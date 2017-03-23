@@ -607,16 +607,13 @@ public:
                 return 1;
             }
 
-            char const * hash_filename = this->hf_.filename;
-            char const * meta_filename = this->mf_.filename;
-
             char path[1024] = {};
             char basename[1024] = {};
             char extension[256] = {};
             char filename[2048] = {};
 
             canonical_path(
-                meta_filename,
+                this->mf_.filename,
                 path, sizeof(path),
                 basename, sizeof(basename),
                 extension, sizeof(extension)
@@ -624,7 +621,7 @@ public:
 
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            if (hash_buf_open(hash_buf_file_fd, hash_buf_encrypt, hash_filename, S_IRUSR|S_IRGRP) < 0) {
+            if (hash_buf_open(hash_buf_file_fd, hash_buf_encrypt, this->hf_.filename, S_IRUSR|S_IRGRP) < 0) {
                 int e = errno;
                 LOG(LOG_ERR, "Open to transport failed: code=%d", e);
                 errno = e;
@@ -635,10 +632,10 @@ public:
             hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
 
             struct stat stat;
-            int err = ::stat(meta_filename, &stat);
+            int err = ::stat(this->mf_.filename, &stat);
             if (err) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                    hash_filename, err);
+                    this->hf_.filename, err);
                 return 1;
             }
 
@@ -697,7 +694,7 @@ public:
 
             if (res < 0) {
                 err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", hash_filename, int(res));
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", this->hf_.filename, int(res));
                 return 1;
             }
 
@@ -707,15 +704,15 @@ public:
             hash_buf_file_fd = -1;
             if (result.err_code) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
-                        hash_filename, result.err_code);
+                        this->hf_.filename, result.err_code);
                 return 1;
             }
             if (res2) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res2 = %d]\n", hash_filename, int(res2));
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [res2 = %d]\n", this->hf_.filename, int(res2));
                 return 1;
             }
             if (res3) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", hash_filename, int(res3));
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", this->hf_.filename, int(res3));
                 return 1;
             }
         }
@@ -748,16 +745,13 @@ public:
                     }
                 }
 
-                char const * hash_filename = this->hf_.filename;
-                char const * meta_filename = this->mf_.filename;
-
                 char path[1024] = {};
                 char basename[1024] = {};
                 char extension[256] = {};
                 char filename[2048] = {};
 
                 canonical_path(
-                    meta_filename,
+                    this->mf_.filename,
                     path, sizeof(path),
                     basename, sizeof(basename),
                     extension, sizeof(extension)
@@ -765,7 +759,7 @@ public:
 
                 snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-                int hash_buf_fd = ::open(hash_filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+                int hash_buf_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
                 if (hash_buf_fd < 0) {
                     int e = errno;
                     LOG(LOG_ERR, "Open to transport failed: code=%d", e);
@@ -776,9 +770,9 @@ public:
                 raw_write(hash_buf_fd, header, sizeof(header)-1);
 
                 struct stat stat;
-                int err = ::stat(meta_filename, &stat);
+                int err = ::stat(this->mf_.filename, &stat);
                 if (err) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, err);
                     return 1;
                 }
 
@@ -836,13 +830,13 @@ public:
                 ssize_t res = raw_write(hash_buf_fd, mes, p-mes);
 
                 if (res < 0) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, int(res));
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, int(res));
                     return 1;
                 }
 
                 err = ::close(hash_buf_fd);
                 if (err) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", this->hf_.filename, err);
                     return 1;
                 }
             }
