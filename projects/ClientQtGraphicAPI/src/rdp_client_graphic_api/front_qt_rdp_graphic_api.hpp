@@ -22,7 +22,6 @@
 
 #pragma once
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #ifndef Q_MOC_RUN
@@ -65,12 +64,9 @@
 
 #endif
 
-
-#define USER_CONF_PATH "/config/userConfig.config"
-
 #define REPLAY_PATH "/replay"
-#define KEY_SETTING_PATH "/config/keySetting.config"
 #define LOGINS_PATH "/config/logins.config"
+
 
 
 
@@ -83,6 +79,7 @@ public:
     virtual void log4(bool , const char *, const char * = nullptr) {}
     virtual void disconnect_target() {}
 };
+
 
 
 class Front_Qt_API : public FrontAPI
@@ -120,7 +117,6 @@ public:
 
 
     const std::string    MAIN_DIR;
-    const std::string    USER_CONF_DIR;
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
 
@@ -143,8 +139,7 @@ public:
     , cache_replay(nullptr)
     , socket(nullptr)
     , is_spanning(false)
-    , MAIN_DIR(MAIN_PATH)
-    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
+    , MAIN_DIR(std::string(MAIN_PATH))
     , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
     , USER_CONF_LOG(MAIN_DIR + std::string(LOGINS_PATH))
     {}
@@ -320,18 +315,20 @@ public Q_SLOTS:
 
             this->_front->callback();
 
-            if (this->_callback->get_event().set_state) {
-                struct timeval now = tvtime();
-                int time_to_wake = ((this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000)
-                + ((this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000);
+            if (this->_callback) {
+                if (this->_callback->get_event().set_state) {
+                    struct timeval now = tvtime();
+                    int time_to_wake = ((this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000)
+                    + ((this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000);
 
-                if (time_to_wake < 0) {
-                    this->timer.stop();
+                    if (time_to_wake < 0) {
+                        this->timer.stop();
+                    } else {
+                        this->timer.start( time_to_wake );
+                    }
                 } else {
-                    this->timer.start( time_to_wake );
+                    this->timer.stop();
                 }
-            } else {
-                this->timer.stop();
             }
         }
     }

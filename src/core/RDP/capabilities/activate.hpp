@@ -71,8 +71,9 @@ struct ActivationCaps : public Capability {
     , windowManagerKeyFlag(0)
     {
     }
-    ~ActivationCaps() override {}
-    void emit(OutStream & stream)override {
+
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->helpKeyFlag);
@@ -81,7 +82,8 @@ struct ActivationCaps : public Capability {
         stream.out_uint16_le(this->windowManagerKeyFlag);
     }
 
-    void recv(InStream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         this->helpKeyFlag = stream.in_uint16_le();
         this->helpKeyIndexFlag = stream.in_uint16_le();
@@ -89,7 +91,8 @@ struct ActivationCaps : public Capability {
         this->windowManagerKeyFlag = stream.in_uint16_le();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s Activation caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Activation caps::helpKeyFlag %u", this->helpKeyFlag);
         LOG(LOG_INFO, "Activation caps::helpKeyIndexFlag %u", this->helpKeyIndexFlag);
@@ -97,5 +100,3 @@ struct ActivationCaps : public Capability {
         LOG(LOG_INFO, "Activation caps::windowManagerKeyFlag %u", this->windowManagerKeyFlag);
     }
 };
-
-

@@ -330,6 +330,8 @@ struct RFXSrvrCaps : public RFXGenCaps {
     uint8_t * reserved = nullptr;
 
     RFXSrvrCaps() = default;
+    RFXSrvrCaps(RFXSrvrCaps const &) = delete;
+    RFXSrvrCaps & operator = (RFXSrvrCaps const &) = delete;
 
     ~RFXSrvrCaps() {
         delete [] this->reserved;
@@ -337,8 +339,9 @@ struct RFXSrvrCaps : public RFXGenCaps {
 
     void setReserved(uint16_t len) {
         this->reserved = new uint8_t[len];
-        for (size_t i = 0; i < len; i++)
-        this->reserved[i] = 0xff;
+        for (size_t i = 0; i < len; i++) {
+            this->reserved[i] = 0xff;
+        }
     }
 };
 
@@ -473,34 +476,26 @@ enum {
 
 struct BitmapCodecCaps : public Capability {
 
-    BitmapCodecs * supportedBitmapCodecs;
+    BitmapCodecs supportedBitmapCodecs;
 
     BitmapCodecCaps()
     : Capability(CAPSTYPE_SHARE, CAPLEN_BITMAP_CODECS)
     {
-        this->supportedBitmapCodecs = new BitmapCodecs;
     }
 
-    ~BitmapCodecCaps() {
-        delete this->supportedBitmapCodecs;
-    }
-
-    void emit(OutStream &) override {
+    void emit(OutStream &) {
         // TODO BitmapCodec::emit unimplemented
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
 
-    void recv(InStream &, uint16_t len) override {
+    void recv(InStream &, uint16_t len) {
         (void)len;
         // TODO BitmapCodec::recv unimplemented
         LOG(LOG_INFO, "BitmapCodec caps recv not implemented");
     }
 
-    void log(const char * msg) override {
+    void log(const char * msg) {
         LOG(LOG_INFO, "%s BitmapCodec caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void*>(this->supportedBitmapCodecs));
+        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void*>(&this->supportedBitmapCodecs));
     }
 };
-
-
-

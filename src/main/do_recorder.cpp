@@ -2092,7 +2092,7 @@ extern "C" {
 //        }
 //        // default command is redrec;
 
-        if (argc > arg_used){
+        if (argc > arg_used + 1){
             command = in(argv[arg_used+1], {"redrec", "redver", "reddec"});
             if (command){
                 command = command - 1;
@@ -2112,7 +2112,7 @@ extern "C" {
 
         uint8_t tmp[32] = {};
         for (auto a : {0, 1}) {
-            if (argc < arg_used + 1){
+            if (argc <= arg_used + 1){
                 break;
             }
             auto k = argv[arg_used+1];

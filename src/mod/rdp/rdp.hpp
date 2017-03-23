@@ -3294,7 +3294,7 @@ public:
                             LOG(LOG_INFO, "Process pointer null (Fast)");
                         }
                         Pointer cursor;
-                        this->front.set_pointer(cursor);
+                        drawable.set_pointer(cursor);
                     }
                     break;
 
@@ -3304,7 +3304,7 @@ public:
                             LOG(LOG_INFO, "Process pointer default (Fast)");
                         }
                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
-                        this->front.set_pointer(cursor);
+                        drawable.set_pointer(cursor);
                     }
                     break;
 
@@ -3342,21 +3342,21 @@ public:
                     if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                         LOG(LOG_INFO, "Process pointer color (Fast)");
                     }
-                    this->process_color_pointer_pdu(stream);
+                    this->process_color_pointer_pdu(stream, drawable);
                     break;
 
                 case FastPath::UpdateType::CACHED:
                     if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                         LOG(LOG_INFO, "Process pointer cached (Fast)");
                     }
-                    this->process_cached_pointer_pdu(stream);
+                    this->process_cached_pointer_pdu(stream, drawable);
                     break;
 
                 case FastPath::UpdateType::POINTER:
                     if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
-                    this->process_new_pointer_pdu(stream);
+                    this->process_new_pointer_pdu(stream, drawable);
                     break;
 
                 default:
@@ -3646,7 +3646,7 @@ public:
                                             if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
-                                                drawable,this->front_width, this->front_height);
+                                                drawable, this->front_width, this->front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
@@ -3683,7 +3683,7 @@ public:
                                     break;
                                 case PDUTYPE2_POINTER:
                                     if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
-                                    this->process_pointer_pdu(sdata.payload);
+                                    this->process_pointer_pdu(sdata.payload, drawable);
                                     // TODO CGR: Data should actually be consumed
                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
@@ -4421,7 +4421,7 @@ public:
 // process future Cached Pointer Updates.
 
 
-    void process_pointer_pdu(InStream & stream)
+    void process_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace3)){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -4435,7 +4435,7 @@ public:
             if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                 LOG(LOG_INFO, "Process pointer cached");
             }
-            this->process_cached_pointer_pdu(stream);
+            this->process_cached_pointer_pdu(stream, drawable);
             if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                 LOG(LOG_INFO, "Process pointer cached done");
             }
@@ -4445,7 +4445,7 @@ public:
             if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                 LOG(LOG_INFO, "Process pointer color");
             }
-            this->process_color_pointer_pdu(stream);
+            this->process_color_pointer_pdu(stream, drawable);
             if (bool(this->verbose & RDPVerbose::basic_trace3)){
                 LOG(LOG_INFO, "Process pointer color done");
             }
@@ -4456,7 +4456,7 @@ public:
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
-                this->process_new_pointer_pdu(stream); // Pointer with arbitrary color depth
+                this->process_new_pointer_pdu(stream, drawable); // Pointer with arbitrary color depth
             }
             if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                 LOG(LOG_INFO, "Process pointer new done");
@@ -4469,7 +4469,7 @@ public:
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
-            this->process_system_pointer_pdu(stream);
+            this->process_system_pointer_pdu(stream, drawable);
             if (bool(this->verbose & RDPVerbose::basic_trace3)) {
                 LOG(LOG_INFO, "Process pointer system done");
             }
@@ -6385,7 +6385,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_color_pointer_pdu(InStream & stream) {
+    void process_color_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
         if (bool(this->verbose & RDPVerbose::basic_trace3)) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
@@ -6473,7 +6473,7 @@ public:
 
         cursor.update_bw();
 
-        this->front.set_pointer(cursor);
+        drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::basic_trace3)) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -6493,7 +6493,7 @@ public:
     // have already been cached using either the Color Pointer Update
     // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void process_cached_pointer_pdu(InStream & stream)
+    void process_cached_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace3)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
@@ -6509,14 +6509,14 @@ public:
         }
         Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
-            this->front.set_pointer(cursor);
+            drawable.set_pointer(cursor);
         }
         else {
             LOG(LOG_WARNING,
                 "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
                 pointer_idx);
             Pointer cursor(Pointer::POINTER_NORMAL);
-            this->front.set_pointer(cursor);
+            drawable.set_pointer(cursor);
         }
         if (bool(this->verbose & RDPVerbose::basic_trace3)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -6537,7 +6537,7 @@ public:
     // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
     // +---------------------------+-----------------------------+
 
-    void process_system_pointer_pdu(InStream & stream)
+    void process_system_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace3)) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
@@ -6551,7 +6551,7 @@ public:
                 }
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                this->front.set_pointer(cursor);
+                drawable.set_pointer(cursor);
             }
             break;
         default:
@@ -6560,7 +6560,7 @@ public:
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
                 Pointer cursor(Pointer::POINTER_NORMAL);
-                this->front.set_pointer(cursor);
+                drawable.set_pointer(cursor);
             }
             break;
         }
@@ -6716,7 +6716,7 @@ public:
     //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
     //  contains one palette index; for 4 bpp, there are two palette indices per byte).
 
-    void process_new_pointer_pdu(InStream & stream) {
+    void process_new_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
         if (bool(this->verbose & RDPVerbose::basic_trace3)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
@@ -6899,7 +6899,7 @@ public:
         //}
         //printf("\n");
 
-        this->front.set_pointer(cursor);
+        drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::basic_trace3)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }

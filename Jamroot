@@ -18,6 +18,7 @@ project redemption
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
+    <variant>san:<cxxflags>-frtti # undefined reference to `typeinfo`.
 
     $(REDEMPTION_CXXFLAGS)
 
@@ -206,6 +207,7 @@ lib libredrec
         video_capture
         capture
         do_recorder
+        $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
         bitmap.o
         bitmap_from_file.o
         program_options.o
@@ -344,6 +346,7 @@ exe redrec
         libredrec
     :
         $(EXE_DEPENDENCIES)
+        -<define>REDEMPTION_DECL_LOG_SYSLOG
     ;
 
 exe display_learning

@@ -23,7 +23,8 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <iosfwd>
 #include "utils/log.hpp"
 
 class InStream;
@@ -137,7 +138,7 @@ class OutStream;
 
 /* Maps to generalCapabilitySet in T.128 page 138 */
 
-enum {
+enum CAPSTYPE : uint16_t {
     // General Capability Set ([MS-RDPBCGR] section 2.2.7.1.1)
     CAPSTYPE_GENERAL                    = 1,
     // Bitmap Capability Set ([MS-RDPBCGR] section 2.2.7.1.2)
@@ -196,19 +197,13 @@ enum {
     CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30
 };
 
-/*
-enum {
-    OS_MAJOR_TYPE_UNIX             = 4,
-    OS_MINOR_TYPE_XSERVER          = 7,
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & os, CAPSTYPE t)
+{ return os << static_cast<uint16_t>(t); }
 
-    ORDER_CAP_NEGOTIATE            = 2,
-    ORDER_CAP_NOSUPPORT            = 4,
 
-    BMPCACHE2_FLAG_PERSIST         = ((long)1<<31)
-};
-*/
-
-inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
+inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType)
+{
     switch (capabilitySetType) {
         case CAPSTYPE_GENERAL:                 return "General Capability Set";
         case CAPSTYPE_BITMAP:                  return "Bitmap Capability Set";
@@ -243,31 +238,13 @@ inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType
     return "<unknown>";
 }
 
-struct Capability {
-    uint16_t capabilityType;
+struct Capability
+{
+    CAPSTYPE capabilityType;
     uint16_t len;
 
-    Capability(uint16_t capabilityType, uint16_t len)
-        : capabilityType(capabilityType)
-        , len(len) {
+    Capability(CAPSTYPE capabilityType, uint16_t len)
+    : capabilityType(capabilityType)
+    , len(len) {
     }
-
-    virtual ~Capability() {}
-
-    virtual void emit(OutStream & stream) = 0;/* {
-        LOG(LOG_ERR, "Capability::emit [%u, %u] Implemented by subclass",
-            this->capabilityType, this->len);
-    }*/
-
-    virtual void recv(InStream & stream, uint16_t len) = 0;/* {
-        this->len = len;
-        LOG(LOG_ERR, "Capability::recv [%u, %u] Implemented by subclass",
-            this->capabilityType, this->len);
-    }*/
-
-    virtual void log(const char * msg) = 0;/* {
-        LOG(LOG_ERR, "Capability::log [%u, %u, %s] Implemented by subclass",
-            this->capabilityType, this->len, msg);
-    }*/
 };
-

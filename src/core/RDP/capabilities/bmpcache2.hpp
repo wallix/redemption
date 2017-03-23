@@ -147,7 +147,8 @@ struct BmpCache2Caps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->cacheFlags);
@@ -161,7 +162,8 @@ struct BmpCache2Caps : public Capability {
         stream.out_clear_bytes(12);
     }
 
-    void recv(InStream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         if (len != CAPLEN_BITMAPCACHE_REV2 || !stream.in_check_rem(len)) {
             LOG(LOG_ERR, "Broken CAPSTYPE_BITMAPCACHE_REV2, need=%u (%" PRIu16 ") remains=%zu",
@@ -179,7 +181,8 @@ struct BmpCache2Caps : public Capability {
         stream.in_skip_bytes(12);
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s BitmapCache2 caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
         LOG(LOG_INFO, "BitmapCache2 caps::pad1 %u", this->pad1);

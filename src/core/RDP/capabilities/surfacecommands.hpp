@@ -79,20 +79,23 @@ struct SurfaceCommandsCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream) override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->cmdFlags);
         stream.out_uint32_le(this->reserved);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         this->cmdFlags = stream.in_uint32_le();
         this->reserved = stream.in_uint32_le();
     }
 
-    void log(const char * msg) override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s SurfaceCommands caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SurfaceCommands caps::cmdFlags %u", this->cmdFlags);
         LOG(LOG_INFO, "SurfaceCommands caps::reserved %u", this->reserved);

@@ -227,9 +227,9 @@ struct GeneralCaps : public Capability {
     , suppressOutputSupport(0)
     {
     }
-    ~GeneralCaps() override {}
 
-    void emit(OutStream & stream) override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->os_major);
@@ -245,7 +245,8 @@ struct GeneralCaps : public Capability {
         stream.out_uint8(this->suppressOutputSupport);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
 
         /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +
@@ -272,7 +273,8 @@ struct GeneralCaps : public Capability {
         this->suppressOutputSupport = stream.in_uint8();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "General caps::major %u", this->os_major);
         LOG(LOG_INFO, "General caps::minor %u", this->os_minor);
@@ -297,30 +299,30 @@ struct GeneralCaps : public Capability {
         LOG(LOG_INFO, "General caps::suppressOutputSupport %x", this->suppressOutputSupport);
     }
 
-    void dump(FILE * f) const {
-        fprintf(f,
-            "[General Capability Set]\n"
-            "osMajorType=%u\n"
-            "osMinorType=%u\n"
-            "protocolVersion=%u\n"
-            "generalCompressionTypes=%u\n"
-            "extraFlags=%u\n"
-            "updateCapabilityFlag=%u\n"
-            "remoteUnshareFlag=%u\n"
-            "generalCompressionLevel=%u\n"
-            "refreshRectSupport=%u\n"
-            "suppressOutputSupport=%u\n\n",
-            unsigned(this->os_major),
-            unsigned(this->os_minor),
-            unsigned(this->protocolVersion),
-            unsigned(this->compressionType),
-            unsigned(this->extraflags),
-            unsigned(this->updateCapability),
-            unsigned(this->remoteUnshare),
-            unsigned(this->compressionLevel),
-            unsigned(this->refreshRectSupport),
-            unsigned(this->suppressOutputSupport)
-        );
+    void dump(FILE * f) const
+    {
+       fprintf(f,
+           "[General Capability Set]\n"
+           "osMajorType=%u\n"
+           "osMinorType=%u\n"
+           "protocolVersion=%u\n"
+           "generalCompressionTypes=%u\n"
+           "extraFlags=%u\n"
+           "updateCapabilityFlag=%u\n"
+           "remoteUnshareFlag=%u\n"
+           "generalCompressionLevel=%u\n"
+           "refreshRectSupport=%u\n"
+           "suppressOutputSupport=%u\n\n",
+           unsigned(this->os_major),
+           unsigned(this->os_minor),
+           unsigned(this->protocolVersion),
+           unsigned(this->compressionType),
+           unsigned(this->extraflags),
+           unsigned(this->updateCapability),
+           unsigned(this->remoteUnshare),
+           unsigned(this->compressionLevel),
+           unsigned(this->refreshRectSupport),
+           unsigned(this->suppressOutputSupport)
+       );
     }
 };
-
