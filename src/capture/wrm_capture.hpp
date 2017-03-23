@@ -176,7 +176,7 @@ struct MetaFilename
 
 static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const uint8_t * data, size_t len)
 {
-    ocrypto::Result res = hash_buf_encrypt.write(data, len);
+    const ocrypto::Result res = hash_buf_encrypt.write(data, len);
 //     if (res.buf.size() < 0) {
 //         return -1;
 //     }
@@ -204,7 +204,7 @@ static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encry
     size_t base_len = 0;
     const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-    ocrypto::Result ores = hash_buf_encrypt.open(base, base_len);
+    const ocrypto::Result ores = hash_buf_encrypt.open(base, base_len);
     if (ores.err_code) {
         return ores.err_code;
     }
@@ -263,7 +263,7 @@ struct MetaSeqBuf {
                 this->meta_buf_file_size += remaining;
             }
         }
-        ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
+        const ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
         if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
         {
             return -1;
@@ -368,7 +368,7 @@ struct MetaSeqBuf {
 
     int meta_buf_close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
     {
-        ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
+        const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
         if (result.err_code) {
             return -1;
         }
@@ -447,7 +447,7 @@ public:
         size_t derivator_len = 0;
         const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
 
-        ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
+        const ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
         if (ores.err_code) {
             LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
@@ -504,7 +504,7 @@ public:
             size_t base_len = 0;
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-            ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
+            const ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
             if (ores.err_code) {
                 LOG(LOG_INFO, "MetaSeqBufCrypto::write() encrypt open failed");
                 return ores.err_code;
@@ -523,7 +523,7 @@ public:
 
         }
         int res = -1;
-        ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
+        const ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
         res = this->buf_.write(result.buf.data(), result.buf.size());
 
         if (this->with_checksum) {
@@ -559,7 +559,7 @@ public:
                 this->sumbuf_hmac.final(fhash);
                 this->sumbuf_file_size = nosize;
             }
-            ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+            const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
                 LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
@@ -583,14 +583,6 @@ public:
 
     int close()
     {
-    
-//        if (this->buf_.is_open()) {
-//            if (this->next() < 0) {
-//                return 1;
-//            }
-//        }
-
-        LOG(LOG_INFO, "Not encrypted not checksum");
         if (this->buf_.is_open()) {
             uint8_t qhash[MD_HASH_LENGTH];
             uint8_t fhash[MD_HASH_LENGTH];
@@ -600,7 +592,7 @@ public:
                 this->sumbuf_hmac.final(fhash);
                 this->sumbuf_file_size = nosize;
             }
-            ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+            const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
                 LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
@@ -630,7 +622,7 @@ public:
             return 1;
         }
 
-        ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
+        const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
         if (result.err_code) {
             LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
             return -1;
@@ -641,14 +633,13 @@ public:
             return -1;
         }
 
-        int res2 = 0;
         if (-1 != this->meta_buf_fd) {
-            res2 = ::close(this->meta_buf_fd);
+            if (::close(this->meta_buf_fd)){
+                this->meta_buf_fd = -1;
+                LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
+                return -1;
+            }
             this->meta_buf_fd = -1;
-        }
-        if (res2 < 0) {
-            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-            return res2;
         }
 
         if (this->with_checksum)
@@ -667,217 +658,119 @@ public:
             }
         }
 
-//        if (this->with_encryption)
-        {
+        int hash_buf_file_fd = -1;
+        ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
 
-            int hash_buf_file_fd = -1;
-            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+        char filename[2048] = {};
 
-            char path[1024] = {};
-            char basename[1024] = {};
-            char extension[256] = {};
-            char filename[2048] = {};
+        canonical_path(
+            this->mf_.filename,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
 
-            canonical_path(
-                this->mf_.filename,
-                path, sizeof(path),
-                basename, sizeof(basename),
-                extension, sizeof(extension)
-            );
+        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+        if (hash_buf_open(hash_buf_file_fd, hash_buf_encrypt, this->hf_.filename, S_IRUSR|S_IRGRP) < 0) {
+            int e = errno;
+            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
+            errno = e;
+            return 1;
+        }
 
-            if (hash_buf_open(hash_buf_file_fd, hash_buf_encrypt, this->hf_.filename, S_IRUSR|S_IRGRP) < 0) {
-                int e = errno;
-                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-                errno = e;
-                return 1;
-            }
+        char header[] = "v2\n\n\n";
+        hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
 
-            char header[] = "v2\n\n\n";
-            hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
+        struct stat stat;
+        int err = ::stat(this->mf_.filename, &stat);
+        if (err) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                this->hf_.filename, err);
+            return 1;
+        }
 
-            struct stat stat;
-            int err = ::stat(this->mf_.filename, &stat);
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                    this->hf_.filename, err);
-                return 1;
-            }
-
-            // 8Ko for a filename with expanded slash should be enough
-            // or we will truncate filename at buffersize
-            char tmp[8192];
-            size_t j = 0;
-            for (size_t i = 0; (filename[i]) && (j < sizeof(tmp)-2) ; i++){
-                switch (filename[i]){
-                case '\\':
-                case ' ':
-                    tmp[j++] = '\\';
-                    REDEMPTION_CXX_FALLTHROUGH;
-                default:
-                    tmp[j++] = filename[i];
-                break;
-                }
-            }
-            tmp[j] = 0;
-
-            using ull = unsigned long long;
-            using ll = long long;
-            char mes[ sizeof(tmp) +
-                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                wrmcapture_hash_string_len + 1 +
-                2
-            ];
-            ssize_t len = std::sprintf(
-                mes,
-                "%s %lld %llu %lld %lld %llu %lld %lld %lld",
-                tmp,
-                ll(stat.st_size),
-                ull(stat.st_mode),
-                ll(stat.st_uid),
-                ll(stat.st_gid),
-                ull(stat.st_dev),
-                ll(stat.st_ino),
-                ll(stat.st_mtim.tv_sec),
-                ll(stat.st_ctim.tv_sec)
-            );
-
-            char * p = mes + len;
-            if (this->with_checksum) {
-                auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
-                    *p++ = ' ';                // 1 octet
-                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                        sprintf(p, "%02x", c); // 64 octets (hash)
-                        p += 2;
-                    }
-                };
-                hexdump(qhash);
-                hexdump(fhash);
-            }
-            *p++ = '\n';
-
-            ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
-
-            if (res < 0) {
-                err = res < 0 ? res : 1;
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", this->hf_.filename, int(res));
-                return 1;
-            }
-
-            ocrypto::Result result = hash_buf_encrypt.close(qhash, fhash);
-            const int res2 = raw_write(hash_buf_file_fd, result.buf.data(), result.buf.size());
-            const int res3 = ::close(hash_buf_file_fd);
-            hash_buf_file_fd = -1;
-            if (result.err_code) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
-                        this->hf_.filename, result.err_code);
-                return 1;
-            }
-            if (res2) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res2 = %d]\n", this->hf_.filename, int(res2));
-                return 1;
-            }
-            if (res3) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", this->hf_.filename, int(res3));
-                return 1;
+        // 8Ko for a filename with expanded slash should be enough
+        // or we will truncate filename at buffersize
+        char tmp[8192];
+        size_t j = 0;
+        for (size_t i = 0; (filename[i]) && (j < sizeof(tmp)-2) ; i++){
+            switch (filename[i]){
+            case '\\':
+            case ' ':
+                tmp[j++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
+            default:
+                tmp[j++] = filename[i];
+            break;
             }
         }
-//        else {
-//            LOG(LOG_INFO, "Not encrypted closing sumbuf buffer");
+        tmp[j] = 0;
 
-//            int hash_buf_file_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
-//            if (hash_buf_file_fd == -1) {
-//                int e = errno;
-//                LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-//                errno = e;
-//                return 1;
-//            }
+        using ull = unsigned long long;
+        using ll = long long;
+        char mes[ sizeof(tmp) +
+            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+            wrmcapture_hash_string_len + 1 +
+            2
+        ];
+        ssize_t len = std::sprintf(
+            mes,
+            "%s %lld %llu %lld %lld %llu %lld %lld %lld",
+            tmp,
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
 
-//            struct stat stat;
-//            if (::stat(this->mf_.filename, &stat)) {
-//                LOG(LOG_ERR, "Failed writing signature to hash file %s\n", this->hf_.filename);
-//                return 1;
-//            }
+        char * p = mes + len;
+        if (this->with_checksum) {
+            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
+                *p++ = ' ';                // 1 octet
+                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                    sprintf(p, "%02x", c); // 64 octets (hash)
+                    p += 2;
+                }
+            };
+            hexdump(qhash);
+            hexdump(fhash);
+        }
+        *p++ = '\n';
 
-//            char path[1024] = {};
-//            char basename[1024] = {};
-//            char extension[256] = {};
-//            char filename[2048] = {};
+        ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
 
-//            canonical_path(
-//                this->mf_.filename,
-//                path, sizeof(path),
-//                basename, sizeof(basename),
-//                extension, sizeof(extension)
-//            );
-//            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-//            // 8Ko for a filename with expanded slash should be enough
-//            // or we will truncate filename at buffersize
-//            char tmp[8192];
-//            size_t j = 0;
-//            for (size_t i = 0; (filename[i]) && (j < 8190) ; i++){
-//                switch (filename[i]){
-//                case '\\':
-//                case ' ':
-//                    tmp[j++] = '\\';
-//                    REDEMPTION_CXX_FALLTHROUGH;
-//                default:
-//                    tmp[j++] = filename[i];
-//                break;
-//                }
-//            }
-//            tmp[j] = 0;
+        if (res < 0) {
+            err = res < 0 ? res : 1;
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", this->hf_.filename, int(res));
+            return 1;
+        }
 
-//            using ull = unsigned long long;
-//            using ll = long long;
-//            char mes[ 8192
-//                    + (std::numeric_limits<ll>::digits10 + 1 + 1) * 8
-//                    + (std::numeric_limits<ull>::digits10 + 1 + 1) * 2
-//                    +  wrmcapture_hash_string_len + 1
-//                    +  2
-//            ];
-//            char header[] = "v2\n\n\n";
-//            ssize_t len = std::sprintf(
-//                mes,
-//                "%s%s %lld %llu %lld %lld %llu %lld %lld %lld",
-//                header,
-//                tmp,
-//                ll(stat.st_size),
-//                ull(stat.st_mode),
-//                ll(stat.st_uid),
-//                ll(stat.st_gid),
-//                ull(stat.st_dev),
-//                ll(stat.st_ino),
-//                ll(stat.st_mtim.tv_sec),
-//                ll(stat.st_ctim.tv_sec)
-//            );
-
-//            char * p = mes + len;
-//            if (this->with_checksum) {
-//                uint8_t qhash[MD_HASH_LENGTH];
-//                uint8_t fhash[MD_HASH_LENGTH];
-
-//                auto write = [&p](unsigned char const * hash) {
-//                    *p++ = ' ';                // 1 octet
-//                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-//                        sprintf(p, "%02x", c); // 64 octets (hash)
-//                        p += 2;
-//                    }
-//                };
-//                write(qhash);
-//                write(fhash);
-//            }
-//            *p++ = '\n';
-
-//            if (raw_write(hash_buf_file_fd, reinterpret_cast<uint8_t*>(mes), p-mes) != 0) {
-//                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-//                    this->hf_.filename, errno);
-//                return 1;
-//            }
-//            ::close(hash_buf_file_fd);
-//        }
+        const ocrypto::Result result2 = hash_buf_encrypt.close(qhash, fhash);
+        const int res2 = raw_write(hash_buf_file_fd, result2.buf.data(), result2.buf.size());
+        const int res3 = ::close(hash_buf_file_fd);
+        hash_buf_file_fd = -1;
+        if (result2.err_code) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
+                    this->hf_.filename, result2.err_code);
+            return 1;
+        }
+        if (res2) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [res2 = %d]\n", this->hf_.filename, int(res2));
+            return 1;
+        }
+        if (res3) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", this->hf_.filename, int(res3));
+            return 1;
+        }
         return 0;
     }
 
