@@ -113,14 +113,6 @@ public:
     }
 
     Widget2 * last_widget_at_pos(int16_t x, int16_t y) {
-        // recursive
-        // Widget2 * w = this->widget_at_pos(x, y);
-        // if (w && (w != this)) {
-        //     return w->last_widget_at_pos(x, y);
-        // }
-        // return this;
-
-        // loop
         Widget2 * w = this;
         int count = 10;
         while (w->widget_at_pos(x, y)
@@ -270,5 +262,9 @@ public:
 
     Rect get_rect() const {
         return this->rect;
+    }
+
+    virtual const Pointer* get_pointer() const {
+        return nullptr;
     }
 };

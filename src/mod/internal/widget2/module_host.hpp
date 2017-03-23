@@ -227,6 +227,8 @@ private:
 
     GCC::UserData::CSMonitor monitor_one;
 
+    Pointer current_pointer;
+
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -260,6 +262,13 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
+    virtual void set_pointer(Pointer const & pointer) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        drawable_.set_pointer(pointer);
+
+        this->current_pointer = pointer;
+    }
 
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
@@ -275,6 +284,8 @@ public:
     , vscroll(drawable, *this, this, false, 0, 0x606060, 0xF0F0F0, 0xCDCDCD, font, true)
     , monitors(cs_monitor)
     {
+        this->pointer_flag = Pointer::POINTER_CUSTOM;
+
         this->impl = &composite_array;
 
         this->tab_flag   = NORMAL_TAB;
@@ -521,6 +532,10 @@ public:
     }
 
     using WidgetParent::set_wh;
+
+    const Pointer* get_pointer() const override {
+        return &this->current_pointer;
+    }
 
 public:
     // NotifyApi
