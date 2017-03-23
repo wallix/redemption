@@ -669,8 +669,8 @@ public:
 
         if (this->with_encryption){
 
-            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
             int hash_buf_file_fd = -1;
+            ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
 
             char path[1024] = {};
             char basename[1024] = {};
@@ -744,15 +744,17 @@ public:
             );
 
             char * p = mes + len;
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
-                }
-            };
-            hexdump(qhash);
-            hexdump(fhash);
+            if (this->with_checksum) {
+                auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
+                    *p++ = ' ';                // 1 octet
+                    for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                        sprintf(p, "%02x", c); // 64 octets (hash)
+                        p += 2;
+                    }
+                };
+                hexdump(qhash);
+                hexdump(fhash);
+            }
             *p++ = '\n';
 
             ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
@@ -784,9 +786,8 @@ public:
         else {
             LOG(LOG_INFO, "Not encrypted closing sumbuf buffer");
 
-
-            int crypto_hash_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
-            if (crypto_hash_fd == -1) {
+            int hash_buf_file_fd = ::open(this->hf_.filename, O_WRONLY | O_CREAT, S_IRUSR|S_IRGRP);
+            if (hash_buf_file_fd == -1) {
                 int e = errno;
                 LOG(LOG_ERR, "Open to transport failed: code=%d", e);
                 errno = e;
@@ -869,12 +870,12 @@ public:
             }
             *p++ = '\n';
 
-            if (raw_write(crypto_hash_fd, reinterpret_cast<uint8_t*>(mes), p-mes) != 0) {
+            if (raw_write(hash_buf_file_fd, reinterpret_cast<uint8_t*>(mes), p-mes) != 0) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                     this->hf_.filename, errno);
                 return 1;
             }
-            ::close(crypto_hash_fd);
+            ::close(hash_buf_file_fd);
         }
         return 0;
     }
