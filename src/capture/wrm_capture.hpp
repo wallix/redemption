@@ -551,48 +551,35 @@ public:
 
     int next()
     {
-        if (this->with_encryption){
-            if (this->buf_.is_open()) {
-                uint8_t qhash[MD_HASH_LENGTH];
-                uint8_t fhash[MD_HASH_LENGTH];
-                ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
-                if (result.err_code) {
-                    this->buf_.close();
-                    LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
-                    return -1;
-                }
-                ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
-                if (err < 0){
-                    this->buf_.close();
-                    LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
-                    return -1;
-                }
-                const int res2 = this->buf_.close();
-                if (res2) {
-                    LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
-                    return res2;
-                }
-                return this->next_meta_file(qhash, fhash);
+        if (this->buf_.is_open()) {
+            uint8_t qhash[MD_HASH_LENGTH];
+            uint8_t fhash[MD_HASH_LENGTH];
+            if (this->with_checksum) {
+                REDASSERT(this->sumbuf_file_size != nosize);
+                this->sumbuf_quick_hmac.final(qhash);
+                this->sumbuf_hmac.final(fhash);
+                this->sumbuf_file_size = nosize;
             }
-            return 1;
-        }
-        else {
-            if (this->buf_.is_open()) {
-                uint8_t qhash[MD_HASH_LENGTH];
-                uint8_t fhash[MD_HASH_LENGTH];
-                if (this->with_checksum) {
-                    REDASSERT(this->sumbuf_file_size != nosize);
-                    this->sumbuf_quick_hmac.final(qhash);
-                    this->sumbuf_hmac.final(fhash);
-                    this->sumbuf_file_size = nosize;
-                }
+            ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
+            if (result.err_code) {
                 this->buf_.close();
-                int r = this->next_meta_file(qhash, fhash);
-                return r;
+                LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
+                return -1;
             }
-            return 1;
+            ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
+            if (err < 0){
+                this->buf_.close();
+                LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
+                return -1;
+            }
+            const int res2 = this->buf_.close();
+            if (res2) {
+                LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
+                return res2;
+            }
+            return this->next_meta_file(qhash, fhash);
         }
-        return -1;
+        return 1;
     }
 
     int close()
