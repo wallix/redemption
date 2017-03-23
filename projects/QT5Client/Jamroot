@@ -38,10 +38,14 @@ project redemption_qt5_client
    : default-build release
 ;
 
-constant EXE_DEPENDENCIES :
+constant OBJ_EXE_DEPENDENCIES :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
+;
+constant EXE_DEPENDENCIES :
+    $(OBJ_EXE_DEPENDENCIES)
+    <define>REDEMPTION_DECL_LOG_SYSLOG
 ;
 
 # constant TEST_DEPENDENCIES :
@@ -78,7 +82,7 @@ using qt5
     : /usr/lib/x86_64-linux-gnu
     ;
 
-obj front_Qt5.o : src/Qt5/front_Qt5.cpp ;
+obj front_Qt5.o : src/Qt5/front_Qt5.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
 exe client_rdp_Qt5 :
     src/Qt5/front_widget_Qt5.hpp

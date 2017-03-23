@@ -120,6 +120,7 @@
 #include "capture/wrm_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/flv_params_from_ini.hpp"
+#include "capture/wrm_capture.hpp" // TODO GraphicToFile::Verbose
 
 
 class Front : public FrontAPI

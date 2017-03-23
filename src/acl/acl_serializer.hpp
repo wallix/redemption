@@ -44,110 +44,6 @@
 #include <ctime>
 #include "utils/log.hpp"
 
-#define LOG_SESSION(normal_log, session_log, session_type, type, session_id,    \
-        ip_client, ip_target, user, device, service, account, priority, format, \
-        ...                                                                     \
-    )                                                                           \
-    LOGCHECK__REDEMPTION__INTERNAL((                                            \
-        LOG_REDEMPTION_FORMAT_CHECK(format, __VA_ARGS__),                       \
-        LOGSYSLOG_REDEMPTION_SESSION_INTERNAL(                                  \
-            normal_log,                                                         \
-            session_log,                                                        \
-            session_type, type, session_id, ip_client, ip_target,               \
-            user, device, service, account, priority,                           \
-            "%s (%d/%d) -- type='%s'%s" format,                                 \
-            "[%s Session] "                                                     \
-                "type='%s' "                                                    \
-                "session_id='%s' "                                              \
-                "client_ip='%s' "                                               \
-                "target_ip='%s' "                                               \
-                "user='%s' "                                                    \
-                "device='%s' "                                                  \
-                "service='%s' "                                                 \
-                "account='%s'%s"                                                \
-                format,                                                         \
-            ((*format) ? " " : ""),                                             \
-            __VA_ARGS__                                                         \
-        ), 1)                                                                   \
-    )
-
-namespace {
-    template<class... Ts>
-    void LOGSYSLOG_REDEMPTION_SESSION_INTERNAL(
-        bool normal_log,
-        bool session_log,
-
-        const char * session_type,
-        const char * type,
-        const char * session_id,
-        const char * ip_client,
-        const char * ip_target,
-        const char * user,
-        const char * device,
-        const char * service,
-        const char * account,
-
-        int priority,
-        const char *format_with_pid,
-        const char *format2,
-        Ts const & ... args
-    ) {
-#if defined(LOGNULL)
-        (void)normal_log;
-        (void)session_log;
-        (void)session_type;
-        (void)type;
-        (void)session_id;
-        (void)ip_client;
-        (void)ip_target;
-        (void)user;
-        (void)device;
-        (void)service;
-        (void)account;
-        (void)priority;
-        (void)format_with_pid;
-        (void)format2;
-        (void)std::initializer_list<int>{(void(args), 1)...};
-#else
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-
-        # if defined(LOGPRINT) || defined(IN_IDE_PARSER)
-        (void)priority;
-        #  define LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF printf
-        # else
-        #  define LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(...) syslog(priority, __VA_ARGS__)
-        # endif
-        if (normal_log) {
-            LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(
-                format_with_pid,
-                prioritynames[priority], getpid(), getpid(),
-                type, args...
-            );
-        }
-        if (session_log) {
-            LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF(
-                format2,
-                session_type,
-                type,
-                session_id,
-                ip_client,
-                ip_target,
-                user,
-                device,
-                service,
-                account,
-                args...
-             );
-        }
-        # undef LOGSYSLOG_REDEMPTION_SESSION_INTERNAL_PRINTF
-
-        REDEMPTION_DIAGNOSTIC_POP
-#endif
-    }
-}
-
-
 class KeepAlive {
     // Keep alive Variables
     int  grace_delay;
@@ -417,25 +313,36 @@ public:
         }
 
         /* Log to syslog */
-        LOG_SESSION( duplicate_with_pid
-                   , session_log
-
-                   , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
-                   , type
-                   , this->ini.get<cfg::context::session_id>().c_str()
-                   , this->ini.get<cfg::globals::host>().c_str()
-                   , (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-                      this->ini.get<cfg::context::target_host>().c_str() :
-                      this->ini.get<cfg::context::ip_target>().c_str())
-                   , this->ini.get<cfg::globals::auth_user>().c_str()
-                   , this->ini.get<cfg::globals::target_device>().c_str()
-                   , this->ini.get<cfg::context::target_service>().c_str()
-                   , this->ini.get<cfg::globals::target_user>().c_str()
-
-                   , LOG_INFO
-                   , "%s"
-                   , (extra ? extra : "")
-                   );
+        if (duplicate_with_pid) {
+            LOG(LOG_INFO, "type='%s'%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
+        }
+        if (session_log) {
+            LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_INFO
+              , "[%s Session] "
+                "type='%s' "
+                "session_id='%s' "
+                "client_ip='%s' "
+                "target_ip='%s' "
+                "user='%s' "
+                "device='%s' "
+                "service='%s' "
+                "account='%s'"
+                "%s%s"
+              , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
+              , type
+              , this->ini.get<cfg::context::session_id>().c_str()
+              , this->ini.get<cfg::globals::host>().c_str()
+              , (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
+                  this->ini.get<cfg::context::target_host>().c_str() :
+                  this->ini.get<cfg::context::ip_target>().c_str())
+              , this->ini.get<cfg::globals::auth_user>().c_str()
+              , this->ini.get<cfg::globals::target_device>().c_str()
+              , this->ini.get<cfg::context::target_service>().c_str()
+              , this->ini.get<cfg::globals::target_user>().c_str()
+              , (extra ? " " : ""), (extra ? extra : "")
+            );
+        }
     }
 
     bool check(auth_api & authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {

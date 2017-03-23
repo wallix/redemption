@@ -29,6 +29,8 @@
 #define BOOST_TEST_MODULE TestSubRegion
 #include "system/redemption_unit_tests.hpp"
 
+#define LOGNULL
+
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
 //#include <boost/foreach.hpp>
@@ -108,5 +110,4 @@ BOOST_AUTO_TEST_CASE(TestSubRegion)
 
     BOOST_CHECK_EQUAL(region3.rects[0], Rect(10, 10, 20, 90)); // A
     BOOST_CHECK_EQUAL(region3.rects[1], Rect(50, 10, 50, 90)); // B
-
 }

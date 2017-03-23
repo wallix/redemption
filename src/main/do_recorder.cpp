@@ -219,8 +219,8 @@ public:
     }
 
     void interpret_chunk() {
-        switch (this->chunk_type) {
-        case META_FILE:
+        switch (safe_cast<WrmChunkType>(this->chunk_type)) {
+        case WrmChunkType::META_FILE:
             this->info_version                   = this->stream.in_uint16_le();
             this->info_width                     = this->stream.in_uint16_le();
             this->info_height                    = this->stream.in_uint16_le();
@@ -274,11 +274,12 @@ public:
                 this->meta_ok = true;
             }
             break;
-        case RESET_CHUNK:
+        case WrmChunkType::RESET_CHUNK:
             this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
 
             this->trans = this->trans_source;
             break;
+        default :;
         }
 
         for (size_t i = 0; i < this->nbconsumers ; i++) {

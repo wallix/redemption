@@ -24,6 +24,8 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 
+#include <vector>
+
 #include "core/RDP/clipboard.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
@@ -35,6 +37,8 @@
 #include "rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp"
 
 
+#define _SHARE_PATH "/share"
+#define CB_FILE_TEMP_PATH "/clipboard_temp"
 
 #define _WINDOWS_TICK 10000000
 #define _SEC_TO_UNIX_EPOCH 11644473600LL
@@ -95,6 +99,9 @@ public:
     bool                 _recv_disconnect_ultimatum;
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
+
+    const std::string    CB_TEMP_DIR;
+    std::string    SHARE_DIR;
 
     struct ModRDPParamsData
     {
@@ -188,6 +195,8 @@ public:
     , _recv_disconnect_ultimatum(false)
     , enable_shared_clipboard(false)
     , enable_shared_virtual_disk(false)
+    , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(_SHARE_PATH))
     , clipbrdFormatsList()
     , _cb_filesList()
     , _cb_buffers()
@@ -1094,16 +1103,6 @@ public Q_SLOTS:
                 //==================
                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
                         this->_bufferTypeLongName = std::string("\0\0", 2);
-
-    //                     int cmptCR(0);
-    //                     std::string tmp(str);
-    //                     int pos(tmp.find("\n"));
-
-    //                     while (pos != -1) {
-    //                         cmptCR++;
-    //                         tmp = tmp.substr(pos+2, tmp.length());
-    //                         pos = tmp.find("\n"); // for linux install
-    //                     }
 
                         size_t size( ( str.length() * 4) + 2 );
 

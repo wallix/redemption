@@ -23,12 +23,20 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/hdreg.h>
+#include <unordered_map>
+
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
+#include "capture/flv_params_from_ini.hpp"
 
 #include "rdp_client_qt_widget.hpp"
-#include <unordered_map>
+
 
 #pragma GCC diagnostic pop
 
@@ -48,24 +56,14 @@ public:
     };
 
     enum : int {
-        PDU_MAX_SIZE    = 1600
-      , PDU_HEADER_SIZE =    8
+       PDU_HEADER_SIZE =    8
     };
 
     enum : int {
-        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
-      , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+        PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - PDU_HEADER_SIZE
+      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 
-
-    // Graphic members
-//     int               mod_bpp;
-//     BGRPalette            mod_palette;
-//     Form_Qt            * _form;
-//     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
-//     QPixmap            * _cache;
-//     QPixmap            * _trans_cache;
-//     gdi::GraphicApi    * _graph_capture;
 
     struct MouseData {
         QImage cursor_image;
@@ -105,7 +103,6 @@ public:
         }
 
         std::unordered_map<int, std::string> paths;
-        //std::vector<std::string> paths;
 
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
@@ -472,7 +469,6 @@ public:
 
             for (size_t i = 0; i < size; i++) {
                 this->fileSystemData.drives[0].name[i] = tmp.data()[i];
-
             }
 
             this->fileSystemData.drives[0].ID = 1;
@@ -762,7 +758,7 @@ public:
                             chunk.in_skip_bytes(4);
                             int first_part_data_size(0);
                             uint32_t total_length(this->clipboard_qt->_cliboard_data_length + PDU_HEADER_SIZE);
-                            StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
 
                             if (this->clipboard_qt->_bufferTypeID == chunk.in_uint32_le()) {
 
@@ -858,7 +854,7 @@ public:
 
                                         for (int i = 1; i < this->clipboard_qt->_cItems; i++) {
 
-                                            StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
+                                            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
                                             file = this->clipboard_qt->_items_list[i];
                                             RDPECLIP::FileDescriptor fdn( file->nameUTF8
                                                                         , file->size
@@ -936,15 +932,15 @@ public:
 
                                 case RDPECLIP::FILECONTENTS_RANGE :
                                 {
-                                    StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                                    StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
                                     RDPECLIP::FileContentsResponse_Range fileRange( streamID
                                                                                 , this->clipboard_qt->_items_list[lindex]->size);
                                     this->clipboard_qt->_cliboard_data_length = this->clipboard_qt->_items_list[lindex]->size;
                                     int total_length(this->clipboard_qt->_items_list[lindex]->size + 12);
                                     int first_part_data_size(this->clipboard_qt->_items_list[lindex]->size);
                                     first_part_data_size = this->clipboard_qt->_items_list[lindex]->size;
-                                    if (first_part_data_size > PDU_MAX_SIZE - 12) {
-                                        first_part_data_size = PDU_MAX_SIZE - 12;
+                                    if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
+                                        first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
                                     }
                                     fileRange.emit(out_stream_first_part);
 
@@ -1306,7 +1302,7 @@ public:
                                                 }
 
                                             } else {
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                                                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             }
                                         }
@@ -1354,7 +1350,7 @@ public:
                                             std::ifstream file(file_to_request.c_str());
                                             if (!file.good()) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                                                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                             }
 
                                             deviceIOResponse.emit(out_stream);
@@ -1440,7 +1436,7 @@ public:
                                                 std::ifstream file(file_to_request.c_str());
                                                 if (!file.good()) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                                                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                                 }
                                                 deviceIOResponse.emit(out_stream);
 
@@ -1598,7 +1594,7 @@ public:
                                                 std::string str_file_path_slash(this->SHARE_DIR + path);
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                    LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                 }
 
                                             } else {
@@ -1646,7 +1642,7 @@ public:
 
                                                     } else {
                                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
+                                                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                                     }
                                                 }
 
@@ -1659,7 +1655,7 @@ public:
                                                     std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                                     if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                                                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                     } else {
                                                         LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
                                                         LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
@@ -1837,7 +1833,7 @@ public:
                                         int device = open(str_path.c_str(), O_RDONLY | O_NONBLOCK);
                                         if (device < 0) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                            LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
+                                            //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
                                         } else {
                                             ioctl(device, HDIO_GET_IDENTITY, &hd);
                                             VolumeSerialNumber = this->string_to_hex32(hd.serial_no);
@@ -2229,7 +2225,7 @@ public:
             }
 
             // Last part
-                StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
+                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
                 out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
                 data_sent += remains_PDU;

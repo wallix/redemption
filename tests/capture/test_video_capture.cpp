@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
     {
         struct notified_on_video_change : public NotifyNextVideo
         {
-            void notify_next_video(const timeval& now, reason reason)
+            void notify_next_video(const timeval& now, reason reason) override
             {
                 LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                     static_cast<unsigned>(now.tv_sec),
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
     {
         struct notified_on_video_change : public NotifyNextVideo
         {
-            void notify_next_video(const timeval& now, reason reason)
+            void notify_next_video(const timeval& now, reason reason) override
             {
                 LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                     static_cast<unsigned>(now.tv_sec),
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason)
+        void notify_next_video(const timeval& now, reason reason) override
         {
             LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason)
+        void notify_next_video(const timeval& now, reason reason) override
         {
             LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason)
+        void notify_next_video(const timeval& now, reason reason) override
         {
             LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),

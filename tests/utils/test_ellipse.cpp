@@ -27,6 +27,8 @@
 #define BOOST_TEST_MODULE TestEllipse
 #include "system/redemption_unit_tests.hpp"
 
+#define LOGNULL
+
 #include "utils/ellipse.hpp"
 
 

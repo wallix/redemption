@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestPng
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
+#define LOGNULL
 
 #include "utils/png.hpp"
 

@@ -172,7 +172,10 @@ static inline int ip_connect(const char* ip, int port,
 
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
     u.s4.sin_port = htons(port);
+    REDEMPTION_DIAGNOSTIC_POP
     int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
         LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);

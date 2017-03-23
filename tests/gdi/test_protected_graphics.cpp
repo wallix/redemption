@@ -40,6 +40,7 @@
 #include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/bitmap_from_file.hpp"
+#include "utils/fileutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {

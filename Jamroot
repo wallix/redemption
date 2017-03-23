@@ -118,13 +118,18 @@ constant LIB_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
     <cxxflags>-fPIC
     <variant>release:<cxxflags>-fvisibility=hidden
+    <define>REDEMPTION_DECL_LOG_SYSLOG
 ;
-constant EXE_DEPENDENCIES :
+constant OBJ_EXE_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
     $(GCOV_NO_BUILD)
 ;
+constant EXE_DEPENDENCIES :
+    $(OBJ_EXE_DEPENDENCIES)
+    <define>REDEMPTION_DECL_LOG_SYSLOG
+;
 
-constant TEST_DEPENDENCIES :
+constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
     <library>libboost_unit_test
     <include>$(REDEMPTION_TEST_PATH)
@@ -132,6 +137,11 @@ constant TEST_DEPENDENCIES :
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+;
+
+constant TEST_DEPENDENCIES :
+    $(OBJ_TEST_DEPENDENCIES)
+    <define>REDEMPTION_DECL_LOG_TEST
 ;
 
 
@@ -142,12 +152,12 @@ obj png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
-obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(EXE_DEPENDENCIES) ;
-obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(EXE_DEPENDENCIES) ;
-obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(EXE_DEPENDENCIES) ;
+obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
-obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(TEST_DEPENDENCIES) ;
-obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(TEST_DEPENDENCIES) ;
+obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
+obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 
 alias bitmap : bitmap.o bitmap_from_file.o png ;
 alias video_capture : video_capture.o ffmpeg ;
