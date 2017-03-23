@@ -464,33 +464,30 @@ public:
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
             }
-<<<<<<< HEAD
 
-            char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-            const int len = sprintf(
-                header1,
-                "v2\n"
-                "%u %u\n"
-                "%s\n"
-                "\n\n",
-                unsigned(width),
-                unsigned(height),
-                with_checksum  ? "checksum" : "nochecksum"
-            );
-            const ssize_t res = this->meta_buf_write(header1, len);
-            return res;
-        }
-        else {
-            this->current_filename_[0] = 0;
-            // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
-            // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
-            // ça semble plus solide.
-
-            this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
-            if (this->meta_buf_fd < 0) {
-=======
+//             char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
+//             const int len = sprintf(
+//                 header1,
+//                 "v2\n"
+//                 "%u %u\n"
+//                 "%s\n"
+//                 "\n\n",
+//                 unsigned(width),
+//                 unsigned(height),
+//                 with_checksum  ? "checksum" : "nochecksum"
+//             );
+//             const ssize_t res = this->meta_buf_write(header1, len);
+//             return res;
+//         }
+//         else {
+//             this->current_filename_[0] = 0;
+//             // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
+//             // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
+//             // ça semble plus solide.
+//
+//             this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
+//             if (this->meta_buf_fd < 0) {
             if (raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size()) < 0){
->>>>>>> 3da86fa03b73a7a3953017935efb3a9cf18d3d24
                 LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }

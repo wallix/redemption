@@ -32,23 +32,26 @@
 class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 {
 
+    Translator translator;
+    Theme theme;
+
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
+      , translator(Translation::language_t::FR)
     {}
 
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
 
-        // VNC
-        Inifile ini;
-        Translator translator(Translation::language_t::FR);
-        Theme theme;
-
         try {
 
             // VNC
+            Inifile ini;
+            //Translator translator(Translation::language_t::FR);
+            //Theme theme;
+
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -56,8 +59,8 @@ public:
                                    , this->info.width
                                    , this->info.height
                                    , ini.get<cfg::font>()
-                                   , translator
-                                   , theme
+                                   , this->translator
+                                   , this->theme
                                    , this->info.keylayout
                                    , 0
                                    , true
