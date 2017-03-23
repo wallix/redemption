@@ -2856,10 +2856,11 @@ private:
         );
     }
 
-    bool retrieve_client_capability_set(Capability & caps) override {
+    bool retrieve_client_capability_set(Capability & caps) override
+    {
 #ifdef __clang__
     #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess" // TODO What Oo ?
 # endif
         switch (caps.capabilityType) {
             case CAPSTYPE_GENERAL:
@@ -2914,6 +2915,8 @@ private:
             case CAPSETTYPE_LARGE_POINTER:
                 ::memcpy(&caps, &this->client_info.large_pointer_caps, sizeof(this->client_info.large_pointer_caps));
             break;
+
+            default: break;
         }
 #ifdef __clang__
     #pragma GCC diagnostic pop
