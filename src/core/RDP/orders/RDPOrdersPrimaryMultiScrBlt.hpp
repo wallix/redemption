@@ -147,8 +147,6 @@ public:
         }
     }
 
-    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) = default;
-
     void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiScrBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
