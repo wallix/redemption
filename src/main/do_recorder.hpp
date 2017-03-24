@@ -281,8 +281,8 @@ struct MetaLine2
     time_t  ctime;
     time_t  start_time;
     time_t  stop_time;
-    unsigned char hash1[MD_HASH_LENGTH];
-    unsigned char hash2[MD_HASH_LENGTH];
+    unsigned char hash1[MD_HASH::DIGEST_LENGTH];
+    unsigned char hash2[MD_HASH::DIGEST_LENGTH];
 };
 
 static inline void in_copy_bytes(uint8_t * hash, int len, char * & cur, char * eol, int err)
@@ -434,9 +434,9 @@ public:
 //        LOG(LOG_INFO, "read_meta_file [7] %.*s", static_cast<int>(eol-cur), cur);
         if (header.has_checksum){
             // HASH1 + space
-            in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            in_hex256(meta_line.hash1, MD_HASH::DIGEST_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             // HASH1 + CR
-            in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eol, '\n', ERR_TRANSPORT_READ_FAILED);
+            in_hex256(meta_line.hash2, MD_HASH::DIGEST_LENGTH, cur, eol, '\n', ERR_TRANSPORT_READ_FAILED);
         }
         else {
             memset(meta_line.hash1, 0, sizeof(meta_line.hash1));

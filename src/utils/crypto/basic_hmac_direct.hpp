@@ -41,7 +41,7 @@ class basic_HMAC_direct
     Ssl context;
 
 public:
-    basic_HMAC_direct(const uint8_t * key, size_t key_len)
+    basic_HMAC_direct(const uint8_t * const key, size_t key_len)
     {
         const uint8_t * k = key;
         uint8_t digest[Ssl::DIGEST_LENGTH];
@@ -80,5 +80,53 @@ public:
     }
 };
 
+template<class Ssl, std::size_t pad_length>
+class DelayedHMAC_direct
+{
+    bool initialized = false;
+    uint8_t k_opad[pad_length];
+    Ssl context;
+
+public:
+    DelayedHMAC_direct() {}
+
+    void init(const uint8_t * const key, size_t key_len)
+    {
+        const uint8_t * k = key;
+        uint8_t digest[Ssl::DIGEST_LENGTH];
+        if (key_len > pad_length) {
+            Ssl ssl;
+            ssl.update(key, key_len);
+            ssl.final(digest);
+            key_len = Ssl::DIGEST_LENGTH;
+            k = digest;
+        }
+        uint8_t k_ipad[pad_length];
+        for (size_t i = 0; i < key_len; i++) {
+            k_ipad[i] = 0x36 ^ k[i];
+            k_opad[i] = 0x5C ^ k[i];
+        }
+        for (size_t i = key_len; i < pad_length; i++) {
+            k_ipad[i] = 0x36;
+            k_opad[i] = 0x5C;
+        }
+        context.update(k_ipad, pad_length);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        context.update(data, data_size);
+    }
+
+    void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
+    {
+        context.final(out_data);
+
+        Ssl ssl;
+        ssl.update(this->k_opad, pad_length);
+        ssl.update(out_data, Ssl::DIGEST_LENGTH);
+        ssl.final(out_data);
+    }
+};
 
 }

@@ -144,8 +144,8 @@ struct MetaLine
     time_t  ctime;
     time_t  start_time;
     time_t  stop_time;
-    unsigned char hash1[MD_HASH_LENGTH];
-    unsigned char hash2[MD_HASH_LENGTH];
+    unsigned char hash1[MD_HASH::DIGEST_LENGTH];
+    unsigned char hash2[MD_HASH::DIGEST_LENGTH];
 };
 
 class InMetaSequenceTransport : public Transport
@@ -856,7 +856,7 @@ public:
     }
 
     int buf_read_meta_file_v1(MetaLine & meta_line) {
-        char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+        char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + (1+MD_HASH::DIGEST_LENGTH*2) * 2 + 2];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
         if (len < 0) {
             return -len;
@@ -944,7 +944,7 @@ public:
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
-            (1 + MD_HASH_LENGTH*2) * 2 +
+            (1 + MD_HASH::DIGEST_LENGTH*2) * 2 +
             2
         ];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);

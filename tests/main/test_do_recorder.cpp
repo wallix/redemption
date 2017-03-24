@@ -280,6 +280,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     int system_fd = open(full_test_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0600);
     BOOST_REQUIRE_MESSAGE(system_fd != -1, "failed opening=" << full_test_file_name);
 
+#define MD_HASH_NAME "SHA256"
+#define MD_HASH_FUNC   SHA256
+
     struct crypto_file
     {
           iofdbuf file;
@@ -359,12 +362,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                     const std::unique_ptr<unsigned char[]> auto_free(key_buf);
                     ::memset(key_buf, 0, blocksize);
                     if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                        unsigned char keyhash[MD_HASH_LENGTH];
+                        unsigned char keyhash[MD_HASH::DIGEST_LENGTH];
                         if ( ! ::MD_HASH_FUNC(cctx.get_hmac_key(), CRYPTO_KEY_LENGTH, keyhash)) {
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key!\n", ::getpid());
                             return -1;
                         }
-                        ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+                        ::memcpy(key_buf, keyhash, MIN(MD_HASH::DIGEST_LENGTH, blocksize));
                     }
                     else {
                         ::memcpy(key_buf, cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
@@ -488,7 +491,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                 return 0;
             }
 
-            int close(iofdbuf & snk, unsigned char hash[MD_HASH_LENGTH << 1], const unsigned char * hmac_key)
+            int close(iofdbuf & snk, unsigned char hash[MD_HASH::DIGEST_LENGTH << 1], const unsigned char * hmac_key)
             {
                 int result = this->flush(snk);
 
@@ -514,16 +517,16 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                 this->xmd_update(tmp_buf, 8);
 
                 if (hash) {
-                    unsigned char tmp_hash[MD_HASH_LENGTH << 1];
+                    unsigned char tmp_hash[MD_HASH::DIGEST_LENGTH << 1];
                     if (::EVP_DigestFinal_ex(&this->hctx4k, tmp_hash, nullptr) != 1) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute 4k MD digests\n", ::getpid());
                         result = -1;
                         tmp_hash[0] = '\0';
                     }
-                    if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH_LENGTH, nullptr) != 1) {
+                    if (::EVP_DigestFinal_ex(&this->hctx, tmp_hash + MD_HASH::DIGEST_LENGTH, nullptr) != 1) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                         result = -1;
-                        tmp_hash[MD_HASH_LENGTH] = '\0';
+                        tmp_hash[MD_HASH::DIGEST_LENGTH] = '\0';
                     }
                     // HMAC: MD(key^opad + MD(key^ipad))
                     const EVP_MD *md = ::EVP_get_digestbyname(MD_HASH_NAME);
@@ -540,12 +543,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                     const std::unique_ptr<unsigned char[]> auto_free(key_buf);
                     ::memset(key_buf, '\0', blocksize);
                     if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
-                        unsigned char keyhash[MD_HASH_LENGTH];
+                        unsigned char keyhash[MD_HASH::DIGEST_LENGTH];
                         if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
                             return -1;
                         }
-                        ::memcpy(key_buf, keyhash, MIN(MD_HASH_LENGTH, blocksize));
+                        ::memcpy(key_buf, keyhash, MIN(MD_HASH::DIGEST_LENGTH, blocksize));
                     }
                     else {
                         ::memcpy(key_buf, hmac_key, CRYPTO_KEY_LENGTH);
@@ -564,7 +567,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                         return -1;
                     }
-                    if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH_LENGTH) != 1) {
+                    if (::EVP_DigestUpdate(&mdctx, tmp_hash, MD_HASH::DIGEST_LENGTH) != 1) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                         return -1;
                     }
@@ -583,14 +586,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                         return -1;
                     }
-                    if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH_LENGTH, MD_HASH_LENGTH) != 1){
+                    if (::EVP_DigestUpdate(&mdctx, tmp_hash + MD_HASH::DIGEST_LENGTH, MD_HASH::DIGEST_LENGTH) != 1){
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not update hash\n", ::getpid());
                         return -1;
                     }
-                    if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH_LENGTH, nullptr) != 1) {
+                    if (::EVP_DigestFinal_ex(&mdctx, hash + MD_HASH::DIGEST_LENGTH, nullptr) != 1) {
                         LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not compute MD digests\n", ::getpid());
                         result = -1;
-                        hash[MD_HASH_LENGTH] = '\0';
+                        hash[MD_HASH::DIGEST_LENGTH] = '\0';
                     }
                     ::EVP_MD_CTX_cleanup(&mdctx);
                 }

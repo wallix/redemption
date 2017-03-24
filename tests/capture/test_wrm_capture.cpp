@@ -567,17 +567,17 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     }
 }
 
-inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash)
+inline char * wrmcapture_swrite_hash(char * p, uint8_t const * hash)
 {
-    auto write = [&p](unsigned char const * hash) {
+    auto write = [&p](uint8_t const * hash) {
         *p++ = ' ';                // 1 octet
-        for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+        for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
             sprintf(p, "%02x", c); // 64 octets (hash)
             p += 2;
         }
     };
     write(hash);
-    write(hash + MD_HASH_LENGTH);
+    write(hash + MD_HASH::DIGEST_LENGTH);
     return p;
 }
 
@@ -597,10 +597,10 @@ inline char * wrmcapture_swrite_hash(char * p, wrmcapture_hash_type const & hash
 //    BOOST_CHECK_EQUAL(buf.write("ab", 2), 2);
 //    BOOST_CHECK_EQUAL(buf.write("cde", 3), 3);
 
-//    wrmcapture_hash_type hash;
+//    MD_HASH hash;
 //    buf.close(hash);
 
-//    char hash_str[wrmcapture_hash_string_len + 1];
+//    char hash_str[(MD_HASH::DIGEST_LENGTH*2+1)*2 + 1];
 //    *wrmcapture_swrite_hash(hash_str, hash) = 0;
 //    BOOST_CHECK_EQUAL(
 //        hash_str,
@@ -652,8 +652,7 @@ int wrmcapture_write_filename(Writer & writer, const char * filename)
 template<class Writer>
 int wrmcapture_write_meta_file(
     Writer & writer, const char * filename,
-    time_t start_sec, time_t stop_sec,
-    wrmcapture_hash_type const * hash
+    time_t start_sec, time_t stop_sec
 ) {
     struct stat stat;
     int err = ::stat(filename, &stat);
@@ -703,7 +702,7 @@ int wrmcapture_write_meta_file(
     char mes[
         (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
         (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        wrmcapture_hash_string_len + 1 +
+        (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
         2
     ];
     ssize_t len = std::sprintf(
@@ -726,17 +725,6 @@ int wrmcapture_write_meta_file(
     );
 
     char * p = mes + len;
-    if (hash) {
-        auto write = [&p](unsigned char const * hash) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
-            }
-        };
-        write(&(*hash)[0]);
-        write(&(*hash)[MD_HASH_LENGTH]);
-    }
     *p++ = '\n';
 
     ssize_t res = writer.write(mes, p-mes);
@@ -778,20 +766,6 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
     TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
     TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
     TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
-}
-
-BOOST_AUTO_TEST_CASE(TestWriteHash)
-{
-    wrmcapture_hash_type hash;
-    std::iota(std::begin(hash), std::end(hash), 0);
-
-    char hash_str[wrmcapture_hash_string_len + 1];
-    *wrmcapture_swrite_hash(hash_str, hash) = 0;
-    BOOST_CHECK_EQUAL(
-        hash_str,
-        " 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
-        " 202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
-    );
 }
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
@@ -840,7 +814,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         char mes[
             (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
+            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
             2
         ];
         ssize_t len = std::sprintf(
@@ -879,12 +853,12 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
     const char * file1 = "./xxx-000000.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1, nullptr));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
     const char * file2 = "./xxx-000001.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1, nullptr));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
@@ -927,12 +901,12 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     } meta_len_writer;
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
 
-    const unsigned hash_size = (1 + MD_HASH_LENGTH*2) * 2;
+    const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
 
 //    char file1[1024];
 //    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     const char * file1 = "./xxx-000000.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1, nullptr);
+    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
@@ -940,7 +914,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    char file2[1024];
 //    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     const char * file2 = "./xxx-000001.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1, nullptr);
+    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));

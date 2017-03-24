@@ -155,3 +155,28 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
     );
     //hexdump96_c(sig, sizeof(sig));
 }
+
+BOOST_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Sha256_Delayed hmac;
+    
+    hmac.init(key, sizeof(key)-1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg)-1);
+
+    uint8_t sig[SslSha256::DIGEST_LENGTH];
+    hmac.final(sig);
+
+    BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
+
+    CHECK_MEM(
+        sig, SslSha256::DIGEST_LENGTH,
+        "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
+        "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"
+    );
+    //hexdump96_c(sig, sizeof(sig));
+}

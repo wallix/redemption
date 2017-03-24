@@ -516,8 +516,8 @@ inline void load_hash(
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         cur++;
-        in_copy_bytes(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
-        in_copy_bytes(hash_line.hash2, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+        in_copy_bytes(hash_line.hash1, MD_HASH::DIGEST_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+        in_copy_bytes(hash_line.hash2, MD_HASH::DIGEST_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
     }
     else {
         if (verbose) {
@@ -584,9 +584,9 @@ inline void load_hash(
 
         if (infile_is_checksumed){
             // HASH1 + space
-            in_hex256(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+            in_hex256(hash_line.hash1, MD_HASH::DIGEST_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
             // HASH1 + CR
-            in_hex256(hash_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
+            in_hex256(hash_line.hash2, MD_HASH::DIGEST_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
         }
     }
 }
@@ -941,7 +941,7 @@ static inline int check_encrypted_or_checksumed(
             char mes[
                 (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
                 (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                wrmcapture_hash_string_len + 1 +
+                MD_HASH::DIGEST_LENGTH*4 + 1 +
                 2
             ];
             ssize_t len = std::sprintf(
@@ -1029,7 +1029,7 @@ static inline int check_encrypted_or_checksumed(
                 char mes[
                     (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
                     (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                    wrmcapture_hash_string_len + 1 +
+                    MD_HASH::DIGEST_LENGTH*4 + 1 +
                     2
                 ];
                 ssize_t len = std::sprintf(
