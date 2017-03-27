@@ -2368,53 +2368,6 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 
 
-
-
-class ochecksum_buf_null_buf
-{
-    static constexpr size_t nosize = ~size_t{};
-    static constexpr size_t quick_size = 4096;
-    size_t file_size = nosize;
-
-    SslHMAC_Sha256_Delayed hmac;
-    SslHMAC_Sha256_Delayed quick_hmac;
-    unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH];
-
-public:
-    explicit ochecksum_buf_null_buf(unsigned char const (&hmac_key)[SHA256_DIGEST_LENGTH])
-    : hmac_key(hmac_key)
-    {}
-
-    int open()
-    {
-        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        this->file_size = 0;
-        return 0;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        this->hmac.update(static_cast<const uint8_t *>(data), len);
-        if (this->file_size < quick_size) {
-            auto const remaining = std::min(quick_size - this->file_size, len);
-            this->quick_hmac.update(static_cast<const uint8_t *>(data), remaining);
-            this->file_size += remaining;
-        }
-        return len;
-    }
-
-    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
-    {
-        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
-        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
-        this->file_size = nosize;
-        return 0;
-    }
-};
-
-
-
 #include "utils/fileutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)

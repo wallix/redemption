@@ -74,13 +74,15 @@ struct BrushCacheCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->brushSupportLevel);
     }
 
-    void recv(InStream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
 
         if (!stream.in_check_rem(4)){
@@ -92,7 +94,8 @@ struct BrushCacheCaps : public Capability {
         this->brushSupportLevel = stream.in_uint32_le();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s BrushCache caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BrushCacheCaps caps::brushSupportLevel %u", this->brushSupportLevel);
     }

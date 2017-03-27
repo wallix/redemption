@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     bitmap_caps.desktopHeight = 600;
     bitmap_caps.bitmapCompressionFlag = 1;
 
-    BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAP));
+    BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, CAPSTYPE_BITMAP);
     BOOST_CHECK_EQUAL(bitmap_caps.len, static_cast<uint16_t>(CAPLEN_BITMAP));
     BOOST_CHECK_EQUAL(bitmap_caps.preferredBitsPerPixel, static_cast<uint16_t>(24));
     BOOST_CHECK_EQUAL(bitmap_caps.receive1BitPerPixel, static_cast<uint16_t>(1));

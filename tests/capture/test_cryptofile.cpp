@@ -348,8 +348,8 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    unsigned char fhash[MD_HASH_LENGTH];
-    unsigned char qhash[MD_HASH_LENGTH];
+    unsigned char fhash[MD_HASH::DIGEST_LENGTH];
+    unsigned char qhash[MD_HASH::DIGEST_LENGTH];
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -374,13 +374,13 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
                                   }; 
     CHECK_MEM(result, 68, expected_result);
 
-    char expected_hash[MD_HASH_LENGTH+1] = 
+    char expected_hash[MD_HASH::DIGEST_LENGTH+1] = 
                                   "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
                                   "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
                                   "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
                                   "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
 
 }
 
@@ -442,8 +442,8 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    unsigned char qhash[MD_HASH_LENGTH];
-    unsigned char fhash[MD_HASH_LENGTH];
+    unsigned char qhash[MD_HASH::DIGEST_LENGTH];
+    unsigned char fhash[MD_HASH::DIGEST_LENGTH];
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -468,13 +468,13 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
                                   }; 
     CHECK_MEM(result, 68, expected_result);
 
-    char expected_hash[MD_HASH_LENGTH+1] = 
+    char expected_hash[MD_HASH::DIGEST_LENGTH+1] = 
                                   "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
                                   "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
                                   "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
                                   "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_hash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
 
     char clear[8192] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
@@ -559,8 +559,8 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    unsigned char qhash[MD_HASH_LENGTH];
-    unsigned char fhash[MD_HASH_LENGTH];
+    unsigned char qhash[MD_HASH::DIGEST_LENGTH];
+    unsigned char fhash[MD_HASH::DIGEST_LENGTH];
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -578,29 +578,29 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     BOOST_CHECK_EQUAL(res2, sizeof(randomSample));
     CHECK_MEM(clear, sizeof(randomSample), randomSample);
 
-    char expected_qhash[MD_HASH_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
-    char expected_fhash[MD_HASH_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
+    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
+    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
 
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
 
-    unsigned char fhash2[MD_HASH_LENGTH];
+    unsigned char fhash2[MD_HASH::DIGEST_LENGTH];
     
     SslHMAC_Sha256_Delayed hmac;
-    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     hmac.update(result, offset);
     hmac.final(fhash2);
 
-    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
 
-    unsigned char qhash2[MD_HASH_LENGTH];
+    unsigned char qhash2[MD_HASH::DIGEST_LENGTH];
     
     SslHMAC_Sha256_Delayed hmac2;
-    hmac2.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac2.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     hmac2.update(result, 4096);
     hmac2.final(qhash2);
 
-    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -667,8 +667,8 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    unsigned char qhash[MD_HASH_LENGTH] {};
-    unsigned char fhash[MD_HASH_LENGTH] {};
+    unsigned char qhash[MD_HASH::DIGEST_LENGTH] {};
+    unsigned char fhash[MD_HASH::DIGEST_LENGTH] {};
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -678,29 +678,29 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     }
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
-    char expected_qhash[MD_HASH_LENGTH+1] = "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80";
-    char expected_fhash[MD_HASH_LENGTH+1] = "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8";
+    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80";
+    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8";
 
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
 
-    uint8_t qhash2[MD_HASH_LENGTH] {};
-    uint8_t fhash2[MD_HASH_LENGTH] {};
+    uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
+    uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
 
     SslHMAC_Sha256_Delayed hmac;
-    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     hmac.update(randomSample, sizeof(randomSample));
     hmac.update(randomSample, sizeof(randomSample));
     hmac.final(fhash2);
 
     SslHMAC_Sha256_Delayed quick_hmac;
-    quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    quick_hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     quick_hmac.update(randomSample, 4096);
     quick_hmac.final(qhash2);
 
-    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
     // "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
-    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
@@ -768,19 +768,19 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    uint8_t expected_qhash[MD_HASH_LENGTH] = {
+    uint8_t expected_qhash[MD_HASH::DIGEST_LENGTH] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
     };
-    uint8_t expected_fhash[MD_HASH_LENGTH] = {
+    uint8_t expected_fhash[MD_HASH::DIGEST_LENGTH] = {
         0x10, 0x01, 0x12, 0x03, 0x14, 0x05, 0x16, 0x07, 0x18, 0x09,0x1A, 0x0B, 0x1C, 0x0D, 0x1E, 0x0F,
         0x10, 0x01, 0x12, 0x03, 0x14, 0x05, 0x16, 0x07, 0x18, 0x09,0x1A, 0x0B, 0x1C, 0x0D, 0x0E, 0x0F
     };
 
-    uint8_t qhash[MD_HASH_LENGTH];
-    ::memcpy(qhash, expected_qhash, MD_HASH_LENGTH);
-    uint8_t fhash[MD_HASH_LENGTH];
-    ::memcpy(fhash, expected_fhash, MD_HASH_LENGTH);
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+    ::memcpy(qhash, expected_qhash, MD_HASH::DIGEST_LENGTH);
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+    ::memcpy(fhash, expected_fhash, MD_HASH::DIGEST_LENGTH);
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -791,8 +791,8 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
     // Check qhash and fhash are left unchanged if no checksum is enabled
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
@@ -857,8 +857,8 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     // and a full hash for the whole file
     // obviously the two will be identical for short files
     // and differs for larger ones
-    uint8_t qhash[MD_HASH_LENGTH] {};
-    uint8_t fhash[MD_HASH_LENGTH] {};
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH] {};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH] {};
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
@@ -867,29 +867,29 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         BOOST_CHECK_EQUAL(res2.consumed, 0);
     }
 
-    char expected_qhash[MD_HASH_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
-    char expected_fhash[MD_HASH_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
+    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
+    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
 
-    CHECK_MEM(qhash, MD_HASH_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH_LENGTH, expected_fhash);
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
 
-    uint8_t qhash2[MD_HASH_LENGTH] {};
-    uint8_t fhash2[MD_HASH_LENGTH] {};
+    uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
+    uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
 
     SslHMAC_Sha256_Delayed hmac;
-    hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     uint8_t data[5] = {1, 2, 3, 4, 5};
     hmac.update(data, sizeof(data));
     hmac.update(data, sizeof(data));
     hmac.final(fhash2);
 
     SslHMAC_Sha256_Delayed quick_hmac;
-    quick_hmac.init(cctx.get_hmac_key(), MD_HASH_LENGTH);
+    quick_hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     quick_hmac.update(data, sizeof(data));
     quick_hmac.update(data, sizeof(data));
     quick_hmac.final(qhash2);
 
-    CHECK_MEM(fhash2, MD_HASH_LENGTH, expected_fhash);
-    CHECK_MEM(qhash2, MD_HASH_LENGTH, expected_qhash);
+    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
 }
 

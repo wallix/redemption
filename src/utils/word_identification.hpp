@@ -22,6 +22,9 @@
 
 #include "utils/sugar/array_view.hpp"
 
+#include <cstring>
+
+
 int in(const char * needle, std::initializer_list<const char *> haystack);
 int in(const char * needle, array_view<const char * const> haystack);
 int ends_with(const char * needle, std::initializer_list<const char *> haystack);
@@ -57,10 +60,7 @@ inline int ends_with(const char * needle, array_view<const char * const> haystac
     for (auto h: haystack){
         result++;
         int hlen = strlen(h);
-        if (nlen >= hlen){
-            printf("needle end=%s h=%s\n", needle+nlen-hlen, h);
-        }
-        if ((nlen >= hlen) and (strcmp(h, needle+nlen-hlen) == 0)){
+        if (nlen >= hlen && 0 == strcmp(h, needle+nlen-hlen)){
             return result;
         }
     }

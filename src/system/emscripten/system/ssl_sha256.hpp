@@ -24,3 +24,4 @@
 
 using SslSha256 = SslSha256_direct;
 using SslHMAC_Sha256 = SslHMAC_Sha256_direct;
+using SslHMAC_Sha256_Delayed = SslHMAC_Sha256_Delayed_direct;
