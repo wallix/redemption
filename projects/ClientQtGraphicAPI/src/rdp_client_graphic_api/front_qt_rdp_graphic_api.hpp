@@ -290,6 +290,7 @@ public:
                     int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
                     + (this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000;
 
+
                     if (time_to_wake < 0) {
                         this->timer.stop();
                     } else {
@@ -1203,7 +1204,7 @@ public:
     virtual ResizeResult server_resize(int width, int height, int bpp) override{
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
         }
 
@@ -1226,7 +1227,7 @@ public:
             this->screen->show();
         }
 
-        return ResizeResult::done;
+        return ResizeResult::no_need;
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
@@ -2401,21 +2402,11 @@ public:
         this->mod->rdp_input_invalidate(rect);
     }
 
-    void CtrlAltDelPressed() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+    virtual void CtrlAltDelPressed() override {
+        LOG(LOG_WARNING, "CtrlAltDel not implemented yet.");
     }
 
-    void CtrlAltDelReleased() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
+    virtual void CtrlAltDelReleased() override {}
 
     void disconnexionReleased() override{
         this->is_replaying = false;
