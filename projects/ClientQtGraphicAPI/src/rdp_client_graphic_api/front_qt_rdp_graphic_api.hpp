@@ -284,17 +284,25 @@ public:
 
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event()));
 
-            if (this->_callback->get_event().set_state) {
-                struct timeval now = tvtime();
-                int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
-                + (this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000;
+            if (this->_callback) {
+                if (this->_callback->get_event().set_state) {
+                    struct timeval now = tvtime();
+                    int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
+                    + (this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000;
 
-                if (time_to_wake < 0) {
-                    this->timer.stop();
-                } else {
-                    this->timer.start( time_to_wake );
+                    if (time_to_wake < 0) {
+                        this->timer.stop();
+                    } else {
+                        this->timer.start( time_to_wake );
+                    }
+
                 }
-
+            } else {
+                const std::string errorMsg("Error: Mod Initialization failed.");
+                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+                this->_front->dropScreen();
+                this->_front->disconnect(labelErrorMsg);
+                return false;
             }
 
         } else {
@@ -1203,6 +1211,20 @@ public:
         this->info.bpp = bpp;
         this->info.width = width;
         this->info.height = height;
+        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
+        if (this->info.bpp ==  32) {
+            this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
+        }
+
+        if (this->screen) {
+            this->screen->disconnection();
+            this->dropScreen();
+            this->cache = new QPixmap(this->info.width, this->info.height);
+            this->trans_cache = new QPixmap(this->info.width, this->info.height);
+            this->trans_cache->fill(Qt::transparent);
+            this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+            this->screen->show();
+        }
 
         return ResizeResult::done;
     }
