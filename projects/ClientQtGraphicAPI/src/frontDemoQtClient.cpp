@@ -72,7 +72,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
-                                   , 0xffffffff);
+                                   , 0xffffffff - 2);
 
         } catch (const Error &) {
             return nullptr;

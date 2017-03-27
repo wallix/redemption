@@ -1100,6 +1100,8 @@ struct KeymapSym {
             extendedKeyCode = 211;
         }
 
+        LOG(LOG_WARNING,  "loooooooooooooooooo! %u", extendedKeyCode);
+
         switch (extendedKeyCode){
         //----------------
         // Lock keys
@@ -1109,7 +1111,7 @@ struct KeymapSym {
                     this->key_flags ^= CAPSLOCK;
                 }
                 break;
-            case 0x45: // numlock
+            case 0xc5: // numlock
                 if (this->keys_down[extendedKeyCode]){
                     this->key_flags ^= NUMLOCK;
                 }
