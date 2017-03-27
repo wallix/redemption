@@ -390,7 +390,7 @@ public:
 
         this->img_convert_ctx.reset(sws_getContext(
             width, height, AV_PIX_FMT_BGR24,
-            target_width, target_height, AV_PIX_FMT_YUV420P,
+            target_width, target_height, STREAM_PIX_FMT,
             SWS_BICUBIC, nullptr, nullptr, nullptr
         ));
 

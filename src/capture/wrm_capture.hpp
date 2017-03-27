@@ -251,7 +251,7 @@ struct MetaSeqBuf {
     }
 
 
-    int next_meta_file(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
+    int next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         const char * filename = this->filegen_.get(this->num_file_);
         LOG(LOG_INFO, "MetaSeqBufCrypto::next_meta_file:\"%s\" -> \"%s\".",
@@ -295,7 +295,7 @@ struct MetaSeqBuf {
         char mes[ sizeof(tmp) +
             (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
+            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
             2
         ];
         ssize_t len = std::sprintf(
@@ -321,9 +321,9 @@ struct MetaSeqBuf {
         char * p = mes + len;
 
         if (this->with_checksum) {
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
+            auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
                 *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
                     sprintf(p, "%02x", c); // 64 octets (hash)
                     p += 2;
                 }
@@ -345,7 +345,7 @@ struct MetaSeqBuf {
     }
 
 
-    int meta_buf_close(uint8_t (&qhash)[MD_HASH_LENGTH], uint8_t (&fhash)[MD_HASH_LENGTH])
+    int meta_buf_close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
         if (result.err_code) {
@@ -366,8 +366,8 @@ struct MetaSeqBuf {
 
     int meta_buf_close()
     {
-        unsigned char qhash[MD_HASH_LENGTH];
-        unsigned char fhash[MD_HASH_LENGTH];
+        unsigned char qhash[MD_HASH::DIGEST_LENGTH];
+        unsigned char fhash[MD_HASH::DIGEST_LENGTH];
         return this->meta_buf_close(qhash, fhash);
     }
 
@@ -508,8 +508,8 @@ public:
     int next()
     {
         if (this->buf_.is_open()) {
-            uint8_t qhash[MD_HASH_LENGTH];
-            uint8_t fhash[MD_HASH_LENGTH];
+            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
@@ -535,8 +535,8 @@ public:
     int close()
     {
         if (this->buf_.is_open()) {
-            uint8_t qhash[MD_HASH_LENGTH];
-            uint8_t fhash[MD_HASH_LENGTH];
+            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
             if (result.err_code) {
                 this->buf_.close();
@@ -559,8 +559,8 @@ public:
             }
         }
 
-        uint8_t qhash[MD_HASH_LENGTH];
-        uint8_t fhash[MD_HASH_LENGTH];
+        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
 
         if (!this->meta_buf_is_open()) {
             LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile not opened\n");
@@ -644,7 +644,7 @@ public:
         char mes[ sizeof(tmp) +
             (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            wrmcapture_hash_string_len + 1 +
+            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
             2
         ];
         ssize_t len = std::sprintf(
@@ -663,9 +663,9 @@ public:
 
         char * p = mes + len;
         if (this->with_checksum) {
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH_LENGTH]) {
+            auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
                 *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH_LENGTH)) {
+                for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
                     sprintf(p, "%02x", c); // 64 octets (hash)
                     p += 2;
                 }
