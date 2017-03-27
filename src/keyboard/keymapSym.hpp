@@ -1100,8 +1100,6 @@ struct KeymapSym {
             extendedKeyCode = 211;
         }
 
-        LOG(LOG_WARNING,  "loooooooooooooooooo! %u", extendedKeyCode);
-
         switch (extendedKeyCode){
         //----------------
         // Lock keys
