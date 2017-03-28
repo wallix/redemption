@@ -54,6 +54,10 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
+    const uint32_t    param_default_caps_version;
+    const uint32_t    param_default_caps_general_flags;
+    const std::string param_default_temp_dir;
+
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
     FrontAPI& front;
@@ -69,6 +73,8 @@ private:
     size_t                     first_client_format_list_pdu_length = 0;
     uint32_t                   first_client_format_list_pdu_flags  = 0;
 
+    bool is_client_capabilities_sent = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -79,6 +85,10 @@ public:
         bool dont_log_data_into_wrm;
 
         bool client_use_long_format_names = true;
+
+        uint32_t    default_caps_version;
+        uint32_t    default_caps_general_flags;
+        const char* default_temp_dir;
 
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
@@ -97,6 +107,9 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_default_caps_version(params.default_caps_version)
+    , param_default_caps_general_flags(params.default_caps_general_flags)
+    , param_default_temp_dir(params.default_temp_dir)
 
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {}
@@ -203,6 +216,8 @@ private:
                      RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
         }
+
+        this->is_client_capabilities_sent = true;
 
         return true;
     }
@@ -494,6 +509,69 @@ public:
         InStream& chunk)
     {
         (void)total_length;
+
+        // Client Clipboard Capabilities PDU.
+        if (!this->is_client_capabilities_sent && this->param_default_caps_version) {
+            {
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
+                    RDPECLIP::GeneralCapabilitySet::size());
+                RDPECLIP::GeneralCapabilitySet general_cap_set(
+                    this->param_default_caps_version,
+                    this->param_default_caps_general_flags);
+                StaticOutStream<1024> out_s;
+
+                clipboard_caps_pdu.emit(out_s);
+                general_cap_set.emit(out_s);
+
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                            "Send Clipboard Capabilities PDU.");
+                    general_cap_set.log();
+                }
+
+                const size_t totalLength = out_s.get_offset();
+
+                InStream in_s(out_s.get_data(), totalLength);
+
+                this->send_message_to_server(totalLength,
+                                               CHANNELS::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::CHANNEL_FLAG_LAST
+                                             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                             out_s.get_data(),
+                                             totalLength);
+            }
+
+            this->is_client_capabilities_sent = true;
+
+            if (this->param_default_temp_dir.length())
+            {
+                RDPECLIP::ClientTemporaryDirectoryPDU client_temp_dir_pdu(
+                    this->param_default_temp_dir.c_str());
+                StaticOutStream<1024> out_s;
+
+                client_temp_dir_pdu.emit(out_s);
+
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                            "Send Client Temporary Directory PDU.");
+                    client_temp_dir_pdu.log();
+                }
+
+                const size_t totalLength = out_s.get_offset();
+
+                InStream in_s(out_s.get_data(), totalLength);
+
+                this->send_message_to_server(totalLength,
+                                               CHANNELS::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::CHANNEL_FLAG_LAST
+                                             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                             out_s.get_data(),
+                                             totalLength);
+            }
+        }
+
 
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized &&
@@ -1247,6 +1325,12 @@ public:
         if (this->proxy_managed) {
             // Client Clipboard Capabilities PDU.
             {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                            "Send Clipboard Capabilities PDU.");
+                }
+
                 RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
                     RDPECLIP::GeneralCapabilitySet::size());
                 RDPECLIP::GeneralCapabilitySet general_cap_set(
@@ -1275,6 +1359,12 @@ public:
 
             // Format List PDU.
             {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                            "Send Clipboard Capabilities PDU.");
+                }
+
                 RDPECLIP::FormatListPDU format_list_pdu;
                 StaticOutStream<1024> out_stream;
 

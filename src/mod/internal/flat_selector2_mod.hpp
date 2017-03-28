@@ -48,7 +48,8 @@ using FlatSelector2ModVariables = vcfg::variables<
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
 class FlatSelector2Mod : public LocallyIntegrableMod, public NotifyApi
@@ -102,6 +103,7 @@ public:
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , vars(vars)
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
