@@ -284,6 +284,8 @@ private:
      */
     void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
     {
+        LOG(LOG_INFO, "ocrypto::xaes_encrypt()");
+
         int safe_size = *dst_sz;
         int remaining_size = 0;
 
@@ -305,6 +307,7 @@ private:
      */
     void flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
+        LOG(LOG_INFO, "ocrypto::flush()");
         // No data to flush
         if (!this->pos) {
             return;
@@ -368,8 +371,14 @@ public:
     {
     }
 
+    ~ocrypto()
+    {
+        LOG(LOG_INFO, "ocrypto::destructor");
+    }
+    
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
+        LOG(LOG_INFO, "ocrypto::open()");
         this->file_size = 0;
         if (this->checksum) {
             this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
@@ -430,6 +439,7 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+        LOG(LOG_INFO, "ocrypto::close");
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
@@ -470,6 +480,8 @@ public:
 
     ocrypto::Result write(const uint8_t * data, size_t len)
     {
+        LOG(LOG_INFO, "ocrypto::write()");
+
         if (!this->encryption) {
             if (this->checksum){
                 this->hm.update(data, len);

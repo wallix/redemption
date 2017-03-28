@@ -557,6 +557,7 @@ test-canonical core/RDP/capabilities/window.hpp ;
 ## Transport tests
 ## @{
 # TODO test-canonical transport/detail/meta_writer.hpp ;
+test-canonical transport/out_crypto_transport.hpp ;
 test-canonical transport/count_transport.hpp ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
