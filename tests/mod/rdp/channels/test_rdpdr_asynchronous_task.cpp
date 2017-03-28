@@ -65,8 +65,6 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
     BOOST_CHECK_NE(fd, -1);
 
-    InFileSeekableTransport transport(fd);
-
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
@@ -79,8 +77,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(&transport, fd,
-        DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
+    RdpdrDriveReadTask rdpdr_drive_read_task(
+        fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
         test_to_server_sender, to_verbose_flags(verbose));
 
     bool run_task = true;

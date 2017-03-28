@@ -23,7 +23,9 @@
 
 #include "core/error.hpp"
 #include "transport/transport.hpp"
-#include "transport/file_transport.hpp"
+
+#include <cerrno>
+
 
 class InFileTransport : public Transport
 {
@@ -78,64 +80,3 @@ private:
         }
     }
 };
-
-
-
-struct InFileSeekableTransport : public FileTransport
-{
-protected:
-    int fd;
-
-public:
-    explicit InFileSeekableTransport(int fd) noexcept
-    : fd(fd)
-    {}
-
-    ~InFileSeekableTransport()
-    {
-        this->disconnect();
-    }
-
-    bool disconnect() override {
-        if (-1 != this->fd) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return !ret;
-        }
-        return !0;
-    }
-
-    void seek(int64_t offset, int whence) override {
-        if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
-private:
-
-    int do_recv(uint8_t * buffer, size_t len) override {
-        ssize_t res = -1;
-        size_t remaining_len = len;
-        while (remaining_len) {
-            res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
-            if (res <= 0){
-                if ((res == 0)
-                ||  ((errno != EINTR) && (remaining_len != len))){
-                    break;
-                }
-                if (errno == EINTR){
-                    continue;
-                }
-                this->status = false;
-                throw Error(ERR_TRANSPORT_READ_FAILED, res);
-            }
-            remaining_len -= res;
-        }
-        res = len - remaining_len;
-        //*pbuffer += res;
-        this->last_quantum_received += res;
-        return res;
-    }
-
-
-};
-

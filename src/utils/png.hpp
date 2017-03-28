@@ -26,7 +26,6 @@
 #include "capture/wrm_chunk_type.hpp"
 
 class Transport;
-class FileTransport;
 namespace gdi
 {
     class GraphicApi;
@@ -34,15 +33,6 @@ namespace gdi
 
 void transport_dump_png24(
     Transport & trans,
-    uint8_t const * data,
-    std::size_t width,
-    std::size_t height,
-    std::size_t rowsize,
-    bool bgr
-);
-
-void file_transport_dump_png24(
-    FileTransport & trans,
     uint8_t const * data,
     std::size_t width,
     std::size_t height,

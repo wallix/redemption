@@ -35,10 +35,8 @@
 #include "utils/virtual_channel_data_sender.hpp"
 #include "utils/winpr/pattern.hpp"
 
+#include <sys/types.h>
 #include <dirent.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/inotify.h>
 #include <sys/statvfs.h>
 
 #include <vector>
@@ -1218,8 +1216,6 @@ public:
 };  // ManagedDirectory
 
 class ManagedFile : public ManagedFileSystemObject {
-    std::unique_ptr<InFileSeekableTransport> in_file_transport; // For read operations only.
-
     bool is_session_probe_image = false;
 
 public:
@@ -1233,7 +1229,11 @@ public:
 
         // File descriptor will be closed when in_file_transport is destroyed.
 
-        REDASSERT((this->fd <= -1) || in_file_transport);
+        REDASSERT(this->fd <= -1);
+
+        if (this->fd <= -1) {
+          ::close(this->fd);
+        }
 
         if (this->delete_pending) {
             ::unlink(this->full_path.c_str());
@@ -1275,14 +1275,13 @@ public:
         const uint32_t DesiredAccess     = device_create_request.DesiredAccess();
         const uint32_t CreateDisposition = device_create_request.CreateDisposition();
 
-        const int last_error = [] (const char * path,
-                                   uint32_t DesiredAccess,
-                                   uint32_t CreateDisposition,
-                                   int drive_access_mode,
-                                   void * log_this,
-                                   RDPVerbose verbose,
-                                   int & out_fd) -> int {
-            out_fd = -1;
+        const int last_error = [this] (
+            uint32_t DesiredAccess,
+            uint32_t CreateDisposition,
+            int drive_access_mode,
+            RDPVerbose verbose
+        ) -> int {
+            this->fd = -1;
 
             if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
                  smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
@@ -1330,17 +1329,12 @@ public:
             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                 LOG(LOG_INFO,
                     "ManagedFile::ProcessServerCreateDriveRequest: <%p> open_flags=0x%X",
-                    log_this, open_flags);
+                    static_cast<void*>(this), open_flags);
             }
 
-            out_fd = ::open(path, open_flags, S_IRUSR | S_IWUSR | S_IRGRP);
-            return ((out_fd > -1) ? 0 : errno);
-        } (this->full_path.c_str(), DesiredAccess, CreateDisposition, drive_access_mode,
-           this, verbose, this->fd);
-
-        if (this->fd > -1) {
-            this->in_file_transport = std::make_unique<InFileSeekableTransport>(this->fd);
-        }
+            this->fd = ::open(this->full_path.c_str(), open_flags, S_IRUSR | S_IWUSR | S_IRGRP);
+            return (fd != -1 ? 0 : errno);
+        } (DesiredAccess, CreateDisposition, drive_access_mode, verbose);
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
@@ -1477,7 +1471,6 @@ public:
             sb.st_size - Offset, Length);
 
         out_asynchronous_task = std::make_unique<RdpdrDriveReadTask>(
-            this->in_file_transport.get(),
             this->fd, device_io_request.DeviceId(),
             device_io_request.CompletionId(),
             static_cast<uint32_t>(remaining_number_of_bytes_to_read),

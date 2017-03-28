@@ -30,7 +30,6 @@
 
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
-#include "transport/file_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/bitmap_shrink.hpp"
 

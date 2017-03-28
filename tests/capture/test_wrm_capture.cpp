@@ -34,7 +34,6 @@
 #include <snappy-c.h>
 #include <memory>
 
-#include "transport/file_transport.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 
