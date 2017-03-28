@@ -2025,16 +2025,13 @@ private:
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
             this->status = false;
+            auto eid = ERR_TRANSPORT_WRITE_FAILED;
             if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
+                this->authentifier->report("FILESYSTEM_FULL", "100|unknown");
                 errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
             }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
+            throw Error(eid, errno);
         }
         this->last_quantum_sent += res;
     }

@@ -46,31 +46,25 @@
 
 
 
-FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
-    const char * const prefix,
-    const char * const filename,
-    const char * const extension,
-    const int groupid)
+VideoTransportBase::VideoTransportBase(const int groupid, auth_api * authentifier)
 : fd(-1)
 , groupid(groupid)
 {
-    this->final_filename[0] = 0;
-    // TODO: check that filename_gen is not too large of throw some exception
-    std::snprintf(
-        this->final_filename,
-        sizeof(this->final_filename),
-        "%s%s%s", prefix, filename, extension);
     this->tmp_filename[0] = 0;
+    this->final_filename[0] = 0;
+    if (authentifier) {
+        this->authentifier = authentifier;
+    }
 }
 
-void FullVideoCaptureImpl::TmpFileTransport::seek(int64_t offset, int whence)
+void VideoTransportBase::seek(int64_t offset, int whence)
 {
     if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
         throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
     }
 }
 
-FullVideoCaptureImpl::TmpFileTransport::~TmpFileTransport()
+VideoTransportBase::~VideoTransportBase()
 {
     if (this->fd != -1) {
         ::close(this->fd);
@@ -82,42 +76,103 @@ FullVideoCaptureImpl::TmpFileTransport::~TmpFileTransport()
     }
 }
 
-void FullVideoCaptureImpl::TmpFileTransport::do_send(const uint8_t * data, size_t len)
+void VideoTransportBase::force_open()
 {
+    assert(this->final_filename[0]);
+
+    std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
+    this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (this->fd == -1) {
-        std::snprintf(
-            this->tmp_filename, sizeof(this->tmp_filename),
-            "%sred-XXXXXX.tmp", this->final_filename);
-        this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-        if (this->fd == -1) {
-            this->status = false;
-            auto eid = (errno == ENOSPC) ? ERR_TRANSPORT_WRITE_NO_ROOM : ERR_TRANSPORT_WRITE_FAILED;
-            throw Error(eid, errno);
+        this->status = false;
+        auto eid = ERR_TRANSPORT_OPEN_FAILED;
+        if (errno == ENOSPC) {
+            this->authentifier->report("FILESYSTEM_FULL", "100|unknown");
+            eid = ERR_TRANSPORT_WRITE_NO_ROOM;
+            errno = ENOSPC;
         }
-        if (chmod(this->tmp_filename, this->groupid ?(S_IRUSR|S_IRGRP):S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                , this->tmp_filename
-                , this->groupid ? "u+r, g+r" : "u+r"
-                , strerror(errno), errno);
-            // TODO: throw error if chmod fails
-            // TODO: see if we can provide chmod in mkostemp
-        }
+        throw Error(eid, errno);
+    }
+    if (fchmod(this->fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
+        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+            , this->tmp_filename
+            , this->groupid ? "u+r, g+r" : "u+r"
+            , strerror(errno), errno);
+        ::close(this->fd);
+        this->fd = -1;
+        unlink(this->tmp_filename);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+    }
+}
+
+void VideoTransportBase::rename()
+{
+    assert(this->final_filename[0]);
+    assert(this->fd != -1);
+
+    ::close(this->fd);
+    this->fd = -1;
+    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
+
+    if (::rename(this->tmp_filename, this->final_filename) < 0)
+    {
+        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+            , this->tmp_filename, this->final_filename, errno, strerror(errno));
+        this->status = false;
+        throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
     }
 
+    this->tmp_filename[0] = 0;
+}
+
+bool VideoTransportBase::is_open() const
+{
+    return this->fd > -1;
+}
+
+void VideoTransportBase::do_send(const uint8_t * data, size_t len)
+{
     size_t remaining_len = len;
     size_t total_sent = 0;
     while (remaining_len) {
         ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
         if (ret <= 0) {
-            if (errno == EINTR){ continue; }
+            if (errno == EINTR) {
+                continue;
+            }
             this->status = false;
-            auto eid = (errno == ENOSPC) ? ERR_TRANSPORT_WRITE_NO_ROOM : ERR_TRANSPORT_WRITE_FAILED;
+            auto eid = ERR_TRANSPORT_WRITE_FAILED;
+            if (errno == ENOSPC) {
+                this->authentifier->report("FILESYSTEM_FULL", "100|unknow");
+                errno = ENOSPC;
+                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
+            }
             throw Error(eid, errno);
         }
         remaining_len -= ret;
         total_sent += ret;
     }
     this->last_quantum_sent += total_sent;
+}
+
+
+FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
+    const char * const prefix,
+    const char * const filename,
+    const char * const extension,
+    const int groupid,
+    auth_api * authentifier)
+: VideoTransportBase(groupid, authentifier)
+{
+    int const len = std::snprintf(
+        this->final_filename,
+        sizeof(this->final_filename),
+        "%s%s%s", prefix, filename, extension
+    );
+    if (len > int(sizeof(this->final_filename))) {
+        LOG(LOG_ERR, "%s", "Video path length is too large.");
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
+    this->force_open();
 }
 
 
@@ -186,7 +241,7 @@ private:
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
     const int groupid, bool no_timestamp, RDPDrawable & drawable, FlvParams flv_params)
-: trans_tmp_file(record_path, basename, ("." + flv_params.codec).c_str(), groupid)
+: trans_tmp_file(record_path, basename, ("." + flv_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
 , drawable(drawable)
 , flv_params(std::move(flv_params))
 , start_video_capture(now)
@@ -304,12 +359,16 @@ void FullVideoCaptureImpl::encoding_video_frame()
 }
 
 
-void SequencedVideoCaptureImpl::SequenceTransport
-::FileGen::set_final_filename(char * final_filename, size_t final_filename_size)
+void SequencedVideoCaptureImpl::SequenceTransport::set_final_filename()
 {
-    std::snprintf(
-        final_filename, final_filename_size, "%s%s-%06u%s",
-        this->path, this->base, this->num, this->ext);
+    int len = std::snprintf(
+        this->final_filename, sizeof(this->final_filename), "%s%s-%06u%s",
+        this->filegen.path, this->filegen.base, this->filegen.num, this->filegen.ext
+    );
+    if (len > int(sizeof(this->final_filename))) {
+        LOG(LOG_ERR, "%s", "Video path length is too large.");
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
 }
 
 SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
@@ -318,8 +377,7 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     const char * const extension,
     const int groupid,
     auth_api * authentifier)
-: fd(-1)
-, groupid(groupid)
+: VideoTransportBase(groupid, authentifier)
 {
     if (strlen(prefix) > sizeof(this->filegen.path) - 1
      || strlen(filename) > sizeof(this->filegen.base) - 1
@@ -330,20 +388,6 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     strcpy(this->filegen.path, prefix);
     strcpy(this->filegen.base, filename);
     strcpy(this->filegen.ext, extension);
-
-    this->final_filename[0] = 0;
-    this->tmp_filename[0] = 0;
-
-    if (authentifier) {
-        this->set_authentifier(authentifier);
-    }
-}
-
-void SequencedVideoCaptureImpl::SequenceTransport::seek(int64_t offset, int whence)
-{
-    if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
-        throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-    }
 }
 
 bool SequencedVideoCaptureImpl::SequenceTransport::next()
@@ -351,20 +395,9 @@ bool SequencedVideoCaptureImpl::SequenceTransport::next()
     if (this->status == false) {
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
-    ::close(this->fd);
-    this->fd = -1;
-    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
 
-    this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-    if (::rename(this->tmp_filename, this->final_filename) < 0)
-    {
-        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-            , this->tmp_filename, this->final_filename, errno, strerror(errno));
-        this->status = false;
-        LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
-        throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-    }
-    this->tmp_filename[0] = 0;
+    this->set_final_filename();
+    this->rename();
 
     ++this->filegen.num;
     ++this->seqno;
@@ -373,72 +406,17 @@ bool SequencedVideoCaptureImpl::SequenceTransport::next()
 
 SequencedVideoCaptureImpl::SequenceTransport::~SequenceTransport()
 {
-    if (this->fd != -1) {
-        ::close(this->fd);
-        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-
-        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-        const int res = ::rename(this->tmp_filename, this->final_filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-                , this->tmp_filename, this->final_filename, errno, strerror(errno));
-        }
-    }
+    this->set_final_filename();
 }
 
 void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data, size_t len)
 {
-    if (this->fd == -1) {
-
-        this->filegen.set_final_filename(this->final_filename, sizeof(this->final_filename));
-        std::snprintf(
-            this->tmp_filename, sizeof(this->tmp_filename),
-            "%sred-XXXXXX.tmp", this->final_filename);
-        this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-        if (this->fd == -1) {
-            this->status = false;
-            auto id = ERR_TRANSPORT_WRITE_FAILED;
-            if (errno == ENOSPC) {
-                char message[1024];
-                std::snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                errno = ENOSPC;
-            }
-            throw Error(id, errno);
-        }
-        if (chmod(this->tmp_filename, this->groupid ?
-            (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                , this->tmp_filename
-                , this->groupid ? "u+r, g+r" : "u+r"
-                , strerror(errno), errno);
-        }
+    if (!this->is_open()) {
+        this->set_final_filename();
+        this->force_open();
     }
 
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
-        if (ret <= 0){
-            if (errno == EINTR){
-                continue;
-            }
-            this->status = false;
-            auto id = ERR_TRANSPORT_WRITE_FAILED;
-            if (errno == ENOSPC) {
-                char message[1024];
-                std::snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                errno = ENOSPC;
-            }
-            throw Error(id, errno);
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
-    this->last_quantum_sent += total_sent;
+    this->VideoTransportBase::do_send(data, len);
 }
 
 
@@ -737,7 +715,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     std::chrono::microseconds video_interval,
     NotifyNextVideo & next_video_notifier)
 : first_image(now, *this)
-, vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, nullptr)
+, vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
 , vc(now, this->vc_trans, drawable, no_timestamp, std::move(flv_params))
 , ic_trans(record_path, basename, ".png", groupid, nullptr)
 , ic_zoom_factor(std::min(image_zoom, 100u))
