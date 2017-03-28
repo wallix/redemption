@@ -35,16 +35,6 @@ class ReplayMod : public InternalMod
     std::string & auth_error_message;
 
     CryptoContext           cctx;
-    InMetaSequenceTransport in_trans;
-    FileToGraphic           reader;
-
-    bool end_of_data;
-    bool wait_for_escape;
-
-public:
-    using Verbose = FileToGraphic::Verbose;
-
-private:
     struct TemporaryCtxPath
     {
         char extension[128];
@@ -77,10 +67,23 @@ private:
 
             std::snprintf(this->prefix,  sizeof(this->prefix), "%s%s", path, basename);
         }
-    };
+    } movie_path;
+    InMetaSequenceTransport in_trans;
+    FileToGraphic           reader;
 
+    bool end_of_data;
+    bool wait_for_escape;
+
+public:
+    using Verbose = FileToGraphic::Verbose;
+
+private:
+
+
+public:
     ReplayMod( FrontAPI & front
-             , TemporaryCtxPath const & path
+             , const char * replay_path
+             , const char * movie
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
@@ -89,7 +92,8 @@ private:
              , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
-    , in_trans(&this->cctx, path.prefix, path.extension, 0)
+    , movie_path(replay_path, movie)
+    , in_trans(&this->cctx, movie_path.prefix, movie_path.extension, 0)
     , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
@@ -117,22 +121,6 @@ private:
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
-
-public:
-    ReplayMod( FrontAPI & front
-             , const char * replay_path
-             , const char * movie
-             , uint16_t width
-             , uint16_t height
-             , std::string & auth_error_message
-             , Font const & font
-             , bool wait_for_escape
-             , Verbose debug_capture)
-    : ReplayMod(
-        front, TemporaryCtxPath(replay_path, movie),
-        width, height, auth_error_message,
-        font, wait_for_escape, debug_capture
-    ){}
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,

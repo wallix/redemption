@@ -64,7 +64,6 @@ inline bool read_all(int fd, void * data_, std::size_t len)
 }
 
 
-inline Bitmap load_error_bitmap();
 inline Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
 inline Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
 

@@ -408,7 +408,6 @@ public:
                                 this->acl_serial->receive();
                             }
                         }
-//                        std::cout << "Session 1" <<  std::endl;
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
@@ -428,9 +427,9 @@ public:
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
-                                    mes += TR("minute", language(this->ini));
+                                    mes += TR(trkeys::minute, language(this->ini));
                                     mes += (minutes > 1) ? "s " : " ";
-                                    mes += TR("before_closing", language(this->ini));
+                                    mes += TR(trkeys::before_closing, language(this->ini));
                                     mm.osd_message(std::move(mes), true);
                                     ++osd_state;
                                 }

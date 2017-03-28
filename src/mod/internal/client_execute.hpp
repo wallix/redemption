@@ -474,8 +474,10 @@ public:
         this->front_->sync();
     }   // input_invalidate
 
-    void input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
-        if (!this->channel_) return;
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
+        bool pointer_changed = false;
+
+        if (!this->channel_) return pointer_changed;
 
         //LOG(LOG_INFO,
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
@@ -892,6 +894,7 @@ public:
                         Pointer cursor(pointer_type);
 
                         this->front_->set_pointer(cursor);
+                        pointer_changed = true;
                     }
 
                     this->update_widget();
@@ -992,6 +995,7 @@ public:
                     Pointer cursor(Pointer::POINTER_SIZENS);
 
                     this->front_->set_pointer(cursor);
+                    pointer_changed = true;
                 }
                 else if (this->north_west_north.contains_pt(xPos, yPos) ||
                          this->north_west_west.contains_pt(xPos, yPos) ||
@@ -1000,12 +1004,14 @@ public:
                     Pointer cursor(Pointer::POINTER_SIZENWSE);
 
                     this->front_->set_pointer(cursor);
+                    pointer_changed = true;
                 }
                 else if (this->west.contains_pt(xPos, yPos) ||
                          this->east.contains_pt(xPos, yPos)) {
                     Pointer cursor(Pointer::POINTER_SIZEWE);
 
                     this->front_->set_pointer(cursor);
+                    pointer_changed = true;
                 }
                 else if (this->south_west_west.contains_pt(xPos, yPos) ||
                          this->south_west_south.contains_pt(xPos, yPos) ||
@@ -1014,11 +1020,7 @@ public:
                     Pointer cursor(Pointer::POINTER_SIZENESW);
 
                     this->front_->set_pointer(cursor);
-                }
-                else {
-                    Pointer cursor(Pointer::POINTER_NORMAL);
-
-                    this->front_->set_pointer(cursor);
+                    pointer_changed = true;
                 }
             }   // else if (!this->maximized)
         }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
@@ -1190,7 +1192,6 @@ public:
                             LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
                         }
 
-//LOG(LOG_INFO, "not sent");
                         this->front_->draw(order);
                     }
 
@@ -1314,6 +1315,8 @@ public:
                 throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
             }   // else if (this->title_bar_icon_rect.contains_pt(xPos, yPos))
         }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
+
+        return pointer_changed;
     }   // input_mouse
 
     void maximize_restore_window() {

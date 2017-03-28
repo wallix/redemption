@@ -23,8 +23,9 @@
 
 #include "utils/stream.hpp"
 #include "utils/colors.hpp"
-#include "capabilities/common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include <cassert>
+#include <type_traits>
 
 namespace RDP {
 
@@ -244,7 +245,8 @@ struct DrawingOrder_RecvFactory {
 // blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
 
 struct UpdatePaletteData_Recv {
-    UpdatePaletteData_Recv(InStream & stream, bool fast_path, BGRPalette & palette) {
+    UpdatePaletteData_Recv(InStream & stream, bool fast_path, BGRPalette & palette)
+    {
         if (fast_path) {
             stream.in_skip_bytes(2);    // updateType(2)
         }
@@ -452,7 +454,9 @@ struct ConfirmActivePDU_Send {
         this->offset_capabilitySets = payload.get_offset();
     }
 
+    template<class Capability>
     void emit_capability_set(Capability & capability) {
+        static_assert(std::is_base_of<::Capability, Capability>::value, "capability should be a Capability class");
         capability.emit(this->payload);
         this->numberCapabilities++;
     }

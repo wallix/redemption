@@ -92,16 +92,13 @@ namespace aux_ {
         }
 
         void * alloc(size_t n) {
-            //std::cout << "n: " << n << std::endl;
             for (Memory & mem : this->mems) {
                 if (n <= mem.size_element()) {
                     if (!mem.empty()) {
-                        //std::cout << "mem " << mem.size_element() << std::endl;
                         return mem.pop();
                     }
                 }
             }
-            //std::cout << "op new" << std::endl;
             return ::operator new(n);
         }
 

@@ -2296,26 +2296,25 @@ struct UnlockClipboardDataPDU
     , streamDataID(streamDataID)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream)
+    {
         this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
 
-    void recv(InStream & stream) {
+    void recv(InStream & stream)
+    {
         this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 
-    void log() {
+    void log()
+    {
         this->header.log();
         LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");
         LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
-
 };
-
-
-
 
 }   // namespace RDPECLIP
 

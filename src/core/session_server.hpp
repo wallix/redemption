@@ -72,7 +72,10 @@ public:
 
         char source_ip[256];
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
         const int source_port = ntohs(u.s4.sin_port);
+        REDEMPTION_DIAGNOSTIC_POP
         /* start new process */
         const pid_t pid = fork();
         switch (pid) {
@@ -110,7 +113,10 @@ public:
                 }
 
                 char target_ip[256];
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
                 const int target_port = ntohs(localAddress.s4.sin_port);
+                REDEMPTION_DIAGNOSTIC_POP
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 

@@ -1,5 +1,7 @@
 #define BOOST_TEST_MODULE TestAes
 
+#define LOGNULL
+
 #include "utils/crypto/ssl_aes_direct.hpp"
 
 using SslAes128_CBC = SslAes128_CBC_direct;

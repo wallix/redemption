@@ -227,6 +227,8 @@ private:
 
     GCC::UserData::CSMonitor monitor_one;
 
+    Pointer current_pointer;
+
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -260,6 +262,13 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
+    virtual void set_pointer(Pointer const & pointer) override {
+        gdi::GraphicApi& drawable_ = this->get_drawable();
+
+        drawable_.set_pointer(pointer);
+
+        this->current_pointer = pointer;
+    }
 
     WidgetModuleHost(gdi::GraphicApi& drawable, Widget2& parent,
                      NotifyApi* notifier,
@@ -277,6 +286,8 @@ public:
         BGRColor_(0x606060), BGRColor_(0xF0F0F0), BGRColor_(0xCDCDCD), font, true)
     , monitors(cs_monitor)
     {
+        this->pointer_flag = Pointer::POINTER_CUSTOM;
+
         this->impl = &composite_array;
 
         this->tab_flag   = NORMAL_TAB;
@@ -524,6 +535,10 @@ public:
 
     using WidgetParent::set_wh;
 
+    const Pointer* get_pointer() const override {
+        return &this->current_pointer;
+    }
+
 public:
     // NotifyApi
 
@@ -709,9 +724,7 @@ private:
             std::is_same<Cmd, RDPEllipseSC       >::value ||
             std::is_same<Cmd, RDPPolygonCB       >::value ||
             std::is_same<Cmd, RDPPolygonSC       >::value ||
-            std::is_same<Cmd, RDPPolyline        >::value ||
-            std::is_same<Cmd, RDPGlyphIndex      >::value ||
-            std::is_same<Cmd, RDP::RDPMultiScrBlt>::value
+            std::is_same<Cmd, RDPGlyphIndex      >::value
         >;
 
     template<class Cmd, class... Args, typename std::enable_if<

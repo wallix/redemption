@@ -147,8 +147,6 @@ public:
         }
     }
 
-    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) = default;
-
     void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiScrBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
@@ -350,6 +348,13 @@ public:
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
+    }
+
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
+
+        this->nXSrc += offset_x;
+        this->nYSrc += offset_y;
     }
 };  // class RDPMultiScrBlt
 

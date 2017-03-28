@@ -254,7 +254,7 @@ public:
              module_cstr == STRMODULE_VNC)) {
             LOG(LOG_INFO, "===========> MODULE_CLOSE");
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.set<cfg::context::auth_error_message>(TR("end_connection", language(this->ini)));
+                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
             }
             return MODULE_INTERNAL_CLOSE;
         }
@@ -375,7 +375,7 @@ private:
 
             if (is_disable_by_input) {
                 this->osd_message += "  ";
-                this->osd_message += TR("disable_osd", language(this->mm.ini));
+                this->osd_message += TR(trkeys::disable_osd, language(this->mm.ini));
             }
 
             gdi::TextMetrics tm(this->mm.ini.get<cfg::font>(), this->osd_message.c_str());
@@ -950,7 +950,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * button = TR("refused", language(this->ini));
+                const char * button = TR(trkeys::refused, language(this->ini));
                 const char * caption = "Information";
                 this->set_mod(new FlatDialogMod(
                     this->ini,
@@ -1034,7 +1034,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * caption = TR("information", language(this->ini));
+                const char * caption = TR(trkeys::information, language(this->ini));
                 bool showform = this->ini.get<cfg::context::showform>();
                 uint flag = this->ini.get<cfg::context::formflag>();
                 this->set_mod(new FlatWaitMod(

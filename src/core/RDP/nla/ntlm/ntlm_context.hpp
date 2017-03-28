@@ -594,7 +594,6 @@ struct NTLMContext
     }
 
     void ntlm_compute_MIC() {
-        uint8_t * MIC = this->MessageIntegrityCheck;
         SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
         hmac_md5resp.update(this->SavedNegotiateMessage.get_data(),
                             this->SavedNegotiateMessage.size());
@@ -602,7 +601,7 @@ struct NTLMContext
                             this->SavedChallengeMessage.size());
         hmac_md5resp.update(this->SavedAuthenticateMessage.get_data(),
                             this->SavedAuthenticateMessage.size());
-        hmac_md5resp.final(MIC);
+        hmac_md5resp.final(this->MessageIntegrityCheck);
     }
 
 

@@ -21,23 +21,22 @@
 
 #pragma once
 
-/* for HMAC calculations */
-#define MD_HASH_FUNC   SHA256
-#define MD_HASH_NAME   "SHA256"
-#define MD_HASH_LENGTH SHA256_DIGEST_LENGTH
-
-#include <libgen.h>
 #include <string.h>
 #include <cstdio>
 #include <unistd.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-
 #include <array>
+#include <snappy-c.h>
+
 #include "utils/log.hpp"
 #include "utils/sugar/bytes_t.hpp"
+#include "utils/genrandom.hpp"
+#include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
+
+using MD_HASH = SslSha256;
 
 enum crypto_file_state {
     CF_READY = 0, // Crypto File Reading
@@ -47,6 +46,7 @@ enum crypto_file_state {
 
 #define MIN(x, y)               (((x) > (y) ? (y) : (x)))
 #define AES_BLOCK_SIZE          16
+// MFCW
 #define WABCRYPTOFILE_MAGIC     0x4D464357
 #define WABCRYPTOFILE_EOF_MAGIC 0x5743464D
 #define WABCRYPTOFILE_VERSION   0x00000001
@@ -149,12 +149,12 @@ public:
 
         uint8_t tmp[SHA256_DIGEST_LENGTH];
         {
-            SslSha256 sha256;
+            MD_HASH sha256;
             sha256.update(derivator, derivator_len);
             sha256.final(tmp);
         }
         {
-            SslSha256 sha256;
+            MD_HASH sha256;
             sha256.update(tmp, DERIVATOR_LENGTH);
             sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
             sha256.final(tmp);
@@ -255,3 +255,264 @@ public:
         this->get_trace_key_cb = get_trace_key_cb;
     }
 };
+
+struct ocrypto {
+    struct Result {
+        const_bytes_array buf;
+        std::size_t consumed;
+        int err_code; // no error = 0
+
+        static Result error(int err_code)
+        {
+            return Result{{}, 0, err_code};
+        }
+    };
+
+private:
+    uint8_t result_buffer[32768] = {};
+
+    char           buf[CRYPTO_BUFFER_SIZE]; //
+    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+    SslHMAC_Sha256_Delayed hm;              // full hash context
+    SslHMAC_Sha256_Delayed hm4k;             // quick hash context
+    uint32_t       pos;                     // current position in buf
+    uint32_t       raw_size;                // the unciphered/uncompressed file size
+    uint32_t       file_size;               // the current file size
+    uint8_t header_buf[40];
+
+    CryptoContext & cctx;
+    Random & rnd;
+    bool encryption;
+    bool checksum;
+    
+    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
+     * Return 0 on success, negative value on error
+     */
+    void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+    {
+        int safe_size = *dst_sz;
+        int remaining_size = 0;
+
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        *dst_sz = safe_size + remaining_size;
+    }
+
+    /* Flush procedure (compression, encryption)
+     * Return 0 on success, negatif on error
+     */
+    void flush(uint8_t * buffer, size_t buflen, size_t & towrite)
+    {
+        // No data to flush
+        if (!this->pos) {
+            return;
+        }
+        
+        // Compress
+        // TODO: check this
+        char compressed_buf[65536];
+        size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
+        snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
+
+        switch (status)
+        {
+            case SNAPPY_OK:
+                break;
+            case SNAPPY_INVALID_INPUT:
+                throw Error(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT);
+            case SNAPPY_BUFFER_TOO_SMALL:
+                throw Error(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL);
+        }
+
+        // Encrypt
+        unsigned char ciphered_buf[4 + 65536];
+        //char ciphered_buf[ciphered_buf_sz];
+        uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+        this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
+                           compressed_buf_sz,
+                           ciphered_buf + 4, &ciphered_buf_sz);
+
+        ciphered_buf[0] = ciphered_buf_sz & 0xFF;
+        ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
+        ciphered_buf[2] = (ciphered_buf_sz >> 16) & 0xFF;
+        ciphered_buf[3] = (ciphered_buf_sz >> 24) & 0xFF;
+
+        ciphered_buf_sz += 4;
+        if (ciphered_buf_sz > buflen){
+            throw Error(ERR_CRYPTO_BUFFER_TOO_SMALL);
+        }
+        ::memcpy(buffer, ciphered_buf, ciphered_buf_sz);
+        towrite += ciphered_buf_sz;
+
+        if (this->checksum){
+            this->hm.update(&ciphered_buf[0], ciphered_buf_sz);
+            if (this->file_size < 4096) {
+                size_t remaining_size = 4096 - this->file_size;
+                this->hm4k.update(&ciphered_buf[0], remaining_size >= ciphered_buf_sz ? ciphered_buf_sz : remaining_size);
+            }
+            this->file_size += ciphered_buf_sz;
+        }
+
+        // Reset buffer
+        this->pos = 0;
+    }
+
+public:
+    ocrypto(bool encryption, bool checksum, CryptoContext & cctx, Random & rnd)
+        : cctx(cctx)
+        , rnd(rnd)
+        , encryption(encryption)
+        , checksum(checksum)
+    {
+    }
+
+    Result open(const uint8_t * derivator, size_t derivator_len)
+    {
+        this->file_size = 0;
+        if (this->checksum) {
+            this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+            this->hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+        }
+
+        if (this->encryption) {
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            this->cctx.get_derived_key(trace_key, derivator, derivator_len);
+            unsigned char iv[32];
+            this->rnd.random(iv, 32);
+
+            ::memset(this->buf, 0, sizeof(this->buf));
+            ::memset(&this->ectx, 0, sizeof(this->ectx));
+            this->pos = 0;
+            this->raw_size = 0;
+
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
+                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+            if (i != 32) {
+                throw Error(ERR_SSL_CALL_FAILED);
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                throw Error(ERR_SSL_CALL_FAILED);
+            }
+
+            // update context with previously written data
+            this->header_buf[0] = 'W';
+            this->header_buf[1] = 'C';
+            this->header_buf[2] = 'F';
+            this->header_buf[3] = 'M';
+            this->header_buf[4] = WABCRYPTOFILE_VERSION & 0xFF;
+            this->header_buf[5] = (WABCRYPTOFILE_VERSION >> 8) & 0xFF;
+            this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
+            this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
+            ::memcpy(this->header_buf + 8, iv, 32);
+
+            if (this->checksum){
+                this->hm.update(&this->header_buf[0], 40);
+                if (this->file_size < 4096) {
+                    size_t remaining_size = 4096 - this->file_size;
+                    this->hm4k.update(&this->header_buf[0], remaining_size >= 40 ? 40 : remaining_size);
+                }
+                this->file_size += 40;
+            }
+            return {{this->header_buf, 40u}, 0u, 0};
+        }
+        else {
+            return Result{{this->header_buf, 0u}, 0u, 0};
+        }
+    }
+
+    ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+    {
+        size_t towrite = 0;
+        if (this->encryption) {
+            size_t buflen = sizeof(this->result_buffer);
+            this->flush(this->result_buffer, buflen, towrite);
+
+            unsigned char tmp_buf[8] = {
+                'M','F','C','W',
+                uint8_t(this->raw_size & 0xFF),
+                uint8_t((this->raw_size >> 8) & 0xFF),
+                uint8_t((this->raw_size >> 16) & 0xFF),
+                uint8_t((this->raw_size >> 24) & 0xFF),
+            };
+
+            if (towrite + 8 > buflen){
+                throw Error(ERR_CRYPTO_BUFFER_TOO_SMALL);
+            }
+            ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
+            towrite += 8;
+
+            if (this->checksum){
+                this->hm.update(tmp_buf, 8);
+                if (this->file_size < 4096) {
+                    size_t remaining_size = 4096 - this->file_size;
+                    this->hm4k.update(tmp_buf, remaining_size >= 8 ? 8 : remaining_size);
+                }
+                this->file_size += 8;
+            }
+        }
+
+        if (this->checksum && qhash && fhash) {
+            this->hm.final(fhash);
+            this->hm4k.final(qhash);
+
+        }
+        return Result{{this->result_buffer, towrite}, 0u, 0};
+
+    }
+
+    ocrypto::Result write(const uint8_t * data, size_t len)
+    {
+        if (!this->encryption) {
+            if (this->checksum){
+                this->hm.update(data, len);
+                if (this->file_size < 4096) {
+                    size_t remaining_size = 4096 - this->file_size;
+                    this->hm4k.update(data, remaining_size >= len ? len : remaining_size);
+                }
+                this->file_size += len;
+            }
+            
+            return Result{{data, len}, len, 0};
+        }
+
+        size_t buflen = sizeof(this->result_buffer);
+        size_t towrite = 0;
+        unsigned int remaining_size = len;
+        while (remaining_size > 0) {
+            // Check how much we can append into buffer
+            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+            // Append and update pos pointer
+            ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
+            this->pos += available_size;
+            // If buffer is full, flush it to disk
+            if (this->pos == CRYPTO_BUFFER_SIZE) {
+                size_t tmp_towrite = 0;
+                this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
+                towrite += tmp_towrite;
+            }
+            remaining_size -= available_size;
+        }
+        // Update raw size counter
+        this->raw_size += len;
+        return {{this->result_buffer, towrite}, len, 0};
+    }
+
+
+};
+
+
+

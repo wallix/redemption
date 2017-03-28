@@ -18,8 +18,13 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
+
+#include "configs/autogen/enums.hpp"
+#include "capture/ocr/locale/locale_id.hpp"
+
+#include <chrono>
+
 
 struct OcrParams
 {

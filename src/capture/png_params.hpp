@@ -18,7 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
 #include <chrono>

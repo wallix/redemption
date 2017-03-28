@@ -59,6 +59,7 @@ extern "C" {
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
+#include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
 
 #include <memory>
@@ -389,7 +390,7 @@ public:
 
         this->img_convert_ctx.reset(sws_getContext(
             width, height, AV_PIX_FMT_BGR24,
-            target_width, target_height, AV_PIX_FMT_YUV420P,
+            target_width, target_height, STREAM_PIX_FMT,
             SWS_BICUBIC, nullptr, nullptr, nullptr
         ));
 
@@ -517,65 +518,5 @@ public:
         }
 
         this->video_frame_prepared = false;
-    }
-};
-
-
-struct io_video_recorder_with_transport
-{
-    io_video_recorder_with_transport(Transport & trans)
-    : trans(trans)
-    {}
-
-    video_recorder::write_packet_fn_t write_fn() const { return &write_packet; }
-    video_recorder::seek_fn_t seek_fn() const { return &seek; }
-    void * params() const { return &this->trans; }
-
-private:
-    Transport& trans;
-
-    static int write_packet(void *opaque, uint8_t *buf, int buf_size) {
-        Transport * trans       = reinterpret_cast<Transport *>(opaque);
-        int         return_code = buf_size;
-        try {
-            trans->send(buf, buf_size);
-        }
-        catch (Error const & e) {
-            if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
-                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%d)", e.id);
-            }
-            else {
-                LOG(LOG_ERR, "Video write_packet failure (id=%d, errnum=%d)", e.id, e.errnum);
-            }
-            return_code = -1;
-        }
-        return return_code;
-    }
-
-    static int64_t seek(void *opaque, int64_t offset, int whence) {
-        // This function is like the fseek() C stdio function.
-        // "whence" can be either one of the standard C values
-        // (SEEK_SET, SEEK_CUR, SEEK_END) or one more value: AVSEEK_SIZE.
-
-        // When "whence" has this value, your seek function must
-        // not seek but return the size of your file handle in bytes.
-        // This is also optional and if you don't implement it you must return <0.
-
-        // Otherwise you must return the current position of your stream
-        //  in bytes (that is, after the seeking is performed).
-        // If the seek has failed you must return <0.
-        if (whence == AVSEEK_SIZE) {
-            LOG(LOG_ERR, "Video seek failure");
-            return -1;
-        }
-        try {
-            Transport *trans = reinterpret_cast<Transport *>(opaque);
-            trans->seek(offset, whence);
-            return offset;
-        }
-        catch (Error const & e){
-            LOG(LOG_ERR, "Video seek failure (id=%d)", e.id);
-            return -1;
-        };
     }
 };

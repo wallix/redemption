@@ -36,7 +36,9 @@ struct Pointer {
         POINTER_SIZENESW         ,  // Double-pointed arrow pointing northeast and southwest
         POINTER_SIZENS           ,  // Double-pointed arrow pointing north and south
         POINTER_SIZENWSE         ,  // Double-pointed arrow pointing northwest and southeast
-        POINTER_SIZEWE              // Double-pointed arrow pointing west and east
+        POINTER_SIZEWE           ,  // Double-pointed arrow pointing west and east
+
+        POINTER_CUSTOM
     };
 
 public:
@@ -781,8 +783,6 @@ public:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
 
-    ~Pointer() = default;
-
     void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {
 //        this->bpp    = bpp;
@@ -810,16 +810,6 @@ public:
     //}
 
     unsigned data_size() const {
-/*
-        switch (this->bpp){
-        case 1:
-            return (this->width * this->height) / 8;
-        case 4:
-            return (this->width * this->height) / 2;
-        default:
-            return (this->width * this->height) * nbbytes(this->bpp);
-        }
-*/
         const unsigned int xor_line_length_in_byte = this->width * 3;
         const unsigned int xor_padded_line_length_in_byte =
             ((xor_line_length_in_byte % 2) ?
@@ -838,7 +828,6 @@ public:
              and_line_length_in_byte);
 
         return (and_padded_line_length_in_byte * this->height);
-//        return (this->width * this->height) / 8;
     }
 
     bool is_valid() const {
@@ -865,7 +854,4 @@ public:
 
         this->only_black_white = true;
     }
-
-
 };
-

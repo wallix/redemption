@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,21 +15,29 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2017
-   Author(s): Christophe Grosjean
-
+   Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRedemptionIO
-#include "system/redemption_unit_tests.hpp"
+#pragma once
 
-#define LOGPRINT
-#include "utils/log.hpp"
+#include <cstdint>
 
-#include "redemptionio/redemptionio.hpp"
+#include "core/RDP/share.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRedIO)
+
+enum class WrmChunkType : uint16_t
 {
-//    RedIO redio;
-}
+    RDP_UPDATE_ORDERS   = ::RDP_UPDATE_ORDERS,
+    RDP_UPDATE_BITMAP   = ::RDP_UPDATE_BITMAP,
+    META_FILE           = 1006,
+    TIMESTAMP           = 1008,
+    POINTER             = 1009,
+    POINTER2            = 1010,
+    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
+    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
+    SAVE_STATE          = 0x1002,   // 4098
+    RESET_CHUNK         = 0x1003,   // 4099
+    SESSION_UPDATE      = 0x1004,
+
+    INVALID_CHUNK       = 0x8000
+};

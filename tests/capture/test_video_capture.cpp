@@ -48,6 +48,7 @@
 #include "utils/bitmap_shrink.hpp"
 
 #include "capture/video_capture.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
 
@@ -85,9 +86,9 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
     {
         struct notified_on_video_change : public NotifyNextVideo
         {
-            void notify_next_video(const timeval& now, reason reason) 
+            void notify_next_video(const timeval& now, reason reason) override
             {
-                LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                     static_cast<unsigned>(now.tv_sec),
                     static_cast<unsigned>(now.tv_usec),
                     static_cast<unsigned>(reason));
@@ -97,8 +98,8 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-        SequencedVideoCaptureImpl video_capture(now, 
-            "./", "opaquerect_videocapture", 
+        SequencedVideoCaptureImpl video_capture(now,
+            "./", "opaquerect_videocapture",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -133,9 +134,9 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
     {
         struct notified_on_video_change : public NotifyNextVideo
         {
-            void notify_next_video(const timeval& now, reason reason) 
+            void notify_next_video(const timeval& now, reason reason) override
             {
-                LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+                LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                     static_cast<unsigned>(now.tv_sec),
                     static_cast<unsigned>(now.tv_usec),
                     static_cast<unsigned>(reason));
@@ -145,8 +146,8 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-        SequencedVideoCaptureImpl video_capture(now, 
-            "./", "opaquerect_videocapture", 
+        SequencedVideoCaptureImpl video_capture(now,
+            "./", "opaquerect_videocapture",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{2 * 1000000l}, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -183,9 +184,9 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason) 
+        void notify_next_video(const timeval& now, reason reason) override
         {
-            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),
                 static_cast<unsigned>(now.tv_usec),
                 static_cast<unsigned>(reason));
@@ -196,8 +197,8 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-        SequencedVideoCaptureImpl video_capture(now, 
-            "./", "opaquerect_videocapture_one_chunk_xxx", 
+        SequencedVideoCaptureImpl video_capture(now,
+            "./", "opaquerect_videocapture_one_chunk_xxx",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{1000 * 1000000l}, next_video_notifier);
         simple_movie(now, 1000, drawable, video_capture, false, true);
@@ -225,8 +226,8 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-        FullVideoCaptureImpl video_capture(now, 
-            "./", "opaquerect_fullvideocapture_timestamp1", 
+        FullVideoCaptureImpl video_capture(now,
+            "./", "opaquerect_fullvideocapture_timestamp1",
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
@@ -242,8 +243,8 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-        FullVideoCaptureImpl video_capture(now, 
-            "./", "opaquerect_fullvideocapture_timestamp_mouse0", 
+        FullVideoCaptureImpl video_capture(now,
+            "./", "opaquerect_fullvideocapture_timestamp_mouse0",
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, false);
     }
@@ -259,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-        FullVideoCaptureImpl video_capture(now, 
+        FullVideoCaptureImpl video_capture(now,
             "./", "opaquerect_fullvideocapture_timestamp2",
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -278,9 +279,9 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason) 
+        void notify_next_video(const timeval& now, reason reason) override
         {
-            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),
                 static_cast<unsigned>(now.tv_usec),
                 static_cast<unsigned>(reason));
@@ -291,13 +292,13 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", 0};
-        SequencedVideoCaptureImpl video_capture(now, 
+        SequencedVideoCaptureImpl video_capture(now,
             "./", "opaquerect_seqvideocapture",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{1000000}, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
-    
+
     struct CheckFiles {
         const char * filename;
         size_t size;
@@ -337,9 +338,9 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
-        void notify_next_video(const timeval& now, reason reason) 
+        void notify_next_video(const timeval& now, reason reason) override
         {
-            LOG(LOG_INFO, "next video: now=%u:%u reason=%u", 
+            LOG(LOG_INFO, "next video: now=%u:%u reason=%u",
                 static_cast<unsigned>(now.tv_sec),
                 static_cast<unsigned>(now.tv_usec),
                 static_cast<unsigned>(reason));
@@ -350,7 +351,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", 0};
-        SequencedVideoCaptureImpl video_capture(now, 
+        SequencedVideoCaptureImpl video_capture(now,
             "./", "opaquerect_seqvideocapture_timestamp2",
             0 /* groupid */, false /* no_timestamp */, 100 /* zoom */, drawable, flv_params,
             std::chrono::microseconds{1000000}, next_video_notifier);

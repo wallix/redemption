@@ -414,5 +414,10 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
     }
+
+    void move(int offset_x, int offset_y) {
+        this->xStart += offset_x;
+        this->yStart += offset_y;
+    }
 };  // class RDPPolyLine
 

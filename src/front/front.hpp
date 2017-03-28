@@ -113,10 +113,14 @@
 #include "utils/sugar/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
+#include "gdi/graphic_cmd_color.hpp"
+
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/wrm_params.hpp"
 #include "capture/ocr_params.hpp"
+#include "capture/flv_params_from_ini.hpp"
+#include "capture/wrm_capture.hpp" // TODO GraphicToFile::Verbose
 
 
 class Front : public FrontAPI
@@ -664,10 +668,10 @@ private:
     GlyphCacheCaps          client_glyphcache_caps;
     RailCaps                client_rail_caps;
     WindowListCaps          client_window_list_caps;
-    LargePointerCaps        client_large_pointer_caps;
-    MultiFragmentUpdateCaps client_multi_frag_caps;
+//    LargePointerCaps        client_large_pointer_caps;
+//    MultiFragmentUpdateCaps client_multi_frag_caps;
     bool                    use_bitmapcache_rev2;
-    bool                    use_multi_frag = false;
+//    bool                    use_multi_frag = false;
 
     std::string server_capabilities_filename;
 
@@ -2852,10 +2856,11 @@ private:
         );
     }
 
-    bool retrieve_client_capability_set(Capability & caps) override {
+    bool retrieve_client_capability_set(Capability & caps) override
+    {
 #ifdef __clang__
     #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess" // TODO What Oo ?
 # endif
         switch (caps.capabilityType) {
             case CAPSTYPE_GENERAL:
@@ -2901,15 +2906,17 @@ private:
             break;
 
             case CAPSETTYPE_MULTIFRAGMENTUPDATE:
-                if (!this->use_multi_frag) {
+                if (!this->client_info.multi_fragment_update_caps.MaxRequestSize) {
                     return false;
                 }
-                ::memcpy(&caps, &this->client_multi_frag_caps, sizeof(this->client_multi_frag_caps));
+                ::memcpy(&caps, &this->client_info.multi_fragment_update_caps, sizeof(this->client_info.multi_fragment_update_caps));
             break;
 
             case CAPSETTYPE_LARGE_POINTER:
-                ::memcpy(&caps, &this->client_large_pointer_caps, sizeof(this->client_large_pointer_caps));
+                ::memcpy(&caps, &this->client_info.large_pointer_caps, sizeof(this->client_info.large_pointer_caps));
             break;
+
+            default: break;
         }
 #ifdef __clang__
     #pragma GCC diagnostic pop
@@ -3496,16 +3503,16 @@ private:
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                this->client_multi_frag_caps.recv(stream, capset_length);
+                this->client_info.multi_fragment_update_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_multi_frag_caps.log("Receiving from client");
+                    this->client_info.multi_fragment_update_caps.log("Receiving from client");
                 }
-                this->use_multi_frag = true;
+//                this->use_multi_frag = true;
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
-                this->client_large_pointer_caps.recv(stream, capset_length);
+                this->client_info.large_pointer_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_large_pointer_caps.log("Receiving from client");
+                    this->client_info.large_pointer_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */

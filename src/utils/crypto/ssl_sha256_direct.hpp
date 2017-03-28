@@ -226,3 +226,4 @@ private:
 
 
 using SslHMAC_Sha256_direct = detail_::basic_HMAC_direct<SslSha256_direct, 64>;
+using SslHMAC_Sha256_Delayed_direct = detail_::DelayedHMAC_direct<SslSha256_direct, 64>;

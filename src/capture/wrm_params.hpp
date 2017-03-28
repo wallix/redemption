@@ -18,12 +18,19 @@
 *   Author(s): Christophe Grosjean
 */
 
-
 #pragma once
-#include "capture/cryptofile.hpp"
+
 #include "configs/autogen/enums.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
+
+#include <chrono>
+
+#ifdef basename
+# undef basename
+#endif
+
+class CryptoContext;
+class Random;
+class Fstat;
 
 struct WrmParams
 {

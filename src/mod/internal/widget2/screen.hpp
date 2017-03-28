@@ -145,12 +145,21 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
-            if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
-                this->drawable.set_pointer(edit_pointer);
+            const Pointer* pointer = &this->normal_pointer;
+
+            if (nullptr != w) {
+                if (Pointer::POINTER_EDIT == w->pointer_flag) {
+                    pointer = &this->edit_pointer;
+                }
+                else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
+                    const Pointer* temp_pointer = w->get_pointer();
+                    if (temp_pointer) {
+                        pointer = temp_pointer;
+                    }
+                }
             }
-            else {
-                this->drawable.set_pointer(normal_pointer);
-            }
+            this->drawable.set_pointer(*pointer);
+
             this->current_over = w;
         }
         if (this->tooltip) {

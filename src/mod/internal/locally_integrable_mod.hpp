@@ -100,7 +100,9 @@ struct LocallyIntegrableMod : public InternalMod {
 
         //LOG(LOG_INFO, "device_flags=0x%X", device_flags);
 
-        this->client_execute.input_mouse(device_flags, x, y);
+        if (this->client_execute.input_mouse(device_flags, x, y)) {
+            this->screen.current_over = nullptr;
+        }
 
         switch (this->dc_state) {
             case DCSTATE_WAIT:
