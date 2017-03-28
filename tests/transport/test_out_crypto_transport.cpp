@@ -26,48 +26,84 @@
 
 #define LOGPRINT
 #include "utils/log.hpp"
+#include "transport/out_crypto_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 {
+    LCGRandom rnd(0);
+    Fstat fstat;
+    CryptoContext cctx;
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+
+    char tmpname[128] = "/tmp/test_transportXXXXXX";
+    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+    const char * finalname = "./encrypted.txt";
+    {
+        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        ct.open(fd, tmpname, finalname);
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        ct.send("and so on.", 10);
+        ct.close(qhash, fhash);
+    }
+    ::unlink(tmpname);
+    ::unlink(finalname);
 }
 
-//#include <stdlib.h>
-//#include <unistd.h>
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <fcntl.h>
-
-//#include "transport/in_file_transport.hpp"
-//#include "transport/out_file_transport.hpp"
-//#include "core/error.hpp"
-
-//BOOST_AUTO_TEST_CASE(TestInFileTransport)
+//BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
 //{
+//    LCGRandom rnd(0);
+//    Fstat fstat;
+//    CryptoContext cctx;
 //    char tmpname[128] = "/tmp/test_transportXXXXXX";
 //    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+//    const char * finalname = "./encrypted.txt";
+//    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+//    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 //    {
-//        OutFileTransport ft(fd);
-//        ft.send("We write, ", 10);
-//        ft.send("and again, ", 11);
-//        ft.send("and so on.", 10);
+//        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+//        ct.open(fd, tmpname, finalname);
+//        ct.send("We write, ", 10);
+//        ct.send("and again, ", 11);
+//        ct.send("and so on.", 10);
 //    }
-//    ::close(fd);
-//    fd = ::open(tmpname, O_RDONLY);
-//    {
-//        char buf[128];
-//        char * pbuf = buf;
-//        InFileTransport ft(fd);
-//        ft.recv_new(pbuf, 10);
-//            pbuf += 10;
-//            ft.recv_new(pbuf, 11);
-//            pbuf += 11;
-//            ft.recv_new(pbuf, 10);
-//            pbuf += 10;
-//        BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
-//        pbuf = buf;
-//        CHECK_EXCEPTION_ERROR_ID(ft.recv_new(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
-//    }
-//    ::close(fd);
+//    // if there is no explicit close we can't get hash values
+//    // but the file is correctly closed and ressources freed
 //    ::unlink(tmpname);
+//    ::unlink(finalname);
+//}
+
+//BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
+//{
+//    LCGRandom rnd(0);
+//    Fstat fstat;
+//    CryptoContext cctx;
+//    char tmpname1[128] = "/tmp/test_transportXXXXXX";
+//    char tmpname2[128] = "/tmp/test_transportXXXXXX";
+//    const char * finalname1 = "./encrypted001.txt";
+//    const char * finalname2 = "./encrypted002.txt";
+//    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+//    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+//    {
+//        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+//        int fd1 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
+//        ct.open(fd1, tmpname1, finalname1);
+//        ct.send("We write, ", 10);
+//        ct.send("and again, ", 11);
+//        ct.send("and so on.", 10);
+//        cl.close(qhash, fhash);
+
+//        int fd2 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
+//        ct.open(fd2, tmpname2, finalname2);        
+//        ct.send("We write, ", 10);
+//        ct.send("and again, ", 11);
+//        ct.send("and so on.", 10);
+//        cl.close(qhash, fhash);
+//    }
+//    ::unlink(tmpname1);
+//    ::unlink(finalname1);
+//    ::unlink(tmpname2);
+//    ::unlink(finalname2);
 //}
 

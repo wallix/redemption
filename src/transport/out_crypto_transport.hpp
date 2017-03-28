@@ -21,43 +21,37 @@
 
 #pragma once
 
-//#include "utils/fdbuf.hpp"
-//#include "transport/transport.hpp"
+#include "transport/transport.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
+#include "capture/cryptofile.hpp"
 
-//class OutFileTransport
-//: public Transport
-//{
-//    io::posix::fdbuf file;
+class OutCryptoTransport : public Transport
+{
 
-//public:
-//    explicit OutFileTransport(int fd) noexcept
-//    : file(fd)
-//    {}
+public:
+    explicit OutCryptoTransport(bool with_encryption,
+                                bool with_checksum,
+                                CryptoContext & cctx,
+                                Random & rnd,
+                                Fstat & fstat) noexcept
+    {} 
 
-//    bool disconnect() override {
-//        return !this->file.close();
-//    }
+    // TODO: CGR: I want to remove that from Transport API
+    bool disconnect() override {
+        return 0;
+    }
 
-//private:
-//    void do_send(const uint8_t * data, size_t len) override {
-//        const ssize_t res = this->file.write(data, len);
-//        if (res < 0) {
-//            this->status = false;
-//            if (errno == ENOSPC) {
-//                this->authentifier->report("FILESYSTEM_FULL", "100|unknow");
-//                errno = ENOSPC;
-//            }
-//            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-//        }
-//        this->last_quantum_sent += res;
-//    }
+    void open(int fd, const char * tmpname, const char * finalname)
+    {
+    }
+    
+    void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+    {
+    }
 
-//protected:
-//    io::posix::fdbuf & buffer() noexcept
-//    { return this->file; }
-
-//    const io::posix::fdbuf & buffer() const noexcept
-//    { return this->file; }
-
-//    typedef OutFileTransport TransportType;
-//};
+private:
+    void do_send(const uint8_t * data, size_t len) override 
+    {
+    }
+};
