@@ -331,7 +331,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     BOOST_CHECK_EQUAL(res.buf.size(), 40);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -340,7 +339,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     offset += res2.buf.size();
     BOOST_CHECK_EQUAL(res2.buf.size(), 0);
     BOOST_CHECK_EQUAL(res2.consumed, 4);
-    BOOST_CHECK_EQUAL(res2.err_code, 0);
     
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
@@ -415,7 +413,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     BOOST_CHECK_EQUAL(res.buf.size(), 40);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -425,7 +422,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 0);
         BOOST_CHECK_EQUAL(res2.consumed, 2);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
     // This test is very similar to Encryption1, but we are performing 2 writes
     {
@@ -434,7 +430,6 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 0);
         BOOST_CHECK_EQUAL(res2.consumed, 2);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }    
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
@@ -524,7 +519,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     BOOST_CHECK_EQUAL(res.buf.size(), 40);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -536,7 +530,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 0);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     {
@@ -544,7 +537,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 8612);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     // I write the same block *again* now I should reach some compression
@@ -632,7 +624,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
     BOOST_CHECK_EQUAL(res.buf.size(), 0);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -644,7 +635,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     {
@@ -652,7 +642,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     // I write the same block *again* now I should reach some compression
@@ -732,7 +721,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
     BOOST_CHECK_EQUAL(res.buf.size(), 0);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -744,7 +732,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     {
@@ -752,7 +739,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), sizeof(randomSample));
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
 
@@ -824,7 +810,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
     BOOST_CHECK_EQUAL(res.buf.size(), 0);
-    BOOST_CHECK_EQUAL(res.err_code, 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
@@ -836,7 +821,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 5);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     // Let's send a small block of data 
@@ -846,7 +830,6 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 5);
-        BOOST_CHECK_EQUAL(res2.err_code, 0);
     }
 
     BOOST_CHECK_EQUAL(offset, 10);
