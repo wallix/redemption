@@ -47,7 +47,8 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
 
@@ -83,6 +84,7 @@ public:
             &this->language_button,
             this->font(), Translator(language(vars)), this->theme())
         , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
         , vars(vars)
     {
         if (vars.get<cfg::globals::authentication_timeout>().count()) {

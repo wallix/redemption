@@ -41,7 +41,8 @@ using FlatDialogModVariables = vcfg::variables<
     vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
 class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
@@ -71,6 +72,7 @@ public:
             cancel_text, has_challenge)
         , vars(vars)
         , timeout(now, vars.get<cfg::debug::pass_dialog_box>())
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
         this->screen.add_widget(&this->dialog_widget);
         this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
