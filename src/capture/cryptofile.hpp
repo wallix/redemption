@@ -288,42 +288,37 @@ private:
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
      * Return 0 on success, negative value on error
      */
-    int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
+    void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
     {
         int safe_size = *dst_sz;
         int remaining_size = 0;
 
         /* allows reusing of ectx for multiple encryption cycles */
         if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
-            return -1;
+            throw Error(ERR_SSL_CALL_FAILED);
         }
         if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
-            return -1;
+            throw Error(ERR_SSL_CALL_FAILED);
         }
         if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
-            return -1;
+            throw Error(ERR_SSL_CALL_FAILED);
         }
         *dst_sz = safe_size + remaining_size;
-        return 0;
     }
 
     /* Flush procedure (compression, encryption)
      * Return 0 on success, negatif on error
      */
-    int flush(uint8_t * buffer, size_t buflen, size_t & towrite)
+    void flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
         // No data to flush
         if (!this->pos) {
-            return 0;
+            return;
         }
-
+        
         // Compress
         // TODO: check this
         char compressed_buf[65536];
-        //char compressed_buf[compressed_buf_sz];
         size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
         snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
 
@@ -332,23 +327,18 @@ private:
             case SNAPPY_OK:
                 break;
             case SNAPPY_INVALID_INPUT:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code INVALID_INPUT!\n", getpid());
-                return -1;
+                throw Error(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT);
             case SNAPPY_BUFFER_TOO_SMALL:
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                return -1;
+                throw Error(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL);
         }
 
         // Encrypt
         unsigned char ciphered_buf[4 + 65536];
         //char ciphered_buf[ciphered_buf_sz];
         uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-        {
-            const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-            if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
-                return -1;
-            }
-        }
+        this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
+                           compressed_buf_sz,
+                           ciphered_buf + 4, &ciphered_buf_sz);
 
         ciphered_buf[0] = ciphered_buf_sz & 0xFF;
         ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
@@ -357,8 +347,7 @@ private:
 
         ciphered_buf_sz += 4;
         if (ciphered_buf_sz > buflen){
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Encryption buffer too small\n", ::getpid());
-            return -1;
+            throw Error(ERR_CRYPTO_BUFFER_TOO_SMALL);
         }
         ::memcpy(buffer, ciphered_buf, ciphered_buf_sz);
         towrite += ciphered_buf_sz;
@@ -374,7 +363,6 @@ private:
 
         // Reset buffer
         this->pos = 0;
-        return 0;
     }
 
 public:
@@ -412,14 +400,12 @@ public:
             const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
                                            trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
             if (i != 32) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                Result::error(-1);
+                throw Error(ERR_SSL_CALL_FAILED);
             }
 
             ::EVP_CIPHER_CTX_init(&this->ectx);
             if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize encrypt context\n", ::getpid());
-                Result::error(-1);
+                throw Error(ERR_SSL_CALL_FAILED);
             }
 
             // update context with previously written data
@@ -453,10 +439,7 @@ public:
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
-            int err = this->flush(this->result_buffer, buflen, towrite);
-            if (err) {
-                return Result::error(-1);
-            }
+            this->flush(this->result_buffer, buflen, towrite);
 
             unsigned char tmp_buf[8] = {
                 'M','F','C','W',
@@ -467,7 +450,7 @@ public:
             };
 
             if (towrite + 8 > buflen){
-               return Result::error(-1);
+                throw Error(ERR_CRYPTO_BUFFER_TOO_SMALL);
             }
             ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
             towrite += 8;
@@ -518,11 +501,8 @@ public:
             // If buffer is full, flush it to disk
             if (this->pos == CRYPTO_BUFFER_SIZE) {
                 size_t tmp_towrite = 0;
-                int err = this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
+                this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
                 towrite += tmp_towrite;
-                if (err) {
-                    return Result::error(-1);
-                }
             }
             remaining_size -= available_size;
         }
