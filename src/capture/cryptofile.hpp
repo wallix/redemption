@@ -371,14 +371,10 @@ public:
     {
     }
 
-    ~ocrypto()
-    {
-        LOG(LOG_INFO, "ocrypto::destructor");
-    }
+    ~ocrypto() {}
     
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
-        LOG(LOG_INFO, "ocrypto::open()");
         this->file_size = 0;
         if (this->checksum) {
             this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
@@ -439,7 +435,6 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
-        LOG(LOG_INFO, "ocrypto::close");
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
@@ -480,8 +475,6 @@ public:
 
     ocrypto::Result write(const uint8_t * data, size_t len)
     {
-        LOG(LOG_INFO, "ocrypto::write()");
-
         if (!this->encryption) {
             if (this->checksum){
                 this->hm.update(data, len);

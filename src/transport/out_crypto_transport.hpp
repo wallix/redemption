@@ -23,18 +23,20 @@
 
 #include "transport/transport.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
+#include "utils/fileutils.hpp"
 #include "capture/cryptofile.hpp"
 
 class OutCryptoTransport : public Transport
 {
-
+    ocrypto encrypter;
+    int fd;
 public:
     explicit OutCryptoTransport(bool with_encryption,
                                 bool with_checksum,
                                 CryptoContext & cctx,
-                                Random & rnd,
-                                Fstat & fstat) noexcept
+                                Random & rnd) noexcept
+        : encrypter(with_encryption, with_checksum, cctx, rnd)
+        , fd(-1)
     {} 
 
     // TODO: CGR: I want to remove that from Transport API
@@ -44,14 +46,29 @@ public:
 
     void open(int fd, const char * tmpname, const char * finalname)
     {
+        size_t derivator_len = 0;
+        const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(finalname, derivator_len));
+
+        ocrypto::Result res = encrypter.open(derivator, sizeof(derivator_len));
+        // TODO: write header data
     }
     
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+        // This should avoid double closes, we do not want that
+        if (this->fd == -1){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+        // TODO: close encryption and write data
     }
 
 private:
     void do_send(const uint8_t * data, size_t len) override 
     {
+        if (this->fd == -1){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+        // TODO: send data to encrypter
+        // TODO: crypt if necessary
     }
 };
