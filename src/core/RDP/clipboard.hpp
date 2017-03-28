@@ -298,7 +298,7 @@ public:
     void recv(InStream & stream) {
         const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
         if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::recv truncated data, need=%u remains=%zu"
+            LOG( LOG_INFO, "RDPECLIP::CliprdrHeader::recv truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -570,21 +570,21 @@ enum {
 class GeneralCapabilitySet {
     uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
     uint16_t lengthCapability  = size();
-    uint32_t version           = CB_CAPS_VERSION_1;
+    uint32_t version_          = CB_CAPS_VERSION_1;
     uint32_t generalFlags_     = 0;
 
 public:
     GeneralCapabilitySet() = default;
 
     GeneralCapabilitySet(uint32_t version, uint32_t generalFlags) {
-        this->version       = version;
+        this->version_      = version;
         this->generalFlags_ = generalFlags;
     }
 
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);
-        stream.out_uint32_le(this->version);
+        stream.out_uint32_le(this->version_);
         stream.out_uint32_le(this->generalFlags_);
     }
 
@@ -605,9 +605,11 @@ public:
 
         REDASSERT(this->lengthCapability == size());
 
-        this->version       = stream.in_uint32_le();
+        this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();
     }
+
+    uint32_t version() const { return this->version_; }
 
     uint32_t generalFlags() const { return this->generalFlags_; }
 
@@ -633,8 +635,8 @@ private:
             CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType),
             this->capabilitySetType,
             unsigned(this->lengthCapability),
-            this->get_version_name(this->version),
-            this->version,
+            this->get_version_name(this->version_),
+            this->version_,
             this->generalFlags_);
         return ((length < size) ? length : size - 1);
     }
@@ -651,7 +653,7 @@ public:
         LOG(LOG_INFO, "     General Capability Set:");
         LOG(LOG_INFO, "          * capabilitySetType = 0x%04x (2 bytes): CB_CAPSTYPE_GENERAL", this->capabilitySetType);
         LOG(LOG_INFO, "          * lengthCapability  = 0x%04x (2 bytes)", this->lengthCapability);
-        LOG(LOG_INFO, "          * version           = 0x%08x (4 bytes)", this->version);
+        LOG(LOG_INFO, "          * version           = 0x%08x (4 bytes)", this->version_);
         LOG(LOG_INFO, "          * generalFlags      = 0x%08x (4 bytes)", this->generalFlags_);
     }
 };  // GeneralCapabilitySet
@@ -695,6 +697,98 @@ struct ServerMonitorReadyPDU
 
     void log() {
         this->header.log();
+    }
+
+};  // struct ServerMonitorReadyPDU
+
+// [MS-RDPECLIP] 2.2.2.3 Client Temporary Directory PDU (CLIPRDR_TEMP_DIRECTORY)
+// =============================================================================
+
+// The Temporary Directory PDU is an optional PDU sent from the client to the server. This PDU informs
+//  the server of a location on the client file system that MUST be used to deposit files being copied to the
+//  client. The location MUST be accessible by the server to be useful. Section 3.1.1.3 specifies how direct
+//  file access impacts file copy and paste. This PDU is sent by the client after receiving the Monitor Ready
+//  PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    wszTempDir (520 bytes)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header
+//  MUST be set to CB_TEMP_DIRECTORY (0x0006), while the msgFlags field MUST be set to
+//  0x0000.
+
+// wszTempDir (520 bytes): A 520-byte block that contains a null-terminated string that represents
+//  the directory on the client that MUST be used to store temporary clipboard related information.
+//  The supplied path MUST be absolute and relative to the local client system, for example,
+//  "c:\temp\clipdata". Any space not used in this field SHOULD be filled with null characters.
+
+struct ClientTemporaryDirectoryPDU
+{
+    CliprdrHeader header;
+
+    std::string temp_dir;
+
+    ClientTemporaryDirectoryPDU()
+    : header(CB_TEMP_DIRECTORY, 0, 520) {}
+
+    ClientTemporaryDirectoryPDU(const char* temp_dir)
+    : header(CB_TEMP_DIRECTORY, 0, 520),
+    temp_dir(temp_dir) {}
+
+    void emit(OutStream & stream)
+    {
+        this->header.emit(stream);
+
+        uint8_t tempDir_unicode_data[520]; // wszTempDir(520)
+
+        size_t size_of_tempDir_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->temp_dir.c_str()),
+            tempDir_unicode_data, sizeof(tempDir_unicode_data));
+
+        stream.out_copy_bytes(tempDir_unicode_data,
+            size_of_tempDir_unicode_data);
+
+        stream.out_clear_bytes(520 /* wszTempDir(520) */ -
+            size_of_tempDir_unicode_data);
+    }
+
+    void recv(InStream & stream)
+    {
+        this->header.recv(stream);
+
+        const unsigned expected = 520;  // wszTempDir(520)
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO, "RDPECLIP::ClientTemporaryDirectoryPDU::recv truncated data, need=%u remains=%zu"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        uint8_t const * const tempDir_unicode_data = stream.get_current();
+        uint8_t tempDir_utf8_string[520 /* wszTempDir(520) */ / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+        ::UTF16toUTF8(tempDir_unicode_data, 520 /* wszTempDir(520) */ / 2,
+            tempDir_utf8_string, sizeof(tempDir_utf8_string));
+        // The null-terminator is included.
+        this->temp_dir = ::char_ptr_cast(tempDir_utf8_string);
+
+        stream.in_skip_bytes(520);       // wszTempDir(520)
+    }
+
+    void log() {
+        this->header.log();
+        LOG(LOG_INFO, "     Client Temporary Directory PDU:");
+        LOG(LOG_INFO, "          * wszTempDir = \"%s\"", this->temp_dir.c_str());
     }
 
 };  // struct ServerMonitorReadyPDU

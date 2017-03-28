@@ -2655,7 +2655,37 @@ public:
 
                     if (this->up_and_running) {
                         if (bool(this->verbose & Verbose::channel)) {
-                            LOG(LOG_INFO, "Front::send_to_mod_channel");
+                            LOG(LOG_INFO, "Front::send_to_mod_channel channel_name=\"%s\"", channel.name);
+                        }
+
+                        if (!strcmp(channel.name, channel_names::cliprdr) &&
+                            ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) == (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))) {
+                            InStream chunk(sec.payload.get_current(), chunk_size);
+
+                            RDPECLIP::RecvPredictor rp(chunk);
+
+                            if (rp.msgType == RDPECLIP::CB_TEMP_DIRECTORY) {
+                                RDPECLIP::ClientTemporaryDirectoryPDU client_temp_dir_pdu;
+
+                                client_temp_dir_pdu.recv(chunk);
+
+                                this->client_info.clip_temp_dir = client_temp_dir_pdu.temp_dir;
+                            }
+                            else if (rp.msgType == RDPECLIP::CB_CLIP_CAPS) {
+                                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
+
+                                clipboard_caps_pdu.recv(chunk);
+
+                                RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(chunk);
+
+                                if (caps_recv_factory.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                                    RDPECLIP::GeneralCapabilitySet general_caps;
+                                    general_caps.recv(chunk, caps_recv_factory);
+
+                                    this->client_info.clip_caps_version       = general_caps.version();
+                                    this->client_info.clip_caps_general_flags = general_caps.generalFlags();
+                                }
+                            }
                         }
 
                         InStream chunk(sec.payload.get_current(), chunk_size);

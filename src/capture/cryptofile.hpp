@@ -260,12 +260,6 @@ struct ocrypto {
     struct Result {
         const_bytes_array buf;
         std::size_t consumed;
-        int err_code; // no error = 0
-
-        static Result error(int err_code)
-        {
-            return Result{{}, 0, err_code};
-        }
     };
 
 private:
@@ -290,6 +284,8 @@ private:
      */
     void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
     {
+        LOG(LOG_INFO, "ocrypto::xaes_encrypt()");
+
         int safe_size = *dst_sz;
         int remaining_size = 0;
 
@@ -311,6 +307,7 @@ private:
      */
     void flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
+        LOG(LOG_INFO, "ocrypto::flush()");
         // No data to flush
         if (!this->pos) {
             return;
@@ -374,6 +371,8 @@ public:
     {
     }
 
+    ~ocrypto() {}
+    
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
         this->file_size = 0;
@@ -427,10 +426,10 @@ public:
                 }
                 this->file_size += 40;
             }
-            return {{this->header_buf, 40u}, 0u, 0};
+            return Result{{this->header_buf, 40u}, 0u};
         }
         else {
-            return Result{{this->header_buf, 0u}, 0u, 0};
+            return Result{{this->header_buf, 0u}, 0u};
         }
     }
 
@@ -470,7 +469,7 @@ public:
             this->hm4k.final(qhash);
 
         }
-        return Result{{this->result_buffer, towrite}, 0u, 0};
+        return Result{{this->result_buffer, towrite}, 0u};
 
     }
 
@@ -486,7 +485,7 @@ public:
                 this->file_size += len;
             }
             
-            return Result{{data, len}, len, 0};
+            return Result{{data, len}, len};
         }
 
         size_t buflen = sizeof(this->result_buffer);
@@ -508,7 +507,7 @@ public:
         }
         // Update raw size counter
         this->raw_size += len;
-        return {{this->result_buffer, towrite}, len, 0};
+        return {{this->result_buffer, towrite}, len};
     }
 
 
