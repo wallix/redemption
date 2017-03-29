@@ -20,6 +20,7 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_CHECK_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
 # define BOOST_CHECK_EQUAL(a, b) (a) == (b)
+# define BOOST_CHECK_EQ(a, b) (a) == (b)
 # define BOOST_CHECK_NE(a, b) (a) != (b)
 # define BOOST_CHECK_LT(a, b) (a) < (b)
 # define BOOST_CHECK_LE(a, b) (a) <= (b)
@@ -34,6 +35,7 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
 # define BOOST_REQUIRE_EQUAL(a, b) (a) == (b)
+# define BOOST_REQUIRE_EQ(a, b) (a) == (b)
 # define BOOST_REQUIRE_NE(a, b) (a) != (b)
 # define BOOST_REQUIRE_LT(a, b) (a) < (b)
 # define BOOST_REQUIRE_LE(a, b) (a) <= (b)
@@ -43,6 +45,8 @@ namespace boost { namespace unit_test { namespace ut_detail {
 # define BOOST_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
 # define BOOST_REQUIRE_EQUAL_RANGES(a, b) (a) != (b)
 #else
+# define BOOST_CHECK_EQ BOOST_CHECK_EQUAL
+# define BOOST_REQUIRE_EQ BOOST_REQUIRE_EQUAL
 # define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \
     BOOST_CHECK_EXCEPTION(                      \
         stmt, Error,                            \

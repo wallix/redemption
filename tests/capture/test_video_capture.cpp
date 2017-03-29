@@ -110,17 +110,17 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
         size_t size;
     } fileinfo[] = {
         {"./opaquerect_videocapture-000000.png", 3099},
-        {"./opaquerect_videocapture-000000.flv", 40677},
+        {"./opaquerect_videocapture-000000.flv", 40475},
         {"./opaquerect_videocapture-000001.png", 3104},
-        {"./opaquerect_videocapture-000001.flv", 40011},
+        {"./opaquerect_videocapture-000001.flv", 39925},
         {"./opaquerect_videocapture-000002.png", 3107},
-        {"./opaquerect_videocapture-000002.flv", 41172},
+        {"./opaquerect_videocapture-000002.flv", 40970},
         {"./opaquerect_videocapture-000003.png", 3099},
-        {"./opaquerect_videocapture-000003.flv", 40610},
+        {"./opaquerect_videocapture-000003.flv", 40408},
         {"./opaquerect_videocapture-000004.png", 3098},
-        {"./opaquerect_videocapture-000004.flv", 40173},
+        {"./opaquerect_videocapture-000004.flv", 40085},
         {"./opaquerect_videocapture-000005.png", 3098},
-        {"./opaquerect_videocapture-000005.flv", 13539},
+        {"./opaquerect_videocapture-000005.flv", 12805},
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
         size_t size;
     } fileinfo[] = {
         {"./opaquerect_videocapture_one_chunk_xxx-000000.png", 3099},
-        {"./opaquerect_videocapture_one_chunk_xxx-000000.flv", 645722},
+        {"./opaquerect_videocapture_one_chunk_xxx-000000.flv", 650655},
         {"./opaquerect_videocapture_one_chunk_xxx-000001.png", static_cast<long unsigned>(-1)},
         {"./opaquerect_videocapture_one_chunk_xxx-000001.flv", static_cast<long unsigned>(-1)},
     };
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
     const char * filename = "./opaquerect_fullvideocapture_timestamp1.flv";
-    BOOST_CHECK_EQUAL(164693, filesize(filename));
+    BOOST_CHECK_EQUAL(164605, filesize(filename));
     ::unlink(filename);
 
 }
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
         simple_movie(now, 250, drawable, video_capture, false, false);
     }
     const char * filename = "./opaquerect_fullvideocapture_timestamp_mouse0.flv";
-    BOOST_CHECK_EQUAL(158699, filesize(filename));
+    BOOST_CHECK_EQUAL(158624, filesize(filename));
     ::unlink(filename);
 
 }
@@ -304,27 +304,27 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
         size_t size;
     } fileinfo[] = {
         {"./opaquerect_seqvideocapture-000000.png", 3099},
-        {"./opaquerect_seqvideocapture-000000.flv", 29439},
+        {"./opaquerect_seqvideocapture-000000.flv", 29364},
         {"./opaquerect_seqvideocapture-000001.png", 3099},
-        {"./opaquerect_seqvideocapture-000001.flv", 30726},
+        {"./opaquerect_seqvideocapture-000001.flv", 30476},
         {"./opaquerect_seqvideocapture-000002.png", 3104},
-        {"./opaquerect_seqvideocapture-000002.flv", 29119},
+        {"./opaquerect_seqvideocapture-000002.flv", 28921},
         {"./opaquerect_seqvideocapture-000003.png", 3101},
-        {"./opaquerect_seqvideocapture-000003.flv", 29108},
+        {"./opaquerect_seqvideocapture-000003.flv", 29023},
         {"./opaquerect_seqvideocapture-000004.png", 3107},
-        {"./opaquerect_seqvideocapture-000004.flv", 29088},
+        {"./opaquerect_seqvideocapture-000004.flv", 28979},
         {"./opaquerect_seqvideocapture-000005.png", 3101},
-        {"./opaquerect_seqvideocapture-000005.flv", 30560},
+        {"./opaquerect_seqvideocapture-000005.flv", 30370},
         {"./opaquerect_seqvideocapture-000006.png", 3099},
-        {"./opaquerect_seqvideocapture-000006.flv", 29076},
+        {"./opaquerect_seqvideocapture-000006.flv", 28989},
         {"./opaquerect_seqvideocapture-000007.png", 3101},
-        {"./opaquerect_seqvideocapture-000007.flv", 30125},
+        {"./opaquerect_seqvideocapture-000007.flv", 29922},
         {"./opaquerect_seqvideocapture-000008.png", 3098},
-        {"./opaquerect_seqvideocapture-000008.flv", 28966},
+        {"./opaquerect_seqvideocapture-000008.flv", 28882},
         {"./opaquerect_seqvideocapture-000009.png", 3098},
-        {"./opaquerect_seqvideocapture-000009.flv", 29309},
+        {"./opaquerect_seqvideocapture-000009.flv", 29214},
         {"./opaquerect_seqvideocapture-000010.png", 3098},
-        {"./opaquerect_seqvideocapture-000010.flv", 13539}
+        {"./opaquerect_seqvideocapture-000010.flv", 12805}
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);

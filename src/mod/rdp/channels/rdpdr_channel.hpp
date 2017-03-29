@@ -506,7 +506,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                             "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                 "DeviceType=%s(%u) DeviceId=%u "
                                 "PreferredDosName=\"%s\" DeviceDataLength=%u",
-                            rdpdr::DeviceAnnounceHeader::get_DeviceType_name(
+                            rdpdr::get_DeviceType_name(
                                 DeviceType),
                             DeviceType, DeviceId, PreferredDosName,
                             DeviceDataLength);

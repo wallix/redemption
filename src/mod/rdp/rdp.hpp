@@ -729,10 +729,6 @@ protected:
 
     StaticOutStream<65536> multifragment_update_data;
 
-    uint32_t clip_caps_version = 0;
-    uint32_t clip_caps_general_flags = 0;
-    std::string clip_temp_dir;
-
 public:
     using Verbose = RDPVerbose;
 
@@ -876,10 +872,6 @@ public:
         , session_probe_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
-        , clip_caps_version(info.clip_caps_version)
-        , clip_caps_general_flags(info.clip_caps_general_flags)
-        , clip_temp_dir(info.clip_temp_dir)
-
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1490,13 +1482,6 @@ protected:
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
-
-        clipboard_virtual_channel_params.default_caps_version            =
-            this->clip_caps_version;
-        clipboard_virtual_channel_params.default_caps_general_flags      =
-            this->clip_caps_general_flags;
-        clipboard_virtual_channel_params.default_temp_dir                =
-            this->clip_temp_dir.c_str();
 
         return clipboard_virtual_channel_params;
     }

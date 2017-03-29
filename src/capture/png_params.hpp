@@ -22,6 +22,8 @@
 
 #include <chrono>
 
+class auth_api;
+
 struct PngParams
 {
     unsigned png_width;

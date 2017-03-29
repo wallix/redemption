@@ -87,12 +87,13 @@ public:
         struct DeviceData {
             char name[8] = {0};
             uint32_t ID = 0;
+            uint32_t type = 0;
         };
 
         bool drives_created = false;
         bool fileSystemCapacity[5] = { false };
-        const size_t drivesCount = 1;
-        DeviceData drives[2];
+        size_t devicesCount = 1;
+        DeviceData devices[1];
 
         uint32_t next_file_id = 0;
 
@@ -369,22 +370,6 @@ public:
         return this->mod;
     }
 
-    void CtrlAltDelPressed() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
-
-    void CtrlAltDelReleased() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
-
 
 
 
@@ -486,17 +471,29 @@ public:
             }
 
             for (size_t i = 0; i < size; i++) {
-                this->fileSystemData.drives[0].name[i] = tmp.data()[i];
+                this->fileSystemData.devices[0].name[i] = tmp.data()[i];
             }
 
-            this->fileSystemData.drives[0].ID = 1;
+            this->fileSystemData.devices[0].ID = 1;
+            this->fileSystemData.devices[0].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
+
+//             this->fileSystemData.devices[1].ID = 2;
+//             this->fileSystemData.devices[1].type = rdpdr::RDPDR_DTYP_PRINT;
+//             std::string name_printer("printer");
+//             const char * char_name_printer = name_printer.c_str();
+//
+//             for (size_t i = 0; i < size; i++) {
+//                 this->fileSystemData.devices[1].name[i] = char_name_printer[i];
+//             }
+//
+//             this->fileSystemData.devicesCount++;
 
             CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                                , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                , CHANNELS::CHANNEL_CHUNK_LENGTH+1
-                                                };
+                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+1
+                                                 };
             this->_to_client_sender._channel = channel_cliprdr;
             this->cl.push_back(channel_cliprdr);
 
@@ -519,13 +516,12 @@ public:
 
         if (this->enable_shared_virtual_disk) {
             CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
-                                            , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                            , CHANNELS::CHANNEL_CHUNK_LENGTH+2
-                                            };
+                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                              , CHANNELS::CHANNEL_CHUNK_LENGTH+2
+                                              };
             this->cl.push_back(channel_rdpdr);
         }
-
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -1049,7 +1045,6 @@ public:
                             {
                             if (bool(this->verbose & RDPVerbose::rdpdr))
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
-                            //this->show_in_stream(0, chunk_series, chunk_size);
 
                             uint16_t versionMajor = chunk.in_uint16_le();
                             uint16_t versionMinor = chunk.in_uint16_le();
@@ -1204,24 +1199,43 @@ public:
                                                             , rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
                             sharedHeader.emit(out_stream);
 
-                            out_stream.out_uint32_le(this->fileSystemData.drivesCount);
+                            rdpdr::ClientDeviceListAnnounceRequest cdlar(this->fileSystemData.devicesCount);
+                            cdlar.emit(out_stream);
 
-                            for (size_t i = 0; i < this->fileSystemData.drivesCount; i++) {
-                                out_stream.out_uint32_le(rdpdr::RDPDR_DTYP_FILESYSTEM);
-                                out_stream.out_uint32_le(this->fileSystemData.drives[i].ID);
-                                out_stream.out_copy_bytes(this->fileSystemData.drives[i].name, 8);
-                                out_stream.out_uint32_le(0);
+                            for (size_t i = 0; i < this->fileSystemData.devicesCount; i++) {
+
+                                if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+
+//                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
+//                                                     this->fileSystemData.devices[i].type
+//                                                   , this->fileSystemData.devices[i].ID
+//                                                   , this->fileSystemData.devices[i].name
+//                                                   , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII |
+
+//                                                   ,
+//                                       );
+//                                     dahp.emit(out_stream);
+
+                                } else {
+
+                                    rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
+                                                                   , this->fileSystemData.devices[i].ID
+                                                                   , this->fileSystemData.devices[i].name
+                                                                   , nullptr, 0);
+                                    dah.emit(out_stream);
+
+                                }
                             }
 
                             int total_length(out_stream.get_offset());
                             InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                             this->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                , chunk_to_send
-                                                                , total_length
-                                                                , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                CHANNELS::CHANNEL_FLAG_FIRST
-                                                                );
+                                                          , chunk_to_send
+                                                          , total_length
+                                                          , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                          );
                             if (bool(this->verbose & RDPVerbose::rdpdr))
                                 LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
                             }
@@ -1279,7 +1293,7 @@ public:
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
                                                                         , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                          CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
                                 }
                                     break;
@@ -1478,7 +1492,7 @@ public:
                                                                                     , chunk_to_send
                                                                                     , out_stream.get_offset()
                                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                      CHANNELS::CHANNEL_FLAG_FIRST
                                                                                     );
 
 
@@ -1511,7 +1525,7 @@ public:
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
                                                                         , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                          CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
                                     if (bool(this->verbose & RDPVerbose::rdpdr))
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
@@ -1757,7 +1771,7 @@ public:
                                                                                 , chunk_to_send
                                                                                 , out_stream.get_offset()
                                                                                 , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                  CHANNELS::CHANNEL_FLAG_FIRST
                                                                                 );
                                             if (bool(this->verbose & RDPVerbose::rdpdr))
                                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
@@ -1927,7 +1941,7 @@ public:
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
                                                                             , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr))
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
@@ -2084,21 +2098,21 @@ public:
 
                                         switch (dcr.IoControlCode()) {
                                             case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
-                                                {
-                                                    rdpdr::ClientDriveControlResponse cdcr(64);
-                                                    cdcr.emit(out_stream);
+                                            {
+                                                rdpdr::ClientDriveControlResponse cdcr(64);
+                                                cdcr.emit(out_stream);
 
-                                                    uint8_t ObjectId[16] =  { 0 };
-                                                    ObjectId[0] = 1;
-                                                    uint8_t BirthVolumeId[16] =  { 0 };
-                                                    BirthVolumeId[15] = 1;
-                                                    uint8_t BirthObjectId[16] =  { 0 };
-                                                    BirthObjectId[15] = 1;
+                                                uint8_t ObjectId[16] =  { 0 };
+                                                ObjectId[0] = 1;
+                                                uint8_t BirthVolumeId[16] =  { 0 };
+                                                BirthVolumeId[15] = 1;
+                                                uint8_t BirthObjectId[16] =  { 0 };
+                                                BirthObjectId[15] = 1;
 
-                                                    fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId);
-                                                    rgdb.emit(out_stream);
-                                                }
-                                                break;
+                                                fscc::FileObjectBuffer_Type1 rgdb(ObjectId, BirthVolumeId, BirthObjectId);
+                                                rgdb.emit(out_stream);
+                                            }
+                                            break;
 
                                             case fscc::FSCTL_GET_OBJECT_ID :
                                             {
@@ -2142,10 +2156,126 @@ public:
                         default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       packetId);
                             break;
                     }
+                            break;
 
                 case rdpdr::Component::RDPDR_CTYP_PRT:
-                    //LOG(LOG_INFO, "SERVER >> RDPDR: RDPDR_CTYP_PRT");
-                    //this->show_in_stream(0, chunk_series, chunk_size);
+                {
+                    //hexdump_c(chunk_series.get_data(), chunk_size);
+                    chunk.in_skip_bytes(4);
+
+                    switch (packetId) {
+                        case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                        {
+                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Announce Request ");
+                        }
+                            break;
+
+                        case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                        {
+                            uint16_t capa  = chunk.in_uint16_le();
+                            chunk.in_skip_bytes(2);
+                            bool driveEnable = false;
+                            for (int i = 0; i < capa; i++) {
+                                uint16_t type = chunk.in_uint16_le();
+                                uint16_t size = chunk.in_uint16_le() - 4;
+                                chunk.in_skip_bytes(size);
+                                this->fileSystemData.fileSystemCapacity[type] = true;
+                                if (type == 0x4) {
+                                    driveEnable = true;
+                                }
+                            }
+
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                if (driveEnable) {
+                                    LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Capability Enable");
+                                } else {
+                                    LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Not Allowed");
+                                }
+                            }
+                        }
+                            break;
+
+                        case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
+                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server User Logged On");
+                            break;
+
+                        case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
+                        {
+                            rdpdr::ServerDeviceAnnounceResponse sdar;
+                            sdar.receive(chunk);
+
+                            if (sdar.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS) {
+                                this->fileSystemData.drives_created = true;
+                            } else {
+                                this->fileSystemData.drives_created = false;
+                                LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
+                            }
+                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
+                        }
+                            break;
+
+                        case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                        {
+                            LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
+                        }
+                            break;
+
+                        case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+                        {
+                            rdpdr::DeviceIORequest deviceIORequest;
+                            deviceIORequest.receive(chunk);
+
+
+                            StaticOutStream<1024> out_stream;
+                            rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                            , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
+                            sharedHeader.emit(out_stream);
+
+                            rdpdr::DeviceIOResponse deviceIOResponse( deviceIORequest.DeviceId()
+                                                                    , deviceIORequest.CompletionId()
+                                                                    , erref::NTSTATUS::STATUS_SUCCESS);
+
+                            switch (deviceIORequest.MajorFunction()) {
+
+                                case rdpdr::IRP_MJ_CREATE:
+                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
+                                        break;
+
+                                case rdpdr::IRP_MJ_READ:
+                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
+                                        break;
+
+                                case rdpdr::IRP_MJ_CLOSE:
+                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
+                                        break;
+
+                                    hexdump_c(chunk_series.get_data(), chunk_size);
+                                        break;
+
+
+                                default:
+                                    LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow MajorFunction = %x", deviceIORequest.MajorFunction());
+                                    //hexdump_c(chunk_series.get_data(), chunk_size);
+                                    break;
+
+                            }
+
+
+                        }
+                            break;
+
+
+                        default :
+                            LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", packetId);
+                            break;
+                    }
+                }
                     break;
 
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
@@ -2555,7 +2685,7 @@ public:
         this->empty_buffer();
     }
 
-    void empty_buffer() override {
+    virtual void empty_buffer() override {
         this->_cb_buffers.pic_bpp    = 0;
         this->_cb_buffers.sizeTotal  = 0;
         this->_cb_buffers.pic_width  = 0;
@@ -2634,7 +2764,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::none;       // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
+    RDPVerbose verbose = RDPVerbose::none;                     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

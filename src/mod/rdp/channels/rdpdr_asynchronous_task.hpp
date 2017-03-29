@@ -55,7 +55,7 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
         }
         remaining_len -= res;
     }
-    return size_t(len - remaining_len);
+    return len - remaining_len;
 }
 
 class RdpdrDriveReadTask : public AsynchronousTask
