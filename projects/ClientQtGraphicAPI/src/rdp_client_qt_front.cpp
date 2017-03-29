@@ -1230,6 +1230,7 @@ public:
 
 //                                                   ,
 //                                       );
+//                                     dahp.emit(out_stream);
 
                                 } else {
 
@@ -2779,7 +2780,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::rdpdr;                     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
+    RDPVerbose verbose = RDPVerbose::none;                     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
