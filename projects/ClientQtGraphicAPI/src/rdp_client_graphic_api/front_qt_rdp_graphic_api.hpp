@@ -2405,11 +2405,21 @@ public:
         this->mod->rdp_input_invalidate(rect);
     }
 
-    virtual void CtrlAltDelPressed() override {
-        LOG(LOG_WARNING, "CtrlAltDel not implemented yet.");
+    void CtrlAltDelPressed() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    virtual void CtrlAltDelReleased() override {}
+    void CtrlAltDelReleased() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+    }
 
     void disconnexionReleased() override{
         this->is_replaying = false;
