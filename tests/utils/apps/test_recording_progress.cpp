@@ -26,13 +26,203 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
-//#define LOGPRINT
-#include "utils/log.hpp"
+// #define LOGNULL
+#define LOGPRINT
+#include "utils/apps/recording_progress.hpp"
+#include "get_file_contents.hpp"
 
 //#include "path/to/file.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    BOOST_CHECK(true);
+    std::string contents;
+
+    time_t const start_time = 123456789;
+    time_t const end_time = start_time + 100;
+    char const * filename = "/tmp/test_progress_123.test";
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::JSON_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+//         {"percentage":0,"eta":-1,"videos":0}
+//         {"percentage":10,"eta":0,"videos":0}
+
+        p(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
+
+        p(start_time + 100);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::JSON_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+
+        p.next_video(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+
+        p(start_time + 100);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::JSON_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+
+        p.next_video(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+
+        p.raise_error(2, "plouf");
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents,
+            R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::OLD_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "0 -1");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "10 0");
+
+        p(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "90 0");
+
+        p(start_time + 100);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "99 0");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, "100 0");
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::OLD_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "0 -1");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "10 0");
+
+        p.next_video(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "90 0");
+
+        p(start_time + 100);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "99 0");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, "100 0");
+
+    {
+        unlink(filename);
+        UpdateProgressData p(
+            UpdateProgressData::OLD_FORMAT,
+            filename,
+            start_time,
+            end_time,
+            0, 0
+        );
+
+        BOOST_REQUIRE(p.is_valid());
+
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "0 -1");
+
+        p(start_time + 10);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "10 0");
+
+        p.next_video(start_time + 90);
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "90 0");
+
+        p.raise_error(2, "plouf");
+        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        BOOST_CHECK_EQUAL(contents, "-1 plouf (2)");
+    }
+    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    BOOST_CHECK_EQUAL(contents, "-1 plouf (2)");
+
+    unlink(filename);
 }
