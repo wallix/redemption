@@ -128,9 +128,6 @@ class video_recorder
 
     AVPacket pkt;
 
-    bool video_frame_prepared;
-    bool has_external_caller;
-
     const std::chrono::milliseconds duration_frame;
     std::chrono::milliseconds duration {};
 
@@ -153,8 +150,6 @@ public:
     : original_height(height)
     , video_outbuf_size(target_width * target_height * 3 * 5)
     , video_st(nullptr)
-    , video_frame_prepared(false)
-    , has_external_caller(false)
     , duration_frame(std::max(1000ull / frame_rate, 1ull))
     {
         /* initialize libavcodec, and register all codecs and formats */
@@ -293,6 +288,7 @@ public:
                 // low quality  (baseline, main, hight, ...)
                 av_dict.add("profile", "baseline");
                 av_dict.add("preset", "ultrafast");
+                av_dict.add("vsync", "2");
             }
 
             // open the codec
@@ -430,24 +426,18 @@ public:
         avcodec_close(this->video_st->codec);
     }
 
-    void preparing_video_frame(bool external_caller) {
-        if (external_caller) {
-            this->has_external_caller = true;
-        }
-
-        if (external_caller || !this->video_frame_prepared || !this->has_external_caller) {
-            sws_scale(
-                this->img_convert_ctx.get(),
-                this->original_picture->data, this->original_picture->linesize,
-                0, this->original_height, this->picture->data, this->picture->linesize);
-
-            this->video_frame_prepared = true;
-        }
+    void preparing_video_frame()
+    {
+        /* stat */// LOG(LOG_INFO, "%s", "preparing_video_frame");
+        sws_scale(
+            this->img_convert_ctx.get(),
+            this->original_picture->data, this->original_picture->linesize,
+            0, this->original_height, this->picture->data, this->picture->linesize);
     }
 
     void encoding_video_frame()
     {
-        this->preparing_video_frame(false);
+        /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
         // encode the image
         // int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size, const AVFrame *pict);
@@ -515,7 +505,5 @@ public:
                 throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
             }
         }
-
-        this->video_frame_prepared = false;
     }
 };

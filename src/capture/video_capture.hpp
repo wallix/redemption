@@ -63,7 +63,6 @@ private:
 
 protected:
     char final_filename[1024];
-
 };
 
 
@@ -108,8 +107,10 @@ public:
     FlvParams flv_params;
     std::unique_ptr<video_recorder> recorder;
     timeval start_video_capture;
+    time_t previous_second = 0;
     std::chrono::microseconds inter_frame_interval;
     bool no_timestamp;
+    bool has_frame_marker = false;
 };
 
 

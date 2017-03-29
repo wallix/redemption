@@ -45,7 +45,6 @@
 #include <sys/stat.h>
 
 
-
 VideoTransportBase::VideoTransportBase(const int groupid, auth_api * authentifier)
 : fd(-1)
 , groupid(groupid)
@@ -291,9 +290,11 @@ void FullVideoCaptureImpl::frame_marker_event(
         localtime_r(&rawtime, &tm_result);
         this->drawable.trace_timestamp(tm_result);
     }
-    this->recorder->preparing_video_frame(true);
+    this->recorder->preparing_video_frame();
+    this->previous_second = this->start_video_capture.tv_sec;
     if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
     this->drawable.clear_mouse();
+    this->has_frame_marker = true;
 }
 
 std::chrono::microseconds FullVideoCaptureImpl::do_snapshot(
@@ -302,21 +303,46 @@ std::chrono::microseconds FullVideoCaptureImpl::do_snapshot(
     uint64_t tick = difftimeval(now, this->start_video_capture);
     uint64_t const inter_frame_interval = this->inter_frame_interval.count();
     if (tick >= inter_frame_interval) {
-        auto encoding_video_frame = [this](time_t rawtime){
+        auto encoding_video_frame = [this](time_t const rawtime){
             this->drawable.trace_mouse();
             if (!this->no_timestamp) {
                 tm tm_result;
                 localtime_r(&rawtime, &tm_result);
                 this->drawable.trace_timestamp(tm_result);
+                if (rawtime != this->previous_second) {
+                    this->recorder->preparing_video_frame();
+                    this->previous_second = rawtime;
+                }
                 this->recorder->encoding_video_frame();
                 this->drawable.clear_timestamp();
             }
             else {
+                if (rawtime != this->previous_second) {
+                    this->recorder->preparing_video_frame();
+                    this->previous_second = rawtime;
+                }
                 this->recorder->encoding_video_frame();
             }
             this->drawable.clear_mouse();
         };
 
+        if (!this->has_frame_marker) {
+            this->drawable.trace_mouse();
+            if (!this->no_timestamp) {
+                time_t rawtime = this->start_video_capture.tv_sec;
+                tm tm_result;
+                localtime_r(&rawtime, &tm_result);
+                this->drawable.trace_timestamp(tm_result);
+            }
+            this->recorder->preparing_video_frame();
+            if (!this->no_timestamp) {
+                this->drawable.clear_timestamp();
+            }
+            this->drawable.clear_mouse();
+            this->previous_second = this->start_video_capture.tv_sec;
+        }
+
+        /* stat */// LOG(LOG_INFO, "%s", "do_snapshot_video_frame");
         if (ignore_frame_in_timeval) {
             auto const nframe = tick / inter_frame_interval;
             encoding_video_frame(this->start_video_capture.tv_sec);
@@ -339,6 +365,7 @@ std::chrono::microseconds FullVideoCaptureImpl::do_snapshot(
                     this->start_video_capture.tv_usec -= 1000000LL;
                 }
                 tick -= inter_frame_interval;
+                /* stat */// LOG(LOG_INFO, "%s", "while do_snapshot_video_frame");
             } while (tick >= inter_frame_interval);
         }
     }
@@ -355,6 +382,7 @@ std::chrono::microseconds FullVideoCaptureImpl::periodic_snapshot(
 
 void FullVideoCaptureImpl::encoding_video_frame()
 {
+    this->recorder->preparing_video_frame();
     this->recorder->encoding_video_frame();
 }
 
@@ -548,6 +576,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
 
 void SequencedVideoCaptureImpl::VideoCapture::encoding_video_frame()
 {
+    this->recorder->preparing_video_frame();
     this->recorder->encoding_video_frame();
 }
 
@@ -561,7 +590,7 @@ void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event(
         localtime_r(&rawtime, &tm_result);
         this->drawable.trace_timestamp(tm_result);
     }
-    this->recorder->preparing_video_frame(true);
+    this->recorder->preparing_video_frame();
     if (!this->no_timestamp) { this->drawable.clear_timestamp(); }
     this->drawable.clear_mouse();
 }
@@ -578,10 +607,12 @@ std::chrono::microseconds SequencedVideoCaptureImpl::VideoCapture::do_snapshot(
                 tm tm_result;
                 localtime_r(&rawtime, &tm_result);
                 this->drawable.trace_timestamp(tm_result);
+                this->recorder->preparing_video_frame();
                 this->recorder->encoding_video_frame();
                 this->drawable.clear_timestamp();
             }
             else {
+                this->recorder->preparing_video_frame();
                 this->recorder->encoding_video_frame();
             }
             this->drawable.clear_mouse();
