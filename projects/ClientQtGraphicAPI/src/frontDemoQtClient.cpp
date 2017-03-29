@@ -59,7 +59,7 @@ public:
                                    , *(this)
                                    , this->info.width
                                    , this->info.height
-                                   , ini.get<cfg::font>()
+                                   , this->ini.get<cfg::font>()
                                    , this->translator
                                    , this->theme
                                    , this->info.keylayout
@@ -72,7 +72,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
-                                   , 0xffffffff - 2);
+                                   , 0xffffffff);
 
         } catch (const Error &) {
             return nullptr;
@@ -90,7 +90,7 @@ public:
 //     }
 
     void CtrlAltDelPressed() override {
-        int flag = 0;                                       //Keymap2::KBDFLAGS_EXTENDED;
+        int flag = 0; //Keymap2::KBDFLAGS_EXTENDED;
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
         this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
