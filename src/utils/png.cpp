@@ -21,7 +21,6 @@
 #include "utils/png.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
-#include "transport/file_transport.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -171,14 +170,6 @@ namespace detail
 
 void transport_dump_png24(
     Transport & trans, uint8_t const * data,
-    const size_t width, const size_t height, const size_t rowsize,
-    const bool bgr
-) {
-    detail::transport_dump_png24(trans, data, width, height, rowsize, bgr);
-}
-
-void file_transport_dump_png24(
-    FileTransport & trans, uint8_t const * data,
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
 ) {

@@ -30,24 +30,31 @@ class OutFileTransport
     io::posix::fdbuf file;
 
 public:
-    explicit OutFileTransport(int fd) noexcept
+    explicit OutFileTransport(int fd, auth_api * auth = nullptr) noexcept
     : file(fd)
-    {}
+    {
+        if (auth) {
+            this->authentifier = auth;
+        }
+    }
 
     bool disconnect() override {
         return !this->file.close();
     }
 
 private:
-    void do_send(const uint8_t * data, size_t len) override {
+    void do_send(const uint8_t * data, size_t len) override
+    {
         const ssize_t res = this->file.write(data, len);
         if (res < 0) {
             this->status = false;
+            auto eid = ERR_TRANSPORT_WRITE_FAILED;
             if (errno == ENOSPC) {
                 this->authentifier->report("FILESYSTEM_FULL", "100|unknow");
                 errno = ENOSPC;
+                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
             }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            throw Error(eid, errno);
         }
         this->last_quantum_sent += res;
     }
