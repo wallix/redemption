@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "transport/in_file_transport.hpp"
 #include "utils/asynchronous_task_manager.hpp"
 #include "core/channel_list.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
@@ -29,10 +28,38 @@
 #include "core/wait_obj.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-class RdpdrDriveReadTask : public AsynchronousTask {
-    InFileSeekableTransport * transport;
+inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
+{
+    if (static_cast<off64_t>(-1) == lseek64(fd, offset, whence)){
+        throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+    }
+}
 
+inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
+{
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t res = ::read(fd, buffer + (len - remaining_len), remaining_len);
+        if (res <= 0){
+            if (errno == EINTR){
+                continue;
+            }
+            if (res == 0 || remaining_len != len) {
+                break;
+            }
+            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+        }
+        remaining_len -= res;
+    }
+    return len - remaining_len;
+}
+
+class RdpdrDriveReadTask : public AsynchronousTask
+{
     const int file_descriptor;
 
     const uint32_t DeviceId;
@@ -50,8 +77,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
     const RDPVerbose verbose;
 
 public:
-    RdpdrDriveReadTask(InFileSeekableTransport * transport,
-                       int file_descriptor,
+    RdpdrDriveReadTask(int file_descriptor,
                        uint32_t DeviceId,
                        uint32_t CompletionId,
                        uint32_t number_of_bytes_to_read,
@@ -59,7 +85,6 @@ public:
                        VirtualChannelDataSender & to_server_sender,
                        RDPVerbose verbose)
     : AsynchronousTask()
-    , transport(transport)
     , file_descriptor(file_descriptor)
     , DeviceId(DeviceId)
     , CompletionId(CompletionId)
@@ -129,15 +154,13 @@ public:
                 number_of_bytes_to_read);
         }
 
-        this->transport->seek(this->Offset, SEEK_SET);
+        rdpdr_in_file_seek(this->file_descriptor, this->Offset, SEEK_SET);
 
-        int number_of_bytes_read = 0;
         try {
-            number_of_bytes_read = this->transport->recv(out_stream.get_current(), number_of_bytes_to_read);
+            auto number_of_bytes_read = rdpdr_in_file_read(this->file_descriptor, out_stream.get_current(), number_of_bytes_to_read);
             out_stream.out_skip_bytes(number_of_bytes_read);
             if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
-                LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%u",
-                    number_of_bytes_read);
+                LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%zu", number_of_bytes_read);
             }
             this->Offset += number_of_bytes_read;
             this->remaining_number_of_bytes_to_read -= number_of_bytes_read;

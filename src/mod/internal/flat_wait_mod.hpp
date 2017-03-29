@@ -40,7 +40,8 @@ using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
 class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
@@ -67,6 +68,7 @@ public:
                       showform, flag)
         , vars(vars)
         , timeout(now, 600)
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
         this->screen.add_widget(&this->wait_widget);
         if (this->wait_widget.hasform) {

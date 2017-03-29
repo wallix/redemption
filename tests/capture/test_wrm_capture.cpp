@@ -34,7 +34,6 @@
 #include <snappy-c.h>
 #include <memory>
 
-#include "transport/file_transport.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 
@@ -50,154 +49,6 @@
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-
-struct wrmcapture_OutFilenameSequenceTransport : public Transport
-{
-    char current_filename_[1024];
-    WrmFGen filegen_;
-    iofdbuf buf_;
-    unsigned num_file_;
-    int groupid_;
-
-    wrmcapture_OutFilenameSequenceTransport(
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid,
-        auth_api * authentifier)
-    : filegen_(prefix, filename, extension)
-    , buf_()
-    , num_file_(0)
-    , groupid_(groupid)
-    {
-        this->current_filename_[0] = 0;
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
-    }
-
-    bool next() override {
-        if (this->status == false) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        ssize_t res = 1;
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            res = this->rename_filename() ? 0 : 1;
-        }
-
-        if (res) {
-            this->status = false;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed (M1): code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override {
-        return !this->close();
-    }
-
-    ~wrmcapture_OutFilenameSequenceTransport() {
-        this->close();
-    }
-
-private:
-
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|unknown");
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        this->last_quantum_sent += res;
-    }
-
-    public:
-
-    int close()
-    {
-        ssize_t res = 1;
-        if (this->buf_.is_open()) {
-            this->buf_.close();
-            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-            res = this->rename_filename() ? 0 : 1;
-        }
-        return res;
-    }
-
-    ssize_t write(const void * data, size_t len)
-    {
-        if (!this->buf_.is_open()) {
-            const int res = this->open_filename(this->filegen_.get(this->num_file_));
-            if (res < 0) {
-                return res;
-            }
-        }
-        return this->buf_.write(data, len);
-    }
-
-
-    iofdbuf & buf() noexcept
-    { return this->buf_; }
-
-    const char * current_path() const
-    {
-        if (!this->current_filename_[0] && !this->num_file_) {
-            return nullptr;
-        }
-
-        return this->filegen_.get(this->num_file_-1);
-    }
-
-protected:
-    ssize_t open_filename(const char * filename)
-    {
-        snprintf(this->current_filename_, sizeof(this->current_filename_),
-                    "%sred-XXXXXX.tmp", filename);
-        const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-        if (fd < 0) {
-            return fd;
-        }
-        if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-               , this->current_filename_
-               , this->groupid_ ? "u+r, g+r" : "u+r"
-               , strerror(errno), errno);
-        }
-        return this->buf_.open(fd);
-    }
-
-    const char * rename_filename()
-    {
-        const char * filename = this->filegen_.get(this->num_file_);
-        const int res = ::rename(this->current_filename_, filename);
-        if (res < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return nullptr;
-        }
-
-        this->current_filename_[0] = 0;
-        ++this->num_file_;
-        return filename;
-    }
-};
-
 
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, const char * path,
@@ -235,52 +86,10 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
-{
-    Rect scr(0, 0, 800, 600);
-    const int groupid = 0;
-    wrmcapture_OutFilenameSequenceTransport trans("./", "test", ".wrm", groupid, nullptr);
-
-    struct timeval now;
-    now.tv_sec = 1000;
-    now.tv_usec = 0;
-
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
-                       BmpCache::CacheOption(600, 768, false),
-                       BmpCache::CacheOption(300, 3072, false),
-                       BmpCache::CacheOption(262, 12288, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(800, 600);
-    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
-    GraphicToFile graphic_to_file(now, trans, 800, 600, 24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
-    );
-    WrmCaptureImpl::NativeCaptureLocal consumer(graphic_to_file, now, std::chrono::seconds{1}, std::chrono::seconds{5});
-    auto const color_cxt = gdi::ColorCtx::depth24();
-
-    drawable.show_mouse_cursor(false);
-
-    bool ignore_frame_in_timeval = false;
-
-    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
-    now.tv_sec += 6;
-    consumer.periodic_snapshot(now, 10, 10, ignore_frame_in_timeval);
-    trans.disconnect();
-
-    const char * filename0 = "./test-000000.wrm";
-    BOOST_CHECK_EQUAL(1560, ::filesize(filename0));
-   ::unlink(filename0);
-    const char * filename1 = "./test-000001.wrm";
-    BOOST_CHECK_EQUAL(3365, ::filesize(filename1));
-   ::unlink(filename1);
-}
-
 
 BOOST_AUTO_TEST_CASE(TestWrmCapture)
 {
+    OpenSSL_add_all_digests();
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
 
@@ -1512,7 +1321,11 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         BOOST_CHECK(true);
     }
 
+    BOOST_CHECK(true);
+
     {
+        BOOST_CHECK(true);
+
         InMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm", 1);
 
         char buffer[1024] = {};

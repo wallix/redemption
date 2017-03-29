@@ -2655,7 +2655,7 @@ public:
 
                     if (this->up_and_running) {
                         if (bool(this->verbose & Verbose::channel)) {
-                            LOG(LOG_INFO, "Front::send_to_mod_channel");
+                            LOG(LOG_INFO, "Front::send_to_mod_channel channel_name=\"%s\"", channel.name);
                         }
 
                         InStream chunk(sec.payload.get_current(), chunk_size);

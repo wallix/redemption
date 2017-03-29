@@ -64,7 +64,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, RDPVerbose verbose)
         params.dont_log_data_into_syslog = true;
         params.dont_log_data_into_wrm = true;
 
-        params.client_use_long_format_names = true;
+//        params.client_use_long_format_names = true;
 
         return params;
     }())

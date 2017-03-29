@@ -78,8 +78,6 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        bool client_use_long_format_names = true;
-
         Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
     };
 
@@ -91,7 +89,6 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    , client_use_long_format_names(params.client_use_long_format_names)
     , param_clipboard_down_authorized(params.clipboard_down_authorized)
     , param_clipboard_up_authorized(params.clipboard_up_authorized)
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
@@ -1247,6 +1244,12 @@ public:
         if (this->proxy_managed) {
             // Client Clipboard Capabilities PDU.
             {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                            "Send Clipboard Capabilities PDU.");
+                }
+
                 RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
                     RDPECLIP::GeneralCapabilitySet::size());
                 RDPECLIP::GeneralCapabilitySet general_cap_set(
@@ -1275,6 +1278,12 @@ public:
 
             // Format List PDU.
             {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                            "Send Clipboard Capabilities PDU.");
+                }
+
                 RDPECLIP::FormatListPDU format_list_pdu;
                 StaticOutStream<1024> out_stream;
 

@@ -133,12 +133,22 @@ class CopyPaste
     bool has_clipboard_ = false;
     size_t long_data_response_size = 0;
 
+    bool verbose;
+
 public:
     CopyPaste() = default;
+
+    CopyPaste(bool verbose) : verbose(verbose) {
+    }
+
     CopyPaste(const CopyPaste &) = delete;
     CopyPaste & operator=(const CopyPaste &) = delete;
 
     bool ready(FrontAPI & front) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "CopyPaste::ready");
+        }
+
         this->front_ = &front;
         this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
 
@@ -152,7 +162,7 @@ public:
             const size_t length     = out_s.get_offset();
             const size_t chunk_size = length;
             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                          CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                                          CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
             this->send_to_front_channel(RDPECLIP::ServerMonitorReadyPDU());
             return true;
@@ -200,7 +210,7 @@ public:
 
 //            if (this->long_data_response_size < stream.in_remain()) {
 //                LOG( LOG_ERR
-//                   , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+//                   , "CopyPaste::send_to_mod_channel truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
 //                   , this->long_data_response_size, stream.in_remain());
 //                throw Error(ERR_RDP_PROTOCOL);
 //            }
@@ -251,7 +261,7 @@ public:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.header.dataLen())) {
                             LOG( LOG_ERR
-                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
+                               , "CopyPaste::send_to_mod_channel truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
                                , format_data_response_pdu.header.dataLen(), stream.in_remain());
                             throw Error(ERR_RDP_PROTOCOL);
                         }
@@ -269,7 +279,7 @@ public:
                         // Virtual channel data span in multiple Virtual Channel PDUs.
 
                         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
-                            LOG(LOG_ERR, "selector::send_to_selector flag CHANNEL_FLAG_FIRST expected");
+                            LOG(LOG_ERR, "CopyPaste::send_to_mod_channel flag CHANNEL_FLAG_FIRST expected");
                             throw Error(ERR_RDP_PROTOCOL);
                         }
 
@@ -280,6 +290,9 @@ public:
                 break;
             }
             default:
+                if (this->verbose) {
+                    LOG(LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType));
+                }
                 break;
         }
     }
@@ -291,7 +304,7 @@ private:
         const size_t length     = out_s.get_offset();
         const size_t chunk_size = length;
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                      CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                                      CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
     }
 
     template<class PDU, class... Args>
@@ -300,7 +313,6 @@ private:
         this->send_to_front_channel_(out_s, std::move(pdu), args...);
     }
 };
-
 
 inline
 void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, NotifyApi::notify_event_t event) {

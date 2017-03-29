@@ -41,6 +41,32 @@ struct NotifyNextVideo : private noncopyable
 };
 
 
+struct VideoTransportBase : Transport
+{
+    VideoTransportBase(const int groupid, auth_api * authentifier);
+
+    void seek(int64_t offset, int whence) override;
+
+    ~VideoTransportBase();
+
+protected:
+    void force_open();
+    void rename();
+    bool is_open() const;
+    void do_send(const uint8_t * data, size_t len) override;
+
+private:
+    int fd;
+    const int groupid;
+
+    char tmp_filename[1024];
+
+protected:
+    char final_filename[1024];
+
+};
+
+
 class FullVideoCaptureImpl : public gdi::CaptureApi
 {
 public:
@@ -66,28 +92,15 @@ public:
     void encoding_video_frame();
 
 public:
-    struct TmpFileTransport : public Transport
+    struct TmpFileTransport : VideoTransportBase
     {
-        char tmp_filename[1024];
-        char final_filename[1024];
-
-        int fd;
-        int groupid;
-
-    public:
         TmpFileTransport(
             const char * const prefix,
             const char * const filename,
             const char * const extension,
-            const int groupid
+            const int groupid,
+            auth_api * authentifier
         );
-
-        void seek(int64_t offset, int whence) override;
-
-        ~TmpFileTransport();
-
-    private:
-        void do_send(const uint8_t * data, size_t len) override;
     } trans_tmp_file;
 
     RDPDrawable & drawable;
@@ -102,38 +115,29 @@ public:
 
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
-    struct SequenceTransport : public Transport
+    struct SequenceTransport : VideoTransportBase
     {
-        char tmp_filename[1024];
-        char final_filename[1024];
-
         struct FileGen {
             char path[1024];
             char base[1012];
             char ext[12];
             unsigned num = 0;
-
-            void set_final_filename(char * final_filename, size_t final_filename_size);
         } filegen;
 
-        int fd;
-        int groupid;
-
-    public:
         SequenceTransport(
             const char * const prefix,
             const char * const filename,
             const char * const extension,
             const int groupid,
-            auth_api * authentifier);
-
-        void seek(int64_t offset, int whence) override;
+            auth_api * authentifier
+        );
 
         bool next() override;
 
         ~SequenceTransport();
 
     private:
+        void set_final_filename();
         void do_send(const uint8_t * data, size_t len) override;
     };
 
