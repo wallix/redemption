@@ -94,18 +94,22 @@ public:
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        int res = HMAC_Update(&this->hmac, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        if (this->initialized){
+            int res = HMAC_Update(&this->hmac, data, data_size);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+            }
         }
     }
 
     void final(uint8_t (&out_data)[DigestLength])
     {
-        unsigned int len = 0;
-        int res = HMAC_Final(&this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        if (this->initialized){
+            unsigned int len = 0;
+            int res = HMAC_Final(&this->hmac, out_data, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
         }
     }
 };

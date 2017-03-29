@@ -94,7 +94,7 @@ public:
     {
         if (!this->hmac_key_loaded){
             if (!this->get_hmac_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+                LOG(LOG_ERR, "CryptoContext: undefined hmac_key callback");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
@@ -113,7 +113,6 @@ public:
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
     {
         if (this->old_encryption_scheme){
-            //LOG(LOG_INFO, "old encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
                 uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -128,12 +127,9 @@ public:
             }
         }
 
-        //LOG(LOG_INFO, "new encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
         if (!this->master_key_loaded){
-            //LOG(LOG_INFO, "first call, loading master key");
-            assert(this->get_trace_key_cb);
-            if (!this->get_trace_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+            if (this->get_trace_key_cb == nullptr) {
+                LOG(LOG_ERR, "CryptoContext: undefined trace_key callback");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
 
@@ -263,9 +259,6 @@ struct ocrypto {
     };
 
 private:
-    uint8_t result_buffer[32768] = {};
-
-    char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
     SslHMAC_Sha256_Delayed hm;              // full hash context
     SslHMAC_Sha256_Delayed hm4k;             // quick hash context
@@ -273,6 +266,8 @@ private:
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
     uint8_t header_buf[40];
+    uint8_t result_buffer[32768] = {};
+    char           buf[CRYPTO_BUFFER_SIZE]; //
 
     CryptoContext & cctx;
     Random & rnd;
@@ -284,8 +279,6 @@ private:
      */
     void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
     {
-        LOG(LOG_INFO, "ocrypto::xaes_encrypt()");
-
         int safe_size = *dst_sz;
         int remaining_size = 0;
 
@@ -307,11 +300,13 @@ private:
      */
     void flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     {
-        LOG(LOG_INFO, "ocrypto::flush()");
+//        LOG(LOG_INFO, "ocrypto::flush");
         // No data to flush
         if (!this->pos) {
             return;
         }
+
+//        LOG(LOG_INFO, "ocrypto::flush snappy compress pos=%d", this->pos);
         
         // Compress
         // TODO: check this
@@ -324,8 +319,10 @@ private:
             case SNAPPY_OK:
                 break;
             case SNAPPY_INVALID_INPUT:
+//                LOG(LOG_INFO, "ocrypto::flush SNAPPY INVALID INPUT");
                 throw Error(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT);
             case SNAPPY_BUFFER_TOO_SMALL:
+//                LOG(LOG_INFO, "ocrypto::flush SNAPPY BUFFER TOO SMALL");
                 throw Error(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL);
         }
 
@@ -333,6 +330,9 @@ private:
         unsigned char ciphered_buf[4 + 65536];
         //char ciphered_buf[ciphered_buf_sz];
         uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+
+//        LOG(LOG_INFO, "ocrypto::flush xaes_encrypt");
+
         this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
                            compressed_buf_sz,
                            ciphered_buf + 4, &ciphered_buf_sz);
@@ -376,6 +376,7 @@ public:
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
         this->file_size = 0;
+        this->pos = 0;
         if (this->checksum) {
             this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
             this->hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
@@ -435,10 +436,14 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+//        LOG(LOG_INFO, "ocrypto::close");
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
+//            LOG(LOG_INFO, "ocrypto::close flushing");
             this->flush(this->result_buffer, buflen, towrite);
+
+//            LOG(LOG_INFO, "ocrypto::close writing trailer");
 
             unsigned char tmp_buf[8] = {
                 'M','F','C','W',
@@ -449,12 +454,16 @@ public:
             };
 
             if (towrite + 8 > buflen){
+//                LOG(LOG_INFO, "ocrypto::close writing trailer buffer too small towrite=%d", towrite);
                 throw Error(ERR_CRYPTO_BUFFER_TOO_SMALL);
             }
             ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
             towrite += 8;
 
+//            LOG(LOG_INFO, "ocrypto::close computing checksum");
+
             if (this->checksum){
+//                LOG(LOG_INFO, "ocrypto::close hm update");
                 this->hm.update(tmp_buf, 8);
                 if (this->file_size < 4096) {
                     size_t remaining_size = 4096 - this->file_size;
@@ -462,13 +471,15 @@ public:
                 }
                 this->file_size += 8;
             }
+//            LOG(LOG_INFO, "ocrypto::close encryption done");
         }
 
-        if (this->checksum && qhash && fhash) {
+        if (this->checksum) {
             this->hm.final(fhash);
             this->hm4k.final(qhash);
 
         }
+//        LOG(LOG_INFO, "ocrypto::close done");
         return Result{{this->result_buffer, towrite}, 0u};
 
     }
@@ -492,11 +503,15 @@ public:
         size_t towrite = 0;
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
+//            LOG(LOG_INFO, "ocrypto 1: write: raw_size=%d pos=%d CRYPTO_BUFFER_SIZE=%d remaining=%d",
+//               this->raw_size, this->pos, CRYPTO_BUFFER_SIZE, remaining_size);
             // Check how much we can append into buffer
             unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
             // Append and update pos pointer
             ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
             this->pos += available_size;
+//            LOG(LOG_INFO, "ocrypto 2: write: raw_size=%d pos=%d CRYPTO_BUFFER_SIZE=%d available=%d remaining=%d",
+//               this->raw_size, this->pos, CRYPTO_BUFFER_SIZE, available_size, remaining_size);
             // If buffer is full, flush it to disk
             if (this->pos == CRYPTO_BUFFER_SIZE) {
                 size_t tmp_towrite = 0;
@@ -506,6 +521,8 @@ public:
             remaining_size -= available_size;
         }
         // Update raw size counter
+//        LOG(LOG_INFO, "ocrypto 3: write: raw_size=%d pos=%d CRYPTO_BUFFER_SIZE=%d remaining=%d",
+//            this->raw_size, this->pos, CRYPTO_BUFFER_SIZE, remaining_size);
         this->raw_size += len;
         return {{this->result_buffer, towrite}, len};
     }

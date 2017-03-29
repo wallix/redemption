@@ -56,13 +56,13 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
         ct.open(fd, tmpname, finalname);
-//        ct.send("We write, ", 10);
-//        ct.send("and again, ", 11);
-//        ct.send("and so on.", 10);
-//        ct.close(qhash, fhash);
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        ct.send("and so on.", 10);
+        ct.close(qhash, fhash);
     }
-    ::unlink(tmpname);
-    ::unlink(finalname);
+    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
 }
 
 //BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 //    }
 //    // if there is no explicit close we can't get hash values
 //    // but the file is correctly closed and ressources freed
-//    ::unlink(tmpname);
-//    ::unlink(finalname);
+//    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+//    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
 //}
 
 //BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
@@ -104,18 +104,18 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 //        ct.send("We write, ", 10);
 //        ct.send("and again, ", 11);
 //        ct.send("and so on.", 10);
-//        cl.close(qhash, fhash);
+//        ct.close(qhash, fhash);
 
 //        int fd2 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
 //        ct.open(fd2, tmpname2, finalname2);        
 //        ct.send("We write, ", 10);
 //        ct.send("and again, ", 11);
 //        ct.send("and so on.", 10);
-//        cl.close(qhash, fhash);
+//        ct.close(qhash, fhash);
 //    }
-//    ::unlink(tmpname1);
-//    ::unlink(finalname1);
-//    ::unlink(tmpname2);
-//    ::unlink(finalname2);
+//    BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
+//    BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
+//    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
+//    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
 //}
 
