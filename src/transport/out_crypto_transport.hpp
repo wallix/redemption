@@ -14,7 +14,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2013
+ *   Copyright (C) Wallix 2010-2017
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
@@ -48,13 +48,15 @@ public:
     } 
 
     ~OutCryptoTransport() {
-        LOG(LOG_INFO, "~OutCryptoTransport()");
-        if (this->fd != -1){
+        if (this->fd == -1){
+            return;
+        }
+        try {
             uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
             uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
             this->close(qhash, fhash);
             if (this->with_checksum){
-                char mes[1024]{};
+                char mes[MD_HASH::DIGEST_LENGTH*4+1+128]{};
                 char * p = mes;
                 p+= sprintf(mes, "Encrypted transport implicitely closed, hash checksums dropped :");
                 auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
@@ -70,6 +72,9 @@ public:
                 LOG(LOG_INFO, "%s", mes);
             }
         }
+        catch (Error e){
+            LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %d", e.id);
+        }
     }
 
     // TODO: CGR: I want to remove that from Transport API
@@ -80,14 +85,17 @@ public:
     void open(int fd, const char * tmpname, const char * finalname)
     {
         // This should avoid double open, we do not want that
-        if (this->fd != -1){
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
-        }
         // also ensure pathes are not to long, we will copy them in the object
-        if (strlen(tmpname) >= 2047){
+        if (strlen(finalname) >= 2047){
+            LOG(LOG_INFO, "OutCryptoTransport::open finalname oversize");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        if (strlen(finalname) >= 2047){
+        if (strlen(tmpname) >= 2047){
+            LOG(LOG_INFO, "OutCryptoTransport::open tmpname oversize (%s)", finalname);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+        if (this->fd != -1){
+            LOG(LOG_INFO, "OutCryptoTransport::open (double open error) (%s -> %s)", tmpname, finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         strcpy(this->tmpname, tmpname);
@@ -104,13 +112,14 @@ public:
     {
         // This should avoid double closes, we do not want that
         if (this->fd == -1){
+            LOG(LOG_INFO, "OutCryptoTransport::close error (double close error)");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
         this->raw_write(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
-                LOG( LOG_ERR, "Renaming file \"%s\" -> \"%s\" failed errno=%u : %s\n"
+                LOG( LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%u : %s\n"
                    , this->tmpname, this->finalname, errno, strerror(errno));
                 ::close(this->fd);
                 this->fd = -1;
@@ -126,6 +135,7 @@ private:
     void do_send(const uint8_t * data, size_t len) override 
     {
         if (this->fd == -1){
+        LOG(LOG_INFO, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.write(data, len);

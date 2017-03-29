@@ -23,6 +23,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOutCryptoTransport
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
 #define LOGPRINT
 #include "utils/log.hpp"
@@ -30,6 +31,7 @@
 
 BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 {
+    LOG(LOG_INFO, "Running test TestOutCryptoTransport");
     OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
@@ -61,61 +63,99 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
     }
+
+    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\xff\xda\x51\xa9\xbd\x9f\x1c\xce\x3d\xdd\x54\x25\x6d\x16\xb4\x3c\x88\x46\x28\x04\x53\x74\x2b\x11\xba\x75\x64\x85\x8a\x0d\x13\x84";
+
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+
     BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
     BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
 }
 
-//BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
-//{
-//    LCGRandom rnd(0);
-//    CryptoContext cctx;
-//    char tmpname[128] = "/tmp/test_transportXXXXXX";
-//    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-//    const char * finalname = "./encrypted.txt";
-//    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-//    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
-//    {
-//        OutCryptoTransport ct(true, true, cctx, rnd);
-//        ct.open(fd, tmpname, finalname);
-//        ct.send("We write, ", 10);
-//        ct.send("and again, ", 11);
-//        ct.send("and so on.", 10);
-//    }
-//    // if there is no explicit close we can't get hash values
-//    // but the file is correctly closed and ressources freed
-//    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-//    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
-//}
+BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
+{
+    LOG(LOG_INFO, "Running test TestOutCryptoTransportAutoClose");
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    char tmpname[128] = "/tmp/test_transportXXXXXX";
+    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+    const char * finalname = "./encrypted.txt";
+    try
+    {
+        OutCryptoTransport ct(true, true, cctx, rnd);
+        ct.open(fd, tmpname, finalname);
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        ct.send("and so on.", 10);
+    }
+    catch (Error e){
+        LOG(LOG_INFO, "exception raised %d", e.id);
+    };
+    // if there is no explicit close we can't get hash values
+    // but the file is correctly closed and ressources freed
+    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
+}
 
-//BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
-//{
-//    LCGRandom rnd(0);
-//    CryptoContext cctx;
-//    char tmpname1[128] = "/tmp/test_transportXXXXXX";
-//    char tmpname2[128] = "/tmp/test_transportXXXXXX";
-//    const char * finalname1 = "./encrypted001.txt";
-//    const char * finalname2 = "./encrypted002.txt";
-//    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-//    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
-//    {
-//        OutCryptoTransport ct(true, true, cctx, rnd);
-//        int fd1 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
-//        ct.open(fd1, tmpname1, finalname1);
-//        ct.send("We write, ", 10);
-//        ct.send("and again, ", 11);
-//        ct.send("and so on.", 10);
-//        ct.close(qhash, fhash);
+BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
+{
+    LOG(LOG_INFO, "Running test TestOutCryptoTransportMultipleFiles");
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    char tmpname1[128] = "/tmp/test_transportXXXXXX";
+    char tmpname2[128] = "/tmp/test_transportXXXXXX";
+    const char * finalname1 = "./encrypted001.txt";
+    const char * finalname2 = "./encrypted002.txt";
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+    {
+        OutCryptoTransport ct(true, true, cctx, rnd);
+        int fd1 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
+        ct.open(fd1, tmpname1, finalname1);
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        ct.send("and so on.", 10);
+        ct.close(qhash, fhash);
 
-//        int fd2 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
-//        ct.open(fd2, tmpname2, finalname2);        
-//        ct.send("We write, ", 10);
-//        ct.send("and again, ", 11);
-//        ct.send("and so on.", 10);
-//        ct.close(qhash, fhash);
-//    }
-//    BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
-//    BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
+        BOOST_CHECK(true);
+        int fd2 = ::mkostemp(tmpname2, O_WRONLY|O_CREAT);
+        ct.open(fd2, tmpname2, finalname2);        
+        BOOST_CHECK(true);
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        BOOST_CHECK(true);
+        ct.send("and so on.", 10);
+        ct.close(qhash, fhash); 
+        BOOST_CHECK(true);
+    }
+    BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
+    BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
 //    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
 //    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
-//}
+}
 
