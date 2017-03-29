@@ -34,7 +34,6 @@
 #include "core/RDP/capabilities/largepointer.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/clipboard.hpp"
 #include "utils/get_printable_password.hpp"
 
 struct ClientInfo {
@@ -97,10 +96,6 @@ struct ClientInfo {
 
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t  autoReconnectCookie[28] = { 0 };
-
-    uint32_t clip_caps_version = RDPECLIP::CB_CAPS_VERSION_1;
-    uint32_t clip_caps_general_flags = RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
-    std::string clip_temp_dir;
 
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
