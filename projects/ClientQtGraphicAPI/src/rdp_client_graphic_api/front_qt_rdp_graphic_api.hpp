@@ -1175,14 +1175,13 @@ public:
     virtual void begin_update() override {}
 
     virtual void end_update() override {
-        //LOG(LOG_WARNING("update_view");
         this->screen->update_view();
 
-        //if (bool(this->verbose & RDPVerbose::graphics)) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "end_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+           LOG(LOG_INFO, "--------- FRONT ------------------------");
+           LOG(LOG_INFO, "end_update");
+           LOG(LOG_INFO, "========================================\n");
+        }
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->end_update();
             struct timeval time;
@@ -1208,6 +1207,8 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        bool remake_screen = (this->info.width != width || this->info.height != height);
+
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         this->info.width = width;
@@ -1217,14 +1218,16 @@ public:
             this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
         }
 
-        if (this->screen) {
-            this->screen->disconnection();
-            this->dropScreen();
-            this->cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache->fill(Qt::transparent);
-            this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
-            this->screen->show();
+        if (remake_screen) {
+            if (this->screen) {
+                this->screen->disconnection();
+                this->dropScreen();
+                this->cache = new QPixmap(this->info.width, this->info.height);
+                this->trans_cache = new QPixmap(this->info.width, this->info.height);
+                this->trans_cache->fill(Qt::transparent);
+                this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                this->screen->show();
+            }
         }
 
         return ResizeResult::no_need;
@@ -2402,11 +2405,21 @@ public:
         this->mod->rdp_input_invalidate(rect);
     }
 
-    virtual void CtrlAltDelPressed() override {
-        LOG(LOG_WARNING, "CtrlAltDel not implemented yet.");
+    void CtrlAltDelPressed() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    virtual void CtrlAltDelReleased() override {}
+    void CtrlAltDelReleased() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+    }
 
     void disconnexionReleased() override{
         this->is_replaying = false;

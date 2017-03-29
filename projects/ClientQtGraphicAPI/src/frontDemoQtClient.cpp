@@ -59,7 +59,7 @@ public:
                                    , *(this)
                                    , this->info.width
                                    , this->info.height
-                                   , ini.get<cfg::font>()
+                                   , this->ini.get<cfg::font>()
                                    , this->translator
                                    , this->theme
                                    , this->info.keylayout
@@ -72,7 +72,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
-                                   , 0xffffffff - 2);
+                                   , 0xffffffff);
 
         } catch (const Error &) {
             return nullptr;
@@ -89,21 +89,7 @@ public:
 //         return FrontQtRDPGraphicAPI::connect();
 //     }
 
-    void CtrlAltDelPressed() override {
-        int flag = 0;                                       //Keymap2::KBDFLAGS_EXTENDED;
 
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
-
-    void CtrlAltDelReleased() override {
-        int flag = /*Keymap2::KBDFLAGS_EXTENDED |*/ KBD_FLAG_UP;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
 
 };
 
