@@ -378,7 +378,7 @@ FullVideoCaptureImpl::~FullVideoCaptureImpl() = default;
 void FullVideoCaptureImpl::frame_marker_event(
     const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
-    this->video_cap_ctx.encoding_video_frame(this->recorder);
+    this->video_cap_ctx.frame_marker_event(this->recorder);
 }
 
 std::chrono::microseconds FullVideoCaptureImpl::do_snapshot(
