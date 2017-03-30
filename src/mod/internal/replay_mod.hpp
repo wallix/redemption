@@ -104,6 +104,7 @@ public:
         case FrontAPI::ResizeResult::no_need:
             // no resizing needed
             break;
+        case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::done:
             // resizing done
             this->front_width  = this->reader.info_width;

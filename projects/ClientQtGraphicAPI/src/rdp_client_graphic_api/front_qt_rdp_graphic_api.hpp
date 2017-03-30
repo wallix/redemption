@@ -1246,7 +1246,7 @@ public:
             }
         }
 
-        return ResizeResult::no_need;
+        return ResizeResult::instant_done;
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
@@ -2509,8 +2509,8 @@ public:
         this->is_replaying = true;
         //this->setScreenDimension();
         this->load_replay_mod(movie_path_);
-//         this->info.width = this->replay_mod->get_dim().w;
-//         this->info.height = this->replay_mod->get_dim().h;
+        this->info.width = this->replay_mod->get_dim().w;
+        this->info.height = this->replay_mod->get_dim().h;
 //         LOG(LOG_WARNING, "w = %u,  h = %u", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
         this->cache_replay = new QPixmap(this->info.width, this->info.height);
         this->trans_cache = new QPixmap(this->info.width, this->info.height);
