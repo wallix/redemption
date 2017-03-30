@@ -31,6 +31,7 @@
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/cryptofile.hpp"
+#include "transport/out_crypto_transport.hpp"
 
 #include "gdi/capture_api.hpp"
 #include "capture/wrm_params.hpp"
@@ -150,21 +151,8 @@ struct MetaSeqBuf {
 
     bool with_checksum;
     bool with_encryption;
-    ocrypto meta_buf_encrypt;
+    OutCryptoTransport meta_buf_encrypt_transport;
     ocrypto wrm_filter_encrypt;
-
-
-//// Only for Checksum Management
-//    static constexpr size_t nosize = ~size_t{};
-//    static constexpr size_t quick_size = 4096;
-
-    ssize_t meta_buf_write(const uint8_t * data, size_t len)
-    {
-        const ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
-        raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size());
-        return res.buf.size();
-    }
-
 
     int next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
@@ -248,13 +236,7 @@ struct MetaSeqBuf {
         }
         *p++ = '\n';
 
-        ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t *>(mes), p-mes);
-
-        if (res < 0) {
-            LOG(LOG_INFO, "meta buf write error for \"%s\"", filename);
-            return res < 0 ? res : 1;
-        }
-
+        this->meta_buf_encrypt_transport.send(mes, p-mes);
         this->start_sec_ = this->stop_sec_+1;
         return 0;
     }
@@ -288,7 +270,7 @@ public:
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
     , with_encryption(with_encryption)
-    , meta_buf_encrypt(with_encryption, with_checksum, cctx, rnd)
+    , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
     , wrm_filter_encrypt(with_encryption, with_checksum, cctx, rnd)
     {
     }
@@ -308,17 +290,13 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
-        size_t derivator_len = 0;
-        const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
-
-        const ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
-        raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size());
+        this->meta_buf_encrypt_transport.open(this->meta_buf_fd, this->mf_.filename);
+        
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
         unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
-        const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
-        LOG(LOG_INFO, "MetaSeqBuf::open() done");
-        return res;
+        this->meta_buf_encrypt_transport.send(header1, len);
+        return 0;
     }
 
 
@@ -418,17 +396,8 @@ public:
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
         uint8_t fhash[MD_HASH::DIGEST_LENGTH];
 
-        LOG(LOG_INFO, "MetaSeqBuf::close() closing meta_buf");
-        const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
-        raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size());
-        if (-1 != this->meta_buf_fd) {
-            if (::close(this->meta_buf_fd)){
-                this->meta_buf_fd = -1;
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-                return -1;
-            }
-            this->meta_buf_fd = -1;
-        }
+        this->meta_buf_encrypt_transport.close(qhash, fhash);
+        this->meta_buf_fd = -1;
 
         ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
 
@@ -628,8 +597,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
 
 private:
     void do_send(const uint8_t * data, size_t len) override {
-        LOG(LOG_INFO, "OutMetaSequenceTransport::do_send()");
-
         const ssize_t res = this->buf.write(data, len);
         if (res < 0) {
             this->status = false;

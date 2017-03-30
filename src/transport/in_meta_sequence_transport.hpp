@@ -766,7 +766,7 @@ public:
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
-                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED"); 
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED!!!"); 
                 return -ERR_TRANSPORT_READ_FAILED;
             }
             if (ret == 0) {

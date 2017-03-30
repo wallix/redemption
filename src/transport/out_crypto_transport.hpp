@@ -61,7 +61,7 @@ public:
                 p+= sprintf(mes, "Encrypted transport implicitely closed, hash checksums dropped :");
                 auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
                     *p++ = ' ';                // 1 octet
-                    for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
+                    for (unsigned c : hash) {
                         sprintf(p, "%02x", c); // 64 octets (hash)
                         p += 2;
                     }
@@ -82,6 +82,11 @@ public:
         return 0;
     }
 
+    void open(int fd, const char * finalname)
+    {
+        this->open(fd, "", finalname);
+    }
+
     void open(int fd, const char * tmpname, const char * finalname)
     {
         // This should avoid double open, we do not want that
@@ -90,7 +95,7 @@ public:
             LOG(LOG_INFO, "OutCryptoTransport::open finalname oversize");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        if (strlen(tmpname) >= 2047){
+        if (!tmpname || strlen(tmpname) >= 2047){
             LOG(LOG_INFO, "OutCryptoTransport::open tmpname oversize (%s)", finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
@@ -104,7 +109,8 @@ public:
         const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(finalname, derivator_len));
         this->fd = fd;
 
-        ocrypto::Result res = this->encrypter.open(derivator, sizeof(derivator_len));
+        ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
+        LOG(LOG_INFO, "open->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
     }
     
@@ -116,6 +122,7 @@ public:
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
+        LOG(LOG_INFO, "close->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
@@ -139,6 +146,7 @@ private:
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.write(data, len);
+        LOG(LOG_INFO, "write->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
     }
     
