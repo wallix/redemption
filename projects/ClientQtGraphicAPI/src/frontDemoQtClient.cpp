@@ -90,7 +90,7 @@ public:
 //     }
 
 //     virtual void options() override {
-//         return FrontQtRDPGraphicAPI::connect();
+//         return FrontQtRDPGraphicAPI::options();
 //     }
 
 
