@@ -32,8 +32,6 @@
 #include "capture/cryptofile.hpp"
 #include "utils/parse.hpp"
 
-
-
 class read_encrypted
 {
 public:

@@ -33,18 +33,18 @@
  * Format (JSON):
  * \code{.json}
    {
-    'percentage': 43,
-    'eta': 567,
-    'videos': 2,
-    'error': {
-        'code': 1,
-        'message': 'Failed to generate video'
+    "percentage": [0..100],
+    "eta": [-1..],
+    "videos": [0..],
+    "error": {
+        "code": %d,
+        "message": "Failed to generate video"
     }
    }
  * \endcode
  *
  * - percentage is the remaining percentage of the video
- * - eta is the estimated time of arrival, the approximate end of generation of total videos
+ * - eta is the estimated time of arrival, the approximate end of generation of total videos. Start with -1 (unknown)
  * - videos is the number of already genereated videos
  * - error exists if the last videos fails (here the number 3), if it fails it sends back
  *   - an error code
@@ -146,7 +146,7 @@ public:
 
         int const len = std::snprintf(
             str_error_message, sizeof(str_error_message),
-            "{'percentage':%u,'eta':%d,'videos':%u,'error':{'code':%d,'message':\"%s\"}}" ,
+            R"({"percentage":%u,"eta":%d,"videos":%u,"error":{"code":%d,"message":"%s"}})" ,
             this->time_percentage, this->time_remaining, this->nb_videos, code, (message ? message : "")
         );
 
@@ -161,7 +161,7 @@ private:
 
         int const len = std::snprintf(
             str_json, sizeof(str_json),
-            "{'percentage':%u,'eta':%d,'videos':%u}",
+            R"({"percentage":%u,"eta":%d,"videos":%u})",
             this->time_percentage, this->time_remaining, this->nb_videos
         );
 
@@ -318,7 +318,6 @@ public:
 };
 
 
-// TODO temporary transition format
 class UpdateProgressData : noncopyable
 {
 public:
@@ -346,7 +345,10 @@ public:
 
     void next_video(time_t record_now)
     {
-        if (format == JSON_FORMAT) {
+        if (format == OLD_FORMAT) {
+            u.old_format(record_now);
+        }
+        else {
             u.json_format.next_video(record_now);
         }
     }

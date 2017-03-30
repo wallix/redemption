@@ -1200,7 +1200,7 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
 
     const char * filename;
     filename = "/tmp/recorder.1-000000.flv";
-    BOOST_CHECK_EQUAL(6008654, filesize(filename));
+    BOOST_CHECK_EQUAL(6006918, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1-000001.flv";
     BOOST_CHECK_EQUAL(717756, filesize(filename));

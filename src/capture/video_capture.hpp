@@ -24,6 +24,8 @@
 #include "transport/transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "flv_params.hpp"
+#include "capture/video_recorder.hpp"
+#include "capture/notify_next_video.hpp"
 
 #include <memory>
 #include <chrono>
@@ -32,13 +34,6 @@
 struct timeval;
 class video_recorder;
 class RDPDrawable;
-
-struct NotifyNextVideo : private noncopyable
-{
-    enum class reason { sequenced, external };
-    virtual void notify_next_video(const timeval& now, reason) = 0;
-    virtual ~NotifyNextVideo() = default;
-};
 
 
 struct VideoTransportBase : Transport
@@ -63,13 +58,36 @@ private:
 
 protected:
     char final_filename[1024];
-
 };
 
 
-class FullVideoCaptureImpl : public gdi::CaptureApi
+struct VideoCaptureCtx : noncopyable
 {
-public:
+    VideoCaptureCtx(
+        timeval const & now,
+        bool no_timestamp,
+        std::chrono::microseconds const & frame_interval,
+        RDPDrawable & drawable
+    );
+
+    void frame_marker_event(video_recorder &);
+    void encoding_video_frame(video_recorder &);
+    std::chrono::microseconds snapshot(video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+
+private:
+    void preparing_video_frame(video_recorder &);
+
+    RDPDrawable & drawable;
+    timeval start_video_capture;
+    std::chrono::microseconds frame_interval;
+    bool no_timestamp;
+    time_t previous_second = 0;
+    bool has_frame_marker = false;
+};
+
+
+struct FullVideoCaptureImpl : gdi::CaptureApi
+{
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, bool no_timestamp, RDPDrawable & drawable, FlvParams flv_params
@@ -91,8 +109,8 @@ public:
 
     void encoding_video_frame();
 
-public:
-    struct TmpFileTransport : VideoTransportBase
+private:
+    struct TmpFileTransport final : VideoTransportBase
     {
         TmpFileTransport(
             const char * const prefix,
@@ -103,19 +121,14 @@ public:
         );
     } trans_tmp_file;
 
-    RDPDrawable & drawable;
-
-    FlvParams flv_params;
-    std::unique_ptr<video_recorder> recorder;
-    timeval start_video_capture;
-    std::chrono::microseconds inter_frame_interval;
-    bool no_timestamp;
+    video_recorder recorder;
+    VideoCaptureCtx video_cap_ctx;
 };
 
 
 class SequencedVideoCaptureImpl : public gdi::CaptureApi
 {
-    struct SequenceTransport : VideoTransportBase
+    struct SequenceTransport final : VideoTransportBase
     {
         struct FileGen {
             char path[1024];
@@ -189,22 +202,11 @@ public:
 public:
     SequenceTransport vc_trans;
 
-    class VideoCapture
+    struct VideoCapture
     {
-        Transport & trans;
-        FlvParams flv_params;
-
-        RDPDrawable & drawable;
-        std::unique_ptr<video_recorder> recorder;
-
-        timeval start_video_capture;
-        std::chrono::microseconds inter_frame_interval;
-        bool no_timestamp;
-
-    public:
         VideoCapture(
             const timeval & now,
-            Transport & trans,
+            SequenceTransport & trans,
             RDPDrawable & drawable,
             bool no_timestamp,
             FlvParams flv_params
@@ -227,6 +229,13 @@ public:
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
         );
+
+    private:
+        VideoCaptureCtx video_cap_ctx;
+        std::unique_ptr<video_recorder> recorder;
+        SequenceTransport & trans;
+        FlvParams flv_params;
+        RDPDrawable & drawable;
     } vc;
 
     SequenceTransport ic_trans;

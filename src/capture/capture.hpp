@@ -26,9 +26,10 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
-#include "capture/video_capture.hpp"
+#include "capture/notify_next_video.hpp"
 #include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
+#include "capture/flv_params.hpp"
 #include "capture/pattern_checker_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/sequenced_video_params.hpp"
@@ -2063,6 +2064,8 @@ class TitleCaptureImpl;
 class PatternsChecker;
 class UpdateProgressData;
 class RDPDrawable;
+class SequencedVideoCaptureImpl;
+class FullVideoCaptureImpl;
 
 struct MouseTrace
 {
