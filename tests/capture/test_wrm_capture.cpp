@@ -460,11 +460,11 @@ int wrmcapture_write_filename(Writer & writer, const char * filename)
 
 template<class Writer>
 int wrmcapture_write_meta_file(
-    Writer & writer, const char * filename,
+    Writer & writer, Fstat & fstat, const char * filename,
     time_t start_sec, time_t stop_sec
 ) {
     struct stat stat;
-    int err = ::stat(filename, &stat);
+    int err = fstat.stat(filename, stat);
     if (err){
         return err;
     }
@@ -577,6 +577,15 @@ BOOST_AUTO_TEST_CASE(TestWriteFilename)
     TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
 }
 
+struct TestFstat : Fstat
+{
+    int stat(const char * /*filename*/, struct stat & stat) override
+    {
+        stat = {};
+        return 0;
+    }
+};
+
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     unsigned sec_start = 1352304810;
@@ -588,7 +597,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
         LCGRandom rnd(0);
-        Fstat fstat;
+        TestFstat fstat;
 
         timeval now;
         now.tv_sec = sec_start;
@@ -614,7 +623,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     const char * meta_hash_path = "./hash-xxx.mwrm";
     meta_len_writer.len = 5; // header
     struct stat stat;
-    BOOST_CHECK(!::stat(meta_path, &stat));
+    BOOST_CHECK(!TestFstat{}.stat(meta_path, stat));
 
     int err = wrmcapture_write_filename(meta_len_writer, filename);
     if (!err) {
@@ -661,13 +670,14 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
+    TestFstat fstat;
     const char * file1 = "./xxx-000000.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
     const char * file2 = "./xxx-000001.wrm";
-    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1));
+    BOOST_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1));
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
@@ -688,7 +698,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
         LCGRandom rnd(0);
-        Fstat fstat;
+        TestFstat fstat;
 
         timeval now;
         now.tv_sec = sec_start;
@@ -711,11 +721,13 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
 
     const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
+    
+    TestFstat fstat;
 
 //    char file1[1024];
 //    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     const char * file1 = "./xxx-000000.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file1, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
@@ -723,7 +735,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    char file2[1024];
 //    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     const char * file2 = "./xxx-000001.wrm";
-    wrmcapture_write_meta_file(meta_len_writer, file2, sec_start, sec_start+1);
+    wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1);
     meta_len_writer.len += hash_size;
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));

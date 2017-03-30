@@ -110,7 +110,6 @@ public:
         this->fd = fd;
 
         ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
-        LOG(LOG_INFO, "open->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
     }
     
@@ -122,7 +121,6 @@ public:
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
-        LOG(LOG_INFO, "close->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
@@ -146,7 +144,6 @@ private:
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.write(data, len);
-        LOG(LOG_INFO, "write->%d", res.buf.size());
         this->raw_write(res.buf.data(), res.buf.size());
     }
     
