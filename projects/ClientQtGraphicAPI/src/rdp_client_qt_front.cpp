@@ -450,6 +450,8 @@ public:
 
     virtual bool connect() override {
 
+        this->setClientInfo();
+
         this->setScreenDimension();
 
         this->clipbrdFormatsList.index = 0;

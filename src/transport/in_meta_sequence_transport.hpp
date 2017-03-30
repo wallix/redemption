@@ -766,7 +766,7 @@ public:
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
-                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED"); 
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED");
                 return -ERR_TRANSPORT_READ_FAILED;
             }
             if (ret == 0) {
@@ -1119,7 +1119,7 @@ public:
 
         LOG(LOG_INFO, "InMetaSequenceTransport::xxx3");
         if (this->buf_reader_next_line()) {
-            LOG(LOG_INFO, "InMetaSequenceTransport::xxx3.1"); 
+            LOG(LOG_INFO, "InMetaSequenceTransport::xxx3.1");
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
 
@@ -1135,7 +1135,7 @@ public:
                       , this->meta_path, sizeof(this->meta_path)
                       , basename, sizeof(basename)
                       , extension2, sizeof(extension2));
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx done"); 
+        LOG(LOG_INFO, "InMetaSequenceTransport::xxx done");
 
     }
 

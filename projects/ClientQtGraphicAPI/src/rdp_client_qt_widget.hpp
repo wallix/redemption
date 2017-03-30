@@ -342,6 +342,8 @@ public:
         this->setFixedSize(this->_width, this->_height);
         this->setModal(true);
 
+        this->_front->setClientInfo();
+
         this->_layout = new QGridLayout(this);
 
 
