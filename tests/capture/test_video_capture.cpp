@@ -159,15 +159,15 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         size_t alternativesize;
     } fileinfo[] = {
         {"./opaquerect_videocapture-000000.png", 3099, 3099},
-        {"./opaquerect_videocapture-000000.mp4", 12999, 12985},
+        {"./opaquerect_videocapture-000000.mp4", 10489, 12985},
         {"./opaquerect_videocapture-000001.png", 3104, 3104},
-        {"./opaquerect_videocapture-000001.mp4", 11726, 11712},
+        {"./opaquerect_videocapture-000001.mp4", 9127, 11712},
         {"./opaquerect_videocapture-000002.png", 3107, 3107},
-        {"./opaquerect_videocapture-000002.mp4", 10798, 10784},
+        {"./opaquerect_videocapture-000002.mp4", 8130, 10784},
         {"./opaquerect_videocapture-000003.png", 3099, 3099},
-        {"./opaquerect_videocapture-000003.mp4", 11329, 11315},
+        {"./opaquerect_videocapture-000003.mp4", 8665, 11315},
         {"./opaquerect_videocapture-000004.png", 3098, 3098},
-        {"./opaquerect_videocapture-000004.mp4", 12331, 12317},
+        {"./opaquerect_videocapture-000004.mp4", 9683, 12317},
         {"./opaquerect_videocapture-000005.png", 3098, 3098},
         {"./opaquerect_videocapture-000005.mp4", 262, 0},
     };
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
     size_t fsize = filesize(filename);
      // size actually depends on the codec version and at least two slightltly different ones exists for h264
     if (fsize != 54190 && fsize != 54176){
-        BOOST_CHECK_EQUAL(54190, filesize(filename));
+        BOOST_CHECK_EQUAL(35710, filesize(filename));
     }
     ::unlink(filename);
 
@@ -364,25 +364,25 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
         size_t alternativesize;
     } fileinfo[] = {
         {"./opaquerect_seqvideocapture_timestamp2-000000.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000000.mp4", 7323, 7309},
+        {"./opaquerect_seqvideocapture_timestamp2-000000.mp4", 7324, 7309},
         {"./opaquerect_seqvideocapture_timestamp2-000001.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000001.mp4", 6889, 6875},
+        {"./opaquerect_seqvideocapture_timestamp2-000001.mp4", 6890, 6875},
         {"./opaquerect_seqvideocapture_timestamp2-000002.png", 3104, 3104},
-        {"./opaquerect_seqvideocapture_timestamp2-000002.mp4", 6629, 6615},
+        {"./opaquerect_seqvideocapture_timestamp2-000002.mp4", 6630, 6615},
         {"./opaquerect_seqvideocapture_timestamp2-000003.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000003.mp4", 6385, 6371},
+        {"./opaquerect_seqvideocapture_timestamp2-000003.mp4", 6386, 6371},
         {"./opaquerect_seqvideocapture_timestamp2-000004.png", 3107, 3107},
-        {"./opaquerect_seqvideocapture_timestamp2-000004.mp4", 6013, 5999},
+        {"./opaquerect_seqvideocapture_timestamp2-000004.mp4", 6014, 5999},
         {"./opaquerect_seqvideocapture_timestamp2-000005.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000005.mp4", 6036, 6022},
+        {"./opaquerect_seqvideocapture_timestamp2-000005.mp4", 6037, 6022},
         {"./opaquerect_seqvideocapture_timestamp2-000006.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000006.mp4", 6133, 6119},
+        {"./opaquerect_seqvideocapture_timestamp2-000006.mp4", 6134, 6119},
         {"./opaquerect_seqvideocapture_timestamp2-000007.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000007.mp4", 6410, 6396},
+        {"./opaquerect_seqvideocapture_timestamp2-000007.mp4", 6411, 6396},
         {"./opaquerect_seqvideocapture_timestamp2-000008.png", 3098, 3098},
-        {"./opaquerect_seqvideocapture_timestamp2-000008.mp4", 6631, 6617},
+        {"./opaquerect_seqvideocapture_timestamp2-000008.mp4", 6632, 6617},
         {"./opaquerect_seqvideocapture_timestamp2-000009.png", 3098, 3098},
-        {"./opaquerect_seqvideocapture_timestamp2-000009.mp4", 6876, 6862},
+        {"./opaquerect_seqvideocapture_timestamp2-000009.mp4", 6877, 6862},
         {"./opaquerect_seqvideocapture_timestamp2-000010.png", 3098, 3098},
         {"./opaquerect_seqvideocapture_timestamp2-000010.mp4", 262, 262}
     };

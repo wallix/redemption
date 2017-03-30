@@ -210,7 +210,7 @@ public:
         this->video_st->codec->time_base.den = frame_rate;
         this->video_st->codec->time_base.num = 1;
 
-        this->video_st->codec->gop_size = 100;
+        this->video_st->codec->gop_size = std::max(100, frame_rate);
         this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
         this->video_st->codec->flags |= CODEC_FLAG_QSCALE;
         this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale;
@@ -230,13 +230,10 @@ public:
                 this->video_st->codec->flags |= AVFMT_NOTIMESTAMPS;
                 this->video_st->codec->qcompress = 0.0;
                 this->video_st->codec->max_qdiff = 4;
-                this->video_st->codec->gop_size = frame_rate;
+                //this->video_st->codec->gop_size = frame_rate;
             break;
             case AV_CODEC_ID_MPEG2VIDEO:
-                // TODO warning do we need B frames ?
-                // just for testing, we also add B frames
-                this->video_st->codec->max_b_frames = 2;
-                this->video_st->codec->gop_size = frame_rate;
+                //this->video_st->codec->gop_size = frame_rate;
             break;
             case AV_CODEC_ID_MPEG1VIDEO:
                 // Needed to avoid using macroblocks in which some coeffs overflow.
