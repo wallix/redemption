@@ -795,7 +795,7 @@ public:
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
         } else {
-            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT);
+            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT + 2);
         }
 
         QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
@@ -2489,23 +2489,23 @@ public:
         if (movie_path_.empty()) {
             return;
         }
-        auto const last_delimiter_it = std::find(movie_path_.rbegin(), movie_path_.rend(), '/');
-        std::string const movie_path = (last_delimiter_it == movie_path_.rend())
-        ? movie_path_
-        : movie_path_.substr(movie_path_.size() - (last_delimiter_it - movie_path_.rbegin()));
+//         auto const last_delimiter_it = std::find(movie_path_.rbegin(), movie_path_.rend(), '/');
+//         std::string const movie_path = (last_delimiter_it == movie_path_.rend())
+//         ? movie_path_
+//         : movie_path_.substr(movie_path_.size() - (last_delimiter_it - movie_path_.rbegin()));
 
         this->is_replaying = true;
         //this->setScreenDimension();
+        this->load_replay_mod(movie_path_);
+        this->info.width = this->replay_mod->get_dim().w;
+        this->info.height = this->replay_mod->get_dim().h;
         this->cache_replay = new QPixmap(this->info.width, this->info.height);
         this->trans_cache = new QPixmap(this->info.width, this->info.height);
         this->trans_cache->fill(Qt::transparent);
-        this->screen = new Screen_Qt(this, this->cache_replay, movie_path, this->trans_cache);
-
+        this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
         this->connected = true;
         this->form->hide();
         this->screen->show();
-
-        this->load_replay_mod(movie_path);
     }
 
     virtual bool connect() {

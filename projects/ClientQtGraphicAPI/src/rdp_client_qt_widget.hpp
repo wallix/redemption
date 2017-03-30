@@ -103,7 +103,7 @@ public:
     bool                 enable_shared_virtual_disk;
 
     const std::string    CB_TEMP_DIR;
-    std::string    SHARE_DIR;
+    std::string          SHARE_DIR;
     const std::string    USER_CONF_DIR;
 
     struct ModRDPParamsData
