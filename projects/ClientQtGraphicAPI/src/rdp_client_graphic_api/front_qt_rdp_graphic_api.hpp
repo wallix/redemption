@@ -176,8 +176,8 @@ public:
 
 
     virtual void options() {
-        LOG(LOG_WARNING, "No options window implemented yet.");
-    };
+        LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
+    }
 
     virtual mod_api * init_mod() = 0;
 
@@ -1215,7 +1215,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if (width ==  0 || height ==  0) {
+        if (width == 0 || height == 0) {
             return ResizeResult::fail;
         }
 
