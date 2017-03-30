@@ -123,14 +123,6 @@ struct MetaFilename
 };
 
 
-
-static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const uint8_t * data, size_t len)
-{
-    const ocrypto::Result res = hash_buf_encrypt.write(data, len);
-    raw_write(hash_buf_file_fd, res.buf.data(), res.buf.size());
-    return 0;
-}
-
 struct MetaSeqBuf {
     CryptoContext & cctx;
     Random & rnd;
@@ -154,7 +146,7 @@ struct MetaSeqBuf {
     OutCryptoTransport meta_buf_encrypt_transport;
     OutCryptoTransport wrm_filter_encrypt_transport;
 
-    int next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+    void next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         const char * filename = this->filegen_.get(this->num_file_);
         this->current_filename_[0] = 0;
@@ -162,10 +154,8 @@ struct MetaSeqBuf {
         this->num_file_ ++;
 
         struct stat stat;
-        int err = fstat.stat(filename, stat);
-        if (err){
-            LOG(LOG_INFO, "stat error for \"%s\"\n", filename);
-            return err;
+        if (fstat.stat(filename, stat)){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
 
         // 8Ko for a filename with expanded slash should be enough
@@ -231,7 +221,6 @@ struct MetaSeqBuf {
 
         this->meta_buf_encrypt_transport.send(mes, p-mes);
         this->start_sec_ = this->stop_sec_+1;
-        return 0;
     }
 
 public:
@@ -307,8 +296,6 @@ public:
 
     ssize_t write(const uint8_t * data, size_t len)
     {
-        LOG(LOG_INFO, "MetaSeqBuf::write()");
-
         if (-1 == this->buf_iofdbuf_fd) {
             const char * filename = this->filegen_.get(this->num_file_);
             snprintf(this->current_filename_, sizeof(this->current_filename_), "%sred-XXXXXX.tmp", filename);
@@ -327,18 +314,8 @@ public:
             this->wrm_filter_encrypt_transport.open(this->buf_iofdbuf_fd, this->current_filename_, filename);
         }
         this->wrm_filter_encrypt_transport.send(data, len);
-        LOG(LOG_INFO, "MetaSeqBuf::write() done");
         return 0;
     }
-
-    const char * current_path() const
-    {
-        if (!this->current_filename_[0] && !this->num_file_) {
-            return nullptr;
-        }
-        return this->filegen_.get(this->num_file_ - 1);
-    }
-
 
     int next()
     {
@@ -347,25 +324,20 @@ public:
             uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             this->wrm_filter_encrypt_transport.close(qhash, fhash);
             this->buf_iofdbuf_fd = -1;
-            return this->next_meta_file(qhash, fhash);
+            this->next_meta_file(qhash, fhash);
+            return 0;
         }
         return -1;
     }
 
     int close()
     {
-        LOG(LOG_INFO, "MetaSeqBuf::close()");
         if (this->buf_iofdbuf_fd != -1) {
-            LOG(LOG_INFO, "MetaSeqBuf::close() closing buf");
             uint8_t qhash[MD_HASH::DIGEST_LENGTH];
             uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             this->wrm_filter_encrypt_transport.close(qhash, fhash);
             this->buf_iofdbuf_fd = -1;
-            if (this->next_meta_file(qhash, fhash)){
-                LOG(LOG_INFO, "MetaSeqBuf::close() closing buf next_meta_file exit");
-                return -1;
-            }
-            LOG(LOG_INFO, "MetaSeqBuf::close() closing buf after next_meta_file");
+            this->next_meta_file(qhash, fhash);
         }
 
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
@@ -374,7 +346,7 @@ public:
         this->meta_buf_encrypt_transport.close(qhash, fhash);
         this->meta_buf_fd = -1;
 
-        ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+        OutCryptoTransport hash_buf_encrypt_transport(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
 
         char path[1024] = {};
         char basename[1024] = {};
@@ -398,13 +370,9 @@ public:
             return 1;
         }
 
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-        const ocrypto::Result ores = hash_buf_encrypt.open(base, base_len);
-        raw_write(hash_buf_file_fd, ores.buf.data(), ores.buf.size());
+        hash_buf_encrypt_transport.open(hash_buf_file_fd, filename);
         char header[] = "v2\n\n\n";
-        hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
+        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
 
         struct stat stat;
         int err = fstat.stat(this->mf_.filename, stat);
@@ -467,22 +435,9 @@ public:
         }
         *p++ = '\n';
 
-        ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
-
-        if (res < 0) {
-            err = res < 0 ? res : 1;
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", this->hf_.filename, int(res));
-            return 1;
-        }
-
-        const ocrypto::Result result2 = hash_buf_encrypt.close(qhash, fhash);
-        raw_write(hash_buf_file_fd, result2.buf.data(), result2.buf.size());
-        const int res3 = ::close(hash_buf_file_fd);
+        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(mes), p-mes);
+        hash_buf_encrypt_transport.close(qhash, fhash);
         hash_buf_file_fd = -1;
-        if (res3) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", this->hf_.filename, int(res3));
-            return 1;
-        }
         return 0;
     }
 
@@ -577,7 +532,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1));
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 LOG(LOG_INFO, "OutMetaSequenceTransport::do_send() exception NO_ROOM");
