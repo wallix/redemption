@@ -479,10 +479,10 @@ int main(int argc, char** argv){
             case 48:                                        // --sess_prb_lnch_mask
                 if (i+1 < argc) {
                      if (       std::string(argv[i+1]) ==  "on") {
-                        mod_rdp_params.enable_session_probe_launch_mask = true;
+                        mod_rdp_params.session_probe_enable_launch_mask = true;
                         i++;
                     } else if (std::string(argv[i+1]) ==  "off") {
-                        mod_rdp_params.enable_session_probe_launch_mask = false;
+                        mod_rdp_params.session_probe_enable_launch_mask = false;
                         i++;
                     }
                 }
@@ -797,7 +797,7 @@ int main(int argc, char** argv){
         std::cout << " enable_krb = " << mod_rdp_params.enable_krb << "\n";
         std::cout << " enable_glyph_cache = " << mod_rdp_params.enable_glyph_cache << "\n";
         std::cout << " enable_session_probe = " << mod_rdp_params.enable_session_probe << "\n";
-        std::cout << " enable_session_probe_launch_mask = t" << mod_rdp_params.enable_session_probe_launch_mask << "\n";
+        std::cout << " session_probe_enable_launch_mask = t" << mod_rdp_params.session_probe_enable_launch_mask << "\n";
         std::cout << " disable_clipboard_log_syslog = " << mod_rdp_params.disable_clipboard_log_syslog << "\n";
         std::cout << " disable_clipboard_log_wrm = " << mod_rdp_params.disable_clipboard_log_wrm << "\n";
         std::cout << " disable_file_system_log_syslog = " << mod_rdp_params.disable_file_system_log_syslog << "\n";
