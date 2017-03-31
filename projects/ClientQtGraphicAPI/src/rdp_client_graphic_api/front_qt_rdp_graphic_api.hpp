@@ -717,13 +717,19 @@ public:
     std::string    _movie_name;
 
     enum : int {
-        BUTTON_HEIGHT = 20
+        BUTTON_HEIGHT      = 20,
+        READING_BAR_HEIGHT = 20
     };
 
     uchar cursor_data[Pointer::DATA_SIZE*4];
     int cursorHotx;
     int cursorHoty;
     bool mouse_out;
+
+    QLabel movie_status;
+
+//     int width_replay_shift = 0;
+//     int height_replay_shift = 0;
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
@@ -784,7 +790,7 @@ public:
         , _trans_cache_painter(this->_trans_cache)
         , _width(this->_front->info.width)
         , _height(this->_front->info.height)
-        , _match_pixmap(this->_width, this->_height)
+        , _match_pixmap(this->_width+2, this->_height+2)
         , _connexionLasted(false)
         , _timer_replay(this)
         , _screen_index(0)
@@ -793,6 +799,7 @@ public:
         , cursorHotx(0)
         , cursorHoty(0)
         , mouse_out(false)
+        , movie_status( QString("  Stop"), this)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -802,38 +809,47 @@ public:
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
         } else {
-            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT);
+            this->setFixedSize(this->_width+2, this->_height + BUTTON_HEIGHT+READING_BAR_HEIGHT);
         }
 
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+READING_BAR_HEIGHT+1),QSize(this->_width/3, BUTTON_HEIGHT));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)     , SIGNAL (pressed()),  this, SLOT (playPressed()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+READING_BAR_HEIGHT+1),QSize(this->_width/3, BUTTON_HEIGHT));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh), SIGNAL (pressed()), this, SLOT (stopRelease()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), BUTTON_HEIGHT));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+READING_BAR_HEIGHT+1),QSize(this->_width-((this->_width/3)*2), BUTTON_HEIGHT));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
+        QRect rectMovieStatus(QPoint(0, this->_height+1),QSize(this->_width, BUTTON_HEIGHT));
+        this->movie_status.setGeometry(rectMovieStatus);
+        this->movie_status.setFocusPolicy(Qt::NoFocus);
+
         uint32_t centerW = 0;
         uint32_t centerH = 0;
         if (!this->_front->is_spanning) {
             QDesktopWidget* desktop = QApplication::desktop();
             centerW = (desktop->width()/2)  - (this->_width/2);
-            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT+10)/2);
+            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT+READING_BAR_HEIGHT)/2);
         }
         this->move(centerW, centerH);
+
+//         QPainter rect_painter(&(this->_match_pixmap));
+//         rect_painter.setPen(QColor(Qt::blue));
+//         rect_painter.drawRect(0, 0, this->_width, this->_height);
+//         this->repaint();
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
 
@@ -1006,23 +1022,26 @@ public Q_SLOTS:
         if (this->_running) {
             this->_running = false;
             this->_buttonCtrlAltDel.setText("Play");
+            this->movie_status.setText("  Pause");
             this->_timer_replay.stop();
         } else {
             this->_running = true;
             this->_buttonCtrlAltDel.setText("Pause");
+            this->movie_status.setText("  Play ");
             this->_timer_replay.start(1);
         }
     }
 
     void playReplay() {
-        if (this->_front->replay_mod->play_qt()) {
+        if (this->_front->replay_mod->play_client()) {
             this->slotRepaint();
         }
 
-        if (this->_front->replay_mod->get_break_privplay_qt()) {
+        if (this->_front->replay_mod->get_break_privplay_client()) {
             this->_timer_replay.stop();
             this->slotRepaint();
             this->_buttonCtrlAltDel.setText("Replay");
+            this->movie_status.setText("  Stop ");
             this->_running = false;
             this->_front->load_replay_mod(this->_movie_name);
         }
@@ -1055,6 +1074,7 @@ public Q_SLOTS:
 
     void stopRelease() {
         this->_buttonCtrlAltDel.setText("Replay");
+        this->movie_status.setText("  Stop ");
         this->_timer_replay.stop();
         this->_running = false;
 
@@ -1306,7 +1326,7 @@ public:
                                                 , this->_error
                                                 , this->_font
                                                 , true
-                                                , to_verbose_flags(0)
+                                                , to_verbose_flags(0) //FileToGraphic::Verbose::play
                                                 ));
 
             this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
@@ -2679,7 +2699,7 @@ public:
                 this->mod->draw_event(time(nullptr), *(this));
             } catch (const Error &) {
                 this->dropScreen();
-                const std::string errorMsg("Error: connexion to [" + this->target_IP +  "] is closed.");
+                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 

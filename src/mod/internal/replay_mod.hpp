@@ -16,7 +16,7 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen,
-              Meng Tan
+              Meng Tan, Clément Moroldo
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
@@ -143,12 +143,12 @@ public:
         this->reader.play(false);
     }
 
-    bool play_qt() {
-        return this->reader.play_qt();
+    bool play_client() {
+        return this->reader.play_client();
     }
 
-    bool get_break_privplay_qt() {
-        return this->reader.break_privplay_qt;
+    bool get_break_privplay_client() {
+        return this->reader.break_privplay_client;
     }
 
     ~ReplayMod() override {

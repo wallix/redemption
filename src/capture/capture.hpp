@@ -16,7 +16,8 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-              Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan
+              Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan,
+              Clément Moroldo
 */
 
 #pragma once
@@ -709,8 +710,8 @@ public:
         uint32_t timestamp_chunk;
     } statistics;
 
-    bool break_privplay_qt;
-    uint64_t movie_elapsed_qt;
+    bool break_privplay_client;
+    uint64_t movie_elapsed_client;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -765,8 +766,8 @@ public:
         , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
         , ignore_frame_in_timeval(false)
         , statistics()
-        , break_privplay_qt(false)
-        , movie_elapsed_qt(0)
+        , break_privplay_client(false)
+        , movie_elapsed_client(0)
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -1199,13 +1200,13 @@ public:
                         gd->sync();
                     }
 
-                    this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+                    this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
 
                     /*struct timeval now     = tvtime();
                     uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
 
                     uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-                    this->movie_elapsed_qt = movie_elapsed;
+                    this->movie_elapsed_client = movie_elapsed;
 
                     if (elapsed < movie_elapsed) {
                         struct timespec wtime     = {
@@ -1482,7 +1483,7 @@ public:
                         gd->sync();
                     }
 
-                    this->movie_elapsed_qt = difftimeval(this->record_now, this->start_record_now);
+                    this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
 
                     /*struct timeval now     = tvtime();
                     uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
@@ -1661,8 +1662,8 @@ public:
         this->privplay([](time_t){}, requested_to_stop);
     }
 
-    bool play_qt() {
-        return this->privplay_qt([](time_t){});
+    bool play_client() {
+        return this->privplay_client([](time_t){});
     }
 
     template<class CbUpdateProgress>
@@ -1707,14 +1708,14 @@ private:
     }
 
     template<class CbUpdateProgress>
-    bool privplay_qt(CbUpdateProgress update_progess) {
+    bool privplay_client(CbUpdateProgress update_progess) {
 
         struct timeval now     = tvtime();
         uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
 
         bool res(false);
 
-        if (elapsed >= this->movie_elapsed_qt) {
+        if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {
                 if (bool(this->verbose & Verbose::play)) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
@@ -1740,13 +1741,13 @@ private:
                     update_progess(this->record_now.tv_sec);
                 }
                 if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
-                    break_privplay_qt = true;
+                    break_privplay_client = true;
                 }
                 if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
-                    break_privplay_qt = true;
+                    break_privplay_client = true;
                 }
             } else {
-                break_privplay_qt = true;
+                break_privplay_client = true;
             }
         }
 
