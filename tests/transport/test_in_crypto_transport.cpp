@@ -21,18 +21,79 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOutCryptoTransport
+#define BOOST_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 #include "check_mem.hpp"
 
 #define LOGPRINT
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
+#include "transport/in_crypto_transport.hpp"
 #include <string.h>
 
-BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
+BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
-    LOG(LOG_INFO, "Running test TestOutCryptoTransport");
+    LOG(LOG_INFO, "Running test TestInCryptoTransport");
+    OpenSSL_add_all_digests();
+
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    
+    
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+
+    const char * finalname = "./clear.txt";
+    char tmpname[256];
+    {
+        OutCryptoTransport ct(false, true, cctx, rnd);
+        ct.open(finalname, S_IRUSR|S_IRGRP);
+        ::strcpy(tmpname, ct.get_tmp());
+        ct.send("We write, ", 10);
+        ct.send("and again, ", 11);
+        ct.send("and so on.", 10);
+        ct.close(qhash, fhash);
+    }
+
+    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b";
+
+    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+
+    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    
+    try
+    {
+        char buffer[40];
+        InCryptoTransport  ct(cctx, rnd);
+        ct.open(finalname);
+        ct.recv_new(buffer, 31);
+        BOOST_CHECK_EQUAL(true, ct.is_eof());
+        ct.close();
+    }
+    catch (Error e) {
+        BOOST_CHECK(false);
+    }
+
+    BOOST_CHECK(::unlink(finalname) == 0);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
+{
+    LOG(LOG_INFO, "Running test TestInCryptoTransportCrypted");
     OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
@@ -57,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
     char tmpname[256];
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(finalname, 0);
+        ct.open(finalname, S_IRUSR|S_IRGRP);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
@@ -71,89 +132,21 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
     CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
 
     BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
-}
-
-BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
-{
-    LOG(LOG_INFO, "Running test TestOutCryptoTransportAutoClose");
-    LCGRandom rnd(0);
-    CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-    ));
-    cctx.set_hmac_key(cstr_array_view(
-         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-    ));
-    char tmpname[128];
-    const char * finalname = "./encrypted.txt";
+    
     try
     {
-        OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
+        char buffer[40];
+        InCryptoTransport  ct(cctx, rnd);
+        ct.open(finalname);
+        ct.recv_new(buffer, 31);
+        BOOST_CHECK_EQUAL(true, ct.is_eof());
+        ct.close();
     }
-    catch (Error e){
-        LOG(LOG_INFO, "exception raised %d", e.id);
-    };
-    // if there is no explicit close we can't get hash values
-    // but the file is correctly closed and ressources freed
-    BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
-}
-
-BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
-{
-    LOG(LOG_INFO, "Running test TestOutCryptoTransportMultipleFiles");
-    LCGRandom rnd(0);
-    CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-    ));
-    cctx.set_hmac_key(cstr_array_view(
-         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-    ));
-    char tmpname1[128];
-    char tmpname2[128];
-    const char * finalname1 = "./encrypted001.txt";
-    const char * finalname2 = "./encrypted002.txt";
-    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
-    {
-        OutCryptoTransport ct(true, true, cctx, rnd);
-
-        ct.open(finalname1, 0);
-        ::strcpy(tmpname1, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
-        ct.close(qhash, fhash);
-
-        ct.open(finalname2, 0);        
-        ::strcpy(tmpname2, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
-        ct.close(qhash, fhash); 
+    catch (Error e) {
+        BOOST_CHECK(false);
     }
-    BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
-    BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
-    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
-    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
+
+//    BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
+
 }
 
