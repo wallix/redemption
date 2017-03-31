@@ -330,7 +330,7 @@
 "session_probe_use_smart_launcher = boolean(default=True)\n\n"
 
 "#_hidden\n"
-"enable_session_probe_launch_mask = boolean(default=True)\n\n"
+"session_probe_enable_launch_mask = boolean(default=True)\n\n"
 
 "# Behavior on failure to launch Session Probe.\n"
 "#   0: ignore failure and continue.\n"

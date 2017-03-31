@@ -1763,7 +1763,7 @@ class Sesman():
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
                 u'session_probe_use_smart_launcher' : 'use_smart_launcher',
-                u'enable_session_probe_launch_mask' : 'enable_launch_mask',
+                u'session_probe_enable_launch_mask' : 'enable_launch_mask',
                 u'session_probe_on_launch_failure' : 'on_launch_failure',
                 u'session_probe_launch_timeout' : 'launch_timeout',
                 u'session_probe_launch_fallback_timeout' : 'launch_fallback_timeout',
@@ -1774,8 +1774,9 @@ class Sesman():
                 u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
                 u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
                 u'session_probe_idle_session_limit' : 'idle_session_limit',
-                u'outbound_connection_blocking_rules' : 'outbound_connection_blocking_rules',
-                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules'
+                u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
+                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
+                u'session_probe_extra_system_processes' : 'extra_system_processes'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',
