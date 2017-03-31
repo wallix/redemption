@@ -1246,7 +1246,7 @@ public:
                 mod_rdp_params.enable_glyph_cache                  = this->ini.get<cfg::globals::glyph_cache>();
 
                 mod_rdp_params.enable_session_probe                = this->ini.get<cfg::mod_rdp::enable_session_probe>();
-                mod_rdp_params.enable_session_probe_launch_mask    = this->ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>();
+                mod_rdp_params.session_probe_enable_launch_mask    = this->ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
 
                 mod_rdp_params.session_probe_use_clipboard_based_launcher
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
@@ -1276,10 +1276,12 @@ public:
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
                 mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
-                mod_rdp_params.outbound_connection_monitoring_rules=
-                    this->ini.get<cfg::context::outbound_connection_monitoring_rules>().c_str();
-                mod_rdp_params.process_monitoring_rules            =
-                    this->ini.get<cfg::context::process_monitoring_rules>().c_str();
+                mod_rdp_params.session_probe_extra_system_processes               =
+                    this->ini.get<cfg::context::session_probe_extra_system_processes>().c_str();
+                mod_rdp_params.session_probe_outbound_connection_monitoring_rules =
+                    this->ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str();
+                mod_rdp_params.session_probe_process_monitoring_rules             =
+                    this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
