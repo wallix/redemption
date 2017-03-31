@@ -43,9 +43,13 @@ public:
         , encrypter(with_encryption, with_checksum, cctx, rnd)
         , fd(-1)
     {
-        tmpname[0] = 0;
-        finalname[0] = 0;
+        this->tmpname[0] = 0;
+        this->finalname[0] = 0;
     } 
+
+    const char * get_tmp(){
+        return &this->tmpname[0];
+    }
 
     ~OutCryptoTransport() {
         if (this->fd == -1){
@@ -82,32 +86,43 @@ public:
         return 0;
     }
 
-    void open(int fd, const char * finalname)
+    bool is_open()
     {
-        this->open(fd, "", finalname);
+        return this->fd != -1;
     }
 
-    void open(int fd, const char * tmpname, const char * finalname)
+    void open(const char * finalname, int groupid)
     {
+        LOG(LOG_INFO, "finalname is %s", finalname);
         // This should avoid double open, we do not want that
+        if (this->fd != -1){
+            LOG(LOG_INFO, "OutCryptoTransport::open (double open error) %s", finalname);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
         // also ensure pathes are not to long, we will copy them in the object
-        if (strlen(finalname) >= 2047){
+        if (strlen(finalname) >= 2047-15){
             LOG(LOG_INFO, "OutCryptoTransport::open finalname oversize");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        if (!tmpname || strlen(tmpname) >= 2047){
-            LOG(LOG_INFO, "OutCryptoTransport::open tmpname oversize (%s)", finalname);
+        snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
+        this->fd = ::mkostemps(this->tmpname, 4, O_WRONLY | O_CREAT);
+        if (this->fd == -1){
+            LOG(LOG_INFO, "OutCryptoTransport::open : open failed (%s -> %s)", this->tmpname, finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        if (this->fd != -1){
-            LOG(LOG_INFO, "OutCryptoTransport::open (double open error) (%s -> %s)", tmpname, finalname);
+
+        if (chmod(this->tmpname, groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                , this->tmpname
+                , groupid ? "u+r, g+r" : "u+r"
+                , strerror(errno), errno);
+            LOG(LOG_INFO, "OutCryptoTransport::open : chmod failed (%s -> %s)", this->tmpname, finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        strcpy(this->tmpname, tmpname);
+
         strcpy(this->finalname, finalname);
         size_t derivator_len = 0;
         const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(finalname, derivator_len));
-        this->fd = fd;
 
         ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
         this->raw_write(res.buf.data(), res.buf.size());

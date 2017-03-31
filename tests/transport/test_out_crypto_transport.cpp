@@ -28,6 +28,7 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
+#include <string.h>
 
 BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 {
@@ -52,12 +53,12 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    char tmpname[128] = "/tmp/test_transportXXXXXX";
-    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
     const char * finalname = "./encrypted.txt";
+    char tmpname[256];
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(fd, tmpname, finalname);
+        ct.open(finalname, 0);
+        ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
@@ -90,13 +91,13 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    char tmpname[128] = "/tmp/test_transportXXXXXX";
-    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+    char tmpname[128];
     const char * finalname = "./encrypted.txt";
     try
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(fd, tmpname, finalname);
+        ct.open(finalname, 0);
+        ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
@@ -127,35 +128,32 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    char tmpname1[128] = "/tmp/test_transportXXXXXX";
-    char tmpname2[128] = "/tmp/test_transportXXXXXX";
+    char tmpname1[128];
+    char tmpname2[128];
     const char * finalname1 = "./encrypted001.txt";
     const char * finalname2 = "./encrypted002.txt";
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        int fd1 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
-        ct.open(fd1, tmpname1, finalname1);
+
+        ct.open(finalname1, 0);
+        ::strcpy(tmpname1, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
 
-        BOOST_CHECK(true);
-        int fd2 = ::mkostemp(tmpname2, O_WRONLY|O_CREAT);
-        ct.open(fd2, tmpname2, finalname2);        
-        BOOST_CHECK(true);
+        ct.open(finalname2, 0);        
+        ::strcpy(tmpname2, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
-        BOOST_CHECK(true);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash); 
-        BOOST_CHECK(true);
     }
     BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
     BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
-//    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
-//    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
+    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
+    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
 }
 
