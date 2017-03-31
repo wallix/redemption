@@ -28,6 +28,7 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
+#include <string.h>
 
 BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
 {
@@ -52,19 +53,19 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransport)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    char tmpname[128] = "/tmp/test_transportXXXXXX";
-    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
     const char * finalname = "./encrypted.txt";
+    char tmpname[256];
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(fd, tmpname, finalname);
+        ct.open(finalname, 0);
+        ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
     }
 
-    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\xff\xda\x51\xa9\xbd\x9f\x1c\xce\x3d\xdd\x54\x25\x6d\x16\xb4\x3c\x88\x46\x28\x04\x53\x74\x2b\x11\xba\x75\x64\x85\x8a\x0d\x13\x84";
+    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5";
 
     CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
     CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
@@ -90,13 +91,13 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    char tmpname[128] = "/tmp/test_transportXXXXXX";
-    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+    char tmpname[128];
     const char * finalname = "./encrypted.txt";
     try
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        ct.open(fd, tmpname, finalname);
+        ct.open(finalname, 0);
+        ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
@@ -127,35 +128,32 @@ BOOST_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    char tmpname1[128] = "/tmp/test_transportXXXXXX";
-    char tmpname2[128] = "/tmp/test_transportXXXXXX";
+    char tmpname1[128];
+    char tmpname2[128];
     const char * finalname1 = "./encrypted001.txt";
     const char * finalname2 = "./encrypted002.txt";
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
-        int fd1 = ::mkostemp(tmpname1, O_WRONLY|O_CREAT);
-        ct.open(fd1, tmpname1, finalname1);
+
+        ct.open(finalname1, 0);
+        ::strcpy(tmpname1, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
 
-        BOOST_CHECK(true);
-        int fd2 = ::mkostemp(tmpname2, O_WRONLY|O_CREAT);
-        ct.open(fd2, tmpname2, finalname2);        
-        BOOST_CHECK(true);
+        ct.open(finalname2, 0);        
+        ::strcpy(tmpname2, ct.get_tmp());
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
-        BOOST_CHECK(true);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash); 
-        BOOST_CHECK(true);
     }
     BOOST_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
     BOOST_CHECK(::unlink(finalname1) == 0); // finalname exists
-//    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
-//    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
+    BOOST_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
+    BOOST_CHECK(::unlink(finalname2) == 0); // finalname exists
 }
 
