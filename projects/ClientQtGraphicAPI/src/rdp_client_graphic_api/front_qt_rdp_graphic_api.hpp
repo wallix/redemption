@@ -120,6 +120,8 @@ public:
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
 
+    std::string _movie_name;
+
 
     Front_Qt_API( RDPVerbose verbose)
     : FrontAPI(false, false)
@@ -174,8 +176,8 @@ public:
 
 
     virtual void options() {
-        LOG(LOG_WARNING, "No options window implemented yet.");
-    };
+        LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
+    }
 
     virtual mod_api * init_mod() = 0;
 
@@ -613,7 +615,12 @@ private Q_SLOTS:
                                                 this->_front->REPLAY_DIR.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
-        this->_front->replay(str_movie_path);
+        auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
+        std::string const movie_path = (last_delimiter_it == str_movie_path.rend())
+        ? str_movie_path
+        : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
+        this->_front->_movie_name = movie_path;
+        this->_front->replay(movie_path);
     }
 
     void connexionReleased() {
@@ -795,7 +802,7 @@ public:
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
         } else {
-            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT + 2);
+            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT);
         }
 
         QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
@@ -824,7 +831,7 @@ public:
         if (!this->_front->is_spanning) {
             QDesktopWidget* desktop = QApplication::desktop();
             centerW = (desktop->width()/2)  - (this->_width/2);
-            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT)/2);
+            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT+10)/2);
         }
         this->move(centerW, centerH);
 
@@ -1050,6 +1057,7 @@ public Q_SLOTS:
         this->_buttonCtrlAltDel.setText("Replay");
         this->_timer_replay.stop();
         this->_running = false;
+
         this->_front->load_replay_mod(this->_movie_name);
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
         this->slotRepaint();
@@ -1207,6 +1215,10 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        if (width == 0 || height == 0) {
+            return ResizeResult::fail;
+        }
+
         bool remake_screen = (this->info.width != width || this->info.height != height);
 
         this->mod_bpp = bpp;
@@ -1225,12 +1237,16 @@ public:
                 this->cache = new QPixmap(this->info.width, this->info.height);
                 this->trans_cache = new QPixmap(this->info.width, this->info.height);
                 this->trans_cache->fill(Qt::transparent);
-                this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                if (this->is_replaying) {
+                    this->screen = new Screen_Qt(this, this->cache, this->_movie_name, this->trans_cache);
+                } else {
+                    this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                }
                 this->screen->show();
             }
         }
 
-        return ResizeResult::no_need;
+        return ResizeResult::instant_done;
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
@@ -2489,16 +2505,13 @@ public:
         if (movie_path_.empty()) {
             return;
         }
-//         auto const last_delimiter_it = std::find(movie_path_.rbegin(), movie_path_.rend(), '/');
-//         std::string const movie_path = (last_delimiter_it == movie_path_.rend())
-//         ? movie_path_
-//         : movie_path_.substr(movie_path_.size() - (last_delimiter_it - movie_path_.rbegin()));
 
         this->is_replaying = true;
         //this->setScreenDimension();
         this->load_replay_mod(movie_path_);
         this->info.width = this->replay_mod->get_dim().w;
         this->info.height = this->replay_mod->get_dim().h;
+//         LOG(LOG_WARNING, "w = %u,  h = %u", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
         this->cache_replay = new QPixmap(this->info.width, this->info.height);
         this->trans_cache = new QPixmap(this->info.width, this->info.height);
         this->trans_cache->fill(Qt::transparent);
@@ -2517,8 +2530,6 @@ public:
 
             this->is_replaying = false;
             this->connected = true;
-
-
 
             if (this->is_recording && !this->is_replaying) {
                 Inifile ini;

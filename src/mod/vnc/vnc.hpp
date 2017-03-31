@@ -1209,6 +1209,15 @@ public:
                 }
 
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
+                case FrontAPI::ResizeResult::instant_done:
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "no resizing needed");
+                    }
+                    // no resizing needed
+                    this->state = DO_INITIAL_CLEAR_SCREEN;
+                    this->event.object_and_time = true;
+                    this->event.set();
+                    break;
                 case FrontAPI::ResizeResult::no_need:
                     if (this->verbose) {
                         LOG(LOG_INFO, "no resizing needed");
