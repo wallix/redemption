@@ -1086,40 +1086,29 @@ public:
         const char * meta_filename = tmp.c_str();
         this->buf_meta.open(meta_filename);
 
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx");
-
         char line[32];
         auto sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
         if (sz < 0) {
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
 
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx1");
-
         // v2
         if (line[0] == 'v') {
             if (this->buf_reader_next_line()
              || (sz = this->buf_reader_read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
             ) {
-                LOG(LOG_INFO, "InMetaSequenceTransport::xxx1.1");
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
             this->meta_header_version = 2;
             this->meta_header_has_checksum = (line[0] == 'c');
-            LOG(LOG_INFO, "InMetaSequenceTransport::xxx1.2");
         }
         // else v1
 
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx2");
-
         if (this->buf_reader_next_line()) {
-            LOG(LOG_INFO, "InMetaSequenceTransport::xxx2.2");
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
 
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx3");
         if (this->buf_reader_next_line()) {
-            LOG(LOG_INFO, "InMetaSequenceTransport::xxx3.1");
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
 
@@ -1135,8 +1124,6 @@ public:
                       , this->meta_path, sizeof(this->meta_path)
                       , basename, sizeof(basename)
                       , extension2, sizeof(extension2));
-        LOG(LOG_INFO, "InMetaSequenceTransport::xxx done");
-
     }
 
     ~InMetaSequenceTransport(){

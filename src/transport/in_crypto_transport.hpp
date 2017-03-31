@@ -28,6 +28,7 @@
 #include "transport/transport.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/parse.hpp"
 #include "capture/cryptofile.hpp"
 
 class InCryptoTransport : public Transport
@@ -36,12 +37,33 @@ class InCryptoTransport : public Transport
     bool eof;
     size_t file_len;
     size_t current_len;
+    
+    CryptoContext & cctx;
+    char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
+                                          // or already decrypted/decompressed data
+    uint32_t clear_pos;                   // current position in clear_data buf
+    uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
+
+    EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
+    uint32_t state;                       // enum crypto_file_state
+    unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+    int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
+    bool encrypted;
+    
 public:
-    explicit InCryptoTransport(CryptoContext & cctx, Random & rnd) noexcept
+    explicit InCryptoTransport(CryptoContext & cctx, int encryption) noexcept
         : fd(-1)
         , eof(true)
         , file_len(0)
         , current_len(0)
+        , cctx(cctx)
+        , clear_data{}
+        , clear_pos(0)
+        , raw_size(0)
+        , state(0)
+        , MAX_CIPHERED_SIZE(0)
+        , encryption(encryption)
+        , encrypted(false)
     {
     } 
 
@@ -60,14 +82,123 @@ public:
         }
         
         struct stat sb;
-        if (stat(pathname, &sb) == -1) {
+        if (::stat(pathname, &sb) == 0) {
             this->file_len = sb.st_size;
         }
         
         this->fd = ::open(pathname, O_RDONLY);
+        if (this->fd < 0) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
         this->eof = false;
+        
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
+
+        ::memset(this->clear_data, 0, sizeof(this->clear_data));
+
+        ::memset(&this->ectx, 0, sizeof(this->ectx));
+        this->clear_pos = 0;
+        this->raw_size = 0;
+        this->state = 0;
+
+        const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+        this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+
+        // todo: we could read in clear_data, that would avoid some copying
+        uint8_t data[40];
+        size_t avail = 0;
+        while (avail != 40) {
+
+            ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+            if (ret < 0 && errno == EINTR){
+                continue;
+            }
+            if (ret <= 0){
+                // Either read error or EOF: in both cases we are in trouble
+                if (ret == 0) {
+                    // see error management, we would need object internal errors
+                    // basically this case means: failed to read compression header
+                    // error.
+                    if (avail > 4){
+                        // check_encryption header:
+                    }
+                    errno = EINVAL;
+                }
+                this->close();
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+
+            if (avail < 4 and avail+ret >= 4){
+                const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+                this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
+                if (this->encrypted) {
+                    if (this->encryption == 0){
+                        this->close();
+                        throw Error(ERR_TRANSPORT_READ_FAILED);
+                    }
+                }
+                else {
+                    if (this->encryption == 1){
+                        this->close();
+                        throw Error(ERR_TRANSPORT_READ_FAILED);
+                    }
+                    else {
+                        // no encryption header but no encryption needed
+                        // we just put aside some data ready to read
+                        // in clear_data buffer and exit of open without error
+                        this->raw_size = avail + ret;
+                        this->clear_pos = 0;
+                        ::memcpy(this->clear_data, data, this->raw_size);
+                        return;
+                    }
+                }
+            }
+            avail += ret;
+        }
+
+        // Encrypted/Compressed file header (40 bytes)
+        // -------------------------------------------
+        // MAGIC: 4 bytes
+        // 0x57 0x43 0x46 0x4D (WCFM)
+        // VERSION: 4 bytes
+        // 0x01 0x00 0x00 0x00
+        // IV: 32 bytes
+        // (random)
+
+
+        Parse p(data+4);
+        const int version = p.in_uint32_le();
+        if (version > WABCRYPTOFILE_VERSION) {
+            this->close();
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        // TODO: replace p.p with some array view of 32 bytes ?
+        const uint8_t * const iv = p.p;
+        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+        const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+        const int          nrounds = 5;
+        unsigned char      key[32];
+
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        cctx.get_derived_key(trace_key, base, base_len);
+
+        int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
+                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
+        if (32 != evp_bytes_to_key_res){
+            this->close();
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+            // TODO: add error management
+            this->close();
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
     }
-    
     
     void close()
     {
