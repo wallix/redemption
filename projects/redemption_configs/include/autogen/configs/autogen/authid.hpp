@@ -115,6 +115,7 @@ enum authid_t {
     AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES,
     AUTHID_CONTEXT_DISCONNECT_REASON,
     AUTHID_CONTEXT_DISCONNECT_REASON_ACK,
+    AUTHID_CONTEXT_RECORDING_STARTED,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -229,4 +230,5 @@ constexpr char const * const authstr[] = {
     "session_probe_extra_system_processes",
     "disconnect_reason",
     "disconnect_reason_ack",
+    "recording_started",
 };

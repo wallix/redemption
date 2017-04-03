@@ -555,6 +555,8 @@ void config_spec_definition(Writer && W)
         W.member(type_<bool>(), "disconnect_reason_ack", set(false), w);
         W.sep();
         W.member(type_<std::string>(), "ip_target");
+        W.sep();
+        W.member(type_<bool>(), "recording_started", set(false), w);
     });
 
     W.section("", [&]
