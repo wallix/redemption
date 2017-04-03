@@ -27,7 +27,7 @@ inline bool check_mem(const void * p, std::size_t len, const void * mem, char * 
 {
     if (memcmp(p, mem, len)) {
         unsigned char const * sig = reinterpret_cast<unsigned char const *>(p);
-        message += std::sprintf(message, "Expected signature: \"\\x%.2x", unsigned(*sig));
+        message += std::sprintf(message, "Expected data: \"\\x%.2x", unsigned(*sig));
         while (--len) {
             message += std::sprintf(message, "\\x%.2x", unsigned(*++sig));
         }

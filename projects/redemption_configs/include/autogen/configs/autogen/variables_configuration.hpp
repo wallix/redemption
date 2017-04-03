@@ -3149,6 +3149,19 @@ namespace cfg {
             using mapped_type = type;
             type value{};
         };
+        // AUTHID_CONTEXT_RECORDING_STARTED
+        // type: bool
+        struct recording_started {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 1; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "recording_started"; }
+            static constexpr unsigned index() { return 110; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
+        };
     };
 
     // type: Theme
@@ -3466,6 +3479,7 @@ struct context
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
+, cfg::context::recording_started
 { static constexpr bool is_section = true; };
 
 }
@@ -3600,5 +3614,6 @@ using VariablesAclPack = Pack<
 , cfg::context::session_probe_extra_system_processes
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
+, cfg::context::recording_started
 >;
 }
