@@ -66,7 +66,7 @@ struct VideoCaptureCtx : noncopyable
     VideoCaptureCtx(
         timeval const & now,
         bool no_timestamp,
-        std::chrono::microseconds const & frame_interval,
+        unsigned frame_rate,
         RDPDrawable & drawable
     );
 

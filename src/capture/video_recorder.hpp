@@ -188,11 +188,11 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
         }
 
-        this->video_st->r_frame_rate.den = frame_rate;
         this->video_st->r_frame_rate.num = 1;
+        this->video_st->r_frame_rate.den = frame_rate;
 
-        this->video_st->time_base.den = frame_rate;
         this->video_st->time_base.num = 1;
+        this->video_st->time_base.den = frame_rate;
 
         this->video_st->codec->codec_id = fmt->video_codec;
         this->video_st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -207,13 +207,14 @@ public:
         // in terms of which frame timestamps are represented.
         // for fixed-fps content, timebase should be 1/framerate
         // and timestamp increments should be identically 1
-        this->video_st->codec->time_base.den = frame_rate;
         this->video_st->codec->time_base.num = 1;
+        this->video_st->codec->time_base.den = frame_rate;
 
-        this->video_st->codec->gop_size = std::max(100, frame_rate);
+        //this->video_st->codec->keyint_min = 20;
+        this->video_st->codec->gop_size = std::max(2, frame_rate);
         this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
-        this->video_st->codec->flags |= CODEC_FLAG_QSCALE;
-        this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale;
+        this->video_st->codec->flags |= CODEC_FLAG_QSCALE; // TODO
+        this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale; // TODO
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -285,7 +286,7 @@ public:
                 // low quality  (baseline, main, hight, ...)
                 av_dict.add("profile", "baseline");
                 av_dict.add("preset", "ultrafast");
-                av_dict.add("vsync", "2");
+                //av_dict.add("vsync", "2");
             }
 
             // open the codec
@@ -402,7 +403,7 @@ public:
 
     ~video_recorder() {
         // write last frame : we must ensure writing at least one frame to avoid empty movies
-        encoding_video_frame();
+//         encoding_video_frame();
 
         // write the last second for mp4 (if preset != ultrafast ...)
         //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
@@ -411,6 +412,10 @@ public:
         //    for (int i = 0; i < loop; ++i) {
         //        encoding_video_frame();
         //    }
+        // --- or --- ?
+        // int got_packet = 1;
+        // for(; got_packet;)
+        //    avcodec_encode_video2(this->video_st->codec, &this->pkt, nullptr, &got_packet);
         //}
 
         /* write the trailer, if any.  the trailer must be written
@@ -432,7 +437,7 @@ public:
             0, this->original_height, this->picture->data, this->picture->linesize);
     }
 
-    void encoding_video_frame()
+    void encoding_video_frame(uint64_t frame_index = 1)
     {
         /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
@@ -476,6 +481,34 @@ public:
 
         // fix "non-strictly-monotonic PTS" warning, but grow file
         //this->picture->pts += this->duration_frame.count();
+auto frame_interval = this->video_st->r_frame_rate.den;
+
+        static auto old_frame_index = 0;
+//         this->pkt.dts = this->duration.count();
+        //this->picture->pkt_dts = this->duration.count() * this->video_st->time_base.den;
+//         this->pkt.duration = this->duration_frame.count() * n;
+auto pts = this->video_st->time_base.den * frame_index / frame_interval;
+auto dur = this->video_st->time_base.den * (frame_index - old_frame_index) / frame_interval;
+        this->duration += std::chrono::milliseconds(dur);
+        //this->pkt.duration = dur.count() * this->video_st->time_base.den;
+        //this->pkt.pts = this->pkt.dts = (this->duration_frame * frame_index).count();
+        this->pkt.pts = this->pkt.dts = pts;
+//         this->pkt.pts = this->duration.count();
+        //this->picture->pts = this->duration.count() * frame_interval;
+        this->picture->pts = pts;
+        old_frame_index = frame_index;
+
+
+// static uint64_t pts = 0;
+//         this->picture->pkt_dts = pts;
+//         auto oldpts = pts;
+//         pts = (this->duration_frame * frame_index * this->video_st->time_base.den).count() * 1000;
+//         this->pkt.pts = this->pkt.dts = pts;
+//         this->pkt.duration = pts-oldpts;
+//         //this->duration += this->duration_frame * n;
+// //         this->pkt.pts = this->duration.count();
+//         this->picture->pts = pts;
+LOG(LOG_INFO, "i: %lu, pic.pts: %ld  dur: %ld dur2: %ld  durframe %ld", frame_index, this->picture->pts, dur, av_rescale_q(1, this->video_st->time_base, this->video_st->codec->time_base), this->duration_frame.count());
 
         const int res = avcodec_encode_video2(
             this->video_st->codec,
@@ -484,18 +517,20 @@ public:
             &got_packet);
 
         if (res == 0 && got_packet) {
-            if (this->frame_key == frame_key_limit) {
+//             if (this->frame_key == frame_key_limit) {
                 this->pkt.flags |= AV_PKT_FLAG_KEY;
                 this->frame_key = 0;
-            }
+//             }
             ++this->frame_key;
             this->pkt.stream_index = this->video_st->index;
-            this->pkt.duration = this->duration_frame.count();
-            if (!(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
-                this->pkt.dts = this->duration.count();
-                this->duration += this->duration_frame;
-                this->pkt.pts = this->duration.count();
-            }
+            this->pkt.duration = dur;
+//             if (!(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
+//                 this->pkt.dts = this->duration.count();
+//                 this->duration += this->duration_frame;
+//                 this->pkt.pts = this->duration.count();
+//             }
+//this->pkt.pts = (this->duration_frame * frame_index).count() * frame_interval;
+LOG(LOG_INFO, "%d %ld %ld", this->pkt.duration, this->pkt.pts, this->pkt.dts);
 
             if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");

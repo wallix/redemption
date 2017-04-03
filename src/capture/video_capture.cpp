@@ -85,6 +85,9 @@ void VideoTransportBase::force_open()
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
     this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (this->fd == -1) {
+        LOG( LOG_ERR, "can't open temporary file %s : %s [%u]"
+           , this->tmp_filename
+           , strerror(errno), errno);
         this->status = false;
         auto eid = ERR_TRANSPORT_OPEN_FAILED;
         if (errno == ENOSPC) {
@@ -96,9 +99,9 @@ void VideoTransportBase::force_open()
     }
     if (fchmod(this->fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-            , this->tmp_filename
-            , this->groupid ? "u+r, g+r" : "u+r"
-            , strerror(errno), errno);
+           , this->tmp_filename
+           , this->groupid ? "u+r, g+r" : "u+r"
+           , strerror(errno), errno);
         ::close(this->fd);
         this->fd = -1;
         unlink(this->tmp_filename);
@@ -148,6 +151,7 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
                 errno = ENOSPC;
                 eid = ERR_TRANSPORT_WRITE_NO_ROOM;
             }
+            LOG( LOG_ERR, "VideoTransport::send: %s [%u]", strerror(errno), errno);
             throw Error(eid, errno);
         }
         remaining_len -= ret;
@@ -165,12 +169,12 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
 VideoCaptureCtx::VideoCaptureCtx(
     timeval const & now,
     bool no_timestamp,
-    std::chrono::microseconds const & frame_interval,
+    unsigned frame_rate,
     RDPDrawable & drawable
 )
 : drawable(drawable)
 , start_video_capture(now)
-, frame_interval(frame_interval)
+, frame_interval(std::chrono::microseconds(1000000L / frame_rate))
 , no_timestamp(no_timestamp)
 {}
 
@@ -198,10 +202,14 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
     this->has_frame_marker = true;
 }
 
+        static uint64_t g_tick = 0;
+        static uint64_t g_time = 0;
+        static uint64_t g_previous_time = 0;
+
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
-    recorder.preparing_video_frame();
-    recorder.encoding_video_frame();
+//     recorder.preparing_video_frame();
+//     recorder.encoding_video_frame(g_tick);
 }
 
 std::chrono::microseconds
@@ -210,12 +218,17 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool i
     uint64_t tick = difftimeval(now, this->start_video_capture);
     uint64_t const frame_interval = this->frame_interval.count();
     if (tick >= frame_interval) {
-        auto encoding_video_frame = [this, &recorder](){
+        g_time += tick;
+        auto encoding_video_frame = [this, &recorder, frame_interval](){
             if (this->start_video_capture.tv_sec != this->previous_second) {
                 // TODO only if drawable is updated
                 this->preparing_video_frame(recorder);
             }
-            recorder.encoding_video_frame();
+            uint64_t count = g_time - g_previous_time;
+            for (; count >= frame_interval; count -= std::min(count, 5*frame_interval)) {
+                recorder.encoding_video_frame(g_previous_time / frame_interval);
+                g_previous_time += std::min(count, 5*frame_interval);
+            }
         };
 
         if (!this->has_frame_marker) {
@@ -237,14 +250,24 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool i
         if (ignore_frame_in_timeval) {
             encoding_video_frame();
             auto const nframe = tick / frame_interval;
+            g_tick += nframe;
             tick -= inc_video_time(frame_interval * nframe);
+            g_time -= tick;
         }
         else {
             do {
-                encoding_video_frame();
-                tick -= inc_video_time(frame_interval);
+                auto sec = frame_interval / 1000000LL;
+                this->start_video_capture.tv_usec += frame_interval - sec * 1000000LL;
+                if (this->start_video_capture.tv_usec >= 1000000LL){
+                    this->start_video_capture.tv_usec -= 1000000LL;
+                    ++sec;
+                }
+                this->start_video_capture.tv_sec += sec;
+                tick -= frame_interval;
                 /* stat */// LOG(LOG_INFO, "%s", "while do_snapshot_video_frame");
             } while (tick >= frame_interval);
+            g_time -= tick;
+            encoding_video_frame();
         }
     }
     return std::chrono::microseconds(frame_interval - tick);
@@ -361,7 +384,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     flv_params.target_width,
     flv_params.target_height,
     flv_params.verbosity)
-, video_cap_ctx(now, no_timestamp, std::chrono::microseconds(1000000L / flv_params.frame_rate), drawable)
+, video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 {
     if (flv_params.verbosity) {
         LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
@@ -551,7 +574,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     RDPDrawable & drawable,
     bool no_timestamp,
     FlvParams flv_params)
-: video_cap_ctx(now, no_timestamp, std::chrono::microseconds(1000000L / flv_params.frame_rate), drawable)
+: video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , drawable(drawable)
