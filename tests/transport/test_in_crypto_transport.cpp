@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         CHECK_MEM(buffer, 31, "We write, and again, and so on.");
     }
     catch (Error e) {
-//        BOOST_CHECK(false);
+        BOOST_CHECK(false);
     }
 
 
@@ -153,6 +153,5 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     }
 
     BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
-
 }
 
