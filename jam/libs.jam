@@ -14,7 +14,7 @@ rule gcov_link ( properties * ) {
   }
 }
 
-lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <conditional>@gcov_link $(GCOV) ;
+lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <conditional>@gcov_link $(GCOV) <cxxflags>-frtti $(OBJ_TEST_DEPENDENCIES) ;
 lib openssl : : <name>ssl <link>shared ;
 
 lib krb5 : : <name>krb5 <link>shared ;
