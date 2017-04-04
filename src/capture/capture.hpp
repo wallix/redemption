@@ -649,8 +649,8 @@ public:
 
     const BGRPalette & palette = BGRPalette::classic_332(); // We don't really care movies are always 24 bits for now
 
-    const timeval begin_capture;
-    const timeval end_capture;
+    timeval begin_capture;
+    timeval end_capture;
     uint32_t max_order_count;
 
     uint16_t info_version;
@@ -795,6 +795,10 @@ public:
         this->kbd_input_consumers.push_back(kbd_input_ptr);
         this->capture_probe_consumers.push_back(capture_probe_ptr);
         this->external_event_consumers.push_back(external_event_ptr);
+    }
+
+    void set_pause_client(timeval & time) {
+        this->start_synctime_now = {this->start_synctime_now.tv_sec + time.tv_sec, this->start_synctime_now.tv_usec + time.tv_usec};
     }
 
     /* order count set this->stream.p to the beginning of the next order.

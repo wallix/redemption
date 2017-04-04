@@ -172,6 +172,10 @@ public:
                                int16_t /*param1*/, int16_t /*param2*/) override {
     }
 
+    void set_pause(timeval & time) {
+        this->reader.set_pause_client(time);
+    }
+
     void refresh(Rect /*rect*/) override {}
 
     // event from back end (draw event from remote or internal server)
