@@ -81,17 +81,19 @@ public:
         return this->fd != -1;
     }
 
+    void hash(const char * pathname)
+    {
+        this->open(pathname);
+        
+    }
+
     void open(const char * pathname)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         
-        struct stat sb;
-        if (::stat(pathname, &sb) == 0) {
-            this->file_len = sb.st_size;
-        }
-        
+       
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -136,6 +138,10 @@ public:
                     this->raw_size = avail;
                     this->clear_pos = 0;
                     ::memcpy(this->clear_data, data, avail);
+                    struct stat sb;
+                    if (::stat(pathname, &sb) == 0) {
+                        this->file_len = sb.st_size;
+                    }
                     return;
                 }
                 this->close();
@@ -149,6 +155,10 @@ public:
             this->raw_size = 40;
             this->clear_pos = 0;
             ::memcpy(this->clear_data, data, 40);
+            struct stat sb;
+            if (::stat(pathname, &sb) == 0) {
+                this->file_len = sb.st_size;
+            }
             return;
         }
 
@@ -171,10 +181,14 @@ public:
                     this->close();
                     throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
-                // Auto: rely on magic copy what we have, it's not encrypted
+                // Auto: rely on magic. Copy what we have, it's not encrypted
                 this->raw_size = 40;
                 this->clear_pos = 0;
                 ::memcpy(this->clear_data, data, 40);
+                struct stat sb;
+                if (::stat(pathname, &sb) == 0) {
+                    this->file_len = sb.st_size;
+                }
                 return;
             }
         }
@@ -187,6 +201,21 @@ public:
             LOG(LOG_INFO, "unsupported_version");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
+
+        // Read File trailer, check for magic trailer and size
+        off64_t off_here = lseek64(this->fd, 0, SEEK_CUR);
+        lseek64(this->fd, -8, SEEK_END);
+        uint8_t trail[8] = {};
+        this->raw_read(trail, 8);
+        Parse pt1(&trail[0]);
+        if (pt1.in_uint32_be() != 0x4D464357){
+            // truncated file
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        Parse pt2(&trail[4]);
+        this->current_len = pt2.in_uint32_le();
+        lseek64(this->fd, off_here, SEEK_SET);
+        // the fd is back where we was
 
         // TODO: replace p.p with some array view of 32 bytes ?
         const uint8_t * const iv = p.p;
@@ -284,7 +313,6 @@ private:
                         this->state = CF_EOF;
                         this->clear_pos = 0;
                         this->raw_size = 0;
-                        this->close();
                         break;
                     }
                     if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
@@ -357,14 +385,10 @@ private:
                 this->raw_size = 0;
                 this->clear_pos = 0;
             }
-
             int res = -1;
             while(remaining_len){
                 res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
                 if (res <= 0){
-                    if ((res == 0) || ((errno != EINTR) && (remaining_len != len))){
-                        break;
-                    }
                     if (errno == EINTR){
                         continue;
                     }
@@ -373,15 +397,11 @@ private:
                 }
                 remaining_len -= res;
             };
-            res = len - remaining_len;
-            this->current_len += res;
+            this->current_len += len;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
             }
-            this->last_quantum_received += res;
-            if (remaining_len != 0){
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
+            this->last_quantum_received += len;
         }
     }    
 };
