@@ -213,11 +213,11 @@ public:
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         Parse pt2(&trail[4]);
-        this->current_len = pt2.in_uint32_le();
+        this->file_len = pt2.in_uint32_le();
         lseek64(this->fd, off_here, SEEK_SET);
         // the fd is back where we was
 
-        // TODO: replace p.p with some array view of 32 bytes ?
+        // TODO: replace p.with some array view of 32 bytes ?
         const uint8_t * const iv = p.p;
         const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
         const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };

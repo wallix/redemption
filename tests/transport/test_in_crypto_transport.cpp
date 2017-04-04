@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         BOOST_CHECK_EQUAL(ct.is_encrypted(), true);
         BOOST_CHECK_EQUAL(false, ct.is_eof());
         ct.recv_new(buffer, 30);
-//        BOOST_CHECK_EQUAL(false, ct.is_eof());
+        BOOST_CHECK_EQUAL(false, ct.is_eof());
         ct.recv_new(&buffer[30], 1);
         BOOST_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
