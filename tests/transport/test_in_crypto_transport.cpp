@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         CHECK_MEM(buffer, 31, "We write, and again, and so on.");
     }
     catch (Error e) {
-//        BOOST_CHECK(false);
+        BOOST_CHECK(false);
     }
 
 
@@ -142,17 +142,17 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         char buffer[40];
         InCryptoTransport  ct(cctx, 0);
         ct.open(finalname);
+        BOOST_CHECK_EQUAL(ct.is_encrypted(), true);
         BOOST_CHECK_EQUAL(false, ct.is_eof());
         ct.recv_new(buffer, 31);
 //        BOOST_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
-//        CHECK_MEM(buffer, 31, "We write, and again, and so on.");
+        CHECK_MEM(buffer, 31, "We write, and again, and so on.");
     }
     catch (Error e) {
-//        BOOST_CHECK(false);
+        BOOST_CHECK(false);
     }
 
     BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
-
 }
 

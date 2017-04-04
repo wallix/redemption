@@ -70,6 +70,12 @@ public:
     ~InCryptoTransport() {
     }
 
+
+    bool is_encrypted()
+    {
+        return this->encrypted;
+    }
+
     bool is_open()
     {
         return this->fd != -1;
@@ -92,7 +98,8 @@ public:
         }
 
         this->eof = false;
-        
+
+
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
 
@@ -110,7 +117,6 @@ public:
         uint8_t data[40];
         size_t avail = 0;
         while (avail != 40) {
-
             ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
             if (ret < 0 && errno == EINTR){
                 continue;
@@ -118,44 +124,32 @@ public:
             if (ret <= 0){
                 // Either read error or EOF: in both cases we are in trouble
                 if (ret == 0) {
-                    // see error management, we would need object internal errors
-                    // basically this case means: failed to read compression header
-                    // error.
-                    if (avail > 4){
-                        // check_encryption header:
-                    }
-                    errno = EINVAL;
-                }
-                this->close();
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-
-            if (avail < 4 and avail+ret >= 4){
-                const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
-                this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
-                if (this->encrypted) {
-                    if (this->encryption == 0){
-                        this->close();
-                        throw Error(ERR_TRANSPORT_READ_FAILED);
-                    }
-                }
-                else {
+                    // if we have less than magic followed by encryption header
+                    // then our file is necessarilly not encrypted.
+                    this->encrypted = false;
+                    // encryption requested but no encryption
                     if (this->encryption == 1){
                         this->close();
                         throw Error(ERR_TRANSPORT_READ_FAILED);
                     }
-                    else {
-                        // no encryption header but no encryption needed
-                        // we just put aside some data ready to read
-                        // in clear_data buffer and exit of open without error
-                        this->raw_size = avail + ret;
-                        this->clear_pos = 0;
-                        ::memcpy(this->clear_data, data, this->raw_size);
-                        return;
-                    }
+                    // copy what we have, it's not encrypted
+                    this->raw_size = avail;
+                    this->clear_pos = 0;
+                    ::memcpy(this->clear_data, data, avail);
+                    return;
                 }
+                this->close();
+                throw Error(ERR_TRANSPORT_READ_FAILED);
             }
             avail += ret;
+        }
+
+        if (this->encryption == 2){
+            // copy what we have, it's not encrypted, don't care about magic
+            this->raw_size = 40;
+            this->clear_pos = 0;
+            ::memcpy(this->clear_data, data, 40);
+            return;
         }
 
         // Encrypted/Compressed file header (40 bytes)
@@ -167,11 +161,30 @@ public:
         // IV: 32 bytes
         // (random)
 
-
+        {
+            Parse p(data);
+            const int magic = p.in_uint32_le();
+            if (magic != 0x4D464357) {
+                this->encrypted = false;
+                // encryption requested but no encryption
+                if (this->encryption == 1){
+                    this->close();
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+                // Auto: rely on magic copy what we have, it's not encrypted
+                this->raw_size = 40;
+                this->clear_pos = 0;
+                ::memcpy(this->clear_data, data, 40);
+                return;
+            }
+        }
+        this->encrypted = true;
         Parse p(data+4);
         const int version = p.in_uint32_le();
         if (version > WABCRYPTOFILE_VERSION) {
+            // Unsupported version
             this->close();
+            LOG(LOG_INFO, "unsupported_version");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
@@ -189,12 +202,14 @@ public:
                            trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
         if (32 != evp_bytes_to_key_res){
             this->close();
+            LOG(LOG_INFO, "Can't read EVP_BytesToKey");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
         ::EVP_CIPHER_CTX_init(&this->ectx);
         if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
             // TODO: add error management
+            LOG(LOG_INFO, "Can't read EVP_DecryptInit_ex");
             this->close();
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
@@ -215,34 +230,166 @@ public:
     }
 
 private:
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-        ssize_t res = -1;
-        size_t remaining_len = len;
-        
-        while(remaining_len){
-            res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
-            if (res <= 0){
-                
-                if ((res == 0) || ((errno != EINTR) && (remaining_len != len))){
-                    break;
-                }
-                if (errno == EINTR){
-                    continue;
-                }
-                this->status = false;
-                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+    void do_recv_new(uint8_t * buffer, size_t len) override 
+    {
+        if (this->encrypted){
+            if (this->state & CF_EOF) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
             }
-            remaining_len -= res;
-        };
-        
-        res = len - remaining_len;
-        this->current_len += res;
-        if (this->file_len <= this->current_len) {
-            this->eof = true;
+
+            unsigned int remaining_size = len;
+            while (remaining_size > 0) {
+                // If we do not have any clear data available read some
+
+                if (!this->raw_size) {
+                    uint8_t hlen[4] = {};
+                    {
+                        size_t rlen = 4;
+                        while (rlen) {
+                            ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
+                            if (ret <= 0){ // unexpected EOF or error
+                                if (ret != 0 && errno == EINTR){
+                                    continue;
+                                }
+                                this->close();
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+                            rlen -= ret;
+                        }
+                    }
+
+                    Parse p(hlen);
+                    uint32_t ciphered_buf_size = p.in_uint32_le();
+                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                        this->state = CF_EOF;
+                        this->clear_pos = 0;
+                        this->raw_size = 0;
+                        this->close();
+                        break;
+                    }
+
+                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) { // integrity error
+                        this->close();
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+
+                    std::unique_ptr<uint8_t []> ciphered_buf(new uint8_t[ciphered_buf_size]);
+                    {
+                        size_t rlen = ciphered_buf_size;
+                        while (rlen) {
+                            ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
+                            if (ret <= 0){
+                                if (ret!=0 && errno == EINTR){
+                                    continue;
+                                }
+                                this->close();
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+                            rlen -= ret;
+                        }
+                    }
+
+                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+                    std::unique_ptr<uint8_t []> compressed_buf(new uint8_t[compressed_buf_size]);
+                    int safe_size = compressed_buf_size;
+                    int remaining = 0;
+
+                    /* allows reusing of ectx for multiple encryption cycles */
+                    if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if (EVP_DecryptUpdate(&this->ectx, &compressed_buf[0], &safe_size, &ciphered_buf[0], ciphered_buf_size) != 1){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if (EVP_DecryptFinal_ex(&this->ectx, &compressed_buf[safe_size], &remaining) != 1){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    compressed_buf_size = safe_size + remaining;
+
+                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                    const snappy_status status = snappy_uncompress(
+                            reinterpret_cast<char *>(&compressed_buf[0]),
+                            compressed_buf_size, this->clear_data, &chunk_size);
+
+                    switch (status)
+                    {
+                        case SNAPPY_OK:
+                            break;
+                        case SNAPPY_INVALID_INPUT:
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                        case SNAPPY_BUFFER_TOO_SMALL:
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                        default:
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+
+                    this->clear_pos = 0;
+                    // When reading, raw_size represent the current chunk size
+                    this->raw_size = chunk_size;
+
+                    if (!this->raw_size) { // end of file reached
+                        break;
+                    }
+                }
+                // Check how much we can copy
+                unsigned int copiable_size = std::min(this->raw_size - this->clear_pos, remaining_size);
+                // Copy buffer to caller
+                ::memcpy(&buffer[len - remaining_size], &this->clear_data[this->clear_pos], copiable_size);
+                this->clear_pos      += copiable_size;
+                this->current_len += len;
+                if (this->file_len <= this->current_len) {
+                    this->eof = true;
+                }
+                remaining_size -= copiable_size;
+                // Check if we reach the end
+                if (this->raw_size == this->clear_pos) {
+                    this->raw_size = 0;
+                }
+            }
+            return;
         }
-        this->last_quantum_received += res;
-        if (remaining_len != 0){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        else {
+            if (this->raw_size - this->clear_pos > len){
+                ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
+                this->clear_pos += len;
+                this->current_len += len;
+                if (this->file_len <= this->current_len) {
+                    this->eof = true;
+                }
+                return;
+            }
+            unsigned int remaining_len = len;
+            if (this->raw_size - this->clear_pos > 0){
+                ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
+                remaining_len -= this->raw_size - this->clear_pos;
+                this->raw_size = 0;
+                this->clear_pos = 0;
+            }
+
+            int res = -1;
+            while(remaining_len){
+                res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
+                if (res <= 0){
+                    if ((res == 0) || ((errno != EINTR) && (remaining_len != len))){
+                        break;
+                    }
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    this->status = false;
+                    throw Error(ERR_TRANSPORT_READ_FAILED, res);
+                }
+                remaining_len -= res;
+            };
+            res = len - remaining_len;
+            this->current_len += res;
+            if (this->file_len <= this->current_len) {
+                this->eof = true;
+            }
+            this->last_quantum_received += res;
+            if (remaining_len != 0){
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            }
         }
     }    
 };
