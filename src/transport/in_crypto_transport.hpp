@@ -70,6 +70,12 @@ public:
     ~InCryptoTransport() {
     }
 
+
+    bool is_encrypted()
+    {
+        return this->encrypted;
+    }
+
     bool is_open()
     {
         return this->fd != -1;
@@ -158,7 +164,7 @@ public:
         {
             Parse p(data);
             const int magic = p.in_uint32_le();
-            if (magic != 0x5743464D) {
+            if (magic != 0x4D464357) {
                 this->encrypted = false;
                 // encryption requested but no encryption
                 if (this->encryption == 1){
@@ -172,12 +178,13 @@ public:
                 return;
             }
         }
-        this->encrypted = true;        
+        this->encrypted = true;
         Parse p(data+4);
         const int version = p.in_uint32_le();
         if (version > WABCRYPTOFILE_VERSION) {
             // Unsupported version
             this->close();
+            LOG(LOG_INFO, "unsupported_version");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
@@ -230,25 +237,20 @@ private:
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
             }
 
-            unsigned int requested_size = len;
-            while (requested_size > 0) {
+            unsigned int remaining_size = len;
+            while (remaining_size > 0) {
                 // If we do not have any clear data available read some
+
                 if (!this->raw_size) {
                     uint8_t hlen[4] = {};
                     {
                         size_t rlen = 4;
                         while (rlen) {
                             ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
-                            if (ret <= 0){
-                                // Unexpected EOF, we are in trouble for decompression: fatal
-                                if (ret == 0){
-                                    this->close();
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                if (errno == EINTR){
+                            if (ret <= 0){ // unexpected EOF or error
+                                if (ret != 0 && errno == EINTR){
                                     continue;
                                 }
-                                // Error should still be there next time we try to read: fatal
                                 this->close();
                                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
@@ -266,37 +268,20 @@ private:
                         break;
                     }
 
-                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) { // integrity error
                         this->close();
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
 
-                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-
-                    //char ciphered_buf[ciphered_buf_size];
-                    unsigned char ciphered_buf[65536];
-                    //char compressed_buf[compressed_buf_size];
-                    unsigned char compressed_buf[65536];
-
+                    std::unique_ptr<uint8_t []> ciphered_buf(new uint8_t[ciphered_buf_size]);
                     {
                         size_t rlen = ciphered_buf_size;
                         while (rlen) {
                             ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
-                            if (ret < 0){
-                                if (errno == EINTR){
+                            if (ret <= 0){
+                                if (ret!=0 && errno == EINTR){
                                     continue;
                                 }
-                                // Error should still be there next time we try to read
-                                // TODO: see if we have already decrypted data
-                                // error reported too early
-                                this->close();
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            // We must exit loop or we will enter infinite loop
-                            if (ret == 0){
-                                // TODO: see if we have already decrypted data
-                                // error reported too early
                                 this->close();
                                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
@@ -304,24 +289,26 @@ private:
                         }
                     }
 
+                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+                    std::unique_ptr<uint8_t []> compressed_buf(new uint8_t[compressed_buf_size]);
                     int safe_size = compressed_buf_size;
-                    int remaining_size = 0;
+                    int remaining = 0;
 
                     /* allows reusing of ectx for multiple encryption cycles */
                     if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
+                    if (EVP_DecryptUpdate(&this->ectx, &compressed_buf[0], &safe_size, &ciphered_buf[0], ciphered_buf_size) != 1){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
+                    if (EVP_DecryptFinal_ex(&this->ectx, &compressed_buf[safe_size], &remaining) != 1){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    compressed_buf_size = safe_size + remaining_size;
+                    compressed_buf_size = safe_size + remaining;
 
                     size_t chunk_size = CRYPTO_BUFFER_SIZE;
                     const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(compressed_buf),
+                            reinterpret_cast<char *>(&compressed_buf[0]),
                             compressed_buf_size, this->clear_data, &chunk_size);
 
                     switch (status)
@@ -344,21 +331,21 @@ private:
                         break;
                     }
                 }
-                // remaining_size is the amount of data available in decoded buffer
-                unsigned int remaining_size = this->raw_size - this->clear_pos;
                 // Check how much we can copy
-                unsigned int copiable_size = std::min(remaining_size, requested_size);
+                unsigned int copiable_size = std::min(this->raw_size - this->clear_pos, remaining_size);
                 // Copy buffer to caller
-                ::memcpy(&buffer[len - requested_size], this->clear_data + this->clear_pos, copiable_size);
+                ::memcpy(&buffer[len - remaining_size], &this->clear_data[this->clear_pos], copiable_size);
                 this->clear_pos      += copiable_size;
-                requested_size -= copiable_size;
+                this->current_len += len;
+                if (this->file_len <= this->current_len) {
+                    this->eof = true;
+                }
+                remaining_size -= copiable_size;
                 // Check if we reach the end
                 if (this->raw_size == this->clear_pos) {
                     this->raw_size = 0;
                 }
             }
-//            return len - requested_size;
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             return;
         }
         else {
