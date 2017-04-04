@@ -725,6 +725,20 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+
+    class RemoteProgramSessionManagerEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        RemoteProgramSessionManagerEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_remote_program_session_manager_event(now, event, drawable);
+        }
+    } remote_program_session_manager_event_handler;
+
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
@@ -872,6 +886,7 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , remote_program_session_manager_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
     {
@@ -1843,6 +1858,12 @@ private:
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
+    void process_remote_program_session_manager_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+        if (this->remote_programs_session_manager) {
+            this->remote_programs_session_manager->process_event();
+        }
+    }
+
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
@@ -1870,6 +1891,17 @@ public:
                 out_event_handlers.emplace_back(
                         event,
                         &this->session_probe_virtual_channel_event_handler,
+                        INVALID_SOCKET
+                );
+            }
+        }
+
+        if (this->remote_programs_session_manager) {
+            wait_obj* event = this->remote_programs_session_manager->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &this->remote_program_session_manager_event_handler,
                         INVALID_SOCKET
                 );
             }
