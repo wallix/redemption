@@ -44,8 +44,6 @@ class RemoteProgramsSessionManager
 , public RemoteProgramsWindowIdManager
 , public windowing_api
 {
-
-private:
     FrontAPI & front;
     mod_api  & mod;
 
@@ -85,6 +83,10 @@ private:
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     const non_null_ptr<ClientExecute> client_execute;
+
+    bool currently_without_window = false;
+
+    wait_obj event;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -294,6 +296,8 @@ public:
             (DialogBoxType::WAITING_SCREEN == this->dialog_box_type)) {
 
             this->dialog_box_destroy();
+
+            this->currently_without_window = false;
         }
 
         //if (bool(this->verbose & RDPVerbose::rail)) {
@@ -450,9 +454,9 @@ public:
         if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) &&
             this->has_previous_window) {
 
-            this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+            this->currently_without_window = true;
 
-            this->waiting_screen_draw(0);
+            this->event.set(3000000);
         }
 
         if (has_window) {
@@ -778,5 +782,25 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    }
+
+    wait_obj* get_event() {
+        if (this->currently_without_window &&
+            (DialogBoxType::NONE == this->dialog_box_type) &&
+            this->has_previous_window) {
+            return &this->event;
+        }
+
+        return nullptr;
+    }
+
+    void process_event() {
+        if (this->currently_without_window) {
+            REDASSERT(DialogBoxType::NONE == this->dialog_box_type);
+
+            this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+
+            this->waiting_screen_draw(0);
+        }
     }
 };  // class RemoteProgramsSessionManager
