@@ -80,6 +80,8 @@ private:
     RDPDrawable & drawable;
     timeval start_video_capture;
     std::chrono::microseconds frame_interval;
+    std::chrono::microseconds current_video_time;
+
     bool no_timestamp;
     time_t previous_second = 0;
     bool has_frame_marker = false;

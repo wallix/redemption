@@ -403,7 +403,7 @@ public:
 
     ~video_recorder() {
         // write last frame : we must ensure writing at least one frame to avoid empty movies
-//         encoding_video_frame();
+        encoding_video_frame();
 
         // write the last second for mp4 (if preset != ultrafast ...)
         //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
@@ -508,7 +508,6 @@ auto dur = this->video_st->time_base.den * (frame_index - old_frame_index) / fra
 //         //this->duration += this->duration_frame * n;
 // //         this->pkt.pts = this->duration.count();
 //         this->picture->pts = pts;
-LOG(LOG_INFO, "i: %lu, pic.pts: %ld  dur: %ld dur2: %ld  durframe %ld", frame_index, this->picture->pts, dur, av_rescale_q(1, this->video_st->time_base, this->video_st->codec->time_base), this->duration_frame.count());
 
         const int res = avcodec_encode_video2(
             this->video_st->codec,
@@ -530,7 +529,6 @@ LOG(LOG_INFO, "i: %lu, pic.pts: %ld  dur: %ld dur2: %ld  durframe %ld", frame_in
 //                 this->pkt.pts = this->duration.count();
 //             }
 //this->pkt.pts = (this->duration_frame * frame_index).count() * frame_interval;
-LOG(LOG_INFO, "%d %ld %ld", this->pkt.duration, this->pkt.pts, this->pkt.dts);
 
             if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");

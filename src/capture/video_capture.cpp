@@ -174,7 +174,8 @@ VideoCaptureCtx::VideoCaptureCtx(
 )
 : drawable(drawable)
 , start_video_capture(now)
-, frame_interval(std::chrono::microseconds(1000000L / frame_rate))
+, frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
+, current_video_time(0)
 , no_timestamp(no_timestamp)
 {}
 
@@ -202,72 +203,40 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
     this->has_frame_marker = true;
 }
 
-        static uint64_t g_tick = 0;
-        static uint64_t g_time = 0;
-        static uint64_t g_previous_time = 0;
-
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
-//     recorder.preparing_video_frame();
-//     recorder.encoding_video_frame(g_tick);
+    recorder.preparing_video_frame();
+    recorder.encoding_video_frame(this->current_video_time / frame_interval);
 }
 
 std::chrono::microseconds
 VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool ignore_frame_in_timeval)
 {
-    uint64_t tick = difftimeval(now, this->start_video_capture);
-    uint64_t const frame_interval = this->frame_interval.count();
+    std::chrono::microseconds tick { difftimeval(now, this->start_video_capture) };
+    std::chrono::microseconds const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
-        g_time += tick;
-        auto encoding_video_frame = [this, &recorder, frame_interval](){
-            if (this->start_video_capture.tv_sec != this->previous_second) {
-                // TODO only if drawable is updated
-                this->preparing_video_frame(recorder);
-            }
-            uint64_t count = g_time - g_previous_time;
-            for (; count >= frame_interval; count -= std::min(count, 5*frame_interval)) {
-                recorder.encoding_video_frame(g_previous_time / frame_interval);
-                g_previous_time += std::min(count, 5*frame_interval);
-            }
-        };
-
         if (!this->has_frame_marker) {
             this->preparing_video_frame(recorder);
         }
 
-        auto inc_video_time = [this](uint64_t const usec) {
-            auto sec = usec / 1000000LL;
-            this->start_video_capture.tv_usec += usec - sec * 1000000LL;
-            if (this->start_video_capture.tv_usec >= 1000000LL){
-                this->start_video_capture.tv_usec -= 1000000LL;
-                ++sec;
-            }
-            this->start_video_capture.tv_sec += sec;
-            return usec;
-        };
+        std::chrono::microseconds previous_video_time = this->current_video_time;
 
-        /* stat */// LOG(LOG_INFO, "%s", "do_snapshot_video_frame");
-        if (ignore_frame_in_timeval) {
-            encoding_video_frame();
-            auto const nframe = tick / frame_interval;
-            g_tick += nframe;
-            tick -= inc_video_time(frame_interval * nframe);
-            g_time -= tick;
-        }
-        else {
-            do {
-                auto sec = frame_interval / 1000000LL;
-                this->start_video_capture.tv_usec += frame_interval - sec * 1000000LL;
-                if (this->start_video_capture.tv_usec >= 1000000LL){
-                    this->start_video_capture.tv_usec -= 1000000LL;
-                    ++sec;
-                }
-                this->start_video_capture.tv_sec += sec;
-                tick -= frame_interval;
-                /* stat */// LOG(LOG_INFO, "%s", "while do_snapshot_video_frame");
-            } while (tick >= frame_interval);
-            g_time -= tick;
-            encoding_video_frame();
+        this->current_video_time += tick;
+        tick %= frame_interval;
+        this->current_video_time -= tick;
+
+        // here, synchronize video time with the end of second
+
+        std::chrono::microseconds count = this->current_video_time - previous_video_time;
+        while (count >= frame_interval) {
+            if (this->start_video_capture.tv_sec != this->previous_second) {
+                this->preparing_video_frame(recorder);
+            }
+            recorder.encoding_video_frame(previous_video_time / frame_interval);
+            auto elapsed = std::min(count, 5*frame_interval);
+            this->start_video_capture = addusectimeval(elapsed.count(), this->start_video_capture);
+            previous_video_time += elapsed;
+            count -= elapsed;
         }
     }
     return std::chrono::microseconds(frame_interval - tick);
