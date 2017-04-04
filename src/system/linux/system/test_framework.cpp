@@ -1,0 +1,22 @@
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+//#include <boost/test/impl/test_main.ipp>
+//#include <boost/test/impl/cpp_main.ipp>
+#include <boost/test/impl/unit_test_main.ipp>
+
+#include <boost/test/impl/plain_report_formatter.ipp>
+#include <boost/test/impl/test_tree.ipp>
+#include <boost/test/impl/unit_test_monitor.ipp>
+#include <boost/test/impl/compiler_log_formatter.ipp>
+#include <boost/test/impl/unit_test_parameters.ipp>
+#include <boost/test/impl/decorator.ipp>
+#include <boost/test/impl/progress_monitor.ipp>
+#include <boost/test/impl/framework.ipp>
+#include <boost/test/impl/execution_monitor.ipp>
+#include <boost/test/impl/results_collector.ipp>
+#include <boost/test/impl/xml_report_formatter.ipp>
+#include <boost/test/impl/test_tools.ipp>
+#include <boost/test/impl/unit_test_log.ipp>
+#include <boost/test/impl/xml_log_formatter.ipp>
+#include <boost/test/impl/debug.ipp>
+#include <boost/test/impl/results_reporter.ipp>

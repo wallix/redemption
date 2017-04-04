@@ -230,6 +230,37 @@ public:
     }
 
 private:
+
+    size_t xaes_decrypt(const uint8_t src[], size_t src_sz, uint8_t dst[])
+    {
+        int written = 0;
+        int trail = 0;
+        /* allows reusing of ectx for multiple encryption cycles */
+        if ((EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1)
+        ||  (EVP_DecryptUpdate(&this->ectx, &dst[0], &written, &src[0], src_sz) != 1)
+        ||  (EVP_DecryptFinal_ex(&this->ectx, &dst[written], &trail) != 1)){
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        return written+trail;
+    }
+
+    // this perform atomic read, partial read will result in exception
+    void raw_read(uint8_t buffer[], const size_t len)
+    {
+        size_t rlen = len;
+        while (rlen) {
+            ssize_t ret = ::read(this->fd, &buffer[len - rlen], rlen);
+            if (ret <= 0){ // unexpected EOF or error
+                if (ret != 0 && errno == EINTR){
+                    continue;
+                }
+                this->close();
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            rlen -= ret;
+        }
+    }
+
     void do_recv_new(uint8_t * buffer, size_t len) override 
     {
         if (this->encrypted){
@@ -242,74 +273,35 @@ private:
                 // If we do not have any clear data available read some
 
                 if (!this->raw_size) {
+                    
+                    // Read a full ciphered block at once
                     uint8_t hlen[4] = {};
-                    {
-                        size_t rlen = 4;
-                        while (rlen) {
-                            ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
-                            if (ret <= 0){ // unexpected EOF or error
-                                if (ret != 0 && errno == EINTR){
-                                    continue;
-                                }
-                                this->close();
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            rlen -= ret;
-                        }
-                    }
+                    this->raw_read(hlen, 4);
 
                     Parse p(hlen);
-                    uint32_t ciphered_buf_size = p.in_uint32_le();
-                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                    uint32_t enc_len = p.in_uint32_le();
+                    if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                         this->state = CF_EOF;
                         this->clear_pos = 0;
                         this->raw_size = 0;
                         this->close();
                         break;
                     }
-
-                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) { // integrity error
+                    if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
                         this->close();
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
 
-                    std::unique_ptr<uint8_t []> ciphered_buf(new uint8_t[ciphered_buf_size]);
-                    {
-                        size_t rlen = ciphered_buf_size;
-                        while (rlen) {
-                            ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
-                            if (ret <= 0){
-                                if (ret!=0 && errno == EINTR){
-                                    continue;
-                                }
-                                this->close();
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            rlen -= ret;
-                        }
-                    }
+                    std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
+                    this->raw_read(&enc_buf[0], enc_len);
 
-                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-                    std::unique_ptr<uint8_t []> compressed_buf(new uint8_t[compressed_buf_size]);
-                    int safe_size = compressed_buf_size;
-                    int remaining = 0;
-
-                    /* allows reusing of ectx for multiple encryption cycles */
-                    if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    if (EVP_DecryptUpdate(&this->ectx, &compressed_buf[0], &safe_size, &ciphered_buf[0], ciphered_buf_size) != 1){
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    if (EVP_DecryptFinal_ex(&this->ectx, &compressed_buf[safe_size], &remaining) != 1){
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    compressed_buf_size = safe_size + remaining;
+                    std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
+                    size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
 
                     size_t chunk_size = CRYPTO_BUFFER_SIZE;
                     const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(&compressed_buf[0]),
-                            compressed_buf_size, this->clear_data, &chunk_size);
+                            reinterpret_cast<char *>(&pack_buf[0]),
+                            pack_buf_size, this->clear_data, &chunk_size);
 
                     switch (status)
                     {
