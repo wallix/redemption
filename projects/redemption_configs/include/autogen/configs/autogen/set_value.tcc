@@ -1012,16 +1012,16 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::mod_rdp::session_probe_use_clipboard_based_launcher&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "enable_session_probe_launch_mask")) {
+        else if (0 == strcmp(key, "session_probe_enable_launch_mask")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_rdp::enable_session_probe_launch_mask&>(this->variables).value,
+                static_cast<cfg::mod_rdp::session_probe_enable_launch_mask&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
             ::configs::post_set_value(
                 this->variables,
-                static_cast<cfg::mod_rdp::enable_session_probe_launch_mask&>(this->variables)
+                static_cast<cfg::mod_rdp::session_probe_enable_launch_mask&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_on_launch_failure")) {

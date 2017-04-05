@@ -77,6 +77,8 @@ using std::begin;
 using std::end;
 
 
+
+
 class FileToChunk
 {
     unsigned char stream_buf[65536];
@@ -1367,8 +1369,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         infile_is_encrypted?1:0
     );
 
-    timeval begin_capture = {0, 0};
-    timeval end_capture = {0, 0};
+    timeval begin_capture = {begin_cap, 0};
+    timeval end_capture = {end_cap, 0};
 
     int result = -1;
     try {

@@ -103,7 +103,7 @@ public:
     bool                 enable_shared_virtual_disk;
 
     const std::string    CB_TEMP_DIR;
-    std::string    SHARE_DIR;
+    std::string          SHARE_DIR;
     const std::string    USER_CONF_DIR;
 
     struct ModRDPParamsData
@@ -113,10 +113,12 @@ public:
     } modRDPParamsData;
 
     struct ClipbrdFormatsList{
+        
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
             , CF_QT_CLIENT_FILECONTENTS         = 48026
         };
+
         enum : int {
               CLIPBRD_FORMAT_COUNT = 5
         };
@@ -341,6 +343,8 @@ public:
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
         this->setModal(true);
+
+        this->_front->setClientInfo();
 
         this->_layout = new QGridLayout(this);
 

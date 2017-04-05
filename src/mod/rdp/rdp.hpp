@@ -316,7 +316,7 @@ protected:
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_session_probe;
-    const bool enable_session_probe_launch_mask;
+    const bool session_probe_enable_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -345,8 +345,9 @@ protected:
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string outbound_connection_monitoring_rules;
-    std::string process_monitoring_rules;
+    std::string session_probe_extra_system_processes;
+    std::string session_probe_outbound_connection_monitoring_rules;
+    std::string session_probe_process_monitoring_rules;
 
     size_t recv_bmp_update;
 
@@ -724,6 +725,20 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+
+    class RemoteProgramSessionManagerEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        RemoteProgramSessionManagerEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_remote_program_session_manager_event(now, event, drawable);
+        }
+    } remote_program_session_manager_event_handler;
+
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
@@ -786,7 +801,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_session_probe(mod_rdp_params.enable_session_probe)
-        , enable_session_probe_launch_mask(mod_rdp_params.enable_session_probe_launch_mask)
+        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -812,8 +827,9 @@ public:
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
-        , outbound_connection_monitoring_rules(mod_rdp_params.outbound_connection_monitoring_rules)
-        , process_monitoring_rules(mod_rdp_params.process_monitoring_rules)
+        , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
+        , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
+        , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -870,6 +886,7 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , remote_program_session_manager_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
     {
@@ -1559,9 +1576,9 @@ protected:
         session_probe_virtual_channel_params.front_height                           =
             this->front_height;
 
-        session_probe_virtual_channel_params.session_probe_disconnected_application_limit =
+        session_probe_virtual_channel_params.session_probe_disconnected_application_limit       =
             this->session_probe_disconnected_application_limit;
-        session_probe_virtual_channel_params.session_probe_disconnected_session_limit =
+        session_probe_virtual_channel_params.session_probe_disconnected_session_limit           =
             this->session_probe_disconnected_session_limit;
         session_probe_virtual_channel_params.session_probe_idle_session_limit       =
             this->session_probe_idle_session_limit;
@@ -1571,11 +1588,14 @@ protected:
         session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_monitoring_rules   =
-            this->outbound_connection_monitoring_rules.c_str();
+        session_probe_virtual_channel_params.session_probe_extra_system_processes   =
+            this->session_probe_extra_system_processes.c_str();
 
-        session_probe_virtual_channel_params.process_monitoring_rules               =
-            this->process_monitoring_rules.c_str();
+        session_probe_virtual_channel_params.session_probe_outbound_connection_monitoring_rules =
+            this->session_probe_outbound_connection_monitoring_rules.c_str();
+
+        session_probe_virtual_channel_params.session_probe_process_monitoring_rules =
+            this->session_probe_process_monitoring_rules.c_str();
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;
@@ -1838,6 +1858,12 @@ private:
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
+    void process_remote_program_session_manager_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+        if (this->remote_programs_session_manager) {
+            this->remote_programs_session_manager->process_event();
+        }
+    }
+
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
@@ -1865,6 +1891,17 @@ public:
                 out_event_handlers.emplace_back(
                         event,
                         &this->session_probe_virtual_channel_event_handler,
+                        INVALID_SOCKET
+                );
+            }
+        }
+
+        if (this->remote_programs_session_manager) {
+            wait_obj* event = this->remote_programs_session_manager->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &this->remote_program_session_manager_event_handler,
                         INVALID_SOCKET
                 );
             }
@@ -5664,7 +5701,7 @@ public:
 
         if (this->enable_session_probe) {
             const bool disable_input_event     = true;
-            const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+            const bool disable_graphics_update = this->session_probe_enable_launch_mask;
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
@@ -5705,7 +5742,7 @@ public:
 
             if (this->enable_session_probe) {
                 const bool disable_input_event     = true;
-                const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+                const bool disable_graphics_update = this->session_probe_enable_launch_mask;
                 this->disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }

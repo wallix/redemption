@@ -1209,3 +1209,165 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     BOOST_CHECK_EQUAL(15092851, filesize(filename));
     ::unlink(filename);
 }
+
+BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
+{
+    {
+        char tmpdirname[128];
+        sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
+        BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
+
+//        int fd = ::mkostemp(tmpdirname, O_WRONLY|O_CREAT);
+
+        char toto_mwrm[512]; sprintf(toto_mwrm, "%s/%s", tmpdirname, "toto.mwrm");
+        { int fd = ::creat(toto_mwrm, 0777); BOOST_CHECK_EQUAL(10, write(fd, "toto_mwrm", sizeof("toto_mwrm"))); close(fd); }
+
+        char toto_0_wrm[512]; sprintf(toto_0_wrm, "%s/%s", tmpdirname, "toto_0.mwrm");
+        { int fd = ::creat(toto_0_wrm, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_wrm", sizeof("toto_0_wrm"))); close(fd); }
+
+        char toto_1_wrm[512]; sprintf(toto_1_wrm, "%s/%s", tmpdirname, "toto_1.wrm");
+        { int fd = ::creat(toto_1_wrm, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_wrm", sizeof("toto_1_wrm"))); close(fd); }
+
+        char toto_0_flv[512]; sprintf(toto_0_flv, "%s/%s", tmpdirname, "toto_0.flv");
+        { int fd = ::creat(toto_0_flv, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_flv", sizeof("toto_0_flv"))); close(fd); }
+
+        char toto_1_flv[512]; sprintf(toto_1_flv, "%s/%s", tmpdirname, "toto_1.flv");
+        { int fd = ::creat(toto_1_flv, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_flv", sizeof("toto_1_flv"))); close(fd); }
+
+        char toto_meta[512]; sprintf(toto_meta, "%s/%s", tmpdirname, "toto.meta");
+        { int fd = ::creat(toto_meta, 0777); BOOST_CHECK_EQUAL(10, write(fd, "toto_meta", sizeof("toto_meta"))); close(fd); }
+
+        char toto_0_png[512]; sprintf(toto_0_png, "%s/%s", tmpdirname, "toto_0.png");
+        { int fd = ::creat(toto_0_png, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_png", sizeof("toto_0_png"))); close(fd); }
+
+        char toto_1_png[512]; sprintf(toto_1_png, "%s/%s", tmpdirname, "toto_1.png");
+        { int fd = ::creat(toto_1_png, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_png", sizeof("toto_1_png"))); close(fd); }
+
+        char tititi_mwrm[512]; sprintf(tititi_mwrm, "%s/%s", tmpdirname, "tititi.mwrm");
+        { int fd = ::creat(tititi_mwrm, 0777); BOOST_CHECK_EQUAL(12, write(fd, "tititi_mwrm", sizeof("tititi_mwrm"))); close(fd); }
+
+        char tititi_0_wrm[512]; sprintf(tititi_0_wrm, "%s/%s", tmpdirname, "tititi_0.mwrm");
+        { int fd = ::creat(tititi_0_wrm, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_wrm", sizeof("tititi_0_wrm"))); close(fd); }
+
+        char tititi_1_wrm[512]; sprintf(tititi_1_wrm, "%s/%s", tmpdirname, "tititi_1.wrm");
+        { int fd = ::creat(tititi_1_wrm, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_wrm", sizeof("tititi_1_wrm"))); close(fd); }
+
+        char tititi_0_flv[512]; sprintf(tititi_0_flv, "%s/%s", tmpdirname, "tititi_0.flv");
+        { int fd = ::creat(tititi_0_flv, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_flv", sizeof("tititi_0_flv"))); close(fd); }
+
+        char tititi_1_flv[512]; sprintf(tititi_1_flv, "%s/%s", tmpdirname, "tititi_1.flv");
+        { int fd = ::creat(tititi_1_flv, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_flv", sizeof("tititi_1_flv"))); close(fd); }
+
+        char tititi_meta[512]; sprintf(tititi_meta, "%s/%s", tmpdirname, "tititi.meta");
+        { int fd = ::creat(tititi_meta, 0777); BOOST_CHECK_EQUAL(12, write(fd, "tititi_meta", sizeof("tititi_meta"))); close(fd); }
+
+        char tititi_0_png[512]; sprintf(tititi_0_png, "%s/%s", tmpdirname, "tititi_0.png");
+        { int fd = ::creat(tititi_0_png, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_png", sizeof("tititi_0_png"))); close(fd); }
+
+        char tititi_1_png[512]; sprintf(tititi_1_png, "%s/%s", tmpdirname, "tititi_1.png");
+        { int fd = ::creat(tititi_1_png, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_png", sizeof("tititi_1_png"))); close(fd); }
+
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_flv));
+        BOOST_CHECK_EQUAL(10, filesize(toto_meta));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+
+        clear_files_flv_meta_png(tmpdirname, "ddd");
+
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_flv));
+        BOOST_CHECK_EQUAL(10, filesize(toto_meta));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+
+        clear_files_flv_meta_png(tmpdirname, "toto");
+
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+
+        clear_files_flv_meta_png(tmpdirname, "titititi");
+
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+
+        clear_files_flv_meta_png(tmpdirname, "tititi");
+
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
+        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        BOOST_CHECK_EQUAL(-1, filesize(tititi_0_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(tititi_1_flv));
+        BOOST_CHECK_EQUAL(-1, filesize(tititi_meta));
+        BOOST_CHECK_EQUAL(-1, filesize(tititi_0_png));
+        BOOST_CHECK_EQUAL(-1, filesize(tititi_1_png));
+
+        ::unlink(toto_mwrm);
+        ::unlink(toto_0_wrm);
+        ::unlink(toto_1_wrm);
+        ::unlink(tititi_mwrm);
+        ::unlink(tititi_0_wrm);
+        ::unlink(tititi_1_wrm);
+
+        ::rmdir(tmpdirname);
+    }
+}
+

@@ -111,11 +111,11 @@ public:
             NEW_FILE_ATTRIBUTES =  fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH // = 0 x03e700ff
         };
 
-
         uint32_t current_dir_id = 0;
         std::vector<std::string> elem_in_path;
 
     } fileSystemData;
+    
 
     virtual void options() override {
         new DialogOptions_Qt(this, this->form);
@@ -449,6 +449,8 @@ public:
     //------------------------
 
     virtual bool connect() override {
+
+        this->setClientInfo();
 
         this->setScreenDimension();
 
