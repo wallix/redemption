@@ -13,7 +13,7 @@ sub dump_to_data
         my $line = $1;
         $x = 1 if $line =~ /$start/;
         $x = 0 if $line =~ /$stop/;
-        print '// ' if !($x && ($line =~ /^\/\* .... \*\/.*$/));
+        print '// ' if !($x && ($line =~ /^ \/\* .... \*\/.*$/));
         print $line." |";
         print "\n";
     }

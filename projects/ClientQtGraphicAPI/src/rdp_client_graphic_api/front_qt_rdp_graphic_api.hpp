@@ -729,9 +729,11 @@ public:
     timeval movie_time_start;
     timeval movie_time_pause;
     bool is_paused;
+    time_t movie_time;
 
     QLabel movie_status;
     QLabel movie_timer_label;
+
 
 
 
@@ -804,8 +806,9 @@ public:
         , cursorHoty(0)
         , mouse_out(false)
         , is_paused(false)
+        , movie_time(this->_front->replay_mod.get()->get_movie_time())
         , movie_status( QString("  Stop"), this)
-        , movie_timer_label(QString("  0/")+QString("xxx"), this)
+        , movie_timer_label(QString("  0/")+QString(std::to_string(movie_time).c_str()), this)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -1053,7 +1056,7 @@ public Q_SLOTS:
 
         struct timeval now = tvtime();
         int current_time_movie = ((now.tv_usec - this->movie_time_start.tv_usec) / 1000000) + now.tv_sec - this->movie_time_start.tv_sec;
-        this->movie_timer_label.setText(QString("  ") + QString(std::to_string(current_time_movie).c_str()) + QString("/") + QString("xxx"));
+        this->movie_timer_label.setText(QString("  ") + QString(std::to_string(current_time_movie).c_str()) + QString("/") + QString(std::to_string(movie_time).c_str()));
         if (this->_front->replay_mod->play_client()) {
             this->slotRepaint();
         }
@@ -1061,9 +1064,9 @@ public Q_SLOTS:
         if (this->_front->replay_mod->get_break_privplay_client()) {
             this->_timer_replay.stop();
             this->slotRepaint();
-            struct timeval now = tvtime();
-            int current_time_movie = ((now.tv_usec - this->movie_time_start.tv_usec) / 1000000) + now.tv_sec - this->movie_time_start.tv_sec;
-            this->movie_timer_label.setText(QString("  ") + QString(std::to_string(current_time_movie).c_str()) + QString("/") + QString("xxx"));
+//             struct timeval now = tvtime();
+//             int current_time_movie = ((now.tv_usec - this->movie_time_start.tv_usec) / 1000000) + now.tv_sec - this->movie_time_start.tv_sec;
+            this->movie_timer_label.setText(QString("  ") + QString(std::to_string(movie_time).c_str()) + QString("/") + QString(std::to_string(movie_time).c_str()));
             this->movie_time_start = {0, 0};
             this->movie_time_pause = {0, 0};
             this->_buttonCtrlAltDel.setText("Replay");
@@ -1104,7 +1107,7 @@ public Q_SLOTS:
         this->movie_time_start = {0, 0};
         this->movie_time_pause = {0, 0};
         this->_timer_replay.stop();
-        this->movie_timer_label.setText(QString("  0/")+QString(std::to_string(0).c_str()));
+        this->movie_timer_label.setText(QString( std::to_string(movie_time).c_str())+QString("/")+QString(std::to_string(movie_time).c_str()));
         this->_running = false;
         this->is_paused = false;
 

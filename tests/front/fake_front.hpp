@@ -51,6 +51,14 @@ public:
 public:
     using FrontAPI::FrontAPI;
 
+    bool retrieve_client_capability_set(Capability & caps) override {
+        if (caps.capabilityType == CAPSTYPE_BITMAPCACHE_REV2) {
+            return false;
+        }
+
+        return FrontAPI::retrieve_client_capability_set(caps);
+    }
+
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
     void draw(RDPDestBlt          const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}

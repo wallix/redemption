@@ -668,10 +668,7 @@ private:
     GlyphCacheCaps          client_glyphcache_caps;
     RailCaps                client_rail_caps;
     WindowListCaps          client_window_list_caps;
-//    LargePointerCaps        client_large_pointer_caps;
-//    MultiFragmentUpdateCaps client_multi_frag_caps;
     bool                    use_bitmapcache_rev2;
-//    bool                    use_multi_frag = false;
 
     std::string server_capabilities_filename;
 
@@ -2910,15 +2907,9 @@ private:
             break;
 
             case CAPSETTYPE_MULTIFRAGMENTUPDATE:
-                if (!this->client_info.multi_fragment_update_caps.MaxRequestSize) {
-                    return false;
-                }
-                ::memcpy(&caps, &this->client_info.multi_fragment_update_caps, sizeof(this->client_info.multi_fragment_update_caps));
-            break;
-
             case CAPSETTYPE_LARGE_POINTER:
-                ::memcpy(&caps, &this->client_info.large_pointer_caps, sizeof(this->client_info.large_pointer_caps));
-            break;
+                REDASSERT(false);
+                return false;
 
             default: break;
         }

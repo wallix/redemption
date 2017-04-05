@@ -33,8 +33,8 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 Level::low,
                 ini.get<cfg::video::l_width>(),
                 ini.get<cfg::video::l_height>(),
-                ini.get<cfg::video::l_qscale>(),
                 ini.get<cfg::video::l_framerate>(),
+                ini.get<cfg::video::l_qscale>(),
                 ini.get<cfg::video::l_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
                 ini.get<cfg::debug::ffmpeg>()
@@ -43,8 +43,8 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 Level::high,
                 original_width,
                 original_height,
-                ini.get<cfg::video::h_qscale>(),
                 ini.get<cfg::video::h_framerate>(),
+                ini.get<cfg::video::h_qscale>(),
                 ini.get<cfg::video::h_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
                 ini.get<cfg::debug::ffmpeg>()
@@ -54,8 +54,8 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 Level::medium,
                 ini.get<cfg::video::m_width>(),
                 ini.get<cfg::video::m_height>(),
-                ini.get<cfg::video::m_qscale>(),
                 ini.get<cfg::video::m_framerate>(),
+                ini.get<cfg::video::m_qscale>(),
                 ini.get<cfg::video::m_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
                 ini.get<cfg::debug::ffmpeg>()
