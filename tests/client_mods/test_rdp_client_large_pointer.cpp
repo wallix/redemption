@@ -32,7 +32,7 @@
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-// #define LOGPRINT
+//#define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -44,10 +44,11 @@
 #include "../front/fake_front.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerDisable)
 {
     int verbose = 256;
 
+    // Uncomment the code block below to generate testing data.
     //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
 
     ClientInfo info;
@@ -81,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //                     );
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/dump_large_pointer.hpp"
+    #include "../fixtures/dump_large_pointer_disabled.hpp"
     TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 

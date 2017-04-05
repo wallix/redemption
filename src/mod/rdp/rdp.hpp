@@ -4400,7 +4400,8 @@ public:
                     confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
 
-                if (this->large_pointer_support) {
+                if (this->large_pointer_support &&
+                    this->client_large_pointer_caps.largePointerSupportFlags) {
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
                         this->client_large_pointer_caps.log("Sending to server");
                     }
