@@ -2,14 +2,14 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-// fixed link error (API changed)
-#ifdef __clang__
-namespace boost { namespace unit_test { namespace ut_detail {
-    std::string normalize_test_case_name(const_string name) {
-        return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
-    }
-}}}
-#endif
+// // fixed link error (API changed)
+// #ifdef __clang__
+// namespace boost { namespace unit_test { namespace ut_detail {
+//     std::string normalize_test_case_name(const_string name) {
+//         return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
+//     }
+// } } }
+// #endif
 
 #ifdef IN_IDE_PARSER
 # define FIXTURES_PATH "./tests/fixtures"
@@ -82,45 +82,22 @@ namespace boost { namespace unit_test { namespace ut_detail {
     } while (0)
 #endif
 
-#include <cstdio>
-//#include <exception>
-#include "core/error.hpp"
-
-#include <boost/test/unit_test_monitor.hpp>
-
-#include "cxx/diagnostic.hpp"
+#include "cxx/cxx.hpp"
 
 namespace redemption_unit_test__
 {
-//   static std::terminate_handler old_terminate_handler = std::set_terminate([](){
-//     if (!std::uncaught_exception()) {
-//       try {
-//         throw;
-//       }
-//       catch (Error const & e) {
-//         std::printf("Exception Error: %s", e.errmsg());
-//         old_terminate_handler();
-//       }
-//       catch (...) {
-//         old_terminate_handler();
-//       }
-//     }
-//     old_terminate_handler();
-//   });
-
-    struct register_exception {
-        register_exception() {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
-            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::string s = "Exception of type 'Error': "; s += e.errmsg();
-                throw std::runtime_error{std::move(s)};
-            });
-            REDEMPTION_DIAGNOSTIC_POP
-        }
-    };
-    static register_exception Init;
+    REDEMPTION_LIB_EXPORT
+    bool check_mem(const void * p, std::size_t len, const void * mem, char * message);
 }
+
+#define CHECK_MEM(p, len, mem)                                          \
+    do {                                                                \
+        char message[len * 5 + 256];                                    \
+        if (!redemption_unit_test__::check_mem(p, len, mem, message)) { \
+            BOOST_CHECK_MESSAGE(false, message);                        \
+        }                                                               \
+    } while (0)
+
 
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER

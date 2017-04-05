@@ -3,3 +3,44 @@
 
 #include <boost/test/included/unit_test.hpp>
 
+#include <boost/test/unit_test_monitor.hpp>
+
+#include <cstdio>
+#include "core/error.hpp"
+
+#include "cxx/diagnostic.hpp"
+
+#include "./redemption_unit_tests.hpp"
+
+
+namespace redemption_unit_test__
+{
+    struct register_exception {
+        register_exception() {
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
+                std::string s = "Exception of type 'Error': "; s += e.errmsg();
+                throw std::runtime_error{std::move(s)};
+            });
+            REDEMPTION_DIAGNOSTIC_POP
+        }
+    };
+    static register_exception Init;
+
+    REDEMPTION_LIB_EXPORT
+    bool check_mem(const void * p, std::size_t len, const void * mem, char * message)
+    {
+        if (memcmp(p, mem, len)) {
+            unsigned char const * sig = reinterpret_cast<unsigned char const *>(p);
+            message += std::sprintf(message, "Expected data: \"\\x%.2x", unsigned(*sig));
+            while (--len) {
+                message += std::sprintf(message, "\\x%.2x", unsigned(*++sig));
+            }
+            message[0] = '"';
+            message[1] = 0;
+            return false;
+        }
+        return true;
+    }
+}
