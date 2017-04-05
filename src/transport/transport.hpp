@@ -161,6 +161,22 @@ public:
         return this->do_recv_new(buffer, len);
     }
 
+    /// atomic_read either read len bytes into buffer or throw an Error
+    /// returned value is either true is read was successful
+    /// or false if nothing was read (End of File reached at block frontier)
+    /// if an exception is thrown buffer is dirty and may have been modified.
+    ///
+    bool atomic_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
+    }
+
+    bool atomic_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_atomic_read(buffer, len);
+    }
+
+
     void send(const uint8_t * const buffer, size_t len)
     {
         this->do_send(buffer, len);
@@ -183,6 +199,16 @@ private:
 //         (void)len;
 //         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
 //     }
+
+
+    // Atomic read read exactly the amount of data requested or return an error
+
+    virtual bool do_atomic_read(uint8_t * buffer, size_t len) {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+    }
+
 
     virtual void do_recv_new(uint8_t * buffer, size_t len) {
         (void)buffer;

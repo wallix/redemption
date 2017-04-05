@@ -12,9 +12,9 @@
 
 #include <boost/version.hpp>
 
-#if BOOST_VERSION / 100 % 1000 == 58
+#if ( BOOST_VERSION / 100 % 1000 == 61 )
 
-// boost unit test 1.58
+// boost unit test 1.61
 #include <boost/test/impl/compiler_log_formatter.ipp>
 #include <boost/test/impl/debug.ipp>
 #include <boost/test/impl/framework.ipp>
@@ -58,5 +58,22 @@
 #else
 
 // Other version of boost tests will need other headers files
+#include <boost/test/impl/compiler_log_formatter.ipp>
+#include <boost/test/impl/debug.ipp>
+#include <boost/test/impl/framework.ipp>
+#include <boost/test/impl/plain_report_formatter.ipp>
+#include <boost/test/impl/xml_log_formatter.ipp>
+#include <boost/test/impl/xml_report_formatter.ipp>
+#include <boost/test/impl/results_collector.ipp>
+#include <boost/test/impl/results_reporter.ipp>
+#include <boost/test/impl/unit_test_log.ipp>
+#include <boost/test/impl/test_tools.ipp>
+#include <boost/test/impl/unit_test_monitor.ipp>
+#include <boost/test/impl/unit_test_parameters.ipp>
+#include <boost/test/impl/progress_monitor.ipp>
+#include <boost/test/impl/execution_monitor.ipp>
+
+#include <boost/test/impl/test_tree.ipp>
+#include <boost/test/impl/decorator.ipp>
 
 #endif
