@@ -23,6 +23,7 @@
 
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "utils/extra_system_processes.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
@@ -80,6 +81,7 @@ private:
 
     wait_obj session_probe_event;
 
+    ExtraSystemProcesses           extra_system_processes;
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
     ProcessMonitorRules            process_monitor_rules;
 
@@ -119,9 +121,11 @@ public:
         const char* real_alternate_shell;
         const char* real_working_dir;
 
-        const char* outbound_connection_monitoring_rules;
+        const char* session_probe_extra_system_processes;
 
-        const char* process_monitoring_rules;
+        const char* session_probe_outbound_connection_monitoring_rules;
+
+        const char* session_probe_process_monitoring_rules;
 
         Translation::language_t lang;
 
@@ -172,9 +176,11 @@ public:
     , front(front)
     , mod(mod)
     , file_system_virtual_channel(file_system_virtual_channel)
+    , extra_system_processes(params.session_probe_extra_system_processes)
     , outbound_connection_monitor_rules(
-          params.outbound_connection_monitoring_rules)
-    , process_monitor_rules(params.process_monitoring_rules)
+          params.session_probe_outbound_connection_monitoring_rules)
+    , process_monitor_rules(
+          params.session_probe_process_monitoring_rules)
     {
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
@@ -409,6 +415,9 @@ public:
                 "SessionProbeVirtualChannel::process_server_message: \"%s\"",
                 this->server_message.c_str());
         }
+
+        const char request_extra_system_process[] =
+            "Request=Get extra system process\x01";
 
         const char request_outbound_connection_monitoring_rule[] =
             "Request=Get outbound connection monitoring rule\x01";
@@ -801,6 +810,63 @@ public:
                             "OtherVersion=%u.%u",
                         unsigned(major), unsigned(minor));
                 }
+            }
+        }
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(request_extra_system_process) - 1,
+                     request_extra_system_process)) {
+            const char * remaining_data =
+                (this->server_message.c_str() +
+                 sizeof(request_extra_system_process) - 1);
+
+            const unsigned int proc_index =
+                ::strtoul(remaining_data, nullptr, 10);
+
+            // ExtraSystemProcess=ProcIndex\x01ErrorCode[\x01ProcName]
+            // ErrorCode : 0 on success. -1 if an error occurred.
+
+            {
+                StaticOutStream<8192> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "ExtraSystemProcess=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                std::string name;
+
+                const bool result =
+                    this->extra_system_processes.get(proc_index, name);
+
+                {
+                    const int error_code = (result ? 0 : -1);
+                    char cstr[128];
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        proc_index, error_code);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                if (result) {
+                    char cstr[1024];
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
+                        name.c_str());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
         }
         else if (!this->server_message.compare(

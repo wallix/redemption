@@ -591,7 +591,6 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
 //
 // DataBuffer (variable): The content of this buffer is opaque to the file system. On receipt, its content MUST be preserved and properly returned to the caller.
 
-
 struct ReparseGUIDDataBuffer {
 
   uint32_t ReparseTag = 0;
@@ -734,6 +733,8 @@ struct FileAllocationInformation {
         LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
     }
 };
+
+
 
 
 // [MS-FSCC] - 2.4.6 FileAttributeTagInformation

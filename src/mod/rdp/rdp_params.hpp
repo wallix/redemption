@@ -52,7 +52,7 @@ struct ModRDPParams {
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_session_probe = false;
-    bool enable_session_probe_launch_mask = true;
+    bool session_probe_enable_launch_mask = true;
 
     bool disable_clipboard_log_syslog = false;
     bool disable_clipboard_log_wrm = false;
@@ -81,8 +81,9 @@ struct ModRDPParams {
 
     int key_flags;
 
-    const char * outbound_connection_monitoring_rules = "";
-    const char * process_monitoring_rules           = "";
+    const char * session_probe_extra_system_processes               = "";
+    const char * session_probe_outbound_connection_monitoring_rules = "";
+    const char * session_probe_process_monitoring_rules             = "";
 
     bool         ignore_auth_channel = false;
     const char * auth_channel = "";
@@ -209,7 +210,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe_launch_mask);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_launch_mask);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_use_clipboard_based_launcher);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launch_timeout);
@@ -237,9 +238,11 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             outbound_connection_monitoring_rules);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_extra_system_processes);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             process_monitoring_rules);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_outbound_connection_monitoring_rules);
+
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_process_monitoring_rules);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel);

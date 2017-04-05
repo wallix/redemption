@@ -1175,13 +1175,13 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
-        // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
+        // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK
         // type: bool
-        struct enable_session_probe_launch_mask {
+        struct session_probe_enable_launch_mask {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
-            static constexpr char const * name() { return "enable_session_probe_launch_mask"; }
+            static constexpr char const * name() { return "session_probe_enable_launch_mask"; }
             static constexpr unsigned index() { return 29; }
             using type = bool;
             using sesman_and_spec_type = bool;
@@ -3064,27 +3064,40 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{};
         };
-        // AUTHID_CONTEXT_OUTBOUND_CONNECTION_MONITORING_RULES
+        // AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES
         // type: std::string
-        struct outbound_connection_monitoring_rules {
+        struct session_probe_outbound_connection_monitoring_rules {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
-            static constexpr char const * name() { return "outbound_connection_monitoring_rules"; }
+            static constexpr char const * name() { return "session_probe_outbound_connection_monitoring_rules"; }
             static constexpr unsigned index() { return 105; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
             type value{};
         };
-        // AUTHID_CONTEXT_PROCESS_MONITORING_RULES
+        // AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES
         // type: std::string
-        struct process_monitoring_rules {
+        struct session_probe_process_monitoring_rules {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
-            static constexpr char const * name() { return "process_monitoring_rules"; }
+            static constexpr char const * name() { return "session_probe_process_monitoring_rules"; }
             static constexpr unsigned index() { return 106; }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES
+        // type: std::string
+        struct session_probe_extra_system_processes {
+            static constexpr bool is_readable() { return 1; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "session_probe_extra_system_processes"; }
+            static constexpr unsigned index() { return 107; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -3107,7 +3120,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason"; }
-            static constexpr unsigned index() { return 107; }
+            static constexpr unsigned index() { return 108; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -3120,7 +3133,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason_ack"; }
-            static constexpr unsigned index() { return 108; }
+            static constexpr unsigned index() { return 109; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -3135,6 +3148,19 @@ namespace cfg {
             using type = std::string;
             using mapped_type = type;
             type value{};
+        };
+        // AUTHID_CONTEXT_RECORDING_STARTED
+        // type: bool
+        struct recording_started {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 1; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "recording_started"; }
+            static constexpr unsigned index() { return 110; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
         };
     };
 
@@ -3268,7 +3294,7 @@ struct mod_rdp
 , cfg::mod_rdp::use_native_remoteapp_capability
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
-, cfg::mod_rdp::enable_session_probe_launch_mask
+, cfg::mod_rdp::session_probe_enable_launch_mask
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
@@ -3446,12 +3472,14 @@ struct context
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
-, cfg::context::outbound_connection_monitoring_rules
-, cfg::context::process_monitoring_rules
+, cfg::context::session_probe_outbound_connection_monitoring_rules
+, cfg::context::session_probe_process_monitoring_rules
+, cfg::context::session_probe_extra_system_processes
 , cfg::context::manager_disconnect_reason
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
+, cfg::context::recording_started
 { static constexpr bool is_section = true; };
 
 }
@@ -3505,7 +3533,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::use_native_remoteapp_capability
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
-, cfg::mod_rdp::enable_session_probe_launch_mask
+, cfg::mod_rdp::session_probe_enable_launch_mask
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
@@ -3581,9 +3609,11 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
-, cfg::context::outbound_connection_monitoring_rules
-, cfg::context::process_monitoring_rules
+, cfg::context::session_probe_outbound_connection_monitoring_rules
+, cfg::context::session_probe_process_monitoring_rules
+, cfg::context::session_probe_extra_system_processes
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
+, cfg::context::recording_started
 >;
 }

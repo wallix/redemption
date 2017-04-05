@@ -53,7 +53,8 @@ public:
     enum class ResizeResult {
         no_need = 0,
         done    = 1,
-        fail    = -1
+        fail    = -1,
+        instant_done = 2
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
 

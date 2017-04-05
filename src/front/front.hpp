@@ -1174,6 +1174,10 @@ public:
 
         this->update_keyboard_input_mask_state();
 
+        if (capture_wrm) {
+            this->ini.set_acl<cfg::context::recording_started>(true);
+        }
+
 //        this->authentifier.capture_started = true;
 
         return true;

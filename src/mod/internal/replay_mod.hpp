@@ -16,7 +16,7 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen,
-              Meng Tan
+              Meng Tan, Clément Moroldo
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
@@ -104,6 +104,7 @@ public:
         case FrontAPI::ResizeResult::no_need:
             // no resizing needed
             break;
+        case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::done:
             // resizing done
             this->front_width  = this->reader.info_width;
@@ -142,12 +143,12 @@ public:
         this->reader.play(false);
     }
 
-    bool play_qt() {
-        return this->reader.play_qt();
+    bool play_client() {
+        return this->reader.play_client();
     }
 
-    bool get_break_privplay_qt() {
-        return this->reader.break_privplay_qt;
+    bool get_break_privplay_client() {
+        return this->reader.break_privplay_client;
     }
 
     ~ReplayMod() override {
@@ -169,6 +170,43 @@ public:
 
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                int16_t /*param1*/, int16_t /*param2*/) override {
+    }
+
+    void set_pause(timeval & time) {
+        this->reader.set_pause_client(time);
+    }
+
+    time_t get_movie_time() {
+        time_t start = this->in_trans.meta_line.start_time;
+
+        std::string movie_path_str(this->movie_path.prefix);
+        movie_path_str += std::string(".mwrm");
+
+        std::ifstream file(movie_path_str.c_str());
+        std::string line;
+        std::string last_line;
+        if (file.good()) {
+            while(!file.eof()) {
+                last_line = line;
+                getline(file,line);
+            }
+        }
+
+        size_t pos = last_line.find(".wrm ");
+        last_line = last_line.substr(pos+5, last_line.length());
+        while (pos != last_line.length()) {
+            pos = last_line.find(" ");
+            last_line = last_line.substr(pos+1, last_line.length());
+        }
+
+        char end_chars[10] = {0};
+        for (size_t i = 0; i < last_line.length();i++) {
+            end_chars[i] = last_line.c_str()[i];
+        }
+        char * end_chars_end = end_chars;
+        time_t end = strtoll(end_chars, &end_chars_end, 10);
+
+        return end - start;
     }
 
     void refresh(Rect /*rect*/) override {}
