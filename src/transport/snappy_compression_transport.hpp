@@ -154,6 +154,58 @@ private:
 
         //(*pbuffer) = (*pbuffer) + len;
     }
+
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+        size_t    remaining_size = len;
+
+        while (remaining_size) {
+            if (this->uncompressed_data_length) {
+                REDASSERT(this->uncompressed_data);
+
+                const size_t data_length = std::min<size_t>(remaining_size, this->uncompressed_data_length);
+
+                ::memcpy(&buffer[len-remaining_size], this->uncompressed_data, data_length);
+
+                this->uncompressed_data        += data_length;
+                this->uncompressed_data_length -= data_length;
+
+                remaining_size -= data_length;
+            }
+            else {
+                uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
+
+                // read compressed_data_length(2);
+                if (!this->source_transport.atomic_read(data_buf, sizeof(uint16_t))){
+                    if (remaining_size == len) {
+                        return false;
+                    }
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+
+                const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
+                //if (this->verbose) {
+                //    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
+                //}
+
+                if (!this->source_transport.atomic_read(data_buf, compressed_data_length)){
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+                this->uncompressed_data        = this->uncompressed_data_buffer;
+                this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
+
+                snappy_status status = ::snappy_uncompress(
+                      reinterpret_cast<char *>(data_buf) , compressed_data_length
+                    , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
+                if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
+                    LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
+                       , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %d", status);
+                }
+            }
+        }
+        return true;
+    }
+
+
 };  // class SnappyCompressionInTransport
 
 

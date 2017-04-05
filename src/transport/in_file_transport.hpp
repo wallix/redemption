@@ -79,4 +79,30 @@ private:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
+
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+        ssize_t res = -1;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
+            if (res <= 0){
+                if (res == 0) {
+                    if (remaining_len == len){
+                        return false;
+                    }
+                }
+                if ((res != 0) && (errno == EINTR)){
+                    continue;
+                }
+                this->status = false;
+                throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            }
+            remaining_len -= res;
+        }
+        this->last_quantum_received += len;
+        if (remaining_len != 0){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        }
+        return true;
+    }
 };

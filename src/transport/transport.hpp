@@ -201,16 +201,18 @@ private:
 //     }
 
 
-    // Atomic read read exactly the amount of data requested or return an error
 
-    virtual bool do_atomic_read(uint8_t * buffer, size_t len) {
+
+    virtual void do_recv_new(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-
-    virtual void do_recv_new(uint8_t * buffer, size_t len) {
+    /// Atomic read read exactly the amount of data requested or return an error
+    /// @see atomic_read
+    ///
+    virtual bool do_atomic_read(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
