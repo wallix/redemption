@@ -85,6 +85,9 @@ void VideoTransportBase::force_open()
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
     this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (this->fd == -1) {
+        LOG( LOG_ERR, "can't open temporary file %s : %s [%u]"
+           , this->tmp_filename
+           , strerror(errno), errno);
         this->status = false;
         auto eid = ERR_TRANSPORT_OPEN_FAILED;
         if (errno == ENOSPC) {
@@ -96,9 +99,9 @@ void VideoTransportBase::force_open()
     }
     if (fchmod(this->fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-            , this->tmp_filename
-            , this->groupid ? "u+r, g+r" : "u+r"
-            , strerror(errno), errno);
+           , this->tmp_filename
+           , this->groupid ? "u+r, g+r" : "u+r"
+           , strerror(errno), errno);
         ::close(this->fd);
         this->fd = -1;
         unlink(this->tmp_filename);
@@ -148,6 +151,7 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
                 errno = ENOSPC;
                 eid = ERR_TRANSPORT_WRITE_NO_ROOM;
             }
+            LOG( LOG_ERR, "VideoTransport::send: %s [%u]", strerror(errno), errno);
             throw Error(eid, errno);
         }
         remaining_len -= ret;
@@ -165,12 +169,13 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
 VideoCaptureCtx::VideoCaptureCtx(
     timeval const & now,
     bool no_timestamp,
-    std::chrono::microseconds const & frame_interval,
+    unsigned frame_rate,
     RDPDrawable & drawable
 )
 : drawable(drawable)
 , start_video_capture(now)
-, frame_interval(frame_interval)
+, frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
+, current_video_time(0)
 , no_timestamp(no_timestamp)
 {}
 
@@ -200,51 +205,39 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
-    recorder.preparing_video_frame();
-    recorder.encoding_video_frame();
+    this->preparing_video_frame(recorder);
+    recorder.encoding_video_frame(this->current_video_time / frame_interval);
+    recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
 }
 
 std::chrono::microseconds
-VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool ignore_frame_in_timeval)
+VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/)
 {
-    uint64_t tick = difftimeval(now, this->start_video_capture);
-    uint64_t const frame_interval = this->frame_interval.count();
+    std::chrono::microseconds tick { difftimeval(now, this->start_video_capture) };
+    std::chrono::microseconds const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
-        auto encoding_video_frame = [this, &recorder](){
-            if (this->start_video_capture.tv_sec != this->previous_second) {
-                // TODO only if drawable is updated
-                this->preparing_video_frame(recorder);
-            }
-            recorder.encoding_video_frame();
-        };
-
         if (!this->has_frame_marker) {
             this->preparing_video_frame(recorder);
         }
 
-        auto inc_video_time = [this](uint64_t const usec) {
-            auto sec = usec / 1000000LL;
-            this->start_video_capture.tv_usec += usec - sec * 1000000LL;
-            if (this->start_video_capture.tv_usec >= 1000000LL){
-                this->start_video_capture.tv_usec -= 1000000LL;
-                ++sec;
-            }
-            this->start_video_capture.tv_sec += sec;
-            return usec;
-        };
+        std::chrono::microseconds previous_video_time = this->current_video_time;
 
-        /* stat */// LOG(LOG_INFO, "%s", "do_snapshot_video_frame");
-        if (ignore_frame_in_timeval) {
-            encoding_video_frame();
-            auto const nframe = tick / frame_interval;
-            tick -= inc_video_time(frame_interval * nframe);
-        }
-        else {
-            do {
-                encoding_video_frame();
-                tick -= inc_video_time(frame_interval);
-                /* stat */// LOG(LOG_INFO, "%s", "while do_snapshot_video_frame");
-            } while (tick >= frame_interval);
+        this->current_video_time += tick;
+        tick %= frame_interval;
+        this->current_video_time -= tick;
+
+        // here, synchronize video time with the end of second
+
+        std::chrono::microseconds count = this->current_video_time - previous_video_time;
+        while (count >= frame_interval) {
+            if (this->start_video_capture.tv_sec != this->previous_second) {
+                this->preparing_video_frame(recorder);
+            }
+            recorder.encoding_video_frame(previous_video_time / frame_interval);
+            auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
+            this->start_video_capture = addusectimeval(elapsed.count(), this->start_video_capture);
+            previous_video_time += elapsed;
+            count -= elapsed;
         }
     }
     return std::chrono::microseconds(frame_interval - tick);
@@ -361,7 +354,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     flv_params.target_width,
     flv_params.target_height,
     flv_params.verbosity)
-, video_cap_ctx(now, no_timestamp, std::chrono::microseconds(1000000L / flv_params.frame_rate), drawable)
+, video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 {
     if (flv_params.verbosity) {
         LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
@@ -551,7 +544,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     RDPDrawable & drawable,
     bool no_timestamp,
     FlvParams flv_params)
-: video_cap_ctx(now, no_timestamp, std::chrono::microseconds(1000000L / flv_params.frame_rate), drawable)
+: video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , drawable(drawable)

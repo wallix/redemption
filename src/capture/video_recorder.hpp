@@ -107,19 +107,20 @@ class video_recorder
         { return this->frame; }
     };
 
+
+    const int original_height;
+    uint64_t old_frame_index = 0;
+
     /* video output */
 
     std::unique_ptr<uint8_t, default_av_free> picture_buf;
+    AVStream * video_st = nullptr;
 
     AVFramePtr picture;
     AVFramePtr original_picture;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
-    const int original_height;
-    const int video_outbuf_size;
-
     std::unique_ptr<AVFormatContext, default_av_free_format_context> oc;
-    AVStream *video_st;
     std::unique_ptr<SwsContext, default_sws_free_context> img_convert_ctx;
 
     /* custom IO */
@@ -128,11 +129,8 @@ class video_recorder
 
     AVPacket pkt;
 
-    const std::chrono::milliseconds duration_frame;
-    std::chrono::milliseconds duration {};
-
-    static const unsigned frame_key_limit = 100;
-    unsigned frame_key = frame_key_limit;
+    //static const unsigned frame_key_limit = 100;
+    //unsigned frame_key = frame_key_limit;
 
 public:
     //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
@@ -148,9 +146,6 @@ public:
         int log_level
     )
     : original_height(height)
-    , video_outbuf_size(target_width * target_height * 3 * 5)
-    , video_st(nullptr)
-    , duration_frame(std::max(1000ull / frame_rate, 1ull))
     {
         /* initialize libavcodec, and register all codecs and formats */
         av_register_all();
@@ -188,11 +183,11 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
         }
 
-        this->video_st->r_frame_rate.den = frame_rate;
         this->video_st->r_frame_rate.num = 1;
+        this->video_st->r_frame_rate.den = frame_rate;
 
-        this->video_st->time_base.den = frame_rate;
         this->video_st->time_base.num = 1;
+        this->video_st->time_base.den = frame_rate;
 
         this->video_st->codec->codec_id = fmt->video_codec;
         this->video_st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -207,13 +202,17 @@ public:
         // in terms of which frame timestamps are represented.
         // for fixed-fps content, timebase should be 1/framerate
         // and timestamp increments should be identically 1
-        this->video_st->codec->time_base.den = frame_rate;
         this->video_st->codec->time_base.num = 1;
+        this->video_st->codec->time_base.den = frame_rate;
 
-        this->video_st->codec->gop_size = std::max(100, frame_rate);
+        // impact: keyframe, filesize and time of generating
+        // high value = ++time, --size
+        // keyframe managed by this->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
+        this->video_st->codec->gop_size = std::max(2, frame_rate);
+
         this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
-        this->video_st->codec->flags |= CODEC_FLAG_QSCALE;
-        this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale;
+        this->video_st->codec->flags |= CODEC_FLAG_QSCALE; // TODO
+        this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale; // TODO
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
@@ -270,6 +269,8 @@ public:
         // and allocate the necessary encode buffers
         // find the video encoder
 
+        int const video_outbuf_size = target_width * target_height * 3 * 5;
+
         {
             struct AVDict {
                 void add(char const * k, char const * v) {
@@ -285,7 +286,7 @@ public:
                 // low quality  (baseline, main, hight, ...)
                 av_dict.add("profile", "baseline");
                 av_dict.add("preset", "ultrafast");
-                av_dict.add("vsync", "2");
+                //av_dict.add("vsync", "2");
             }
 
             // open the codec
@@ -320,7 +321,7 @@ public:
                 as long as they're aligned enough for the architecture, and
                 they're freed appropriately (such as using av_free for buffers
                 allocated with av_malloc) */
-            this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(this->video_outbuf_size)));
+            this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
             if (!this->video_outbuf){
                 LOG(LOG_ERR, "video recorder error : failed to allocate video output buffer");
                 throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
@@ -395,14 +396,14 @@ public:
 
         av_init_packet(&this->pkt);
         this->pkt.data = this->video_outbuf.get();
-        this->pkt.size = this->video_outbuf_size;
+        this->pkt.size = video_outbuf_size;
 
         av_log_set_level(log_level);
     }
 
     ~video_recorder() {
         // write last frame : we must ensure writing at least one frame to avoid empty movies
-        encoding_video_frame();
+        // encoding_video_frame();
 
         // write the last second for mp4 (if preset != ultrafast ...)
         //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
@@ -411,6 +412,10 @@ public:
         //    for (int i = 0; i < loop; ++i) {
         //        encoding_video_frame();
         //    }
+        // --- or --- ?
+        // int got_packet = 1;
+        // for(; got_packet;)
+        //    avcodec_encode_video2(this->video_st->codec, &this->pkt, nullptr, &got_packet);
         //}
 
         /* write the trailer, if any.  the trailer must be written
@@ -432,7 +437,7 @@ public:
             0, this->original_height, this->picture->data, this->picture->linesize);
     }
 
-    void encoding_video_frame()
+    void encoding_video_frame(uint64_t frame_index = 1)
     {
         /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
@@ -472,11 +477,14 @@ public:
          */
         // int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt, const AVFrame *frame, int *got_packet_ptr);
 
+        auto frame_interval = this->video_st->r_frame_rate.den;
+        auto pts = this->video_st->time_base.den * frame_index / frame_interval;
+        auto dur = this->video_st->time_base.den * (frame_index - this->old_frame_index) / frame_interval;
+        this->pkt.pts = this->pkt.dts = pts;
+        this->picture->pts = pts;
+        this->old_frame_index = frame_index;
+
         int got_packet = 0;
-
-        // fix "non-strictly-monotonic PTS" warning, but grow file
-        //this->picture->pts += this->duration_frame.count();
-
         const int res = avcodec_encode_video2(
             this->video_st->codec,
             &this->pkt,
@@ -484,18 +492,13 @@ public:
             &got_packet);
 
         if (res == 0 && got_packet) {
-            if (this->frame_key == frame_key_limit) {
-                this->pkt.flags |= AV_PKT_FLAG_KEY;
-                this->frame_key = 0;
-            }
-            ++this->frame_key;
+            //if (this->frame_key == frame_key_limit) {
+            //    this->pkt.flags |= AV_PKT_FLAG_KEY;
+            //    this->frame_key = 0;
+            //}
+            //++this->frame_key;
             this->pkt.stream_index = this->video_st->index;
-            this->pkt.duration = this->duration_frame.count();
-            if (!(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
-                this->pkt.dts = this->duration.count();
-                this->duration += this->duration_frame;
-                this->pkt.pts = this->duration.count();
-            }
+            this->pkt.duration = dur;
 
             if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");
