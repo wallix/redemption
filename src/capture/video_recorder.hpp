@@ -205,8 +205,11 @@ public:
         this->video_st->codec->time_base.num = 1;
         this->video_st->codec->time_base.den = frame_rate;
 
-        //this->video_st->codec->keyint_min = 20;
+        // impact: keyframe, filesize and time of generating
+        // high value = ++time, --size
+        // keyframe managed by this->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
         this->video_st->codec->gop_size = std::max(2, frame_rate);
+
         this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
         this->video_st->codec->flags |= CODEC_FLAG_QSCALE; // TODO
         this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale; // TODO
