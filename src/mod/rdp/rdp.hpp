@@ -1372,7 +1372,7 @@ public:
         if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
-                    front, *this, this->lang, this->font,
+                    front, *this, this->orders, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
                     mod_rdp_params.client_execute, this->verbose
@@ -1405,6 +1405,8 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
+
+        this->remote_programs_session_manager.reset();
     }
 
     int get_fd() const override { return this->nego.trans.get_fd(); }
