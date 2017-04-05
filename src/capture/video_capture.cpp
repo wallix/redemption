@@ -205,12 +205,13 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
-    recorder.preparing_video_frame();
+    this->preparing_video_frame(recorder);
     recorder.encoding_video_frame(this->current_video_time / frame_interval);
+    recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
 }
 
 std::chrono::microseconds
-VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool ignore_frame_in_timeval)
+VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/)
 {
     std::chrono::microseconds tick { difftimeval(now, this->start_video_capture) };
     std::chrono::microseconds const frame_interval = this->frame_interval;
@@ -233,7 +234,7 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool i
                 this->preparing_video_frame(recorder);
             }
             recorder.encoding_video_frame(previous_video_time / frame_interval);
-            auto elapsed = std::min(count, 5*frame_interval);
+            auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
             this->start_video_capture = addusectimeval(elapsed.count(), this->start_video_capture);
             previous_video_time += elapsed;
             count -= elapsed;

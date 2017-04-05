@@ -107,19 +107,20 @@ class video_recorder
         { return this->frame; }
     };
 
+
+    const int original_height;
+    uint64_t old_frame_index = 0;
+
     /* video output */
 
     std::unique_ptr<uint8_t, default_av_free> picture_buf;
+    AVStream * video_st = nullptr;
 
     AVFramePtr picture;
     AVFramePtr original_picture;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
-    const int original_height;
-    const int video_outbuf_size;
-
     std::unique_ptr<AVFormatContext, default_av_free_format_context> oc;
-    AVStream *video_st;
     std::unique_ptr<SwsContext, default_sws_free_context> img_convert_ctx;
 
     /* custom IO */
@@ -128,11 +129,8 @@ class video_recorder
 
     AVPacket pkt;
 
-    const std::chrono::milliseconds duration_frame;
-    std::chrono::milliseconds duration {};
-
-    static const unsigned frame_key_limit = 100;
-    unsigned frame_key = frame_key_limit;
+    //static const unsigned frame_key_limit = 100;
+    //unsigned frame_key = frame_key_limit;
 
 public:
     //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
@@ -148,9 +146,6 @@ public:
         int log_level
     )
     : original_height(height)
-    , video_outbuf_size(target_width * target_height * 3 * 5)
-    , video_st(nullptr)
-    , duration_frame(std::max(1000ull / frame_rate, 1ull))
     {
         /* initialize libavcodec, and register all codecs and formats */
         av_register_all();
@@ -271,6 +266,8 @@ public:
         // and allocate the necessary encode buffers
         // find the video encoder
 
+        int const video_outbuf_size = target_width * target_height * 3 * 5;
+
         {
             struct AVDict {
                 void add(char const * k, char const * v) {
@@ -321,7 +318,7 @@ public:
                 as long as they're aligned enough for the architecture, and
                 they're freed appropriately (such as using av_free for buffers
                 allocated with av_malloc) */
-            this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(this->video_outbuf_size)));
+            this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
             if (!this->video_outbuf){
                 LOG(LOG_ERR, "video recorder error : failed to allocate video output buffer");
                 throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
@@ -396,14 +393,14 @@ public:
 
         av_init_packet(&this->pkt);
         this->pkt.data = this->video_outbuf.get();
-        this->pkt.size = this->video_outbuf_size;
+        this->pkt.size = video_outbuf_size;
 
         av_log_set_level(log_level);
     }
 
     ~video_recorder() {
         // write last frame : we must ensure writing at least one frame to avoid empty movies
-        encoding_video_frame();
+        // encoding_video_frame();
 
         // write the last second for mp4 (if preset != ultrafast ...)
         //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
@@ -477,38 +474,14 @@ public:
          */
         // int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt, const AVFrame *frame, int *got_packet_ptr);
 
-        int got_packet = 0;
-
-        // fix "non-strictly-monotonic PTS" warning, but grow file
-        //this->picture->pts += this->duration_frame.count();
-auto frame_interval = this->video_st->r_frame_rate.den;
-
-        static auto old_frame_index = 0;
-//         this->pkt.dts = this->duration.count();
-        //this->picture->pkt_dts = this->duration.count() * this->video_st->time_base.den;
-//         this->pkt.duration = this->duration_frame.count() * n;
-auto pts = this->video_st->time_base.den * frame_index / frame_interval;
-auto dur = this->video_st->time_base.den * (frame_index - old_frame_index) / frame_interval;
-        this->duration += std::chrono::milliseconds(dur);
-        //this->pkt.duration = dur.count() * this->video_st->time_base.den;
-        //this->pkt.pts = this->pkt.dts = (this->duration_frame * frame_index).count();
+        auto frame_interval = this->video_st->r_frame_rate.den;
+        auto pts = this->video_st->time_base.den * frame_index / frame_interval;
+        auto dur = this->video_st->time_base.den * (frame_index - this->old_frame_index) / frame_interval;
         this->pkt.pts = this->pkt.dts = pts;
-//         this->pkt.pts = this->duration.count();
-        //this->picture->pts = this->duration.count() * frame_interval;
         this->picture->pts = pts;
-        old_frame_index = frame_index;
+        this->old_frame_index = frame_index;
 
-
-// static uint64_t pts = 0;
-//         this->picture->pkt_dts = pts;
-//         auto oldpts = pts;
-//         pts = (this->duration_frame * frame_index * this->video_st->time_base.den).count() * 1000;
-//         this->pkt.pts = this->pkt.dts = pts;
-//         this->pkt.duration = pts-oldpts;
-//         //this->duration += this->duration_frame * n;
-// //         this->pkt.pts = this->duration.count();
-//         this->picture->pts = pts;
-
+        int got_packet = 0;
         const int res = avcodec_encode_video2(
             this->video_st->codec,
             &this->pkt,
@@ -516,19 +489,13 @@ auto dur = this->video_st->time_base.den * (frame_index - old_frame_index) / fra
             &got_packet);
 
         if (res == 0 && got_packet) {
-//             if (this->frame_key == frame_key_limit) {
-                this->pkt.flags |= AV_PKT_FLAG_KEY;
-                this->frame_key = 0;
-//             }
-            ++this->frame_key;
+            //if (this->frame_key == frame_key_limit) {
+            //    this->pkt.flags |= AV_PKT_FLAG_KEY;
+            //    this->frame_key = 0;
+            //}
+            //++this->frame_key;
             this->pkt.stream_index = this->video_st->index;
             this->pkt.duration = dur;
-//             if (!(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
-//                 this->pkt.dts = this->duration.count();
-//                 this->duration += this->duration_frame;
-//                 this->pkt.pts = this->duration.count();
-//             }
-//this->pkt.pts = (this->duration_frame * frame_index).count() * frame_interval;
 
             if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
                 LOG(LOG_ERR, "video recorder : failed to write encoded frame");
