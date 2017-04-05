@@ -429,8 +429,6 @@ protected:
 
         wait_obj & asynchronous_task_event;
 
-
-
         RDPVerbose verbose;
 
     public:
@@ -744,6 +742,9 @@ protected:
 
     StaticOutStream<65536> multifragment_update_data;
 
+    LargePointerCaps        client_large_pointer_caps;
+    MultiFragmentUpdateCaps client_multi_fragment_update_caps;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -889,6 +890,8 @@ public:
         , remote_program_session_manager_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
+        , client_large_pointer_caps(info.large_pointer_caps)
+        , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -4398,22 +4401,23 @@ public:
                 }
 
                 if (this->large_pointer_support) {
-                    LargePointerCaps largeptr_caps;
-                    this->front.retrieve_client_capability_set(largeptr_caps);
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                        largeptr_caps.log("Sending to server");
+                        this->client_large_pointer_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emit_capability_set(largeptr_caps);
+                    confirm_active_pdu.emit_capability_set(this->client_large_pointer_caps);
 
-                    MultiFragmentUpdateCaps multifragupd_caps;
-                    if (this->front.retrieve_client_capability_set(multifragupd_caps)) {
-                        if (multifragupd_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
-                            multifragupd_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
+                    if (this->client_multi_fragment_update_caps.MaxRequestSize) {
+                        MultiFragmentUpdateCaps multi_fragment_update_caps;
+
+                        multi_fragment_update_caps = this->client_multi_fragment_update_caps;
+
+                        if (multi_fragment_update_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
+                            multi_fragment_update_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
                         }
                         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                            multifragupd_caps.log("Sending to server");
+                            multi_fragment_update_caps.log("Sending to server");
                         }
-                        confirm_active_pdu.emit_capability_set(multifragupd_caps);
+                        confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
                     }
                 }
 
