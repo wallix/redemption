@@ -24,7 +24,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestVerifier
 #include "system/redemption_unit_tests.hpp"
-#include "check_mem.hpp"
 
 //#define LOGNULL
 #define LOGPRINT

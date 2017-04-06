@@ -25,7 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
-#include "check_mem.hpp"
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
 #include "transport/in_crypto_transport.hpp"

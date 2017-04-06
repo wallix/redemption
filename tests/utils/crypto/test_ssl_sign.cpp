@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/crypto/ssl_sign.hpp"
-#include "check_mem.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSign)
 {

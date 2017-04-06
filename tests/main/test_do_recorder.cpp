@@ -24,8 +24,6 @@
 #define BOOST_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
-#include <check_mem.hpp>
-
 #define LOGPRINT
 //#define LOGNULL
 #include "utils/log.hpp"
