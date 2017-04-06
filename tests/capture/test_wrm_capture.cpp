@@ -721,7 +721,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
 
     const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
-    
+
     TestFstat fstat;
 
 //    char file1[1024];
@@ -744,7 +744,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
     const char * meta_path = "./xxx.mwrm";
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
-//    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }
 
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
@@ -1361,18 +1361,11 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         BOOST_CHECK(true);
     }
 
-//    const char * file[] = {
-//        "/tmp/TESTOFS.mwrm", // hash
-//        "TESTOFS.mwrm",
-//        "TESTOFS-000000.wrm",
-//        "TESTOFS-000001.wrm"
-//    };
-//    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-//        if (::unlink(file[i])){
-//            BOOST_CHECK(false);
-//            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-//        }
-//    }
+    // cleanup of possible previous test files
+    BOOST_CHECK(!::unlink("/tmp/TESTOFS.mwrm")); // TODO CHECK_FILESIZE_AND_UNLIKE
+    BOOST_CHECK(!::unlink("TESTOFS.mwrm")); // TODO CHECK_FILESIZE_AND_UNLIKE
+    BOOST_CHECK(!::unlink("TESTOFS-000000.wrm")); // TODO CHECK_FILESIZE_AND_UNLIKE
+    BOOST_CHECK(!::unlink("TESTOFS-000001.wrm")); // TODO CHECK_FILESIZE_AND_UNLIKE
 }
 
 BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
