@@ -92,12 +92,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x1b\xf9\xcc\xf2\x3f\xef\x1f\xbf\xa1\xe2\x70\xdf\xef\x94\xa4\x6f\xf7\xeb\x13\xc2"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x1b\xf9\xcc\xf2\x3f\xef\x1f\xbf\xa1\xe2\x70\xdf\xef\x94\xa4\x6f\xf7\xeb\x13\xc2");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWaitWithForm)
@@ -160,12 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait_1.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x2b\xae\xee\xd5\x35\xca\x1d\x42\x1a\x1b\xf2\x67\x39\xbf\x38\xfb\x51\xb4\xab\x5f"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x2b\xae\xee\xd5\x35\xca\x1d\x42\x1a\x1b\xf2\x67\x39\xbf\x38\xfb\x51\xb4\xab\x5f");
 }
 
 

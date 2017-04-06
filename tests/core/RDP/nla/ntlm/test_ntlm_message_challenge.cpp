@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 {
     StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
-    uint8_t packet2[] = {
+    constexpr static uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
         0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,
         0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80, 0x4e,
@@ -79,10 +79,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    char message[1024];
-    if (!check_sig(to_send2, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send2, sig);
 
     NTLMChallengeMessage ChallengeMsg;
 
@@ -97,25 +94,21 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
-    uint8_t targetname_match[] =
-        "\x57\x00\x49\x00\x4e\x00\x37\x00";
-    BOOST_CHECK_EQUAL(memcmp(targetname_match,
-                             ChallengeMsg.TargetName.buffer.ostream.get_data(),
-                             ChallengeMsg.TargetName.len),
-                      0);
+    CHECK_MEM_C(
+        make_array_view(ChallengeMsg.TargetName.buffer.ostream.get_data(), ChallengeMsg.TargetName.len),
+        "\x57\x00\x49\x00\x4e\x00\x37\x00"
+    );
     // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetName.buffer.ostream.size());
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
-    uint8_t targetinfo_match[] =
+    CHECK_MEM_C(
+        make_array_view(ChallengeMsg.TargetInfo.buffer.ostream.get_data(), ChallengeMsg.TargetInfo.len),
         "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
         "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
-        "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
-    BOOST_CHECK_EQUAL(memcmp(targetinfo_match,
-                             ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
-                             ChallengeMsg.TargetInfo.len),
-                      0);
+        "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"
+    );
     // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
     InStream servChall(ChallengeMsg.serverChallenge, 8);

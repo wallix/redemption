@@ -47,11 +47,6 @@
 #include "utils/bitmap_shrink.hpp"
 #include "utils/fileutils.hpp"
 
-inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
-{
-    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
-}
-
 inline void dump_png(const char * prefix, const Drawable & data)
 {
     char tmpname[128];
@@ -166,13 +161,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
         gd.draw(glyph_index, rect_clip, color_cxt, gly_cache);
     }
 
-    char message[1024];
-    if (!check_sig(gd, message,
-                   "\xd8\xf7\x6e\xf5\xd1\xe6\x4a\x05\x56\x0a"
-                   "\x21\x42\xa4\x27\x73\x5a\xce\x67\xf6\xb3"
-                   )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(gd, "\xd8\xf7\x6e\xf5\xd1\xe6\x4a\x05\x56\x0a\x21\x42\xa4\x27\x73\x5a\xce\x67\xf6\xb3");
 
     // uncomment to see result in png file
     //dump_png("test_glyph_000_", gd.impl());
@@ -219,12 +208,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect, color_cxt);
 
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(gd, "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_polyline_000_", gd.impl());
@@ -259,12 +243,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
 
     gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles_in), screen_rect);
 
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(gd, "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_multidstblt_000_", gd.impl());
@@ -299,12 +278,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
     gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles_in), screen_rect, color_cxt);
 
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(gd, "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_multiopaquerect_000_", gd.impl());

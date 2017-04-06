@@ -63,12 +63,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x90\x1d\x52\xa3\x11\x2f\xd3\xed\x6e\xe7\xbd\x98\x3d\x57\xe9\xdb\x0a\x72\xe9\x31"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x90\x1d\x52\xa3\x11\x2f\xd3\xed\x6e\xe7\xbd\x98\x3d\x57\xe9\xdb\x0a\x72\xe9\x31");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
@@ -102,13 +97,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog2.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x75\x16\xab\xf9\x4a\xab\xf8\x20\x06\x9e\x50\x6f\xce\x58\xe8\x36\xf0\x53\xd2\x38"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x75\x16\xab\xf9\x4a\xab\xf8\x20\x06\x9e\x50\x6f\xce\x58\xe8\x36\xf0\x53\xd2\x38");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
@@ -142,13 +131,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog3.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x74\xfd\xcc\x8d\x7b\xe8\xe0\xa2\x5f\x23\xa0\x3a\xe5\x04\x30\x93\x87\x73\x1d\xd3"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x74\xfd\xcc\x8d\x7b\xe8\xe0\xa2\x5f\x23\xa0\x3a\xe5\x04\x30\x93\x87\x73\x1d\xd3");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
@@ -182,13 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog4.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x64\x9c\x88\xe4\xf1\xe7\x64\x81\xec\x12\x3e\x28\x28\x33\xe9\x96\x15\x34\x4b\x3d"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x64\x9c\x88\xe4\xf1\xe7\x64\x81\xec\x12\x3e\x28\x28\x33\xe9\x96\x15\x34\x4b\x3d");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
@@ -222,13 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog5.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x8f\x5a\xdc\xe7\x0d\xb2\xff\x5b\xed\x9d\x9e\xa4\x22\xfa\x36\x95\x46\x33\x05\x16"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x8f\x5a\xdc\xe7\x0d\xb2\xff\x5b\xed\x9d\x9e\xa4\x22\xfa\x36\x95\x46\x33\x05\x16");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
@@ -262,13 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog6.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x81\x25\xbb\xbe\xd1\x82\x8f\x02\xb2\x62\xec\xa6\xdb\xfb\x01\xe6\x58\x52\x6e\xdd"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x81\x25\xbb\xbe\xd1\x82\x8f\x02\xb2\x62\xec\xa6\xdb\xfb\x01\xe6\x58\x52\x6e\xdd");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
@@ -302,13 +267,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog7.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xf7\x9e\x59\x23\x0b\x84\x1b\x90\x1d\x6e\x3b\xe2\x2f\x0c\x39\x1f\x95\xac\xaf\x4f"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xf7\x9e\x59\x23\x0b\x84\x1b\x90\x1d\x6e\x3b\xe2\x2f\x0c\x39\x1f\x95\xac\xaf\x4f");
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
@@ -342,13 +301,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog8.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x8e\x3b\x71\xe6\x83\xd8\xae\x56\xe6\xea\xd6\x6d\x09\x40\xf7\xe9\x0d\x88\xdb\x1b"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x8e\x3b\x71\xe6\x83\xd8\xae\x56\xe6\xea\xd6\x6d\x09\x40\xf7\xe9\x0d\x88\xdb\x1b");
 }
 
 BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
@@ -397,13 +350,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-1-button-ok.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x6e\x22\xbd\x87\x7b\x9c\x93\xb3\x62\xe6\x47\x36\xae\xb0\x2d\x95\x7b\x0d\xf1\xc9"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x6e\x22\xbd\x87\x7b\x9c\x93\xb3\x62\xe6\x47\x36\xae\xb0\x2d\x95\x7b\x0d\xf1\xc9");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -418,11 +365,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xa6\x1d\x30\x14\x91\x5b\x81\xa0\xf4\x6d\x44\x30\x88\x3c\xfc\x83\x80\x79\x52\xd8"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xa6\x1d\x30\x14\x91\x5b\x81\xa0\xf4\x6d\x44\x30\x88\x3c\xfc\x83\x80\x79\x52\xd8");
 
 
     x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
@@ -438,11 +381,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-3-button-cancel.png");
 
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xe5\x54\xf4\x28\x42\xd1\xfc\xb5\xf5\x46\xe5\xb9\x18\xa5\x25\x87\x50\x8b\x5b\x97"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xe5\x54\xf4\x28\x42\xd1\xfc\xb5\xf5\x46\xe5\xb9\x18\xa5\x25\x87\x50\x8b\x5b\x97");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -516,13 +455,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-challenge-1.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x54\x86\xd7\x3a\xc9\xf6\x45\x66\x14\xe0\xe1\x0c\x4d\xdf\x84\xe5\x13\xe5\x82\x2e"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x54\x86\xd7\x3a\xc9\xf6\x45\x66\x14\xe0\xe1\x0c\x4d\xdf\x84\xe5\x13\xe5\x82\x2e");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);

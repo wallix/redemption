@@ -2,14 +2,14 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-// fixed link error (API changed)
-#ifdef __clang__
-namespace boost { namespace unit_test { namespace ut_detail {
-    std::string normalize_test_case_name(const_string name) {
-        return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
-    }
-}}}
-#endif
+// // fixed link error (API changed)
+// #ifdef __clang__
+// namespace boost { namespace unit_test { namespace ut_detail {
+//     std::string normalize_test_case_name(const_string name) {
+//         return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
+//     }
+// } } }
+// #endif
 
 #ifdef IN_IDE_PARSER
 # define FIXTURES_PATH "./tests/fixtures"
@@ -82,45 +82,52 @@ namespace boost { namespace unit_test { namespace ut_detail {
     } while (0)
 #endif
 
-#include <cstdio>
-//#include <exception>
-#include "core/error.hpp"
-
-#include <boost/test/unit_test_monitor.hpp>
-
-#include "cxx/diagnostic.hpp"
+#include "cxx/cxx.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
 namespace redemption_unit_test__
 {
-//   static std::terminate_handler old_terminate_handler = std::set_terminate([](){
-//     if (!std::uncaught_exception()) {
-//       try {
-//         throw;
-//       }
-//       catch (Error const & e) {
-//         std::printf("Exception Error: %s", e.errmsg());
-//         old_terminate_handler();
-//       }
-//       catch (...) {
-//         old_terminate_handler();
-//       }
-//     }
-//     old_terminate_handler();
-//   });
-
-    struct register_exception {
-        register_exception() {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
-            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::string s = "Exception of type 'Error': "; s += e.errmsg();
-                throw std::runtime_error{std::move(s)};
-            });
-            REDEMPTION_DIAGNOSTIC_POP
-        }
+    struct xformat
+    {
+        const_bytes_array sig;
     };
-    static register_exception Init;
+
+    inline std::ostream & operator<<(std::ostream & out, xformat const & x)
+    {
+        out << "Expected data: ";
+        char const * hex_table = "0123456789abcdef";
+        for (unsigned c : x.sig) {
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        }
+        return out;
+    }
 }
+
+#define CHECK_MEM(mem, memref)                            \
+    do {                                                  \
+        const_bytes_array mem__ {mem};                    \
+        const_bytes_array memref__ {memref};              \
+        BOOST_CHECK_EQUAL(mem__.size(), memref__.size()); \
+        if (mem__.size() == memref__.size()) {            \
+            BOOST_CHECK_MESSAGE(                          \
+                !memcmp(                                  \
+                    mem__.data(), memref__.data(),        \
+                    mem__.size()                          \
+                ),                                        \
+                redemption_unit_test__::xformat{mem__}    \
+            );                                            \
+        }                                                 \
+    } while (0)
+
+#ifdef IN_IDE_PARSER
+# define CHECK_MEM_C(mem, memref) void(mem), void("" memref)
+# define CHECK_MEM_AC(mem, memref) void(mem), void("" memref)
+# define CHECK_MEM_AA(mem, memref) void(mem), void(memref)
+#else
+# define CHECK_MEM_C(mem, memref) CHECK_MEM(mem, cstr_array_view("" memref))
+# define CHECK_MEM_AC(mem, memref) CHECK_MEM(make_array_view(mem), cstr_array_view("" memref))
+# define CHECK_MEM_AA(mem, memref) CHECK_MEM(make_array_view(mem), make_array_view(memref))
+# endif
 
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER

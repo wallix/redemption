@@ -98,7 +98,7 @@ rule test-run ( target : sources + : tested ? : requirements * )
 #    ECHO "sources = $(sources)" ;
 #    ECHO "target = $(target)" ;
     #run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
-    unit-test $(target) : $(sources) : $(requirements) $(TEST_DEPENDENCIES) ;
+    unit-test $(target) : $(sources) : $(TEST_DEPENDENCIES) $(requirements) ;
 
     if ($(tested)) {
         make $(target:S=.coverage) : $(target) : id
