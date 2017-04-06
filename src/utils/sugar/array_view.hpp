@@ -117,6 +117,10 @@ private:
 
 
 template<class T>
+constexpr array_view<T> make_array_view(array_view<T> av) noexcept
+{ return av; }
+
+template<class T>
 constexpr array_view<T> make_array_view(T * x, std::size_t n) noexcept
 { return {x, n}; }
 
@@ -141,6 +145,10 @@ constexpr auto make_array_view(Cont & cont)
 noexcept(noexcept(array_view<typename std::remove_pointer<decltype(cont.data())>::type>{cont}))
 -> array_view<typename std::remove_pointer<decltype(cont.data())>::type>
 { return {cont}; }
+
+template<class T>
+constexpr array_view<T const> make_const_array_view(array_view<T> av) noexcept
+{ return av; }
 
 template<class T>
 constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n) noexcept

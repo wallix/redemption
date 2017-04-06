@@ -103,13 +103,13 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        BOOST_CHECK_EQUAL(memcmp(sig,
-                            "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
-                            "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
-                            "\x25\x48\xb0\x85\x04\xfb\x36\xa8"
-                            "\xf5\xc4\xca\x7a\x28\x29\x4f\x6f",
-                                 sizeof(sig)),
-                          0);
+        CHECK_MEM_AC(
+            sig,
+            "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
+            "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
+            "\x25\x48\xb0\x85\x04\xfb\x36\xa8"
+            "\xf5\xc4\xca\x7a\x28\x29\x4f\x6f"
+        );
     }
 
     {
@@ -122,13 +122,13 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        BOOST_CHECK_EQUAL(memcmp(sig,
-                            "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
-                            "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
-                            "\x25\x48\xb0\x85\x04\xfb\x36\xa8"
-                            "\xf5\xc4\xca\x7a\x28\x29\x4f\x6f",
-                                 sizeof(sig)),
-                          0);
+        CHECK_MEM_AC(
+            sig,
+            "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
+            "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
+            "\x25\x48\xb0\x85\x04\xfb\x36\xa8"
+            "\xf5\xc4\xca\x7a\x28\x29\x4f\x6f"
+        );
     }
 
 }
@@ -148,8 +148,8 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
 
     BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
-    CHECK_MEM(
-        sig, SslSha256::DIGEST_LENGTH,
+    CHECK_MEM_AC(
+        sig,
         "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
         "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"
     );
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
     SslHMAC_Sha256_Delayed hmac;
-    
+
     hmac.init(key, sizeof(key)-1);
 
     const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
@@ -173,8 +173,8 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
 
     BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
-    CHECK_MEM(
-        sig, SslSha256::DIGEST_LENGTH,
+    CHECK_MEM_AC(
+        sig,
         "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
         "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"
     );

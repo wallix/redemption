@@ -53,15 +53,16 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
     CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
-    BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                        creds->identity.User.get_data(),
-                        creds->identity.User.size()));
-    BOOST_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                        creds->identity.Domain.get_data(),
-                        creds->identity.Domain.size()));
-    BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                        creds->identity.Password.get_data(),
-                        creds->identity.Password.size()));
+    CHECK_MEM_C(
+        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
+    CHECK_MEM_C(
+        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
+    CHECK_MEM_C(
+        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
+
     status = table.FreeCredentialsHandle(&credentials);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 }
@@ -91,15 +92,15 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
     CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
-    BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                        creds->identity.User.get_data(),
-                        creds->identity.User.size()));
-    BOOST_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                        creds->identity.Domain.get_data(),
-                        creds->identity.Domain.size()));
-    BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                        creds->identity.Password.get_data(),
-                        creds->identity.Password.size()));
+    CHECK_MEM_C(
+        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
+    CHECK_MEM_C(
+        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
+    CHECK_MEM_C(
+        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
     SecPkgInfo packageInfo;
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);

@@ -512,7 +512,6 @@ class InMetaSequenceTransport : public Transport
 
         void open(const char * meta_filename)
         {
-            LOG(LOG_INFO, "InMetaSequenceTransport::open()");
             if (this->encryption){
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
                 size_t base_len = 0;
@@ -972,7 +971,6 @@ public:
 
         auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
 
-        LOG(LOG_INFO, "meta_line.filename=%s", meta_line.filename);
 
         int err = 0;
         auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
@@ -1079,7 +1077,6 @@ public:
     , meta_header_has_checksum(false)
     , encryption(encryption)
     {
-        LOG(LOG_INFO, "InMetaSequenceTransport::constructeur");
         assert(encryption ? bool(cctx) : true);
 
         temporary_concat tmp(filename, extension);
@@ -1168,35 +1165,6 @@ public:
         }
         ++this->seqno;
         return true;
-    }
-
-//     void do_recv(uint8_t ** pbuffer, size_t len) override {
-//         const ssize_t res = this->buf_read(*pbuffer, len);
-//         if (res < 0){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_READ_FAILED, res);
-//         }
-//         *pbuffer += res;
-//         this->last_quantum_received += res;
-//         if (static_cast<size_t>(res) != len){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-//         }
-//     }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-
-        const ssize_t res = this->buf_read(buffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
     }
 
     bool do_atomic_read(uint8_t * buffer, size_t len) override {

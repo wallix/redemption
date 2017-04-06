@@ -67,11 +67,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
     BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    char message[1024];
-    if (!check_sig(to_send, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
+    CHECK_SIG(to_send, sig);
 
     NTLMNegotiateMessage NegoMsg;
 

@@ -19,29 +19,3 @@
  */
 
 #pragma once
-
-#include <cstring>
-#include <cstdio>
-
-inline bool check_mem(const void * p, std::size_t len, const void * mem, char * message)
-{
-    if (memcmp(p, mem, len)) {
-        unsigned char const * sig = reinterpret_cast<unsigned char const *>(p);
-        message += std::sprintf(message, "Expected data: \"\\x%.2x", unsigned(*sig));
-        while (--len) {
-            message += std::sprintf(message, "\\x%.2x", unsigned(*++sig));
-        }
-        message[0] = '"';
-        message[1] = 0;
-        return false;
-    }
-    return true;
-}
-
-#define CHECK_MEM(p, len, mem)                   \
-    {                                            \
-        char message[len * 5 + 256];             \
-        if (!check_mem(p, len, mem, message)) {  \
-            BOOST_CHECK_MESSAGE(false, message); \
-        }                                        \
-    }

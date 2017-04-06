@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
 BOOST_AUTO_TEST_CASE(TestEncryption1)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[8192];
     size_t offset = 0;
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
     offset += res2.buf.size();
     BOOST_CHECK_EQUAL(res2.buf.size(), 0);
     BOOST_CHECK_EQUAL(res2.consumed, 4);
-    
+
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -367,23 +367,23 @@ BOOST_AUTO_TEST_CASE(TestEncryption1)
                                   0xfa, 0xfc, 0x11, 0x8a, 0xc0, 0x92, 0xf7, 0x53,
                                   'M', 'F', 'C', 'W',    // EOF Magic
                                   0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
-                                  }; 
-    CHECK_MEM(result, 68, expected_result);
+                                  };
+    CHECK_MEM_AA(make_array_view(result, 68), expected_result);
 
-    char expected_hash[MD_HASH::DIGEST_LENGTH+1] = 
-                                  "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
-                                  "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
-                                  "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
-                                  "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    auto expected_hash = cstr_array_view(
+        "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
+        "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
+        "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
+        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
+    CHECK_MEM_AA(qhash, expected_hash);
+    CHECK_MEM_AA(fhash, expected_hash);
 
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryption2)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[8192];
     size_t offset = 0;
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
         offset += res2.buf.size();
         BOOST_CHECK_EQUAL(res2.buf.size(), 0);
         BOOST_CHECK_EQUAL(res2.consumed, 2);
-    }    
+    }
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -458,24 +458,24 @@ BOOST_AUTO_TEST_CASE(TestEncryption2)
                                   0xfa, 0xfc, 0x11, 0x8a, 0xc0, 0x92, 0xf7, 0x53,
                                   'M', 'F', 'C', 'W',    // EOF Magic
                                   0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
-                                  }; 
-    CHECK_MEM(result, 68, expected_result);
+                                  };
+    CHECK_MEM_AA(make_array_view(result, 68), expected_result);
 
-    char expected_hash[MD_HASH::DIGEST_LENGTH+1] = 
-                                  "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
-                                  "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
-                                  "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
-                                  "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29";
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    auto expected_hash = cstr_array_view(
+        "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
+        "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
+        "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
+        "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
+    CHECK_MEM_AA(qhash, expected_hash);
+    CHECK_MEM_AA(fhash, expected_hash);
 
     char clear[8192] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
     decrypter.open(derivator, sizeof(derivator));
-    
+
     size_t res2 = decrypter.read(clear, sizeof(clear));
     BOOST_CHECK_EQUAL(res2, 4);
-    CHECK_MEM(clear, 4, "toto");
+    CHECK_MEM_C(make_array_view(clear, 4), "toto");
 
 }
 
@@ -489,7 +489,7 @@ static uint8_t randomSample[8192] = {
 BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[16384];
     size_t offset = 0;
@@ -521,7 +521,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
 
-    // Let's send a large block of pseudo random data 
+    // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
         ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
 //    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
 //    offset += towrite;
 //    BOOST_CHECK_EQUAL(towrite, 8612);
-    
+
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -563,40 +563,44 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLarge1)
     char clear[sizeof(randomSample)] = {};
     read_encrypted decrypter(cctx, 1, result, offset);
     decrypter.open(derivator, sizeof(derivator));
-    
+
     size_t res2 = decrypter.read(clear, sizeof(clear));
     BOOST_CHECK_EQUAL(res2, sizeof(randomSample));
-    CHECK_MEM(clear, sizeof(randomSample), randomSample);
+    CHECK_MEM_AA(clear, randomSample);
 
-    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2";
-    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35";
+    auto expected_qhash = cstr_array_view(
+        "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee"
+        "\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2");
+    auto expected_fhash = cstr_array_view(
+        "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c"
+        "\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35");
 
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(qhash, expected_qhash);
+    CHECK_MEM_AA(fhash, expected_fhash);
 
     unsigned char fhash2[MD_HASH::DIGEST_LENGTH];
-    
+
     SslHMAC_Sha256_Delayed hmac;
     hmac.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     hmac.update(result, offset);
     hmac.final(fhash2);
 
-    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(fhash2, expected_fhash);
 
     unsigned char qhash2[MD_HASH::DIGEST_LENGTH];
-    
+
     SslHMAC_Sha256_Delayed hmac2;
     hmac2.init(cctx.get_hmac_key(), MD_HASH::DIGEST_LENGTH);
     hmac2.update(result, 4096);
     hmac2.final(qhash2);
 
-    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM_AA(qhash2, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -611,7 +615,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[16384];
     size_t offset = 0;
@@ -626,7 +630,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
 
-    // Let's send a large block of pseudo random data 
+    // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
         ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
@@ -647,7 +651,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 //    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
 //    offset += towrite;
 //    BOOST_CHECK_EQUAL(towrite, 8612);
-    
+
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -665,11 +669,15 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     }
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
-    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80";
-    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8";
+    auto expected_qhash = cstr_array_view(
+        "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97"
+        "\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80");
+    auto expected_fhash = cstr_array_view(
+        "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34"
+        "\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8");
 
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(qhash, expected_qhash);
+    CHECK_MEM_AA(fhash, expected_fhash);
 
     uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
     uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
@@ -685,15 +693,15 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     quick_hmac.update(randomSample, 4096);
     quick_hmac.final(qhash2);
 
-    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(fhash2, expected_fhash);
     // "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
-    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM_AA(qhash2, expected_qhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -708,7 +716,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[16384];
     size_t offset = 0;
@@ -723,7 +731,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
 
-    // Let's send a large block of pseudo random data 
+    // Let's send a large block of pseudo random data
     // with that kind of data I expect poor compression results
     {
         ocrypto::Result res2 = encrypter.write(randomSample, sizeof(randomSample));
@@ -745,7 +753,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 //    encrypter.write(result+offset, sizeof(result)-offset, towrite, randomSample, sizeof(randomSample));
 //    offset += towrite;
 //    BOOST_CHECK_EQUAL(towrite, 8612);
-    
+
     // close flushes all opened buffers and writes potential trailer
     // the full file hash is also returned which is made of two parts
     // a partial hash for the first 4K of the file
@@ -775,14 +783,14 @@ BOOST_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     BOOST_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
     // Check qhash and fhash are left unchanged if no checksum is enabled
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(qhash, expected_qhash);
+    CHECK_MEM_AA(fhash, expected_fhash);
 }
 
 BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
 {
     OpenSSL_add_all_digests();
-    
+
     LCGRandom rnd(0);
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -797,7 +805,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
 
     uint8_t result[16384];
     size_t offset = 0;
@@ -812,7 +820,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     // writing data to compressed/encrypted buffer may result in data to write
     // ... or not as this writing may be differed.
 
-    // Let's send a small block of data 
+    // Let's send a small block of data
     {
         uint8_t data[5] = {1, 2, 3, 4, 5};
         ocrypto::Result res2 = encrypter.write(data, sizeof(data));
@@ -821,7 +829,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         BOOST_CHECK_EQUAL(res2.buf.size(), 5);
     }
 
-    // Let's send a small block of data 
+    // Let's send a small block of data
     {
         uint8_t data[5] = {1, 2, 3, 4, 5};
         ocrypto::Result res2 = encrypter.write(data, sizeof(data));
@@ -848,11 +856,15 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         BOOST_CHECK_EQUAL(res2.consumed, 0);
     }
 
-    char expected_qhash[MD_HASH::DIGEST_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
-    char expected_fhash[MD_HASH::DIGEST_LENGTH+1] = "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68";
+    auto expected_qhash = cstr_array_view(
+        "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3"
+        "\x14\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68");
+    auto expected_fhash = cstr_array_view(
+        "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14"
+        "\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68");
 
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_qhash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_fhash);
+    CHECK_MEM_AA(qhash, expected_qhash);
+    CHECK_MEM_AA(fhash, expected_fhash);
 
     uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
     uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
@@ -870,7 +882,7 @@ BOOST_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     quick_hmac.update(data, sizeof(data));
     quick_hmac.final(qhash2);
 
-    CHECK_MEM(fhash2, MD_HASH::DIGEST_LENGTH, expected_fhash);
-    CHECK_MEM(qhash2, MD_HASH::DIGEST_LENGTH, expected_qhash);
+    CHECK_MEM_AA(fhash2, expected_fhash);
+    CHECK_MEM_AA(qhash2, expected_qhash);
 }
 

@@ -673,7 +673,9 @@ private:
         void safe_read_packet() {
             uint16_t buf_sz = 0;
             do {
-                this->trans.recv_new(this->buf, HEADER_SIZE);
+                if (!this->trans.atomic_read(this->buf, HEADER_SIZE)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
 
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
@@ -682,7 +684,9 @@ private:
 
             this->p = this->buf;
             this->e = this->buf;
-            this->trans.recv_new(e, buf_sz);
+            if (!this->trans.atomic_read(e, buf_sz)){
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            }
             e += buf_sz;
 
             if (bool(this->verbose & Verbose::buffer)) {

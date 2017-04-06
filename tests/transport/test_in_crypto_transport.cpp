@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
@@ -66,15 +66,16 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         ct.close(qhash, fhash);
     }
 
-    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b";
+    auto expected_hash = cstr_array_view(
+        "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3"
+        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b");
 
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM_AA(qhash, expected_hash);
+    CHECK_MEM_AA(fhash, expected_hash);
 
     BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-    
-    try
-    {
+
+    BOOST_CHECK_NO_THROW([&]{
         char buffer[40];
         InCryptoTransport  ct(cctx, 0);
         ct.open(finalname);
@@ -85,13 +86,8 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         BOOST_CHECK_EQUAL(true, ct.is_eof());
         BOOST_CHECK_EQUAL(false, ct.atomic_read(&buffer[30], 1));
         ct.close();
-        CHECK_MEM(buffer, 31, "We write, and again, and so on.");
-    }
-    catch (Error e) {
-        BOOST_CHECK(false);
-    }
-
-
+        CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
+    });
 
     BOOST_CHECK(::unlink(finalname) == 0);
 
@@ -116,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
-    
+
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
@@ -132,15 +128,16 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.close(qhash, fhash);
     }
 
-    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5";
+    auto expected_hash = cstr_array_view(
+        "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
+        "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5");
 
-    CHECK_MEM(qhash, MD_HASH::DIGEST_LENGTH, expected_hash);
-    CHECK_MEM(fhash, MD_HASH::DIGEST_LENGTH, expected_hash);
+    CHECK_MEM_AA(qhash, expected_hash);
+    CHECK_MEM_AA(fhash, expected_hash);
 
     BOOST_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-    
-    try
-    {
+
+    BOOST_CHECK_NO_THROW([&]{
         char buffer[40];
         InCryptoTransport  ct(cctx, 0);
         ct.open(finalname);
@@ -152,11 +149,8 @@ BOOST_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         BOOST_CHECK_EQUAL(true, ct.is_eof());
         BOOST_CHECK_EQUAL(false, ct.atomic_read(&buffer[30], 1));
         ct.close();
-        CHECK_MEM(buffer, 31, "We write, and again, and so on.");
-    }
-    catch (Error e) {
-        BOOST_CHECK(false);
-    }
+        CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
+    });
 
     BOOST_CHECK(::unlink(finalname) == 0); // finalname exists
 }

@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 {
 
     // ===== NTLMSSP_NEGOTIATE =====
-    uint8_t packet[] = {
+    constexpr static uint8_t packet[] = {
         0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1,
         0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,
         0x28, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50,
@@ -66,15 +66,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    char message[1024];
-    if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig1))){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send, sig1);
 
     // hexdump_c(to_send.get_data(), to_send.size());
 
     // ===== NTLMSSP_CHALLENGE =====
-    uint8_t packet2[] = {
+    constexpr static uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
         0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,
         0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80, 0x4e,
@@ -120,14 +117,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    if (!check_sig(to_send2, message, sig2)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send2, sig2);
 
     // hexdump_c(to_send2.get_data(), to_send2.size());
 
     // ===== NTLMSSP_AUTH =====
-    uint8_t packet3[] = {
+    constexpr static uint8_t packet3[] = {
         0x30, 0x82, 0x02, 0x41, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0xa1, 0x82, 0x01, 0x12, 0x30, 0x82, 0x01,
         0x0e, 0x30, 0x82, 0x01, 0x0a, 0xa0, 0x82, 0x01,
@@ -228,14 +223,12 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    if (!check_sig(to_send3, message, sig3)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send3, sig3);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
     // ===== PUBKEYAUTH =====
-    uint8_t packet4[] = {
+    constexpr static uint8_t packet4[] = {
         0x30, 0x82, 0x01, 0x2b, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0xa3, 0x82, 0x01, 0x22, 0x04, 0x82, 0x01,
         0x1e, 0x01, 0x00, 0x00, 0x00, 0xc9, 0x88, 0xfc,
@@ -298,15 +291,13 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
-    if (!check_sig(to_send4, message, sig4)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send4, sig4);
 
     // hexdump_c(to_send4.get_data(), to_send4.size());
 
 
     // ===== AUTHINFO =====
-    uint8_t packet5[] = {
+    constexpr static uint8_t packet5[] = {
         0x30, 0x5a, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa2,
         0x53, 0x04, 0x51, 0x01, 0x00, 0x00, 0x00, 0xb3,
         0x2c, 0x3b, 0xa1, 0x36, 0xf6, 0x55, 0x71, 0x01,
@@ -342,13 +333,9 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
 
-    if (!check_sig(to_send5, message, sig5)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send5, sig5);
 
     // hexdump_c(to_send5.get_data(), to_send5.size());
-
-
 }
 
 

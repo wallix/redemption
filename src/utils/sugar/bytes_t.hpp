@@ -131,8 +131,8 @@ struct bytes_array : array_view<uint8_t>
     }
 
     template<class T>
-    bytes_array & operator=(T & other) noexcept(noexcept(make_array_view(other)))
-    { return (*this = make_array_view(other)); }
+    bytes_array & operator=(T & other) noexcept(noexcept(bytes_array(other)))
+    { return (*this = bytes_array(other)); }
 };
 
 /**
@@ -192,6 +192,6 @@ struct const_bytes_array : array_view<const uint8_t>
     { return (*this = static_cast<array_view<uint8_t> const &>(barray)); }
 
     template<class T>
-    const_bytes_array & operator=(T & other) noexcept(noexcept(make_array_view(other)))
-    { return (*this = make_array_view(other)); }
+    const_bytes_array & operator=(T & other) noexcept(noexcept(const_bytes_array(other)))
+    { return (*this = const_bytes_array(other)); }
 };

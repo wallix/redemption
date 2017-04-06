@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         char buffer[1024] = {};
         char * bob = buffer;
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_atomic(bob, 15));
 
         BOOST_CHECK_EQUAL_RANGES(make_array_view(buffer, 15), cstr_array_view("AAAAXBBBBXCCCCX"));
     }

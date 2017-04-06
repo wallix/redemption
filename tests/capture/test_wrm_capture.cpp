@@ -89,6 +89,7 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
 
 BOOST_AUTO_TEST_CASE(TestWrmCapture)
 {
+    LOG(LOG_INFO, "TestWrmCapture");
     OpenSSL_add_all_digests();
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
@@ -225,6 +226,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCapture)
 
 BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
 
     OpenSSL_add_all_digests();
 
@@ -284,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0xFFFF
+            0 //0xFFFF VERBOSE
         );
 
         BOOST_CHECK(true);
@@ -548,6 +550,7 @@ int wrmcapture_write_meta_file(
 
 BOOST_AUTO_TEST_CASE(TestWriteFilename)
 {
+    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
     struct {
         std::string s;
 
@@ -588,6 +591,8 @@ struct TestFstat : Fstat
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
+    LOG(LOG_INFO, "TestOutmetaTransport");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -688,6 +693,8 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
+    LOG(LOG_INFO, "TestOutmetaTransportWithSum");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -744,7 +751,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 //    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
     const char * meta_path = "./xxx.mwrm";
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
-//    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
+    BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }
 
 //void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
@@ -1094,6 +1101,8 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM1");
+
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
         FIXTURES_PATH "/sample", ".mwrm", 0);
@@ -1103,7 +1112,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
@@ -1115,6 +1124,8 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM1_v2");
+
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
     unsigned char buffer[10000];
@@ -1123,7 +1134,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
@@ -1135,6 +1146,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 {
+    LOG(LOG_INFO, "(TestSequenceFollowedTransportWRM2");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1194,6 +1206,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM2_RIO");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1228,6 +1241,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM3");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1288,6 +1302,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
 BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
+    LOG(LOG_INFO, "TestCryptoInmetaSequenceTransport");
     OpenSSL_add_all_digests();
 
     // cleanup of possible previous test files
@@ -1345,8 +1360,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         BOOST_CHECK(true);
 
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob, 6));
-        BOOST_CHECK_NO_THROW(crypto_trans.recv_new(bob+6, 9));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_atomic(bob, 6));
+        BOOST_CHECK_NO_THROW(crypto_trans.recv_atomic(bob+6, 9));
 
         BOOST_CHECK(true);
 
@@ -1361,22 +1376,23 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         BOOST_CHECK(true);
     }
 
-//    const char * file[] = {
-//        "/tmp/TESTOFS.mwrm", // hash
-//        "TESTOFS.mwrm",
-//        "TESTOFS-000000.wrm",
-//        "TESTOFS-000001.wrm"
-//    };
-//    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-//        if (::unlink(file[i])){
-//            BOOST_CHECK(false);
-//            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-//        }
-//    }
+    const char * file[] = {
+        "/tmp/TESTOFS.mwrm", // hash
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
+        if (::unlink(file[i])){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 {
+    LOG(LOG_INFO, "CryptoTestInMetaSequenceTransport2");
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
