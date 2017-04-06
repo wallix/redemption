@@ -123,6 +123,50 @@ public:
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
+        ReplayMod( FrontAPI & front
+             , const char * replay_path
+             , const char * movie
+             , uint16_t width
+             , uint16_t height
+             , std::string & auth_error_message
+             , Font const & font
+             , bool wait_for_escape
+             , timeval & begin_read
+             , timeval & end_read
+             , Verbose debug_capture)
+    : InternalMod(front, width, height, font, Theme{}, false)
+    , auth_error_message(auth_error_message)
+    , movie_path(replay_path, movie)
+    , in_trans(&this->cctx, movie_path.prefix, movie_path.extension, 0)
+    , reader(this->in_trans, begin_read, end_read, true, debug_capture)
+    , end_of_data(false)
+    , wait_for_escape(wait_for_escape)
+    {
+        switch (this->front.server_resize( this->reader.info_width
+                                         , this->reader.info_height
+                                         , this->reader.info_bpp)) {
+        case FrontAPI::ResizeResult::no_need:
+            // no resizing needed
+            break;
+        case FrontAPI::ResizeResult::instant_done:
+        case FrontAPI::ResizeResult::done:
+            // resizing done
+            this->front_width  = this->reader.info_width;
+            this->front_height = this->reader.info_height;
+
+            this->screen.set_wh(this->reader.info_width, this->reader.info_height);
+
+            break;
+        case FrontAPI::ResizeResult::fail:
+            // resizing failed
+            // thow an Error ?
+            LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+            throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+        }
+
+        this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+    }
+
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
         gdi::CaptureApi * capture_ptr,
@@ -141,6 +185,10 @@ public:
 
     void play() {
         this->reader.play(false);
+    }
+
+    FileToGraphic * get_reader() {
+        return &(this->reader);
     }
 
     bool play_client() {
@@ -176,7 +224,7 @@ public:
         this->reader.set_pause_client(time);
     }
 
-    time_t get_movie_time() {
+    time_t get_movie_time_length() {
         time_t start = this->in_trans.meta_line.start_time;
 
         std::string movie_path_str(this->movie_path.prefix);

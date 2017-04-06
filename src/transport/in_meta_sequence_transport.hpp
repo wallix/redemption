@@ -971,6 +971,7 @@ public:
 
         auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
 
+
         int err = 0;
         auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);

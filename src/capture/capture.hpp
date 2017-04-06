@@ -836,7 +836,7 @@ public:
             this->chunk_size = header.in_uint32_le();
             this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-            if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK 
+            if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
             && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
                 switch (this->chunk_type) {
                     case WrmChunkType::RDP_UPDATE_ORDERS:
@@ -1728,7 +1728,6 @@ private:
                 }
 
                 this->interpret_order();
-
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
                         cap->periodic_snapshot(
