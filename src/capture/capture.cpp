@@ -809,9 +809,15 @@ public:
     std::chrono::microseconds do_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
+        (void)x;
+        (void)y;
+        (void)ignore_frame_in_timeval;
+        uint64_t const duration = difftimeval(now, this->start_capture);
+        uint64_t const interval = this->frame_interval.count();
         if (this->enable_rt_display) {
-            this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
+            return this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
         }
+        return std::chrono::microseconds(interval - duration);
     }
 };
 
