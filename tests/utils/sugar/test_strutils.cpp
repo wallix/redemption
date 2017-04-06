@@ -300,7 +300,7 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     }
 
     {
-       RED_CHECK_EXCEPTION_ERROR_ID(
+        RED_CHECK_EXCEPTION_ERROR_ID(
             linux_to_windows_newline_convert("text", 4, nullptr, 0),
             ERR_STREAM_MEMORY_TOO_SMALL
         );
@@ -308,7 +308,7 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
 
     {
         char d[2];
-       RED_CHECK_EXCEPTION_ERROR_ID(
+        RED_CHECK_EXCEPTION_ERROR_ID(
             linux_to_windows_newline_convert("text", 4, d, sizeof(d)),
             ERR_STREAM_MEMORY_TOO_SMALL
         );

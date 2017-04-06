@@ -516,7 +516,7 @@ RED_AUTO_TEST_CASE(TestFront2)
 
     //    front.dump_png("trace_w2008_");
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
 }
 
 /*

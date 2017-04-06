@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);

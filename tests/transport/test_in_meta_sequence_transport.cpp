@@ -46,11 +46,11 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
     RED_CHECK_EQUAL(2200000, total);
@@ -66,11 +66,11 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
     RED_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
         RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-       RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
     RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-   RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
         RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-       RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         char buffer[1024] = {};
         char * bob = buffer;
 
-        RED_CHECK_NO_THROW(crypto_trans.recv_new(bob, 15));
+        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(bob, 15));
 
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer, 15), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
@@ -305,5 +305,5 @@ RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-   RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
+    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
 }

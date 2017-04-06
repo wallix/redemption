@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::CSMultiTransport cs_multitransport;
     InStream stream(buf);
     cs_multitransport.recv(stream);

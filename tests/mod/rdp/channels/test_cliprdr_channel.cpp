@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -160,7 +160,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
             virtual_channel_stream.rewind();
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
@@ -232,7 +232,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
             virtual_channel_stream.rewind();
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
@@ -327,7 +327,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -350,7 +350,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -373,7 +373,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
             virtual_channel_stream.rewind();
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
@@ -422,7 +422,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -445,7 +445,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -468,7 +468,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
             virtual_channel_stream.rewind();
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 class NullSender : public VirtualChannelDataSender {

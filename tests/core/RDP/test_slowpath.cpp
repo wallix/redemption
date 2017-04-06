@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 
     {
         auto end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_new(end, payload_length);
+        in_t.recv_atomic(end, payload_length);
     }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
 
     {
         auto * end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_new(end, payload_length);
+        in_t.recv_atomic(end, payload_length);
     }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);

@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
-   RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
+    RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
 RED_AUTO_TEST_CASE(TestAclSerializerIncoming)

@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Unknown_TPDU)
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Unknown_TPDU)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     constexpr size_t array_size = 4;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv x224(stream, false), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv x224(stream, false), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
@@ -191,7 +191,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
@@ -209,7 +209,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
@@ -339,7 +339,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestSend_CC_TPDU)
@@ -421,7 +421,7 @@ RED_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestSend_DR_TPDU)
@@ -477,7 +477,7 @@ RED_AUTO_TEST_CASE(TestReceive_ER_TPDU_wrong_opcode)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
@@ -513,7 +513,7 @@ RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-   RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), static_cast<int>(ERR_X224));
 }
 
 RED_AUTO_TEST_CASE(TestSend_DT_TPDU)

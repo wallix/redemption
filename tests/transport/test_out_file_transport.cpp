@@ -53,15 +53,15 @@ RED_AUTO_TEST_CASE(TestInFileTransport)
         char buf[128];
         char * pbuf = buf;
         InFileTransport ft(fd);
-        ft.recv_new(pbuf, 10);
+        ft.recv_atomic(pbuf, 10);
             pbuf += 10;
-            ft.recv_new(pbuf, 11);
+            ft.recv_atomic(pbuf, 11);
             pbuf += 11;
-            ft.recv_new(pbuf, 10);
+            ft.recv_atomic(pbuf, 10);
             pbuf += 10;
         RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
         pbuf = buf;
-       RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_new(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_atomic(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
     }
     ::close(fd);
     ::unlink(tmpname);

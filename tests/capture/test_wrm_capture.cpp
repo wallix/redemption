@@ -89,6 +89,7 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
+    LOG(LOG_INFO, "TestWrmCapture");
     OpenSSL_add_all_digests();
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
@@ -225,6 +226,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
+    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
 
     OpenSSL_add_all_digests();
 
@@ -284,7 +286,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0xFFFF
+            0 //0xFFFF VERBOSE
         );
 
         RED_CHECK(true);
@@ -548,6 +550,7 @@ int wrmcapture_write_meta_file(
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {
+    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
     struct {
         std::string s;
 
@@ -588,6 +591,8 @@ struct TestFstat : Fstat
 
 RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
+    LOG(LOG_INFO, "TestOutmetaTransport");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -688,6 +693,8 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
 RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
+    LOG(LOG_INFO, "TestOutmetaTransportWithSum");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -1094,6 +1101,8 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM1");
+
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
         FIXTURES_PATH "/sample", ".mwrm", 0);
@@ -1103,11 +1112,11 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
     RED_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
@@ -1115,6 +1124,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM1_v2");
+
     // This is what we are actually testing, chaining of several files content
     InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
     unsigned char buffer[10000];
@@ -1123,11 +1134,11 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
     auto test = [&]{
         for (size_t i = 0; i < 221 ; i++){
             pbuffer = buffer;
-            wrm_trans.recv_new(pbuffer, sizeof(buffer));
+            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
             total += sizeof(buffer);
         }
     };
-   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
     total += pbuffer - buffer;
     // total size if sum of sample sizes
     RED_CHECK_EQUAL(2200000, total);
@@ -1135,6 +1146,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 {
+    LOG(LOG_INFO, "(TestSequenceFollowedTransportWRM2");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1165,7 +1177,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
         RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-       RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -1194,6 +1206,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM2_RIO");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1223,11 +1236,12 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
     RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
     RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-   RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 {
+    LOG(LOG_INFO, "TestSequenceFollowedTransportWRM3");
 //        "800 600\n",
 //        "0\n",
 //        "\n",
@@ -1259,7 +1273,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
         RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
         RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
 
-       RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     // check we can do it two times
@@ -1288,6 +1302,7 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
+    LOG(LOG_INFO, "TestCryptoInmetaSequenceTransport");
     OpenSSL_add_all_digests();
 
     // cleanup of possible previous test files
@@ -1345,8 +1360,8 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         RED_CHECK(true);
 
-        RED_CHECK_NO_THROW(crypto_trans.recv_new(bob, 6));
-        RED_CHECK_NO_THROW(crypto_trans.recv_new(bob+6, 9));
+        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(bob, 6));
+        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(bob+6, 9));
 
         RED_CHECK(true);
 
@@ -1370,6 +1385,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
 RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 {
+    LOG(LOG_INFO, "CryptoTestInMetaSequenceTransport2");
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -1379,5 +1395,5 @@ RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-   RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
+    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
 }
