@@ -6129,10 +6129,14 @@ public:
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
                         uint8_t * end = data;
-                        this->persistent_key_list_transport->recv_new(end, 2/*pdu_size(2)*/);
+                        if (!this->persistent_key_list_transport->atomic_read(end, 2/*pdu_size(2)*/)){
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                        }
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
-                        this->persistent_key_list_transport->recv_new(end, pdu_size);
+                        if (!this->persistent_key_list_transport->atomic_read(end, pdu_size)){
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                        }
 
                         pdu_data_stream.out_skip_bytes(pdu_size);
 

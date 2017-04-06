@@ -333,7 +333,9 @@ namespace X224
             Parse data(*end);
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
 
-            t.recv_new(*end, 1);
+            if(!t.atomic_read(*end, 1)){
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            }
             *end += 1;
 
             nbbytes++;
@@ -352,13 +354,17 @@ namespace X224
                     throw Error(ERR_RDP_FASTPATH);
                 }
 
-                t.recv_new(*end, 1);
+                if (!t.atomic_read(*end, 1)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 *end += 1;
                 nbbytes++;
 
                 uint16_t lg = data.in_uint8();
                 if (lg & 0x80){
-                    t.recv_new(*end, 1);
+                    if(!t.atomic_read(*end, 1)){
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                    }
                     *end += 1;
                     nbbytes++;
                     uint8_t byte = data.in_uint8();
@@ -371,14 +377,18 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 };
-                t.recv_new(*end, this->length - nbbytes);
+                if (!t.atomic_read(*end, this->length - nbbytes)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 *end += this->length - nbbytes;
 
                 return;
             }
             else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
                 /* 4 bytes */
-                t.recv_new(*end, X224::TPKT_HEADER_LEN - nbbytes);
+                if(!t.atomic_read(*end, X224::TPKT_HEADER_LEN - nbbytes)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 *end += X224::TPKT_HEADER_LEN - nbbytes;
                 nbbytes = X224::TPKT_HEADER_LEN;
                 data.in_skip_bytes(1);
@@ -393,7 +403,9 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 }
-                t.recv_new(*end, tpkt_len - nbbytes );
+                if (!t.atomic_read(*end, tpkt_len - nbbytes )){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 *end += tpkt_len - nbbytes;
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
