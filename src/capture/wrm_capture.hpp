@@ -320,7 +320,7 @@ public:
         );
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
+//        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
 
         OutCryptoTransport hash_buf_encrypt_transport(this->with_encryption, false, this->cctx, this->rnd);
         hash_buf_encrypt_transport.open(this->hf_.filename, S_IRUSR|S_IRGRP);
