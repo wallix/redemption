@@ -805,6 +805,14 @@ public:
         uint32_t num_start = this->trans.get_seqno() - this->png_limit;
         this->clear_png_interval(num_start, num_start + 1);
     }
+
+    std::chrono::microseconds do_snapshot(
+        timeval const & now, int x, int y, bool ignore_frame_in_timeval
+    ) override {
+        if (this->enable_rt_display) {
+            this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
+        }
+    }
 };
 
 
