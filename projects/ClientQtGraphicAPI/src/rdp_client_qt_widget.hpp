@@ -113,7 +113,7 @@ public:
     } modRDPParamsData;
 
     struct ClipbrdFormatsList{
-        
+
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
             , CF_QT_CLIENT_FILECONTENTS         = 48026

@@ -970,11 +970,7 @@ public:
         //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
-        LOG(LOG_INFO, "line = %s", line);
-
         auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
-
-        LOG(LOG_INFO, "pline = %s", pline);
 
         LOG(LOG_INFO, "meta_line.filename=%s", meta_line.filename);
 

@@ -1731,7 +1731,6 @@ private:
                 }
 
                 this->interpret_order();
-
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
                         cap->periodic_snapshot(
