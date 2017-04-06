@@ -302,6 +302,9 @@ public:
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
             LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu\n",
                 this->pubKeyAuth.size());
+            if (this->pubKeyAuth.size() == 0) {
+                LOG(LOG_INFO, "Provided password is probably incorrect.\n");
+            }
             return SEC_E_INVALID_TOKEN;
         }
         length = this->pubKeyAuth.size();
@@ -921,6 +924,3 @@ public:
        return 1;
     }
 };
-
-
-
