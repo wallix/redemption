@@ -83,21 +83,51 @@
 #endif
 
 #include "cxx/cxx.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
 namespace redemption_unit_test__
 {
-    REDEMPTION_LIB_EXPORT
-    bool check_mem(const void * p, std::size_t len, const void * mem, char * message);
+    struct xformat
+    {
+        const_bytes_array sig;
+    };
+
+    inline std::ostream & operator<<(std::ostream & out, xformat const & x)
+    {
+        out << "Expected data: ";
+        char const * hex_table = "0123456789abcdef";
+        for (unsigned c : x.sig) {
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        }
+        return out;
+    }
 }
 
-#define CHECK_MEM(p, len, mem)                                          \
-    do {                                                                \
-        char message[len * 5 + 256];                                    \
-        if (!redemption_unit_test__::check_mem(p, len, mem, message)) { \
-            BOOST_CHECK_MESSAGE(false, message);                        \
-        }                                                               \
+#define CHECK_MEM(mem, memref)                            \
+    do {                                                  \
+        const_bytes_array mem__ {mem};                    \
+        const_bytes_array memref__ {memref};              \
+        BOOST_CHECK_EQUAL(mem__.size(), memref__.size()); \
+        if (mem__.size() == memref__.size()) {            \
+            BOOST_CHECK_MESSAGE(                          \
+                !memcmp(                                  \
+                    mem__.data(), memref__.data(),        \
+                    mem__.size()                          \
+                ),                                        \
+                redemption_unit_test__::xformat{mem__}    \
+            );                                            \
+        }                                                 \
     } while (0)
 
+#ifdef IN_IDE_PARSER
+# define CHECK_MEM_C(mem, memref) void(mem), void("" memref)
+# define CHECK_MEM_AC(mem, memref) void(mem), void("" memref)
+# define CHECK_MEM_AA(mem, memref) void(mem), void(memref)
+#else
+# define CHECK_MEM_C(mem, memref) CHECK_MEM(mem, cstr_array_view("" memref))
+# define CHECK_MEM_AC(mem, memref) CHECK_MEM(make_array_view(mem), cstr_array_view("" memref))
+# define CHECK_MEM_AA(mem, memref) CHECK_MEM(make_array_view(mem), make_array_view(memref))
+# endif
 
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER

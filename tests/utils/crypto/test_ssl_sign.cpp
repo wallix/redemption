@@ -39,9 +39,5 @@ BOOST_AUTO_TEST_CASE(TestSign)
     uint8_t sig[16];
     hmac.final(sig, sizeof(sig));
     // hexdump96_c(sig, sizeof(sig));
-    CHECK_MEM(
-        sig, sizeof(sig),
-        "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b"
-        "\x91\xc2\xe2\x12\x39\x80\xe1\x94"
-    );
+    CHECK_MEM_AC(sig, "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b\x91\xc2\xe2\x12\x39\x80\xe1\x94");
 }

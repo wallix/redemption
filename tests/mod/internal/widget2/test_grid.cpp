@@ -111,12 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9");
 
 
     wgrid.set_selection(4);
@@ -128,11 +123,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74");
 
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -148,11 +139,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1");
 
 
     Keymap2 keymap;
@@ -174,11 +161,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32");
 
     wgrid.clear();
 

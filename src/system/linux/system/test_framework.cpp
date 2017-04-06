@@ -27,20 +27,4 @@ namespace redemption_unit_test__
         }
     };
     static register_exception Init;
-
-    REDEMPTION_LIB_EXPORT
-    bool check_mem(const void * p, std::size_t len, const void * mem, char * message)
-    {
-        if (memcmp(p, mem, len)) {
-            unsigned char const * sig = reinterpret_cast<unsigned char const *>(p);
-            message += std::sprintf(message, "Expected data: \"\\x%.2x", unsigned(*sig));
-            while (--len) {
-                message += std::sprintf(message, "\\x%.2x", unsigned(*++sig));
-            }
-            message[0] = '"';
-            message[1] = 0;
-            return false;
-        }
-        return true;
-    }
 }

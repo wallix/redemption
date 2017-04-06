@@ -386,7 +386,7 @@ inline void hexdump_c(const unsigned char * data, size_t size)
         if (i < 16){
             line += std::sprintf(line, "%*c", static_cast<int>((16-i)*4), ' ');
         }
-        line += std::sprintf(line, " //");
+        line += std::sprintf(line, " // ");
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
             unsigned char tmp = data[j+i];
@@ -425,7 +425,7 @@ inline void hexdump96_c(const unsigned char * data, size_t size)
         if (i < line_length){
             line += std::sprintf(line, "%*c", static_cast<int>((line_length-i)*4), ' ');
         }
-        line += std::sprintf(line, " //");
+        line += std::sprintf(line, " // ");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
             unsigned char tmp = data[j+i];
@@ -464,7 +464,7 @@ inline void hexdump8_c(const unsigned char * data, size_t size)
         if (i < line_length){
             line += std::sprintf(line, "%*c", static_cast<int>((line_length-i)*4), ' ');
         }
-        line += std::sprintf(line, " //");
+        line += std::sprintf(line, " // ");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
             unsigned char tmp = data[j+i];

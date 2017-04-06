@@ -33,7 +33,7 @@
 BOOST_AUTO_TEST_CASE(TestAuthenticate)
 {
     // ===== NTLMSSP_AUTH =====
-    uint8_t packet3[] = {
+    constexpr static uint8_t packet3[] = {
         0x30, 0x82, 0x02, 0x41, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0xa1, 0x82, 0x01, 0x12, 0x30, 0x82, 0x01,
         0x0e, 0x30, 0x82, 0x01, 0x0a, 0xa0, 0x82, 0x01,
@@ -132,10 +132,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    char message[1024];
-    if (!check_sig(to_send3, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(to_send3, sig);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
@@ -167,22 +164,11 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
-    uint8_t lm_response_match[] =
-        "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3";
-    BOOST_CHECK_EQUAL(memcmp(lm_response_match,
-                             lmResponse.Response,
-                             16),
-                      0);
+    CHECK_MEM_AC(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3");
 
     // LOG(LOG_INFO, "Lm Response . ClientChallenge ===========\n");
     // hexdump_c(lmResponse.ClientChallenge, 8);
-    uint8_t lm_clientchallenge_match[] =
-        "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
-    BOOST_CHECK_EQUAL(memcmp(lm_clientchallenge_match,
-                             lmResponse.ClientChallenge,
-                             8),
-                      0);
-
+    CHECK_MEM_AC(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
 
 
     // NtChallengeResponse
@@ -192,32 +178,17 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
-    uint8_t nt_response_match[] =
-        "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10";
-    BOOST_CHECK_EQUAL(memcmp(nt_response_match,
-                             ntResponse.Response,
-                             16),
-                      0);
+    CHECK_MEM_AC(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10");
 
     BOOST_CHECK_EQUAL(ntResponse.Challenge.RespType, 1);
     BOOST_CHECK_EQUAL(ntResponse.Challenge.HiRespType, 1);
     // LOG(LOG_INFO, "Nt Response . Challenge . Timestamp ===========\n");
     // hexdump_c(ntResponse.Challenge.Timestamp, 8);
-    uint8_t nt_timestamp_match[] =
-        "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01";
-    BOOST_CHECK_EQUAL(memcmp(nt_timestamp_match,
-                             ntResponse.Challenge.Timestamp,
-                             8),
-                      0);
+    CHECK_MEM_AC(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01");
 
     // LOG(LOG_INFO, "Nt Response . Challenge . ClientChallenge ===========\n");
     // hexdump_c(ntResponse.Challenge.ClientChallenge, 8);
-    uint8_t nt_clientchallenge_match[] =
-        "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43";
-    BOOST_CHECK_EQUAL(memcmp(nt_clientchallenge_match,
-                             ntResponse.Challenge.ClientChallenge,
-                             8),
-                      0);
+    CHECK_MEM_AC(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
 
     // LOG(LOG_INFO, "Nt Response . Challenge . AvPairList ===========\n");
     // ntResponse.Challenge.AvPairList.print();
@@ -225,43 +196,38 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // Domain Name
     // LOG(LOG_INFO, "Domain Name ===========\n");
     // hexdump_c(AuthMsg.DomainName.Buffer.get_data(), AuthMsg.DomainName.Buffer.size());
-    uint8_t domainname_match[] =
-        "\x77\x00\x69\x00\x6e\x00\x37\x00";
-    BOOST_CHECK_EQUAL(memcmp(domainname_match,
-                             AuthMsg.DomainName.buffer.ostream.get_data(),
-                             AuthMsg.DomainName.len),
-                      0);
+    CHECK_MEM_C(
+        make_array_view(AuthMsg.DomainName.buffer.ostream.get_data(), AuthMsg.DomainName.len),
+        "\x77\x00\x69\x00\x6e\x00\x37\x00"
+    );
 
     // User Name
     // LOG(LOG_INFO, "User Name ===========\n");
     // hexdump_c(AuthMsg.UserName.Buffer.get_data(), AuthMsg.UserName.Buffer.size());
-    uint8_t username_match[] =
-        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00";
-    BOOST_CHECK_EQUAL(memcmp(username_match,
-                             AuthMsg.UserName.buffer.ostream.get_data(),
-                             AuthMsg.UserName.len),
-                      0);
+    CHECK_MEM_C(
+        make_array_view(AuthMsg.UserName.buffer.ostream.get_data(), AuthMsg.UserName.len),
+        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"
+    );
 
     // Work Station
     // LOG(LOG_INFO, "Work Station ===========\n");
     // hexdump_c(AuthMsg.Workstation.Buffer.get_data(), AuthMsg.Workstation.Buffer.size());
-    uint8_t workstation_match[] =
-        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00";
-    BOOST_CHECK_EQUAL(memcmp(workstation_match,
-                             AuthMsg.Workstation.buffer.ostream.get_data(),
-                             AuthMsg.Workstation.len),
-                      0);
+    CHECK_MEM_C(
+        make_array_view(AuthMsg.Workstation.buffer.ostream.get_data(), AuthMsg.Workstation.len),
+        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"
+    );
 
     // Encrypted Random Session Key
     // LOG(LOG_INFO, "Encrypted Random Session Key ===========\n");
     // hexdump_c(AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
     //           AuthMsg.EncryptedRandomSessionKey.Buffer.size());
-    uint8_t encryptedrandomsessionkey_match[] =
-        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba";
-    BOOST_CHECK_EQUAL(memcmp(encryptedrandomsessionkey_match,
-                             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
-                             AuthMsg.EncryptedRandomSessionKey.len),
-                      0);
+    CHECK_MEM_C(
+        make_array_view(
+            AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
+            AuthMsg.EncryptedRandomSessionKey.len
+        ),
+        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"
+    );
 
     StaticOutStream<65635> tosend;
     AuthMsg.emit(tosend);
@@ -285,5 +251,4 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.len, 10);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.len, 16);
-
 }

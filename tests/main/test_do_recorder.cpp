@@ -580,10 +580,10 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     BOOST_CHECK_EQUAL(meta_line.ctime, 1455816632);
     BOOST_CHECK_EQUAL(meta_line.start_time, 1455816611);
     BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    CHECK_MEM(meta_line.hash1, 32,
+    CHECK_MEM_AC(meta_line.hash1,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
       "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
-    CHECK_MEM(meta_line.hash2, 32,
+    CHECK_MEM_AC(meta_line.hash2,
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
       "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
 

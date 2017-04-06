@@ -60,12 +60,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-                   "\x4e\xbe\x6f\x60\xb2\x9f\x20\xba\xa4\x0f\xda\x06\x89\xa8\x0a\x9c\x5f\xa1\x90\x66"
-                   )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x4e\xbe\x6f\x60\xb2\x9f\x20\xba\xa4\x0f\xda\x06\x89\xa8\x0a\x9c\x5f\xa1\x90\x66");
 }
 
 // BOOST_AUTO_TEST_CASE(TraceFlatWait2)

@@ -76,12 +76,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
@@ -120,12 +115,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
@@ -164,12 +154,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
@@ -208,12 +193,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
@@ -252,12 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
@@ -296,12 +271,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
@@ -340,12 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
@@ -384,12 +349,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e");
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
@@ -426,10 +386,5 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    CHECK_SIG(drawable.gd, "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c");
 }
