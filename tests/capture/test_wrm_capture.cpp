@@ -682,6 +682,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     BOOST_CHECK_EQUAL(0, ::unlink(file2));
 
     BOOST_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
+    LOG(LOG_INFO, "unlinking %s", meta_path);
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }
 
