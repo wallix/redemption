@@ -29,18 +29,18 @@
 
 #include "core/RDP/capabilities/offscreencache.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
+RED_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 {
     OffScreenCacheCaps offscreencache_caps;
     offscreencache_caps.offscreenSupportLevel = true;
     offscreencache_caps.offscreenCacheSize = 7680;
     offscreencache_caps.offscreenCacheEntries = 500;
 
-    BOOST_CHECK_EQUAL(offscreencache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
-    BOOST_CHECK_EQUAL(offscreencache_caps.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenSupportLevel, static_cast<uint32_t>(1));
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheSize, static_cast<uint16_t>(7680));
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheEntries, static_cast<uint16_t>(500));
+    RED_CHECK_EQUAL(offscreencache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
+    RED_CHECK_EQUAL(offscreencache_caps.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
+    RED_CHECK_EQUAL(offscreencache_caps.offscreenSupportLevel, static_cast<uint32_t>(1));
+    RED_CHECK_EQUAL(offscreencache_caps.offscreenCacheSize, static_cast<uint16_t>(7680));
+    RED_CHECK_EQUAL(offscreencache_caps.offscreenCacheEntries, static_cast<uint16_t>(500));
 
     StaticOutStream<1024> out_stream;
     offscreencache_caps.emit(out_stream);
@@ -49,14 +49,14 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 
     OffScreenCacheCaps offscreencache_caps2;
 
-    BOOST_CHECK_EQUAL(offscreencache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
-    BOOST_CHECK_EQUAL(offscreencache_caps2.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
+    RED_CHECK_EQUAL(offscreencache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
+    RED_CHECK_EQUAL(offscreencache_caps2.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE), stream.in_uint16_le());
     offscreencache_caps2.recv(stream, CAPLEN_OFFSCREENCACHE);
 
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheSize, static_cast<uint16_t>(7680));
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheEntries, static_cast<uint16_t>(500));
+    RED_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(offscreencache_caps2.offscreenCacheSize, static_cast<uint16_t>(7680));
+    RED_CHECK_EQUAL(offscreencache_caps2.offscreenCacheEntries, static_cast<uint16_t>(500));
 }

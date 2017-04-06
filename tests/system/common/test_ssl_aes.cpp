@@ -23,7 +23,7 @@
 
 #include "system/redemption_unit_tests.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAES128_CBC)
+RED_AUTO_TEST_CASE(TestAES128_CBC)
 {
     {
         // very secret key
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestAES128_CBC)
             0xc6, 0x05, 0x6c, 0xb1,
             0xf5, 0xf1, 0xd5, 0x1f
         };
-        CHECK_MEM_AA(aes.tiv.iv, updated_iv);
+        RED_CHECK_MEM_AA(aes.tiv.iv, updated_iv);
 
         aes.crypt_cbc(32, inbuf+32, outbuf+32);
         aes.crypt_cbc(32, inbuf+64, outbuf+64);
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestAES128_CBC)
 /* 0070 */ 0x1a, 0xcd, 0xe3, 0x84, 0x0c, 0x2a, 0xe7, 0x6d,
            0x75, 0xa8, 0x02, 0x0c, 0x74, 0x55, 0x84, 0x50,
         };
-        BOOST_CHECK_EQUAL(memcmp(outbuf, expected, 128), 0);
+        RED_CHECK_EQUAL(memcmp(outbuf, expected, 128), 0);
 
 //        hexdump_d(outbuf, 128);
 
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestAES128_CBC)
         aes2.crypt_cbc(32, outbuf+64, decrypted+64);
         aes2.crypt_cbc(32, outbuf+96, decrypted+96);
 
-        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32), 0);
+        RED_CHECK_EQUAL(memcmp(inbuf, decrypted, 32), 0);
 
 //        hexdump_d(decrypted, 32);
 //        hexdump_d(inbuf, 32);
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestAES128_CBC)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestAES192_CBC)
+RED_AUTO_TEST_CASE(TestAES192_CBC)
 {
     {
         // very secret key
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TestAES192_CBC)
             0x2c, 0x6c, 0x55, 0x38,
             0xd5, 0xa1, 0x34, 0xaf
         };
-        BOOST_CHECK_EQUAL(memcmp(aes.tiv.iv, updated_iv, 16), 0);
+        RED_CHECK_EQUAL(memcmp(aes.tiv.iv, updated_iv, 16), 0);
 
 //        hexdump_d(aes.tiv.iv, 16);
 
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestAES192_CBC)
 /* 0060 */ 0xb1, 0x91, 0xde, 0xa7, 0x3c, 0xca, 0xc8, 0x3f, 0x2e, 0xf9, 0x66, 0xde, 0x4a, 0x24, 0x40, 0xaa,
 /* 0070 */ 0x87, 0x3b, 0xf8, 0x4f, 0x59, 0xbd, 0xf9, 0x4b, 0x60, 0xcb, 0x42, 0x15, 0x56, 0xb7, 0x9d, 0x2f,
         };
-        BOOST_CHECK_EQUAL(memcmp(outbuf, expected, 96), 0);
+        RED_CHECK_EQUAL(memcmp(outbuf, expected, 96), 0);
 
 //        hexdump_d(outbuf, 128);
 
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestAES192_CBC)
         aes2.crypt_cbc(32, outbuf+96, decrypted+96);
 
 
-        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 128), 0);
+        RED_CHECK_EQUAL(memcmp(inbuf, decrypted, 128), 0);
 
 //        hexdump_d(decrypted, 32);
 //        hexdump_d(inbuf, 32);
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestAES192_CBC)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestAES256_CBC)
+RED_AUTO_TEST_CASE(TestAES256_CBC)
 {
     {
         // very secret key
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestAES256_CBC)
 
 //        hexdump_d(aes.tiv.iv, 16);
 
-        CHECK_MEM_AC(aes.tiv.iv, "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b");
+        RED_CHECK_MEM_AC(aes.tiv.iv, "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b");
 
 //        hexdump_d(aes.tiv.iv, 16);
 
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TestAES256_CBC)
         aes.crypt_cbc(32, inbuf+64, outbuf+64);
         aes.crypt_cbc(32, inbuf+96, outbuf+96);
 
-        CHECK_MEM_C(
+        RED_CHECK_MEM_C(
             make_array_view(outbuf, 128),
             /* 0000 */ "\x6c\x47\x19\xee\xb0\x70\x40\x3e\x2e\x2c\x2a\xbd\x5c\xa8\x4f\xfb"
             /* 0010 */ "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b"
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestAES256_CBC)
         aes2.crypt_cbc(32, outbuf+64, decrypted+64);
         aes2.crypt_cbc(32, outbuf+96, decrypted+96);
 
-        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 64), 0);
+        RED_CHECK_EQUAL(memcmp(inbuf, decrypted, 64), 0);
 
 //        hexdump_d(decrypted, 128);
 //        hexdump_d(inbuf, 32);

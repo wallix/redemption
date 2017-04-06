@@ -35,7 +35,7 @@
 
 
 
-BOOST_AUTO_TEST_CASE(TestSimpleShrink)
+RED_AUTO_TEST_CASE(TestSimpleShrink)
 {
     const int width = 15;
     const int height = 7;
@@ -94,8 +94,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
     unsigned zoom_factor = 50;
     unsigned scaled_width = (((width * zoom_factor) / 100) + 3) & 0xFFC;
     unsigned scaled_height = (height * zoom_factor) / 100;
-    BOOST_CHECK_EQUAL(scaled_width, 8);    
-    BOOST_CHECK_EQUAL(scaled_height, 3);
+    RED_CHECK_EQUAL(scaled_width, 8);    
+    RED_CHECK_EQUAL(scaled_height, 3);
     
     std::vector<uint8_t> scaled_buffer(scaled_width * scaled_height * 3);
 
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
         rowsize);
     
 //    hexdump_d(scaled_buffer.data(), scaled_width * scaled_height * 3);
-    BOOST_CHECK(0 == memcmp(&expected[0], scaled_buffer.data(), scaled_width * scaled_height * 3));
+    RED_CHECK(0 == memcmp(&expected[0], scaled_buffer.data(), scaled_width * scaled_height * 3));
 }
 
 // Note: Test below works but is disabled on purpose because 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
 //#include "core/RDP/RDPDrawable.hpp"
 
 
-//BOOST_AUTO_TEST_CASE(TestBitmapShrink)
+//RED_AUTO_TEST_CASE(TestBitmapShrink)
 //{
 //   const int width = 800;
 //    const int height = 600;
@@ -166,6 +166,6 @@ BOOST_AUTO_TEST_CASE(TestSimpleShrink)
 
 //    // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
 //    const char * filename = trans.seqgen()->get(0);
-//    BOOST_CHECK_EQUAL(8162, ::filesize(filename));
+//    RED_CHECK_EQUAL(8162, ::filesize(filename));
 ////    ::unlink(filename);
 //}

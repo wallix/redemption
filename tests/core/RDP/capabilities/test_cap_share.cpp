@@ -29,16 +29,16 @@
 #define LOGNULL
 #include "core/RDP/capabilities/cap_share.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
+RED_AUTO_TEST_CASE(TestCapabilityShareEmit)
 {
     ShareCaps share_caps;
     share_caps.nodeId = 0;
     share_caps.pad2octets = 1;
 
-    BOOST_CHECK_EQUAL(share_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_SHARE));
-    BOOST_CHECK_EQUAL(share_caps.len, static_cast<uint16_t>(CAPLEN_SHARE));
-    BOOST_CHECK_EQUAL(share_caps.nodeId, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(share_caps.pad2octets, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(share_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_SHARE));
+    RED_CHECK_EQUAL(share_caps.len, static_cast<uint16_t>(CAPLEN_SHARE));
+    RED_CHECK_EQUAL(share_caps.nodeId, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(share_caps.pad2octets, static_cast<uint16_t>(1));
 
     StaticOutStream<1024> out_stream;
     share_caps.emit(out_stream);
@@ -47,13 +47,13 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
 
     ShareCaps share_caps2;
 
-    BOOST_CHECK_EQUAL(share_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SHARE));
-    BOOST_CHECK_EQUAL(share_caps2.len, static_cast<uint16_t>(CAPLEN_SHARE));
+    RED_CHECK_EQUAL(share_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SHARE));
+    RED_CHECK_EQUAL(share_caps2.len, static_cast<uint16_t>(CAPLEN_SHARE));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_SHARE), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_SHARE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_SHARE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_SHARE), stream.in_uint16_le());
     share_caps2.recv(stream, CAPLEN_SHARE);
 
-    BOOST_CHECK_EQUAL(share_caps2.nodeId, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(share_caps2.pad2octets, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(share_caps2.nodeId, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(share_caps2.pad2octets, static_cast<uint16_t>(1));
 }

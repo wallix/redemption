@@ -33,7 +33,7 @@
 
 //#include "path/to/file.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
     std::string contents;
 
@@ -51,27 +51,27 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 //         {"percentage":0,"eta":-1,"videos":0}
 //         {"percentage":10,"eta":0,"videos":0}
 
         p(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
 
         p(start_time + 100);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
 
     {
         unlink(filename);
@@ -83,25 +83,25 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p(start_time + 100);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
 
     {
         unlink(filename);
@@ -113,26 +113,26 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p.raise_error(2, "plouf");
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents,
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents,
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
 
     {
         unlink(filename);
@@ -144,25 +144,25 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "10 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "10 0");
 
         p(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "90 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "99 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "99 0");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, "100 0");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, "100 0");
 
     {
         unlink(filename);
@@ -174,25 +174,25 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "10 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "90 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "99 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "99 0");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, "100 0");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, "100 0");
 
     {
         unlink(filename);
@@ -204,25 +204,25 @@ BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
             0, 0
         );
 
-        BOOST_REQUIRE(p.is_valid());
+        RED_REQUIRE(p.is_valid());
 
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "10 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "90 0");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "90 0");
 
         p.raise_error(2, "plouf");
-        BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-        BOOST_CHECK_EQUAL(contents, "-1 plouf (2)");
+        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        RED_CHECK_EQUAL(contents, "-1 plouf (2)");
     }
-    BOOST_CHECK_EQUAL(0, get_file_contents(contents, filename));
-    BOOST_CHECK_EQUAL(contents, "-1 plouf (2)");
+    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    RED_CHECK_EQUAL(contents, "-1 plouf (2)");
 
     unlink(filename);
 }

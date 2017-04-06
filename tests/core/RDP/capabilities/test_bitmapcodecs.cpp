@@ -27,7 +27,7 @@
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "utils/stream.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
+RED_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
 {
     StaticOutStream<1024> out_stream;
     BitmapCodecCaps cap;

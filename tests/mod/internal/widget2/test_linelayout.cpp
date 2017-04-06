@@ -37,7 +37,7 @@
 #define OUTPUT_FILE_PATH "/tmp/"
 
 
-BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
+RED_AUTO_TEST_CASE(TestLineLayoutwithColumns)
 {
 
     TestDraw drawable(800, 600);

@@ -56,7 +56,7 @@ struct CopyPasteFront : FakeFront
     void send_to_channel(
         const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
     ) override {
-        BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
+        RED_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 
         InStream stream(data, length);
         RDPECLIP::RecvPredictor rp(stream);
@@ -117,12 +117,12 @@ public:
     {}
 
     void notify(Widget2 * sender, notify_event_t event) override {
-        BOOST_REQUIRE(sender);
+        RED_REQUIRE(sender);
         copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestPaste)
+RED_AUTO_TEST_CASE(TestPaste)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -151,12 +151,12 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     edit.set_wh(120, dim.h);
     edit.set_xy(0, 0);
 
-    BOOST_REQUIRE(copy_paste.ready(front));
+    RED_REQUIRE(copy_paste.ready(front));
 
     #define edit_paste(s, sig) {                                   \
         keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
         copy_paste.paste(edit);                                    \
-        BOOST_CHECK_EQUAL(s, edit.get_text());                     \
+        RED_CHECK_EQUAL(s, edit.get_text());                     \
                                                                    \
         edit.rdp_input_invalidate(edit.get_rect());                \
                                                                    \
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
         /*sprintf(filename, "test_copy_paste_%d.png", __LINE__);*/ \
         /*mod.save_to_png(filename);*/                             \
                                                                    \
-        CHECK_SIG(mod.gd.impl(), sig);                             \
+        RED_CHECK_SIG(mod.gd.impl(), sig);                             \
     }
     edit_paste("",
         "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c");

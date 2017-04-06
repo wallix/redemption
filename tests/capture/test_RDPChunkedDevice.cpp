@@ -31,7 +31,7 @@
 
 #include "capture/RDPChunkedDevice.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRDPChunkedDevice)
+RED_AUTO_TEST_CASE(TestRDPChunkedDevice)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

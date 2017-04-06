@@ -29,7 +29,7 @@
 #include "core/WMF/MetaFileFormat.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestMetaHeader)
+RED_AUTO_TEST_CASE(TestMetaHeader)
 {
      const char data[] =
                 // metaFileData
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestMetaHeader)
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
         std::string const expected(reinterpret_cast<const char *>(data), data_len);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
     {                                                       // Recv
@@ -62,17 +62,17 @@ BOOST_AUTO_TEST_CASE(TestMetaHeader)
         MFF::MetaHeader metaHeader;
         metaHeader.recv(in_stream);
 
-        BOOST_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
-        BOOST_CHECK_EQUAL(metaHeader.headerSize, 9);
-        BOOST_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
-        BOOST_CHECK_EQUAL(metaHeader.size, 24149);
-        BOOST_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
-        BOOST_CHECK_EQUAL(metaHeader.maxRecord, 24123);
-        BOOST_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
+        RED_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
+        RED_CHECK_EQUAL(metaHeader.headerSize, 9);
+        RED_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
+        RED_CHECK_EQUAL(metaHeader.size, 24149);
+        RED_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
+        RED_CHECK_EQUAL(metaHeader.maxRecord, 24123);
+        RED_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestMetaSetMapMod)
+RED_AUTO_TEST_CASE(TestMetaSetMapMod)
 {
      const char data[] =
                 "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestMetaSetMapMod)
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
         std::string const expected(reinterpret_cast<const char *>(data), data_len);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
     {                                                       // Recv
@@ -97,13 +97,13 @@ BOOST_AUTO_TEST_CASE(TestMetaSetMapMod)
         MFF::MetaSetMapMod MetaSetMapMod;
         MetaSetMapMod.recv(in_stream);
 
-        BOOST_CHECK_EQUAL(MetaSetMapMod.recordSize, 4);
-        BOOST_CHECK_EQUAL(MetaSetMapMod.recordFunction, MFF::META_SETMAPMODE);
-        BOOST_CHECK_EQUAL(MetaSetMapMod.mappingMode, 8);
+        RED_CHECK_EQUAL(MetaSetMapMod.recordSize, 4);
+        RED_CHECK_EQUAL(MetaSetMapMod.recordFunction, MFF::META_SETMAPMODE);
+        RED_CHECK_EQUAL(MetaSetMapMod.mappingMode, 8);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestMetaSetWindowExt)
+RED_AUTO_TEST_CASE(TestMetaSetWindowExt)
 {
      const char data[] =
                 "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestMetaSetWindowExt)
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
         std::string const expected(reinterpret_cast<const char *>(data), data_len);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
     {                                                       // Recv
@@ -130,14 +130,14 @@ BOOST_AUTO_TEST_CASE(TestMetaSetWindowExt)
         MFF::MetaSetWindowExt MetaSetWindowExt;
         MetaSetWindowExt.recv(in_stream);
 
-        BOOST_CHECK_EQUAL(MetaSetWindowExt.recordSize, 5);
-        BOOST_CHECK_EQUAL(MetaSetWindowExt.recordFunction, MFF::META_SETWINDOWEXT);
-        BOOST_CHECK_EQUAL(MetaSetWindowExt.height, negative_height16);
-        BOOST_CHECK_EQUAL(MetaSetWindowExt.width,220);
+        RED_CHECK_EQUAL(MetaSetWindowExt.recordSize, 5);
+        RED_CHECK_EQUAL(MetaSetWindowExt.recordFunction, MFF::META_SETWINDOWEXT);
+        RED_CHECK_EQUAL(MetaSetWindowExt.height, negative_height16);
+        RED_CHECK_EQUAL(MetaSetWindowExt.width,220);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestMetaSetWindowOrg)
+RED_AUTO_TEST_CASE(TestMetaSetWindowOrg)
 {
      const char data[] =
                 "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestMetaSetWindowOrg)
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
         std::string const expected(reinterpret_cast<const char *>(data), data_len);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
     {                                                       // Recv
@@ -163,14 +163,14 @@ BOOST_AUTO_TEST_CASE(TestMetaSetWindowOrg)
         MFF::MetaSetWindowOrg MetaSetWindowOrg;
         MetaSetWindowOrg.recv(in_stream);
 
-        BOOST_CHECK_EQUAL(MetaSetWindowOrg.recordSize, 5);
-        BOOST_CHECK_EQUAL(MetaSetWindowOrg.recordFunction, MFF::META_SETWINDOWORG);
-        BOOST_CHECK_EQUAL(MetaSetWindowOrg.yOrg, 0);
-        BOOST_CHECK_EQUAL(MetaSetWindowOrg.xOrg, 0);
+        RED_CHECK_EQUAL(MetaSetWindowOrg.recordSize, 5);
+        RED_CHECK_EQUAL(MetaSetWindowOrg.recordFunction, MFF::META_SETWINDOWORG);
+        RED_CHECK_EQUAL(MetaSetWindowOrg.yOrg, 0);
+        RED_CHECK_EQUAL(MetaSetWindowOrg.xOrg, 0);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestDibStretchBLT)
+RED_AUTO_TEST_CASE(TestDibStretchBLT)
 {
      const char data[] =
                 // META_DIBSTRETCHBLT This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestDibStretchBLT)
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
         std::string const expected(reinterpret_cast<const char *>(data), data_len);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
     {                                                      // Recv
@@ -220,29 +220,29 @@ BOOST_AUTO_TEST_CASE(TestDibStretchBLT)
         MFF::DibStretchBLT dibStretchBLT;
         dibStretchBLT.recv(in_stream);
 
-        BOOST_CHECK_EQUAL(dibStretchBLT.recordSize, 24123);
-        BOOST_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
-        BOOST_CHECK_EQUAL(dibStretchBLT.rasterOperation, 0x00CC0020);
-        BOOST_CHECK_EQUAL(dibStretchBLT.srcHeight, 73);
-        BOOST_CHECK_EQUAL(dibStretchBLT.srcWidth, 220);
-        BOOST_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
-        BOOST_CHECK_EQUAL(dibStretchBLT.destWidth, 220);
-        BOOST_CHECK_EQUAL(dibStretchBLT.yDest, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.xDest, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.recordSize, 24123);
+        RED_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
+        RED_CHECK_EQUAL(dibStretchBLT.rasterOperation, 0x00CC0020);
+        RED_CHECK_EQUAL(dibStretchBLT.srcHeight, 73);
+        RED_CHECK_EQUAL(dibStretchBLT.srcWidth, 220);
+        RED_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
+        RED_CHECK_EQUAL(dibStretchBLT.destWidth, 220);
+        RED_CHECK_EQUAL(dibStretchBLT.yDest, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.xDest, 0);
 
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.headerSize, 40);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.width, 220);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.height, negative_height32);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.planes, 0x0001);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.bitCount, 24);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.compression, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.imageSize, 48180);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.xPelsPerMeter, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.yPelsPerMeter, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.colorUsed, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.colorImportant, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.headerSize, 40);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.width, 220);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.height, negative_height32);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.planes, 0x0001);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.bitCount, 24);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.compression, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.imageSize, 48180);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.xPelsPerMeter, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.yPelsPerMeter, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.colorUsed, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.bitmapInfoHeader.colorImportant, 0);
     }
 }
 

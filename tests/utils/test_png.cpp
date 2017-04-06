@@ -31,7 +31,7 @@
 
 #include "utils/png.hpp"
 
-BOOST_AUTO_TEST_CASE(TestPng)
+RED_AUTO_TEST_CASE(TestPng)
 {
     // TODO
 }

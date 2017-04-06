@@ -58,12 +58,12 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
+RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
 
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
-    BOOST_CHECK_NE(fd, -1);
+    RED_CHECK_NE(fd, -1);
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -119,12 +119,12 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     while (run_task);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
+RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
     auto contents = get_file_contents<std::string>(FIXTURES_PATH "/sample.bmp");
-    BOOST_CHECK_EQUAL(1974u, contents.size());
+    RED_CHECK_EQUAL(1974u, contents.size());
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);

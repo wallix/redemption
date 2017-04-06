@@ -36,7 +36,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 {
     TestDraw drawable(800, 600);
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
 
-    CHECK_SIG(drawable.gd, "\xa0\xc9\x71\x22\x96\x6a\x6c\x75\x1a\x2b\xdf\xf9\x37\x2b\xaf\xe5\xc5\x21\x10\xbb");
+    RED_CHECK_SIG(drawable.gd, "\xa0\xc9\x71\x22\x96\x6a\x6c\x75\x1a\x2b\xdf\xf9\x37\x2b\xaf\xe5\xc5\x21\x10\xbb");
 
     selector.selector_lines.set_selection(1);
 
@@ -82,10 +82,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector2.png");
 
-    CHECK_SIG(drawable.gd, "\x16\x86\x97\xdf\xa8\x00\x36\x02\xe1\x8e\xb8\x8d\xe5\x78\x18\x07\x3b\xfa\x2b\x91");
+    RED_CHECK_SIG(drawable.gd, "\x16\x86\x97\xdf\xa8\x00\x36\x02\xe1\x8e\xb8\x8d\xe5\x78\x18\x07\x3b\xfa\x2b\x91");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 {
     TestDraw drawable(640, 480);
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize1.png");
 
-    CHECK_SIG(drawable.gd, "\x02\x9e\x7c\xf9\x07\x53\x65\x71\x04\x36\x86\x20\x58\x40\xb1\xf4\x0b\xbd\xbd\xf6");
+    RED_CHECK_SIG(drawable.gd, "\x02\x9e\x7c\xf9\x07\x53\x65\x71\x04\x36\x86\x20\x58\x40\xb1\xf4\x0b\xbd\xbd\xf6");
 
 
     selector.selector_lines.set_selection(1);
@@ -133,10 +133,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
 
-    CHECK_SIG(drawable.gd, "\x75\x26\x59\xbd\x59\xe8\x22\x21\xcc\xb3\x43\x00\x62\x74\x2f\x6e\x69\x7e\x69\x7c");
+    RED_CHECK_SIG(drawable.gd, "\x75\x26\x59\xbd\x59\xe8\x22\x21\xcc\xb3\x43\x00\x62\x74\x2f\x6e\x69\x7e\x69\x7c");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 {
     TestDraw drawable(800, 600);
 
@@ -158,10 +158,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector3.png");
 
-    CHECK_SIG(drawable.gd, "\x7f\xcc\x04\x8e\x44\x5c\xe2\x11\xa5\x40\x3f\x1a\xfb\x21\xe7\xd7\x3d\x3a\xc4\xaa");
+    RED_CHECK_SIG(drawable.gd, "\x7f\xcc\x04\x8e\x44\x5c\xe2\x11\xa5\x40\x3f\x1a\xfb\x21\xe7\xd7\x3d\x3a\xc4\xaa");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
 {
     TestDraw drawable(800, 600);
 
@@ -186,10 +186,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector4.png");
 
-    CHECK_SIG(drawable.gd, "\xc0\xe4\x4e\x72\xb1\x97\x00\x1a\xea\x33\x23\xc0\xe3\x3d\xf2\x25\x3d\x7c\xcb\x0d");
+    RED_CHECK_SIG(drawable.gd, "\xc0\xe4\x4e\x72\xb1\x97\x00\x1a\xea\x33\x23\xc0\xe3\x3d\xf2\x25\x3d\x7c\xcb\x0d");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -215,10 +215,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector5.png");
 
-    CHECK_SIG(drawable.gd, "\x23\xea\xe9\x93\x5f\xe1\x7d\x1c\x73\x71\x45\x56\xe2\xde\x4b\xff\x0a\x27\x38\xd6");
+    RED_CHECK_SIG(drawable.gd, "\x23\xea\xe9\x93\x5f\xe1\x7d\x1c\x73\x71\x45\x56\xe2\xde\x4b\xff\x0a\x27\x38\xd6");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 {
     TestDraw drawable(800, 600);
 
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-1.png");
 
-    CHECK_SIG(drawable.gd, "\xd1\x00\xc5\x77\xec\x82\x12\x0d\x06\xfd\x37\xdf\x82\xad\x08\x85\xeb\x05\xff\x21");
+    RED_CHECK_SIG(drawable.gd, "\xd1\x00\xc5\x77\xec\x82\x12\x0d\x06\xfd\x37\xdf\x82\xad\x08\x85\xeb\x05\xff\x21");
 
 
     Keymap2 keymap;
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-2.png");
 
 
-    CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
+    RED_CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-3.png");
 
 
-    CHECK_SIG(drawable.gd, "\x37\x79\x54\xd3\xea\x21\xa4\xc0\x26\x88\xa7\xe3\xa4\xa4\xb6\x77\x1c\xb2\xe5\xb2");
+    RED_CHECK_SIG(drawable.gd, "\x37\x79\x54\xd3\xea\x21\xa4\xc0\x26\x88\xa7\xe3\xa4\xa4\xb6\x77\x1c\xb2\xe5\xb2");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-4.png");
 
 
-    CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
+    RED_CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-5.png");
 
 
-    CHECK_SIG(drawable.gd, "\xd1\x00\xc5\x77\xec\x82\x12\x0d\x06\xfd\x37\xdf\x82\xad\x08\x85\xeb\x05\xff\x21");
+    RED_CHECK_SIG(drawable.gd, "\xd1\x00\xc5\x77\xec\x82\x12\x0d\x06\xfd\x37\xdf\x82\xad\x08\x85\xeb\x05\xff\x21");
 
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-6.png");
 
 
-    CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
+    RED_CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     // selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
+RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 {
     TestDraw drawable(800, 600);
 
@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-1.png");
 
-    CHECK_SIG(drawable.gd, "\x2f\xde\xcc\xa9\x8d\xf3\x5b\x44\x18\x4e\xaf\x0f\x11\xb7\xdd\x10\x15\x4a\x32\x7e");
+    RED_CHECK_SIG(drawable.gd, "\x2f\xde\xcc\xa9\x8d\xf3\x5b\x44\x18\x4e\xaf\x0f\x11\xb7\xdd\x10\x15\x4a\x32\x7e");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-2.png");
 
 
-    CHECK_SIG(drawable.gd, "\xf8\xd9\x4e\x69\xf5\xf1\x0c\x9a\x94\xb3\xef\x9d\xb0\x2a\xd9\x2c\x2e\xc1\x9a\x30");
+    RED_CHECK_SIG(drawable.gd, "\xf8\xd9\x4e\x69\xf5\xf1\x0c\x9a\x94\xb3\xef\x9d\xb0\x2a\xd9\x2c\x2e\xc1\x9a\x30");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -402,7 +402,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-3.png");
 
-    CHECK_SIG(drawable.gd, "\xa1\x80\xb3\x77\xc9\x66\xd1\xcf\x45\x44\x96\x1d\x70\x5a\xb5\xdd\x29\x9e\xc5\x43");
+    RED_CHECK_SIG(drawable.gd, "\xa1\x80\xb3\x77\xc9\x66\xd1\xcf\x45\x44\x96\x1d\x70\x5a\xb5\xdd\x29\x9e\xc5\x43");
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-4.png");
 
-    CHECK_SIG(drawable.gd, "\xbc\xcc\x11\xfe\x7a\xd2\x12\x43\xa9\xae\x72\x0e\x4d\x0d\xf2\x59\x9f\x6b\x89\xa0");
+    RED_CHECK_SIG(drawable.gd, "\xbc\xcc\x11\xfe\x7a\xd2\x12\x43\xa9\xae\x72\x0e\x4d\x0d\xf2\x59\x9f\x6b\x89\xa0");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-5.png");
 
-    CHECK_SIG(drawable.gd, "\x98\x62\xe4\x6b\xe9\x28\xca\x4e\xbe\x0b\x85\x97\xb2\x3a\x49\x6a\xb6\xd0\xa5\x57");
+    RED_CHECK_SIG(drawable.gd, "\x98\x62\xe4\x6b\xe9\x28\xca\x4e\xbe\x0b\x85\x97\xb2\x3a\x49\x6a\xb6\xd0\xa5\x57");
 
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
@@ -433,7 +433,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-6.png");
 
-    CHECK_SIG(drawable.gd, "\x27\xe2\x1a\x6b\x7d\x19\x43\x9b\x53\x9f\xf9\xf9\x3a\xe5\x8f\xe6\x6d\x4c\xec\x69");
+    RED_CHECK_SIG(drawable.gd, "\x27\xe2\x1a\x6b\x7d\x19\x43\x9b\x53\x9f\xf9\xf9\x3a\xe5\x8f\xe6\x6d\x4c\xec\x69");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-7.png");
 
-    CHECK_SIG(drawable.gd, "\x1d\xbc\x27\x87\xd8\x35\xe5\xbd\xdb\x57\xb9\x03\x48\x30\x5a\x3d\x13\xeb\x8b\xde");
+    RED_CHECK_SIG(drawable.gd, "\x1d\xbc\x27\x87\xd8\x35\xe5\xbd\xdb\x57\xb9\x03\x48\x30\x5a\x3d\x13\xeb\x8b\xde");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -455,7 +455,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-8.png");
 
-    CHECK_SIG(drawable.gd, "\x9f\xec\xf5\x04\xc9\xb6\x65\xf8\x75\xd8\x83\x6f\xa0\xda\xab\xcb\x51\x2e\x07\xe5");
+    RED_CHECK_SIG(drawable.gd, "\x9f\xec\xf5\x04\xc9\xb6\x65\xf8\x75\xd8\x83\x6f\xa0\xda\xab\xcb\x51\x2e\x07\xe5");
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -477,10 +477,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-9.png");
 
-    CHECK_SIG(drawable.gd, "\x0c\x88\x50\x25\x4a\xe0\x1a\xe8\x24\xdc\x5b\xde\x43\xa6\x21\x0a\x5e\xbb\x08\xba");
+    RED_CHECK_SIG(drawable.gd, "\x0c\x88\x50\x25\x4a\xe0\x1a\xe8\x24\xdc\x5b\xde\x43\xa6\x21\x0a\x5e\xbb\x08\xba");
 }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -535,7 +535,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x36\xf9\x92\x34\x51\xa3\xe6\x18\xb8\xbb"
 //                    "\x7d\xd9\xa2\x92\x14\xe8\x40\xb3\x04\x2f"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -564,7 +564,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x08\x3d\xdd\xe9\x60\x8b\xf9\xc9\x74\xcc"
 //                    "\xb3\x4c\xb4\x1d\xa4\x85\x3f\xdd\xe1\xad"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -593,7 +593,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x6d\x23\xab\x06\x73\x7c\xbe\x69\x6b\x33"
 //                    "\xd4\x94\x7a\x4c\xc7\x38\x68\x01\xcd\xcf"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 //     selector.selector_lines.clear();
@@ -621,11 +621,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x82\x5c\xe0\x0e\x0e\xcb\x63\x48\x64\xb7"
 //                    "\x6f\x05\xa8\x92\x40\xe6\x51\x7f\x20\x32"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 // {
 //     TestDraw drawable(640, 480);
 
@@ -680,7 +680,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\xc3\x87\x52\xfc\xbc\x47\x3d\x20\x34\x33"
 //                    "\x7c\x54\xcd\x65\xf1\x3f\xab\xc3\x12\x64"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -710,7 +710,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x88\xff\x6f\x35\xb6\xca\xf3\x61\x5a\x8c"
 //                    "\xcf\x4b\xa0\x27\x98\x4e\xe4\x0a\x38\x2d"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -740,7 +740,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x04\xf1\xeb\x69\xe9\xbc\xda\x26\xd4\xe0"
 //                    "\x96\xd1\xa7\x59\x52\x0a\x2e\x7d\x44\x01"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -769,12 +769,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x8d\x52\x86\xa1\xbe\x32\x62\xa9\x14\xc6"
 //                    "\x06\xea\xa6\x27\x18\x10\x8b\xa8\x4b\xe7"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 // {
 //     TestDraw drawable(1280, 1024);
 
@@ -829,7 +829,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x7d\x56\xc8\x95\xa9\xb2\x32\x5c\x7d\x61"
 //                    "\x7f\x06\x0b\x3c\x6b\x1f\x37\x71\xad\x28"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -859,7 +859,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x4c\x80\xba\x39\xfc\xc3\xbe\x2a\x1f\xc4"
 //                    "\x25\xdf\xcf\xc7\x13\x57\x8d\xb0\xfa\xad"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -889,7 +889,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x8a\xb8\x20\xdf\xad\x13\x4e\x70\x6f\x7a"
 //                    "\xe3\xc6\x21\x8d\xa6\x3b\xa5\x16\x84\xe7"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -918,12 +918,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                    "\x1a\x2f\xf3\x80\x9f\x43\x8d\x11\xd5\x1a"
 //                    "\x56\xf6\xd4\xfc\xef\x4a\x3a\xc0\x80\x3c"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVV)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVV)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -975,19 +975,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     // selector.selector_lines.set_selection(1);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
 
-//     BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
-//     BOOST_CHECK(notifier.sender == &selector.connect);
+//     RED_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &selector.connect);
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVM)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVM)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -1038,34 +1038,34 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     // selector.selector_lines.set_selection(1);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
-//     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
+//     RED_CHECK(selector.current_focus == &selector.comment_edit);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
-//     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
+//     RED_CHECK(selector.current_focus == &selector.comment_edit);
 
 //     selector.comment_edit.set_text("I would like to log on please !");
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
-//     BOOST_CHECK(notifier.sender == &selector.connect);
+//     RED_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &selector.connect);
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMV)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMV)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -1115,22 +1115,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.ticket_edit);
 
 //     keymap.push_kevent(Keymap2::KEVENT_TAB);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.comment_edit);
 //     selector.comment_edit.set_text("I would like to log on please !");
 //     notifier.event = 0;
 //     notifier.sender = 0;
@@ -1138,30 +1138,30 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //                              selector.connect.x() + 2,
 //                              selector.connect.y() + 2,
 //                              nullptr);
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.connect);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.connect);
 //     notifier.event = 0;
 //     notifier.sender = 0;
 //     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //                              selector.connect.x() + 2,
 //                              selector.connect.y() + 2,
 //                              nullptr);
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.ticket_edit);
 
 
 //     selector.ticket_edit.set_text("18752");
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
-//     BOOST_CHECK(notifier.sender == &selector.connect);
+//     RED_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &selector.connect);
 // }
 
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMM)
+// RED_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMM)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -1211,30 +1211,30 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == nullptr);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == nullptr);
 
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.ticket_edit);
 
 //     selector.ticket_edit.set_text("18752");
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+//     RED_CHECK_EQUAL(notifier.event, 0);
+//     RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(selector.current_focus == &selector.comment_edit);
 //     selector.comment_edit.set_text("I would like to log on please !");
 
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
-//     BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
-//     BOOST_CHECK(notifier.sender == &selector.connect);
+//     RED_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &selector.connect);
 // }

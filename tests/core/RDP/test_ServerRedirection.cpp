@@ -29,7 +29,7 @@
 // #define LOGPRINT
 #include "core/RDP/ServerRedirection.hpp"
 
-BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
+RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
 {
     RedirectionInfo rinfo_init;
     rinfo_init.valid = true;
@@ -59,15 +59,15 @@ BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
     srv_redir_target.export_to_redirection_info(rinfo_target);
     rinfo_target.log(LOG_INFO, "test 2 redirection_info");
 
-    BOOST_CHECK_EQUAL(rinfo_init.valid, rinfo_target.valid);
-    BOOST_CHECK_EQUAL(rinfo_init.session_id, rinfo_target.session_id);
-    BOOST_CHECK_EQUAL(rinfo_init.host_is_fqdn, rinfo_target.host_is_fqdn);
-    BOOST_CHECK_EQUAL(rinfo_init.smart_card_logon, rinfo_target.smart_card_logon);
+    RED_CHECK_EQUAL(rinfo_init.valid, rinfo_target.valid);
+    RED_CHECK_EQUAL(rinfo_init.session_id, rinfo_target.session_id);
+    RED_CHECK_EQUAL(rinfo_init.host_is_fqdn, rinfo_target.host_is_fqdn);
+    RED_CHECK_EQUAL(rinfo_init.smart_card_logon, rinfo_target.smart_card_logon);
 
-    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.host),
+    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.host),
                                 reinterpret_cast<char*>(rinfo_target.host)));
-    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.username),
+    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.username),
                                 reinterpret_cast<char*>(rinfo_target.username)));
-    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.domain),
+    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.domain),
                                 reinterpret_cast<char*>(rinfo_target.domain)));
 }

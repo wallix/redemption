@@ -27,9 +27,9 @@
 
 #include "utils/sugar/cast.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCast)
+RED_AUTO_TEST_CASE(TestCast)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
 
 }

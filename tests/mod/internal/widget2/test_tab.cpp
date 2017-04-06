@@ -26,6 +26,6 @@
 //#define LOGNULL
 //#define LOGPRINT
 
-BOOST_AUTO_TEST_CASE(TraceWidgetTab)
+RED_AUTO_TEST_CASE(TraceWidgetTab)
 {
 }

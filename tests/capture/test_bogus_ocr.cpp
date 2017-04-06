@@ -48,7 +48,7 @@ namespace {
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCR4)
+RED_AUTO_TEST_CASE(TestNewOCR4)
 {
     Drawable drawable(800, 600);
 
@@ -65,11 +65,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
         auto expected = make_array(
             "a b c d e f g h ij k l m n o p q r s t u v w xyz - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }

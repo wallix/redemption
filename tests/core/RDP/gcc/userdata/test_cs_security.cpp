@@ -34,7 +34,7 @@
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
 {
     const char indata[] =
         "\x02\xc0"         // CS_SECURITY
@@ -57,10 +57,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     GCC::UserData::CSSecurity cs_security;
     InStream stream(buf);
     cs_security.recv(stream);
-    BOOST_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
-    BOOST_CHECK_EQUAL(12, cs_security.length);
-    BOOST_CHECK_EQUAL(27, cs_security.encryptionMethods);
-    BOOST_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
+    RED_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
+    RED_CHECK_EQUAL(12, cs_security.length);
+    RED_CHECK_EQUAL(27, cs_security.encryptionMethods);
+    RED_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
 
     cs_security.log("Client Received");
 }

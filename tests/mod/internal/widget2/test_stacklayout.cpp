@@ -34,7 +34,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
-BOOST_AUTO_TEST_CASE(Testtab)
+RED_AUTO_TEST_CASE(Testtab)
 {
     TestDraw drawable(800, 600);
 

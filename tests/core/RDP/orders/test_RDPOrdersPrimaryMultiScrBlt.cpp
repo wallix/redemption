@@ -30,7 +30,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMultiScrBlt)
+RED_AUTO_TEST_CASE(TestMultiScrBlt)
 {
 
 }

@@ -32,53 +32,53 @@
 #include "utils/stream.hpp"
 #include "core/RDP/out_per_bstream.hpp"
 
-BOOST_AUTO_TEST_CASE(TestOutPerStream)
+RED_AUTO_TEST_CASE(TestOutPerStream)
 {
     // test we can create a Stream object
     uint8_t buf[3];
     OutPerStream out_per_stream(buf);
 
-    BOOST_CHECK(out_per_stream.get_capacity() == 3);
-    BOOST_CHECK(out_per_stream.get_data());
-    BOOST_CHECK(out_per_stream.get_data() == out_per_stream.get_current());
+    RED_CHECK(out_per_stream.get_capacity() == 3);
+    RED_CHECK(out_per_stream.get_data());
+    RED_CHECK(out_per_stream.get_data() == out_per_stream.get_current());
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
+RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
 {
     // test we can create a Stream object
     StaticOutPerStream<256> stream;
     stream.out_per_integer(0x12345678);
-    BOOST_CHECK_EQUAL(5, stream.get_offset());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x12\x34\x56\x78", stream.get_offset()));
+    RED_CHECK_EQUAL(5, stream.get_offset());
+    RED_CHECK(0 == memcmp(stream.get_data(), "\x04\x12\x34\x56\x78", stream.get_offset()));
 }
 
-BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
+RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
 {
     // test we can create a Stream object
     StaticOutPerStream<256> stream;
     stream.out_per_integer(0x00345678);
-    BOOST_CHECK_EQUAL(5, stream.get_offset());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x04\x00\x34\x56\x78", stream.get_offset()));
+    RED_CHECK_EQUAL(5, stream.get_offset());
+    RED_CHECK(0 == memcmp(stream.get_data(), "\x04\x00\x34\x56\x78", stream.get_offset()));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
+RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
 {
     // test we can create a Stream object
     StaticOutPerStream<256> stream;
     stream.out_per_integer(0x1234);
-    BOOST_CHECK_EQUAL(3, stream.get_offset());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x02\x12\x34", stream.get_offset()));
+    RED_CHECK_EQUAL(3, stream.get_offset());
+    RED_CHECK(0 == memcmp(stream.get_data(), "\x02\x12\x34", stream.get_offset()));
 }
 
-BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
+RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 {
     // test we can create a Stream object
     StaticOutPerStream<256> stream;
     stream.out_per_integer(0x12);
-    BOOST_CHECK_EQUAL(2, stream.get_offset());
-    BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
+    RED_CHECK_EQUAL(2, stream.get_offset());
+    RED_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
 
 #include "transport/test_transport.hpp"
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 /* TODO For now we are testing out_per primitive through gcc object,
  * true unit test should do that at a lower level
  * for every out_per primitive defined */
-BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
+RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {
     const char gcc_user_data[] =
     "\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
@@ -149,8 +149,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     t.send(gcc_header.get_data(), gcc_header.get_offset());
 
     InStream in_stream(gcc_conference_create_request_expected, sz);
-    BOOST_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
+    RED_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
 
-//    BOOST_CHECK(t.get_status());
+//    RED_CHECK(t.get_status());
 }
 

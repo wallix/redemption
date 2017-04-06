@@ -24,7 +24,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSslSha256)
+RED_AUTO_TEST_CASE(TestSslSha256)
 {
     uint8_t sig[SslSha256::DIGEST_LENGTH];
 
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        CHECK_MEM_AC(
+        RED_CHECK_MEM_AC(
             sig,
             "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
             "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        CHECK_MEM_AC(
+        RED_CHECK_MEM_AC(
             sig,
             "\xc5\x4b\xf3\x03\xb9\x09\xfc\x19"
             "\x1e\x2b\x6e\xf6\x8f\x0d\x7e\xc2"
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
+RED_AUTO_TEST_CASE(TestSslHmacSHA256)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
@@ -145,9 +145,9 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
     uint8_t sig[SslSha256::DIGEST_LENGTH];
     hmac.final(sig);
 
-    BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
+    RED_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
-    CHECK_MEM_AC(
+    RED_CHECK_MEM_AC(
         sig,
         "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
         "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
     //hexdump96_c(sig, sizeof(sig));
 }
 
-BOOST_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
+RED_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
@@ -170,9 +170,9 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256Delayed)
     uint8_t sig[SslSha256::DIGEST_LENGTH];
     hmac.final(sig);
 
-    BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
+    RED_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
-    CHECK_MEM_AC(
+    RED_CHECK_MEM_AC(
         sig,
         "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
         "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"

@@ -297,7 +297,7 @@ const char expected_red[] =
     /* 0000 */ "\xae\x42\x60\x82"                                                 //.B`.
     ;
 
-BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
+RED_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
 {
     // This is how the expected raw PNG (a big flat RED 800x600 screen)
     // will look as a string
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     dump_png24(d.impl(), trans, true);
 }
 
-BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
+RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
             drawable.rowsize(), true);
 }
 
-BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
+RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
     const char * filename = "test.png";
     size_t len = strlen(filename);
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     int fd = ::creat(path, 0777);
     if (fd == -1){
         LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), path);
-        BOOST_CHECK(false);
+        RED_CHECK(false);
         return;
     }
 
@@ -347,11 +347,11 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     drawable.draw(cmd, screen_rect);
     d.flush();
     trans.disconnect(); // close file before checking size
-    BOOST_CHECK_EQUAL(2786, filesize(filename));
+    RED_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
+RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
@@ -370,14 +370,14 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const char * filename;
 
     filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(2786, ::filesize(filename));
+    RED_CHECK_EQUAL(2786, ::filesize(filename));
     ::unlink(filename);
     filename = trans.seqgen()->get(1);
-    BOOST_CHECK_EQUAL(2806, ::filesize(filename));
+    RED_CHECK_EQUAL(2806, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestOneRedScreen)
+RED_AUTO_TEST_CASE(TestOneRedScreen)
 {
     struct timeval now;
     now.tv_sec = 1000;
@@ -466,43 +466,43 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
 
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     bool ignore_frame_in_timeval = false;
 
     now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
+    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
 
     now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
+    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
 
     now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
+    RED_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
+    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
     for (unsigned i = 1; i <= 3; ++i) {
         unlink(trans.seqgen()->get(i));
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestSmallImage)
+RED_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid);
@@ -514,11 +514,11 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
     const char * filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestScaleImage)
+RED_AUTO_TEST_CASE(TestScaleImage)
 {
     const int width = 800;
     const int height = 600;
@@ -539,13 +539,13 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     d.flush();
     // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
     const char * filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(8162, ::filesize(filename));
+    RED_CHECK_EQUAL(8162, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestBogusBitmap)
+RED_AUTO_TEST_CASE(TestBogusBitmap)
 {
-    BOOST_CHECK(1);
+    RED_CHECK(1);
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
@@ -667,13 +667,13 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 
     d.flush();
     const char * filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(4094, ::filesize(filename));
+    RED_CHECK_EQUAL(4094, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
+RED_AUTO_TEST_CASE(TestBogusBitmap2)
 {
-    BOOST_CHECK(1);
+    RED_CHECK(1);
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid);
     Rect scr(0, 0, 800, 600);
@@ -717,7 +717,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 
     d.flush();
     const char * filename = trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(2913, ::filesize(filename));
+    RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
 }
 

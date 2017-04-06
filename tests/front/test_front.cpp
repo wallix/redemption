@@ -116,7 +116,7 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestFront)
+RED_AUTO_TEST_CASE(TestFront)
 {
     try {
         ::unlink(RECORD_PATH "/redemption.mwrm");
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         // Comment the code block below to generate testing data.
         GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         LCGRandom gen1(0);
         CryptoContext cctx;
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
@@ -252,21 +252,21 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LCGRandom gen2(0);
         LCGTime timeobj;
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
+        RED_CHECK(t.get_status());
         // incoming connexion data
-        BOOST_CHECK_EQUAL(front.client_info.width, 1024);
-        BOOST_CHECK_EQUAL(front.client_info.height, 768);
+        RED_CHECK_EQUAL(front.client_info.width, 1024);
+        RED_CHECK_EQUAL(front.client_info.height, 768);
 
 
         while (!mod->is_up_and_running())
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
     };
 }
 
-BOOST_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
+RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 {
    const uint8_t bytes_data[] = "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
                                 "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
@@ -336,10 +336,10 @@ BOOST_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 
     std::string const out_data(reinterpret_cast<char *>(g24b.raw_data), 256*3);
     std::string const expected(reinterpret_cast<const char *>(bytes_data), 256*3);
-    BOOST_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(expected, out_data);
 }
 
-BOOST_AUTO_TEST_CASE(TestFront2)
+RED_AUTO_TEST_CASE(TestFront2)
 {
     auto test = [&]{
         ::unlink(RECORD_PATH "/redemption.mwrm");
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         // Comment the code block below to generate testing data.
         GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         LCGRandom gen1(0);
         CryptoContext cctx;
@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
@@ -475,20 +475,20 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         LCGRandom gen2(0);
         LCGTime timeobj;
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(front.client_info.width, 800);
-        BOOST_CHECK_EQUAL(front.client_info.height, 600);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(front.client_info.width, 800);
+        RED_CHECK_EQUAL(front.client_info.height, 600);
 
         while (!mod->is_up_and_running())
             mod->draw_event(now, front);
@@ -516,11 +516,11 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
     //    front.dump_png("trace_w2008_");
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
+   RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TestFront3)
+RED_AUTO_TEST_CASE(TestFront3)
 {
     try {
         ::unlink(RECORD_PATH "/redemption.mwrm");
@@ -578,7 +578,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         // GeneratorTransport front_trans(indata, sizeof(indata), verbose);
         TestTransport front_trans("Front", indata, sizeof(indata), outdata, sizeof(outdata) - 1, verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         LCGRandom gen1(0);
         CryptoContext cctx;
@@ -681,7 +681,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
@@ -712,20 +712,20 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         // To always get the same client random, in tests
         LCGRandom gen2(0);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 1024);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(mod->get_front_width(), 1024);
+        RED_CHECK_EQUAL(mod->get_front_height(), 768);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.

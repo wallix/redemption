@@ -34,7 +34,7 @@
 
 using namespace re;
 
-BOOST_AUTO_TEST_CASE(TestRegexSt)
+RED_AUTO_TEST_CASE(TestRegexSt)
 {
     struct Reg {
         Reg(const char * s)
@@ -63,278 +63,278 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("a");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), true);
-        BOOST_CHECK_EQUAL(reg.search("abc"), true);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), true);
+        RED_CHECK_EQUAL(reg.search("abc"), true);
+        RED_CHECK_EQUAL(reg.search("dabc"), true);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("^a");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), true);
-        BOOST_CHECK_EQUAL(reg.search("abc"), true);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), true);
+        RED_CHECK_EQUAL(reg.search("abc"), true);
+        RED_CHECK_EQUAL(reg.search("dabc"), false);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("a$");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), false);
+        RED_CHECK_EQUAL(reg.search("abc"), false);
+        RED_CHECK_EQUAL(reg.search("dabc"), false);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("^a$");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), false);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), false);
+        RED_CHECK_EQUAL(reg.search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), false);
+        RED_CHECK_EQUAL(reg.search("abc"), false);
+        RED_CHECK_EQUAL(reg.search("dabc"), false);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("a+");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), true);
-        BOOST_CHECK_EQUAL(reg.search("abc"), true);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), true);
+        RED_CHECK_EQUAL(reg.search("abc"), true);
+        RED_CHECK_EQUAL(reg.search("dabc"), true);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg(".*a.*$");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), true);
-        BOOST_CHECK_EQUAL(reg.search("abc"), true);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), true);
+        RED_CHECK_EQUAL(reg.search("abc"), true);
+        RED_CHECK_EQUAL(reg.search("dabc"), true);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), true);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), true);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), true);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), true);
     }
 
     {
         Reg reg("aa+$");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), false);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), false);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), false);
+        RED_CHECK_EQUAL(reg.search("abc"), false);
+        RED_CHECK_EQUAL(reg.search("dabc"), false);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), false);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("aa*b?a");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("a"), false);
-        BOOST_CHECK_EQUAL(reg.search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaaa"), true);
-        BOOST_CHECK_EQUAL(reg.search("baaba"), true);
-        BOOST_CHECK_EQUAL(reg.search("abaaba"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), false);
-        BOOST_CHECK_EQUAL(reg.search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("a"), false);
+        RED_CHECK_EQUAL(reg.search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaaa"), true);
+        RED_CHECK_EQUAL(reg.search("baaba"), true);
+        RED_CHECK_EQUAL(reg.search("abaaba"), true);
+        RED_CHECK_EQUAL(reg.search("b"), false);
+        RED_CHECK_EQUAL(reg.search("ab"), false);
+        RED_CHECK_EQUAL(reg.search("abc"), false);
+        RED_CHECK_EQUAL(reg.search("dabc"), false);
 
-        BOOST_CHECK_EQUAL(reg.exact_search(""), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("a"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abaaba"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("baaba"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaba"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("b"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("ab"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("abc"), false);
-        BOOST_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK_EQUAL(reg.exact_search(""), false);
+        RED_CHECK_EQUAL(reg.exact_search("a"), false);
+        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
+        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abaaba"), false);
+        RED_CHECK_EQUAL(reg.exact_search("baaba"), false);
+        RED_CHECK_EQUAL(reg.exact_search("aaba"), true);
+        RED_CHECK_EQUAL(reg.exact_search("b"), false);
+        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
+        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
+        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
     }
 
     {
         Reg reg("[a-ce]");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("a"), true);
-        BOOST_CHECK_EQUAL(reg.search("b"), true);
-        BOOST_CHECK_EQUAL(reg.search("c"), true);
-        BOOST_CHECK_EQUAL(reg.search("d"), false);
-        BOOST_CHECK_EQUAL(reg.search("e"), true);
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("lka"), true);
-        BOOST_CHECK_EQUAL(reg.search("lkd"), false);
+        RED_CHECK_EQUAL(reg.search("a"), true);
+        RED_CHECK_EQUAL(reg.search("b"), true);
+        RED_CHECK_EQUAL(reg.search("c"), true);
+        RED_CHECK_EQUAL(reg.search("d"), false);
+        RED_CHECK_EQUAL(reg.search("e"), true);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("lka"), true);
+        RED_CHECK_EQUAL(reg.search("lkd"), false);
     }
 
     {
         Reg reg("[^a-cd]");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("a"), !true);
-        BOOST_CHECK_EQUAL(reg.search("b"), !true);
-        BOOST_CHECK_EQUAL(reg.search("c"), !true);
-        BOOST_CHECK_EQUAL(reg.search("d"), !true);
-        BOOST_CHECK_EQUAL(reg.search(""), false);
-        BOOST_CHECK_EQUAL(reg.search("lka"), !false);
+        RED_CHECK_EQUAL(reg.search("a"), !true);
+        RED_CHECK_EQUAL(reg.search("b"), !true);
+        RED_CHECK_EQUAL(reg.search("c"), !true);
+        RED_CHECK_EQUAL(reg.search("d"), !true);
+        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK_EQUAL(reg.search("lka"), !false);
     }
 
     {
         Reg reg("(a?b?c?)d(.*)$");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("adefg"), true);
+        RED_CHECK_EQUAL(reg.search("adefg"), true);
     }
 
     {
         Reg reg("b?a{,1}c");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("a{,1}c"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("a{,1}c"), true);
+        RED_CHECK_EQUAL(reg.search("a{,1}c"), true);
+        RED_CHECK_EQUAL(reg.exact_search("a{,1}c"), true);
     }
 
     {
         Reg reg("b?a{0,3}c");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("ac"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("ac"), true);
+        RED_CHECK_EQUAL(reg.search("ac"), true);
+        RED_CHECK_EQUAL(reg.exact_search("ac"), true);
     }
 
     {
         Reg reg("b?a{2,4}c");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("aaac"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaac"), true);
+        RED_CHECK_EQUAL(reg.search("aaac"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaac"), true);
     }
 
     {
         Reg reg("b?a{2,}c");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("aaaaaaaac"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("aaaaaaac"), true);
+        RED_CHECK_EQUAL(reg.search("aaaaaaaac"), true);
+        RED_CHECK_EQUAL(reg.exact_search("aaaaaaac"), true);
     }
 
     {
         Reg reg("b?a{0,}c");
 
-        BOOST_CHECK(reg.root());
+        RED_CHECK(reg.root());
 
-        BOOST_CHECK_EQUAL(reg.search("c"), true);
-        BOOST_CHECK_EQUAL(reg.exact_search("c"), true);
+        RED_CHECK_EQUAL(reg.search("c"), true);
+        RED_CHECK_EQUAL(reg.exact_search("c"), true);
     }
 }

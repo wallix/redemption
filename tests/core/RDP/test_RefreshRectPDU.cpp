@@ -29,7 +29,7 @@
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRefreshRectPDU)
+RED_AUTO_TEST_CASE(TestRefreshRectPDU)
 {
     const char *payload =
 /* 0000 */ "\x03\x00\x00\x2c\x02\xf0\x80\x64\x00\x07\x03\xeb\x70\x1e\x1e\x00" //...,...d....p...

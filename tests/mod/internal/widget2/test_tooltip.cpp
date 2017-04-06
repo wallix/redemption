@@ -34,7 +34,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
+RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 {
     TestDraw drawable(800, 600);
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltip.png");
 
-    CHECK_SIG(drawable.gd, "\x48\xaa\x0c\x28\xb2\x58\x37\x02\x98\x48\xf0\xaf\xfa\xfb\x2a\x06\x6f\x8c\xae\x80");
+    RED_CHECK_SIG(drawable.gd, "\x48\xaa\x0c\x28\xb2\x58\x37\x02\x98\x48\xf0\xaf\xfa\xfb\x2a\x06\x6f\x8c\xae\x80");
 }
 
 inline
@@ -78,7 +78,7 @@ void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScre
 
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
+RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 {
     TestDraw drawable(800, 600);
     int x = 50;
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen1.png");
 
-    CHECK_SIG(drawable.gd, "\x2a\xe5\xb7\x02\xd4\xa4\x88\x01\x65\xd5\x93\x8d\x83\x8d\xd1\xe7\x6f\x10\x2a\x59");
+    RED_CHECK_SIG(drawable.gd, "\x2a\xe5\xb7\x02\xd4\xa4\x88\x01\x65\xd5\x93\x8d\x83\x8d\xd1\xe7\x6f\x10\x2a\x59");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.x() + label.cx() / 2, label.y() + label.cy() / 2,
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
-    CHECK_SIG(drawable.gd, "\x81\x11\xa7\xb0\xbc\x79\xd7\x22\x6b\x89\x20\xc8\xf2\x62\x13\x5f\x6e\x59\x45\xdf");
+    RED_CHECK_SIG(drawable.gd, "\x81\x11\xa7\xb0\xbc\x79\xd7\x22\x6b\x89\x20\xc8\xf2\x62\x13\x5f\x6e\x59\x45\xdf");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen3.png");
 
-    CHECK_SIG(drawable.gd, "\xdd\xc9\x40\x79\x91\xbd\x3c\xe8\xf4\x14\x17\xe6\x2d\x09\x2d\xae\x23\x54\xb7\x17");
+    RED_CHECK_SIG(drawable.gd, "\xdd\xc9\x40\x79\x91\xbd\x3c\xe8\xf4\x14\x17\xe6\x2d\x09\x2d\xae\x23\x54\xb7\x17");
 
     parent.tooltip->set_text("Test tooltip<br>"
                              "Text modification<br>"
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
 
-    CHECK_SIG(drawable.gd, "\x6b\x0e\x8a\x3a\x5a\x37\x42\xaa\x36\x2d\xf5\x43\xb4\x50\x88\xbf\xcf\xee\xf8\x02");
+    RED_CHECK_SIG(drawable.gd, "\x6b\x0e\x8a\x3a\x5a\x37\x42\xaa\x36\x2d\xf5\x43\xb4\x50\x88\xbf\xcf\xee\xf8\x02");
 
     parent.clear();
 }

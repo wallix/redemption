@@ -43,7 +43,7 @@ constexpr auto is_callable(U & x)
 -> decltype(is_callable_impl<T>(x, 1))
 { return {}; }
 
-BOOST_AUTO_TEST_CASE(TestBytesT)
+RED_AUTO_TEST_CASE(TestBytesT)
 {
     char a[2]{};
     uint8_t ua[2]{};
@@ -68,31 +68,31 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     const_bytes_t{cus};
     const_bytes_t{bytes_t{a}};
 
-    BOOST_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(a));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(ua).to_charp()), voidp(ua));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(s).to_charp()), voidp(s));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(bytes_t(ua).to_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(bytes_t(s).to_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(bytes_t(us).to_charp()), voidp(us));
 
-    BOOST_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(bytes_t(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(bytes_t(a).to_u8p()));
 
-    BOOST_CHECK(bool(bytes_t(a)));
-    BOOST_CHECK(!bool(bytes_t{}));
+    RED_CHECK(bool(bytes_t(a)));
+    RED_CHECK(!bool(bytes_t{}));
 
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(a));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(ua).to_charp()), voidp(ua));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(s).to_charp()), voidp(s));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(ua).to_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(s).to_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(us).to_charp()), voidp(us));
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(ca).to_charp()), voidp(ca));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cua).to_charp()), voidp(cus));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cs).to_charp()), voidp(cs));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cus).to_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(ca).to_charp()), voidp(ca));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cua).to_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cs).to_charp()), voidp(cs));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cus).to_charp()), voidp(cus));
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(const_bytes_t(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(const_bytes_t(a).to_u8p()));
 
-    BOOST_CHECK(bool(const_bytes_t(a)));
-    BOOST_CHECK(!bool(const_bytes_t{}));
+    RED_CHECK(bool(const_bytes_t(a)));
+    RED_CHECK(!bool(const_bytes_t{}));
 
 
     bytes_t bs{s};

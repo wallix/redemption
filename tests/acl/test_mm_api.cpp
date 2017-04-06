@@ -31,8 +31,8 @@
 
 //#include "path/to/file.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMMAPI1)
+RED_AUTO_TEST_CASE(TestMMAPI1)
 {
     LOG(LOG_INFO, "Test not yet implemented");
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

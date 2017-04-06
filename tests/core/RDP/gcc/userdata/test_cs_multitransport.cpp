@@ -31,7 +31,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_multitransport.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
 {
     const char indata[] =
         "\x0a\xc0"         // CS_MULTITRANSPORT
@@ -48,9 +48,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
     GCC::UserData::CSMultiTransport cs_multitransport;
     InStream stream(buf);
     cs_multitransport.recv(stream);
-    BOOST_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
-    BOOST_CHECK_EQUAL(8, cs_multitransport.length);
-    BOOST_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
+    RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
+    RED_CHECK_EQUAL(8, cs_multitransport.length);
+    RED_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
                       GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
                       GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
                       GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP,

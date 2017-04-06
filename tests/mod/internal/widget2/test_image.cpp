@@ -33,7 +33,7 @@
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage)
+RED_AUTO_TEST_CASE(TraceWidgetImage)
 {
     TestDraw drawable(800, 600);
 
@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image.png");
 
-    CHECK_SIG(drawable.gd, "\xe2\x5c\x4a\x10\xe0\xbc\x8f\x3c\xb5\x0b\x10\x98\xd1\xdc\x3b\xb8\x33\x28\x76\xbb");
+    RED_CHECK_SIG(drawable.gd, "\xe2\x5c\x4a\x10\xe0\xbc\x8f\x3c\xb5\x0b\x10\x98\xd1\xdc\x3b\xb8\x33\x28\x76\xbb");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
+RED_AUTO_TEST_CASE(TraceWidgetImage2)
 {
     TestDraw drawable(800, 600);
 
@@ -86,10 +86,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image2.png");
 
-    CHECK_SIG(drawable.gd, "\xfe\x5c\x1a\x41\xb3\x22\xa4\xc8\xe3\x39\x31\xd3\xd2\xe8\xe6\x55\x56\xce\x9a\xc7");
+    RED_CHECK_SIG(drawable.gd, "\xfe\x5c\x1a\x41\xb3\x22\xa4\xc8\xe3\x39\x31\xd3\xd2\xe8\xe6\x55\x56\xce\x9a\xc7");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
+RED_AUTO_TEST_CASE(TraceWidgetImage3)
 {
     TestDraw drawable(800, 600);
 
@@ -114,10 +114,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image3.png");
 
-    CHECK_SIG(drawable.gd, "\x15\xf3\xaf\x95\xac\x8e\x9b\xbc\x94\x91\x33\x79\x17\xf9\xee\x43\x74\x9c\x34\xc2");
+    RED_CHECK_SIG(drawable.gd, "\x15\xf3\xaf\x95\xac\x8e\x9b\xbc\x94\x91\x33\x79\x17\xf9\xee\x43\x74\x9c\x34\xc2");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
+RED_AUTO_TEST_CASE(TraceWidgetImage4)
 {
     TestDraw drawable(800, 600);
 
@@ -142,10 +142,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image4.png");
 
-    CHECK_SIG(drawable.gd, "\xff\x70\xc7\xd1\x91\x5d\x2a\x6b\x1d\x70\xf8\xcb\x96\x8d\x04\xef\x03\xcf\x73\x0e");
+    RED_CHECK_SIG(drawable.gd, "\xff\x70\xc7\xd1\x91\x5d\x2a\x6b\x1d\x70\xf8\xcb\x96\x8d\x04\xef\x03\xcf\x73\x0e");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
+RED_AUTO_TEST_CASE(TraceWidgetImage5)
 {
     TestDraw drawable(800, 600);
 
@@ -170,10 +170,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image5.png");
 
-    CHECK_SIG(drawable.gd, "\x1a\x71\xe8\x5b\x2b\x93\x0c\x4b\x68\x9f\xf8\x65\xc8\x53\xdd\xb5\x59\x9f\x29\x28");
+    RED_CHECK_SIG(drawable.gd, "\x1a\x71\xe8\x5b\x2b\x93\x0c\x4b\x68\x9f\xf8\x65\xc8\x53\xdd\xb5\x59\x9f\x29\x28");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
+RED_AUTO_TEST_CASE(TraceWidgetImage6)
 {
     TestDraw drawable(800, 600);
 
@@ -198,10 +198,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image6.png");
 
-    CHECK_SIG(drawable.gd, "\x34\x31\x5a\xd6\x44\x12\x6b\xb0\xb6\x61\x54\x70\x57\x63\xf3\x8f\x27\x76\xa3\x2e");
+    RED_CHECK_SIG(drawable.gd, "\x34\x31\x5a\xd6\x44\x12\x6b\xb0\xb6\x61\x54\x70\x57\x63\xf3\x8f\x27\x76\xa3\x2e");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
+RED_AUTO_TEST_CASE(TraceWidgetImageClip)
 {
     TestDraw drawable(800, 600);
 
@@ -226,10 +226,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image7.png");
 
-    CHECK_SIG(drawable.gd, "\xa9\x9b\x0f\x65\x5b\xd3\xd0\x70\xee\xd2\xad\xa8\x61\x38\x5e\x9e\x95\x7a\x24\xa2");
+    RED_CHECK_SIG(drawable.gd, "\xa9\x9b\x0f\x65\x5b\xd3\xd0\x70\xee\xd2\xad\xa8\x61\x38\x5e\x9e\x95\x7a\x24\xa2");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
+RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -254,10 +254,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "image8.png");
 
-    CHECK_SIG(drawable.gd, "\x30\xd6\xba\x4a\xd4\x54\x54\xc8\xa6\x55\xe1\xe7\xd1\x95\x83\xca\x36\xd0\x96\x47");
+    RED_CHECK_SIG(drawable.gd, "\x30\xd6\xba\x4a\xd4\x54\x54\xc8\xa6\x55\xe1\xe7\xd1\x95\x83\xca\x36\xd0\x96\x47");
 }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
+// RED_AUTO_TEST_CASE(TraceWidgetImageEvent)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -287,20 +287,20 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
 //     wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-//     BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+//     RED_CHECK(widget_for_receive_event.sender == &wimage);
+//     RED_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
 //     wimage.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-//     BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
+//     RED_CHECK(widget_for_receive_event.sender == &wimage);
+//     RED_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
 //     wimage.send_event(KEYUP, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-//     BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+//     RED_CHECK(widget_for_receive_event.sender == &wimage);
+//     RED_CHECK(widget_for_receive_event.event == KEYUP);
 //     wimage.send_event(KEYDOWN, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-//     BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+//     RED_CHECK(widget_for_receive_event.sender == &wimage);
+//     RED_CHECK(widget_for_receive_event.event == KEYDOWN);
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
+// RED_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     if (!check_sig(drawable.gd.impl(), message,
 //         "\xa9\x05\x72\xca\xa4\xe1\x4e\x88\x48\x79"
 //         "\xf0\x43\x37\xb8\xbc\xda\x77\x8d\x3d\x33")){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 //     // ask to widget to redraw at it's current position
@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     if (!check_sig(drawable.gd.impl(), message,
 //         "\x76\xe4\xfd\xbb\x8e\x8e\x76\x2c\xc7\x37"
 //         "\x5b\x46\xcd\xd4\xb2\x5a\xcd\x0a\x2d\x2b")){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 //     wcomposite.clear();
 // }

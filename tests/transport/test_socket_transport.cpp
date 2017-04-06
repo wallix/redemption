@@ -45,7 +45,7 @@
 // this is done through one select loop listening on everybody and non blocking calls
 // (non blocking calls should not even be necessary thanks to select)
 
-BOOST_AUTO_TEST_CASE(TestSocketTransport)
+RED_AUTO_TEST_CASE(TestSocketTransport)
 {
     class ServerOnce : public Server
     {
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
-        BOOST_CHECK_EQUAL(true, true);
+        RED_CHECK_EQUAL(true, true);
         int max = listener.sck;
         FD_SET(max, &rfds);
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
 
                 }
                 else {
-                    BOOST_CHECK(false);
+                    RED_CHECK(false);
                     run = false;
                 }
             }

@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "core/RDP/capabilities/colcache.hpp"
 
-BOOST_AUTO_TEST_CASE(TestColorCacheCaps)
+RED_AUTO_TEST_CASE(TestColorCacheCaps)
 {
     ColorCacheCaps cap;
 

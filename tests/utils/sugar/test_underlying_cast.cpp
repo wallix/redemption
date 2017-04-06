@@ -27,7 +27,7 @@
 
 #include "utils/sugar/underlying_cast.hpp"
 
-BOOST_AUTO_TEST_CASE(TestUnderlyingCast)
+RED_AUTO_TEST_CASE(TestUnderlyingCast)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

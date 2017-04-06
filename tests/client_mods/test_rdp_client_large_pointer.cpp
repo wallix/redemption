@@ -43,7 +43,7 @@
 
 #include "../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
+RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {
     int verbose = 256;
 
@@ -131,10 +131,10 @@ BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
         LOG(LOG_INFO,
             "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
+RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 {
     int verbose = 256;
 
@@ -239,10 +239,10 @@ BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
         LOG(LOG_INFO,
             "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

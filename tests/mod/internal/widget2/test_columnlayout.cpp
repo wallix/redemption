@@ -33,7 +33,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetColumn)
+RED_AUTO_TEST_CASE(TraceWidgetColumn)
 {
     TestDraw drawable(800, 600);
 
@@ -78,6 +78,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetColumn)
     // if (!check_sig(drawable.gd.drawable, message,
     //     "\x7d\xfe\xb4\x41\x31\x06\x68\xe8\xbb\x75"
     //     "\x8c\x35\x11\x19\x97\x2a\x16\x0f\x65\x28")){
-    //     BOOST_CHECK_MESSAGE(false, message);
+    //     RED_CHECK_MESSAGE(false, message);
     // }
 }

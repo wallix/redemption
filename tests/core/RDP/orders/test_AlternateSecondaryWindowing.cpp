@@ -28,7 +28,7 @@
 
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-BOOST_AUTO_TEST_CASE(TestWindowingCommon)
+RED_AUTO_TEST_CASE(TestWindowingCommon)
 {
 /*
     const uint32_t WindowId = 1000;
@@ -43,8 +43,8 @@ BOOST_AUTO_TEST_CASE(TestWindowingCommon)
     WindowInformationCommonHeader wch_r;
     wch_r.receive(in_stream);
 
-    BOOST_CHECK_EQUAL(wch_r.FieldsPresentFlags(), WINDOW_ORDER_TYPE_WINDOW);
-    BOOST_CHECK_EQUAL(wch_r.WindowId(),           WindowId);
+    RED_CHECK_EQUAL(wch_r.FieldsPresentFlags(), WINDOW_ORDER_TYPE_WINDOW);
+    RED_CHECK_EQUAL(wch_r.WindowId(),           WindowId);
 */
 
     RDP::RAIL::NewOrExistingWindow new_or_existing_window;

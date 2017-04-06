@@ -29,7 +29,7 @@
 
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

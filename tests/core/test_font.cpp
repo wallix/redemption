@@ -33,7 +33,7 @@
 #include "utils/log.hpp"
 #include "core/font.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCreateFontChar)
+RED_AUTO_TEST_CASE(TestCreateFontChar)
 {
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(8);
     int16_t offset = 0;
@@ -43,47 +43,47 @@ BOOST_AUTO_TEST_CASE(TestCreateFontChar)
     int16_t incby = 8;
 
 //     FontChar fc1(data, offset, baseline, width, height, incby);
-//     BOOST_CHECK_EQUAL(fc1.datasize(), 8);
-//     BOOST_CHECK_EQUAL(fc1.offset, offset);
-//     BOOST_CHECK_EQUAL(fc1.baseline, baseline);
-//     BOOST_CHECK_EQUAL(fc1.width, width);
-//     BOOST_CHECK_EQUAL(fc1.height, height);
-//     BOOST_CHECK_EQUAL(fc1.incby, incby);
+//     RED_CHECK_EQUAL(fc1.datasize(), 8);
+//     RED_CHECK_EQUAL(fc1.offset, offset);
+//     RED_CHECK_EQUAL(fc1.baseline, baseline);
+//     RED_CHECK_EQUAL(fc1.width, width);
+//     RED_CHECK_EQUAL(fc1.height, height);
+//     RED_CHECK_EQUAL(fc1.incby, incby);
 
     FontChar fc2(offset, baseline, width, height, incby);
-    BOOST_CHECK_EQUAL(fc2.datasize(), 8);
-    BOOST_CHECK_EQUAL(fc2.offset, offset);
-    BOOST_CHECK_EQUAL(fc2.baseline, baseline);
-    BOOST_CHECK_EQUAL(fc2.width, width);
-    BOOST_CHECK_EQUAL(fc2.height, height);
-    BOOST_CHECK_EQUAL(fc2.incby, incby);
+    RED_CHECK_EQUAL(fc2.datasize(), 8);
+    RED_CHECK_EQUAL(fc2.offset, offset);
+    RED_CHECK_EQUAL(fc2.baseline, baseline);
+    RED_CHECK_EQUAL(fc2.width, width);
+    RED_CHECK_EQUAL(fc2.height, height);
+    RED_CHECK_EQUAL(fc2.incby, incby);
 
 }
 
-BOOST_AUTO_TEST_CASE(TestCreateFont)
+RED_AUTO_TEST_CASE(TestCreateFont)
 {
     {
         Font f;
-        BOOST_CHECK(!f.is_loaded());
+        RED_CHECK(!f.is_loaded());
     }
 
     Font f(FIXTURES_PATH "/dejavu-sans-10.fv1");
-    BOOST_CHECK(f.is_loaded());
+    RED_CHECK(f.is_loaded());
 
-    BOOST_CHECK_EQUAL("DejaVu Sans", f.name());
-    BOOST_CHECK_EQUAL(1, f.style());
-    BOOST_CHECK_EQUAL(10, f.size());
+    RED_CHECK_EQUAL("DejaVu Sans", f.name());
+    RED_CHECK_EQUAL(1, f.style());
+    RED_CHECK_EQUAL(10, f.size());
 
-    BOOST_CHECK(!f.glyph_defined(31));
-    BOOST_CHECK(f.glyph_defined(32));
-    BOOST_CHECK(f.glyph_defined(0x4dff));
-    BOOST_CHECK(!f.glyph_defined(0x4dff+1));
+    RED_CHECK(!f.glyph_defined(31));
+    RED_CHECK(f.glyph_defined(32));
+    RED_CHECK(f.glyph_defined(0x4dff));
+    RED_CHECK(!f.glyph_defined(0x4dff+1));
 
-    BOOST_CHECK(f.glyph_defined('?'));
-    BOOST_CHECK_EQUAL(f.glyph_at('?'), &f.unknown_glyph());
+    RED_CHECK(f.glyph_defined('?'));
+    RED_CHECK_EQUAL(f.glyph_at('?'), &f.unknown_glyph());
 
-    BOOST_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
-    BOOST_CHECK_EQUAL(f.glyph_at(31), static_cast<FontChar*>(nullptr));
-    BOOST_CHECK_EQUAL(f.glyph_at(32), &f.glyph_or_unknown(32));
-    BOOST_CHECK_NE(f.glyph_at(32), static_cast<FontChar*>(nullptr));
+    RED_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
+    RED_CHECK_EQUAL(f.glyph_at(31), static_cast<FontChar*>(nullptr));
+    RED_CHECK_EQUAL(f.glyph_at(32), &f.glyph_or_unknown(32));
+    RED_CHECK_NE(f.glyph_at(32), static_cast<FontChar*>(nullptr));
 }

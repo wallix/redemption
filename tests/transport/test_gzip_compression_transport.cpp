@@ -29,7 +29,7 @@
 #include "transport/gzip_compression_transport.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
+RED_AUTO_TEST_CASE(TestGZipCompressionTransport)
 {
     //for (unsigned int i = 0; i < 100000; i++) {
         MemoryTransport mt;
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
 
             in_trans.recv_new(in_buffer, 21);
             in_buffer = in_data;
-            BOOST_CHECK_EQUAL(in_buffer,
+            RED_CHECK_EQUAL(in_buffer,
                 "azert"
                 "azert"
                 "azert"
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
             in_buffer = in_data;
             in_trans.recv_new(in_buffer, 31);
             in_buffer = in_data;
-            BOOST_CHECK_EQUAL(in_buffer,
+            RED_CHECK_EQUAL(in_buffer,
                 "wallix"
                 "wallix"
                 "wallix"
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestGZipCompressionTransport)
             in_buffer = in_data;
             in_trans.recv_new(in_buffer, 65);
             in_buffer = in_data;
-            BOOST_CHECK_EQUAL(in_buffer,
+            RED_CHECK_EQUAL(in_buffer,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"

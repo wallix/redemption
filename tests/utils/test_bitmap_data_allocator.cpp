@@ -34,9 +34,9 @@
 #include "utils/bitmap_data_allocator.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
 
     aux_::BmpMemAlloc bmpMemAlloc;

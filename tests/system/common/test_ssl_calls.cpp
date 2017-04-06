@@ -27,7 +27,7 @@
 #include "core/RDP/gcc.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSCSecurity)
+RED_AUTO_TEST_CASE(TestSCSecurity)
 {
 
 //-- 0000 02 0c 36 22 02 00 00 00 02 00 00 00 20 00 00 00 ..6"........ ...
@@ -1134,8 +1134,8 @@ uint8_t security[] = {
     InStream input(security, sizeof(security));
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(input);
-    BOOST_CHECK_EQUAL(sc_sec1.encryptionMethod, 2);
-    BOOST_CHECK_EQUAL(sc_sec1.dwVersion, GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2);
+    RED_CHECK_EQUAL(sc_sec1.encryptionMethod, 2);
+    RED_CHECK_EQUAL(sc_sec1.dwVersion, GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2);
 }
 
 

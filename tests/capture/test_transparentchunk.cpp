@@ -30,7 +30,7 @@
 
 #include "capture/transparentchunk.hpp"
 
-BOOST_AUTO_TEST_CASE(Testtransparentchunk)
+RED_AUTO_TEST_CASE(Testtransparentchunk)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

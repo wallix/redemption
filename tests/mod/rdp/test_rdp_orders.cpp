@@ -28,6 +28,6 @@
 
 #include "mod/rdp/rdp_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+RED_AUTO_TEST_CASE(TestXXX)
 {
 }

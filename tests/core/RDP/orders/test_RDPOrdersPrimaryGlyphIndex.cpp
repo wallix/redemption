@@ -33,7 +33,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGlyphIndex)
+RED_AUTO_TEST_CASE(TestGlyphIndex)
 {
     using namespace RDP;
 
@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
         newcmd.emit(out_stream, newcommon, state_common, statecmd);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
-        BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), newcommon.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
+        RED_CHECK_EQUAL(Rect(5, 0, 800, 600), newcommon.clip);
 
         // TODO " DELTA is disabled because it does not works with rdesktop"
         uint8_t datas[] = {
@@ -86,20 +86,20 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x0D), header.control);
-        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x3fffff), header.fields);
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), common_cmd.order);
-        BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), common_cmd.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(0x0D), header.control);
+        RED_CHECK_EQUAL(static_cast<uint32_t>(0x3fffff), header.fields);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), common_cmd.order);
+        RED_CHECK_EQUAL(Rect(5, 0, 800, 600), common_cmd.clip);
 
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(in_stream, header);
 
         if (!(RDPBrush(3, 4, 0x03, 0xDD, brush_extra)
                 == cmd.brush)){
-            BOOST_CHECK_EQUAL(true, false);
+            RED_CHECK_EQUAL(true, false);
         }
      // TODO " actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
         check<RDPGlyphIndex>(common_cmd, cmd,
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
+RED_AUTO_TEST_CASE(TestGlyphIndex2)
 {
     using namespace RDP;
 
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
 
         newcmd.emit(out_stream, newcommon, state_common, statecmd);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
 
         // TODO " DELTA is disabled because it does not works with rdesktop"
         uint8_t datas[] = {
@@ -177,19 +177,19 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t        control    = in_stream.in_uint8();
-        BOOST_CHECK(control & STANDARD);
+        RED_CHECK(control & STANDARD);
 
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
-        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x3803fb), header.fields);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        RED_CHECK_EQUAL(static_cast<uint32_t>(0x3803fb), header.fields);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), common_cmd.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), common_cmd.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), common_cmd.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 1024, 768), common_cmd.clip);
 
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(in_stream, header);
 
-        BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra) == cmd.brush);
+        RED_CHECK(RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra) == cmd.brush);
 
         // TODO " actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
         check<RDPGlyphIndex>( common_cmd, cmd

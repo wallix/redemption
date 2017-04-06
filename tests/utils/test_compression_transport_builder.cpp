@@ -30,7 +30,7 @@
 #include <iostream>
 #include <sstream>
 
-BOOST_AUTO_TEST_CASE(TestCompressionTransportBuilder)
+RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 {
     std::stringbuf buf;
     auto * oldbuf = std::cout.rdbuf(&buf);
@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 
     std::cout.rdbuf(oldbuf);
 
-    BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
+    RED_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
 
     CompressionTestTransportBuilder t(trans, WrmCompressionAlgorithm::gzip);
-    BOOST_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
+    RED_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
 }

@@ -35,11 +35,11 @@
 
 #include "utils/genfstat.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGenFstat)
+RED_AUTO_TEST_CASE(TestGenFstat)
 {
     struct stat stat;
     Fstat fstat;
     int res = fstat.stat(FIXTURES_PATH "/sample0.wrm", stat);
-    BOOST_CHECK_EQUAL(res, 0);
-    BOOST_CHECK_EQUAL(stat.st_size, 1471394);
+    RED_CHECK_EQUAL(res, 0);
+    RED_CHECK_EQUAL(stat.st_size, 1471394);
 }

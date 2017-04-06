@@ -30,7 +30,7 @@
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestDialogMod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -68,6 +68,6 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 /*
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
     LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("True", res));
+    RED_CHECK(0 == strcmp("True", res));
 */
 }

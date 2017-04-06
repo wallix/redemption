@@ -28,6 +28,6 @@
 
 #include "mod/internal/test_card_mod.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+RED_AUTO_TEST_CASE(TestXXX)
 {
 }

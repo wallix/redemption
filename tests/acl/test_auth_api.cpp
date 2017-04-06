@@ -31,10 +31,10 @@
 
 #include "acl/auth_api.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAuthAPI1)
+RED_AUTO_TEST_CASE(TestAuthAPI1)
 {
     LOG(LOG_INFO, "Test not yet implemented");
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
     NullAuthentifier nullAuth;
 

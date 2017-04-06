@@ -35,18 +35,18 @@
 
 #include <cinttypes>
 
-BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
+RED_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.bmp");
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);
         OutStream out(uptr.get(), sz);
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         {
             uint64_t usec = ustime();
             uint64_t cycles = rdtsc();
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
         Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
+        RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
@@ -82,23 +82,23 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
         Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
+        RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
+RED_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 {
     {
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.png");
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);
         OutStream out(uptr.get(), sz);
-        BOOST_CHECK(true);
+        RED_CHECK(true);
         {
             uint64_t usec = ustime();
             uint64_t cycles = rdtsc();
@@ -111,8 +111,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
         Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
+        RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
                 elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
         }
         Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
-        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
+        RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
+        RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 }

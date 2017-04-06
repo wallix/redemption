@@ -30,7 +30,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMultiPatBlt)
+RED_AUTO_TEST_CASE(TestMultiPatBlt)
 {
 
 }

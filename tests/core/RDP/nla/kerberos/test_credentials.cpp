@@ -28,7 +28,7 @@
 #include "core/RDP/nla/kerberos/credentials.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestTSRequest)
+RED_AUTO_TEST_CASE(TestTSRequest)
 {
 
 }

@@ -33,13 +33,13 @@ struct NonCopyable : noncopyable{
 
 };
 
-BOOST_AUTO_TEST_CASE(TestSplitter)
+RED_AUTO_TEST_CASE(TestSplitter)
 {
-    BOOST_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
-    BOOST_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
+    RED_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
+    RED_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
 
-    BOOST_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
-    BOOST_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
+    RED_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
+    RED_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
 
     // test default constructible
     NonCopyable x; (void)x;

@@ -33,7 +33,7 @@
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
+RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
 {
     TestDraw drawable(800, 600);
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
 
-    CHECK_SIG(drawable.gd, "\xb3\x0e\x54\x67\x9d\xfd\x8b\x9b\x15\x83\x31\xa7\x89\x30\x95\x96\x4d\xfb\x55\x5a");
+    RED_CHECK_SIG(drawable.gd, "\xb3\x0e\x54\x67\x9d\xfd\x8b\x9b\x15\x83\x31\xa7\x89\x30\x95\x96\x4d\xfb\x55\x5a");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -97,10 +97,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
 
-    CHECK_SIG(drawable.gd, "\xe4\xa4\xa1\xb8\x91\x71\x0e\xf4\xcd\xe5\xe2\x5e\x79\xce\xb7\x4f\x50\xf8\xd6\xe9");
+    RED_CHECK_SIG(drawable.gd, "\xe4\xa4\xa1\xb8\x91\x71\x0e\xf4\xcd\xe5\xe2\x5e\x79\xce\xb7\x4f\x50\xf8\xd6\xe9");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
+RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 {
     TestDraw drawable(800, 600);
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     wgroupbox.set_wh(cx, cy);
     wgroupbox.set_xy(x, y);
 
-    BOOST_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
+    RED_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
 
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_2.png");
 
-    CHECK_SIG(drawable.gd, "\x3d\x38\x8c\x1e\x0f\x38\x18\xa1\x4e\x40\xe8\x9f\x1c\xe9\x80\x0b\x60\x60\x39\xb8");
+    RED_CHECK_SIG(drawable.gd, "\x3d\x38\x8c\x1e\x0f\x38\x18\xa1\x4e\x40\xe8\x9f\x1c\xe9\x80\x0b\x60\x60\x39\xb8");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -171,5 +171,5 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_3.png");
 
-    CHECK_SIG(drawable.gd, "\x20\x96\x42\x3e\xfa\xff\x1a\x98\x75\x2a\x5c\x0a\x41\x6d\xe8\xa1\x66\x4e\x93\xe3");
+    RED_CHECK_SIG(drawable.gd, "\x20\x96\x42\x3e\xfa\xff\x1a\x98\x75\x2a\x5c\x0a\x41\x6d\xe8\xa1\x66\x4e\x93\xe3");
 }

@@ -28,6 +28,6 @@
 
 #include "core/session_server.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+RED_AUTO_TEST_CASE(TestXXX)
 {
 }

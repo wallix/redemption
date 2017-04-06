@@ -34,7 +34,7 @@
 
 #include <png.h>
 
-BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
+RED_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 {
     // Create a Blue/White/Red stripped image
     // minimal code, minimal options, no error checking, no nothing
@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
         const int PNG_BYTES_TO_CHECK = 4;
         uint8_t buf[PNG_BYTES_TO_CHECK];
 
-        BOOST_CHECK_EQUAL(PNG_BYTES_TO_CHECK, fread(buf, 1, PNG_BYTES_TO_CHECK, fp));
+        RED_CHECK_EQUAL(PNG_BYTES_TO_CHECK, fread(buf, 1, PNG_BYTES_TO_CHECK, fp));
 
-        BOOST_CHECK_EQUAL(0, png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK));
+        RED_CHECK_EQUAL(0, png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK));
 
         png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
         png_info * pinfo = png_create_info_struct(ppng);
@@ -118,12 +118,12 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
         int compression_type;
         int filter_type;
         png_get_IHDR(ppng, pinfo, &width, &height, &bit_depth, &color_type, &interlace_type, &compression_type, &filter_type);
-        BOOST_CHECK_EQUAL(192, width);
-        BOOST_CHECK_EQUAL(128, height);
-        BOOST_CHECK_EQUAL(PNG_COLOR_TYPE_RGB, color_type);
-        BOOST_CHECK_EQUAL(PNG_INTERLACE_NONE, interlace_type);
-        BOOST_CHECK_EQUAL(PNG_COMPRESSION_TYPE_BASE, compression_type);
-        BOOST_CHECK_EQUAL(PNG_FILTER_TYPE_BASE, filter_type);
+        RED_CHECK_EQUAL(192, width);
+        RED_CHECK_EQUAL(128, height);
+        RED_CHECK_EQUAL(PNG_COLOR_TYPE_RGB, color_type);
+        RED_CHECK_EQUAL(PNG_INTERLACE_NONE, interlace_type);
+        RED_CHECK_EQUAL(PNG_COMPRESSION_TYPE_BASE, compression_type);
+        RED_CHECK_EQUAL(PNG_FILTER_TYPE_BASE, filter_type);
 
         uint8_t * row_pointers[128];
         for (uint32_t row = 0; row < height; row++){
@@ -137,17 +137,17 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
             for (uint32_t x = 0; x < width/3; ++x ){
                 const int pos = Bpp * x;
                 // BLUE
-                BOOST_CHECK_EQUAL(0x00, row[pos+0]); // RED
-                BOOST_CHECK_EQUAL(0x00, row[pos+1]); // GREEN
-                BOOST_CHECK_EQUAL(0xFF, row[pos+2]); // BLUE
+                RED_CHECK_EQUAL(0x00, row[pos+0]); // RED
+                RED_CHECK_EQUAL(0x00, row[pos+1]); // GREEN
+                RED_CHECK_EQUAL(0xFF, row[pos+2]); // BLUE
                 // WHITE
-                BOOST_CHECK_EQUAL(0xFF, row[pos+0+Bpp*(width/3)]); // RED
-                BOOST_CHECK_EQUAL(0xFF, row[pos+1+Bpp*(width/3)]); // GREEN
-                BOOST_CHECK_EQUAL(0xFF, row[pos+2+Bpp*(width/3)]); // BLUE
+                RED_CHECK_EQUAL(0xFF, row[pos+0+Bpp*(width/3)]); // RED
+                RED_CHECK_EQUAL(0xFF, row[pos+1+Bpp*(width/3)]); // GREEN
+                RED_CHECK_EQUAL(0xFF, row[pos+2+Bpp*(width/3)]); // BLUE
                 // RED
-                BOOST_CHECK_EQUAL(0xFF, row[pos+0+Bpp*((2*width)/3)]); // RED
-                BOOST_CHECK_EQUAL(0x00, row[pos+1+Bpp*((2*width)/3)]); // GREEN
-                BOOST_CHECK_EQUAL(0x00, row[pos+2+Bpp*((2*width)/3)]); // BLUE
+                RED_CHECK_EQUAL(0xFF, row[pos+0+Bpp*((2*width)/3)]); // RED
+                RED_CHECK_EQUAL(0x00, row[pos+1+Bpp*((2*width)/3)]); // GREEN
+                RED_CHECK_EQUAL(0x00, row[pos+2+Bpp*((2*width)/3)]); // BLUE
             }
         }
         for (uint32_t row = 0; row < height; row++){

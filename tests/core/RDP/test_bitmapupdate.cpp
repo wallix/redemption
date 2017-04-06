@@ -33,7 +33,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
+RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 1440;
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
     gd.draw(bitmap_data, capture_bmp);
 
-    CHECK_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
+    RED_CHECK_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
 
     // uncomment to see result in png file
     //dump_png("./test_bitmapupdate.png", gd.impl());

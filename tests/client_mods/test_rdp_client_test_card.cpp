@@ -37,9 +37,9 @@
 
 #include "../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestShowTestCard)
+RED_AUTO_TEST_CASE(TestShowTestCard)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
 
     Font font;
 
-    BOOST_CHECK(true);
+    RED_CHECK(true);
     TestCardMod mod(front, info.width, info.height, font);
-    BOOST_CHECK_NO_THROW(mod.draw_event(time(nullptr), front));
+    RED_CHECK_NO_THROW(mod.draw_event(time(nullptr), front));
 }

@@ -90,19 +90,19 @@ inline void simple_movie(
 
 #define CHECK_FILESIZE_AND_CLEAN(filename, size) { \
     size_t fsize = filesize(filename);             \
-    BOOST_CHECK_EQUAL(size, fsize);                \
+    RED_CHECK_EQUAL(size, fsize);                \
     ::unlink(filename);                            \
 }
 
 #define CHECK_FILESIZE_AND_CLEAN2(filename, size1, size2) { \
     size_t fsize = filesize(filename);                      \
     if (fsize != size2){                                    \
-        BOOST_CHECK_EQUAL(size1, fsize);                    \
+        RED_CHECK_EQUAL(size1, fsize);                    \
     }                                                       \
     ::unlink(filename);                                     \
 }
 
-BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
+RED_AUTO_TEST_CASE(TestSequencedVideoCapture)
 {
     {
         struct notified_on_video_change : public NotifyNextVideo
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000005.flv", 18489);
 }
 
-BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
+RED_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
 {
     {
         struct notified_on_video_change : public NotifyNextVideo
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
     CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000005.mp4", 262, 262);
 }
 
-BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
+RED_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture_one_chunk_xxx-000001.flv", -1);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp1.flv", 307997);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp_mouse0.flv", 297960);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureX264)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp2.mp4", 118756);
 }
 
-BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
+RED_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
 }
 
 
-BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
+RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {

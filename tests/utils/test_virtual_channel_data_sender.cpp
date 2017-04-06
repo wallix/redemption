@@ -33,9 +33,9 @@
 #include "utils/virtual_channel_data_sender.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestVirtualChannelDataSender)
+RED_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
     
 }

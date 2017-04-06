@@ -34,7 +34,7 @@
 #include "gdi/graphic_cmd_color.hpp"
 #include "utils/colors.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
+RED_AUTO_TEST_CASE(TestGdCmdConverter)
 {
     encode_color16 enc;
     decode_color16 dec;
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
     BGRColor color16 = enc(raw_color);
     RDPOpaqueRect opaque_rect({}, color16);
 
-    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
-    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);
+    RED_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
+    RED_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);
 
-    BOOST_CHECK_NE(opaque_rect.color, dec(color16));
+    RED_CHECK_NE(opaque_rect.color, dec(color16));
     gdi::GraphicCmdColor::encode_cmd_color(dec, opaque_rect);
-    BOOST_CHECK_EQUAL(opaque_rect.color, dec(color16));
+    RED_CHECK_EQUAL(opaque_rect.color, dec(color16));
 }

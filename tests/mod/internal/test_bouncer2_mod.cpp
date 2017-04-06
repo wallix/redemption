@@ -31,7 +31,7 @@
 #include "mod/internal/bouncer2_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
+RED_AUTO_TEST_CASE(TestBouncer2Mod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;

@@ -30,7 +30,7 @@
 
 #include "core/RDP/gcc/userdata/sc_core.hpp"  
 
-BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
+RED_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
     const char expected[] =
         "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
@@ -45,17 +45,17 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     sc_core.clientRequestedProtocols = 0;
     OutStream out_stream(buf);
     sc_core.emit(out_stream);
-    BOOST_CHECK_EQUAL(12, out_stream.get_offset());
-    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_EQUAL(12, out_stream.get_offset());
+    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
     GCC::UserData::SCCore sc_core2;
 
     InStream in_stream(buf);
     sc_core2.recv(in_stream);
-    BOOST_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
-    BOOST_CHECK_EQUAL(12, sc_core2.length);
-    BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
-    BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
+    RED_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
+    RED_CHECK_EQUAL(12, sc_core2.length);
+    RED_CHECK_EQUAL(0x0080004, sc_core2.version);
+    RED_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 
     sc_core2.log("Server Received");
 }

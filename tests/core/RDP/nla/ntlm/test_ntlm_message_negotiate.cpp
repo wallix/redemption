@@ -30,7 +30,7 @@
 
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestNegotiate)
+RED_AUTO_TEST_CASE(TestNegotiate)
 {
     // ===== NTLMSSP_NEGOTIATE =====
     uint8_t packet[] = {
@@ -54,20 +54,20 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req.version, 2);
+    RED_CHECK_EQUAL(ts_req.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
-    BOOST_CHECK_EQUAL(ts_req.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
+    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send;
 
-    BOOST_CHECK_EQUAL(to_send.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send.get_offset(), 0);
     ts_req.emit(to_send);
 
-    BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
+    RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    CHECK_SIG(to_send, sig);
+    RED_CHECK_SIG(to_send, sig);
 
     NTLMNegotiateMessage NegoMsg;
 
@@ -75,23 +75,23 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     NegoMsg.recv(nego);
 
 
-    BOOST_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
+    RED_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
     // NegoMsg.negoFlags.print();
 
-    BOOST_CHECK_EQUAL(NegoMsg.DomainName.len, 0);
-    BOOST_CHECK_EQUAL(NegoMsg.DomainName.bufferOffset, 0);
+    RED_CHECK_EQUAL(NegoMsg.DomainName.len, 0);
+    RED_CHECK_EQUAL(NegoMsg.DomainName.bufferOffset, 0);
     // hexdump_c(NegoMsg.DomainName.Buffer.get_data(),
     //           NegoMsg.DomainName.Buffer.size());
     // uint8_t domainname_match[] = "";
-    // BOOST_CHECK_EQUAL(memcmp(domainname_match,
+    // RED_CHECK_EQUAL(memcmp(domainname_match,
     //                          NegoMsg.DomainName.Buffer.get_data(),
     //                          NegoMsg.DomainName.len),
     //                   0);
 
-    BOOST_CHECK_EQUAL(NegoMsg.Workstation.len, 0);
-    BOOST_CHECK_EQUAL(NegoMsg.Workstation.bufferOffset, 0);
+    RED_CHECK_EQUAL(NegoMsg.Workstation.len, 0);
+    RED_CHECK_EQUAL(NegoMsg.Workstation.bufferOffset, 0);
     // uint8_t workstation_match[] = "";
-    // BOOST_CHECK_EQUAL(memcmp(workstation_match,
+    // RED_CHECK_EQUAL(memcmp(workstation_match,
     //                          NegoMsg.Workstation.Buffer.get_data(),
     //                          NegoMsg.Workstation.len),
     //                   0);
@@ -161,21 +161,21 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
 // TSRequest ts_req4(s);
 
-// BOOST_CHECK_EQUAL(ts_req4.version, 2);
+// RED_CHECK_EQUAL(ts_req4.version, 2);
 
-// BOOST_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
-// BOOST_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
-// BOOST_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
+// RED_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
+// RED_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
+// RED_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
 
 // BStream to_send4;
 
-// BOOST_CHECK_EQUAL(to_send4.size(), 0);
+// RED_CHECK_EQUAL(to_send4.size(), 0);
 // ts_req4.emit(to_send4);
 
-// BOOST_CHECK_EQUAL(to_send4.size(), 0x12b + 4);
+// RED_CHECK_EQUAL(to_send4.size(), 0x12b + 4);
 
 // if (!check_sig(to_send4, message, sig)){
-//     BOOST_CHECK_MESSAGE(false, message);
+//     RED_CHECK_MESSAGE(false, message);
 // }
 
 // // hexdump_c(to_send4.get_data(), to_send4.size());
@@ -205,21 +205,21 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
 // TSRequest ts_req5(s);
 
-// BOOST_CHECK_EQUAL(ts_req5.version, 2);
+// RED_CHECK_EQUAL(ts_req5.version, 2);
 
-// BOOST_CHECK_EQUAL(ts_req5.negoTokens.size(), 0);
-// BOOST_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
-// BOOST_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
+// RED_CHECK_EQUAL(ts_req5.negoTokens.size(), 0);
+// RED_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
+// RED_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
 
 // BStream to_send5;
 
-// BOOST_CHECK_EQUAL(to_send5.size(), 0);
+// RED_CHECK_EQUAL(to_send5.size(), 0);
 // ts_req5.emit(to_send5);
 
-// BOOST_CHECK_EQUAL(to_send5.size(), 0x5a + 2);
+// RED_CHECK_EQUAL(to_send5.size(), 0x5a + 2);
 
 // if (!check_sig(to_send5, message, sig)){
-//     BOOST_CHECK_MESSAGE(false, message);
+//     RED_CHECK_MESSAGE(false, message);
 // }
 
 // // hexdump_c(to_send5.get_data(), to_send5.size());

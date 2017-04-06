@@ -31,7 +31,7 @@
 
 #include "capture/transparentrecorder.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_transparentrecorder)
+RED_AUTO_TEST_CASE(Test_transparentrecorder)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

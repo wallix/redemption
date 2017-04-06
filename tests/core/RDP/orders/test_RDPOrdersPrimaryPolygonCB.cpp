@@ -35,7 +35,7 @@
 #include "test_orders.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestPolygonCB)
+RED_AUTO_TEST_CASE(TestPolygonCB)
 {
     using namespace RDP;
 
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         RDPOrderCommon state_common(POLYGONCB, Rect(700, 200, 100, 200));
         RDPPolygonCB state_PolygonCB;
 
-        BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
+        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(POLYGONCB, Rect(0, 400, 800, 76));
         RDPPolygonCB().emit(out_stream, newcommon, state_common, state_PolygonCB);
@@ -64,14 +64,14 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
-        BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
-        BOOST_CHECK_EQUAL(400, common_cmd.clip.y);
-        BOOST_CHECK_EQUAL(800, common_cmd.clip.cx);
-        BOOST_CHECK_EQUAL(76, common_cmd.clip.cy);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
+        RED_CHECK_EQUAL(0, common_cmd.clip.x);
+        RED_CHECK_EQUAL(400, common_cmd.clip.y);
+        RED_CHECK_EQUAL(800, common_cmd.clip.cx);
+        RED_CHECK_EQUAL(76, common_cmd.clip.cy);
 
         RDPPolygonCB cmd;
         cmd.receive(in_stream, header);
@@ -123,8 +123,8 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
 
         polygonCB.emit(out_stream, newcommon, state_common, state_polygonCB);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), newcommon.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), newcommon.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
             CHANGE | STANDARD,
@@ -151,13 +151,13 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
-        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x1FF7), header.fields);
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        RED_CHECK_EQUAL(static_cast<uint32_t>(0x1FF7), header.fields);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPPolygonCB cmd = state_polygonCB;
         cmd.receive(in_stream, header);

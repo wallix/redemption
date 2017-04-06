@@ -33,8 +33,8 @@
 #include "utils/cfgloader.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestCfgloader)
+RED_AUTO_TEST_CASE(TestCfgloader)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
 }

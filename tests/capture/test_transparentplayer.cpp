@@ -30,7 +30,7 @@
 
 #include "capture/transparentplayer.hpp"
 
-BOOST_AUTO_TEST_CASE(Testtransparentplayer)
+RED_AUTO_TEST_CASE(Testtransparentplayer)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

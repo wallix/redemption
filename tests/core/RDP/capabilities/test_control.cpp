@@ -29,7 +29,7 @@
 #define LOGNULL
 #include "core/RDP/capabilities/control.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
+RED_AUTO_TEST_CASE(TestCapabilityControlEmit)
 {
     ControlCaps control_caps;
     control_caps.controlFlags = 0;
@@ -37,12 +37,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
     control_caps.controlInterest = 2;
     control_caps.detachInterest = 3;
 
-    BOOST_CHECK_EQUAL(control_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
-    BOOST_CHECK_EQUAL(control_caps.len, static_cast<uint16_t>(CAPLEN_CONTROL));
-    BOOST_CHECK_EQUAL(control_caps.controlFlags, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(control_caps.remoteDetachFlag, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(control_caps.controlInterest, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(control_caps.detachInterest, static_cast<uint16_t>(3));
+    RED_CHECK_EQUAL(control_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
+    RED_CHECK_EQUAL(control_caps.len, static_cast<uint16_t>(CAPLEN_CONTROL));
+    RED_CHECK_EQUAL(control_caps.controlFlags, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(control_caps.remoteDetachFlag, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(control_caps.controlInterest, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(control_caps.detachInterest, static_cast<uint16_t>(3));
 
     StaticOutStream<1024> out_stream;
     control_caps.emit(out_stream);
@@ -51,16 +51,16 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
 
     ControlCaps control_caps2;
 
-    BOOST_CHECK_EQUAL(control_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
-    BOOST_CHECK_EQUAL(control_caps2.len, static_cast<uint16_t>(CAPLEN_CONTROL));
+    RED_CHECK_EQUAL(control_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
+    RED_CHECK_EQUAL(control_caps2.len, static_cast<uint16_t>(CAPLEN_CONTROL));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_CONTROL), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_CONTROL), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_CONTROL), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_CONTROL), stream.in_uint16_le());
 
     control_caps2.recv(stream, CAPLEN_CONTROL);
 
-    BOOST_CHECK_EQUAL(control_caps2.controlFlags, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(control_caps2.remoteDetachFlag, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(control_caps2.controlInterest, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(control_caps2.detachInterest, static_cast<uint16_t>(3));
+    RED_CHECK_EQUAL(control_caps2.controlFlags, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(control_caps2.remoteDetachFlag, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(control_caps2.controlInterest, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(control_caps2.detachInterest, static_cast<uint16_t>(3));
 }

@@ -27,36 +27,36 @@
 
 #include "capture/ocr/classification.hh"
 
-BOOST_AUTO_TEST_CASE(TestLatinToCyrillic)
+RED_AUTO_TEST_CASE(TestLatinToCyrillic)
 {
     ocr::locale::latin_to_cyrillic_context ctx;
     std::string s = "aБВ9ГДEжзийo aБВ9ГДEжзийo Блокнот internet aБВ9ГДEжзийo";
     char const * result = "аБВ9ГДЕжзийо аБВ9ГДЕжзийо Блокнот internet аБВ9ГДЕжзийо";
 
-    BOOST_CHECK_NE(s, result);
+    RED_CHECK_NE(s, result);
     ctx.latin_to_cyrillic(s);
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
     ctx.latin_to_cyrillic(s);
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
 
     s = "aбc";
     result = "aбc";
 
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
     ctx.latin_to_cyrillic(s);
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
 
     s = "a?Б?ББaa";
     result = "a?Б?ББaa";
 
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
     ctx.latin_to_cyrillic(s);
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
 
     s = "Уcтpoйcтвa и пpинтepы";
     result = "Устройства и принтеры";
 
-    BOOST_CHECK_NE(s, result);
+    RED_CHECK_NE(s, result);
     ctx.latin_to_cyrillic(s);
-    BOOST_CHECK_EQUAL(s, result);
+    RED_CHECK_EQUAL(s, result);
 }

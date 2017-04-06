@@ -29,16 +29,16 @@
 #define LOGNULL
 #include "core/RDP/capabilities/cap_sound.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
+RED_AUTO_TEST_CASE(TestCapabilitySoundEmit)
 {
     SoundCaps sound_caps;
     sound_caps.soundFlags = 0;
     sound_caps.pad2octetsA = 1;
 
-    BOOST_CHECK_EQUAL(sound_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
-    BOOST_CHECK_EQUAL(sound_caps.len, static_cast<uint16_t>(CAPLEN_SOUND));
-    BOOST_CHECK_EQUAL(sound_caps.soundFlags, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(sound_caps.pad2octetsA, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(sound_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
+    RED_CHECK_EQUAL(sound_caps.len, static_cast<uint16_t>(CAPLEN_SOUND));
+    RED_CHECK_EQUAL(sound_caps.soundFlags, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(sound_caps.pad2octetsA, static_cast<uint16_t>(1));
 
     StaticOutStream<1024> out_stream;
     sound_caps.emit(out_stream);
@@ -47,13 +47,13 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
 
     SoundCaps sound_caps2;
 
-    BOOST_CHECK_EQUAL(sound_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
-    BOOST_CHECK_EQUAL(sound_caps2.len, static_cast<uint16_t>(CAPLEN_SOUND));
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_SOUND), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_SOUND), stream.in_uint16_le());
+    RED_CHECK_EQUAL(sound_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
+    RED_CHECK_EQUAL(sound_caps2.len, static_cast<uint16_t>(CAPLEN_SOUND));
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_SOUND), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_SOUND), stream.in_uint16_le());
 
     sound_caps2.recv(stream, CAPLEN_SOUND);
 
-    BOOST_CHECK_EQUAL(sound_caps2.soundFlags, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(sound_caps2.pad2octetsA, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(sound_caps2.soundFlags, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(sound_caps2.pad2octetsA, static_cast<uint16_t>(1));
 }

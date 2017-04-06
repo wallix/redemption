@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "core/RDP/capabilities/bmpcache2.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityBmpCache2)
+RED_AUTO_TEST_CASE(TestCapabilityBmpCache2)
 {
     BmpCache2Caps cap;
 

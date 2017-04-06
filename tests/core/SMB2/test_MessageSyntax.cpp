@@ -30,7 +30,7 @@
 
 
 
-BOOST_AUTO_TEST_CASE(ChangeNotifyResponseEmit)
+RED_AUTO_TEST_CASE(ChangeNotifyResponseEmit)
 {
     const size_t len = 8;
     const char data[] =
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(ChangeNotifyResponseEmit)
 
     std::string const out_data(data, len);
     std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
-    BOOST_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(expected, out_data);
 }
 
-BOOST_AUTO_TEST_CASE(ChangeNotifyResponseReceive)
+RED_AUTO_TEST_CASE(ChangeNotifyResponseReceive)
 {
     const size_t len = 8;
     const char data[] =
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(ChangeNotifyResponseReceive)
     smb2::ChangeNotifyResponse pdu;
     pdu.receive(in_stream);
 
-    BOOST_CHECK_EQUAL(pdu.StructureSize, 1);
-    BOOST_CHECK_EQUAL(pdu.OutputBufferOffset, 2);
-    BOOST_CHECK_EQUAL(pdu.OutputBufferLength, 3);
+    RED_CHECK_EQUAL(pdu.StructureSize, 1);
+    RED_CHECK_EQUAL(pdu.OutputBufferOffset, 2);
+    RED_CHECK_EQUAL(pdu.OutputBufferLength, 3);
 }

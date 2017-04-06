@@ -37,7 +37,7 @@
 #include "transport/out_file_transport.hpp"
 #include "core/error.hpp"
 
-BOOST_AUTO_TEST_CASE(TestInFileTransport)
+RED_AUTO_TEST_CASE(TestInFileTransport)
 {
     char tmpname[128] = "/tmp/test_transportXXXXXX";
     int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
@@ -59,9 +59,9 @@ BOOST_AUTO_TEST_CASE(TestInFileTransport)
             pbuf += 11;
             ft.recv_new(pbuf, 10);
             pbuf += 10;
-        BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+        RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
         pbuf = buf;
-        CHECK_EXCEPTION_ERROR_ID(ft.recv_new(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+       RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_new(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
     }
     ::close(fd);
     ::unlink(tmpname);

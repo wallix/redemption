@@ -29,7 +29,7 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "utils/bitmap_from_file.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
+RED_AUTO_TEST_CASE(TestBitmapCacheBasic)
 {
     BmpCache bmp_cache(
         BmpCache::Recorder, 24, 3, true,
@@ -815,7 +815,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_0(24, 24, &palette, 64, 64, bitmap_data_0, 12288, false);
     cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_0));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_0));
     }
 
     uint8_t bitmap_data_1[] = {
@@ -1591,7 +1591,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_1(24, 24, &palette, 64, 64, bitmap_data_1, 12288, false);
     cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_1));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_1));
     }
 
     uint8_t bitmap_data_2[] = {
@@ -2367,7 +2367,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_2(24, 24, &palette, 64, 64, bitmap_data_2, 12288, false);
     cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
     cache_index = 2;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_2));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_2));
     }
 
     uint8_t bitmap_data_3[] = {
@@ -2471,7 +2471,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_3(24, 24, &palette, 8, 64, bitmap_data_3, 1536, false);
     cache_id    = 1;
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_3));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_3));
     }
 
     uint8_t bitmap_data_4[] = {
@@ -2515,7 +2515,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_4(24, 24, &palette, 64, 3, bitmap_data_4, 576, false);
     cache_id    = 0;
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_4));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_4));
     }
 
     uint8_t bitmap_data_5[] = {
@@ -2559,7 +2559,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_5(24, 24, &palette, 64, 3, bitmap_data_5, 576, false);
     cache_id    = 0;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_5));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_5));
     }
 
     uint8_t bitmap_data_6[] = {
@@ -2603,7 +2603,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_6(24, 24, &palette, 64, 3, bitmap_data_6, 576, false);
     cache_id    = 0;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_6));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_6));
     }
 
     uint8_t bitmap_data_7[] = {
@@ -2616,7 +2616,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_7(24, 24, &palette, 8, 3, bitmap_data_7, 72, false);
     cache_id    = 0;
     cache_index = 2;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_7));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_7));
     }
 
     uint8_t bitmap_data_8[] = {
@@ -3392,7 +3392,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_8(24, 24, &palette, 64, 64, bitmap_data_8, 12288, false);
     cache_id    = 2;
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_8));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_8));
     }
 
     uint8_t bitmap_data_9[] = {
@@ -4168,7 +4168,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_9(24, 24, &palette, 64, 64, bitmap_data_9, 12288, false);
     cache_id    = 2;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_9));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_9));
     }
 
     uint8_t bitmap_data_10[] = {
@@ -4944,7 +4944,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_10(24, 24, &palette, 64, 64, bitmap_data_10, 12288, false);
     cache_id    = 2;
     cache_index = 2;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_10));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_10));
     }
 
     uint8_t bitmap_data_11[] = {
@@ -5048,7 +5048,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_11(24, 24, &palette, 8, 64, bitmap_data_11, 1536, false);
     cache_id    = 1;
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_11));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_11));
     }
 
     uint8_t bitmap_data_12[] = {
@@ -5092,7 +5092,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_12(24, 24, &palette, 64, 3, bitmap_data_12, 576, false);
     cache_id    = 0;
     cache_index = 0;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_12));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_12));
     }
 
     uint8_t bitmap_data_13[] = {
@@ -5136,7 +5136,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_13(24, 24, &palette, 64, 3, bitmap_data_13, 576, false);
     cache_id    = 0;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_13));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_13));
     }
 
     uint8_t bitmap_data_14[] = {
@@ -5180,7 +5180,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_14(24, 24, &palette, 64, 3, bitmap_data_14, 576, false);
     cache_id    = 0;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_14));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_14));
     }
 
     uint8_t bitmap_data_15[] = {
@@ -5193,7 +5193,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_15(24, 24, &palette, 8, 3, bitmap_data_15, 72, false);
     cache_id    = 0;
     cache_index = 2;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_15));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_15));
     }
 
     uint8_t bitmap_data_16[] = {
@@ -5203,3392 +5203,3392 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
     {Bitmap bmp_16(24, 16, &palette, 16, 1, bitmap_data_16, 32, false);
     cache_id    = 0;
     cache_index = 3;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_16));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_16));
     }
 
     uint8_t bitmap_data_17[0x600] = { };
     {Bitmap bmp_17(24, 16, &palette, 64, 12, bitmap_data_17, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_17));
+    RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_17));
     }
 
     uint8_t bitmap_data_18[0x600] = { };
     {Bitmap bmp_18(24, 16, &palette, 64, 12, bitmap_data_18, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_18));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_18));
     }
 
     uint8_t bitmap_data_19[0x600] = { };
     {Bitmap bmp_19(24, 16, &palette, 64, 12, bitmap_data_19, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_19));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_19));
     }
 
     uint8_t bitmap_data_20[0x600] = { };
     {Bitmap bmp_20(24, 16, &palette, 64, 12, bitmap_data_20, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_20));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_20));
     }
 
     uint8_t bitmap_data_21[0x600] = { };
     {Bitmap bmp_21(24, 16, &palette, 64, 12, bitmap_data_21, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_21));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_21));
     }
 
     uint8_t bitmap_data_22[0x600] = { };
     {Bitmap bmp_22(24, 16, &palette, 64, 12, bitmap_data_22, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_22));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_22));
     }
 
     uint8_t bitmap_data_23[0x600] = { };
     {Bitmap bmp_23(24, 16, &palette, 64, 12, bitmap_data_23, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_23));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_23));
     }
 
     uint8_t bitmap_data_24[0x600] = { };
     {Bitmap bmp_24(24, 16, &palette, 64, 12, bitmap_data_24, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_24));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_24));
     }
 
     uint8_t bitmap_data_25[0x600] = { };
     {Bitmap bmp_25(24, 16, &palette, 64, 12, bitmap_data_25, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_25));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_25));
     }
 
     uint8_t bitmap_data_26[0x600] = { };
     {Bitmap bmp_26(24, 16, &palette, 64, 12, bitmap_data_26, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_26));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_26));
     }
 
     uint8_t bitmap_data_27[0x600] = { };
     {Bitmap bmp_27(24, 16, &palette, 64, 12, bitmap_data_27, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_27));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_27));
     }
 
     uint8_t bitmap_data_28[0x600] = { };
     {Bitmap bmp_28(24, 16, &palette, 64, 12, bitmap_data_28, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_28));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_28));
     }
 
     uint8_t bitmap_data_29[0x600] = { };
     {Bitmap bmp_29(24, 16, &palette, 64, 12, bitmap_data_29, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_29));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_29));
     }
 
     uint8_t bitmap_data_30[0x600] = { };
     {Bitmap bmp_30(24, 16, &palette, 64, 12, bitmap_data_30, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_30));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_30));
     }
 
     uint8_t bitmap_data_31[0x600] = { };
     {Bitmap bmp_31(24, 16, &palette, 64, 12, bitmap_data_31, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_31));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_31));
     }
 
     uint8_t bitmap_data_32[0x600] = { };
     {Bitmap bmp_32(24, 16, &palette, 64, 12, bitmap_data_32, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_32));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_32));
     }
 
     uint8_t bitmap_data_33[0x600] = { };
     {Bitmap bmp_33(24, 16, &palette, 64, 12, bitmap_data_33, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_33));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_33));
     }
 
     uint8_t bitmap_data_34[0x600] = { };
     {Bitmap bmp_34(24, 16, &palette, 64, 12, bitmap_data_34, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_34));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_34));
     }
 
     uint8_t bitmap_data_35[0x600] = { };
     {Bitmap bmp_35(24, 16, &palette, 64, 12, bitmap_data_35, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_35));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_35));
     }
 
     uint8_t bitmap_data_36[0x600] = { };
     {Bitmap bmp_36(24, 16, &palette, 64, 12, bitmap_data_36, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_36));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_36));
     }
 
     uint8_t bitmap_data_37[0x600] = { };
     {Bitmap bmp_37(24, 16, &palette, 64, 12, bitmap_data_37, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_37));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_37));
     }
 
     uint8_t bitmap_data_38[0x600] = { };
     {Bitmap bmp_38(24, 16, &palette, 64, 12, bitmap_data_38, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_38));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_38));
     }
 
     uint8_t bitmap_data_39[0x600] = { };
     {Bitmap bmp_39(24, 16, &palette, 64, 12, bitmap_data_39, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_39));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_39));
     }
 
     uint8_t bitmap_data_40[0x600] = { };
     {Bitmap bmp_40(24, 16, &palette, 64, 12, bitmap_data_40, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_40));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_40));
     }
 
     uint8_t bitmap_data_41[0x600] = { };
     {Bitmap bmp_41(24, 16, &palette, 64, 12, bitmap_data_41, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_41));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_41));
     }
 
     uint8_t bitmap_data_42[0x600] = { };
     {Bitmap bmp_42(24, 16, &palette, 64, 12, bitmap_data_42, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_42));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_42));
     }
 
     uint8_t bitmap_data_43[0x600] = { };
     {Bitmap bmp_43(24, 16, &palette, 64, 12, bitmap_data_43, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_43));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_43));
     }
 
     uint8_t bitmap_data_44[0x600] = { };
     {Bitmap bmp_44(24, 16, &palette, 64, 12, bitmap_data_44, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_44));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_44));
     }
 
     uint8_t bitmap_data_45[0x600] = { };
     {Bitmap bmp_45(24, 16, &palette, 64, 12, bitmap_data_45, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_45));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_45));
     }
 
     uint8_t bitmap_data_46[0x600] = { };
     {Bitmap bmp_46(24, 16, &palette, 64, 12, bitmap_data_46, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_46));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_46));
     }
 
     uint8_t bitmap_data_47[0x600] = { };
     {Bitmap bmp_47(24, 16, &palette, 64, 12, bitmap_data_47, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_47));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_47));
     }
 
     uint8_t bitmap_data_48[0x600] = { };
     {Bitmap bmp_48(24, 16, &palette, 64, 12, bitmap_data_48, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_48));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_48));
     }
 
     uint8_t bitmap_data_49[0x600] = { };
     {Bitmap bmp_49(24, 16, &palette, 64, 12, bitmap_data_49, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_49));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_49));
     }
 
     uint8_t bitmap_data_50[0x600] = { };
     {Bitmap bmp_50(24, 16, &palette, 64, 12, bitmap_data_50, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_50));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_50));
     }
 
     uint8_t bitmap_data_51[0x600] = { };
     {Bitmap bmp_51(24, 16, &palette, 64, 12, bitmap_data_51, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_51));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_51));
     }
 
     uint8_t bitmap_data_52[0x600] = { };
     {Bitmap bmp_52(24, 16, &palette, 64, 12, bitmap_data_52, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_52));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_52));
     }
 
     uint8_t bitmap_data_53[0x600] = { };
     {Bitmap bmp_53(24, 16, &palette, 64, 12, bitmap_data_53, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_53));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_53));
     }
 
     uint8_t bitmap_data_54[0x600] = { };
     {Bitmap bmp_54(24, 16, &palette, 64, 12, bitmap_data_54, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_54));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_54));
     }
 
     uint8_t bitmap_data_55[0x600] = { };
     {Bitmap bmp_55(24, 16, &palette, 64, 12, bitmap_data_55, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_55));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_55));
     }
 
     uint8_t bitmap_data_56[0x600] = { };
     {Bitmap bmp_56(24, 16, &palette, 64, 12, bitmap_data_56, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_56));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_56));
     }
 
     uint8_t bitmap_data_57[0x600] = { };
     {Bitmap bmp_57(24, 16, &palette, 64, 12, bitmap_data_57, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_57));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_57));
     }
 
     uint8_t bitmap_data_58[0x600] = { };
     {Bitmap bmp_58(24, 16, &palette, 64, 12, bitmap_data_58, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_58));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_58));
     }
 
     uint8_t bitmap_data_59[0x600] = { };
     {Bitmap bmp_59(24, 16, &palette, 64, 12, bitmap_data_59, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_59));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_59));
     }
 
     uint8_t bitmap_data_60[0x600] = { };
     {Bitmap bmp_60(24, 16, &palette, 64, 12, bitmap_data_60, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_60));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_60));
     }
 
     uint8_t bitmap_data_61[0x600] = { };
     {Bitmap bmp_61(24, 16, &palette, 64, 12, bitmap_data_61, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_61));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_61));
     }
 
     uint8_t bitmap_data_62[0x600] = { };
     {Bitmap bmp_62(24, 16, &palette, 64, 12, bitmap_data_62, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_62));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_62));
     }
 
     uint8_t bitmap_data_63[0x600] = { };
     {Bitmap bmp_63(24, 16, &palette, 64, 12, bitmap_data_63, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_63));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_63));
     }
 
     uint8_t bitmap_data_64[0x600] = { };
     {Bitmap bmp_64(24, 16, &palette, 64, 12, bitmap_data_64, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_64));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_64));
     }
 
     uint8_t bitmap_data_65[0x600] = { };
     {Bitmap bmp_65(24, 16, &palette, 64, 12, bitmap_data_65, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_65));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_65));
     }
 
     uint8_t bitmap_data_66[0x600] = { };
     {Bitmap bmp_66(24, 16, &palette, 64, 12, bitmap_data_66, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_66));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_66));
     }
 
     uint8_t bitmap_data_67[0x600] = { };
     {Bitmap bmp_67(24, 16, &palette, 64, 12, bitmap_data_67, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_67));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_67));
     }
 
     uint8_t bitmap_data_68[0x600] = { };
     {Bitmap bmp_68(24, 16, &palette, 64, 12, bitmap_data_68, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_68));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_68));
     }
 
     uint8_t bitmap_data_69[0x600] = { };
     {Bitmap bmp_69(24, 16, &palette, 64, 12, bitmap_data_69, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_69));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_69));
     }
 
     uint8_t bitmap_data_70[0x600] = { };
     {Bitmap bmp_70(24, 16, &palette, 64, 12, bitmap_data_70, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_70));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_70));
     }
 
     uint8_t bitmap_data_71[0x600] = { };
     {Bitmap bmp_71(24, 16, &palette, 64, 12, bitmap_data_71, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_71));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_71));
     }
 
     uint8_t bitmap_data_72[0x600] = { };
     {Bitmap bmp_72(24, 16, &palette, 64, 12, bitmap_data_72, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_72));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_72));
     }
 
     uint8_t bitmap_data_73[0x600] = { };
     {Bitmap bmp_73(24, 16, &palette, 64, 12, bitmap_data_73, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_73));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_73));
     }
 
     uint8_t bitmap_data_74[0x600] = { };
     {Bitmap bmp_74(24, 16, &palette, 64, 12, bitmap_data_74, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_74));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_74));
     }
 
     uint8_t bitmap_data_75[0x600] = { };
     {Bitmap bmp_75(24, 16, &palette, 64, 12, bitmap_data_75, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_75));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_75));
     }
 
     uint8_t bitmap_data_76[0x600] = { };
     {Bitmap bmp_76(24, 16, &palette, 64, 12, bitmap_data_76, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_76));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_76));
     }
 
     uint8_t bitmap_data_77[0x600] = { };
     {Bitmap bmp_77(24, 16, &palette, 64, 12, bitmap_data_77, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_77));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_77));
     }
 
     uint8_t bitmap_data_78[0x600] = { };
     {Bitmap bmp_78(24, 16, &palette, 64, 12, bitmap_data_78, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_78));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_78));
     }
 
     uint8_t bitmap_data_79[0x600] = { };
     {Bitmap bmp_79(24, 16, &palette, 64, 12, bitmap_data_79, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_79));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_79));
     }
 
     uint8_t bitmap_data_80[0x600] = { };
     {Bitmap bmp_80(24, 16, &palette, 64, 12, bitmap_data_80, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_80));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_80));
     }
 
     uint8_t bitmap_data_81[0x600] = { };
     {Bitmap bmp_81(24, 16, &palette, 64, 12, bitmap_data_81, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_81));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_81));
     }
 
     uint8_t bitmap_data_82[0x600] = { };
     {Bitmap bmp_82(24, 16, &palette, 64, 12, bitmap_data_82, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_82));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_82));
     }
 
     uint8_t bitmap_data_83[0x600] = { };
     {Bitmap bmp_83(24, 16, &palette, 64, 12, bitmap_data_83, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_83));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_83));
     }
 
     uint8_t bitmap_data_84[0x600] = { };
     {Bitmap bmp_84(24, 16, &palette, 64, 12, bitmap_data_84, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_84));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_84));
     }
 
     uint8_t bitmap_data_85[0x600] = { };
     {Bitmap bmp_85(24, 16, &palette, 64, 12, bitmap_data_85, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_85));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_85));
     }
 
     uint8_t bitmap_data_86[0x600] = { };
     {Bitmap bmp_86(24, 16, &palette, 64, 12, bitmap_data_86, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_86));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_86));
     }
 
     uint8_t bitmap_data_87[0x600] = { };
     {Bitmap bmp_87(24, 16, &palette, 64, 12, bitmap_data_87, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_87));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_87));
     }
 
     uint8_t bitmap_data_88[0x600] = { };
     {Bitmap bmp_88(24, 16, &palette, 64, 12, bitmap_data_88, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_88));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_88));
     }
 
     uint8_t bitmap_data_89[0x600] = { };
     {Bitmap bmp_89(24, 16, &palette, 64, 12, bitmap_data_89, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_89));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_89));
     }
 
     uint8_t bitmap_data_90[0x600] = { };
     {Bitmap bmp_90(24, 16, &palette, 64, 12, bitmap_data_90, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_90));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_90));
     }
 
     uint8_t bitmap_data_91[0x600] = { };
     {Bitmap bmp_91(24, 16, &palette, 64, 12, bitmap_data_91, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_91));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_91));
     }
 
     uint8_t bitmap_data_92[0x600] = { };
     {Bitmap bmp_92(24, 16, &palette, 64, 12, bitmap_data_92, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_92));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_92));
     }
 
     uint8_t bitmap_data_93[0x600] = { };
     {Bitmap bmp_93(24, 16, &palette, 64, 12, bitmap_data_93, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_93));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_93));
     }
 
     uint8_t bitmap_data_94[0x600] = { };
     {Bitmap bmp_94(24, 16, &palette, 64, 12, bitmap_data_94, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_94));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_94));
     }
 
     uint8_t bitmap_data_95[0x600] = { };
     {Bitmap bmp_95(24, 16, &palette, 64, 12, bitmap_data_95, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_95));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_95));
     }
 
     uint8_t bitmap_data_96[0x600] = { };
     {Bitmap bmp_96(24, 16, &palette, 64, 12, bitmap_data_96, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_96));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_96));
     }
 
     uint8_t bitmap_data_97[0x600] = { };
     {Bitmap bmp_97(24, 16, &palette, 64, 12, bitmap_data_97, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_97));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_97));
     }
 
     uint8_t bitmap_data_98[0x600] = { };
     {Bitmap bmp_98(24, 16, &palette, 64, 12, bitmap_data_98, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_98));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_98));
     }
 
     uint8_t bitmap_data_99[0x600] = { };
     {Bitmap bmp_99(24, 16, &palette, 64, 12, bitmap_data_99, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_99));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_99));
     }
 
     uint8_t bitmap_data_100[0x600] = { };
     {Bitmap bmp_100(24, 16, &palette, 64, 12, bitmap_data_100, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_100));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_100));
     }
 
     uint8_t bitmap_data_101[0x600] = { };
     {Bitmap bmp_101(24, 16, &palette, 64, 12, bitmap_data_101, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_101));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_101));
     }
 
     uint8_t bitmap_data_102[0x600] = { };
     {Bitmap bmp_102(24, 16, &palette, 64, 12, bitmap_data_102, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_102));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_102));
     }
 
     uint8_t bitmap_data_103[0x600] = { };
     {Bitmap bmp_103(24, 16, &palette, 64, 12, bitmap_data_103, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_103));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_103));
     }
 
     uint8_t bitmap_data_104[0x600] = { };
     {Bitmap bmp_104(24, 16, &palette, 64, 12, bitmap_data_104, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_104));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_104));
     }
 
     uint8_t bitmap_data_105[0x600] = { };
     {Bitmap bmp_105(24, 16, &palette, 64, 12, bitmap_data_105, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_105));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_105));
     }
 
     uint8_t bitmap_data_106[0x600] = { };
     {Bitmap bmp_106(24, 16, &palette, 64, 12, bitmap_data_106, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_106));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_106));
     }
 
     uint8_t bitmap_data_107[0x600] = { };
     {Bitmap bmp_107(24, 16, &palette, 64, 12, bitmap_data_107, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_107));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_107));
     }
 
     uint8_t bitmap_data_108[0x600] = { };
     {Bitmap bmp_108(24, 16, &palette, 64, 12, bitmap_data_108, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_108));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_108));
     }
 
     uint8_t bitmap_data_109[0x600] = { };
     {Bitmap bmp_109(24, 16, &palette, 64, 12, bitmap_data_109, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_109));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_109));
     }
 
     uint8_t bitmap_data_110[0x600] = { };
     {Bitmap bmp_110(24, 16, &palette, 64, 12, bitmap_data_110, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_110));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_110));
     }
 
     uint8_t bitmap_data_111[0x600] = { };
     {Bitmap bmp_111(24, 16, &palette, 64, 12, bitmap_data_111, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_111));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_111));
     }
 
     uint8_t bitmap_data_112[0x600] = { };
     {Bitmap bmp_112(24, 16, &palette, 64, 12, bitmap_data_112, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_112));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_112));
     }
 
     uint8_t bitmap_data_113[0x600] = { };
     {Bitmap bmp_113(24, 16, &palette, 64, 12, bitmap_data_113, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_113));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_113));
     }
 
     uint8_t bitmap_data_114[0x600] = { };
     {Bitmap bmp_114(24, 16, &palette, 64, 12, bitmap_data_114, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_114));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_114));
     }
 
     uint8_t bitmap_data_115[0x600] = { };
     {Bitmap bmp_115(24, 16, &palette, 64, 12, bitmap_data_115, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_115));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_115));
     }
 
     uint8_t bitmap_data_116[0x600] = { };
     {Bitmap bmp_116(24, 16, &palette, 64, 12, bitmap_data_116, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_116));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_116));
     }
 
     uint8_t bitmap_data_117[0x600] = { };
     {Bitmap bmp_117(24, 16, &palette, 64, 12, bitmap_data_117, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_117));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_117));
     }
 
     uint8_t bitmap_data_118[0x600] = { };
     {Bitmap bmp_118(24, 16, &palette, 64, 12, bitmap_data_118, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_118));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_118));
     }
 
     uint8_t bitmap_data_119[0x600] = { };
     {Bitmap bmp_119(24, 16, &palette, 64, 12, bitmap_data_119, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_119));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_119));
     }
 
     uint8_t bitmap_data_120[0x600] = { };
     {Bitmap bmp_120(24, 16, &palette, 64, 12, bitmap_data_120, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_120));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_120));
     }
 
     uint8_t bitmap_data_121[0x600] = { };
     {Bitmap bmp_121(24, 16, &palette, 64, 12, bitmap_data_121, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_121));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_121));
     }
 
     uint8_t bitmap_data_122[0x600] = { };
     {Bitmap bmp_122(24, 16, &palette, 64, 12, bitmap_data_122, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_122));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_122));
     }
 
     uint8_t bitmap_data_123[0x600] = { };
     {Bitmap bmp_123(24, 16, &palette, 64, 12, bitmap_data_123, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_123));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_123));
     }
 
     uint8_t bitmap_data_124[0x600] = { };
     {Bitmap bmp_124(24, 16, &palette, 64, 12, bitmap_data_124, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_124));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_124));
     }
 
     uint8_t bitmap_data_125[0x600] = { };
     {Bitmap bmp_125(24, 16, &palette, 64, 12, bitmap_data_125, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_125));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_125));
     }
 
     uint8_t bitmap_data_126[0x600] = { };
     {Bitmap bmp_126(24, 16, &palette, 64, 12, bitmap_data_126, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_126));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_126));
     }
 
     uint8_t bitmap_data_127[0x600] = { };
     {Bitmap bmp_127(24, 16, &palette, 64, 12, bitmap_data_127, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_127));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_127));
     }
 
     uint8_t bitmap_data_128[0x600] = { };
     {Bitmap bmp_128(24, 16, &palette, 64, 12, bitmap_data_128, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_128));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_128));
     }
 
     uint8_t bitmap_data_129[0x600] = { };
     {Bitmap bmp_129(24, 16, &palette, 64, 12, bitmap_data_129, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_129));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_129));
     }
 
     uint8_t bitmap_data_130[0x600] = { };
     {Bitmap bmp_130(24, 16, &palette, 64, 12, bitmap_data_130, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_130));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_130));
     }
 
     uint8_t bitmap_data_131[0x600] = { };
     {Bitmap bmp_131(24, 16, &palette, 64, 12, bitmap_data_131, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_131));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_131));
     }
 
     uint8_t bitmap_data_132[0x600] = { };
     {Bitmap bmp_132(24, 16, &palette, 64, 12, bitmap_data_132, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_132));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_132));
     }
 
     uint8_t bitmap_data_133[0x600] = { };
     {Bitmap bmp_133(24, 16, &palette, 64, 12, bitmap_data_133, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_133));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_133));
     }
 
     uint8_t bitmap_data_134[0x600] = { };
     {Bitmap bmp_134(24, 16, &palette, 64, 12, bitmap_data_134, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_134));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_134));
     }
 
     uint8_t bitmap_data_135[0x600] = { };
     {Bitmap bmp_135(24, 16, &palette, 64, 12, bitmap_data_135, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_135));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_135));
     }
 
     uint8_t bitmap_data_136[0x600] = { };
     {Bitmap bmp_136(24, 16, &palette, 64, 12, bitmap_data_136, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_136));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_136));
     }
 
     uint8_t bitmap_data_137[0x600] = { };
     {Bitmap bmp_137(24, 16, &palette, 64, 12, bitmap_data_137, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_137));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_137));
     }
 
     uint8_t bitmap_data_138[0x600] = { };
     {Bitmap bmp_138(24, 16, &palette, 64, 12, bitmap_data_138, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_138));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_138));
     }
 
     uint8_t bitmap_data_139[0x600] = { };
     {Bitmap bmp_139(24, 16, &palette, 64, 12, bitmap_data_139, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_139));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_139));
     }
 
     uint8_t bitmap_data_140[0x600] = { };
     {Bitmap bmp_140(24, 16, &palette, 64, 12, bitmap_data_140, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_140));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_140));
     }
 
     uint8_t bitmap_data_141[0x600] = { };
     {Bitmap bmp_141(24, 16, &palette, 64, 12, bitmap_data_141, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_141));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_141));
     }
 
     uint8_t bitmap_data_142[0x600] = { };
     {Bitmap bmp_142(24, 16, &palette, 64, 12, bitmap_data_142, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_142));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_142));
     }
 
     uint8_t bitmap_data_143[0x600] = { };
     {Bitmap bmp_143(24, 16, &palette, 64, 12, bitmap_data_143, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_143));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_143));
     }
 
     uint8_t bitmap_data_144[0x600] = { };
     {Bitmap bmp_144(24, 16, &palette, 64, 12, bitmap_data_144, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_144));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_144));
     }
 
     uint8_t bitmap_data_145[0x600] = { };
     {Bitmap bmp_145(24, 16, &palette, 64, 12, bitmap_data_145, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_145));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_145));
     }
 
     uint8_t bitmap_data_146[0x600] = { };
     {Bitmap bmp_146(24, 16, &palette, 64, 12, bitmap_data_146, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_146));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_146));
     }
 
     uint8_t bitmap_data_147[0x600] = { };
     {Bitmap bmp_147(24, 16, &palette, 64, 12, bitmap_data_147, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_147));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_147));
     }
 
     uint8_t bitmap_data_148[0x600] = { };
     {Bitmap bmp_148(24, 16, &palette, 64, 12, bitmap_data_148, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_148));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_148));
     }
 
     uint8_t bitmap_data_149[0x600] = { };
     {Bitmap bmp_149(24, 16, &palette, 64, 12, bitmap_data_149, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_149));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_149));
     }
 
     uint8_t bitmap_data_150[0x600] = { };
     {Bitmap bmp_150(24, 16, &palette, 64, 12, bitmap_data_150, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_150));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_150));
     }
 
     uint8_t bitmap_data_151[0x600] = { };
     {Bitmap bmp_151(24, 16, &palette, 64, 12, bitmap_data_151, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_151));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_151));
     }
 
     uint8_t bitmap_data_152[0x600] = { };
     {Bitmap bmp_152(24, 16, &palette, 64, 12, bitmap_data_152, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_152));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_152));
     }
 
     uint8_t bitmap_data_153[0x600] = { };
     {Bitmap bmp_153(24, 16, &palette, 64, 12, bitmap_data_153, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_153));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_153));
     }
 
     uint8_t bitmap_data_154[0x600] = { };
     {Bitmap bmp_154(24, 16, &palette, 64, 12, bitmap_data_154, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_154));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_154));
     }
 
     uint8_t bitmap_data_155[0x600] = { };
     {Bitmap bmp_155(24, 16, &palette, 64, 12, bitmap_data_155, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_155));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_155));
     }
 
     uint8_t bitmap_data_156[0x600] = { };
     {Bitmap bmp_156(24, 16, &palette, 64, 12, bitmap_data_156, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_156));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_156));
     }
 
     uint8_t bitmap_data_157[0x600] = { };
     {Bitmap bmp_157(24, 16, &palette, 64, 12, bitmap_data_157, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_157));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_157));
     }
 
     uint8_t bitmap_data_158[0x600] = { };
     {Bitmap bmp_158(24, 16, &palette, 64, 12, bitmap_data_158, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_158));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_158));
     }
 
     uint8_t bitmap_data_159[0x600] = { };
     {Bitmap bmp_159(24, 16, &palette, 64, 12, bitmap_data_159, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_159));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_159));
     }
 
     uint8_t bitmap_data_160[0x600] = { };
     {Bitmap bmp_160(24, 16, &palette, 64, 12, bitmap_data_160, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_160));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_160));
     }
 
     uint8_t bitmap_data_161[0x600] = { };
     {Bitmap bmp_161(24, 16, &palette, 64, 12, bitmap_data_161, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_161));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_161));
     }
 
     uint8_t bitmap_data_162[0x600] = { };
     {Bitmap bmp_162(24, 16, &palette, 64, 12, bitmap_data_162, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_162));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_162));
     }
 
     uint8_t bitmap_data_163[0x600] = { };
     {Bitmap bmp_163(24, 16, &palette, 64, 12, bitmap_data_163, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_163));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_163));
     }
 
     uint8_t bitmap_data_164[0x600] = { };
     {Bitmap bmp_164(24, 16, &palette, 64, 12, bitmap_data_164, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_164));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_164));
     }
 
     uint8_t bitmap_data_165[0x600] = { };
     {Bitmap bmp_165(24, 16, &palette, 64, 12, bitmap_data_165, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_165));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_165));
     }
 
     uint8_t bitmap_data_166[0x600] = { };
     {Bitmap bmp_166(24, 16, &palette, 64, 12, bitmap_data_166, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_166));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_166));
     }
 
     uint8_t bitmap_data_167[0x600] = { };
     {Bitmap bmp_167(24, 16, &palette, 64, 12, bitmap_data_167, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_167));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_167));
     }
 
     uint8_t bitmap_data_168[0x600] = { };
     {Bitmap bmp_168(24, 16, &palette, 64, 12, bitmap_data_168, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_168));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_168));
     }
 
     uint8_t bitmap_data_169[0x600] = { };
     {Bitmap bmp_169(24, 16, &palette, 64, 12, bitmap_data_169, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_169));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_169));
     }
 
     uint8_t bitmap_data_170[0x600] = { };
     {Bitmap bmp_170(24, 16, &palette, 64, 12, bitmap_data_170, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_170));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_170));
     }
 
     uint8_t bitmap_data_171[0x600] = { };
     {Bitmap bmp_171(24, 16, &palette, 64, 12, bitmap_data_171, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_171));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_171));
     }
 
     uint8_t bitmap_data_172[0x600] = { };
     {Bitmap bmp_172(24, 16, &palette, 64, 12, bitmap_data_172, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_172));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_172));
     }
 
     uint8_t bitmap_data_173[0x600] = { };
     {Bitmap bmp_173(24, 16, &palette, 64, 12, bitmap_data_173, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_173));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_173));
     }
 
     uint8_t bitmap_data_174[0x600] = { };
     {Bitmap bmp_174(24, 16, &palette, 64, 12, bitmap_data_174, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_174));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_174));
     }
 
     uint8_t bitmap_data_175[0x600] = { };
     {Bitmap bmp_175(24, 16, &palette, 64, 12, bitmap_data_175, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_175));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_175));
     }
 
     uint8_t bitmap_data_176[0x600] = { };
     {Bitmap bmp_176(24, 16, &palette, 64, 12, bitmap_data_176, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_176));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_176));
     }
 
     uint8_t bitmap_data_177[0x600] = { };
     {Bitmap bmp_177(24, 16, &palette, 64, 12, bitmap_data_177, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_177));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_177));
     }
 
     uint8_t bitmap_data_178[0x600] = { };
     {Bitmap bmp_178(24, 16, &palette, 64, 12, bitmap_data_178, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_178));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_178));
     }
 
     uint8_t bitmap_data_179[0x600] = { };
     {Bitmap bmp_179(24, 16, &palette, 64, 12, bitmap_data_179, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_179));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_179));
     }
 
     uint8_t bitmap_data_180[0x600] = { };
     {Bitmap bmp_180(24, 16, &palette, 64, 12, bitmap_data_180, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_180));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_180));
     }
 
     uint8_t bitmap_data_181[0x600] = { };
     {Bitmap bmp_181(24, 16, &palette, 64, 12, bitmap_data_181, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_181));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_181));
     }
 
     uint8_t bitmap_data_182[0x600] = { };
     {Bitmap bmp_182(24, 16, &palette, 64, 12, bitmap_data_182, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_182));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_182));
     }
 
     uint8_t bitmap_data_183[0x600] = { };
     {Bitmap bmp_183(24, 16, &palette, 64, 12, bitmap_data_183, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_183));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_183));
     }
 
     uint8_t bitmap_data_184[0x600] = { };
     {Bitmap bmp_184(24, 16, &palette, 64, 12, bitmap_data_184, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_184));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_184));
     }
 
     uint8_t bitmap_data_185[0x600] = { };
     {Bitmap bmp_185(24, 16, &palette, 64, 12, bitmap_data_185, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_185));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_185));
     }
 
     uint8_t bitmap_data_186[0x600] = { };
     {Bitmap bmp_186(24, 16, &palette, 64, 12, bitmap_data_186, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_186));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_186));
     }
 
     uint8_t bitmap_data_187[0x600] = { };
     {Bitmap bmp_187(24, 16, &palette, 64, 12, bitmap_data_187, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_187));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_187));
     }
 
     uint8_t bitmap_data_188[0x600] = { };
     {Bitmap bmp_188(24, 16, &palette, 64, 12, bitmap_data_188, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_188));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_188));
     }
 
     uint8_t bitmap_data_189[0x600] = { };
     {Bitmap bmp_189(24, 16, &palette, 64, 12, bitmap_data_189, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_189));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_189));
     }
 
     uint8_t bitmap_data_190[0x600] = { };
     {Bitmap bmp_190(24, 16, &palette, 64, 12, bitmap_data_190, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_190));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_190));
     }
 
     uint8_t bitmap_data_191[0x600] = { };
     {Bitmap bmp_191(24, 16, &palette, 64, 12, bitmap_data_191, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_191));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_191));
     }
 
     uint8_t bitmap_data_192[0x600] = { };
     {Bitmap bmp_192(24, 16, &palette, 64, 12, bitmap_data_192, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_192));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_192));
     }
 
     uint8_t bitmap_data_193[0x600] = { };
     {Bitmap bmp_193(24, 16, &palette, 64, 12, bitmap_data_193, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_193));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_193));
     }
 
     uint8_t bitmap_data_194[0x600] = { };
     {Bitmap bmp_194(24, 16, &palette, 64, 12, bitmap_data_194, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_194));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_194));
     }
 
     uint8_t bitmap_data_195[0x600] = { };
     {Bitmap bmp_195(24, 16, &palette, 64, 12, bitmap_data_195, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_195));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_195));
     }
 
     uint8_t bitmap_data_196[0x600] = { };
     {Bitmap bmp_196(24, 16, &palette, 64, 12, bitmap_data_196, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_196));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_196));
     }
 
     uint8_t bitmap_data_197[0x600] = { };
     {Bitmap bmp_197(24, 16, &palette, 64, 12, bitmap_data_197, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_197));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_197));
     }
 
     uint8_t bitmap_data_198[0x600] = { };
     {Bitmap bmp_198(24, 16, &palette, 64, 12, bitmap_data_198, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_198));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_198));
     }
 
     uint8_t bitmap_data_199[0x600] = { };
     {Bitmap bmp_199(24, 16, &palette, 64, 12, bitmap_data_199, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_199));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_199));
     }
 
     uint8_t bitmap_data_200[0x600] = { };
     {Bitmap bmp_200(24, 16, &palette, 64, 12, bitmap_data_200, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_200));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_200));
     }
 
     uint8_t bitmap_data_201[0x600] = { };
     {Bitmap bmp_201(24, 16, &palette, 64, 12, bitmap_data_201, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_201));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_201));
     }
 
     uint8_t bitmap_data_202[0x600] = { };
     {Bitmap bmp_202(24, 16, &palette, 64, 12, bitmap_data_202, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_202));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_202));
     }
 
     uint8_t bitmap_data_203[0x600] = { };
     {Bitmap bmp_203(24, 16, &palette, 64, 12, bitmap_data_203, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_203));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_203));
     }
 
     uint8_t bitmap_data_204[0x600] = { };
     {Bitmap bmp_204(24, 16, &palette, 64, 12, bitmap_data_204, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_204));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_204));
     }
 
     uint8_t bitmap_data_205[0x600] = { };
     {Bitmap bmp_205(24, 16, &palette, 64, 12, bitmap_data_205, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_205));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_205));
     }
 
     uint8_t bitmap_data_206[0x600] = { };
     {Bitmap bmp_206(24, 16, &palette, 64, 12, bitmap_data_206, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_206));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_206));
     }
 
     uint8_t bitmap_data_207[0x600] = { };
     {Bitmap bmp_207(24, 16, &palette, 64, 12, bitmap_data_207, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_207));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_207));
     }
 
     uint8_t bitmap_data_208[0x600] = { };
     {Bitmap bmp_208(24, 16, &palette, 64, 12, bitmap_data_208, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_208));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_208));
     }
 
     uint8_t bitmap_data_209[0x600] = { };
     {Bitmap bmp_209(24, 16, &palette, 64, 12, bitmap_data_209, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_209));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_209));
     }
 
     uint8_t bitmap_data_210[0x600] = { };
     {Bitmap bmp_210(24, 16, &palette, 64, 12, bitmap_data_210, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_210));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_210));
     }
 
     uint8_t bitmap_data_211[0x600] = { };
     {Bitmap bmp_211(24, 16, &palette, 64, 12, bitmap_data_211, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_211));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_211));
     }
 
     uint8_t bitmap_data_212[0x600] = { };
     {Bitmap bmp_212(24, 16, &palette, 64, 12, bitmap_data_212, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_212));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_212));
     }
 
     uint8_t bitmap_data_213[0x600] = { };
     {Bitmap bmp_213(24, 16, &palette, 64, 12, bitmap_data_213, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_213));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_213));
     }
 
     uint8_t bitmap_data_214[0x600] = { };
     {Bitmap bmp_214(24, 16, &palette, 64, 12, bitmap_data_214, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_214));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_214));
     }
 
     uint8_t bitmap_data_215[0x600] = { };
     {Bitmap bmp_215(24, 16, &palette, 64, 12, bitmap_data_215, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_215));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_215));
     }
 
     uint8_t bitmap_data_216[0x600] = { };
     {Bitmap bmp_216(24, 16, &palette, 64, 12, bitmap_data_216, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_216));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_216));
     }
 
     uint8_t bitmap_data_217[0x600] = { };
     {Bitmap bmp_217(24, 16, &palette, 64, 12, bitmap_data_217, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_217));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_217));
     }
 
     uint8_t bitmap_data_218[0x600] = { };
     {Bitmap bmp_218(24, 16, &palette, 64, 12, bitmap_data_218, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_218));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_218));
     }
 
     uint8_t bitmap_data_219[0x600] = { };
     {Bitmap bmp_219(24, 16, &palette, 64, 12, bitmap_data_219, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_219));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_219));
     }
 
     uint8_t bitmap_data_220[0x600] = { };
     {Bitmap bmp_220(24, 16, &palette, 64, 12, bitmap_data_220, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_220));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_220));
     }
 
     uint8_t bitmap_data_221[0x600] = { };
     {Bitmap bmp_221(24, 16, &palette, 64, 12, bitmap_data_221, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_221));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_221));
     }
 
     uint8_t bitmap_data_222[0x600] = { };
     {Bitmap bmp_222(24, 16, &palette, 64, 12, bitmap_data_222, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_222));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_222));
     }
 
     uint8_t bitmap_data_223[0x600] = { };
     {Bitmap bmp_223(24, 16, &palette, 64, 12, bitmap_data_223, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_223));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_223));
     }
 
     uint8_t bitmap_data_224[0x600] = { };
     {Bitmap bmp_224(24, 16, &palette, 64, 12, bitmap_data_224, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_224));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_224));
     }
 
     uint8_t bitmap_data_225[0x600] = { };
     {Bitmap bmp_225(24, 16, &palette, 64, 12, bitmap_data_225, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_225));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_225));
     }
 
     uint8_t bitmap_data_226[0x600] = { };
     {Bitmap bmp_226(24, 16, &palette, 64, 12, bitmap_data_226, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_226));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_226));
     }
 
     uint8_t bitmap_data_227[0x600] = { };
     {Bitmap bmp_227(24, 16, &palette, 64, 12, bitmap_data_227, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_227));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_227));
     }
 
     uint8_t bitmap_data_228[0x600] = { };
     {Bitmap bmp_228(24, 16, &palette, 64, 12, bitmap_data_228, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_228));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_228));
     }
 
     uint8_t bitmap_data_229[0x600] = { };
     {Bitmap bmp_229(24, 16, &palette, 64, 12, bitmap_data_229, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_229));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_229));
     }
 
     uint8_t bitmap_data_230[0x600] = { };
     {Bitmap bmp_230(24, 16, &palette, 64, 12, bitmap_data_230, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_230));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_230));
     }
 
     uint8_t bitmap_data_231[0x600] = { };
     {Bitmap bmp_231(24, 16, &palette, 64, 12, bitmap_data_231, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_231));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_231));
     }
 
     uint8_t bitmap_data_232[0x600] = { };
     {Bitmap bmp_232(24, 16, &palette, 64, 12, bitmap_data_232, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_232));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_232));
     }
 
     uint8_t bitmap_data_233[0x600] = { };
     {Bitmap bmp_233(24, 16, &palette, 64, 12, bitmap_data_233, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_233));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_233));
     }
 
     uint8_t bitmap_data_234[0x600] = { };
     {Bitmap bmp_234(24, 16, &palette, 64, 12, bitmap_data_234, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_234));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_234));
     }
 
     uint8_t bitmap_data_235[0x600] = { };
     {Bitmap bmp_235(24, 16, &palette, 64, 12, bitmap_data_235, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_235));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_235));
     }
 
     uint8_t bitmap_data_236[0x600] = { };
     {Bitmap bmp_236(24, 16, &palette, 64, 12, bitmap_data_236, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_236));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_236));
     }
 
     uint8_t bitmap_data_237[0x600] = { };
     {Bitmap bmp_237(24, 16, &palette, 64, 12, bitmap_data_237, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_237));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_237));
     }
 
     uint8_t bitmap_data_238[0x600] = { };
     {Bitmap bmp_238(24, 16, &palette, 64, 12, bitmap_data_238, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_238));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_238));
     }
 
     uint8_t bitmap_data_239[0x600] = { };
     {Bitmap bmp_239(24, 16, &palette, 64, 12, bitmap_data_239, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_239));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_239));
     }
 
     uint8_t bitmap_data_240[0x600] = { };
     {Bitmap bmp_240(24, 16, &palette, 64, 12, bitmap_data_240, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_240));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_240));
     }
 
     uint8_t bitmap_data_241[0x600] = { };
     {Bitmap bmp_241(24, 16, &palette, 64, 12, bitmap_data_241, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_241));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_241));
     }
 
     uint8_t bitmap_data_242[0x600] = { };
     {Bitmap bmp_242(24, 16, &palette, 64, 12, bitmap_data_242, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_242));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_242));
     }
 
     uint8_t bitmap_data_243[0x600] = { };
     {Bitmap bmp_243(24, 16, &palette, 64, 12, bitmap_data_243, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_243));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_243));
     }
 
     uint8_t bitmap_data_244[0x600] = { };
     {Bitmap bmp_244(24, 16, &palette, 64, 12, bitmap_data_244, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_244));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_244));
     }
 
     uint8_t bitmap_data_245[0x600] = { };
     {Bitmap bmp_245(24, 16, &palette, 64, 12, bitmap_data_245, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_245));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_245));
     }
 
     uint8_t bitmap_data_246[0x600] = { };
     {Bitmap bmp_246(24, 16, &palette, 64, 12, bitmap_data_246, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_246));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_246));
     }
 
     uint8_t bitmap_data_247[0x600] = { };
     {Bitmap bmp_247(24, 16, &palette, 64, 12, bitmap_data_247, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_247));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_247));
     }
 
     uint8_t bitmap_data_248[0x600] = { };
     {Bitmap bmp_248(24, 16, &palette, 64, 12, bitmap_data_248, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_248));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_248));
     }
 
     uint8_t bitmap_data_249[0x600] = { };
     {Bitmap bmp_249(24, 16, &palette, 64, 12, bitmap_data_249, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_249));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_249));
     }
 
     uint8_t bitmap_data_250[0x600] = { };
     {Bitmap bmp_250(24, 16, &palette, 64, 12, bitmap_data_250, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_250));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_250));
     }
 
     uint8_t bitmap_data_251[0x600] = { };
     {Bitmap bmp_251(24, 16, &palette, 64, 12, bitmap_data_251, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_251));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_251));
     }
 
     uint8_t bitmap_data_252[0x600] = { };
     {Bitmap bmp_252(24, 16, &palette, 64, 12, bitmap_data_252, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_252));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_252));
     }
 
     uint8_t bitmap_data_253[0x600] = { };
     {Bitmap bmp_253(24, 16, &palette, 64, 12, bitmap_data_253, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_253));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_253));
     }
 
     uint8_t bitmap_data_254[0x600] = { };
     {Bitmap bmp_254(24, 16, &palette, 64, 12, bitmap_data_254, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_254));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_254));
     }
 
     uint8_t bitmap_data_255[0x600] = { };
     {Bitmap bmp_255(24, 16, &palette, 64, 12, bitmap_data_255, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_255));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_255));
     }
 
     uint8_t bitmap_data_256[0x600] = { };
     {Bitmap bmp_256(24, 16, &palette, 64, 12, bitmap_data_256, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_256));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_256));
     }
 
     uint8_t bitmap_data_257[0x600] = { };
     {Bitmap bmp_257(24, 16, &palette, 64, 12, bitmap_data_257, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_257));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_257));
     }
 
     uint8_t bitmap_data_258[0x600] = { };
     {Bitmap bmp_258(24, 16, &palette, 64, 12, bitmap_data_258, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_258));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_258));
     }
 
     uint8_t bitmap_data_259[0x600] = { };
     {Bitmap bmp_259(24, 16, &palette, 64, 12, bitmap_data_259, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_259));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_259));
     }
 
     uint8_t bitmap_data_260[0x600] = { };
     {Bitmap bmp_260(24, 16, &palette, 64, 12, bitmap_data_260, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_260));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_260));
     }
 
     uint8_t bitmap_data_261[0x600] = { };
     {Bitmap bmp_261(24, 16, &palette, 64, 12, bitmap_data_261, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_261));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_261));
     }
 
     uint8_t bitmap_data_262[0x600] = { };
     {Bitmap bmp_262(24, 16, &palette, 64, 12, bitmap_data_262, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_262));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_262));
     }
 
     uint8_t bitmap_data_263[0x600] = { };
     {Bitmap bmp_263(24, 16, &palette, 64, 12, bitmap_data_263, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_263));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_263));
     }
 
     uint8_t bitmap_data_264[0x600] = { };
     {Bitmap bmp_264(24, 16, &palette, 64, 12, bitmap_data_264, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_264));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_264));
     }
 
     uint8_t bitmap_data_265[0x600] = { };
     {Bitmap bmp_265(24, 16, &palette, 64, 12, bitmap_data_265, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_265));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_265));
     }
 
     uint8_t bitmap_data_266[0x600] = { };
     {Bitmap bmp_266(24, 16, &palette, 64, 12, bitmap_data_266, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_266));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_266));
     }
 
     uint8_t bitmap_data_267[0x600] = { };
     {Bitmap bmp_267(24, 16, &palette, 64, 12, bitmap_data_267, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_267));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_267));
     }
 
     uint8_t bitmap_data_268[0x600] = { };
     {Bitmap bmp_268(24, 16, &palette, 64, 12, bitmap_data_268, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_268));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_268));
     }
 
     uint8_t bitmap_data_269[0x600] = { };
     {Bitmap bmp_269(24, 16, &palette, 64, 12, bitmap_data_269, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_269));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_269));
     }
 
     uint8_t bitmap_data_270[0x600] = { };
     {Bitmap bmp_270(24, 16, &palette, 64, 12, bitmap_data_270, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_270));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_270));
     }
 
     uint8_t bitmap_data_271[0x600] = { };
     {Bitmap bmp_271(24, 16, &palette, 64, 12, bitmap_data_271, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_271));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_271));
     }
 
     uint8_t bitmap_data_272[0x600] = { };
     {Bitmap bmp_272(24, 16, &palette, 64, 12, bitmap_data_272, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_272));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_272));
     }
 
     uint8_t bitmap_data_273[0x600] = { };
     {Bitmap bmp_273(24, 16, &palette, 64, 12, bitmap_data_273, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_273));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_273));
     }
 
     uint8_t bitmap_data_274[0x600] = { };
     {Bitmap bmp_274(24, 16, &palette, 64, 12, bitmap_data_274, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_274));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_274));
     }
 
     uint8_t bitmap_data_275[0x600] = { };
     {Bitmap bmp_275(24, 16, &palette, 64, 12, bitmap_data_275, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_275));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_275));
     }
 
     uint8_t bitmap_data_276[0x600] = { };
     {Bitmap bmp_276(24, 16, &palette, 64, 12, bitmap_data_276, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_276));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_276));
     }
 
     uint8_t bitmap_data_277[0x600] = { };
     {Bitmap bmp_277(24, 16, &palette, 64, 12, bitmap_data_277, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_277));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_277));
     }
 
     uint8_t bitmap_data_278[0x600] = { };
     {Bitmap bmp_278(24, 16, &palette, 64, 12, bitmap_data_278, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_278));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_278));
     }
 
     uint8_t bitmap_data_279[0x600] = { };
     {Bitmap bmp_279(24, 16, &palette, 64, 12, bitmap_data_279, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_279));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_279));
     }
 
     uint8_t bitmap_data_280[0x600] = { };
     {Bitmap bmp_280(24, 16, &palette, 64, 12, bitmap_data_280, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_280));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_280));
     }
 
     uint8_t bitmap_data_281[0x600] = { };
     {Bitmap bmp_281(24, 16, &palette, 64, 12, bitmap_data_281, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_281));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_281));
     }
 
     uint8_t bitmap_data_282[0x600] = { };
     {Bitmap bmp_282(24, 16, &palette, 64, 12, bitmap_data_282, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_282));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_282));
     }
 
     uint8_t bitmap_data_283[0x600] = { };
     {Bitmap bmp_283(24, 16, &palette, 64, 12, bitmap_data_283, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_283));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_283));
     }
 
     uint8_t bitmap_data_284[0x600] = { };
     {Bitmap bmp_284(24, 16, &palette, 64, 12, bitmap_data_284, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_284));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_284));
     }
 
     uint8_t bitmap_data_285[0x600] = { };
     {Bitmap bmp_285(24, 16, &palette, 64, 12, bitmap_data_285, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_285));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_285));
     }
 
     uint8_t bitmap_data_286[0x600] = { };
     {Bitmap bmp_286(24, 16, &palette, 64, 12, bitmap_data_286, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_286));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_286));
     }
 
     uint8_t bitmap_data_287[0x600] = { };
     {Bitmap bmp_287(24, 16, &palette, 64, 12, bitmap_data_287, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_287));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_287));
     }
 
     uint8_t bitmap_data_288[0x600] = { };
     {Bitmap bmp_288(24, 16, &palette, 64, 12, bitmap_data_288, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_288));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_288));
     }
 
     uint8_t bitmap_data_289[0x600] = { };
     {Bitmap bmp_289(24, 16, &palette, 64, 12, bitmap_data_289, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_289));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_289));
     }
 
     uint8_t bitmap_data_290[0x600] = { };
     {Bitmap bmp_290(24, 16, &palette, 64, 12, bitmap_data_290, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_290));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_290));
     }
 
     uint8_t bitmap_data_291[0x600] = { };
     {Bitmap bmp_291(24, 16, &palette, 64, 12, bitmap_data_291, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_291));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_291));
     }
 
     uint8_t bitmap_data_292[0x600] = { };
     {Bitmap bmp_292(24, 16, &palette, 64, 12, bitmap_data_292, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_292));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_292));
     }
 
     uint8_t bitmap_data_293[0x600] = { };
     {Bitmap bmp_293(24, 16, &palette, 64, 12, bitmap_data_293, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_293));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_293));
     }
 
     uint8_t bitmap_data_294[0x600] = { };
     {Bitmap bmp_294(24, 16, &palette, 64, 12, bitmap_data_294, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_294));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_294));
     }
 
     uint8_t bitmap_data_295[0x600] = { };
     {Bitmap bmp_295(24, 16, &palette, 64, 12, bitmap_data_295, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_295));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_295));
     }
 
     uint8_t bitmap_data_296[0x600] = { };
     {Bitmap bmp_296(24, 16, &palette, 64, 12, bitmap_data_296, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_296));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_296));
     }
 
     uint8_t bitmap_data_297[0x600] = { };
     {Bitmap bmp_297(24, 16, &palette, 64, 12, bitmap_data_297, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_297));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_297));
     }
 
     uint8_t bitmap_data_298[0x600] = { };
     {Bitmap bmp_298(24, 16, &palette, 64, 12, bitmap_data_298, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_298));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_298));
     }
 
     uint8_t bitmap_data_299[0x600] = { };
     {Bitmap bmp_299(24, 16, &palette, 64, 12, bitmap_data_299, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_299));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_299));
     }
 
     uint8_t bitmap_data_300[0x600] = { };
     {Bitmap bmp_300(24, 16, &palette, 64, 12, bitmap_data_300, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_300));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_300));
     }
 
     uint8_t bitmap_data_301[0x600] = { };
     {Bitmap bmp_301(24, 16, &palette, 64, 12, bitmap_data_301, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_301));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_301));
     }
 
     uint8_t bitmap_data_302[0x600] = { };
     {Bitmap bmp_302(24, 16, &palette, 64, 12, bitmap_data_302, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_302));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_302));
     }
 
     uint8_t bitmap_data_303[0x600] = { };
     {Bitmap bmp_303(24, 16, &palette, 64, 12, bitmap_data_303, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_303));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_303));
     }
 
     uint8_t bitmap_data_304[0x600] = { };
     {Bitmap bmp_304(24, 16, &palette, 64, 12, bitmap_data_304, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_304));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_304));
     }
 
     uint8_t bitmap_data_305[0x600] = { };
     {Bitmap bmp_305(24, 16, &palette, 64, 12, bitmap_data_305, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_305));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_305));
     }
 
     uint8_t bitmap_data_306[0x600] = { };
     {Bitmap bmp_306(24, 16, &palette, 64, 12, bitmap_data_306, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_306));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_306));
     }
 
     uint8_t bitmap_data_307[0x600] = { };
     {Bitmap bmp_307(24, 16, &palette, 64, 12, bitmap_data_307, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_307));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_307));
     }
 
     uint8_t bitmap_data_308[0x600] = { };
     {Bitmap bmp_308(24, 16, &palette, 64, 12, bitmap_data_308, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_308));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_308));
     }
 
     uint8_t bitmap_data_309[0x600] = { };
     {Bitmap bmp_309(24, 16, &palette, 64, 12, bitmap_data_309, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_309));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_309));
     }
 
     uint8_t bitmap_data_310[0x600] = { };
     {Bitmap bmp_310(24, 16, &palette, 64, 12, bitmap_data_310, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_310));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_310));
     }
 
     uint8_t bitmap_data_311[0x600] = { };
     {Bitmap bmp_311(24, 16, &palette, 64, 12, bitmap_data_311, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_311));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_311));
     }
 
     uint8_t bitmap_data_312[0x600] = { };
     {Bitmap bmp_312(24, 16, &palette, 64, 12, bitmap_data_312, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_312));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_312));
     }
 
     uint8_t bitmap_data_313[0x600] = { };
     {Bitmap bmp_313(24, 16, &palette, 64, 12, bitmap_data_313, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_313));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_313));
     }
 
     uint8_t bitmap_data_314[0x600] = { };
     {Bitmap bmp_314(24, 16, &palette, 64, 12, bitmap_data_314, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_314));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_314));
     }
 
     uint8_t bitmap_data_315[0x600] = { };
     {Bitmap bmp_315(24, 16, &palette, 64, 12, bitmap_data_315, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_315));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_315));
     }
 
     uint8_t bitmap_data_316[0x600] = { };
     {Bitmap bmp_316(24, 16, &palette, 64, 12, bitmap_data_316, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_316));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_316));
     }
 
     uint8_t bitmap_data_317[0x600] = { };
     {Bitmap bmp_317(24, 16, &palette, 64, 12, bitmap_data_317, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_317));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_317));
     }
 
     uint8_t bitmap_data_318[0x600] = { };
     {Bitmap bmp_318(24, 16, &palette, 64, 12, bitmap_data_318, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_318));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_318));
     }
 
     uint8_t bitmap_data_319[0x600] = { };
     {Bitmap bmp_319(24, 16, &palette, 64, 12, bitmap_data_319, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_319));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_319));
     }
 
     uint8_t bitmap_data_320[0x600] = { };
     {Bitmap bmp_320(24, 16, &palette, 64, 12, bitmap_data_320, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_320));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_320));
     }
 
     uint8_t bitmap_data_321[0x600] = { };
     {Bitmap bmp_321(24, 16, &palette, 64, 12, bitmap_data_321, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_321));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_321));
     }
 
     uint8_t bitmap_data_322[0x600] = { };
     {Bitmap bmp_322(24, 16, &palette, 64, 12, bitmap_data_322, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_322));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_322));
     }
 
     uint8_t bitmap_data_323[0x600] = { };
     {Bitmap bmp_323(24, 16, &palette, 64, 12, bitmap_data_323, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_323));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_323));
     }
 
     uint8_t bitmap_data_324[0x600] = { };
     {Bitmap bmp_324(24, 16, &palette, 64, 12, bitmap_data_324, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_324));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_324));
     }
 
     uint8_t bitmap_data_325[0x600] = { };
     {Bitmap bmp_325(24, 16, &palette, 64, 12, bitmap_data_325, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_325));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_325));
     }
 
     uint8_t bitmap_data_326[0x600] = { };
     {Bitmap bmp_326(24, 16, &palette, 64, 12, bitmap_data_326, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_326));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_326));
     }
 
     uint8_t bitmap_data_327[0x600] = { };
     {Bitmap bmp_327(24, 16, &palette, 64, 12, bitmap_data_327, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_327));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_327));
     }
 
     uint8_t bitmap_data_328[0x600] = { };
     {Bitmap bmp_328(24, 16, &palette, 64, 12, bitmap_data_328, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_328));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_328));
     }
 
     uint8_t bitmap_data_329[0x600] = { };
     {Bitmap bmp_329(24, 16, &palette, 64, 12, bitmap_data_329, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_329));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_329));
     }
 
     uint8_t bitmap_data_330[0x600] = { };
     {Bitmap bmp_330(24, 16, &palette, 64, 12, bitmap_data_330, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_330));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_330));
     }
 
     uint8_t bitmap_data_331[0x600] = { };
     {Bitmap bmp_331(24, 16, &palette, 64, 12, bitmap_data_331, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_331));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_331));
     }
 
     uint8_t bitmap_data_332[0x600] = { };
     {Bitmap bmp_332(24, 16, &palette, 64, 12, bitmap_data_332, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_332));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_332));
     }
 
     uint8_t bitmap_data_333[0x600] = { };
     {Bitmap bmp_333(24, 16, &palette, 64, 12, bitmap_data_333, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_333));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_333));
     }
 
     uint8_t bitmap_data_334[0x600] = { };
     {Bitmap bmp_334(24, 16, &palette, 64, 12, bitmap_data_334, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_334));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_334));
     }
 
     uint8_t bitmap_data_335[0x600] = { };
     {Bitmap bmp_335(24, 16, &palette, 64, 12, bitmap_data_335, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_335));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_335));
     }
 
     uint8_t bitmap_data_336[0x600] = { };
     {Bitmap bmp_336(24, 16, &palette, 64, 12, bitmap_data_336, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_336));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_336));
     }
 
     uint8_t bitmap_data_337[0x600] = { };
     {Bitmap bmp_337(24, 16, &palette, 64, 12, bitmap_data_337, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_337));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_337));
     }
 
     uint8_t bitmap_data_338[0x600] = { };
     {Bitmap bmp_338(24, 16, &palette, 64, 12, bitmap_data_338, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_338));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_338));
     }
 
     uint8_t bitmap_data_339[0x600] = { };
     {Bitmap bmp_339(24, 16, &palette, 64, 12, bitmap_data_339, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_339));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_339));
     }
 
     uint8_t bitmap_data_340[0x600] = { };
     {Bitmap bmp_340(24, 16, &palette, 64, 12, bitmap_data_340, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_340));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_340));
     }
 
     uint8_t bitmap_data_341[0x600] = { };
     {Bitmap bmp_341(24, 16, &palette, 64, 12, bitmap_data_341, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_341));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_341));
     }
 
     uint8_t bitmap_data_342[0x600] = { };
     {Bitmap bmp_342(24, 16, &palette, 64, 12, bitmap_data_342, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_342));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_342));
     }
 
     uint8_t bitmap_data_343[0x600] = { };
     {Bitmap bmp_343(24, 16, &palette, 64, 12, bitmap_data_343, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_343));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_343));
     }
 
     uint8_t bitmap_data_344[0x600] = { };
     {Bitmap bmp_344(24, 16, &palette, 64, 12, bitmap_data_344, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_344));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_344));
     }
 
     uint8_t bitmap_data_345[0x600] = { };
     {Bitmap bmp_345(24, 16, &palette, 64, 12, bitmap_data_345, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_345));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_345));
     }
 
     uint8_t bitmap_data_346[0x600] = { };
     {Bitmap bmp_346(24, 16, &palette, 64, 12, bitmap_data_346, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_346));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_346));
     }
 
     uint8_t bitmap_data_347[0x600] = { };
     {Bitmap bmp_347(24, 16, &palette, 64, 12, bitmap_data_347, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_347));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_347));
     }
 
     uint8_t bitmap_data_348[0x600] = { };
     {Bitmap bmp_348(24, 16, &palette, 64, 12, bitmap_data_348, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_348));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_348));
     }
 
     uint8_t bitmap_data_349[0x600] = { };
     {Bitmap bmp_349(24, 16, &palette, 64, 12, bitmap_data_349, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_349));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_349));
     }
 
     uint8_t bitmap_data_350[0x600] = { };
     {Bitmap bmp_350(24, 16, &palette, 64, 12, bitmap_data_350, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_350));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_350));
     }
 
     uint8_t bitmap_data_351[0x600] = { };
     {Bitmap bmp_351(24, 16, &palette, 64, 12, bitmap_data_351, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_351));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_351));
     }
 
     uint8_t bitmap_data_352[0x600] = { };
     {Bitmap bmp_352(24, 16, &palette, 64, 12, bitmap_data_352, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_352));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_352));
     }
 
     uint8_t bitmap_data_353[0x600] = { };
     {Bitmap bmp_353(24, 16, &palette, 64, 12, bitmap_data_353, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_353));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_353));
     }
 
     uint8_t bitmap_data_354[0x600] = { };
     {Bitmap bmp_354(24, 16, &palette, 64, 12, bitmap_data_354, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_354));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_354));
     }
 
     uint8_t bitmap_data_355[0x600] = { };
     {Bitmap bmp_355(24, 16, &palette, 64, 12, bitmap_data_355, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_355));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_355));
     }
 
     uint8_t bitmap_data_356[0x600] = { };
     {Bitmap bmp_356(24, 16, &palette, 64, 12, bitmap_data_356, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_356));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_356));
     }
 
     uint8_t bitmap_data_357[0x600] = { };
     {Bitmap bmp_357(24, 16, &palette, 64, 12, bitmap_data_357, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_357));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_357));
     }
 
     uint8_t bitmap_data_358[0x600] = { };
     {Bitmap bmp_358(24, 16, &palette, 64, 12, bitmap_data_358, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_358));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_358));
     }
 
     uint8_t bitmap_data_359[0x600] = { };
     {Bitmap bmp_359(24, 16, &palette, 64, 12, bitmap_data_359, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_359));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_359));
     }
 
     uint8_t bitmap_data_360[0x600] = { };
     {Bitmap bmp_360(24, 16, &palette, 64, 12, bitmap_data_360, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_360));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_360));
     }
 
     uint8_t bitmap_data_361[0x600] = { };
     {Bitmap bmp_361(24, 16, &palette, 64, 12, bitmap_data_361, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_361));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_361));
     }
 
     uint8_t bitmap_data_362[0x600] = { };
     {Bitmap bmp_362(24, 16, &palette, 64, 12, bitmap_data_362, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_362));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_362));
     }
 
     uint8_t bitmap_data_363[0x600] = { };
     {Bitmap bmp_363(24, 16, &palette, 64, 12, bitmap_data_363, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_363));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_363));
     }
 
     uint8_t bitmap_data_364[0x600] = { };
     {Bitmap bmp_364(24, 16, &palette, 64, 12, bitmap_data_364, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_364));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_364));
     }
 
     uint8_t bitmap_data_365[0x600] = { };
     {Bitmap bmp_365(24, 16, &palette, 64, 12, bitmap_data_365, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_365));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_365));
     }
 
     uint8_t bitmap_data_366[0x600] = { };
     {Bitmap bmp_366(24, 16, &palette, 64, 12, bitmap_data_366, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_366));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_366));
     }
 
     uint8_t bitmap_data_367[0x600] = { };
     {Bitmap bmp_367(24, 16, &palette, 64, 12, bitmap_data_367, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_367));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_367));
     }
 
     uint8_t bitmap_data_368[0x600] = { };
     {Bitmap bmp_368(24, 16, &palette, 64, 12, bitmap_data_368, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_368));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_368));
     }
 
     uint8_t bitmap_data_369[0x600] = { };
     {Bitmap bmp_369(24, 16, &palette, 64, 12, bitmap_data_369, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_369));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_369));
     }
 
     uint8_t bitmap_data_370[0x600] = { };
     {Bitmap bmp_370(24, 16, &palette, 64, 12, bitmap_data_370, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_370));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_370));
     }
 
     uint8_t bitmap_data_371[0x600] = { };
     {Bitmap bmp_371(24, 16, &palette, 64, 12, bitmap_data_371, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_371));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_371));
     }
 
     uint8_t bitmap_data_372[0x600] = { };
     {Bitmap bmp_372(24, 16, &palette, 64, 12, bitmap_data_372, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_372));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_372));
     }
 
     uint8_t bitmap_data_373[0x600] = { };
     {Bitmap bmp_373(24, 16, &palette, 64, 12, bitmap_data_373, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_373));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_373));
     }
 
     uint8_t bitmap_data_374[0x600] = { };
     {Bitmap bmp_374(24, 16, &palette, 64, 12, bitmap_data_374, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_374));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_374));
     }
 
     uint8_t bitmap_data_375[0x600] = { };
     {Bitmap bmp_375(24, 16, &palette, 64, 12, bitmap_data_375, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_375));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_375));
     }
 
     uint8_t bitmap_data_376[0x600] = { };
     {Bitmap bmp_376(24, 16, &palette, 64, 12, bitmap_data_376, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_376));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_376));
     }
 
     uint8_t bitmap_data_377[0x600] = { };
     {Bitmap bmp_377(24, 16, &palette, 64, 12, bitmap_data_377, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_377));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_377));
     }
 
     uint8_t bitmap_data_378[0x600] = { };
     {Bitmap bmp_378(24, 16, &palette, 64, 12, bitmap_data_378, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_378));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_378));
     }
 
     uint8_t bitmap_data_379[0x600] = { };
     {Bitmap bmp_379(24, 16, &palette, 64, 12, bitmap_data_379, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_379));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_379));
     }
 
     uint8_t bitmap_data_380[0x600] = { };
     {Bitmap bmp_380(24, 16, &palette, 64, 12, bitmap_data_380, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_380));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_380));
     }
 
     uint8_t bitmap_data_381[0x600] = { };
     {Bitmap bmp_381(24, 16, &palette, 64, 12, bitmap_data_381, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_381));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_381));
     }
 
     uint8_t bitmap_data_382[0x600] = { };
     {Bitmap bmp_382(24, 16, &palette, 64, 12, bitmap_data_382, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_382));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_382));
     }
 
     uint8_t bitmap_data_383[0x600] = { };
     {Bitmap bmp_383(24, 16, &palette, 64, 12, bitmap_data_383, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_383));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_383));
     }
 
     uint8_t bitmap_data_384[0x600] = { };
     {Bitmap bmp_384(24, 16, &palette, 64, 12, bitmap_data_384, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_384));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_384));
     }
 
     uint8_t bitmap_data_385[0x600] = { };
     {Bitmap bmp_385(24, 16, &palette, 64, 12, bitmap_data_385, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_385));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_385));
     }
 
     uint8_t bitmap_data_386[0x600] = { };
     {Bitmap bmp_386(24, 16, &palette, 64, 12, bitmap_data_386, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_386));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_386));
     }
 
     uint8_t bitmap_data_387[0x600] = { };
     {Bitmap bmp_387(24, 16, &palette, 64, 12, bitmap_data_387, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_387));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_387));
     }
 
     uint8_t bitmap_data_388[0x600] = { };
     {Bitmap bmp_388(24, 16, &palette, 64, 12, bitmap_data_388, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_388));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_388));
     }
 
     uint8_t bitmap_data_389[0x600] = { };
     {Bitmap bmp_389(24, 16, &palette, 64, 12, bitmap_data_389, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_389));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_389));
     }
 
     uint8_t bitmap_data_390[0x600] = { };
     {Bitmap bmp_390(24, 16, &palette, 64, 12, bitmap_data_390, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_390));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_390));
     }
 
     uint8_t bitmap_data_391[0x600] = { };
     {Bitmap bmp_391(24, 16, &palette, 64, 12, bitmap_data_391, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_391));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_391));
     }
 
     uint8_t bitmap_data_392[0x600] = { };
     {Bitmap bmp_392(24, 16, &palette, 64, 12, bitmap_data_392, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_392));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_392));
     }
 
     uint8_t bitmap_data_393[0x600] = { };
     {Bitmap bmp_393(24, 16, &palette, 64, 12, bitmap_data_393, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_393));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_393));
     }
 
     uint8_t bitmap_data_394[0x600] = { };
     {Bitmap bmp_394(24, 16, &palette, 64, 12, bitmap_data_394, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_394));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_394));
     }
 
     uint8_t bitmap_data_395[0x600] = { };
     {Bitmap bmp_395(24, 16, &palette, 64, 12, bitmap_data_395, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_395));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_395));
     }
 
     uint8_t bitmap_data_396[0x600] = { };
     {Bitmap bmp_396(24, 16, &palette, 64, 12, bitmap_data_396, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_396));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_396));
     }
 
     uint8_t bitmap_data_397[0x600] = { };
     {Bitmap bmp_397(24, 16, &palette, 64, 12, bitmap_data_397, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_397));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_397));
     }
 
     uint8_t bitmap_data_398[0x600] = { };
     {Bitmap bmp_398(24, 16, &palette, 64, 12, bitmap_data_398, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_398));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_398));
     }
 
     uint8_t bitmap_data_399[0x600] = { };
     {Bitmap bmp_399(24, 16, &palette, 64, 12, bitmap_data_399, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_399));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_399));
     }
 
     uint8_t bitmap_data_400[0x600] = { };
     {Bitmap bmp_400(24, 16, &palette, 64, 12, bitmap_data_400, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_400));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_400));
     }
 
     uint8_t bitmap_data_401[0x600] = { };
     {Bitmap bmp_401(24, 16, &palette, 64, 12, bitmap_data_401, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_401));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_401));
     }
 
     uint8_t bitmap_data_402[0x600] = { };
     {Bitmap bmp_402(24, 16, &palette, 64, 12, bitmap_data_402, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_402));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_402));
     }
 
     uint8_t bitmap_data_403[0x600] = { };
     {Bitmap bmp_403(24, 16, &palette, 64, 12, bitmap_data_403, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_403));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_403));
     }
 
     uint8_t bitmap_data_404[0x600] = { };
     {Bitmap bmp_404(24, 16, &palette, 64, 12, bitmap_data_404, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_404));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_404));
     }
 
     uint8_t bitmap_data_405[0x600] = { };
     {Bitmap bmp_405(24, 16, &palette, 64, 12, bitmap_data_405, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_405));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_405));
     }
 
     uint8_t bitmap_data_406[0x600] = { };
     {Bitmap bmp_406(24, 16, &palette, 64, 12, bitmap_data_406, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_406));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_406));
     }
 
     uint8_t bitmap_data_407[0x600] = { };
     {Bitmap bmp_407(24, 16, &palette, 64, 12, bitmap_data_407, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_407));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_407));
     }
 
     uint8_t bitmap_data_408[0x600] = { };
     {Bitmap bmp_408(24, 16, &palette, 64, 12, bitmap_data_408, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_408));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_408));
     }
 
     uint8_t bitmap_data_409[0x600] = { };
     {Bitmap bmp_409(24, 16, &palette, 64, 12, bitmap_data_409, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_409));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_409));
     }
 
     uint8_t bitmap_data_410[0x600] = { };
     {Bitmap bmp_410(24, 16, &palette, 64, 12, bitmap_data_410, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_410));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_410));
     }
 
     uint8_t bitmap_data_411[0x600] = { };
     {Bitmap bmp_411(24, 16, &palette, 64, 12, bitmap_data_411, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_411));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_411));
     }
 
     uint8_t bitmap_data_412[0x600] = { };
     {Bitmap bmp_412(24, 16, &palette, 64, 12, bitmap_data_412, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_412));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_412));
     }
 
     uint8_t bitmap_data_413[0x600] = { };
     {Bitmap bmp_413(24, 16, &palette, 64, 12, bitmap_data_413, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_413));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_413));
     }
 
     uint8_t bitmap_data_414[0x600] = { };
     {Bitmap bmp_414(24, 16, &palette, 64, 12, bitmap_data_414, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_414));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_414));
     }
 
     uint8_t bitmap_data_415[0x600] = { };
     {Bitmap bmp_415(24, 16, &palette, 64, 12, bitmap_data_415, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_415));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_415));
     }
 
     uint8_t bitmap_data_416[0x600] = { };
     {Bitmap bmp_416(24, 16, &palette, 64, 12, bitmap_data_416, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_416));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_416));
     }
 
     uint8_t bitmap_data_417[0x600] = { };
     {Bitmap bmp_417(24, 16, &palette, 64, 12, bitmap_data_417, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_417));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_417));
     }
 
     uint8_t bitmap_data_418[0x600] = { };
     {Bitmap bmp_418(24, 16, &palette, 64, 12, bitmap_data_418, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_418));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_418));
     }
 
     uint8_t bitmap_data_419[0x600] = { };
     {Bitmap bmp_419(24, 16, &palette, 64, 12, bitmap_data_419, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_419));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_419));
     }
 
     uint8_t bitmap_data_420[0x600] = { };
     {Bitmap bmp_420(24, 16, &palette, 64, 12, bitmap_data_420, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_420));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_420));
     }
 
     uint8_t bitmap_data_421[0x600] = { };
     {Bitmap bmp_421(24, 16, &palette, 64, 12, bitmap_data_421, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_421));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_421));
     }
 
     uint8_t bitmap_data_422[0x600] = { };
     {Bitmap bmp_422(24, 16, &palette, 64, 12, bitmap_data_422, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_422));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_422));
     }
 
     uint8_t bitmap_data_423[0x600] = { };
     {Bitmap bmp_423(24, 16, &palette, 64, 12, bitmap_data_423, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_423));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_423));
     }
 
     uint8_t bitmap_data_424[0x600] = { };
     {Bitmap bmp_424(24, 16, &palette, 64, 12, bitmap_data_424, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_424));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_424));
     }
 
     uint8_t bitmap_data_425[0x600] = { };
     {Bitmap bmp_425(24, 16, &palette, 64, 12, bitmap_data_425, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_425));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_425));
     }
 
     uint8_t bitmap_data_426[0x600] = { };
     {Bitmap bmp_426(24, 16, &palette, 64, 12, bitmap_data_426, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_426));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_426));
     }
 
     uint8_t bitmap_data_427[0x600] = { };
     {Bitmap bmp_427(24, 16, &palette, 64, 12, bitmap_data_427, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_427));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_427));
     }
 
     uint8_t bitmap_data_428[0x600] = { };
     {Bitmap bmp_428(24, 16, &palette, 64, 12, bitmap_data_428, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_428));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_428));
     }
 
     uint8_t bitmap_data_429[0x600] = { };
     {Bitmap bmp_429(24, 16, &palette, 64, 12, bitmap_data_429, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_429));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_429));
     }
 
     uint8_t bitmap_data_430[0x600] = { };
     {Bitmap bmp_430(24, 16, &palette, 64, 12, bitmap_data_430, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_430));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_430));
     }
 
     uint8_t bitmap_data_431[0x600] = { };
     {Bitmap bmp_431(24, 16, &palette, 64, 12, bitmap_data_431, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_431));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_431));
     }
 
     uint8_t bitmap_data_432[0x600] = { };
     {Bitmap bmp_432(24, 16, &palette, 64, 12, bitmap_data_432, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_432));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_432));
     }
 
     uint8_t bitmap_data_433[0x600] = { };
     {Bitmap bmp_433(24, 16, &palette, 64, 12, bitmap_data_433, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_433));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_433));
     }
 
     uint8_t bitmap_data_434[0x600] = { };
     {Bitmap bmp_434(24, 16, &palette, 64, 12, bitmap_data_434, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_434));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_434));
     }
 
     uint8_t bitmap_data_435[0x600] = { };
     {Bitmap bmp_435(24, 16, &palette, 64, 12, bitmap_data_435, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_435));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_435));
     }
 
     uint8_t bitmap_data_436[0x600] = { };
     {Bitmap bmp_436(24, 16, &palette, 64, 12, bitmap_data_436, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_436));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_436));
     }
 
     uint8_t bitmap_data_437[0x600] = { };
     {Bitmap bmp_437(24, 16, &palette, 64, 12, bitmap_data_437, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_437));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_437));
     }
 
     uint8_t bitmap_data_438[0x600] = { };
     {Bitmap bmp_438(24, 16, &palette, 64, 12, bitmap_data_438, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_438));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_438));
     }
 
     uint8_t bitmap_data_439[0x600] = { };
     {Bitmap bmp_439(24, 16, &palette, 64, 12, bitmap_data_439, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_439));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_439));
     }
 
     uint8_t bitmap_data_440[0x600] = { };
     {Bitmap bmp_440(24, 16, &palette, 64, 12, bitmap_data_440, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_440));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_440));
     }
 
     uint8_t bitmap_data_441[0x600] = { };
     {Bitmap bmp_441(24, 16, &palette, 64, 12, bitmap_data_441, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_441));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_441));
     }
 
     uint8_t bitmap_data_442[0x600] = { };
     {Bitmap bmp_442(24, 16, &palette, 64, 12, bitmap_data_442, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_442));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_442));
     }
 
     uint8_t bitmap_data_443[0x600] = { };
     {Bitmap bmp_443(24, 16, &palette, 64, 12, bitmap_data_443, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_443));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_443));
     }
 
     uint8_t bitmap_data_444[0x600] = { };
     {Bitmap bmp_444(24, 16, &palette, 64, 12, bitmap_data_444, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_444));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_444));
     }
 
     uint8_t bitmap_data_445[0x600] = { };
     {Bitmap bmp_445(24, 16, &palette, 64, 12, bitmap_data_445, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_445));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_445));
     }
 
     uint8_t bitmap_data_446[0x600] = { };
     {Bitmap bmp_446(24, 16, &palette, 64, 12, bitmap_data_446, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_446));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_446));
     }
 
     uint8_t bitmap_data_447[0x600] = { };
     {Bitmap bmp_447(24, 16, &palette, 64, 12, bitmap_data_447, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_447));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_447));
     }
 
     uint8_t bitmap_data_448[0x600] = { };
     {Bitmap bmp_448(24, 16, &palette, 64, 12, bitmap_data_448, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_448));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_448));
     }
 
     uint8_t bitmap_data_449[0x600] = { };
     {Bitmap bmp_449(24, 16, &palette, 64, 12, bitmap_data_449, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_449));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_449));
     }
 
     uint8_t bitmap_data_450[0x600] = { };
     {Bitmap bmp_450(24, 16, &palette, 64, 12, bitmap_data_450, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_450));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_450));
     }
 
     uint8_t bitmap_data_451[0x600] = { };
     {Bitmap bmp_451(24, 16, &palette, 64, 12, bitmap_data_451, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_451));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_451));
     }
 
     uint8_t bitmap_data_452[0x600] = { };
     {Bitmap bmp_452(24, 16, &palette, 64, 12, bitmap_data_452, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_452));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_452));
     }
 
     uint8_t bitmap_data_453[0x600] = { };
     {Bitmap bmp_453(24, 16, &palette, 64, 12, bitmap_data_453, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_453));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_453));
     }
 
     uint8_t bitmap_data_454[0x600] = { };
     {Bitmap bmp_454(24, 16, &palette, 64, 12, bitmap_data_454, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_454));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_454));
     }
 
     uint8_t bitmap_data_455[0x600] = { };
     {Bitmap bmp_455(24, 16, &palette, 64, 12, bitmap_data_455, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_455));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_455));
     }
 
     uint8_t bitmap_data_456[0x600] = { };
     {Bitmap bmp_456(24, 16, &palette, 64, 12, bitmap_data_456, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_456));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_456));
     }
 
     uint8_t bitmap_data_457[0x600] = { };
     {Bitmap bmp_457(24, 16, &palette, 64, 12, bitmap_data_457, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_457));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_457));
     }
 
     uint8_t bitmap_data_458[0x600] = { };
     {Bitmap bmp_458(24, 16, &palette, 64, 12, bitmap_data_458, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_458));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_458));
     }
 
     uint8_t bitmap_data_459[0x600] = { };
     {Bitmap bmp_459(24, 16, &palette, 64, 12, bitmap_data_459, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_459));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_459));
     }
 
     uint8_t bitmap_data_460[0x600] = { };
     {Bitmap bmp_460(24, 16, &palette, 64, 12, bitmap_data_460, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_460));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_460));
     }
 
     uint8_t bitmap_data_461[0x600] = { };
     {Bitmap bmp_461(24, 16, &palette, 64, 12, bitmap_data_461, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_461));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_461));
     }
 
     uint8_t bitmap_data_462[0x600] = { };
     {Bitmap bmp_462(24, 16, &palette, 64, 12, bitmap_data_462, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_462));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_462));
     }
 
     uint8_t bitmap_data_463[0x600] = { };
     {Bitmap bmp_463(24, 16, &palette, 64, 12, bitmap_data_463, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_463));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_463));
     }
 
     uint8_t bitmap_data_464[0x600] = { };
     {Bitmap bmp_464(24, 16, &palette, 64, 12, bitmap_data_464, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_464));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_464));
     }
 
     uint8_t bitmap_data_465[0x600] = { };
     {Bitmap bmp_465(24, 16, &palette, 64, 12, bitmap_data_465, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_465));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_465));
     }
 
     uint8_t bitmap_data_466[0x600] = { };
     {Bitmap bmp_466(24, 16, &palette, 64, 12, bitmap_data_466, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_466));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_466));
     }
 
     uint8_t bitmap_data_467[0x600] = { };
     {Bitmap bmp_467(24, 16, &palette, 64, 12, bitmap_data_467, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_467));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_467));
     }
 
     uint8_t bitmap_data_468[0x600] = { };
     {Bitmap bmp_468(24, 16, &palette, 64, 12, bitmap_data_468, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_468));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_468));
     }
 
     uint8_t bitmap_data_469[0x600] = { };
     {Bitmap bmp_469(24, 16, &palette, 64, 12, bitmap_data_469, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_469));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_469));
     }
 
     uint8_t bitmap_data_470[0x600] = { };
     {Bitmap bmp_470(24, 16, &palette, 64, 12, bitmap_data_470, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_470));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_470));
     }
 
     uint8_t bitmap_data_471[0x600] = { };
     {Bitmap bmp_471(24, 16, &palette, 64, 12, bitmap_data_471, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_471));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_471));
     }
 
     uint8_t bitmap_data_472[0x600] = { };
     {Bitmap bmp_472(24, 16, &palette, 64, 12, bitmap_data_472, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_472));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_472));
     }
 
     uint8_t bitmap_data_473[0x600] = { };
     {Bitmap bmp_473(24, 16, &palette, 64, 12, bitmap_data_473, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_473));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_473));
     }
 
     uint8_t bitmap_data_474[0x600] = { };
     {Bitmap bmp_474(24, 16, &palette, 64, 12, bitmap_data_474, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_474));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_474));
     }
 
     uint8_t bitmap_data_475[0x600] = { };
     {Bitmap bmp_475(24, 16, &palette, 64, 12, bitmap_data_475, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_475));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_475));
     }
 
     uint8_t bitmap_data_476[0x600] = { };
     {Bitmap bmp_476(24, 16, &palette, 64, 12, bitmap_data_476, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_476));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_476));
     }
 
     uint8_t bitmap_data_477[0x600] = { };
     {Bitmap bmp_477(24, 16, &palette, 64, 12, bitmap_data_477, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_477));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_477));
     }
 
     uint8_t bitmap_data_478[0x600] = { };
     {Bitmap bmp_478(24, 16, &palette, 64, 12, bitmap_data_478, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_478));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_478));
     }
 
     uint8_t bitmap_data_479[0x600] = { };
     {Bitmap bmp_479(24, 16, &palette, 64, 12, bitmap_data_479, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_479));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_479));
     }
 
     uint8_t bitmap_data_480[0x600] = { };
     {Bitmap bmp_480(24, 16, &palette, 64, 12, bitmap_data_480, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_480));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_480));
     }
 
     uint8_t bitmap_data_481[0x600] = { };
     {Bitmap bmp_481(24, 16, &palette, 64, 12, bitmap_data_481, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_481));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_481));
     }
 
     uint8_t bitmap_data_482[0x600] = { };
     {Bitmap bmp_482(24, 16, &palette, 64, 12, bitmap_data_482, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_482));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_482));
     }
 
     uint8_t bitmap_data_483[0x600] = { };
     {Bitmap bmp_483(24, 16, &palette, 64, 12, bitmap_data_483, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_483));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_483));
     }
 
     uint8_t bitmap_data_484[0x600] = { };
     {Bitmap bmp_484(24, 16, &palette, 64, 12, bitmap_data_484, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_484));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_484));
     }
 
     uint8_t bitmap_data_485[0x600] = { };
     {Bitmap bmp_485(24, 16, &palette, 64, 12, bitmap_data_485, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_485));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_485));
     }
 
     uint8_t bitmap_data_486[0x600] = { };
     {Bitmap bmp_486(24, 16, &palette, 64, 12, bitmap_data_486, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_486));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_486));
     }
 
     uint8_t bitmap_data_487[0x600] = { };
     {Bitmap bmp_487(24, 16, &palette, 64, 12, bitmap_data_487, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_487));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_487));
     }
 
     uint8_t bitmap_data_488[0x600] = { };
     {Bitmap bmp_488(24, 16, &palette, 64, 12, bitmap_data_488, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_488));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_488));
     }
 
     uint8_t bitmap_data_489[0x600] = { };
     {Bitmap bmp_489(24, 16, &palette, 64, 12, bitmap_data_489, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_489));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_489));
     }
 
     uint8_t bitmap_data_490[0x600] = { };
     {Bitmap bmp_490(24, 16, &palette, 64, 12, bitmap_data_490, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_490));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_490));
     }
 
     uint8_t bitmap_data_491[0x600] = { };
     {Bitmap bmp_491(24, 16, &palette, 64, 12, bitmap_data_491, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_491));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_491));
     }
 
     uint8_t bitmap_data_492[0x600] = { };
     {Bitmap bmp_492(24, 16, &palette, 64, 12, bitmap_data_492, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_492));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_492));
     }
 
     uint8_t bitmap_data_493[0x600] = { };
     {Bitmap bmp_493(24, 16, &palette, 64, 12, bitmap_data_493, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_493));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_493));
     }
 
     uint8_t bitmap_data_494[0x600] = { };
     {Bitmap bmp_494(24, 16, &palette, 64, 12, bitmap_data_494, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_494));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_494));
     }
 
     uint8_t bitmap_data_495[0x600] = { };
     {Bitmap bmp_495(24, 16, &palette, 64, 12, bitmap_data_495, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_495));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_495));
     }
 
     uint8_t bitmap_data_496[0x600] = { };
     {Bitmap bmp_496(24, 16, &palette, 64, 12, bitmap_data_496, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_496));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_496));
     }
 
     uint8_t bitmap_data_497[0x600] = { };
     {Bitmap bmp_497(24, 16, &palette, 64, 12, bitmap_data_497, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_497));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_497));
     }
 
     uint8_t bitmap_data_498[0x600] = { };
     {Bitmap bmp_498(24, 16, &palette, 64, 12, bitmap_data_498, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_498));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_498));
     }
 
     uint8_t bitmap_data_499[0x600] = { };
     {Bitmap bmp_499(24, 16, &palette, 64, 12, bitmap_data_499, 1536, false);
     cache_id    = 1;
     cache_index = 1;
-    BOOST_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_499));
+    RED_CHECK_EQUAL(((BmpCache::FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp_499));
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
+RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 {
     BmpCache bmp_cache(
         BmpCache::Recorder, 24, 3, true,
@@ -8607,7 +8607,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
         uint16_t cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
         uint32_t cache_index = 0;
-        BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
+        RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
     }
 
     // Bitmap 1 -> Waiting list
@@ -8618,7 +8618,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
         uint16_t cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
         uint32_t cache_index = 1;
-        BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
+        RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
     }
 
     // Bitmap 2 -> Waiting list
@@ -8629,7 +8629,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
         uint16_t cache_id    = (BmpCache::IN_WAIT_LIST | 2 /* Bitmap Cache 2 */);
         uint32_t cache_index = 2;
-        BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
+        RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
     }
 
 
@@ -8641,7 +8641,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
         uint16_t cache_id    = 2;
         uint32_t cache_index = 0;
-        BOOST_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
+        RED_CHECK_EQUAL(((BmpCache::ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
     }
 
 
@@ -8653,21 +8653,21 @@ BOOST_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
         uint16_t cache_id    = 2;
         uint32_t cache_index = 0;
-        BOOST_CHECK_EQUAL(((cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
+        RED_CHECK_EQUAL(((cache_id << 16) | cache_index), bmp_cache.cache_bitmap(bmp));
     }
 }
 
-BOOST_AUTO_TEST_CASE(BmpcachePutAndGet)
+RED_AUTO_TEST_CASE(BmpcachePutAndGet)
 {
     BmpCache bmpcache(BmpCache::Mod_rdp, 24, 1, false, BmpCache::CacheOption(256, 1024, true));
     {
         Bitmap bmp = bitmap_from_file("no_image");
-        BOOST_CHECK(bmp.is_valid());
+        RED_CHECK(bmp.is_valid());
         bmpcache.put(0, RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX, bmp, ~0, ~0);
     }
     {
         const Bitmap & bmp = bmpcache.get(0, RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX);
-        BOOST_CHECK(bmp.is_valid());
+        RED_CHECK(bmp.is_valid());
     }
 }
 

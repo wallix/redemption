@@ -16,7 +16,7 @@
 #include <QApplication>
 
 
-BOOST_AUTO_TEST_CASE(TestRDPQtDrawable)
+RED_AUTO_TEST_CASE(TestRDPQtDrawable)
 {
     int argc(0);
     char *argv[] {"myprog"};

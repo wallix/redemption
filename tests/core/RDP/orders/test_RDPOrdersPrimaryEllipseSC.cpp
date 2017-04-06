@@ -34,7 +34,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestEllipseSC)
+RED_AUTO_TEST_CASE(TestEllipseSC)
 {
     using namespace RDP;
 
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon state_common(ELLIPSESC, Rect(700, 200, 100, 200));
         RDPEllipseSC state_ellipse(Rect(0, 0, 800, 600), 0);
 
-        BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
+        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 400, 800, 76));
         RDPEllipseSC(Rect(0, 0, 800, 600), 0).emit(out_stream, newcommon, state_common, state_ellipse);
@@ -62,14 +62,14 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
-        BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
-        BOOST_CHECK_EQUAL(400, common_cmd.clip.y);
-        BOOST_CHECK_EQUAL(800, common_cmd.clip.cx);
-        BOOST_CHECK_EQUAL(76, common_cmd.clip.cy);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(0, common_cmd.clip.x);
+        RED_CHECK_EQUAL(400, common_cmd.clip.y);
+        RED_CHECK_EQUAL(800, common_cmd.clip.cx);
+        RED_CHECK_EQUAL(76, common_cmd.clip.cy);
 
         RDPEllipseSC cmd(Rect(0, 0, 800, 600), 0);
         cmd.receive(in_stream, header);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), 0xFFFFFF);
 
-        BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
+        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF).emit(out_stream, newcommon, state_common, state_ellipse);
@@ -97,10 +97,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -132,10 +132,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -169,10 +169,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -202,10 +202,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -237,10 +237,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -272,10 +272,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -308,10 +308,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -348,10 +348,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -388,10 +388,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -424,10 +424,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), 0xFFFFFF);
 
-        BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
+        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF, 0x0A, 0x00).emit(out_stream, newcommon, state_common, state_ellipse);
@@ -459,10 +459,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -498,10 +498,10 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSESC), common_cmd.order);
 
         RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -514,7 +514,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
 
 
     RDPEllipseSC nullellipse;
-    BOOST_CHECK(nullellipse.id() == ELLIPSESC);
+    RED_CHECK(nullellipse.id() == ELLIPSESC);
     //nullellipse.log(1, Rect());
     //nullellipse.print(Rect());
 }

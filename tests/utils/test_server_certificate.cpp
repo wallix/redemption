@@ -37,7 +37,7 @@
 // hexdump_d(data, sizeof(data), 8);
 
 
-BOOST_AUTO_TEST_CASE(TestReadServer)
+RED_AUTO_TEST_CASE(TestReadServer)
 {
 
 uint8_t data[] = {

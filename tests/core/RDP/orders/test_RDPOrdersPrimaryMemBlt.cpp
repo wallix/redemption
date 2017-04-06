@@ -33,7 +33,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMemBlt)
+RED_AUTO_TEST_CASE(TestMemBlt)
 {
     using namespace RDP;
 
@@ -66,10 +66,10 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
 
 
         RDPMemBlt cmd(cache_id, Rect(310, 390, 10, 10), 0xFF, 0, 0, cache_idx);
@@ -115,10 +115,10 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
 
 
         RDPMemBlt cmd(0, Rect(), 0, 0, 0, 0);

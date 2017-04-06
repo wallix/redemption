@@ -29,18 +29,18 @@
 
 #include "core/RDP/capabilities/window.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
+RED_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
 {
     WindowListCaps windowlist_caps;
     windowlist_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
     windowlist_caps.NumIconCaches = 255;
     windowlist_caps.NumIconCacheEntries = 65535;
 
-    BOOST_CHECK_EQUAL(windowlist_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
-    BOOST_CHECK_EQUAL(windowlist_caps.len, static_cast<uint16_t>(CAPLEN_WINDOW));
-    BOOST_CHECK_EQUAL(windowlist_caps.WndSupportLevel, static_cast<uint32_t>(2));
-    BOOST_CHECK_EQUAL(windowlist_caps.NumIconCaches, static_cast<uint8_t>(255));
-    BOOST_CHECK_EQUAL(windowlist_caps.NumIconCacheEntries, static_cast<uint16_t>(65535));
+    RED_CHECK_EQUAL(windowlist_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
+    RED_CHECK_EQUAL(windowlist_caps.len, static_cast<uint16_t>(CAPLEN_WINDOW));
+    RED_CHECK_EQUAL(windowlist_caps.WndSupportLevel, static_cast<uint32_t>(2));
+    RED_CHECK_EQUAL(windowlist_caps.NumIconCaches, static_cast<uint8_t>(255));
+    RED_CHECK_EQUAL(windowlist_caps.NumIconCacheEntries, static_cast<uint16_t>(65535));
 
     StaticOutStream<1024> out_stream;
     windowlist_caps.emit(out_stream);
@@ -49,14 +49,14 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
 
     WindowListCaps windowslist_caps2;
 
-    BOOST_CHECK_EQUAL(windowslist_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
-    BOOST_CHECK_EQUAL(windowslist_caps2.len, static_cast<uint16_t>(CAPLEN_WINDOW));
+    RED_CHECK_EQUAL(windowslist_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
+    RED_CHECK_EQUAL(windowslist_caps2.len, static_cast<uint16_t>(CAPLEN_WINDOW));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_WINDOW), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_WINDOW), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_WINDOW), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_WINDOW), stream.in_uint16_le());
     windowslist_caps2.recv(stream, CAPLEN_WINDOW);
 
-    BOOST_CHECK_EQUAL(windowslist_caps2.WndSupportLevel, static_cast<uint32_t>(2));
-    BOOST_CHECK_EQUAL(windowslist_caps2.NumIconCaches, static_cast<uint8_t>(255));
-    BOOST_CHECK_EQUAL(windowslist_caps2.NumIconCacheEntries, static_cast<uint16_t>(65535));
+    RED_CHECK_EQUAL(windowslist_caps2.WndSupportLevel, static_cast<uint32_t>(2));
+    RED_CHECK_EQUAL(windowslist_caps2.NumIconCaches, static_cast<uint8_t>(255));
+    RED_CHECK_EQUAL(windowslist_caps2.NumIconCacheEntries, static_cast<uint16_t>(65535));
 }

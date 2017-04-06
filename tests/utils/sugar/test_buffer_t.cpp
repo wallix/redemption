@@ -30,7 +30,7 @@
 #include <type_traits>
 
 
-BOOST_AUTO_TEST_CASE(TestBufferT)
+RED_AUTO_TEST_CASE(TestBufferT)
 {
     char a[2]{};
     uint8_t ua[2]{};

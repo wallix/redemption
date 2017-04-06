@@ -25,6 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+RED_AUTO_TEST_CASE(TestXXX)
 {
 }

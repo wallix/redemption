@@ -36,7 +36,7 @@
 #include "core/RDP/x224.hpp"
 #include "core/RDP/fastpath.hpp"
 
-BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
+RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;
 
     // TODO We should fix that test (and a few other below) to make it independant from transport
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
 
-    BOOST_CHECK_EQUAL(4, in_cie.numEvents);
+    RED_CHECK_EQUAL(4, in_cie.numEvents);
 
     uint16_t messageTypes[4] = {
           FastPath::FASTPATH_INPUT_EVENT_SCANCODE
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
         eventCode = (byte & 0xE0) >> 5;
 
-        BOOST_CHECK_EQUAL(eventCode, messageTypes[i]);
+        RED_CHECK_EQUAL(eventCode, messageTypes[i]);
 
         switch (eventCode){
             case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
         }
     }
 
-    BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
+    RED_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
     StaticOutStream<65536> out_s;
 
@@ -115,10 +115,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     out_t.send(out_s.get_data(), out_s.get_offset());
     out_t.send(out_payload.get_data(), out_payload.get_offset());
 
-    BOOST_CHECK_EQUAL(true, out_t.get_status());
+    RED_CHECK_EQUAL(true, out_t.get_status());
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
+RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     CryptContext decrypt;
 
     const char *payload =
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
 
-    BOOST_CHECK_EQUAL(6, in_cie.numEvents);
+    RED_CHECK_EQUAL(6, in_cie.numEvents);
 
     uint16_t messageTypes[6] = {
           FastPath::FASTPATH_INPUT_EVENT_MOUSE
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
         eventCode = (byte & 0xE0) >> 5;
 
-        BOOST_CHECK_EQUAL(eventCode, messageTypes[i]);
+        RED_CHECK_EQUAL(eventCode, messageTypes[i]);
 
         switch (eventCode){
             case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
         }
     }
 
-    BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
+    RED_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
     StaticOutStream<65536> out_s;
 
@@ -200,10 +200,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     out_t.send(out_s.get_data(), out_s.get_offset());
     out_t.send(out_payload.get_data(), out_payload.get_offset());
 
-    BOOST_CHECK_EQUAL(true, out_t.get_status());
+    RED_CHECK_EQUAL(true, out_t.get_status());
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
+RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     CryptContext decrypt;
 
     const char *payload =
@@ -234,17 +234,17 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     while (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
-        BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
+        RED_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
 
 //        FastPath::Update_Send out_upd(in_su.payload);
     }
 
-    BOOST_CHECK_EQUAL(i, 4);
+    RED_CHECK_EQUAL(i, 4);
 
-    BOOST_CHECK_EQUAL(0, in_su.payload.in_remain());
+    RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
+RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     CryptContext decrypt;
 
     const char *payload =
@@ -293,15 +293,15 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     while (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);
 
-        BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
+        RED_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
     }
 
-    BOOST_CHECK_EQUAL(i, 4);
+    RED_CHECK_EQUAL(i, 4);
 
-    BOOST_CHECK_EQUAL(0, in_su.payload.in_remain());
+    RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
+RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     CryptContext decrypt;
 
     const char *payload =
@@ -356,9 +356,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         }
     }
 
-    BOOST_CHECK_EQUAL(0, in_su.payload.in_remain());
+    RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 
-    BOOST_CHECK_EQUAL(true, out_t.get_status());
+    RED_CHECK_EQUAL(true, out_t.get_status());
 }
 
 

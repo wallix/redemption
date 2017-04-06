@@ -31,7 +31,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_cluster.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
 {
     const char indata[] =
         "\x04\xc0"         // CS_CLUSTER
@@ -51,10 +51,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
-    BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
-    BOOST_CHECK_EQUAL(12, cs_cluster.length);
-    BOOST_CHECK_EQUAL(13, cs_cluster.flags);
-    BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+    RED_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
+    RED_CHECK_EQUAL(12, cs_cluster.length);
+    RED_CHECK_EQUAL(13, cs_cluster.flags);
+    RED_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
 
     cs_cluster.log("Client Received");
 }

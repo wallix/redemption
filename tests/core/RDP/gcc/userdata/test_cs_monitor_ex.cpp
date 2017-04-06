@@ -31,7 +31,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
 {
     const char indata[] =
         "\x08\xc0"         // TS_UD_HEADER::type = CS_MONITOR_EX (0xc008)
@@ -56,17 +56,17 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     GCC::UserData::CSMonitorEx cs_monitor_ex;
     InStream stream(buf);
     cs_monitor_ex.recv(stream);
-    BOOST_CHECK_EQUAL(36, cs_monitor_ex.length);
-    BOOST_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
-    BOOST_CHECK_EQUAL(20, cs_monitor_ex.monitorAttributeSize);
-    BOOST_CHECK_EQUAL(1, cs_monitor_ex.monitorCount);
+    RED_CHECK_EQUAL(36, cs_monitor_ex.length);
+    RED_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
+    RED_CHECK_EQUAL(20, cs_monitor_ex.monitorAttributeSize);
+    RED_CHECK_EQUAL(1, cs_monitor_ex.monitorCount);
 
-    BOOST_CHECK_EQUAL(150, cs_monitor_ex.monitorAttributesArray[0].physicalWidth);
-    BOOST_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].physicalHeight);
-    BOOST_CHECK_EQUAL(90, cs_monitor_ex.monitorAttributesArray[0].orientation); // ORIENTATION_PORTRAIT = 90
+    RED_CHECK_EQUAL(150, cs_monitor_ex.monitorAttributesArray[0].physicalWidth);
+    RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].physicalHeight);
+    RED_CHECK_EQUAL(90, cs_monitor_ex.monitorAttributesArray[0].orientation); // ORIENTATION_PORTRAIT = 90
 
-    BOOST_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
-	  BOOST_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
+    RED_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
+	  RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
 
     cs_monitor_ex.log("Client Received");
 

@@ -26,19 +26,19 @@
 #include "system/ssl_sha1.hpp"
 
 
-#define CHECK_SIG(obj, sig)                                          \
+#define RED_CHECK_SIG(obj, sig)                                      \
     do {                                                             \
         char message[1024];                                          \
         if (!redemption_unit_test__::check_sig(obj, message, sig)) { \
-            BOOST_CHECK_MESSAGE(false, message);                     \
+            RED_CHECK_MESSAGE(false, message);                       \
         }                                                            \
     } while (0)
 
-#define CHECK_SIG2(buf, sz, sig)                                            \
+#define RED_CHECK_SIG2(buf, sz, sig)                                        \
     do {                                                                    \
         char message[1024];                                                 \
         if (!redemption_unit_test__::check_sig(buf, 1, sz, message, sig)) { \
-            BOOST_CHECK_MESSAGE(false, message);                            \
+            RED_CHECK_MESSAGE(false, message);                              \
         }                                                                   \
     } while (0)
 

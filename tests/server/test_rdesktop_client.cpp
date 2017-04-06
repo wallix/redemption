@@ -47,7 +47,7 @@
 //#include "core/session.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestIncomingConnection)
+RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
     // Uncomment the code block below to generate testing data.
     //// This server only support one incoming connection before closing listener
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    BOOST_CHECK_EQUAL(1, front.up_and_running);
+    RED_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
     mod.draw_event(time(nullptr), front);
 
