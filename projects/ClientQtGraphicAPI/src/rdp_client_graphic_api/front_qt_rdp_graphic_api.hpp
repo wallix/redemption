@@ -114,6 +114,7 @@ public:
     TimeSystem           timeSystem;
     DummyAuthentifier    authentifier;
     bool                 is_spanning;
+    Fstat fstat;
 
 
     const std::string    MAIN_DIR;
@@ -1021,26 +1022,26 @@ public:
         this->_penColor = color;
     }
 
-//     bool event(QEvent *event) {
-//         if (this->_front->is_replaying) {
-//             QHelpEvent *helpEvent = static_cast<QHelpEvent*>( event );
-//             QRect bar_zone(44, this->_height+4, this->_width - 148, READING_BAR_H);
-//             int x = helpEvent->pos().x();
-//             int y = helpEvent->pos().y();
-//             if (x > 44 && x < this->_width - 148  && y >  this->_height+2 && y < this->_height + 14) {
-//                 LOG(LOG_INFO, "tip");
-//                 int bar_len = this->_width - 148;
-//                 int bar_pos = x - 44;
-//                 double read_len_tmp = (bar_pos * this->movie_time) / bar_len;
-//                 std::string str(std::to_string(int(read_len_tmp)));
-//                 this->setToolTip(str.c_str());
-//             } else {
-//                 this->setToolTip("");
-//             }
-//         }
-//
-//         return QWidget::event( event );
-//     }
+    bool event(QEvent *event) {
+
+        if (this->_front->is_replaying) {
+            QHelpEvent *helpEvent = static_cast<QHelpEvent*>( event );
+            QRect bar_zone(44, this->_height+4, this->_width - 148, READING_BAR_H);
+            int x = helpEvent->pos().x();
+            int y = helpEvent->pos().y();
+            if (x > 44 && x < this->_width - 148  && y >  this->_height+2 && y < this->_height + 14) {
+                int bar_len = this->_width - 148;
+                int bar_pos = x - 44;
+                double read_len_tmp = (bar_pos * this->movie_time) / bar_len;
+                std::string str(std::to_string(int(read_len_tmp))+std::string(" seconds"));
+                this->setToolTip(str.c_str());
+            } else {
+                QToolTip::hideText();
+            }
+        }
+
+        return QWidget::event( event );
+    }
 
 
 private:
@@ -1060,7 +1061,9 @@ private:
                 this->movie_time_start = tvtime();
                 this->_buttonCtrlAltDel.setText("Pause");
                 this->movie_status.setText("  Play ");
-                this->_front->load_replay_mod(this->_movie_name, {this->begin, 0}, {0, 0});
+
+                time_t started_rec(this->_front->replay_mod.get()->get_reader()->record_now.tv_sec);
+                this->_front->load_replay_mod(this->_movie_name, {this->begin+started_rec, 0}, {0, 0});
 
                 this->_timer_replay.start(1);
             }
@@ -1194,7 +1197,7 @@ public Q_SLOTS:
         this->movie_time_pause = {0, 0};
         this->current_time_movie = 0;
         this->_timer_replay.stop();
-        this->movie_timer_label.setText(QString( std::to_string(0).c_str())+QString("/")+QString(std::to_string(movie_time).c_str()));
+        this->movie_timer_label.setText(QString( std::to_string(0).c_str()) +QString("/")+QString(std::to_string(movie_time).c_str()));
         this->_running = false;
         this->is_paused = false;
 
@@ -1463,7 +1466,7 @@ public:
                                                 , to_verbose_flags(0) //FileToGraphic::Verbose::play
                                                 ));
 
-            this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
+            this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
         } catch (const Error &) {
             LOG(LOG_WARNING, "new ReplayMod error %s", this->_error.c_str());
         }
@@ -2700,7 +2703,7 @@ public:
                     ini.set<cfg::video::capture_groupid>(1);
                     ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
                     ini.set<cfg::video::record_path>(this->REPLAY_DIR);
-                    ini.set<cfg::video::hash_path>(this->REPLAY_DIR);
+                    ini.set<cfg::video::hash_path>(this->REPLAY_DIR+std::string("/signatures"));
                     time_t now;
                     time(&now);
                     std::string data(ctime(&now));
@@ -2729,14 +2732,14 @@ public:
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
-                Fstat fstat;
+
 
                 WrmParams wrmParams(
                     this->info.bpp
                     , TraceType::localfile
                     , cctx
                     , gen
-                    , fstat
+                    , this->fstat
                     , record_path.c_str()
                     , ini.get<cfg::video::hash_path>().c_str()
                     , movie_name.c_str()

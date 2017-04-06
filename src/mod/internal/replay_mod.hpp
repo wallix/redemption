@@ -131,8 +131,8 @@ public:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
-             , timeval begin_read
-             , timeval end_read
+             , timeval & begin_read
+             , timeval & end_read
              , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
@@ -185,6 +185,10 @@ public:
 
     void play() {
         this->reader.play(false);
+    }
+
+    FileToGraphic * get_reader() {
+        return &(this->reader);
     }
 
     bool play_client() {

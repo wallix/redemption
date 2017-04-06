@@ -8,6 +8,7 @@
 
 #include "main/do_recorder.hpp"
 
+
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -1392,6 +1393,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                 in_wrm_trans.next();
             }
 
+            LOG(LOG_INFO, "player begin_capture = %u", begin_capture.tv_sec);
             FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
             if (show_file_metadata) {

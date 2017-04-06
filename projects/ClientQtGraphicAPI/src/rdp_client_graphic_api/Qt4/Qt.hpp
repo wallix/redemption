@@ -58,4 +58,5 @@
 #include <QtCore/QDebug>
 //#include <QtCore/QFileSystemWatcher>
 #include <QtCore/QTimer>
+#include <QtGui/QToolTip>
 

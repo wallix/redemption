@@ -50,4 +50,5 @@
 #include <QtCore/QTimer>
 #include <QtCore/QMimeData>
 #include <QtCore/QTimer>
+#include <QtGui/QToolTip>
 
