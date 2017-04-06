@@ -23,9 +23,9 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
-#include "check_mem.hpp"
 
 #define LOGPRINT
+#include "check_mem.hpp"
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
 #include "transport/in_crypto_transport.hpp"
