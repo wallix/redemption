@@ -2,19 +2,7 @@ import property-set ;
 import feature ;
 import toolset ;
 
-rule gcov_link ( properties * ) {
-
-  if <variant>coverage in $(properties)
-  {
-    return <link>static ;
-  }
-  else
-  {
-    return <link>shared ;
-  }
-}
-
-lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <conditional>@gcov_link $(GCOV) <cxxflags>-frtti $(OBJ_TEST_DEPENDENCIES) ;
+lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <link>shared <cxxflags>-frtti ;
 lib openssl : : <name>ssl <link>shared ;
 
 lib krb5 : : <name>krb5 <link>shared ;

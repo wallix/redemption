@@ -244,6 +244,74 @@ private:
 
         //(*pbuffer) = (*pbuffer) + len;
     }
+
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+        size_t    remaining_size = len;
+
+        while (remaining_size) {
+            if (this->uncompressed_data_length) {
+                REDASSERT(this->uncompressed_data);
+
+                const size_t data_length = std::min<size_t>(remaining_size, this->uncompressed_data_length);
+
+                ::memcpy(&buffer[len-remaining_size], this->uncompressed_data, data_length);
+
+                this->uncompressed_data        += data_length;
+                this->uncompressed_data_length -= data_length;
+
+                remaining_size -= data_length;
+            }
+            else {
+                if (!this->inflate_pending) {
+                    // reset_decompressor(1) + compressed_data_length(4)
+                    if (!this->source_transport.atomic_read(this->compressed_data_buf, 5)){
+                        return false;
+                    }
+
+                    InStream compressed_data(this->compressed_data_buf);
+
+                    if (compressed_data.in_uint8() == 1) {
+                        REDASSERT(this->inflate_pending == false);
+
+                        ::inflateEnd(&this->compression_stream);
+
+                        ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
+
+                        REDEMPTION_DIAGNOSTIC_PUSH
+                        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+                        int ret = ::inflateInit(&this->compression_stream);
+                        REDEMPTION_DIAGNOSTIC_POP
+                        (void)ret;
+                    }
+
+                    const size_t compressed_data_length = compressed_data.in_uint32_le();
+
+                    if (!this->source_transport.atomic_read(this->compressed_data_buf, compressed_data_length)){
+                        throw Error(ERR_TRANSPORT_READ_FAILED);                    
+                    }
+
+                    this->compression_stream.avail_in = compressed_data_length;
+                    this->compression_stream.next_in  = this->compressed_data_buf;
+                }
+
+                this->uncompressed_data = this->uncompressed_data_buffer;
+
+                const size_t uncompressed_data_capacity = sizeof(this->uncompressed_data_buffer);
+
+                this->compression_stream.avail_out = uncompressed_data_capacity;
+                this->compression_stream.next_out  = this->uncompressed_data;
+
+                // TODO: what happens if some decompression error occurs ?
+                int ret = ::inflate(&this->compression_stream, Z_NO_FLUSH);
+                this->uncompressed_data_length = uncompressed_data_capacity - this->compression_stream.avail_out;
+
+                this->inflate_pending = ((ret == 0) && (this->compression_stream.avail_out == 0));
+            }
+        }
+        return true;
+    }
+
+
 };  // class GZipCompressionInTransport
 
 

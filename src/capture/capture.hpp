@@ -827,42 +827,37 @@ public:
                 gd->sync();
             }
 
-            try {
-                uint8_t buf[HEADER_SIZE];
-                this->trans->recv_new(buf, HEADER_SIZE);
-                InStream header(buf);
-                this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
-                this->chunk_size = header.in_uint32_le();
-                this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-
-                if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
-                    switch (this->chunk_type) {
-                        case WrmChunkType::RDP_UPDATE_ORDERS:
-                            this->statistics.graphics_update_chunk++; break;
-                        case WrmChunkType::RDP_UPDATE_BITMAP:
-                            this->statistics.bitmap_update_chunk++;   break;
-                        case WrmChunkType::TIMESTAMP:
-                            this->statistics.timestamp_chunk++;       break;
-                        default: ;
-                    }
-                    if (this->chunk_size > 65536){
-                        LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
-                        throw Error(ERR_WRM);
-                    }
-                    this->stream = InStream(this->stream_buf);
-                    if (this->chunk_size - HEADER_SIZE > 0) {
-                        this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                        this->trans->recv_new(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                    }
-                }
+            uint8_t buf[HEADER_SIZE];
+            if (!this->trans->atomic_read(buf, HEADER_SIZE)){
+                return false;
             }
-            catch (Error & e){
-                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
-                    return false;
-                }
+            InStream header(buf);
+            this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
+            this->chunk_size = header.in_uint32_le();
+            this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-                LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
-                throw;
+            if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK 
+            && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
+                switch (this->chunk_type) {
+                    case WrmChunkType::RDP_UPDATE_ORDERS:
+                        this->statistics.graphics_update_chunk++; break;
+                    case WrmChunkType::RDP_UPDATE_BITMAP:
+                        this->statistics.bitmap_update_chunk++;   break;
+                    case WrmChunkType::TIMESTAMP:
+                        this->statistics.timestamp_chunk++;       break;
+                    default: ;
+                }
+                if (this->chunk_size > 65536){
+                    LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
+                    throw Error(ERR_WRM);
+                }
+                this->stream = InStream(this->stream_buf);
+                if (this->chunk_size - HEADER_SIZE > 0) {
+                    this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
+                    if (!this->trans->atomic_read(this->stream_buf, this->chunk_size - HEADER_SIZE)){
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                    }
+                }
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
@@ -1330,7 +1325,9 @@ public:
                 // If no drawable is available ignore images chunks
                 this->stream.rewind();
                 std::size_t sz = this->chunk_size - HEADER_SIZE;
-                this->trans->recv_new(this->stream_buf, sz);
+                if (!this->trans->atomic_read(this->stream_buf, sz)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 this->stream = InStream(this->stream_buf, sz, sz);
             }
             this->remaining_order_count = 0;
