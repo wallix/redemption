@@ -146,14 +146,14 @@ public:
     /// if EOF is encountered at that point it's also an error and
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
     ///
-    void recv_new(uint8_t * buffer, size_t len)
+    void recv_atomic(uint8_t * buffer, size_t len)
     {
         if (!this->do_atomic_read(buffer, len)){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
     }
 
-    void recv_new(char * buffer, size_t len)
+    void recv_atomic(char * buffer, size_t len)
     {
         if (!this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len)){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
@@ -191,22 +191,6 @@ public:
     }
 
 private:
-//     virtual void do_recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         (void)pbuffer;
-//         (void)len;
-//         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-//     }
-
-
-
-
-    virtual void do_recv_new(uint8_t * buffer, size_t len) {
-        (void)buffer;
-        (void)len;
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-    }
-
     /// Atomic read read exactly the amount of data requested or return an error
     /// @see atomic_read
     ///

@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             for (int i = 0 ; i < nb_recv_sck ; i++){
                 if (FD_ISSET(recv_sck[i], & rfds)){
                     LOG(LOG_INFO, "activity on %d", recv_sck[i]);
-                    sck_trans[i]->recv_new(p, 5);
+                    sck_trans[i]->recv_atomic(p, 5);
                     p += 5;
                     nb_inbuffer += 5;
                     LOG(LOG_INFO, "received %*s\n", nb_inbuffer, buffer);

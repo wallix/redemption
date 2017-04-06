@@ -2345,7 +2345,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     constexpr std::size_t sz_buf = 8;
     uint8_t buf[sz_buf];
     auto end = buf;
-    in_png_trans.recv_new(end, sz_buf); // skip first chunk header
+    in_png_trans.recv_atomic(end, sz_buf); // skip first chunk header
     InStream stream(buf);
 
 //    in_png_trans.recv(&stream.end, 107); // skip first chunk header

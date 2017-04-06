@@ -186,7 +186,7 @@ public:
             {
                 auto const buf_sz = FileToGraphic::HEADER_SIZE;
                 unsigned char buf[buf_sz];
-                this->trans->recv_new(buf, buf_sz);
+                this->trans->recv_atomic(buf, buf_sz);
                 InStream header(buf);
                 this->chunk_type  = header.in_uint16_le();
                 this->chunk_size  = header.in_uint32_le();
@@ -201,7 +201,7 @@ public:
             auto const ssize = this->chunk_size - FileToGraphic::HEADER_SIZE;
             if (ssize > 0) {
                 auto const size = size_t(ssize);
-                this->trans->recv_new(this->stream_buf, size);
+                this->trans->recv_atomic(this->stream_buf, size);
                 this->stream = InStream(this->stream_buf, size);
             }
         }

@@ -164,34 +164,6 @@ public:
     }
 
 private:
-//     void do_recv(uint8_t ** pbuffer, size_t len) override {
-//         const ssize_t res = this->buf.read(*pbuffer, len);
-//         if (res < 0){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_READ_FAILED, res);
-//         }
-//         *pbuffer += res;
-//         this->last_quantum_received += res;
-//         if (static_cast<size_t>(res) != len){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-//         }
-//     }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-        const ssize_t res = this->buf.read(buffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
-        }
-
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-        }
-    }
-
     bool do_atomic_read(uint8_t * buffer, size_t len) override {
         const ssize_t res = this->buf.read(buffer, len);
         if (res < 0){
@@ -371,16 +343,6 @@ public:
     }
 
 private:
-//     void do_recv(uint8_t ** pbuffer, size_t len) override {
-//
-//         this->gen.recv(pbuffer, len);
-//     }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-
-        this->gen.recv_new(buffer, len);
-    }
-
     bool do_atomic_read(uint8_t * buffer, size_t len) override {
 
         return this->gen.atomic_read(buffer, len);
@@ -411,10 +373,6 @@ class MemoryTransport : public Transport
 public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-        this->in_stream.in_copy_bytes(buffer, len);
-    }
 
     bool do_atomic_read(uint8_t * buffer, size_t len) override {
         auto avail = this->in_stream.in_remain();

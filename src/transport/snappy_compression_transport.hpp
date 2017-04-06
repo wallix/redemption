@@ -52,63 +52,6 @@ public:
     }
 
 private:
-    void do_recv_new(uint8_t * buffer, size_t len) override {
-        uint8_t * temp_data        = buffer;
-        size_t    temp_data_length = len;
-
-        while (temp_data_length) {
-            if (this->uncompressed_data_length) {
-                REDASSERT(this->uncompressed_data);
-
-                const size_t data_length = std::min<size_t>(temp_data_length, this->uncompressed_data_length);
-
-                ::memcpy(temp_data, this->uncompressed_data, data_length);
-
-                this->uncompressed_data        += data_length;
-                this->uncompressed_data_length -= data_length;
-
-                temp_data        += data_length;
-                temp_data_length -= data_length;
-            }
-            else {
-                uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
-
-                auto end = data_buf;
-                if (!this->source_transport.atomic_read(end, sizeof(uint16_t))){
-                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                }  // compressed_data_length(2);
-
-                const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
-                //if (this->verbose) {
-                //    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
-                //}
-
-                end = data_buf;
-                if(!this->source_transport.atomic_read(end, compressed_data_length)){
-                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                }
-                end += compressed_data_length;
-
-                this->uncompressed_data        = this->uncompressed_data_buffer;
-                this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
-
-                snappy_status status = ::snappy_uncompress(
-                      reinterpret_cast<char *>(data_buf) , end-data_buf
-                    , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
-                if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
-                    LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
-                       , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %d", status);
-                }
-                //if (this->verbose) {
-                //    LOG( LOG_INFO, "SnappyCompressionInTransport::do_recv: uncompressed_data_length=%zu"
-                //       , this->uncompressed_data_length);
-                //}
-            }
-        }
-
-        //(*pbuffer) = (*pbuffer) + len;
-    }
-
     bool do_atomic_read(uint8_t * buffer, size_t len) override {
         size_t    remaining_size = len;
 
