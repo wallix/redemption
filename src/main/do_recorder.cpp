@@ -595,13 +595,15 @@ inline void load_hash(
 
 static inline bool meta_line_stat_equal_stat(MetaLine2 const & metadata, struct stat64 const & sb)
 {
-    return metadata.dev == sb.st_dev
-        && metadata.ino == sb.st_ino
-        && metadata.mode == sb.st_mode
+    return 
+//           metadata.dev == sb.st_dev
+//        && metadata.ino == sb.st_ino
+//        && 
+           metadata.mode == sb.st_mode
         && metadata.uid == sb.st_uid
         && metadata.gid == sb.st_gid
         && metadata.mtime == sb.st_mtime
-        && metadata.ctime == sb.st_ctime
+//        && metadata.ctime == sb.st_ctime
         && metadata.size == sb.st_size;
 }
 
