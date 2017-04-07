@@ -45,7 +45,7 @@ public:
     {
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
-    } 
+    }
 
     const char * get_tmp(){
         return &this->tmpname[0];
@@ -76,7 +76,7 @@ public:
                 LOG(LOG_INFO, "%s", mes);
             }
         }
-        catch (Error e){
+        catch (Error const & e){
             LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %d", e.id);
         }
     }
@@ -126,7 +126,7 @@ public:
         ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
         this->raw_write(res.buf.data(), res.buf.size());
     }
-    
+
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         // This should avoid double closes, we do not want that
@@ -151,7 +151,7 @@ public:
     }
 
 private:
-    void do_send(const uint8_t * data, size_t len) override 
+    void do_send(const uint8_t * data, size_t len) override
     {
         if (this->fd == -1){
         LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
@@ -160,7 +160,7 @@ private:
         const ocrypto::Result res = this->encrypter.write(data, len);
         this->raw_write(res.buf.data(), res.buf.size());
     }
-    
+
     void raw_write(const uint8_t * data, size_t len)
     {
         size_t total_sent = 0;
@@ -175,5 +175,5 @@ private:
             total_sent += ret;
         }
     }
-    
+
 };

@@ -835,7 +835,8 @@ public:
 //  | 0x00000010                                 | Specification (XPS) format.                |
 //  +--------------------------------------------+--------------------------------------------+
 
-enum RDPDR_PRINTER_ANNOUNCE_FLAG : uint32_t {
+// TODO strong enum RDPDR_PRINTER_ANNOUNCE_FLAG
+enum : uint32_t {
     RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII          = 0x00000001
   , RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER = 0x00000002
   , RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER = 0x00000004
@@ -843,7 +844,7 @@ enum RDPDR_PRINTER_ANNOUNCE_FLAG : uint32_t {
   , RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT      = 0x00000010
 };
 
-static std::string get_rdpdr_printer_flags_name(RDPDR_PRINTER_ANNOUNCE_FLAG flags)
+static std::string get_rdpdr_printer_flags_name(uint32_t flags)
 {
     std::string str;
     #define ASTR(f) if (flags & f) str += #f " "
