@@ -179,13 +179,8 @@ int main(int argc, char * argv[]) {
         LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-                               , ini.get<cfg::debug::front>(), nullptr);
+                               , to_verbose_flags(ini.get<cfg::debug::front>()), nullptr);
     wait_obj front_event;
-
-    UdevRandom gen;
-    TimeSystem timeobj;
-
-    CryptoContext cctx(gen, ini);
 
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
@@ -205,9 +200,15 @@ int main(int argc, char * argv[]) {
 
     time_t now = time(nullptr);
 
+    UdevRandom gen;
+    TimeSystem timeobj;
+    CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(front_trans, gen, ini, cctx,
+
+    NullAuthentifier authentifier;
+
+    Front front(front_trans, gen, ini, cctx, authentifier,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
@@ -254,9 +255,9 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {});
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000);
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                                     , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
+                                     , to_verbose_flags(ini.get<cfg::debug::mod_rdp>()), &ini.get_ref<cfg::context::auth_error_message>());
 
             ClientInfo client_info = front.client_info;
 
@@ -265,14 +266,15 @@ int main(int argc, char * argv[]) {
                                        , target_device.c_str()
                                        , "0.0.0.0"   // client ip is silenced
                                        , front.keymap.key_flags
-                                       , ini.get<cfg::debug::mod_rdp>()
+                                       , ini.get<cfg::font>()
+                                       , ini.get<cfg::theme>()
+                                       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
                                        );
             //mod_rdp_params.enable_tls                          = true;
             mod_rdp_params.enable_nla                          = ini.get<cfg::mod_rdp::enable_nla>();
             mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
             //mod_rdp_params.enable_fastpath                     = true;
             //mod_rdp_params.enable_mem3blt                      = true;
-            mod_rdp_params.enable_bitmap_update                = ini.get<cfg::globals::enable_bitmap_update>();
             //mod_rdp_params.enable_new_pointer                  = true;
             mod_rdp_params.enable_transparent_mode             = true;
             mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
@@ -280,7 +282,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.transparent_recorder_transport      = record_oft;
             mod_rdp_params.auth_channel                        = ini.get<cfg::mod_rdp::auth_channel>();
             mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-            mod_rdp_params.working_dir                         = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+            mod_rdp_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
@@ -288,13 +290,13 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
             mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();
             mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
-            mod_rdp_params.cache_verbose                       = ini.get<cfg::debug::cache>();
+            mod_rdp_params.cache_verbose                       = to_verbose_flags(ini.get<cfg::debug::cache>());
 
             mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, timeobj, mod_rdp_params);
+                        gen, timeobj, mod_rdp_params, authentifier);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 
@@ -348,12 +350,12 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             fd_set   rfds;
             fd_set   wfds;
 
-            FD_ZERO(&rfds);
-            FD_ZERO(&wfds);
+            io_fd_zero(rfds);
+            io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            front_event.add_to_fd_set(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
-            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+            front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 0;

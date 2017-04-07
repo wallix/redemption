@@ -21,16 +21,14 @@
     Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientWab
+#define UNIT_TEST_MODULE TestRdpClientWab
 #include "system/redemption_unit_tests.hpp"
 
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "check_sig.hpp"
 #include "configs/config.hpp"
@@ -40,10 +38,9 @@
 #include "mod/rdp/rdp.hpp"
 #include "../front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "utils/netutils.hpp"
-//#include "transport/socket_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
 
@@ -64,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // const char * name = "RDP Wab Target";
     // Uncomment the code block below to generate testing data.
-    //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000, {}, verbose);
+    //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000);
     //std::string     error_message;
     //SocketTransport t( name
     //                 , client_sck
@@ -91,7 +88,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                , "10.10.47.154"
                                , "192.168.1.100"
                                , 7
-                               , 511
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
+                               , to_verbose_flags(511)
                                );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = true;
@@ -100,7 +99,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     mod_rdp_params.enable_mem3blt                  = false;
-    //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -109,39 +107,34 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.server_redirection_support        = true;
+    mod_rdp_params.large_pointer_support             = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
-    mod_rdp   mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
-    mod_api * mod = &mod_;
+    NullAuthentifier authentifier;
+    mod_rdp   mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params, authentifier);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     time_t now = 1450864840;
 
-    while (!mod->is_up_and_running())
-            mod->draw_event(now, front);
+    while (!mod.is_up_and_running())
+            mod.draw_event(now, front);
 
     uint32_t    count = 0;
-    BackEvent_t res   = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    for (;;) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 8) break;
-        mod->draw_event(time(nullptr), front);
+        mod.draw_event(time(nullptr), front);
     }
 
-    char message[1024];
-    if (!check_sig( front.gd.impl(), message
-                  , "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29"
-                  )) {
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
 }

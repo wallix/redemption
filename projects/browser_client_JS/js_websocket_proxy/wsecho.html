@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>WebSocket Echo Client</title>
+  <meta charset="UTF-8" />
+  <script>
+  var to_send = [
+        new Uint8Array([0x03, 0x00, 0x00, 0x2c, 0x27, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69,
+              0x65, 0x3a, 0x20, 0x6d, 0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x61, 0x64, 0x6d, 0x69,
+                  0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x75, 0x72, 0x0d, 0x0a])
+        ];
+  var to_send_index = 0;
+
+    // ok, this one is from valid utf-8, so it should always work
+    function unicode_to_utf8bytes(s) {
+        return unescape(encodeURIComponent(s));
+    }
+
+    // this one may not work as some sequences are not valid utf-8
+    function utf8bytes_to_unicode(s) {
+        return decodeURIComponent(escape(s));
+    }
+
+    // Initialize everything when the window finishes loading
+    window.addEventListener("load", function(event) {
+      var status = document.getElementById("status");
+      var url = document.getElementById("url");
+      var open = document.getElementById("open");
+      var close = document.getElementById("close");
+      var send = document.getElementById("send");
+      var text = document.getElementById("text");
+      var message = document.getElementById("message");
+      var socket;
+
+      status.textContent = "Not Connected";
+      url.value = "ws://localhost:8080";
+      close.disabled = true;
+      send.disabled = true;
+
+      // Create a new connection when the Connect button is clicked
+      open.addEventListener("click", function(event) {
+        open.disabled = true;
+        to_send_index = 0;
+
+        socket = new WebSocket(url.value, "rdp-protocol");
+        socket.binaryType = 'arraybuffer';
+
+        socket.addEventListener("open", function(event) {
+          close.disabled = false;
+          send.disabled = false;
+          status.textContent = "Connected";
+        });
+
+        // Display messages received from the server
+        socket.addEventListener("message", function(event) {
+            var bytearray = new Uint8Array(event.data);
+            var text = "";
+            console.log('Received Binary Message of ' + bytearray.length + ' bytes');
+            for (var i = 0 ; i < bytearray.length ; ++i){
+                text += ":" + (bytearray[i]+0x10000).toString(16).substr(-2);
+            }
+            message.textContent = "Server Says: " + text
+        });
+
+        // Display any errors that occur
+        socket.addEventListener("error", function(event) {
+          message.textContent = "Error: " + event;
+        });
+
+        socket.addEventListener("close", function(event) {
+          open.disabled = false;
+          status.textContent = "Not Connected";
+        });
+      });
+
+
+      // Close the connection when the Disconnect button is clicked
+      close.addEventListener("click", function(event) {
+        close.disabled = true;
+        send.disabled = true;
+        message.textContent = "";
+        socket.close();
+      });
+
+      // Send text to the server when the Send button is clicked
+      send.addEventListener("click", function(event) {
+        if (socket.readyState == 1){
+            socket.send(to_send[to_send_index++]);
+            text.value = "";
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  Status: <span id="status"></span><br />
+  URL: <input id="url" /><br />
+  <input id="open" type="button" value="Connect" />&nbsp;
+  <input id="close" type="button" value="Disconnect" /><br />
+  <input id="send" type="button" value="Send" />&nbsp;
+  <input id="text" /><br />
+  <span id="message"></span>
+</body>
+</html>

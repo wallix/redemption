@@ -19,20 +19,23 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
+#define UNIT_TEST_MODULE TestRDPDRAsynchronousTask
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/fdbuf.hpp"
+#include "get_file_contents.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "transport/test_transport.hpp"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 class TestToServerSender : public VirtualChannelDataSender {
     Transport & transport;
@@ -53,21 +56,12 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
+RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
 
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
-    if (fd == -1) {
-        BOOST_CHECK(false);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-
-    io::posix::fdbuf fd_wrapper(fd);
-
-    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
-
-    fd_wrapper.release();
+    RED_CHECK_NE(fd, -1);
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
@@ -81,9 +75,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(transport.get(), fd,
-        DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, verbose);
+    RdpdrDriveReadTask rdpdr_drive_read_task(
+        fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
+        test_to_server_sender, to_verbose_flags(verbose));
 
     bool run_task = true;
 
@@ -100,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
         timeval timeout = { 3, 0 };
 
-        event.add_to_fd_set(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -123,54 +117,39 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     while (run_task);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
+RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open(FIXTURES_PATH "/sample.bmp", O_RDONLY);
-    if (fd == -1) {
-        BOOST_CHECK(false);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-
-    io::posix::fdbuf fd_wrapper(fd);
-
-    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
-
-    fd_wrapper.release();
-
-    uint8_t buf[65536];
-    auto p = buf;
-
-    try {
-        transport->recv(&p, CHANNELS::CHANNEL_CHUNK_LENGTH + 1024);
-    }
-    catch (Error & e) {
-        if(e.id != 1501) {
-            LOG(LOG_ERR, "Error = %d", e.id);
-
-            throw;
-        }
-    }
+    auto contents = get_file_contents<std::string>(FIXTURES_PATH "/sample.bmp");
+    RED_CHECK_EQUAL(1974u, contents.size());
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
     #include "../../../fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    LOG(LOG_INFO, "CHECK_EXCEPTION_ERROR_ID");
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
+
+    LOG(LOG_INFO, "check_transport");
     TestToServerSender test_to_server_sender(check_transport);
+
+    LOG(LOG_INFO, "TestToServerSender");
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        buf,
-        p-buf,
+        reinterpret_cast<uint8_t const *>(contents.data()),
+        contents.size(),
         test_to_server_sender,
-        verbose);
+        to_verbose_flags(verbose));
+
+    LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
 
     bool run_task = true;
 
     do
     {
+        LOG(LOG_INFO, "do");
         wait_obj event;
 
         rdpdr_send_drive_io_response_task.configure_wait_object(event);
@@ -182,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
         timeval timeout = { 3, 0 };
 
-        event.add_to_fd_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 

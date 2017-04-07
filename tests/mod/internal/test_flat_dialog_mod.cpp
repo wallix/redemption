@@ -19,19 +19,18 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatDialogMod
+#define UNIT_TEST_MODULE TestFlatDialogMod
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
 //#define LOGPRINT
 
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestDialogMod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -42,21 +41,22 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL(true, ini.get<cfg::context::accept_message>());
+    RED_CHECK_EQUAL(true, ini.get<cfg::context::accept_message>());
 }
 
 
-BOOST_AUTO_TEST_CASE(TestDialogModReject)
+RED_AUTO_TEST_CASE(TestDialogModReject)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -67,20 +67,21 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL(false, ini.get<cfg::context::accept_message>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::context::accept_message>());
 }
 
-BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
+RED_AUTO_TEST_CASE(TestDialogModChallenge)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -91,13 +92,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;
@@ -121,10 +123,10 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
+    RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
 }
 
-BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
+RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -135,13 +137,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
     info.height = 1200;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;
@@ -165,5 +168,5 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
+    RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
 }

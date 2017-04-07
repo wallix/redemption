@@ -1,0 +1,296 @@
+## Warnings
+## @{
+constant CXXFLAGS-COMMON :
+    <cxxflags>-pedantic
+    <cxxflags>-pedantic-errors
+    <cxxflags>-Wvla
+    <cxxflags>-Wuninitialized
+    <cxxflags>-Wnon-virtual-dtor
+    <cxxflags>-Wall
+    <cxxflags>-Wextra
+    <cxxflags>-Wno-long-long
+    <cxxflags>-Wtype-limits
+    <cxxflags>-Wundef
+    <cxxflags>-Wcast-align
+    <cxxflags>-Wchar-subscripts
+    <cxxflags>-Wformat=2
+    <cxxflags>-Wformat-security
+#    <cxxflags>-Wmissing-format-attribute
+    <cxxflags>-Wsequence-point
+    <cxxflags>-Wreturn-type
+    <cxxflags>-Wfloat-equal
+#    <cxxflags>-Wshadow
+    <cxxflags>-Wpointer-arith
+    <cxxflags>-Wsign-compare
+    <cxxflags>-Wmissing-declarations
+    <cxxflags>-Wpacked
+    <cxxflags>-Wredundant-decls
+#    <cxxflags>-Winline
+    <cxxflags>-Winit-self
+    <cxxflags>-Wcast-qual
+    <cxxflags>-Woverloaded-virtual
+    <cxxflags>-Wunused-variable
+    <cxxflags>-Wmissing-include-dirs
+    <cxxflags>-Wunused
+    <cxxflags>-Wendif-labels
+    <cxxflags>-Wwrite-strings
+#    <cxxflags>-Wpadded
+    <cxxflags>-Wstrict-overflow=1
+#     <cxxflags>-Wstrict-overflow=2
+#     <cxxflags>-Wstrict-overflow=3
+#     <cxxflags>-Wstrict-overflow=4
+#     <cxxflags>-Wstrict-overflow=5
+    <cxxflags>-Wvolatile-register-var
+#    <cxxflags>-Wdisabled-optimization
+    <cxxflags>-Warray-bounds
+    <cxxflags>-Wold-style-cast
+    <cxxflags>-Wno-overlength-strings
+    <cxxflags>-Wunused-macros
+
+    <cxxflags>-Wno-switch-enum&&-Wswitch
+#     <cxxflags>-Wsign-conversion
+#     <cxxflags>-Wconversion
+#     <cxxflags>-Werror
+
+    <cxxflags>-fno-rtti
+;
+
+
+constant CXXFLAGS-CLANG-X :
+    <cxxflags>-Weverything
+    <cxxflags>-Wno-documentation-unknown-command
+    <cxxflags>-Wno-range-loop-analysis
+    <cxxflags>-Wno-disabled-macro-expansion
+    <cxxflags>-Wno-c++98-compat
+    <cxxflags>-Wno-c++98-compat-pedantic
+    <cxxflags>-Wno-mismatched-tags
+    <cxxflags>-Wno-padded
+    <cxxflags>-Wno-shadow
+    <cxxflags>-Wno-global-constructors
+    <cxxflags>-Wno-weak-vtables
+    <cxxflags>-Wno-exit-time-destructors
+
+    <cxxflags>-Wno-covered-switch-default
+    <cxxflags>-Wno-conversion
+
+    <cxxflags>-Qunused-arguments
+;
+
+
+constant CXXFLAGS-GCC-4.7 :
+    <cxxflags>-Wunused-but-set-parameter
+    <cxxflags>-Wunused-but-set-variable
+#    <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=const
+    <cxxflags>-Wsuggest-attribute=noreturn
+    <cxxflags>-Wzero-as-null-pointer-constant
+    <cxxflags>-Wlogical-op
+#    <cxxflags>-Wno-aggressive-loop-optimizations
+    <cxxflags>-Wnormalized=nfc #disable ?
+    <cxxflags>-Wvector-operation-performance
+    <cxxflags>-Wdouble-promotion
+    <cxxflags>-Wmaybe-uninitialized
+    <cxxflags>-Wtrampolines
+;
+
+
+constant CXXFLAGS-GCC-4.8 :
+    $(CXXFLAGS-GCC-4.7)
+    <cxxflags>-Wuseless-cast
+;
+
+variant empty_variant : ;
+
+# if [ os.environ NO_LTO ] {
+#     constant LTO_VARIANT : empty_variant ;
+# } else {
+#     constant LTO_VARIANT : release ;
+# }
+
+constant CXXFLAGS-GCC-4.9 :
+    $(CXXFLAGS-GCC-4.8)
+    <cxxflags>-Wconditionally-supported
+    <cxxflags>-Wfloat-conversion
+    <cxxflags>-Wopenmp-simd
+    <cxxflags>-Wparentheses
+
+#     <variant>$(LTO_VARIANT):<cxxflags>-flto
+#     <variant>$(LTO_VARIANT):<linkflags>-flto
+;
+
+
+constant CXXFLAGS-GCC-5 :
+    $(CXXFLAGS-GCC-4.9)
+    <cxxflags>-Wlogical-not-parentheses
+    <cxxflags>-Wswitch-bool
+    <cxxflags>-Wsizeof-array-argument
+    <cxxflags>-Wbool-compare
+#    <cxxflags>-Wsuggest-final-types
+#    <cxxflags>-Wsuggest-final-methods
+#    <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=const
+
+#     <variant>$(LTO_VARIANT):<cxxflags>-flto-odr-type-merging
+#     <variant>$(LTO_VARIANT):<linkflags>-flto-odr-type-merging
+;
+
+
+constant CXXFLAGS-GCC-5.1 :
+    $(CXXFLAGS-GCC-5)
+    <cxxflags>-Wsuggest-override
+    <cxxflags>-fsized-deallocation
+    <cxxflags>-Wsized-deallocation
+    <cxxflags>-Warray-bounds=2
+;
+
+
+constant CXXFLAGS-GCC-5.2 :
+    $(CXXFLAGS-GCC-5.1)
+;
+
+
+constant CXXFLAGS-GCC-6 :
+    $(CXXFLAGS-GCC-5.2)
+;
+
+
+constant CXXFLAGS-GCC-6.1 :
+    $(CXXFLAGS-GCC-6.1)
+    <cxxflags>-Wmisleading-indentation
+;
+## @}
+
+
+## Debug
+## @{
+constant CXXFLAGS-debug :
+    <define>REDASSERT_AS_ASSERT
+    <define>_GLIBCXX_DEBUG
+;
+constant CXXFLAGS-debug-only :
+    <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<define>_GLIBCXX_DEBUG
+;
+## @}
+
+
+## Sanitize
+## @{
+constant CXXFLAGS-GCC-4.9-sanitize :
+    <cxxflags>-fsanitize=address
+    <linkflags>-fsanitize=address
+
+    <cxxflags>-fsanitize=undefined
+    <linkflags>-fsanitize=undefined
+
+    <linkflags>-fsanitize=leak
+    <cxxflags>-fsanitize=leak
+
+    <cxxflags>-fno-omit-frame-pointer
+;
+
+constant CXXFLAGS-GCC-5-sanitize :
+    $(CXXFLAGS-GCC-4.9-sanitize)
+    <cxxflags>-fsanitize=bounds
+    <linkflags>-fsanitize=bounds
+;
+
+constant CXXFLAGS-GCC-6-sanitize :
+    $(CXXFLAGS-GCC-5-sanitize)
+;
+
+constant CXXFLAGS-GCC-6.1-sanitize :
+    $(CXXFLAGS-GCC-6-sanitize)
+    <cxxflags>-fsanitize=bounds-strict
+    <linkflags>-fsanitize=bounds-strict
+;
+
+constant CXXFLAGS-CLANG-3.8-sanitize :
+    $(CXXFLAGS-GCC-6-sanitize)
+;
+
+
+variant san : debug :
+    $(CXXFLAGS-debug)
+;
+## @}
+
+
+constant CXXFLAGS-clang-warnings :
+    <toolset>clang:$(CXXFLAGS-CLANG-X)
+;
+
+constant CXXFLAGS-clang-sanitize :
+    <variant>san,<toolset>clang-3.8.0:$(CXXFLAGS-CLANG-3.8-sanitize)
+;
+
+constant CXXFLAGS-gcc-warnings :
+    <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
+    <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9)
+    <toolset>gcc-5.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
+    <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.3:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.4:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
+    <toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1)
+    <toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1)
+;
+
+constant CXXFLAGS-gcc-sanitize :
+    <variant>san,<toolset>clang-3.8.0:$(CXXFLAGS-CLANG-3.8-sanitize)
+    <variant>san,<toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.4:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-5.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.4:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
+    <variant>san,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
+    <variant>san,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
+;
+
+
+constant CXXFLAGS-clang :
+    $(CXXFLAGS-clang-sanitize)
+    $(CXXFLAGS-clang-warnings)
+;
+
+constant CXXFLAGS-gcc :
+    $(CXXFLAGS-gcc-sanitize)
+    $(CXXFLAGS-gcc-warnings)
+;
+
+
+variant strict :
+    <cxxflags>-Wsign-conversion
+;
+
+constant CXXFLAGS :
+    $(CXXFLAGS-COMMON)
+    $(CXXFLAGS-debug-only)
+    $(CXXFLAGS-clang)
+    $(CXXFLAGS-gcc)
+    <variant>san:<define>CXX_ENABLE_ASAN
+;

@@ -19,24 +19,25 @@
  *              Meng Tan, Raphael Zhou
  */
 
-#pragma once 
+#pragma once
 
 #include "widget.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/region.hpp"
 #include "utils/colors.hpp"
+#include "utils/log.hpp"
+#include "utils/region.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
-inline void fill_region(gdi::GraphicApi & drawable, const Region & region, int bg_color) {
-    for (const Rect & rect : region.rects) {
-        drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
+inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
+    for (Rect const & rect : region.rects) {
+        drawable.draw(RDPOpaqueRect(rect, bg_color), rect, gdi::ColorCtx::depth24());
     }
 }
 
 class CompositeContainer {
 public:
-    virtual ~CompositeContainer() {}
+    virtual ~CompositeContainer() = default;
 
     enum { invalid_iterator = 0 };
 
@@ -164,9 +165,9 @@ protected:
 public:
     Widget2 * current_focus;
 
-    WidgetParent(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetParent(gdi::GraphicApi & drawable, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
-        : Widget2(drawable, rect, parent, notifier, group_id)
+        : Widget2(drawable, parent, notifier, group_id)
         , pressed(nullptr)
         , bg_color(BLACK)
         , impl(nullptr)
@@ -203,7 +204,7 @@ public:
             this->current_focus->focus(reason);
         }
         if (!tmp_has_focus) {
-            this->refresh(this->rect);
+            this->rdp_input_invalidate(this->get_rect());
         }
     }
     void blur() override {
@@ -214,7 +215,7 @@ public:
         if (this->current_focus) {
             this->current_focus->blur();
         }
-        this->refresh(this->rect);
+        this->rdp_input_invalidate(this->get_rect());
     }
 
     Widget2 * get_next_focus(Widget2 * w, bool loop) {
@@ -316,32 +317,48 @@ public:
         this->current_focus = nullptr;
     }
 
-    void draw(const Rect & clip) override {
-        Rect rect_intersect = clip.intersect(this->rect);
-        this->draw_inner_free(rect_intersect, this->get_bg_color());
-        this->draw_children(rect_intersect);
-    }
-    virtual void draw_children(const Rect & clip) {
+    virtual void invalidate_children(Rect clip) {
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
             REDASSERT(w);
 
-            w->refresh(clip.intersect(w->rect));
+            Rect newr = clip.intersect(w->get_rect());
+
+            if (!newr.isempty()) {
+                w->rdp_input_invalidate(newr);
+            }
 
             iter_w_current = this->impl->get_next(iter_w_current);
         }
     }
-    virtual void draw_inner_free(const Rect & clip, int bg_color) {
-        Region region;
-        region.rects.push_back(clip.intersect(this->rect));
+
+    virtual void refresh_children(Rect clip) {
+        CompositeContainer::iterator iter_w_current = this->impl->get_first();
+        while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+            Widget2 * w = this->impl->get(iter_w_current);
+            REDASSERT(w);
+
+            Rect newr = clip.intersect(w->get_rect());
+
+            if (!newr.isempty()) {
+                w->refresh(newr);
+            }
+
+            iter_w_current = this->impl->get_next(iter_w_current);
+        }
+    }
+
+    virtual void draw_inner_free(Rect clip, int bg_color) {
+        SubRegion region;
+        region.rects.push_back(clip.intersect(this->get_rect()));
 
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
             REDASSERT(w);
 
-            Rect rect_widget = clip.intersect(w->rect);
+            Rect rect_widget = clip.intersect(w->get_rect());
             if (!rect_widget.isempty()) {
                 region.subtract_rect(rect_widget);
             }
@@ -352,8 +369,8 @@ public:
         ::fill_region(this->drawable, region, bg_color);
     }
 
-    //virtual void hide_child(const Rect & clip, int bg_color) {
-    //    Region region;
+    //virtual void hide_child(Rect clip, int bg_color) {
+    //    SubRegion region;
     //
     //    CompositeContainer::iterator iter_w_current = this->impl->get_first();
     //    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
@@ -381,14 +398,20 @@ public:
         this->bg_color = color;
     }
 
-    void move_xy(int16_t x, int16_t y) {
+    void move_xy(int16_t x, int16_t y) override {
+        this->set_xy(this->x() + x, this->y() + y);
+
+        this->move_children_xy(x, y);
+    }
+
+    void move_children_xy(int16_t x, int16_t y) {
         CompositeContainer::iterator iter_w_first = this->impl->get_first();
         if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             CompositeContainer::iterator iter_w_current = iter_w_first;
             do {
                 Widget2 * w = this->impl->get(iter_w_current);
                 REDASSERT(w);
-                w->set_xy(x + w->dx(), y + w->dy());
+                w->move_xy(x, y);
 
                 iter_w_current = this->impl->get_next(iter_w_current);
             }
@@ -441,30 +464,63 @@ public:
     }
 
     Widget2 * widget_at_pos(int16_t x, int16_t y) override {
-        if (!this->rect.contains_pt(x, y)) {
+        if (!this->get_rect().contains_pt(x, y)) {
             return nullptr;
         }
         if (this->current_focus) {
-            if (this->current_focus->rect.contains_pt(x, y)) {
+            if (this->current_focus->get_rect().contains_pt(x, y)) {
                 return this->current_focus;
             }
         }
-        CompositeContainer::iterator iter_w_current = this->impl->get_first();
+        // Foreground widget is the last in the list.
+        CompositeContainer::iterator iter_w_current = this->impl->get_last();
         while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             Widget2 * w = this->impl->get(iter_w_current);
             REDASSERT(w);
-            if (w->rect.contains_pt(x, y)) {
+            if (w->get_rect().contains_pt(x, y)) {
                 return w;
             }
 
-            iter_w_current = this->impl->get_next(iter_w_current);
+            iter_w_current = this->impl->get_previous(iter_w_current);
         }
 
         return nullptr;
     }
 
-    void rdp_input_scancode( long param1, long param2, long param3
-                                   , long param4, Keymap2 * keymap) override {
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw_inner_free(rect_intersect, this->get_bg_color());
+            this->invalidate_children(rect_intersect);
+
+            this->drawable.end_update();
+        }
+    }
+
+    void refresh(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw_inner_free(rect_intersect, this->get_bg_color());
+            this->refresh_children(rect_intersect);
+
+            this->drawable.end_update();
+        }
+    }
+
+    void rdp_input_scancode(long param1, long param2, long param3,
+                            long param4, Keymap2 * keymap) override {
+        if (!keymap->nb_kevent_available()) {
+            if (this->current_focus) {
+                this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
+        }
+
         while (keymap->nb_kevent_available() > 0) {
             uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()) {
@@ -527,17 +583,11 @@ class WidgetComposite: public WidgetParent {
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetComposite(gdi::GraphicApi & drawable, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
-    : WidgetParent(drawable, rect, parent, notifier, group_id) {
+    : WidgetParent(drawable, parent, notifier, group_id) {
         this->impl = & composite_array;
     }
 
     ~WidgetComposite() override {}
-
-    void draw(const Rect & clip) override {
-        Rect rect_intersect = clip.intersect(this->rect);
-        this->draw_children(rect_intersect);
-    }
 };
-

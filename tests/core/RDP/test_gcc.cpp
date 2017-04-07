@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGCC
+#define UNIT_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
+RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {
     const char gcc_user_data[] =
     "\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
@@ -98,18 +96,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     uint8_t buf[sz];
     OutStream(buf).out_copy_bytes(gcc_conference_create_request_expected, sz);
 
-    try {
-        InStream in_stream(buf);
-        GCC::Create_Request_Recv header(in_stream);
-    } catch (Error const &) {
-        BOOST_CHECK(false);
-    };
-
-//    BOOST_CHECK(t.get_status());
+    InStream in_stream(buf);
+    RED_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
+//    RED_CHECK(t.get_status());
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
+RED_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
     const char expected[] =
         "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
@@ -124,22 +117,22 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     sc_core.clientRequestedProtocols = 0;
     OutStream out_stream(buf);
     sc_core.emit(out_stream);
-    BOOST_CHECK_EQUAL(12, out_stream.get_offset());
-    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_EQUAL(12, out_stream.get_offset());
+    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
     GCC::UserData::SCCore sc_core2;
 
     InStream in_stream(buf);
     sc_core2.recv(in_stream);
-    BOOST_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
-    BOOST_CHECK_EQUAL(12, sc_core2.length);
-    BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
-    BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
+    RED_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
+    RED_CHECK_EQUAL(12, sc_core2.length);
+    RED_CHECK_EQUAL(0x0080004, sc_core2.version);
+    RED_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 
     sc_core2.log("Server Received");
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
+RED_AUTO_TEST_CASE(Test_gcc_sc_net)
 {
     const char expected[] =
         "\x03\x0c\x10\x00" // TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
@@ -160,32 +153,26 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(out_stream);
-    BOOST_CHECK_EQUAL(16, out_stream.get_offset());
-    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_EQUAL(16, out_stream.get_offset());
+    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
-    try {
-        GCC::UserData::SCNet sc_net2;
+    GCC::UserData::SCNet sc_net2;
 
-        const bool bogus_sc_net_size = false;
-        InStream in_stream(buf);
-        sc_net2.recv(in_stream, bogus_sc_net_size);
-        BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-        BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
-        BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
-        BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
-        BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
-        BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    const bool bogus_sc_net_size = false;
+    InStream in_stream(buf);
+    RED_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
+    RED_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
+    RED_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
+    RED_CHECK_EQUAL(3, sc_net2.channelCount);
+    RED_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
+    RED_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
+    RED_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
 
-        sc_net2.log("Server Received");
-    }
-    catch (const Error &){
-        BOOST_CHECK(false);
-    };
-
+    sc_net2.log("Server Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
     const char indata[] =
         "\x03\xc0"         // CS_NET
@@ -205,30 +192,29 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSNet cs_net;
     cs_net.recv(stream);
-    BOOST_CHECK_EQUAL(CS_NET, cs_net.userDataType);
-    BOOST_CHECK_EQUAL(32, cs_net.length);
-    BOOST_CHECK_EQUAL(2, cs_net.channelCount);
-    BOOST_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
-    BOOST_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
-    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+    RED_CHECK_EQUAL(CS_NET, cs_net.userDataType);
+    RED_CHECK_EQUAL(32, cs_net.length);
+    RED_CHECK_EQUAL(2, cs_net.channelCount);
+    RED_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
+    RED_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
+    RED_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                      , cs_net.channelDefArray[0].options);
-    BOOST_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
-    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+    RED_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
+    RED_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      , cs_net.channelDefArray[1].options);
 
     cs_net.log("Client Received");
-
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
 {
     const char indata[] =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -238,20 +224,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
     sc_sec1.log("Server Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
     const char indata[] =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -261,20 +247,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
     sc_sec1.log("Server Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 {
     const char indata[] =
     // SC_SECURITY tag=0c02 length=1410
@@ -373,29 +359,29 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
-    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
-    BOOST_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
 //    hexdump_c(sc_sec1.serverRandom, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_EQUAL(0, memcmp(
                         "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
                         "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
-    BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(true, sc_sec1.temporary);
 
     sc_sec1.log("Server Received");
 
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 {
     const char indata[] =
         // SC_SECURITY tag=0c02 length=236
@@ -420,29 +406,29 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
-    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
-    BOOST_CHECK_EQUAL(184, sc_sec1.serverCertLen);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(184, sc_sec1.serverCertLen);
 //    hexdump_c(sc_sec1.serverRandom, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_EQUAL(0, memcmp(
                     "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
                     "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
-    BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
-    BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(false, sc_sec1.temporary);
+    RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
     sc_sec1.log("Server Received");
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
 {
     const char indata[] =
         "\x04\xc0"         // CS_CLUSTER
@@ -458,20 +444,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
-    BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
-    BOOST_CHECK_EQUAL(12, cs_cluster.length);
-    BOOST_CHECK_EQUAL(13, cs_cluster.flags);
-    BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+    RED_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
+    RED_CHECK_EQUAL(12, cs_cluster.length);
+    RED_CHECK_EQUAL(13, cs_cluster.flags);
+    RED_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
 
     cs_cluster.log("Client Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
 {
     const char indata[] =
         "\x01\xc0"         // TS_UD_HEADER::type = CS_CORE (0xc001)
@@ -516,12 +502,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
-    BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
-    BOOST_CHECK_EQUAL(216, cs_core.length);
+    RED_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
+    RED_CHECK_EQUAL(216, cs_core.length);
 
     cs_core.log("Client Received");
 }
@@ -530,7 +516,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
 {
     const char indata[] =
         "\x02\xc0"         // CS_SECURITY
@@ -549,19 +535,19 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::CSSecurity cs_security;
     InStream stream(buf);
     cs_security.recv(stream);
-    BOOST_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
-    BOOST_CHECK_EQUAL(12, cs_security.length);
-    BOOST_CHECK_EQUAL(27, cs_security.encryptionMethods);
-    BOOST_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
+    RED_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
+    RED_CHECK_EQUAL(12, cs_security.length);
+    RED_CHECK_EQUAL(27, cs_security.encryptionMethods);
+    RED_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
 
     cs_security.log("Client Received");
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 {
     const char indata[] =
         // SC_SECURITY tag=0c02 length=428
@@ -598,24 +584,24 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::SCSecurity sc_sec1;
     InStream stream(buf);
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
-    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
-    BOOST_CHECK_EQUAL(376, sc_sec1.serverCertLen);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(376, sc_sec1.serverCertLen);
     //hexdump_c(sc_sec1.serverRandom, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_EQUAL(0, memcmp(
                     "\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64\x15\x44\x44\xed"
                     "\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4\x3b\x35\x37\x9f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
-    BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
-    BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(false, sc_sec1.temporary);
+    RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
     sc_sec1.log("Server Received");
 
@@ -627,7 +613,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     ct.send(out_stream.get_data(), out_stream.get_offset());
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
 {
     const char indata[] =
         "\x06\xc0"         // CS_MCS_MSGCHANNEL
@@ -640,18 +626,18 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     InStream stream(buf);
     cs_mcs_msgchannel.recv(stream);
-    BOOST_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
-    BOOST_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
-    BOOST_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
+    RED_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
+    RED_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
+    RED_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
 
     cs_mcs_msgchannel.log("Client Received");
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
 {
     const char indata[] =
         "\x0a\xc0"         // CS_MULTITRANSPORT
@@ -664,13 +650,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv(&end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::CSMultiTransport cs_multitransport;
     InStream stream(buf);
     cs_multitransport.recv(stream);
-    BOOST_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
-    BOOST_CHECK_EQUAL(8, cs_multitransport.length);
-    BOOST_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
+    RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
+    RED_CHECK_EQUAL(8, cs_multitransport.length);
+    RED_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
                       GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
                       GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
                       GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP,

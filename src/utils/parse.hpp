@@ -34,6 +34,11 @@ public:
     Parse() = default;
     explicit Parse(uint8_t const * p) : p(p) {}
 
+    void unget(size_t n)
+    {
+        this->p -= n;
+    }
+
     int8_t in_sint8(void) {
         return *(reinterpret_cast<int8_t const *>(this->p++));
     }
@@ -194,6 +199,10 @@ public:
         return false;
     }
 
+    bool bool_from_cstrz() noexcept
+    {
+        return this->bool_from_cstr() && this->p[0] == 0;
+    }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
     // =======================================================
@@ -336,6 +345,17 @@ public:
         for (size_t i = 0; i < length ; i ++){
             utf16[i] = this->in_uint16_le();
         }
+    }
+
+    size_t in_utf16_sz(uint16_t utf16[], size_t length)
+    {
+        for (size_t i = 0; i < length ; i++){
+            utf16[i] = this->in_uint16_le();
+            if (utf16[i] == 0){
+                return i;
+            }
+        }
+        return length;
     }
 
 };

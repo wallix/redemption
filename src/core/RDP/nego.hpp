@@ -30,6 +30,8 @@
 
 #include "utils/sugar/strutils.hpp"
 
+#include "utils/verbose_flags.hpp"
+
 struct RdpNego
 {
     enum {
@@ -53,13 +55,15 @@ struct RdpNego
 //    char* cookie;
     bool restricted_admin_mode;
 
+  // NLA : Network Level Authentication (TLS implicit)
+  // TLS : TLS Encryption without NLA
+  // RDP: Standard Legacy RDP Encryption without TLS nor NLA
+
     enum
     {
         NEGO_STATE_INITIAL,
-        NEGO_STATE_NLA,  // Network Level Authentication (TLS implicit)
-        NEGO_STATE_TLS,  // TLS Encryption without NLA
-        NEGO_STATE_RDP,  // Standard Legacy RDP Encryption
-        //NEGO_STATE_FAIL, // Negotiation failure */
+        NEGO_STATE_NEGOCIATE,
+        // NEGO_STATE_FAIL, // Negotiation failure */
         NEGO_STATE_FINAL
     } state;
 
@@ -85,12 +89,18 @@ struct RdpNego
     uint8_t * current_password;
     Random & rand;
     TimeObj & timeobj;
-    const uint32_t verbose;
     char * lb_info;
+
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        credssp     = 0x400,
+        negotiation = 128,
+    };
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-            const uint32_t verbose = 0)
+            const Verbose verbose = {})
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -104,9 +114,10 @@ struct RdpNego
     , current_password(nullptr)
     , rand(rand)
     , timeobj(timeobj)
-    , verbose(verbose)
     , lb_info(nullptr)
+    , verbose(verbose)
     {
+
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
                                     | RdpNego::PROTOCOL_TLS;
@@ -117,6 +128,12 @@ struct RdpNego
         else {
             this->enabled_protocols = RdpNego::PROTOCOL_RDP;
         }
+
+        LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s",
+            ((this->enabled_protocols & RdpNego::PROTOCOL_TLS) ? "Enabled" : "Disabled"),
+            ((this->enabled_protocols & RdpNego::PROTOCOL_NLA) ? "Enabled" : "Disabled")
+            );
+
         strncpy(this->username, username, 127);
         this->username[127] = 0;
 
@@ -145,57 +162,6 @@ struct RdpNego
         }
     }
 
-    void server_event(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path)
-    {
-        switch (this->state){
-        case NEGO_STATE_INITIAL:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            this->send_negotiation_request();
-            if (this->nla) {
-                this->state = NEGO_STATE_NLA;
-            }
-            else if (this->tls){
-                this->state = NEGO_STATE_TLS;
-            }
-            else {
-                this->state = NEGO_STATE_RDP;
-            }
-        break;
-        default:
-        case NEGO_STATE_FINAL:
-        case NEGO_STATE_NLA:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        case NEGO_STATE_TLS:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        case NEGO_STATE_RDP:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        }
-    }
 
 
 // 2.2.1.2 Server X.224 Connection Confirm PDU
@@ -321,9 +287,11 @@ struct RdpNego
         InStream stream(array, end - array);
         X224::CC_TPDU_Recv x224(stream);
 
-        if (x224.rdp_neg_type == 0){
+        if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
             this->tls = false;
+            this->nla = false;
             this->state = NEGO_STATE_FINAL;
+            LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
             return;
         }
         this->selected_protocol = x224.rdp_neg_code;
@@ -350,7 +318,7 @@ struct RdpNego
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
                                    this->rand, this->timeobj,
-                                   this->verbose);
+                                   bool(this->verbose & Verbose::credssp));
 
                 int res = 0;
                 bool fallback = false;
@@ -391,9 +359,10 @@ struct RdpNego
             else {
                 LOG(LOG_INFO, "Can't activate NLA");
                 this->nla = false;
+                this->tls = true;
                 LOG(LOG_INFO, "falling back to SSL only");
                 this->send_negotiation_request();
-                this->state = NEGO_STATE_TLS;
+                this->state = NEGO_STATE_NEGOCIATE;
                 this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
             }
         }
@@ -414,12 +383,13 @@ struct RdpNego
             || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER)){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
+                this->nla = false;
                 this->trans.disconnect();
                 if (!this->trans.connect()){
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 this->send_negotiation_request();
-                this->state = NEGO_STATE_RDP;
+                this->state = NEGO_STATE_NEGOCIATE;
                 this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
@@ -449,7 +419,6 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
-
     }
 
 
@@ -490,17 +459,14 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
         char * cookie_or_token = this->lb_info?this->lb_info:cookie;
-        if (this->verbose & 128) {
+        if (bool(this->verbose & Verbose::negotiation)) {
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }
-        uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
-        if (this->tls) {
-            rdp_neg_requestedProtocols |= X224::PROTOCOL_TLS;
-        }
-        if (this->nla) {
-            rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
-        }
+        uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP
+                | (this->tls ? X224::PROTOCOL_TLS:0)
+                | (this->nla ? X224::PROTOCOL_HYBRID:0);
+
         StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
@@ -510,166 +476,6 @@ struct RdpNego
         this->trans.send(stream.get_data(), stream.get_offset());
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
-
-
-//     void send_negotiation_response()
-//     {
-//        STREAM* s;
-//        rdpSettings* settings;
-//        int length;
-//        uint8 *bm, *em;
-//        boolean ret;
-
-//        ret = true;
-//        settings = nego->transport->settings;
-
-//        s = transport_send_stream_init(nego->transport, 256);
-//        length = TPDU_CONNECTION_CONFIRM_LENGTH;
-//        stream_get_mark(s, bm);
-//        stream_seek(s, length);
-
-//        if (nego->selected_protocol > PROTOCOL_RDP)
-//        {
-//            /* RDP_NEG_DATA must be present for TLS and NLA */
-//            stream_write_uint8(s, TYPE_RDP_NEG_RSP);
-//            stream_write_uint8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
-//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
-//            stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
-//            length += 8;
-//        }
-//        else if (!settings->rdp_security)
-//        {
-//            stream_write_uint8(s, TYPE_RDP_NEG_FAILURE);
-//            stream_write_uint8(s, 0); /* flags */
-//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
-//            /*
-//            * TODO: Check for other possibilities,
-//            *       like SSL_NOT_ALLOWED_BY_SERVER.
-//            */
-//            printf("this->send_negotiation_response: client supports only Standard RDP Security\n");
-//            stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
-//            length += 8;
-//            ret = false;
-//        }
-
-//        stream_get_mark(s, em);
-//        stream_set_mark(s, bm);
-//        tpkt_write_header(s, length);
-//        tpdu_write_connection_confirm(s, length - 5);
-//        stream_set_mark(s, em);
-
-//        if (transport_write(nego->transport, s) < 0){
-//            return false;
-//        }
-
-//        if (ret)
-//        {
-//            /* update settings with negotiated protocol security */
-//            settings->requested_protocols = nego->requested_protocols;
-//            settings->selected_protocol = nego->selected_protocol;
-
-//            if (settings->selected_protocol == PROTOCOL_RDP)
-//            {
-//                settings->tls_security = false;
-//                settings->nla_security = false;
-//                settings->rdp_security = true;
-//                settings->encryption = true;
-//                settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-//                settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-//            }
-//            else if (settings->selected_protocol == PROTOCOL_TLS)
-//            {
-//                settings->tls_security = true;
-//                settings->nla_security = false;
-//                settings->rdp_security = false;
-//                settings->encryption = false;
-//                settings->encryption_method = ENCRYPTION_METHOD_NONE;
-//                settings->encryption_level = ENCRYPTION_LEVEL_NONE;
-//            }
-//            else if (settings->selected_protocol == PROTOCOL_NLA)
-//            {
-//                settings->tls_security = true;
-//                settings->nla_security = true;
-//                settings->rdp_security = false;
-//                settings->encryption = false;
-//                settings->encryption_method = ENCRYPTION_METHOD_NONE;
-//                settings->encryption_level = ENCRYPTION_LEVEL_NONE;
-//            }
-//        }
-
-//        return ret;
-//     }
-
-
-//     void recv_resquest(const char * certificate_password, ClientInfo & client_info,
-//                        bool tls_support, bool tls_fallback_legacy) {
-//         // Receive Request
-//         {
-//
-//             constexpr size_t array_size = AUTOSIZE;
-//             uint8_t array[array_size];
-//             uint8_t * end = array;
-//             X224::RecvFactory fac_x224(this->trans, &end, array_size);
-//             InStream stream(array, end - array);
-//             X224::CR_TPDU_Recv x224(stream, false);
-//             if (x224._header_size != (size_t)(stream.size())){
-//                 LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-//                     " %d bytes remains", stream.size() - x224._header_size);
-//             }
-//             this->requested_protocol = x224.rdp_neg_requestedProtocols;
-//
-//             if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-//                 (!tls_support || 0 == (this->requested_protocol & X224::PROTOCOL_TLS))
-//                 // Fallback to legacy security protocol (RDP) is allowed.
-//                 && tls_fallback_legacy) {
-//                 LOG(LOG_INFO, "Fallback to legacy security protocol");
-//                 this->tls = false;
-//             }
-//         }
-//
-//         // Send Response
-//         {
-//             BStream stream(256);
-//             uint8_t rdp_neg_type = 0;
-//             uint8_t rdp_neg_flags = 0;
-//             uint32_t rdp_neg_code = 0;
-//             if (this->nla) {
-//                 LOG(LOG_INFO, "-----------------> Front::NLA Support Enabled");
-//                 if (this->requested_protocol & X224::PROTOCOL_HYBRID) {
-//                     rdp_neg_type = X224::RDP_NEG_RSP;
-//                     rdp_neg_code = X224::PROTOCOL_HYBRID;
-//                     client_info.encryptionLevel = 0;
-//                 }
-//                 else {
-//                     rdp_neg_type = X224::RDP_NEG_FAILURE;
-//                     rdp_neg_code = X224::HYBRID_REQUIRED_BY_SERVER;
-//                     // Fallback to tls ?
-//                 }
-//             }
-//             else if (this->tls) {
-//                 LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
-//                 if (this->requested_protocol & X224::PROTOCOL_TLS) {
-//                     rdp_neg_type = X224::RDP_NEG_RSP;
-//                     rdp_neg_code = X224::PROTOCOL_TLS;
-//                     client_info.encryptionLevel = 0;
-//                 }
-//                 else {
-//                     rdp_neg_type = X224::RDP_NEG_FAILURE;
-//                     rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
-//                 }
-//             }
-//             else {
-//                 LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
-//             }
-//
-//             X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-//             this->trans.send(stream);
-//
-//             if (this->tls){
-//                 this->trans.enable_server_tls(certificate_password);
-//             }
-//         }
-//     }
 
 };
 

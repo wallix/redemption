@@ -26,23 +26,18 @@
 
 #include "utils/apps/app_proxy.hpp"
 
-#include "program_options/program_options.hpp"
+#include "capture/cryptofile.hpp"
+#include "utils/genrandom.hpp"
+#include "configs/config.hpp"
 
-#include "utils/apps/cryptofile.hpp"
-
-namespace po = program_options;
+#include "main/version.hpp"
 
 int main(int argc, char** argv)
 {
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     UdevRandom rnd;
-    CryptoContext cctx(rnd, ini);
-
-    static constexpr char const * opt_print_spec = "print-config-spec";
-    static constexpr char const * opt_print_ini = "print-default-ini";
+    CryptoContext cctx;
 
     return app_proxy(
         argc, argv
@@ -52,24 +47,6 @@ int main(int argc, char** argv)
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
       , cctx
-      , extra_option_list{
-          {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
-          {opt_print_ini, "rdpproxy.ini by default"}
-      }
-      , [argv](po::variables_map const & options, bool * quit) {
-            if (options.count(opt_print_spec)) {
-                *quit = true;
-                std::cout <<
-                  #include "configs/autogen/str_python_spec.hpp"
-                ;
-            }
-            if (options.count(opt_print_ini)) {
-                *quit = true;
-                std::cout <<
-                  #include "configs/autogen/str_ini.hpp"
-                ;
-            }
-            return 0;
-        }
+      , rnd
     );
 }

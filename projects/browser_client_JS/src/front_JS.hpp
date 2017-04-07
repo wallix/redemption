@@ -414,7 +414,7 @@ public:
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         Rect rectBmp(cmd.rect);
-        const Rect& rect = clip.intersect(rectBmp);
+        const +Rect rect = clip.intersect(rectBmp);
         if (rect.isempty()){
             return ;
         }
@@ -653,7 +653,7 @@ public:
 
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        const Rect& drect = clip.intersect(cmd.rect);
+        const +Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty() || bitmap.cx() <= 0 || bitmap.cy() <= 0){
             return ;
         }
@@ -727,6 +727,14 @@ public:
     virtual void draw(const RDP::RAIL::CachedIcon & order) override {}
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override {}
+
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons order) override {}
+
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons order) override {}
+
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop order) override {}
+
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop order) override {}
 
     virtual void draw(const RDPColCache   & cmd) override {}
 

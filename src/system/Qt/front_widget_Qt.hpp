@@ -864,22 +864,23 @@ public:
     }
 
     bool connect() {
-        const char * name(this->_front->_userName.c_str());
         const char * targetIP(this->_front->_targetIP.c_str());
         const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
 
         //std::cout << name << " " << this->_front->_pwd << " " << this->_front->_targetIP.c_str() << " " << this->_front->_port << std::endl;
 
-        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, {}, this->_front->verbose);
+        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, {});
 
         if (this->_client_sck > 0) {
             try {
                 std::string error_message;
+                const char * name(this->_front->_userName.c_str());
                 this->_sck = new SocketTransport( name
                                                 , this->_client_sck
                                                 , targetIP
                                                 , this->_front->_port
                                                 , this->_front->verbose
+                                                // TODO error_message life time is too short
                                                 , &error_message
                                                 );
                 std::cout << "Connected to [" << targetIP <<  "]." << std::endl;

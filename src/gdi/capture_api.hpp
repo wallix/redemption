@@ -37,7 +37,7 @@ struct CaptureApi : private noncopyable
 {
     virtual ~CaptureApi() = default;
 
-    std::chrono::microseconds snapshot(
+    virtual std::chrono::microseconds periodic_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
@@ -48,25 +48,20 @@ struct CaptureApi : private noncopyable
         return next_duration;
     }
 
-    void pause_capture(timeval const & now) {
-        // assert(now >= previous);
-        this->do_pause_capture(now);
+    virtual void frame_marker_event(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) 
+    {
+        this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
-    void resume_capture(timeval const & now) {
-        // assert(now >= previous);
-        this->do_resume_capture(now);
-    }
-
-private:
     virtual std::chrono::microseconds do_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) = 0;
-
-    virtual void do_pause_capture(timeval const &) {}
-    virtual void do_resume_capture(timeval const &) {}
 };
 
 
@@ -76,14 +71,6 @@ struct ExternalCaptureApi : private noncopyable
     virtual void external_time(timeval const & now) = 0;
 
     virtual ~ExternalCaptureApi() = default;
-};
-
-
-struct UpdateConfigCaptureApi : private noncopyable
-{
-    virtual void update_config(Inifile const & ini) = 0;
-
-    virtual ~UpdateConfigCaptureApi() = default;
 };
 
 }

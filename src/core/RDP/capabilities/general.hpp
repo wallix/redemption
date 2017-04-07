@@ -54,6 +54,14 @@
 // +--------------------------------+----------------------+
 // | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
 // +--------------------------------+----------------------+
+// | 0x0005 OSMAJORTYPE_IOS         | iOS platform         |
+// +--------------------------------+----------------------+
+// | 0x0006 OSMAJORTYPE_OSX         | OS X platform        |
+// +--------------------------------+----------------------+
+// | 0x0007 OSMAJORTYPE_ANDROID     | Android platform     |
+// +--------------------------------+----------------------+
+// | 0x0008 OSMAJORTYPE_CHROME_OS   | Chrome OS platform   |
+// +--------------------------------+----------------------+
 
 enum {
        OSMAJORTYPE_UNSPECIFIED
@@ -61,6 +69,10 @@ enum {
      , OSMAJORTYPE_OS2
      , OSMAJORTYPE_MACINTOSH
      , OSMAJORTYPE_UNIX
+     , OSMAJORTYPE_IOS
+     , OSMAJORTYPE_OSX
+     , OSMAJORTYPE_ANDROID
+     , OSMAJORTYPE_CHROME_OS
 };
 
 
@@ -72,31 +84,34 @@ enum {
 // +--------------------------------------+----------------------+
 // | 0x0001 OSMINORTYPE_WINDOWS_31X       | Windows 3.1x         |
 // +--------------------------------------+----------------------+
-// | 0x0002 TS_OSMINORTYPE_WINDOWS_95     | Windows 95           |
+// | 0x0002 OSMINORTYPE_WINDOWS_95        | Windows 95           |
 // +--------------------------------------+----------------------+
-// | 0x0003 TS_OSMINORTYPE_WINDOWS_NT     | Windows NT           |
+// | 0x0003 OSMINORTYPE_WINDOWS_NT        | Windows NT           |
 // +--------------------------------------+----------------------+
-// | 0x0004 TS_OSMINORTYPE_OS2_V21        | OS/2 2.1             |
+// | 0x0004 OSMINORTYPE_OS2_V21           | OS/2 2.1             |
 // +--------------------------------------+----------------------+
-// | 0x0005 TS_OSMINORTYPE_POWER_PC       | PowerPC              |
+// | 0x0005 OSMINORTYPE_POWER_PC          | PowerPC              |
 // +--------------------------------------+----------------------+
-// | 0x0006 TS_OSMINORTYPE_MACINTOSH      | Macintosh            |
+// | 0x0006 OSMINORTYPE_MACINTOSH         | Macintosh            |
 // +--------------------------------------+----------------------+
-// | 0x0007 TS_OSMINORTYPE_NATIVE_XSERVER | Native X Server      |
+// | 0x0007 OSMINORTYPE_NATIVE_XSERVER    | Native X Server      |
 // +--------------------------------------+----------------------+
-// | 0x0008 TS_OSMINORTYPE_PSEUDO_XSERVER | Pseudo X Server      |
+// | 0x0008 OSMINORTYPE_PSEUDO_XSERVER    | Pseudo X Server      |
+// +--------------------------------------+----------------------+
+// | 0x0009 OSMINORTYPE_WINDOWS RT        | Pseudo X Server      |
 // +--------------------------------------+----------------------+
 
 enum {
        OSMINORTYPE_UNSPECIFIED
      , OSMINORTYPE_WINDOWS_31X
-     , TS_OSMINORTYPE_WINDOWS_95
-     , TS_OSMINORTYPE_WINDOWS_NT
-     , TS_OSMINORTYPE_OS2_V21
-     , TS_OSMINORTYPE_POWER_PC
-     , TS_OSMINORTYPE_MACINTOSH
-     , TS_OSMINORTYPE_NATIVE_XSERVER
-     , TS_OSMINORTYPE_PSEUDO_XSERVER
+     , OSMINORTYPE_WINDOWS_95
+     , OSMINORTYPE_WINDOWS_NT
+     , OSMINORTYPE_OS2_V21
+     , OSMINORTYPE_POWER_PC
+     , OSMINORTYPE_MACINTOSH
+     , OSMINORTYPE_NATIVE_XSERVER
+     , OSMINORTYPE_PSEUDO_XSERVER
+     , OSMINORTYPE_WINDOWS_RT
 };
 
 // protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
@@ -199,7 +214,7 @@ struct GeneralCaps : public Capability {
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
     , os_major(OSMAJORTYPE_WINDOWS)
-    , os_minor(TS_OSMINORTYPE_WINDOWS_NT)
+    , os_minor(OSMINORTYPE_WINDOWS_NT)
     , protocolVersion(0x200)
     , pad2octetsA(0)
     , compressionType(0)
@@ -212,9 +227,9 @@ struct GeneralCaps : public Capability {
     , suppressOutputSupport(0)
     {
     }
-    ~GeneralCaps() override {}
 
-    void emit(OutStream & stream) override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->os_major);
@@ -230,7 +245,8 @@ struct GeneralCaps : public Capability {
         stream.out_uint8(this->suppressOutputSupport);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
 
         /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +
@@ -257,7 +273,8 @@ struct GeneralCaps : public Capability {
         this->suppressOutputSupport = stream.in_uint8();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "General caps::major %u", this->os_major);
         LOG(LOG_INFO, "General caps::minor %u", this->os_minor);
@@ -282,30 +299,30 @@ struct GeneralCaps : public Capability {
         LOG(LOG_INFO, "General caps::suppressOutputSupport %x", this->suppressOutputSupport);
     }
 
-    void dump(FILE * f) const {
-        fprintf(f,
-            "[General Capability Set]\n"
-            "osMajorType=%u\n"
-            "osMinorType=%u\n"
-            "protocolVersion=%u\n"
-            "generalCompressionTypes=%u\n"
-            "extraFlags=%u\n"
-            "updateCapabilityFlag=%u\n"
-            "remoteUnshareFlag=%u\n"
-            "generalCompressionLevel=%u\n"
-            "refreshRectSupport=%u\n"
-            "suppressOutputSupport=%u\n\n",
-            unsigned(this->os_major),
-            unsigned(this->os_minor),
-            unsigned(this->protocolVersion),
-            unsigned(this->compressionType),
-            unsigned(this->extraflags),
-            unsigned(this->updateCapability),
-            unsigned(this->remoteUnshare),
-            unsigned(this->compressionLevel),
-            unsigned(this->refreshRectSupport),
-            unsigned(this->suppressOutputSupport)
-        );
+    void dump(FILE * f) const
+    {
+       fprintf(f,
+           "[General Capability Set]\n"
+           "osMajorType=%u\n"
+           "osMinorType=%u\n"
+           "protocolVersion=%u\n"
+           "generalCompressionTypes=%u\n"
+           "extraFlags=%u\n"
+           "updateCapabilityFlag=%u\n"
+           "remoteUnshareFlag=%u\n"
+           "generalCompressionLevel=%u\n"
+           "refreshRectSupport=%u\n"
+           "suppressOutputSupport=%u\n\n",
+           unsigned(this->os_major),
+           unsigned(this->os_minor),
+           unsigned(this->protocolVersion),
+           unsigned(this->compressionType),
+           unsigned(this->extraflags),
+           unsigned(this->updateCapability),
+           unsigned(this->remoteUnshare),
+           unsigned(this->compressionLevel),
+           unsigned(this->refreshRectSupport),
+           unsigned(this->suppressOutputSupport)
+       );
     }
 };
-

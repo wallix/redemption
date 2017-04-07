@@ -23,15 +23,13 @@
 #pragma once
 
 #include "main/version.hpp"
-#include "core/front_api.hpp"
-#include "widget2/flat_login.hpp"
-#include "internal_mod.hpp"
-#include "widget2/notify_api.hpp"
-#include "utils/translation.hpp"
-#include "copy_paste.hpp"
 #include "configs/config_access.hpp"
-#include "widget2/language_button.hpp"
-
+#include "core/front_api.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "mod/internal/widget2/flat_login.hpp"
+#include "mod/internal/widget2/language_button.hpp"
+#include "mod/internal/widget2/notify_api.hpp"
 #include "utils/timeout.hpp"
 
 # include <chrono>
@@ -49,11 +47,12 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
 
-class FlatLoginMod : public InternalMod, public NotifyApi
+class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 
@@ -68,22 +67,24 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now
+        FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
+        ClientExecute & client_execute
     )
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(
             vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
             this->login, front, front, this->font(), this->theme())
         , login(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this, "Redemption " VERSION,
             nullptr, nullptr,
-            TR("login", language(vars)),
-            TR("password", language(vars)),
+            TR(trkeys::login, language(vars)),
+            TR(trkeys::password, language(vars)),
             vars.get<cfg::context::opt_message>().c_str(),
             &this->language_button,
             this->font(), Translator(language(vars)), this->theme())
         , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
         , vars(vars)
     {
         if (vars.get<cfg::globals::authentication_timeout>().count()) {
@@ -102,7 +103,7 @@ public:
             this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
         }
 
-        this->screen.refresh(this->screen.rect);
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~FlatLoginMod() override {
@@ -126,16 +127,18 @@ public:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
             break;
-        default:
+        case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
             if (this->copy_paste) {
                 copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
             }
             break;
+        default:;
         }
     }
 
-    void draw_event(time_t now, gdi::GraphicApi &) override {
-        (void)now;
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
@@ -157,10 +160,14 @@ public:
     bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        (void)length;
+        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->login.move_size_widget(left, top, width, height);
+    }
+};

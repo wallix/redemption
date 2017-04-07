@@ -21,69 +21,29 @@
 
 #pragma once
 
-#include "utils/log.hpp"
+// set by command line
+#ifdef IN_IDE_PARSER
+# define RECORD_PATH "/var/rdpproxy/recorded"
+# define RECORD_TMP_PATH "/var/rdpproxy/tmp"
+# define FLV_PATH "/tmp"
+# define OCR_PATH "/tmp"
+# define PNG_PATH "/tmp"
+# define WRM_PATH "/tmp"
+// still used in front and recorder
+# define HASH_PATH "/tmp/hash"
+# define LICENSE_PATH "/var/certs/redemption"
+// still used in sockettransport
+# define CERTIF_PATH "/etc/rdpproxy/certificate"
+# define PERSISTENT_PATH "/var/lib/redemption/cache"
+# define DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection"
+# define PID_PATH "/var/run"
 
-// TODO move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)
-#if !defined(SHARE_PATH)
-#define SHARE_PATH "/usr/local/share/rdpproxy"
+// still used in front, checkfiles, session, transparent, some internal mods
+# define SHARE_PATH "/usr/local/share/rdpproxy"
+// still used in main and sockettransport
+# define CFG_PATH "/etc/rdpproxy"
 #endif
 
-// TODO move CFG_PATH to configuration (still used in main and sockettransport)
-#if !defined(CFG_PATH)
-#define CFG_PATH "/etc/rdpproxy"
-#endif
-
-// TODO move PID_PATH to configuration
-#if !defined(PID_PATH)
-#define PID_PATH "/var/run"
-#endif
-
-// TODO move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_transparent)
-#if !defined(LICENSE_PATH)
-#define LICENSE_PATH "/var/certs/redemption"
-#endif
-
-#if !defined(FLV_PATH)
-#define FLV_PATH "/tmp"
-#endif
-
-#if !defined(OCR_PATH)
-#define OCR_PATH "/tmp"
-#endif
-
-#if !defined(PNG_PATH)
-#define PNG_PATH "/tmp"
-#endif
-
-#if !defined(WRM_PATH)
-#define WRM_PATH "/tmp"
-#endif
-
-// TODO move HASH_PATH to configuration (still used in front and recorder)
-#if !defined(HASH_PATH)
-#define HASH_PATH "/tmp/hash"
-#endif
-
-// TODO move CERTIF_PATH to configuration (still used in sockettransport)
-#if !defined(CERTIF_PATH)
-#define CERTIF_PATH "/etc/rdpproxy/certificate"
-#endif
-
-#if !defined(RECORD_PATH)
-#define RECORD_PATH "/var/rdpproxy/recorded"
-#endif
-
-#if !defined(PERSISTENT_PATH)
-#define PERSISTENT_PATH "/var/lib/redemption/cache"
-#endif
-
-#if !defined(DRIVE_REDIRECTION_PATH)
-#define DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection"
-#endif
-
-#if !defined(RECORD_TMP_PATH)
-#define RECORD_TMP_PATH "/var/rdpproxy/tmp"
-#endif
 
 // TODO move these into configuration
 #define LOGIN_LOGO24 "ad24b.png"
@@ -107,4 +67,3 @@
 #define DH1024_PEM "dh1024.pem"
 #define DH2048_PEM "dh2048.pem"
 #define DH_PEM DH2048_PEM
-

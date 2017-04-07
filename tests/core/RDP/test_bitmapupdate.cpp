@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBitmapUpdate
+#define UNIT_TEST_MODULE TestBitmapUpdate
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,15 +31,16 @@
 #include "core/RDP/RDPDrawable.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
+RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 1440;
     uint16_t height = 850;
     Rect screen_rect(0, 0, width, height);
 
-    RDPDrawable gd(width, height, 16);
-    gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect);
+    RDPDrawable gd(width, height);
+    auto const color_cxt = gdi::ColorCtx::depth16();
+    gd.draw(RDPOpaqueRect(screen_rect, color_encode(0x2F2F2F, 16)), screen_rect, color_cxt);
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
@@ -186,12 +185,7 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
     gd.draw(bitmap_data, capture_bmp);
 
-    char message[1024];
-    if (!check_sig(gd, message,
-                   "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1"
-                  )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
 
     // uncomment to see result in png file
     //dump_png("./test_bitmapupdate.png", gd.impl());

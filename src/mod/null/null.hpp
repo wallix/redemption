@@ -53,7 +53,9 @@ struct null_mod : public mod_api
         (void)param2;
     }
 
-    void rdp_input_invalidate(const Rect &) override {}
+    void rdp_input_invalidate(const Rect) override {}
+
+    void refresh(const Rect) override {}
 
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running

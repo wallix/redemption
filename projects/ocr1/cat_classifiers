@@ -1,0 +1,54 @@
+#!/bin/sh
+
+[ $# -lt 2 ] && echo "usage: $0 output font_classfy1.hxx [...]" >&2 && exit 1
+
+out="$1"
+shift 1
+echo "$@"
+pwd="$(dirname "$O")"
+
+for f in "$@" ; do
+    bname="$(basename "$f")"
+    funcname="${bname%%.hxx}"
+    echo 'inline'
+    echo 'const char * '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel)'
+    echo '{'
+    echo '# include "'./ocr1/classifiers/"$bname"'"'
+    echo '  return unknown;'
+    echo '}'
+    echo
+    repl="$pwd/learn.ok/$funcname".repl
+    if [ -f "$repl" ] ; then
+        echo 'constexpr Font::Replacement const '"$funcname"'_replacement[] {'
+        cat "$repl"
+        echo '{nullptr,nullptr}'
+        echo '};'
+        echo
+    else
+        echo -n 'constexpr Font::Replacement * const '"$funcname"'_replacement = nullptr;'
+        echo
+    fi
+done > "$out"
+
+out_hxx="${out%%.hxx}.names.hxx"
+tab=$(echo "\t")
+err=0
+for f in "$@" ; do
+    fonttxt="$pwd/include/ocr1/fonts/$(basename "${f%%.hxx}").txt"
+    # NOTE 'a' latin, 'a' cyrillic
+    hmin=$(grep -E ^'[aа]'"$tab" "$fonttxt" | cut -d"$tab" -f4 | sort -unr | head -n1)
+    hmax=$(cut -d"$tab" -f4 "$fonttxt" | sort -unr | head -n1)
+    name=$(basename "${f%%.hxx}")
+    whitespace=$(grep -m1 "$name " "$pwd"/whitespace_width | cut -d' ' -f2)
+    if [ $? != '0' ] ; then
+        err=1
+        break;
+    fi
+    echo "{\"$name\",&$name,${name}_replacement,$hmin,$hmax,$whitespace},"
+done > "$out_hxx"
+
+if [ $err != 0 ] ; then
+    rm "$out_hxx" "$out"
+    echo "whitespace $name not fount" >&2
+    exit 2
+fi

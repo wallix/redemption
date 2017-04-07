@@ -38,28 +38,21 @@ public:
 
     SslSha512()
     {
-        int res = 0;
-        res = SHA512_Init(&this->sha512);
-        if (res == 0) {
+        if (0 == SHA512_Init(&this->sha512)){
             throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
         }
     }
 
     void update(const uint8_t * const data,  size_t data_size)
     {
-        int res = 0;
-        res = SHA512_Update(&this->sha512, data, data_size);
-        if (res == 0) {
+        if (0 == SHA512_Update(&this->sha512, data, data_size)){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
         }
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        assert(DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA512_Final(out_data, &this->sha512);
-        if (res == 0) {
+        if (0 == SHA512_Final(out_data, &this->sha512)){
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }

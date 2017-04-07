@@ -21,9 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define UNIT_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -39,7 +37,7 @@
 #include "../../front/fake_front.hpp"
 
 /*
-BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
+RED_AUTO_TEST_CASE(TestModRDPXPServer)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -56,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
     const char * name = "RDP XP Target";
 
-    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -82,6 +80,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                    , "10.10.47.175"
                                    , "10.10.9.161"
                                    , 7
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , verbose
                                    );
         mod_rdp_params.enable_tls                      = false;
@@ -90,7 +90,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         //mod_rdp_params.enable_mem3blt                  = true;
-        //mod_rdp_params.enable_bitmap_update            = false;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -102,15 +101,16 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
         // To always get the same client random, in tests
         LCGRandom gen(0);
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+        NullAuthentifier authentifier;
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(mod->get_front_width(), 800);
+        RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -134,7 +134,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 }
 */
 
-BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
+
+
+RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -150,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     FakeFront front(info, verbose);
 
     // const char * name = "RDP W2008 Target";
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -174,7 +176,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , "10.10.47.36"
                                , "10.10.43.33"
                                , 2
-                               , 0
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
+                               , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = false;
@@ -183,7 +187,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     mod_rdp_params.enable_mem3blt                  = false;
-    mod_rdp_params.enable_bitmap_update            = true;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -192,19 +195,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.server_redirection_support        = true;
+    mod_rdp_params.large_pointer_support             = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
+    NullAuthentifier authentifier;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(front.info.width, 800);
-    BOOST_CHECK_EQUAL(front.info.height, 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -218,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
+RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -235,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     const char * name = "RDP W2003 Target";
 
-    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -260,6 +265,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , "10.10.47.205"
                                , "0.0.0.0"
                                , 2
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , verbose
                                );
     mod_rdp_params.enable_tls                      = false;
@@ -268,7 +275,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     //mod_rdp_params.enable_mem3blt                  = true;
-    //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -280,16 +286,17 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    NullAuthentifier authentifier;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
 
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(mod->get_front_width(), 800);
+    RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -310,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //    front.dump_png("trace_w2003_");
 }
 
-BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
+RED_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -327,7 +334,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     const char * name = "RDP W2000 Target";
 
-    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -351,6 +358,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                , "10.10.47.39"
                                , "0.0.0.0"
                                , 2
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
                                , 0
                                );
     mod_rdp_params.enable_tls                      = false;
@@ -359,7 +368,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     //mod_rdp_params.enable_mem3blt                  = true;
-    //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -371,16 +379,17 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    NullAuthentifier authentifier;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
 
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(mod->get_front_width(), 800);
+    RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

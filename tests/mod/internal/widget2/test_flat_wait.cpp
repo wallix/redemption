@@ -19,12 +19,11 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatWait
+#define UNIT_TEST_MODULE TestFlatWait
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "core/font.hpp"
 #include "mod/internal/widget2/flat_wait.hpp"
@@ -33,14 +32,16 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceFlatWait)
+RED_AUTO_TEST_CASE(TraceFlatWait)
 {
     TestDraw drawable(800, 600);
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -85,19 +86,78 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
     //                      text_approb, 0, colors, true);
 
     // ask to widget to redraw at it's current position
-    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x1b\xf9\xcc\xf2\x3f\xef\x1f\xbf\xa1\xe2\x70\xdf\xef\x94\xa4\x6f\xf7\xeb\x13\xc2"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x1b\xf9\xcc\xf2\x3f\xef\x1f\xbf\xa1\xe2\x70\xdf\xef\x94\xa4\x6f\xf7\xeb\x13\xc2");
 }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWait2)
+RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
+    NotifyApi * notifier = nullptr;
+    Theme colors;
+    colors.global.bgcolor = DARK_BLUE_BIS;
+    colors.global.fgcolor = WHITE;
+
+    // const char * text =
+    //     "The target trucmuch@machinbidule:serv is invalid<br>"
+    //     "please enter a valid target<br>"
+    //     "You can either return to selector<br>"
+    //     "or exit<br>"
+    //     "Sorry for the inconvenience";
+
+    // const char * text_timeframe =
+    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
+    //     "It will be available on Oct 4 at 7:00 am.<br>"
+    //     "You can either return to selector or exit.";
+
+    const char * text_invalid =
+        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either<br>"
+        "has no right to access it or it does not exist.<br>"
+        "you can either return to selector or exit.";
+
+    // const char * text_pending =
+    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please wait for approbator confirmation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
+
+    // const char * text_approb =
+    //     "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
+    //     "Please fill following form and enter confirm to ask for an approbation.<br>"
+    //     "Otherwise, you can either return to selector or exit.";
+
+    WidgetFlatButton * extra_button = nullptr;
+    FlatWait flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "Invalid Target",
+                         text_invalid, 0, extra_button, font, colors, Translation::EN, true,
+                         FlatForm::COMMENT_DISPLAY | FlatForm::COMMENT_MANDATORY |
+                            FlatForm::TICKET_DISPLAY | FlatForm::TICKET_MANDATORY |
+                            FlatForm::DURATION_DISPLAY);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Pending Approbation",
+    //                      text_pending, 0, colors);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Out of Timeframe",
+    //                      text_timeframe, 0, colors);
+    // FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "Approbation needed",
+    //                      text_approb, 0, colors, true);
+
+    // ask to widget to redraw at it's current position
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait_1.png");
+
+    RED_CHECK_SIG(drawable.gd, "\x2b\xae\xee\xd5\x35\xca\x1d\x42\x1a\x1b\xf2\x67\x39\xbf\x38\xfb\x51\xb4\xab\x5f");
+}
+
+
+// RED_AUTO_TEST_CASE(TraceFlatWait2)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -129,12 +189,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xbe\xdc\x51\xe5\x3f\x17\x87\xa2\x5e\x57"
 //                    "\x57\x77\xc8\xab\x74\xd1\x44\x67\x73\x6a"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWait3)
+// RED_AUTO_TEST_CASE(TraceFlatWait3)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -166,12 +226,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xab\xf6\x15\x4e\xf6\x00\xcf\xb1\xba\x72"
 //                    "\xc7\x45\x21\x71\xdc\x87\x99\x29\xcd\xdc"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWait4)
+// RED_AUTO_TEST_CASE(TraceFlatWait4)
 // {
 //     TestDraw drawable(1280, 1024);
 
@@ -203,12 +263,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xa4\x3f\xae\x5e\x0c\x62\x18\x35\x12\x4e"
 //                    "\x97\xb2\x9d\xf3\x0a\x21\x3b\xaa\x16\xa8"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWait5)
+// RED_AUTO_TEST_CASE(TraceFlatWait5)
 // {
 //     TestDraw drawable(640, 480);
 
@@ -240,12 +300,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\x23\x3e\xc8\xac\x9e\x89\x32\x4a\xc7\x13"
 //                    "\xb5\xe8\x55\xf9\x55\x0c\x61\xf8\x1f\x56"
 //                    )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWait6)
+// RED_AUTO_TEST_CASE(TraceFlatWait6)
 // {
 //     TestDraw drawable(350, 500);
 
@@ -277,13 +337,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\x60\x53\x42\x70\xfb\xc5\x95\xd8\xa7\xef"
 //                    "\x07\xe8\x5d\xab\xbc\xb1\xf7\x7a\xb6\x6e"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWaitClip)
+// RED_AUTO_TEST_CASE(TraceFlatWaitClip)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -315,12 +375,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\x6f\x5e\xaa\x7b\xaa\x85\x86\x9a\x32\x6c"
 //                    "\xd3\x2e\xa2\x2b\xde\x76\x35\xd6\x3b\x50"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(TraceFlatWaitClip2)
+// RED_AUTO_TEST_CASE(TraceFlatWaitClip2)
 // {
 //     TestDraw drawable(800, 600);
 
@@ -352,12 +412,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xb1\x4f\x44\xde\x94\x93\x7c\x72\x48\xc1"
 //                    "\x15\x50\x5f\x45\xa5\xb4\xcf\x9f\x21\x73"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 // }
 
-// BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
+// RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 // {
 //     ClientInfo info(1, true, true);
 //     info.keylayout = 0x040C;
@@ -396,17 +456,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                            "line 4",
 //                            0, colors);
 
-// //    BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == 0);
+// //    RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == 0);
 
 //     unsigned x = flat_dialog.ok.rect.x + flat_dialog.ok.rect.cx / 2 ;
 //     unsigned y = flat_dialog.ok.rect.y + flat_dialog.ok.rect.cy / 2 ;
 //     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
 //     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-// //    BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == 0);
+// //    RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == 0);
 
 //     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
 //     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-1-button-ok.png");
@@ -417,7 +477,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\x09\x03\x4f\xf6\x6b\xbf\xe2\x9c\xf0\xee"
 //                    "\x89\x5c\x88\x5b\x63\xe8\x39\x4e\xe4\xef"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -425,8 +485,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
 //     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
 //     //                                  flat_dialog.ok.dx(), flat_dialog.ok.dy(), nullptr);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == NOTIFY_SUBMIT);
 //     notifier.sender = 0;
 //     notifier.event = 0;
 
@@ -438,7 +498,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xed\xa6\x0c\x8e\xbc\xab\xdf\x81\x63\xd9"
 //                    "\xaf\x19\x24\x80\x7e\x65\x98\xe9\x94\xab"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
@@ -446,9 +506,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //     y = flat_dialog.cancel->rect.y + flat_dialog.cancel->rect.cy / 2 ;
 //     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
 //     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-// //    BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == 0);
+// //    RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == 0);
 
 
 //     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
@@ -460,13 +520,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xee\x26\x6b\x3c\x2b\x33\x01\x18\xf5\xca"
 //                    "\x87\x41\xd2\xce\x00\x17\xf9\x2f\xbd\xb2"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 
 //     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == NOTIFY_CANCEL);
 
 //     notifier.sender = 0;
 //     notifier.event = 0;
@@ -475,13 +535,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //     keymap.init_layout(info.keylayout);
 //     keymap.push_kevent(Keymap2::KEVENT_ESC);
 //     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == NOTIFY_CANCEL);
 // }
 
 
 
-// BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
+// RED_AUTO_TEST_CASE(EventWidgetChallenge)
 // {
 //     ClientInfo info(1, true, true);
 //     info.keylayout = 0x040C;
@@ -529,16 +589,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                            "adipiscing et arcu.", 0, colors,
 //                            "Ok", "Cancel", CHALLENGE_ECHO);
 
-// //    BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == 0);
+// //    RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == 0);
 
 
 //     flat_dialog.challenge->set_text("challenge_test");
 
-// //    BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == 0);
+// //    RED_CHECK(notifier.sender == 0);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == 0);
 
 //     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
 //     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-challenge-1.png");
@@ -549,15 +609,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 //                    "\xaa\x65\x78\x57\x46\xa8\x97\x24\xf1\xd6"
 //                    "\xc2\xff\x28\x92\xbe\xc8\x46\x0c\xbe\x01"
 //     )){
-//         BOOST_CHECK_MESSAGE(false, message);
+//         RED_CHECK_MESSAGE(false, message);
 //     }
 
 //     Keymap2 keymap;
 //     keymap.init_layout(info.keylayout);
 //     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 //     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(notifier.sender == &flat_dialog);
-//     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+//     RED_CHECK(notifier.sender == &flat_dialog);
+//     RED_CHECK(notifier.event == NOTIFY_SUBMIT);
 
 //     notifier.sender = 0;
 //     notifier.event = 0;

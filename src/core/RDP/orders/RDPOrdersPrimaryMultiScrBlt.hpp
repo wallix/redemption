@@ -131,7 +131,7 @@ public:
 
     RDPMultiScrBlt() = default;
 
-    RDPMultiScrBlt( const Rect & _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
+    RDPMultiScrBlt( const Rect _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
                   , InStream & deltaEncodedRectangles)
     : rect(_rect)
     , bRop(bRop)
@@ -146,8 +146,6 @@ public:
             this->deltaEncodedRectangles[i].height    = deltaEncodedRectangles.in_sint16_le();
         }
     }
-
-    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) = default;
 
     void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiScrBlt & oldcmd) const {
@@ -338,18 +336,25 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
+    }
+
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
+
+        this->nXSrc += offset_x;
+        this->nYSrc += offset_y;
     }
 };  // class RDPMultiScrBlt
 

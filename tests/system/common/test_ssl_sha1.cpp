@@ -18,16 +18,13 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
 #include "system/redemption_unit_tests.hpp"
-#include "check_mem.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSslSha1)
+RED_AUTO_TEST_CASE(TestSslSha1)
 {
-    uint8_t sig[20];
+    uint8_t sig[SslSha1::DIGEST_LENGTH];
 
     uint8_t data[512] = {
         /* 0000 */ 0x86, 0x79, 0x05, 0x32, 0x6c, 0x24, 0x43, 0x02,  // .y.2l$C.
@@ -100,14 +97,10 @@ BOOST_AUTO_TEST_CASE(TestSslSha1)
         SslSha1 sha1;
 
         sha1.update(data, sizeof(data));
-        sha1.final(sig, sizeof(sig));
+        sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
-        BOOST_CHECK_EQUAL(memcmp(sig,
-                                 "\x47\x44\xa9\x9d\xe9\xe5\xf1\xd0\x61\x7a"
-                                 "\x9d\x64\x47\xe2\xf1\xe3\x49\xa7\xf3\xef",
-                                 sizeof(sig)),
-                          0);
+        RED_CHECK_MEM_AC(sig, "\x47\x44\xa9\x9d\xe9\xe5\xf1\xd0\x61\x7a\x9d\x64\x47\xe2\xf1\xe3\x49\xa7\xf3\xef");
     }
 
     {
@@ -117,19 +110,14 @@ BOOST_AUTO_TEST_CASE(TestSslSha1)
         sha1.update(data + 128, 128);
         sha1.update(data + 256, 128);
         sha1.update(data + 384, 128);
-        sha1.final(sig, sizeof(sig));
+        sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
-        BOOST_CHECK_EQUAL(memcmp(sig,
-                                 "\x47\x44\xa9\x9d\xe9\xe5\xf1\xd0\x61\x7a"
-                                 "\x9d\x64\x47\xe2\xf1\xe3\x49\xa7\xf3\xef",
-                                 sizeof(sig)),
-                          0);
+        RED_CHECK_MEM_AC(sig, "\x47\x44\xa9\x9d\xe9\xe5\xf1\xd0\x61\x7a\x9d\x64\x47\xe2\xf1\xe3\x49\xa7\xf3\xef");
     }
-
 }
 
-BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
+RED_AUTO_TEST_CASE(TestSslHmacSHA1)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
@@ -140,18 +128,15 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
-    hmac.final(sig, SslSha1::DIGEST_LENGTH);
+    hmac.final(sig);
 
-    BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
+    RED_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
 
-    CHECK_MEM(
-        sig, SslSha1::DIGEST_LENGTH,
-        "\xde\x7c\x9b\x85\xb8\xb7\x8a\xa6\xbc\x8a\x7a\x36\xf7\x0a\x90\x70\x1c\x9d\xb4\xd9"
-    );
+    RED_CHECK_MEM_AC(sig, "\xde\x7c\x9b\x85\xb8\xb7\x8a\xa6\xbc\x8a\x7a\x36\xf7\x0a\x90\x70\x1c\x9d\xb4\xd9");
     //hexdump96_c(sig, sizeof(sig));
 }
 
-BOOST_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
+RED_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
 {
     const uint8_t key[] = "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke";
     // const uint8_t key[] = "";
@@ -162,17 +147,11 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
-    hmac.final(sig, SslSha1::DIGEST_LENGTH);
+    hmac.final(sig);
 
-    BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
+    RED_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
 
-    CHECK_MEM(
-        sig, SslSha1::DIGEST_LENGTH,
-        "\xf0\xc5\xa7\xca\x22\x47\x50\x06\x79\x7b\xa2\x38\x5d\x16\xdb\x56\x85\xde\xf5\xe0"
-    );
+    RED_CHECK_MEM_AC(sig, "\xf0\xc5\xa7\xca\x22\x47\x50\x06\x79\x7b\xa2\x38\x5d\x16\xdb\x56\x85\xde\xf5\xe0");
     //hexdump96_c(sig, sizeof(sig));
 }
-
-
-
 

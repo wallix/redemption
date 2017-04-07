@@ -21,9 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 /*
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define UNIT_TEST_MODULE TestRdp
 #include <boost/test/auto_unit_test.hpp>
 */
 
@@ -59,7 +57,7 @@ int main(int argc, char** argv) //TestModRDPWin2008Server)
 
     const char * name = "RDP W2008 TLS Target";
 
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -135,7 +133,6 @@ int main(int argc, char** argv) //TestModRDPWin2008Server)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     mod_rdp_params.enable_mem3blt                  = false;
-    mod_rdp_params.enable_bitmap_update            = true;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;

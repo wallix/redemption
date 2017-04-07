@@ -32,6 +32,7 @@
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
+
 class OutStream;
 
 // 3.1.8 MPPC-Based Bulk Data Compression
@@ -459,7 +460,7 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
                                        const uint16_t outputBufferSize)
 {
     uint8_t bits_to_serialize = n;
-    if (bits_left >= bits_to_serialize + 1) {
+    if (bits_left > bits_to_serialize) {
         const int i = bits_left - bits_to_serialize;
         outputBuffer[opb_index] |= data << i;
         bits_left = i;
@@ -491,22 +492,23 @@ static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, uint8_t 
         outputBuffer, bits_left, opb_index, outputBufferSize);
 }
 
-struct rdp_mppc_enc {
+struct rdp_mppc_enc
+{
+    uint64_t total_uncompressed_data_size;
+    uint64_t total_compressed_data_size;
+    bool verbose;
+
 protected:
     /**
      * Initialize rdp_mppc_enc structure
      */
-    explicit rdp_mppc_enc(uint32_t verbose)
+    explicit rdp_mppc_enc(bool verbose)
         : total_uncompressed_data_size(0)
         , total_compressed_data_size(0)
         , verbose(verbose)
     {}
-
+    
 public:
-    uint64_t total_uncompressed_data_size;
-    uint64_t total_compressed_data_size;
-    uint32_t verbose;
-
     /**
      * Deinitialize rdp_mppc_enc structure
      */
@@ -532,7 +534,7 @@ public:
             ((compressedType & PACKET_COMPRESSED) ? compressed_data_size :
                 uncompressed_data_size);
 
-        if (verbose & 128) {
+        if (this->verbose) {
             LOG(LOG_INFO, "compressedType=0x%02X", static_cast<unsigned>(compressedType));
             LOG(LOG_INFO, "uncompressed_data_size=%" PRIu16 " compressed_data_size=%" PRIu16 " rate=%.2f",
                 uncompressed_data_size, compressed_data_size,

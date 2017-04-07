@@ -31,10 +31,15 @@
       function connecting() {
         console.log('>> connecting()'); 
 
-        var ip = document.getElementById("ip").value;
-        var user = document.getElementById("user").value;
-        var password = document.getElementById("password").value;
-        var port = document.getElementById("port").value;
+//        var ip = document.getElementById("ip").value;
+//        var user = document.getElementById("user").value;
+//        var password = document.getElementById("password").value;
+//        var port = document.getElementById("port").value;
+
+        /* JNI DBG : Uncomment after TEST : Autoconnect */
+        var ip = '127.0.0.1';
+        var port = 8080;
+
 
         /* SOCKET CONNECTION */
 
@@ -42,7 +47,7 @@
         console.log("url = " + url);
         socket = io.connect(url);
 
-	document.getElementById("errorMsgDiv").style = "display:none";
+	      document.getElementById("errorMsgDiv").style = "display:none";
         //drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
 
         var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
@@ -54,47 +59,67 @@
 
         _connexion(pip, puser, ppassword, port);
 
+        
         console.log("Socket id = " + socket.id);
     
 
         /* EVENTS LISTENERS */
+/*
         socket.on('event', function (data) {
-          console.log("Client on \'event\': received from Server : " + data.msg + "  number  " + data.num);
+          console.log("Client on \'event\': received from proxy Server : " + data.msg + " data = " + data.data + " number  " + data.num);
+        });
+*/
+
+
+        socket.on('event', function (data) {
+          console.log("Client : received from Server : " + data.msg + "  number  " + data.num);
+
         });
 
+        socket.on('pokeback', function (message) {
+          console.log('pokeback event: the proxy Server says : ' + message);
+
+
+        })
+        ;
+
         socket.on('data', function (data) {
-          console.log("Client on \'data\': received from Server : " + data.data + "  index  " + data.index);
+          console.log("Client on \'data\': received from proxy Server : " + data.msg + " data = " + data.data + " index = " + data.index);
 
          // var ob = JSON.parse(data.pdu);
          // dispMessage("Text received... " + ob.pdu.content + " index " + ob.pdu.index);
         });
 
-        socket.on('message', function (msg) {
-           console.log("Client on \'message\': received from Server : " + msg);
+        socket.on('message', function (data) {
+           console.log("Client on \'message\': received from proxy Server : " + data.msg);
+           console.log("Client on \'message\': received from proxy Server : index = " + data.index + "data = " + data.data.item);
+           
+<!--            if (_up_and_running() == 0){-->
+<!--                _client_event();-->
+<!--                setTimeout(,500);-->
+<!--            }-->
+           
         });
 
         socket.on('disconnect', function() { 
-          console.log('disconnected from server'); 
+          console.log('disconnected from proxy server'); 
         });
-
-        /* Test */
-        data = {
-                   "type":"type2",
-                   "content":"0xA1",
-                   "index":"0"
-               };
-       socket.send(JSON.stringify({data:data, msg:'sending data type2', index:0}));
 
         console.log('<< connecting()'); 
       }
 
-      function helloServer() {
-          console.log("Socket id = " + socket.id);
-          console.log(" poke ! helloServer");
+      function helloServer1() {
+          console.log(" helloServer ! 1");
           var data = {
-                       "type":"type1",
-                       "content":"0x0005",
-                       "index":"0"
+                       "type":"type1"
+                     };
+          send_to_serveur(data, 0);
+      }
+
+      function helloServer2() {
+          console.log(" helloServer ! 2");
+          var data = {
+                       "type":"type2"
                      };
           send_to_serveur(data, 0);
       }
@@ -104,7 +129,8 @@
       }
 
       function poking() {
-           socket.emit('poke', 'helloServer : Hi server, how are you ?');
+           socket.emit('poke', 'poke : Hi server, how are you ?');
+           console.log('poking proxy server')
       }
 
       function send_to_serveur(data, size) { 
@@ -1147,16 +1173,22 @@
 <body id="wrapper">
   <div id="form" style ="display:block">
     <form action="demo_form.asp" width="1024px" height="768px">
+<!-- JNI DBG Uncomment after TEST AUTO CONNECT 
         IP :       <input type="text" id="ip"><br>
         User :     <input type="text" id="user"><br>
         Password : <input type="text" id="password"><br>
         Port :     <input type="text" id="port"><br>
+
+-->
+
+
         <input type="button" value="Connect" onclick="connecting()">
     </form> 
 
-    <p><input type="button" value="Send data to serveur" onclick="helloServer();"></p>
+    <p><input type="button" value="Send paquet 1 to proxy serveur" onclick="helloServer1();"></p>
+    <p><input type="button" value="Send paquet 2 to proxy serveur" onclick="helloServer2();"></p>
     <p><input type="button" value="Disconnect" onclick="disconnecting();"></p>
-    <p><input type="button" value="Poke" onclick="poking();"></p>
+    <p><input type="button" value=" Poke proxy serveur " onclick="poking();"></p>
     <fieldset><legend>Message</legend> 
       <div id="message"></div>
     </fieldset>

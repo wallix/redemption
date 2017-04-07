@@ -43,19 +43,20 @@ enum ChallengeOpt {
 class FlatDialog : public WidgetParent
 {
 public:
-    int bg_color;
-
-    WidgetImage img;
-    WidgetLabel title;
-    WidgetMultiLine dialog;
-    WidgetEdit * challenge;
-    WidgetFlatButton ok;
-    WidgetFlatButton * cancel;
-    WidgetRect separator;
-
     CompositeArray composite_array;
 
+    WidgetLabel        title;
+    WidgetRect         separator;
+    WidgetMultiLine    dialog;
+    WidgetEdit       * challenge;
+    WidgetFlatButton   ok;
+    WidgetFlatButton * cancel;
+    WidgetImage        img;
+    WidgetFlatButton * extra_button;
+
     Font const & font;
+
+    int bg_color;
 
     FlatDialog(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
@@ -64,109 +65,154 @@ public:
                Theme const & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-        , bg_color(theme.global.bgcolor)
-        , img(drawable, 0, 0,
-              theme.global.logo ? theme.global.logo_path :
-              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
-        , title(drawable, 0, 0, *this, nullptr, caption, true, -9,
+        : WidgetParent(drawable, parent, notifier)
+        , title(drawable, *this, nullptr, caption, -9,
                 theme.global.fgcolor, theme.global.bgcolor, font, 5)
-        , dialog(drawable, 0, 0, *this, nullptr, text, true, -10,
+        , separator(drawable, *this, this, -12,
+                    theme.global.separator_color)
+        , dialog(drawable, *this, nullptr, text, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
         , challenge(nullptr)
-        , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
+        , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
              theme.global.fgcolor, theme.global.bgcolor,
-             theme.global.focus_color, font, 6, 2)
-        , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this,
-                                                    cancel_text, true, -11,
+             theme.global.focus_color, 2, font, 6, 2)
+        , cancel(cancel_text ? new WidgetFlatButton(drawable, *this, this,
+                                                    cancel_text, -11,
                                                     theme.global.fgcolor,
                                                     theme.global.bgcolor,
-                                                    theme.global.focus_color, font,
+                                                    theme.global.focus_color, 2, font,
                                                     6, 2) : nullptr)
-        , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
-                    theme.global.separator_color)
+        , img(drawable,
+              theme.global.logo ? theme.global.logo_path.c_str() :
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
+        , extra_button(extra_button)
         , font(font)
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
 
+        this->add_widget(&this->img);
+
         this->add_widget(&this->title);
-        this->add_widget(&this->dialog);
         this->add_widget(&this->separator);
-
-        const int total_width = std::max(this->dialog.cx(), this->title.cx());
-        int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
-        int y = 0;
-        this->title.rect.x = left + (this->cx() - this->title.cx()) / 2;
-        // this->title.rect.cx = total_width;
-        this->separator.rect.x = left + (this->cx() - total_width) / 2;
-        this->separator.rect.cx = total_width;
-        y = this->title.cy();
-        this->separator.rect.y = top + y + 3;
-        this->dialog.rect.x = this->separator.rect.x;
-        this->dialog.rect.y = top + y + 10;
-
-        y = this->dialog.dy() + this->dialog.cy() + 10;
+        this->add_widget(&this->dialog);
 
         if (has_challenge) {
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable,
-                                                 this->separator.rect.x - left + 10, y - top,
-                                                 total_width - 20, *this, this, nullptr, -13,
+                                                 *this, this, nullptr, -13,
                                                  theme.edit.fgcolor,
                                                  theme.edit.bgcolor,
-                                                 theme.edit.focus_color, font, -1u, 1, 1);
+                                                 theme.edit.focus_color,
+                                                 font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
-                                                     this->separator.rect.x - left + 10,
-                                                     y - top, total_width - 20, *this, this, nullptr,
-                                                     -13, theme.edit.fgcolor,
+                                                     *this, this, nullptr, -13,
+                                                     theme.edit.fgcolor,
                                                      theme.edit.bgcolor,
                                                      theme.edit.focus_color,
                                                      font, -1u, 1, 1);
             }
             this->add_widget(this->challenge);
-            total_height += this->challenge->cy() + 10;
-            y += this->challenge->cy() + 10;
-            this->set_widget_focus(this->challenge, focus_reason_tabkey);
 
-            if (extra_button) {
-                this->add_widget(extra_button);
-                extra_button->set_button_x(left + 60);
-                extra_button->set_button_y(top + total_height + 250);
-            }
+            this->set_widget_focus(this->challenge, focus_reason_tabkey);
         }
 
 
         this->add_widget(&this->ok);
-        y += 5;
+
         if (this->cancel) {
             this->add_widget(this->cancel);
-
-            this->cancel->set_button_x(this->dialog.dx() + this->dialog.cx() - (this->cancel->cx() + 10));
-            this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
-
-            this->ok.set_button_y(y);
-            this->cancel->set_button_y(y);
         }
-        else {
-            this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
-            this->ok.set_button_y(y);
-        }
-        this->move_xy(0, (height - total_height) / 2);
 
-        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
-        this->add_widget(&this->img);
+        if (has_challenge) {
+            if (extra_button) {
+                this->add_widget(extra_button);
+            }
+        }
+
+        this->move_size_widget(left, top, width, height);
 
         if (!has_challenge)
             this->set_widget_focus(&this->ok, focus_reason_tabkey);
-
     }
 
     ~FlatDialog() override {
         delete this->challenge;
         delete this->cancel;
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->set_xy(left, top);
+        this->set_wh(width, height);
+
+        int16_t y            = top;
+        int16_t total_height = 0;
+
+        Dimension dim = this->title.get_optimal_dim();
+        this->title.set_wh(dim);
+        this->title.set_xy(left + (width - this->title.cx()) / 2, y);
+        y            += this->title.cy();
+        total_height += this->title.cy();
+
+        dim = this->dialog.get_optimal_dim();
+        this->dialog.set_wh(dim);
+
+        const int total_width = std::max(this->dialog.cx(), this->title.cx());
+
+        this->separator.set_wh(total_width, 2);
+        this->separator.set_xy(left + (width - total_width) / 2, y + 3);
+
+        y            += 10;
+        total_height += 10;
+
+        this->dialog.set_xy(this->separator.x(), y);
+
+        y            += this->dialog.cy() + 10;
+        total_height += this->dialog.cy() + 10;
+
+        if (this->challenge) {
+            dim = this->challenge->get_optimal_dim();
+            this->challenge->set_wh(total_width - 20, dim.h);
+            this->challenge->set_xy(this->separator.x() + 10, y);
+
+            y            += this->challenge->cy() + 10;
+            total_height += this->challenge->cy() + 10;
+        }
+
+        y += 5;
+
+        dim = this->ok.get_optimal_dim();
+        this->ok.set_wh(dim);
+
+        if (this->cancel) {
+            dim = this->cancel->get_optimal_dim();
+            this->cancel->set_wh(dim);
+            this->cancel->set_xy(this->dialog.x() + this->dialog.cx() - (this->cancel->cx() + 10), y);
+
+            this->ok.set_xy(this->cancel->x() - (this->ok.cx() + 10), y);
+        }
+        else {
+            this->ok.set_xy(this->dialog.x() + this->dialog.cx() - (this->ok.cx() + 10), y);
+        }
+
+        total_height += this->ok.cy();
+
+        this->move_children_xy(0, (height - total_height) / 2);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
+
+        this->img.set_xy(left + (width - this->img.cx()) / 2,
+                         top + (3 * (height - total_height) / 2 - this->img.cy()) / 2 + total_height);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_xy(this->img.x(), top);
+        }
+
+        if (this->challenge && this->extra_button) {
+            extra_button->set_xy(left + 60, top + height - 60);
+        }
     }
 
     int get_bg_color() const override {
@@ -183,7 +229,14 @@ public:
             this->send_notify(NOTIFY_SUBMIT);
         }
         else {
-            WidgetParent::notify(widget, event);
+            if (event == NOTIFY_PASTE) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
+            }
         }
     }
 
@@ -201,4 +254,3 @@ public:
         }
     }
 };
-

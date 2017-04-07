@@ -31,6 +31,7 @@
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/invalid_socket.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -53,8 +54,6 @@ protected:
 
     auth_api * authentifier;
 
-    uint32_t verbose;
-
 public:
     Transport()
     : total_received(0)
@@ -64,14 +63,10 @@ public:
     , last_quantum_sent(0)
     , status(true)
     , authentifier(get_null_authentifier())
-    , verbose(0)
     {}
 
     virtual ~Transport()
     {}
-
-    //virtual const FilenameGenerator * seqgen() const noexcept
-    //{ return this->pseq; }
 
     uint32_t get_seqno() const
     { return this->seqno; }
@@ -141,24 +136,48 @@ public:
         return 0;
     }
 
-    void recv(char ** pbuffer, size_t len)
-    {
-        this->do_recv(pbuffer, len);
-    }
-
     void send(const char * const buffer, size_t len)
     {
-        this->do_send(buffer, len);
+        this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
-    void recv(uint8_t ** pbuffer, size_t len)
+
+    /// recv_atomic read len bytes into buffer or throw an Error
+    /// if EOF is encountered at that point it's also an error and
+    /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
+    ///
+    void recv_atomic(uint8_t * buffer, size_t len)
     {
-        this->do_recv(reinterpret_cast<char **>(pbuffer), len);
+        if (!this->do_atomic_read(buffer, len)){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+    }
+
+    void recv_atomic(char * buffer, size_t len)
+    {
+        if (!this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len)){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+    }
+
+    /// atomic_read either read len bytes into buffer or throw an Error
+    /// returned value is either true is read was successful
+    /// or false if nothing was read (End of File reached at block frontier)
+    /// if an exception is thrown buffer is dirty and may have been modified.
+    ///
+    bool atomic_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_atomic_read(buffer, len);
+    }
+
+    bool atomic_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
     void send(const uint8_t * const buffer, size_t len)
     {
-        this->do_send(reinterpret_cast<const char * const>(buffer), len);
+        this->do_send(buffer, len);
     }
 
     virtual void flush()
@@ -172,13 +191,17 @@ public:
     }
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
-        (void)pbuffer;
+    /// Atomic read read exactly the amount of data requested or return an error
+    /// @see atomic_read
+    ///
+    virtual bool do_atomic_read(uint8_t * buffer, size_t len) {
+        (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-    virtual void do_send(const char * const buffer, size_t len) {
+
+    virtual void do_send(const uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
@@ -208,11 +231,9 @@ public:
         return true;
     }
 
-    virtual void request_full_cleaning()
-    {}
+    virtual int get_fd() const { return INVALID_SOCKET; }
 
 private:
     Transport(const Transport &) = delete;
     Transport& operator=(const Transport &) = delete;
 };
-

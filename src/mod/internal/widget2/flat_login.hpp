@@ -39,18 +39,17 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    int bg_color;
-    WidgetEditValid  password_edit;
-    WidgetLabel login_label;
-    WidgetEditValid  login_edit;
-    WidgetImage img;
-    WidgetLabel password_label;
-    WidgetLabel error_message_label;
-    WidgetLabel version_label;
-
-    WidgetFlatButton helpicon;
-
     CompositeArray composite_array;
+
+    WidgetLabel        error_message_label;
+    WidgetLabel        login_label;
+    WidgetEditValid    login_edit;
+    WidgetLabel        password_label;
+    WidgetEditValid    password_edit;
+    WidgetImage        img;
+    WidgetLabel        version_label;
+    WidgetFlatButton   helpicon;
+    WidgetFlatButton * extra_button;
 
 private:
     Translator tr;
@@ -59,6 +58,10 @@ private:
     // WidgetImage wimage;
     // WidgetVScrollBar vbar;
     // WidgetHScrollBar hbar;
+
+    bool labels_added = false;
+
+    int bg_color;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -69,36 +72,35 @@ public:
               const char * label_text_password,
               const char * label_error_message,
               WidgetFlatButton * extra_button,
-              Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-        , bg_color(theme.global.bgcolor)
-        , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, theme.edit.fgcolor,
-                        theme.edit.bgcolor, theme.edit.focus_color,
-                        font,
-                        -1u, 1, 1, true, (width <= 640) ? label_text_password : nullptr)
-        , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
-                      theme.global.fgcolor, theme.global.bgcolor, font)
-        , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font, -1u, 1, 1, false,
-                     (width <= 640) ? label_text_login : nullptr)
-        // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
-        , img(drawable, 0, 0,
-              theme.global.logo ? theme.global.logo_path :
-              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
-        , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
-                         theme.global.fgcolor, theme.global.bgcolor,
-                         font)
-        , error_message_label(drawable, 0, 0, *this, nullptr, label_error_message, true, -15,
+              Font const & font, Translator tr, Theme const & theme)
+        : WidgetParent(drawable, parent, notifier)
+        , error_message_label(drawable, *this, nullptr, label_error_message, -15,
                         theme.global.error_color, theme.global.bgcolor,
                         font)
-        , version_label(drawable, 0, 0, *this, nullptr, caption, true, -15,
+        , login_label(drawable, *this, nullptr, label_text_login, -11,
+                      theme.global.fgcolor, theme.global.bgcolor, font)
+        , login_edit(drawable, *this, this,
+                     login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                     theme.edit.focus_color, theme.global.bgcolor, font,
+                     label_text_login, (width <= 640), -1u, 1, 1, false)
+        , password_label(drawable, *this, nullptr, label_text_password, -13,
+                         theme.global.fgcolor, theme.global.bgcolor,
+                         font)
+        , password_edit(drawable, *this, this,
+                        password, -14, theme.edit.fgcolor,
+                        theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
+                        font, label_text_password, (width <= 640),
+                        -1u, 1, 1, true)
+        , img(drawable,
+              theme.global.logo ? theme.global.logo_path.c_str() :
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+        , version_label(drawable, *this, nullptr, caption, -15,
                         theme.global.fgcolor, theme.global.bgcolor,
                         font)
-        , helpicon(drawable, 0, 0, *this, nullptr, "?", true, -16,
+        , helpicon(drawable, *this, nullptr, "?", -16,
                    theme.global.fgcolor, theme.global.bgcolor,
-                   theme.global.focus_color, font, 6, 2)
+                   theme.global.focus_color, 2, font, 6, 2)
+        , extra_button(extra_button)
         // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
         // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
         //          parent, notifier, -17)
@@ -107,21 +109,22 @@ public:
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         , tr(tr)
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
 
-        this->add_widget(&this->helpicon);
         this->add_widget(&this->img);
+
+        this->add_widget(&this->helpicon);
         this->add_widget(&this->login_edit);
         this->add_widget(&this->password_edit);
         if (width > 640) {
             this->add_widget(&this->login_label);
             this->add_widget(&this->password_label);
+
+            this->labels_added = true;
         }
-        else {
-            this->password_label.rect.cx = 0;
-            this->login_label.rect.cx = 0;
-        }
+
         this->add_widget(&this->version_label);
 
         this->add_widget(&this->error_message_label);
@@ -130,63 +133,108 @@ public:
             this->add_widget(extra_button);
         }
 
-        // Center bloc positionning
-        // Login and Password boxes
-        int cbloc_w = std::max(this->password_label.rect.cx + this->password_edit.rect.cx + 10,
-                               this->login_label.rect.cx + this->login_edit.rect.cx + 10);
-        int cbloc_h = std::max(this->password_label.rect.cy + this->login_label.rect.cy + 20,
-                               this->password_edit.rect.cy + this->login_edit.rect.cy + 20);
-
-        int x_cbloc = (width  - cbloc_w) / 2;
-        int y_cbloc = (height - cbloc_h) / 2;
-
-        this->login_label.set_xy(left + x_cbloc, top + y_cbloc);
-        this->password_label.set_xy(left + x_cbloc, top + height / 2);
-        int labels_w = std::max(this->password_label.rect.cx, this->login_label.rect.cx);
-        this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
-        this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
-
-        this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
-
-
-        this->error_message_label.rect.x  = this->login_edit.rect.x;
-        this->error_message_label.rect.y  = this->login_edit.rect.y - 22;
-        this->error_message_label.rect.cx = this->login_edit.rect.cx;
-
-        // Bottom bloc positioning
-        // Logo and Version
-        int bottom_height = (height - cbloc_h) / 2;
-        int bbloc_h = this->img.rect.cy + 10 + this->version_label.rect.cy;
-        int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
-            ?(height - (bbloc_h + 10))
-            :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
-        this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
-                                   top + y_bbloc + this->img.rect.cy + 10);
-
         this->helpicon.tab_flag = IGNORE_TAB;
         this->helpicon.focus_flag = IGNORE_FOCUS;
-        this->helpicon.set_button_x(left + width - 60);
-        this->helpicon.set_button_y(top + height - 60);
 
-        if (extra_button) {
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
-        }
-
-        // this->add_widget(&this->frame);
-        // this->add_widget(&this->vbar);
-        // this->add_widget(&this->hbar);
-        // this->frame.set_widget(&this->wimage);
-        // this->vbar.set_frame(&this->frame);
-        // this->hbar.set_frame(&this->frame);
-        // this->frame.tab_flag = IGNORE_TAB;
-        // this->frame.focus_flag = IGNORE_FOCUS;
+        this->move_size_widget(left, top, width, height);
     }
 
     ~FlatLogin() override {
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->set_xy(left, top);
+        this->set_wh(width, height);
+
+        Dimension dim;
+
+        if (width > 640) {
+            if (!this->labels_added) {
+                this->add_widget(&this->login_label);
+                this->add_widget(&this->password_label);
+
+                this->labels_added = true;
+            }
+
+            dim = this->login_label.get_optimal_dim();
+            this->login_label.set_wh(dim);
+
+            dim = this->password_label.get_optimal_dim();
+            this->password_label.set_wh(dim);
+        }
+        else {
+            if (this->labels_added) {
+                this->remove_widget(&this->login_label);
+                this->remove_widget(&this->password_label);
+
+                this->labels_added = false;
+            }
+
+            this->login_label.set_wh(0, 0);
+            this->password_label.set_wh(0, 0);
+        }
+
+        this->login_edit.use_title(width < 640);
+        dim = this->login_edit.get_optimal_dim();
+        this->login_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
+
+        this->password_edit.use_title(width < 640);
+        dim = this->password_edit.get_optimal_dim();
+        this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
+
+        const int cbloc_w = std::max(this->login_label.cx()    + 10 + this->login_edit.cx(),
+                                     this->password_label.cx() + 10 + this->password_edit.cx());
+        const int cbloc_h = std::max(this->login_label.cy() + 20 + this->password_label.cy(),
+                                     this->login_edit.cy()  + 20 + this->password_edit.cy());
+
+        const int cbloc_x = (width  - cbloc_w) / 2;
+        const int cbloc_y = (height - cbloc_h) / 2;
+
+        this->login_label.set_xy(left + cbloc_x,
+                                 top + cbloc_y + (this->login_edit.cy() - this->login_label.cy()) / 2);
+
+        this->password_label.set_xy(left + cbloc_x,
+                                    top + height / 2 + (this->password_edit.cy() - this->password_label.cy()) / 2);
+
+        const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
+
+        this->login_edit.set_xy(left + cbloc_x + labels_w + 10, top + cbloc_y - this->login_edit.get_border_height());
+        this->password_edit.set_xy(left + cbloc_x + labels_w + 10, top + height / 2 - this->password_edit.get_border_height());
+
+        this->error_message_label.set_xy(this->login_edit.x(),
+                                         this->login_edit.y() - 22);
+        dim = this->error_message_label.get_optimal_dim();
+        this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
+
+        dim = this->version_label.get_optimal_dim();
+        this->version_label.set_wh(dim);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
+
+        // Bottom bloc positioning
+        // Logo and Version
+        const int bottom_height = (height - cbloc_h) / 2;
+        const int bbloc_h       = this->img.cy() + 10 + this->version_label.cy();
+        const int y_bbloc       =   ((bbloc_h + 10) > (bottom_height / 2))
+                                  ? (height - (bbloc_h + 10))
+                                  : (height / 2 + cbloc_h / 2 + bottom_height / 2);
+
+        this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
+        if (this->img.y() + this->img.cy() > top + height) {
+            this->img.set_xy(this->img.x(), top);
+        }
+        this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
+                                   top + y_bbloc + this->img.cy() + 10);
+
+        dim = this->helpicon.get_optimal_dim();
+        this->helpicon.set_wh(dim);
+        this->helpicon.set_xy(left + width - 60, top + height - 60);
+
+        if (this->extra_button) {
+            this->extra_button->set_xy(left + 60, top + height - 60);
+        }
     }
 
     int get_bg_color() const override {
@@ -224,11 +272,10 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, this->tr("help_message"), x, y);
+                this->show_tooltip(wid, this->tr(trkeys::help_message), x, y, this->get_rect());
             }
         }
 
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 };
-

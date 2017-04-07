@@ -1,0 +1,27 @@
+#!/bin/sh
+
+exec convert \
+    -fill 'white' -opaque 'black' \
+    -fill 'white' -opaque '#080c10' \
+    -fill 'white' -opaque '#081418' \
+    -fill 'white' -opaque '#081818' \
+    -fill 'white' -opaque '#102021' \
+    -fill 'white' -opaque '#183439' \
+    -fill 'white' -opaque '#214552' \
+    -fill 'white' -opaque '#294d5a' \
+    -fill 'white' -opaque '#316173' \
+    -fill 'white' -opaque '#31697b' \
+    -fill 'white' -opaque '#397184' \
+    -fill 'white' -opaque '#428a9c' \
+    -fill 'black' -opaque '#4a8ea5' \
+    -fill 'black' -opaque '#4a92ad' \
+    -fill 'black' -opaque '#4a96ad' \
+    -fill 'black' -opaque '#4a9aad' \
+    -fill 'black' -opaque '#52a6bd' \
+    -fill 'black' -opaque '#52a6c6' \
+    -fill 'black' -opaque '#5aaec6' \
+    -fill 'black' -opaque '#5abad6' \
+    -fill 'black' -opaque '#63c3de' \
+    -fill 'black' -opaque '#63cbef' \
+    -fill 'black' -opaque '#63cbe7' \
+    "$@"

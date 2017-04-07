@@ -272,7 +272,6 @@ struct LogonInfoVersion1_Recv {
     }   // LogonInfoVersion1_Recv(InStream & stream)
 };  // struct LogonInfoVersion1_Recv
 
-/*
 struct LogonInfoVersion1_Send {
     LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
         const uint8_t * UserName, uint32_t sessionId)
@@ -282,11 +281,11 @@ struct LogonInfoVersion1_Send {
 
         memset(utf16_Domain,   0, sizeof(utf16_Domain));
         uint32_t cbDomain   = UTF8toUTF16(Domain, utf16_Domain,
-            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 1;
+            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 2;
 
         memset(utf16_UserName, 0, sizeof(utf16_UserName));
         uint32_t cbUserName = UTF8toUTF16(UserName, utf16_UserName,
-            sizeof(utf16_UserName) - sizeof(uint16_t)) + 1;
+            sizeof(utf16_UserName) - sizeof(uint16_t)) + 2;
 
         stream.out_uint32_le(cbDomain);
         stream.out_copy_bytes(utf16_Domain, sizeof(utf16_Domain));
@@ -295,7 +294,6 @@ struct LogonInfoVersion1_Send {
         stream.out_uint32_le(sessionId);
     }
 };
-*/
 
 // [MS-RDPBCGR] - 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
 // ==========================================================================
@@ -585,7 +583,27 @@ struct LogonInfoExtended_Recv {
     , FieldsPresent(stream.in_uint32_le())
     , payload(stream.get_current(), stream.in_remain())
     {
+        //LOG(LOG_INFO, "LogonInfoExtended: Length=%u", this->Length);
         stream.in_skip_bytes(this->payload.get_capacity());
+    }
+};
+
+struct LogonInfoExtended_Send {
+    LogonInfoExtended_Send(OutStream & stream, uint32_t FieldsPresent)
+    {
+        REDASSERT((FieldsPresent == RDP::LOGON_EX_AUTORECONNECTCOOKIE) ||
+            (FieldsPresent == RDP::LOGON_EX_LOGONERRORS));
+
+        uint32_t Length = 10 /* Length(2) + FieldsPresent(2) + cbFieldData(4) */;
+        if (FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+            Length += 28;    // Length in bytes of the Server Auto-Reconnect Packet
+        }
+        if (FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+            Length += 8;     // Length in bytes of the TS_LOGON_ERRORS_INFO structure
+        }
+
+        stream.out_uint16_le(Length);
+        stream.out_uint32_le(FieldsPresent);
     }
 };
 
@@ -715,7 +733,7 @@ enum {
 // |                              | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
 // | LOGON_FAILED_OTHER           | The logon process failed. The user's focus |
-// |                              | SHOULD be directed to the WinLogon screen. |
+// | 0x00000002                   | SHOULD be directed to the WinLogon screen. |
 // +------------------------------+--------------------------------------------+
 // | LOGON_WARNING                | The logon process has displayed a warning. |
 // | 0x00000003                   | The user's focus SHOULD be directed to the |
@@ -762,8 +780,8 @@ struct LogonErrorsInfo_Recv {
     }
 
     static const char * ErrorNotificationTypeToString(
-            uint32_t ErrorNotificationData) {
-        switch (ErrorNotificationData) {
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
         case LOGON_MSG_DISCONNECT_REFUSED:
             return "LOGON_MSG_DISCONNECT_REFUSED";
         case LOGON_MSG_NO_PERMISSION:
@@ -783,8 +801,8 @@ struct LogonErrorsInfo_Recv {
     }
 
     static const char * ErrorNotificationTypeToMessage(
-            uint32_t ErrorNotificationData) {
-        switch (ErrorNotificationData) {
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
         case LOGON_MSG_DISCONNECT_REFUSED:
             return "The \"Disconnection Refused\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_NO_PERMISSION:
@@ -799,13 +817,13 @@ struct LogonErrorsInfo_Recv {
             return "The logon process is continuing.";
 
         default:
-            return "Unexpected Error Notification Data.";
+            return "Unexpected Error Notification Type.";
         }
     }
 
     static const char * ErrorNotificationDataToString(
-            uint32_t ErrorNotificationType) {
-        switch (ErrorNotificationType) {
+            uint32_t ErrorNotificationData) {
+        switch (ErrorNotificationData) {
         case LOGON_FAILED_BAD_PASSWORD:
             return "LOGON_FAILED_BAD_PASSWORD";
         case LOGON_FAILED_UPDATE_PASSWORD:
@@ -821,6 +839,30 @@ struct LogonErrorsInfo_Recv {
     }
 
     static const char * ErrorNotificationDataToMessage(
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
+        case LOGON_FAILED_BAD_PASSWORD:
+            return "The logon process failed. "
+                "The logon credentials which were supplied are invalid. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
+        case LOGON_FAILED_UPDATE_PASSWORD:
+            return "The logon process failed. "
+                "The user cannot continue with the logon process until the "
+                "password is changed. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
+        case LOGON_FAILED_OTHER:
+            return "The logon process failed. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
+        case LOGON_WARNING:
+            return "The logon process has displayed a warning. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
+
+        default:
+            return "Unexpected Error Notification Type.";
+        }
+    }
+
+    static const char * ErrorNotificationDataToShortMessage(
             uint32_t ErrorNotificationType) {
         switch (ErrorNotificationType) {
         case LOGON_FAILED_BAD_PASSWORD:

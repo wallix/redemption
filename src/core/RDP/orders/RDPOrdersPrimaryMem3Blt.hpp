@@ -180,7 +180,7 @@ class RDPMem3Blt {
     }
 
     RDPMem3Blt( uint16_t cache_id
-              , const Rect & rect
+              , const Rect rect
               , uint8_t rop
               , uint16_t srcx
               , uint16_t srcy
@@ -376,18 +376,22 @@ class RDPMem3Blt {
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
+    }
+
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
     }
 };
 

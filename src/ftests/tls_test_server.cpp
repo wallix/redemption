@@ -27,11 +27,10 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
     // TODO test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL
 
-    SocketTransport sockettransport("TestTLSServer", sock, "", 0, 0xFFFFFFF);
+    SocketTransport sockettransport("TestTLSServer", sock, "", 0, to_verbose_flags(0xFFFFFFF));
 
     char buf[1024];
-    char * pbuf = buf;
-    sockettransport.recv(&pbuf, 14);
+    sockettransport.recv_atomic(buf, 14);
 
     if(0 != strcmp(buf, "REDEMPTION\r\n\r\n")){
         fprintf(stderr,"failed to read expected hello\n");

@@ -22,7 +22,7 @@
 */
 
 #include "system/ssl_md5.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+#include "cxx/cxx.hpp"
 
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll
@@ -40,9 +40,8 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
 }
 
 
-
-
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 
 // ==================================== SSH_MSG_DISCONNECT ================================
@@ -103,7 +102,7 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
  * @brief Disconnect from a session (client or server).
  * The session can then be reused to open a new session.
  *
- * @param[in]  session  The SSH session to use.
+ * @param[in]  client_session  The SSH session to use.
  */
 void ssh_disconnect_client(SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
@@ -188,7 +187,7 @@ static inline void handle_ssh_packet_unimplemented_client(SshClientSession * cli
 /**
  * @brief Send a debug message
  *
- * @param[in] session          The SSH session
+ * @param[in] client_session          The SSH session
  * @param[in] message          Data to be sent
  * @param[in] always_display   Message SHOULD be displayed by the server. It
  *                             SHOULD NOT be displayed unless debugging
@@ -996,7 +995,7 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
 /** @internal
  * @brief launches the DH handshake state machine
- * @param session session handle
+ * @param client_session session handle
  * @returns SSH_OK or SSH_ERROR
  * @warning this function returning is no proof that DH handshake is
  * completed
@@ -1162,6 +1161,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
         }
 
         client_session->dh_handshake_state = DH_STATE_INIT_SENT;
+        REDEMPTION_CXX_FALLTHROUGH;
     case DH_STATE_INIT_SENT:
         /* wait until ssh_packet_dh_reply_client is called */
         break;
@@ -1479,6 +1479,12 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             client_session->socket->close();
             client_session->session_state = SSH_SESSION_STATE_ERROR;
             return;
+        case SSH_SESSION_STATE_DISCONNECTED:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_SESSION_STATE_AUTHENTICATED:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_SESSION_STATE_BANNER_RECEIVED:
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             ssh_set_error(error, SSH_FATAL,"Invalid state %d",client_session->session_state);
     }
@@ -1697,7 +1703,7 @@ static inline void handle_x11_req_request_client(SshClientSession * client_sessi
     (void)client_session;
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,
-      "Received a %s channel_request for channel (%d:%d) (want_reply=%hhd)",
+      "Received a %s channel_request for channel (%d:%d) (want_reply=%d)",
       "x11-req", channel->local_channel, channel->remote_channel, want_reply);
 
     /* uint8_t x11_single_connection = */ packet->in_uint8();
@@ -2029,6 +2035,7 @@ static inline int handle_channel_open_client(SshClientSession * client_session, 
     break;
     case REQUEST_STRING_CHANNEL_OPEN_UNKNOWN:
         syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);
+        REDEMPTION_CXX_FALLTHROUGH;
     default:
     break;
     }
@@ -3291,7 +3298,7 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
  * @brief Send a global request (needed for forward listening) and wait for the
  * result.
  *
- * @param[in]  session  The SSH session handle.
+ * @param[in]  client_session  The SSH session handle.
  *
  * @param[in]  request  The type of request (defined in RFC).
  *
@@ -3307,7 +3314,6 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
 static inline int global_request_client(SshClientSession * client_session, const char *request, ssh_buffer_struct* buffer, int reply) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
-    int rc;
 
     if (client_session->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
         client_session->out_buffer->out_uint8(SSH_MSG_GLOBAL_REQUEST);
@@ -3336,10 +3342,8 @@ static inline int global_request_client(SshClientSession * client_session, const
         return SSH_ERROR;
     }
 
-    rc = SSH_OK;
     while(1){
         if (client_session->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING){
-            rc = SSH_OK;
             break;
         }
 
@@ -3352,23 +3356,22 @@ static inline int global_request_client(SshClientSession * client_session, const
         }
 
         if (!(client_session->flags&SSH_SESSION_FLAG_BLOCKING)){
-            rc = (client_session->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING)
-                ? SSH_OK : SSH_AGAIN;
             break;
         }
     }
 
+    int rc = SSH_OK;
     switch(client_session->global_req_state){
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
         syslog(LOG_INFO, "Global request %s success",request);
-        rc=SSH_OK;
+        rc = SSH_OK;
         break;
     case SSH_CHANNEL_REQ_STATE_DENIED:
         syslog(LOG_INFO,
                 "Global request %s failed", request);
         ssh_set_error(client_session->error, SSH_REQUEST_DENIED,
                       "Global request %s failed", request);
-        rc=SSH_ERROR;
+        rc = SSH_ERROR;
         break;
     case SSH_CHANNEL_REQ_STATE_ERROR:
     case SSH_CHANNEL_REQ_STATE_NONE:
@@ -3387,7 +3390,7 @@ static inline int global_request_client(SshClientSession * client_session, const
  * @brief Sends the "tcpip-forward" global request to ask the server to begin
  *        listening for inbound connections.
  *
- * @param[in]  session  The ssh session to send the request.
+ * @param[in]  client_session  The ssh session to send the request.
  *
  * @param[in]  address  The address to bind to on the server. Pass nullptr to bind
  *                      to all available addresses on all protocol families
@@ -3434,7 +3437,7 @@ inline int ssh_forward_listen_client(SshClientSession * client_session, const ch
  * @brief Sends the "cancel-tcpip-forward" global request to ask the server to
  *        cancel the tcpip-forward request.
  *
- * @param[in]  session  The ssh session to send the request.
+ * @param[in]  client_session  The ssh session to send the request.
  *
  * @param[in]  address  The bound address on the server.
  *
@@ -4098,16 +4101,15 @@ inline int ssh_packet_global_request_client(SshClientSession * client_session, s
 // that generate the "keepalive@openssh.com" messages and these that you
 // need to change in your case, (in addition to KeepAlive).
 
-//	Later versions (3.8 and up) also have the client-side equivalent
+//    Later versions (3.8 and up) also have the client-side equivalent
 // (ServerAliveInterval and ServerAliveCountMax).
 
 
 /** @internal
  * @handles a data received event. It then calls the handlers for the different packet types
  * or and exception handler callback.
- * @param user pointer to current ssh_session
  * @param data pointer to the data received
- * @len length of data received. It might not be enough for a complete packet
+ * @param receivedlen length of data received. It might not be enough for a complete packet
  * @returns number of bytes read and processed.
  */
 int SshClientSession::handle_received_data_client(const void *data, size_t receivedlen)
@@ -4185,7 +4187,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                 return processed;
             }
             this->packet_state = PACKET_STATE_SIZEREAD;
-            CPP_FALLTHROUGH;
+            REDEMPTION_CXX_FALLTHROUGH;
         case PACKET_STATE_SIZEREAD:
 
             // some cases are looking wrong here, seems like not crypted/crypted cases
@@ -4533,15 +4535,13 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 /**
  * @brief Add a fd to the event and assign it a callback,
  * when used in blocking mode.
- * @param event         The ssh_event
- * @param  fd           Socket that will be polled.
- * @param  events       Poll events that will be monitored for the socket. i.e.
- *                      POLLIN, POLLPRI, POLLOUT
- * @param  cb           Function to be called if any of the events are set.
- *                      The prototype of cb is:
+ * @param ctx          access to polling context
+ * @param fd           Socket that will be polled.
+ * @param pw_cb        Function to be called if any of the events are set.
+ *                     The prototype of cb is:
  *                      int (*ssh_event_callback)(socket_t fd, int revents,
  *                                                          void *userdata);
- * @param  userdata     Userdata to be passed to the callback function. nullptr if
+ * @param pw_userdata  Userdata to be passed to the callback function. nullptr if
  *                      not needed.
  *
  * @returns SSH_OK      on success
@@ -4550,7 +4550,6 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_callback pw_cb, void *pw_userdata) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_WARNING, "ssh_event_add_fd = %u", fd);
-
 
     if(ctx == nullptr || pw_cb == nullptr || fd == INVALID_SOCKET) {
         syslog(LOG_WARNING, "ssh_event_add_fd failed = %u", fd);
@@ -4574,7 +4573,7 @@ void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * 
  * @internal
  * @brief Wait for a response of an authentication function.
  *
- * @param[in] session   The SSH session.
+ * @param[in] client_session   The SSH session.
  *
  * @returns SSH_AUTH_SUCCESS Authentication success, or pubkey accepted
  *          SSH_AUTH_PARTIAL Authentication succeeded but another mean
@@ -4721,7 +4720,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
  *
  * Service requests are for example: ssh-userauth, ssh-connection, etc.
  *
- * @param  session      The session to use to ask for a service request.
+ * @param  client_session      The session to use to ask for a service request.
  * @param  service      The service request.
  *
  * @return SSH_OK on success
@@ -4755,9 +4754,9 @@ static inline int ssh_send_service_request_client(SshClientSession * client_sess
  * methods are available. The server MAY return a list of methods that may
  * continue.
  *
- * @param[in] session   The SSH session.
+ * @param[in] client_session   The SSH session.
  *
- * @param[in] username  Deprecated, set to nullptr.
+ * @param[in] error  Deprecated, don't care.
  *
  * @returns             A bitfield of the fllowing values:
  *                      - SSH_AUTH_METHOD_PASSWORD
@@ -4783,7 +4782,7 @@ int ssh_userauth_list_client(SshClientSession * client_session, error_struct * e
  * is provided for querying whether authentication using the 'pubkey' would
  * be possible.
  *
- * @param[in] session     The SSH session.
+ * @param[in] client_session     The SSH session.
  *
  * @param[in] username    The username, this SHOULD be nullptr.
  *
@@ -4928,6 +4927,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 
             client_session->packet_send();
             syslog(LOG_INFO, "%s packet_send -> TO FALLBACK ---", __FUNCTION__);
+            REDEMPTION_CXX_FALLTHROUGH;
         case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
             syslog(LOG_INFO, "%s SSH_PENDING_CALL_OFFER_PUBKEY -> waiting response", __FUNCTION__);
             switch (ssh_userauth_get_response_client(client_session)){
@@ -4956,6 +4956,22 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
                 return SSH_AUTH_INFO;
             }
             break;
+        case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_AGENT:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PUBKEY:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PASSWORD:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_NONE:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_CONNECT:
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             syslog(LOG_INFO, "%s F ---", __FUNCTION__);
             syslog(LOG_INFO, "%s Wrong state during pending SSH call", __FUNCTION__);
@@ -5059,7 +5075,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 /**
  * @brief Try to do public key authentication with ssh agent.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  username The username, this SHOULD be nullptr.
  *
@@ -5117,6 +5133,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
         case SSH_AGENT_STATE_NONE:
             syslog(LOG_INFO, "SSH_AGENT_STATE_NONE %s ---", __FUNCTION__);
             syslog(LOG_DEBUG, "Trying identity %s", client_session->agent_state->comment);
+            REDEMPTION_CXX_FALLTHROUGH;
         case SSH_AGENT_STATE_PUBKEY:
         {
             syslog(LOG_INFO, "SSH_AGENT_STATE_PUBKEY %s ---", __FUNCTION__);
@@ -5391,10 +5408,27 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                     continue;
                 }
             }
+            case SSH_PENDING_CALL_AUTH_NONE:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_PASSWORD:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_PUBKEY:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+                REDEMPTION_CXX_FALLTHROUGH;
+            case SSH_PENDING_CALL_CONNECT:
+                REDEMPTION_CXX_FALLTHROUGH;
             default:
                 ;
             }
         }
+        REDEMPTION_CXX_FALLTHROUGH;
         default:;
             syslog(LOG_INFO, "SSH_AGENT_STATE ???? DEFAULT %s ---", __FUNCTION__);
 
@@ -5419,7 +5453,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
  * However, if you read the password in some other encoding, you MUST convert
  * the password to UTF-8.
  *
- * @param[in] session   The ssh session to use.
+ * @param[in] client_session   The ssh session to use.
  *
  * @param[in] username  The username, this SHOULD be nullptr.
  *
@@ -5456,6 +5490,23 @@ int ssh_userauth_password_client(SshClientSession * client_session,
             if (rc != SSH_AUTH_AGAIN) {
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
             }
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_AGENT:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PUBKEY:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_PASSWORD:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_AUTH_NONE:
+            REDEMPTION_CXX_FALLTHROUGH;
+        case SSH_PENDING_CALL_CONNECT:
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
             ssh_set_error(client_session->error,
                           SSH_FATAL,
@@ -5553,6 +5604,7 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
                 "Sending keyboard-interactive init request");
 
         client_session->packet_send();
+        REDEMPTION_CXX_FALLTHROUGH;
     // fallbak to next case
     case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
         rc = ssh_userauth_get_response_client(client_session);
@@ -5560,6 +5612,22 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
             client_session->pending_call_state = SSH_PENDING_CALL_NONE;
         }
         return rc;
+    case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_AGENT:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_NONE:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_PASSWORD:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_PUBKEY:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_CONNECT:
+    REDEMPTION_CXX_FALLTHROUGH;
     default:
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_AUTH_ERROR;
@@ -5623,7 +5691,7 @@ static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
 /**
  * @brief Try to authenticate through the "keyboard-interactive" method.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  user     The username to authenticate. You can specify nullptr if
  *                      ssh_option_set_username() has been used. You cannot try
@@ -5687,7 +5755,7 @@ int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *us
  * code, this function can be used to retrieve information about the keyboard
  * interactive authentication questions sent by the remote host.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @returns             The number of prompts.
  */
@@ -5875,7 +5943,7 @@ inline int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
 /**
  * @brief Try to authenticate through the "gssapi-with-mic" method.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @returns SSH_AUTH_ERROR:   A serious error happened\n
  *          SSH_AUTH_DENIED:  Authentication failed : use another method\n
@@ -5888,10 +5956,10 @@ inline int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
 int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct * error) {
     (void)error;
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
-	int rc = SSH_AUTH_DENIED;
+    int rc = SSH_AUTH_DENIED;
 
-	switch(client_session->pending_call_state) {
-	case SSH_PENDING_CALL_NONE:
+    switch(client_session->pending_call_state) {
+    case SSH_PENDING_CALL_NONE:
         rc = ssh_send_service_request_client(client_session, "ssh-userauth");
         if (rc == SSH_AGAIN) {
             return SSH_AUTH_AGAIN;
@@ -5900,29 +5968,46 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
                 "Failed to request \"ssh-userauth\" service");
             return SSH_AUTH_ERROR;
         }
-	    syslog(LOG_INFO, "Authenticating with gssapi-with-mic");
-	    client_session->auth_state = SSH_AUTH_STATE_NONE;
-	    client_session->pending_call_state = SSH_PENDING_CALL_AUTH_GSSAPI_MIC;
-	    rc = ssh_gssapi_auth_mic_client(client_session);
+        syslog(LOG_INFO, "Authenticating with gssapi-with-mic");
+        client_session->auth_state = SSH_AUTH_STATE_NONE;
+        client_session->pending_call_state = SSH_PENDING_CALL_AUTH_GSSAPI_MIC;
+        rc = ssh_gssapi_auth_mic_client(client_session);
 
-	    if (rc == SSH_AUTH_ERROR || rc == SSH_AUTH_DENIED) {
-		    client_session->auth_state = SSH_AUTH_STATE_NONE;
-		    client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-		    return rc;
-	    }
-	case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
-	    rc = ssh_userauth_get_response_client(client_session);
-	    if (rc != SSH_AUTH_AGAIN) {
-		    client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-	    }
-	    return rc;
-	default:
-		ssh_set_error(client_session->error,
-				SSH_FATAL,
-				"Wrong state during pending SSH call");
-		return SSH_ERROR;
-	}
-	return SSH_AUTH_ERROR;
+        if (rc == SSH_AUTH_ERROR || rc == SSH_AUTH_DENIED) {
+            client_session->auth_state = SSH_AUTH_STATE_NONE;
+            client_session->pending_call_state = SSH_PENDING_CALL_NONE;
+            return rc;
+        }
+        REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
+        rc = ssh_userauth_get_response_client(client_session);
+        if (rc != SSH_AUTH_AGAIN) {
+            client_session->pending_call_state = SSH_PENDING_CALL_NONE;
+        }
+        return rc;
+    case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_AGENT:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_NONE:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_PASSWORD:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_PUBKEY:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_CONNECT:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
+    REDEMPTION_CXX_FALLTHROUGH;
+    default:
+        ssh_set_error(client_session->error,
+                SSH_FATAL,
+                "Wrong state during pending SSH call");
+        return SSH_ERROR;
+    }
+    return SSH_AUTH_ERROR;
 }
 
 
@@ -5932,7 +6017,7 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
  * If you have called ssh_userauth_kbdint() and got SSH_AUTH_INFO, this
  * function returns the questions from the server.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  i index  The number of the ith prompt.
  *
@@ -5981,7 +6066,7 @@ int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsi
  * code, this function can be used to retrieve information about the keyboard
  * interactive authentication questions sent by the remote host.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  client_session  The ssh session to use.
  *
  * @param[in]  i        The index number of the i'th prompt.
  *
@@ -6467,7 +6552,7 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
     {
         SslSha1 sha1;
         sha1.update(blob.data.get(), blob.size);
-        sha1.final(buf, SHA_DIGEST_LENGTH);
+        sha1.final(buf);
         if (hlen){
             *hlen = SHA_DIGEST_LENGTH;
         }
@@ -6477,9 +6562,9 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
     {
         SslMd5 md5;
         md5.update(blob.data.get(), blob.size);
-        md5.final(buf, MD5_DIGEST_LENGTH);
+        md5.final(buf);
         if (hlen){
-            *hlen = MD5_DIGEST_LENGTH;
+            *hlen = SslMd5::DIGEST_LENGTH;
         }
     }
     break;
@@ -6566,6 +6651,15 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
+
     default:
     break;
     }
@@ -6654,6 +6748,15 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
+
     default:
     break;
     }
@@ -6729,6 +6832,15 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
+
     default:
         break;
     }
@@ -6778,6 +6890,14 @@ int ssh_channel_change_pty_size_client(SshClientSession * client_session, ssh_ch
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
     default:
         break;
     }
@@ -6837,6 +6957,14 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
     default:
         ;
     }
@@ -6905,6 +7033,14 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
         }
     }
     break;
+    case SSH_CHANNEL_REQ_STATE_PENDING:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_DENIED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ACCEPTED:
+    REDEMPTION_CXX_FALLTHROUGH;
+    case SSH_CHANNEL_REQ_STATE_ERROR:
+    REDEMPTION_CXX_FALLTHROUGH;
     default:
     break;
     }
@@ -7123,3 +7259,4 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
     return static_cast<int>(origlen - len);
 }
 
+REDEMPTION_DIAGNOSTIC_POP

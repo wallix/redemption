@@ -21,7 +21,7 @@
 #pragma once
 
 #include "widget.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_api.hpp"
 
@@ -30,34 +30,40 @@ class WidgetImage : public Widget2
     Bitmap bmp;
 
 public:
-    WidgetImage(gdi::GraphicApi & drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
+    : Widget2(drawable, parent, notifier, group_id)
     , bmp(bitmap_from_file(filename))
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-
-        this->rect.cx = this->bmp.cx();
-        this->rect.cy = this->bmp.cy();
     }
 
     ~WidgetImage() override {}
 
-    void draw(const Rect& clip) override {
-        int16_t mx = std::max<int16_t>(clip.x, 0);
-        int16_t my = std::max<int16_t>(clip.y, 0);
-        this->drawable.draw(
-            RDPMemBlt(
-                0,
-                Rect(mx, my, clip.cx, clip.cy),
-                0xCC,
-                mx - this->dx(),
-                my - this->dy(),
-                0
-            ),
-            this->rect,
-            this->bmp
-        );
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(
+                RDPMemBlt(
+                    0,
+                    rect_intersect,
+                    0xCC,
+                    rect_intersect.x - this->x(),
+                    rect_intersect.y - this->y(),
+                    0
+                ),
+                rect_intersect,
+                this->bmp
+            );
+
+            this->drawable.end_update();
+        }
+    }
+
+    Dimension get_optimal_dim() override {
+        return Dimension(this->bmp.cx(), this->bmp.cy());
     }
 };
-

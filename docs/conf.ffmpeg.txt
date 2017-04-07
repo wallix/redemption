@@ -1,0 +1,1 @@
+./configure --disable-libopus --enable-shared --enable-libx264 --enable-gpl --enable-encoder=libx264 --enable-pic --extra-cflags='-fPIC' --extra-ldflags='-fPIC' --disable-ffplay --disable-ffprobe --disable-ffserver --disable-doc --disable-programs --disable-w32threads --disable-os2threads --disable-decoders --disable-lzma --disable-pthreads

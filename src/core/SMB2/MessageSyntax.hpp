@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Clément Moroldo
 */
 
 
@@ -177,11 +177,23 @@ namespace smb2 {
 //  |                   | always creates a new file.                           |
 //  +-------------------+------------------------------------------------------+
 
-enum {
+enum : uint32_t {
       FILE_SHARE_READ   = 0x00000001
     , FILE_SHARE_WRITE  = 0x00000002
     , FILE_SHARE_DELETE = 0x00000004
 };
+
+static inline
+std::string get_ShareAccess_name(uint32_t shareAccess) {
+
+    std::string str;
+    (shareAccess & FILE_SHARE_READ) ? str+="FILE_SHARE_READ ":str;
+    (shareAccess & FILE_SHARE_WRITE) ? str+="FILE_SHARE_WRITE ":str;
+    (shareAccess & FILE_SHARE_DELETE) ? str+="FILE_SHARE_DELETE ":str;
+
+    return str;
+}
+
 
 // CreateDisposition (4 bytes): Defines the action the server MUST take if
 //  the file that is specified in the name field already exists. For opening
@@ -224,6 +236,20 @@ enum {
     , FILE_OVERWRITE    = 0x00000004
     , FILE_OVERWRITE_IF = 0x00000005
 };
+
+static inline
+const char * get_CreateDisposition_name(uint32_t createDisposition) {
+    switch (createDisposition) {
+        case FILE_SUPERSEDE:    return "FILE_SUPERSEDE";
+        case FILE_OPEN:         return "FILE_OPEN";
+        case FILE_CREATE:       return "FILE_CREATE";
+        case FILE_OPEN_IF:      return "FILE_OPEN_IF";
+        case FILE_OVERWRITE:    return "FILE_OVERWRITE";
+        case FILE_OVERWRITE_IF: return "FILE_OVERWRITE_IF";
+    }
+
+    return "<unknown>";
+}
 
 // CreateOptions (4 bytes): Specifies the options to be applied when creating
 //  or opening the file. Combinations of the bit positions listed below are
@@ -407,6 +433,38 @@ enum {
     , FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000
 };
 
+static inline
+std::string get_CreateOptions_name(uint32_t createOptions) {
+
+    std::string str;
+
+    (createOptions & FILE_DIRECTORY_FILE) ? str+="FILE_DIRECTORY_FILE " :str;
+    (createOptions & FILE_WRITE_THROUGH) ? str+="FILE_WRITE_THROUGH " :str;
+    (createOptions & FILE_SEQUENTIAL_ONLY) ? str+="FILE_SEQUENTIAL_ONLY " :str;
+    (createOptions & FILE_NO_INTERMEDIATE_BUFFERING) ? str+="FILE_NO_INTERMEDIATE_BUFFERING " : str;
+    (createOptions & FILE_SYNCHRONOUS_IO_ALERT) ? str+="FILE_SYNCHRONOUS_IO_ALERT " : str;
+    (createOptions & FILE_SYNCHRONOUS_IO_NONALERT) ? str+="FILE_SYNCHRONOUS_IO_NONALERT " : str;
+    (createOptions & FILE_NON_DIRECTORY_FILE) ? str+="FILE_NON_DIRECTORY_FILE " :str;
+    (createOptions & FILE_COMPLETE_IF_OPLOCKED) ? str+="FILE_COMPLETE_IF_OPLOCKED " : str;
+    (createOptions & FILE_NO_EA_KNOWLEDGE) ? str+="FILE_NO_EA_KNOWLEDGE " : str;
+    (createOptions & FILE_RANDOM_ACCESS) ? str+="FILE_RANDOM_ACCESS " : str;
+    (createOptions & FILE_DELETE_ON_CLOSE) ? str+="FILE_DELETE_ON_CLOSE ":str;
+    (createOptions & FILE_OPEN_BY_FILE_ID) ? str+="FILE_OPEN_BY_FILE_ID " : str;
+    (createOptions & FILE_OPEN_FOR_BACKUP_INTENT) ? str+="FILE_OPEN_FOR_BACKUP_INTENT " : str;
+    (createOptions & FILE_NO_COMPRESSION) ? str+="FILE_NO_COMPRESSION " : str;
+    (createOptions & FILE_OPEN_REMOTE_INSTANCE) ? str+="FILE_OPEN_REMOTE_INSTANCE " : str;
+    (createOptions & FILE_OPEN_REQUIRING_OPLOCK) ? str+="FILE_OPEN_REQUIRING_OPLOCK " : str;
+    (createOptions & FILE_DISALLOW_EXCLUSIVE) ? str+="FILE_DISALLOW_EXCLUSIVE " : str;
+    (createOptions & FILE_RESERVE_OPFILTER) ? str+="FILE_RESERVE_OPFILTER " : str;
+    (createOptions & FILE_OPEN_REPARSE_POINT) ? str+="FILE_OPEN_REPARSE_POINT " : str;
+    (createOptions & FILE_OPEN_NO_RECALL) ? str+="FILE_OPEN_NO_RECALL " : str;
+    (createOptions & FILE_OPEN_FOR_FREE_SPACE_QUERY) ? str+="FILE_OPEN_FOR_FREE_SPACE_QUERY " : str;
+
+    return str;
+}
+
+
+
 // NameOffset (2 bytes): The offset, in bytes, from the beginning of the SMB2
 //  header to the 8-byte aligned file name. If SMB2_FLAGS_DFS_OPERATIONS is
 //  set in the Flags field of the SMB2 header, the file name can be prefixed
@@ -574,6 +632,34 @@ enum {
 };
 
 static inline
+std::string get_File_Pipe_Printer_Access_Mask_name(uint32_t File_Pipe_Printer_Access_Mask) {
+
+    std::string str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_DATA) ? str+="FILE_READ_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_DATA) ? str+="FILE_WRITE_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_APPEND_DATA) ? str+="FILE_APPEND_DATA " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_EA) ? str+="FILE_READ_EA " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_EA) ? str+="FILE_WRITE_EA " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_DELETE_CHILD) ? str+="FILE_DELETE_CHILD " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_EXECUTE) ? str+="FILE_EXECUTE " :str;
+    (File_Pipe_Printer_Access_Mask & FILE_READ_ATTRIBUTES) ? str+="FILE_READ_ATTRIBUTES " : str;
+    (File_Pipe_Printer_Access_Mask & FILE_WRITE_ATTRIBUTES) ? str+="FILE_WRITE_ATTRIBUTES " : str;
+    (File_Pipe_Printer_Access_Mask & DELETE) ? str+="DELETE " : str;
+    (File_Pipe_Printer_Access_Mask & READ_CONTROL) ? str+="READ_CONTROL ":str;
+    (File_Pipe_Printer_Access_Mask & WRITE_DAC) ? str+="WRITE_DAC " : str;
+    (File_Pipe_Printer_Access_Mask & WRITE_OWNER) ? str+="WRITE_OWNER " : str;
+    (File_Pipe_Printer_Access_Mask & SYNCHRONIZE) ? str+="SYNCHRONIZE " : str;
+    (File_Pipe_Printer_Access_Mask & ACCESS_SYSTEM_SECURITY) ? str+="ACCESS_SYSTEM_SECURITY " : str;
+    (File_Pipe_Printer_Access_Mask & MAXIMUM_ALLOWED) ? str+="MAXIMUM_ALLOWED " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_ALL) ? str+="GENERIC_ALL " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_EXECUTE) ? str+="GENERIC_EXECUTE " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
+    (File_Pipe_Printer_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
+
+    return str;
+}
+
+static inline
 bool read_access_is_required(uint32_t DesiredAccess, bool strict_check) {
     uint32_t values_of_strict_checking = (FILE_READ_EA |
                                           FILE_READ_ATTRIBUTES |
@@ -614,6 +700,217 @@ bool write_access_is_required(uint32_t DesiredAccess, bool strict_check) {
             )
            );
 }
+
+
+
+//2.2.13.1.2 Directory_Access_Mask
+
+// The following SMB2 Access Mask flag values can be used when accessing a directory.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    Directory_Access_Mask                      |
+// +---------------------------------------------------------------+
+
+// Directory_Access_Mask (4 bytes): For a directory, the value MUST be constructed using the following values:
+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_LIST_DIRECTORY    | This value indicates the right to enumerate the |
+//  | 0x00000001             | contents of the directory.                      |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_ADD_FILE          | This value indicates the right to create a file |
+//  | 0x00000002             | under the directory.                            |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_ADD_SUBDIRECTORY  | This value indicates the right to add a         |
+//  | 0x00000004             | sub-directory under the directory.              |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_EA           | This value indicates the right to read the      |
+//  | 0x00000008             | extended attributes of the directory.           |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_EA          | This value indicates the right to write or      |
+//  | 0x00000010             | change the extended attributes of the directory.|
+//  +------------------------+-------------------------------------------------+
+//  | FILE_TRAVERSE          | This value indicates the right to traverse this |
+//  | 0x00000020             | directory if the server enforces traversal      |
+//  |                        | checking.                                       |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_DELETE_CHILD      | This value indicates the right to delete the    |
+//  | 0x00000040             | files and directories within this directory.    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_READ_ATTRIBUTES   | This value indicates the right to read the      |
+//  | 0x00000080             | attributes of the directory.                    |
+//  +------------------------+-------------------------------------------------+
+//  | FILE_WRITE_ATTRIBUTES  | This value indicates the right to change the    |
+//  | 0x00000100             | attributes of the directory.                    |
+//  +------------------------+-------------------------------------------------+
+//  | DELETE                 | This value indicates the right to delete the    |
+//  | 0x00010000             | directory.                                      |
+//  +------------------------+-------------------------------------------------+
+//  | READ_CONTROL           | This value indicates the right to read the      |
+//  | 0x00020000             | security descriptor for the directory.          |
+//  |                        |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_DAC              | This value indicates the right to change the    |
+//  | 0x00040000             | DACL in the security descriptor for the         |
+//  |                        | directory. For the DACL data structure, see ACL |
+//  |                        | in [MS-DTYP].                                   |
+//  +------------------------+-------------------------------------------------+
+//  | WRITE_OWNER            | This value indicates the right to change the    |
+//  | 0x00080000             | owner in the security descriptor for the        |
+//  |                        | directory.                                      |
+//  +------------------------+-------------------------------------------------+
+//  | SYNCHRONIZE            | SMB2 clients set this flag to any value.<45>    |
+//  | 0x00100000             | SMB2 servers SHOULD<46> ignore this flag.       |
+//  +------------------------+-------------------------------------------------+
+//  | ACCESS_SYSTEM_SECURITY | This value indicates the right to read or change|
+//  | 0x01000000             | the SACL in the security descriptor for the     |
+//  |                        | directory. For the SACL data structure, see ACL |
+//  |                        | in [MS-DTYP].<47>                               |
+//  +------------------------+-------------------------------------------------+
+//  | MAXIMUM_ALLOWED        | This value indicates that the client is         |
+//  | 0x02000000             | requesting an open to the directory with the    |
+//  |                        | highest level of access the client has on this  |
+//  |                        | directory. If no access is granted for the      |
+//  |                        | client on this directory, the server MUST fail  |
+//  |                        | the open with STATUS_ACCESS_DENIED.             |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_ALL            | This value indicates a request for all the      |
+//  | 0x10000000             | access flags that are listed above except       |
+//  |                        | MAXIMUM_ALLOWED and ACCESS_SYSTEM_SECURITY.     |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_EXECUTE        | TThis value indicates a request for the         |
+//  | 0x20000000             | following access flags listed above:            |
+//  |                        | FILE_READ_ATTRIBUTES| FILE_TRAVERSE|            |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_WRITE          | This value indicates a request for the following|
+//  | 0x40000000             | access flags listed above: FILE_ADD_FILE|       |
+//  |                        | FILE_ADD_SUBDIRECTORY| FILE_WRITE_ATTRIBUTES|   |
+//  |                        | FILE_WRITE_EA| SYNCHRONIZE| READ_CONTROL.       |
+//  +------------------------+-------------------------------------------------+
+//  | GENERIC_READ           | This value indicates a request for the following|
+//  | 0x80000000             | access flags listed above: FILE_LIST_DIRECTORY| |
+//  |                        | FILE_READ_ATTRIBUTES| FILE_READ_EA|             |
+//  |                        | SYNCHRONIZE| READ_CONTROL.                      |
+//  +------------------------+-------------------------------------------------+
+
+enum : uint32_t {
+    FILE_LIST_DIRECTORY    = 0x00000001,
+    FILE_ADD_FILE          = 0x00000002,
+    FILE_ADD_SUBDIRECTORY  = 0x00000004,
+    //FILE_READ_EA           = 0x00000008,
+    //FILE_WRITE_EA          = 0x00000010,
+    FILE_TRAVERSE          = 0x00000020,
+    //FILE_DELETE_CHILD      = 0x00000040,
+    //FILE_READ_ATTRIBUTES   = 0x00000080,
+    //FILE_WRITE_ATTRIBUTES  = 0x00000100,
+    //DELETE                 = 0x00010000,
+    //READ_CONTROL           = 0x00020000,
+    //WRITE_DAC              = 0x00040000,
+    //WRITE_OWNER            = 0x00080000,
+    //SYNCHRONIZE            = 0x00100000,
+    //ACCESS_SYSTEM_SECURITY = 0x01000000,
+    //MAXIMUM_ALLOWED        = 0x02000000,
+    //GENERIC_ALL            = 0x10000000,
+    //GENERIC_EXECUTE        = 0x20000000,
+    //GENERIC_WRITE          = 0x40000000,
+    //GENERIC_READ           = 0x80000000
+};
+
+static inline
+std::string get_Directory_Access_Mask_name(uint32_t Directory_Access_Mask) {
+
+    std::string str;
+    (Directory_Access_Mask & FILE_LIST_DIRECTORY) ? str+="FILE_LIST_DIRECTORY " :str;
+    (Directory_Access_Mask & FILE_ADD_FILE) ? str+="FILE_ADD_FILE " :str;
+    (Directory_Access_Mask & FILE_ADD_SUBDIRECTORY) ? str+="FILE_ADD_SUBDIRECTORY " :str;
+    (Directory_Access_Mask & FILE_READ_EA) ? str+="FILE_READ_EA " : str;
+    (Directory_Access_Mask & FILE_WRITE_EA) ? str+="FILE_WRITE_EA " : str;
+    (Directory_Access_Mask & FILE_TRAVERSE) ? str+="FILE_TRAVERSE " : str;
+    (Directory_Access_Mask & FILE_DELETE_CHILD) ? str+="FILE_DELETE_CHILD " :str;
+    (Directory_Access_Mask & FILE_READ_ATTRIBUTES) ? str+="FILE_READ_ATTRIBUTES " : str;
+    (Directory_Access_Mask & FILE_WRITE_ATTRIBUTES) ? str+="FILE_WRITE_ATTRIBUTES " : str;
+    (Directory_Access_Mask & DELETE) ? str+="DELETE " : str;
+    (Directory_Access_Mask & READ_CONTROL) ? str+="READ_CONTROL ":str;
+    (Directory_Access_Mask & WRITE_DAC) ? str+="WRITE_DAC " : str;
+    (Directory_Access_Mask & WRITE_OWNER) ? str+="WRITE_OWNER " : str;
+    (Directory_Access_Mask & SYNCHRONIZE) ? str+="SYNCHRONIZE " : str;
+    (Directory_Access_Mask & ACCESS_SYSTEM_SECURITY) ? str+="ACCESS_SYSTEM_SECURITY " : str;
+    (Directory_Access_Mask & MAXIMUM_ALLOWED) ? str+="MAXIMUM_ALLOWED " : str;
+    (Directory_Access_Mask & GENERIC_ALL) ? str+="GENERIC_ALL " : str;
+    (Directory_Access_Mask & GENERIC_EXECUTE) ? str+="GENERIC_EXECUTE " : str;
+    (Directory_Access_Mask & GENERIC_WRITE) ? str+="GENERIC_WRITE " : str;
+    (Directory_Access_Mask & GENERIC_READ) ? str+="GENERIC_READ " : str;
+
+    return str;
+}
+
+
+
+// 2.2.36 SMB2 CHANGE_NOTIFY Response
+
+// The SMB2 CHANGE_NOTIFY Response packet is sent by the server to transmit the results of a client's SMB2 CHANGE_NOTIFY Request (section 2.2.35). The server MUST send this packet only if a change occurs and MUST NOT send this packet otherwise. An SMB2 CHANGE_NOTIFY Request (section 2.2.35) will result in, at most, one response from the server. A server can choose to aggregate multiple changes into the same change notify response. The server MUST include at least one FILE_NOTIFY_INFORMATION structure if it detects a change. This response consists of an SMB2 header, as specified in section 2.2.1, followed by this response structure:
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |         StructureSize         |      OutputBufferOffset       |
+// +---------------------------------------------------------------+
+// |                       OutputBufferLength                      |
+// +---------------------------------------------------------------+
+// |                        Buffer (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// StructureSize (2 bytes): The server MUST set this field to 9, indicating the size of the request structure, not including the header. The server MUST set the field to this value regardless of how long Buffer[] actually is in the request being sent.
+
+// OutputBufferOffset (2 bytes): The offset, in bytes, from the beginning of the SMB2 header to the change information being returned.
+
+// OutputBufferLength (4 bytes): The length, in bytes, of the change information being returned.
+
+// Buffer (variable): A variable-length buffer containing the change information being returned in the response, as described by the OutputBufferOffset and OutputBufferLength fields. This field is an array of FILE_NOTIFY_INFORMATION structures, as specified in [MS-FSCC] section 2.4.42.
+
+struct ChangeNotifyResponse {
+
+    uint16_t StructureSize = 0;
+    uint16_t OutputBufferOffset = 0;
+    uint32_t OutputBufferLength = 0;
+
+    ChangeNotifyResponse() = default;
+
+    ChangeNotifyResponse( uint16_t StructureSize, uint16_t OutputBufferOffset,
+    uint32_t OutputBufferLength)
+      : StructureSize(StructureSize)
+      , OutputBufferOffset(OutputBufferOffset)
+      , OutputBufferLength(OutputBufferLength)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->StructureSize);
+        stream.out_uint16_le(this->OutputBufferOffset);
+        stream.out_uint32_le(this->OutputBufferLength);
+    }
+
+    void receive(InStream & stream) {
+        this->StructureSize = stream.in_uint16_le();
+        this->OutputBufferOffset = stream.in_uint16_le();
+        this->OutputBufferLength = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Disposition Information:");
+        LOG(LOG_INFO, "          * StructureSize      = %d (2 bytes)", int(this->StructureSize));
+        LOG(LOG_INFO, "          * OutputBufferOffset = %d (2 bytes)", int(this->OutputBufferOffset));
+        LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
+    }
+};
+
 
 }   // namespace smb2
 

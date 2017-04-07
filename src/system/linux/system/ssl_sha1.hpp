@@ -38,29 +38,21 @@ public:
 
     SslSha1()
     {
-        int res = 0;
-        res = SHA1_Init(&this->sha1);
-        if (res == 0) {
+        if (0 == SHA1_Init(&this->sha1)){
             throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
         }
     }
 
     void update(const uint8_t * const data,  size_t data_size)
     {
-        int res = 0;
-        res = SHA1_Update(&this->sha1, data, data_size);
-        if (res == 0) {
+        if (0 == SHA1_Update(&this->sha1, data, data_size)){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
         }
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        (void)out_data_size;
-        assert(DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA1_Final(out_data, &this->sha1);
-        if (res == 0) {
+        if (0 == SHA1_Final(out_data, &this->sha1)){
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }

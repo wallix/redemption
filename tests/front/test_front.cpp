@@ -20,9 +20,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define UNIT_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 #undef RECORD_PATH
@@ -66,15 +64,14 @@ namespace dump2008_PatBlt {
 class MyFront : public Front
 {
 public:
-    bool can_be_start_capture(auth_api*) override { return false; }
-    bool can_be_pause_capture() override { return false; }
-    bool can_be_resume_capture() override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     MyFront( Transport & trans
             , Random & gen
             , Inifile & ini
             , CryptoContext & cctx
+            , auth_api & authentifier
             , bool fp_support // If true, fast-path must be supported
             , bool mem3blt_support
             , time_t now
@@ -85,6 +82,7 @@ public:
             , gen
             , ini
             , cctx
+            , authentifier
             , fp_support
             , mem3blt_support
             , now
@@ -116,7 +114,7 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestFront)
+RED_AUTO_TEST_CASE(TestFront)
 {
     try {
         ::unlink(RECORD_PATH "/redemption.mwrm");
@@ -167,17 +165,16 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
         GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
+
+        LCGRandom gen1(0);
+        CryptoContext cctx;
 
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
@@ -190,7 +187,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        MyFront front( front_trans, gen1, ini , cctx, fastpath_support, mem3blt_support
+        NullAuthentifier authentifier;
+        MyFront front( front_trans, gen1, ini , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
@@ -204,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck
@@ -220,14 +218,16 @@ BOOST_AUTO_TEST_CASE(TestFront)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
-                                   , 0
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
+                                   , to_verbose_flags(0)
                                    );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
@@ -236,7 +236,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -245,27 +244,27 @@ BOOST_AUTO_TEST_CASE(TestFront)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
         LCGTime timeobj;
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
+        RED_CHECK(t.get_status());
         // incoming connexion data
-        BOOST_CHECK_EQUAL(front.client_info.width, 1024);
-        BOOST_CHECK_EQUAL(front.client_info.height, 768);
+        RED_CHECK_EQUAL(front.client_info.width, 1024);
+        RED_CHECK_EQUAL(front.client_info.height, 768);
 
 
         while (!mod->is_up_and_running())
@@ -277,8 +276,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.can_be_start_capture(&blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -295,15 +293,53 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
     //    front.dump_png("trace_w2008_");
     } catch (...) {
+        // TEST Error or not error...?
         LOG(LOG_INFO, "Exiting on Exception");
     };
 }
 
-BOOST_AUTO_TEST_CASE(TestFront2)
+RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 {
-    bool rdp_handshake_timeout_exception_raised = false;
+   const uint8_t bytes_data[] = "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60"  "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff" "\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff" "\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff" "\xff\xff\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" "\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff" "\xff\xff\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\xff" "\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f" "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08" "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60" "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"  "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
+                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
+                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
+                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08";
 
-    try {
+    const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
+                                "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
+
+    std::unique_ptr<uint8_t[]> data;
+
+    int16_t offset = 0;
+    int16_t baseline = 2;
+    uint16_t width = 16;
+    uint16_t height = 16;
+    int16_t incby = 16;
+
+    FontChar fc(offset, baseline, width, height, incby);
+
+    for (int i = 0; i < 32; i++) {
+        fc.data[i] = reinterpret_cast<uint8_t>(bits_data[i]);
+    }
+
+    Front::GlyphTo24Bitmap g24b(fc, { 96,  31,   8}, {255, 255, 255});
+
+    std::string const out_data(reinterpret_cast<char *>(g24b.raw_data), 256*3);
+    std::string const expected(reinterpret_cast<const char *>(bytes_data), 256*3);
+    RED_CHECK_EQUAL(expected, out_data);
+}
+
+RED_AUTO_TEST_CASE(TestFront2)
+{
+    auto test = [&]{
         ::unlink(RECORD_PATH "/redemption.mwrm");
         ::unlink(RECORD_PATH "/redemption-000000.wrm");
 
@@ -352,18 +388,16 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
         GeneratorTransport front_trans(indata, sizeof(indata), verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
+        LCGRandom gen1(0);
+        CryptoContext cctx;
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 
@@ -375,8 +409,9 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
+        NullAuthentifier authentifier;
         MyFront front( front_trans, gen1, ini
-                     , cctx, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
 
@@ -390,7 +425,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck
@@ -406,14 +441,16 @@ BOOST_AUTO_TEST_CASE(TestFront2)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
-                                   , 0
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
+                                   , to_verbose_flags(0)
                                    );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
@@ -422,7 +459,6 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -431,26 +467,26 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
         LCGTime timeobj;
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(front.client_info.width, 800);
-        BOOST_CHECK_EQUAL(front.client_info.height, 600);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(front.client_info.width, 800);
+        RED_CHECK_EQUAL(front.client_info.height, 600);
 
         while (!mod->is_up_and_running())
             mod->draw_event(now, front);
@@ -461,8 +497,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.can_be_start_capture(&blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -478,17 +513,12 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         front.must_be_stop_capture();
 
     //    front.dump_png("trace_w2008_");
-    } catch (const Error & e) {
-        rdp_handshake_timeout_exception_raised = (e.id == ERR_RDP_HANDSHAKE_TIMEOUT);
-    } catch (...) {
-        LOG(LOG_INFO, "Exiting on Exception");
     };
-
-    BOOST_CHECK(rdp_handshake_timeout_exception_raised);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TestFront3)
+RED_AUTO_TEST_CASE(TestFront3)
 {
     try {
         ::unlink(RECORD_PATH "/redemption.mwrm");
@@ -539,10 +569,6 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         time_t now = 1450864840;
 
-        LCGRandom gen1(0);
-
-        CryptoContext cctx(gen1, ini);
-
         // Comment the code block below to generate testing data.
         #include "fixtures/trace_front_client_patblt.hpp"
 
@@ -550,8 +576,10 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         // GeneratorTransport front_trans(indata, sizeof(indata), verbose);
         TestTransport front_trans("Front", indata, sizeof(indata), outdata, sizeof(outdata) - 1, verbose);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
+        LCGRandom gen1(0);
+        CryptoContext cctx;
         const bool fastpath_support = false;
         const bool mem3blt_support  = false;
 
@@ -563,6 +591,8 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
+        NullAuthentifier authentifier;
+
         class MyFront : public Front
         {
             public:
@@ -572,6 +602,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                    , Random & gen
                    , Inifile & ini
                    , CryptoContext & cctx
+                   , auth_api * authentifier
                    , bool fp_support // If true, fast-path must be supported
                    , bool mem3blt_support
                    , time_t now
@@ -583,6 +614,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                    , gen
                    , ini
                    , cctx
+                   , authentifier
                    , fp_support
                    , mem3blt_support
                    , now
@@ -614,8 +646,10 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                 }
         };
 
+        NullAuthentifier authentifier;
+
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
-                     , cctx, fastpath_support, mem3blt_support
+                     , cctx, authentifier, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>());
         null_mod no_mod(front);
 
@@ -629,7 +663,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck
@@ -645,13 +679,15 @@ BOOST_AUTO_TEST_CASE(TestFront3)
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
          ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
                                    , "10.10.47.36"
                                    , "10.10.43.33"
                                    , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
                                    , 0
                                    );
         mod_rdp_params.device_id                       = "device_id";
@@ -661,7 +697,6 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         //mod_rdp_params.enable_clipboard                = true;
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
         mod_rdp_params.enable_new_pointer              = false;
         //mod_rdp_params.rdp_compression                 = 0;
         //mod_rdp_params.error_message                   = nullptr;
@@ -670,25 +705,25 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
         mod_rdp_params.server_redirection_support        = true;
-        mod_rdp_params.verbose = verbose;
+        mod_rdp_params.verbose = to_verbose_flags(verbose);
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
 
-        BOOST_CHECK(true);
+        RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, authentifier);
         mod_api * mod = &mod_;
-         BOOST_CHECK(true);
+         RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 1024);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(mod->get_front_width(), 1024);
+        RED_CHECK_EQUAL(mod->get_front_height(), 768);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
@@ -696,8 +731,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         LOG(LOG_INFO, "Before Start Capture");
 
-        NullAuthentifier blackhole;
-        front.start_capture(1024, 768, ini, &blackhole);
+        front.can_be_start_capture();
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;

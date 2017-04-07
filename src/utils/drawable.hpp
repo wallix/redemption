@@ -199,11 +199,11 @@ namespace Ops {
     typedef Op2_0x0E Op_0xF5;
     typedef Op2_0x0F Op_0xFA;
 
-    struct Op_0x11
+    struct Op_0x11 // NOTSRCERASE DSon
     {
         constexpr u8 operator()(u8 target, u8 source) const noexcept
         {
-            return ~(target | ~source);
+            return ~(target | source);
         }
     };
 
@@ -437,7 +437,7 @@ public:
         return this->data_ + (y * this->width_ + x) * Bpp;
     }
 
-    uint8_t * first_pixel(const Rect & rect) const noexcept {
+    uint8_t * first_pixel(Rect rect) const noexcept {
         return this->first_pixel(rect.x, rect.y);
     }
 
@@ -456,7 +456,7 @@ private:
     struct Invert;
 
 public:
-    void opaque_rect(const Rect & rect, const color_t color)
+    void opaque_rect(Rect rect, const color_t color)
     {
         P const base = this->first_pixel(rect);
 
@@ -476,7 +476,7 @@ public:
     }
 
     template<class Op, class... Col>
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
+    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
     {
         P dest = this->first_pixel(rect);
         const size_t bmp_Bpp = ::nbbytes(bmp.bpp());
@@ -527,12 +527,12 @@ private:
     }
 
 public:
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp)
+    void draw_bitmap(Rect rect, const Bitmap & bmp)
     {
         this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
     }
 
-    void component_rect(const Rect & rect, uint8_t c)
+    void component_rect(Rect rect, uint8_t c)
     {
         P p = this->first_pixel(rect);
         const size_t step = this->rowsize();
@@ -666,7 +666,7 @@ private:
 public:
     template <typename Op>
     void patblt_op_ex(
-        const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
+        Rect rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const color_t back_color, const color_t fore_color)
     {
         // TODO org_x is not used
@@ -695,7 +695,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(const Rect & rect, uint16_t srcx, uint16_t srcy)
+    void scr_blt_op(Rect rect, uint16_t srcx, uint16_t srcy)
     {
         const int16_t deltax = static_cast<int16_t>(srcx - rect.x);
         const int16_t deltay = static_cast<int16_t>(srcy - rect.y);
@@ -736,7 +736,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
+    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -744,7 +744,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Op op)
     {
         P dest = this->first_pixel(rect_dest);
         cP src = this->first_pixel(srcx, srcy);
@@ -776,7 +776,7 @@ private:
     }
 
     template <typename Op>
-    void scr_blt_op_nooverlap(Rect const & rect_dest, size_t srcx, size_t srcy, Op op)
+    void scr_blt_op_nooverlap(Rect const rect_dest, size_t srcx, size_t srcy, Op op)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [this, op](P dest, cP src, size_t n) {
             this->copy(dest, src, n, op);
@@ -784,7 +784,7 @@ private:
     }
 
     template <typename F>
-    void scr_blt_impl(Rect const & rect_dest, size_t srcx, size_t srcy, F f)
+    void scr_blt_impl(Rect const rect_dest, size_t srcx, size_t srcy, F f)
     {
         this->scr_blt_impl(this->first_pixel(rect_dest), this->first_pixel(srcx, srcy), rect_dest.cx * Bpp, rect_dest.cy, f);
     }
@@ -853,22 +853,22 @@ public:
     }
 
     template <typename Op>
-    void patblt_op(const Rect & rect, color_t color, Op)
+    void patblt_op(Rect rect, color_t color, Op)
     {
         this->apply_for_rect(rect, AssignOp<Op>{color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::InvertSrc)
+    void patblt_op(Rect rect, color_t color, Ops::InvertSrc)
     {
         this->apply_for_rect(rect, Assign{~color});
     }
 
-    void patblt_op(const Rect & rect, color_t color, Ops::CopySrc)
+    void patblt_op(Rect rect, color_t color, Ops::CopySrc)
     {
         this->apply_for_rect(rect, Assign{color});
     }
 
-    void invert_color(const Rect & rect)
+    void invert_color(Rect rect)
     {
         this->apply_for_rect(rect, Invert{});
     }
@@ -929,7 +929,7 @@ private:
     }
 
     template<class F>
-    void apply_for_rect(const Rect & rect, F f)
+    void apply_for_rect(Rect rect, F f)
     {
         P p = this->first_pixel(rect);
         const size_t line_size = this->rowsize();
@@ -945,6 +945,11 @@ private:
 
 
 struct DrawablePointer {
+    enum {
+          MAX_WIDTH  = 96
+        , MAX_HEIGHT = 96
+    };
+
     struct ContiguousPixels {
         int             x;
         int             y;
@@ -952,39 +957,52 @@ struct DrawablePointer {
         const uint8_t * data;
     };
 
-    ContiguousPixels contiguous_pixels[16 * 32];    // 16 contiguous pixels per line * 32 lines
+    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT];    // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
     uint8_t          number_of_contiguous_pixels;
 
-    uint8_t data[32 * 32 * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
 
     int hotspot_x;
     int hotspot_y;
 
     DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), data(), hotspot_x(0), hotspot_y(0) {}
 
-    void initialize(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+    void initialize(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
         this->number_of_contiguous_pixels = 0;
         ::memset(this->data, 0, sizeof(this->data));
 
         this->hotspot_x = hotspot_x;
         this->hotspot_y = hotspot_y;
+        //printf("hotspot_x=%d hotspot_y=%d\n", hotspot_x, hotspot_y);
 
         bool               non_transparent_pixel;
         uint8_t          * current_data               = this->data;
         ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
 
-        for (unsigned int line = 0; line < 32; line++) {
+        const unsigned int xor_line_length_in_byte = width * 3;
+        const unsigned int xor_padded_line_length_in_byte =
+            ((xor_line_length_in_byte % 2) ?
+             xor_line_length_in_byte + 1 :
+             xor_line_length_in_byte);
+        const unsigned int remainder = (width % 8);
+        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        for (unsigned int line = 0; line < height; line++) {
             bool in_contiguous_mouse_pixels = false;
 
-            for (unsigned int column = 0; column < 32; column++) {
+            for (unsigned int column = 0; column < width; column++) {
                 const div_t        res = div(column, 8);
                 const unsigned int rem = 7 - res.rem;
 
-                non_transparent_pixel = !(((*(pointer_mask + 128 - (line + 1) * 32 / 8 + res.quot)) & (1 << rem)) >> rem);
+                non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
                 //printf("%c", (non_transparent_pixel ? 'X' : '.'));
 
-                const uint8_t * pixel = pointer_data + 32 * 32 * 3 - (line + 1) * 32 * 3 + column * 3;
+                const uint8_t * pixel = pointer_data + xor_padded_line_length_in_byte * (height - (line + 1)) + column * 3;
                 //printf("%02X%02X%02X", *pixel, *(pixel + 1), *(pixel+2));
 
                 if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
@@ -1011,6 +1029,8 @@ struct DrawablePointer {
             }
             //printf("\n");
         }
+
+        //hexdump_c(pointer_mask, 128);
     }
 
     struct ContiguousPixelsView {
@@ -1711,17 +1731,17 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->impl().first_pixel()) a the given position (rect).
      */
-    void mem_blt(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
     }
 
-    void mem_blt_invert(const Rect & rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt_invert(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
     }
 
 private:
     template <typename Op, class... Color>
-    void mem_blt_op( const Rect & rect
+    void mem_blt_op( Rect rect
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
@@ -1746,7 +1766,7 @@ private:
     }
 
 public:
-    void mem_blt_ex( const Rect & rect
+    void mem_blt_ex( Rect rect
                    , const Bitmap & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
@@ -1794,11 +1814,11 @@ public:
         }
     }
 
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
+    void draw_bitmap(Rect rect, const Bitmap & bmp) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
     }
 
-    void mem_3_blt( const Rect & rect
+    void mem_3_blt( Rect rect
                   , const Bitmap & bmp
                   , const uint16_t srcx
                   , const uint16_t srcy
@@ -1819,7 +1839,7 @@ public:
         }
     }
 
-    void black_color(const Rect & rect)
+    void black_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1830,7 +1850,7 @@ public:
         this->impl().component_rect(trect, 0);
     }
 
-    void white_color(const Rect & rect)
+    void white_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1842,7 +1862,7 @@ public:
     }
 
 private:
-    void invert_color(const Rect & rect)
+    void invert_color(Rect rect)
     {
         const Rect trect = rect.intersect(this->width(), this->height());
 
@@ -1923,7 +1943,7 @@ public:
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
-    void opaquerect(const Rect & rect, const Color color)
+    void opaquerect(Rect rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1941,7 +1961,7 @@ public:
 
 private:
     template <typename Op>
-    void patblt_op(const Rect & rect, const Color color)
+    void patblt_op(Rect rect, const Color color)
     {
         if (this->tracked_area.has_intersection(rect)) {
             this->tracked_area_changed = true;
@@ -1952,7 +1972,7 @@ private:
 public:
     // low level patblt,
     // mostly avoid clipping because we already took care of it
-    void patblt(const Rect & rect, const uint8_t rop, const Color color)
+    void patblt(Rect rect, const uint8_t rop, const Color color)
     {
         switch (rop) {
             // +------+-------------------------------+
@@ -2067,7 +2087,7 @@ public:
 
 private:
     template <typename Op>
-    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
+    void patblt_op_ex(Rect rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const Color back_color, const Color fore_color)
     {
         if (this->tracked_area.has_intersection(rect)) {
@@ -2078,7 +2098,7 @@ private:
     }
 
 public:
-    void patblt_ex(const Rect & rect, const uint8_t rop,
+    void patblt_ex(Rect rect, const uint8_t rop,
         const Color back_color, const Color fore_color,
         const uint8_t * brush_data, int8_t org_x, int8_t org_y)
     {
@@ -2108,7 +2128,7 @@ public:
 
     // low level destblt,
     // mostly avoid clipping because we already took care of it
-    void destblt(const Rect & rect, const uint8_t rop)
+    void destblt(Rect rect, const uint8_t rop)
     {
         switch (rop) {
             case 0x00: // blackness
@@ -2129,7 +2149,7 @@ public:
     }
 
     template <typename Op>
-    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect & drect)
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, Rect drect)
     {
         if (this->tracked_area.has_intersection(drect)) {
             this->tracked_area_changed = true;
@@ -2141,7 +2161,7 @@ public:
 public:
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
-    void scrblt(unsigned srcx, unsigned srcy, const Rect & drect, uint8_t rop)
+    void scrblt(unsigned srcx, unsigned srcy, Rect drect, uint8_t rop)
     {
         switch (rop) {
             // +------+-------------------------------+
@@ -2266,7 +2286,7 @@ public:
         int mix_mode,
         int16_t xStart, int16_t yStart,
         int16_t xEnd, int16_t yEnd,
-        uint8_t rop, Color color, const Rect & clip
+        uint8_t rop, Color color, Rect clip
     ) {
         LineEquation equa(xStart, yStart, xEnd, yEnd);
 
@@ -2373,8 +2393,8 @@ public:
         }
     }
 
-    void use_pointer(int hotspot_x, int hotspot_y, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-        this->dynamic_pointer.initialize(hotspot_x, hotspot_y, pointer_data, pointer_mask);
+    void use_pointer(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+        this->dynamic_pointer.initialize(hotspot_x, hotspot_y, width, height, pointer_data, pointer_mask);
 
         this->current_pointer = &this->dynamic_pointer;
     }
@@ -2450,7 +2470,7 @@ private:
     }
 
 public:
-    void trace_timestamp(tm & now)
+    void trace_timestamp(const tm & now)
     {
         this->priv_trace_timestamp(now, false);
     }
@@ -2476,7 +2496,7 @@ private:
         return this->rowsize() * (this->height() / 2) + ((this->width() - timestamp_len*char_width)*Bpp) / 2;
     }
 
-    void priv_trace_timestamp(tm & now, bool has_clear)
+    void priv_trace_timestamp(const tm & now, bool has_clear)
     {
         const char * timezone = (daylight ? tzname[1] : tzname[0]);
         const uint8_t timestamp_length = 20 + strlen(timezone);
@@ -2783,6 +2803,6 @@ private:
 /* 0070 */ 0x0f, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff,  // ........?.......
         };
 
-        this->default_pointer.initialize(0, 0, pointer_data, pointer_mask);
+        this->default_pointer.initialize(0, 0, 32, 32, pointer_data, pointer_mask);
     }
 };

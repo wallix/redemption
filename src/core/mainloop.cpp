@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "configs/config.hpp"
 #include "core/mainloop.hpp"
 #include "utils/log.hpp"
 #include "core/listen.hpp"
@@ -92,9 +91,9 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, nullptr);
 
@@ -124,7 +123,7 @@ void init_signals(void)
 
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR2, &sa, nullptr);
-#pragma GCC diagnostic pop
+REDEMPTION_DIAGNOSTIC_POP
 }
 
 }
@@ -160,7 +159,7 @@ void init_signals(void)
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-void redemption_new_session(CryptoContext & cctx, char const * config_filename)
+void redemption_new_session(CryptoContext & cctx, Random & rnd, char const * config_filename)
 {
     char text[256];
     char source_ip[256];
@@ -203,7 +202,7 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
     target_port = localAddress.s4.sin_port;
     strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
-    if (ini.get<cfg::globals::enable_ip_transparent>()) {
+    if (ini.get<cfg::globals::enable_transparent_mode>()) {
         const int source_port = 0;
         char target_ip[256];
         strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
@@ -226,7 +225,7 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
-        Session session(sck, ini, cctx);
+        Session session(sck, ini, cctx, rnd);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -241,25 +240,25 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
 
 }
 
-void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename)
+void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, unsigned uid, unsigned gid, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(cctx, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(cctx, rnd, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+    REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
-#pragma GCC diagnostic pop
+    REDEMPTION_DIAGNOSTIC_POP
     int port = ini.get<cfg::globals::port>();
     Listen listener( ss
                      , s_addr
                      , port
                      , false                              /* exit on timeout       */
                      , 60                                 /* timeout sec           */
-                     , ini.get<cfg::globals::enable_ip_transparent>()
+                     , ini.get<cfg::globals::enable_transparent_mode>()
                      );
     listener.run();
 }

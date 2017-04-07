@@ -1187,7 +1187,7 @@ struct ssh_crypto_struct {
     unsigned char *encryptkey;
     unsigned char *encryptMAC;
     unsigned char *decryptMAC;
-    unsigned char hmacbuf[EVP_MAX_MD_SIZE];
+    unsigned char hmacbuf[SslSha1::DIGEST_LENGTH];
     struct ssh_cipher_struct *in_cipher, *out_cipher; /* the cipher structures/objects */
     SSHString server_pubkey;
     const char *server_pubkey_type;
@@ -1341,7 +1341,7 @@ struct ssh_crypto_struct {
             sha1_decryptIV.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptIV.update(reinterpret_cast<const uint8_t*>("A"), 1);
             sha1_decryptIV.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptIV.final(this->decryptIV, SHA_DIGEST_LENGTH);
+            sha1_decryptIV.final(this->decryptIV);
 
             // this->encryptIV, 'B'
             SslSha1 sha1_encryptIV;
@@ -1350,7 +1350,7 @@ struct ssh_crypto_struct {
             sha1_encryptIV.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptIV.update(reinterpret_cast<const uint8_t*>("B"), 1);
             sha1_encryptIV.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptIV.final(this->encryptIV, SHA_DIGEST_LENGTH);
+            sha1_encryptIV.final(this->encryptIV);
 
             // this->decryptkey, 'C'
             SslSha1 sha1_decryptkey;
@@ -1359,7 +1359,7 @@ struct ssh_crypto_struct {
             sha1_decryptkey.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptkey.update(reinterpret_cast<const uint8_t*>("C"), 1);
             sha1_decryptkey.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptkey.final(this->decryptkey, SHA_DIGEST_LENGTH);
+            sha1_decryptkey.final(this->decryptkey);
 
             if (this->in_cipher->keysize > this->digest_len * 8) {
                 SslSha1 sha1;
@@ -1367,7 +1367,7 @@ struct ssh_crypto_struct {
                 sha1.update(k_string.data.get(), k_string.size);
                 sha1.update(this->secret_hash, SHA_DIGEST_LENGTH);
                 sha1.update(this->decryptkey, SHA_DIGEST_LENGTH);
-                sha1.final(this->decryptkey + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH);
+                sha1.final(this->decryptkey + SHA_DIGEST_LENGTH);
             }
 
             // this->encryptkey, 'D'
@@ -1377,7 +1377,7 @@ struct ssh_crypto_struct {
             sha1_encryptkey.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptkey.update(reinterpret_cast<const uint8_t*>("D"), 1);
             sha1_encryptkey.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptkey.final(this->encryptkey, SHA_DIGEST_LENGTH);
+            sha1_encryptkey.final(this->encryptkey);
 
             if (this->out_cipher->keysize > this->digest_len * 8) {
                 SslSha1 sha1;
@@ -1385,7 +1385,7 @@ struct ssh_crypto_struct {
                 sha1.update(k_string.data.get(), k_string.size);
                 sha1.update(this->secret_hash, SHA_DIGEST_LENGTH);
                 sha1.update(this->encryptkey, SHA_DIGEST_LENGTH);
-                sha1.final(this->encryptkey + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH);
+                sha1.final(this->encryptkey + SHA_DIGEST_LENGTH);
             }
 
             // this->decryptMAC, 'E'
@@ -1395,7 +1395,7 @@ struct ssh_crypto_struct {
             sha1_decryptMAC.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptMAC.update(reinterpret_cast<const uint8_t *>("E"), 1);
             sha1_decryptMAC.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptMAC.final(this->decryptMAC, SHA_DIGEST_LENGTH);
+            sha1_decryptMAC.final(this->decryptMAC);
 
             // this->encryptMAC, 'F'
             SslSha1 sha1_encryptMAC;
@@ -1404,7 +1404,7 @@ struct ssh_crypto_struct {
             sha1_encryptMAC.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptMAC.update(reinterpret_cast<const uint8_t *>("F"), 1);
             sha1_encryptMAC.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptMAC.final(this->encryptMAC, SHA_DIGEST_LENGTH);
+            sha1_encryptMAC.final(this->encryptMAC);
         }
         break;
         case SSH_MAC_SHA256:
@@ -1416,7 +1416,7 @@ struct ssh_crypto_struct {
             sha256_decryptIV.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptIV.update(reinterpret_cast<const uint8_t*>("A"), 1);
             sha256_decryptIV.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptIV.final(this->decryptIV, SHA256_DIGEST_LENGTH);
+            sha256_decryptIV.final(this->decryptIV);
 
             // this->encryptIV, 'B'
             SslSha256 sha256_encryptIV;
@@ -1425,7 +1425,7 @@ struct ssh_crypto_struct {
             sha256_encryptIV.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptIV.update(reinterpret_cast<const uint8_t*>("B"), 1);
             sha256_encryptIV.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptIV.final(this->encryptIV, SHA256_DIGEST_LENGTH);
+            sha256_encryptIV.final(this->encryptIV);
 
             // this->decryptkey, 'C'
             SslSha256 sha256_decryptkey;
@@ -1434,7 +1434,7 @@ struct ssh_crypto_struct {
             sha256_decryptkey.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptkey.update(reinterpret_cast<const uint8_t*>("C"), 1);
             sha256_decryptkey.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptkey.final(this->decryptkey, SHA256_DIGEST_LENGTH);
+            sha256_decryptkey.final(this->decryptkey);
 
             /* some ciphers need more than DIGEST_LEN bytes of input key */
             if (this->in_cipher->keysize > this->digest_len * 8) {
@@ -1443,7 +1443,7 @@ struct ssh_crypto_struct {
                 sha256.update(k_string.data.get(), k_string.size);
                 sha256.update(this->secret_hash, SHA256_DIGEST_LENGTH);
                 sha256.update(this->decryptkey, SHA256_DIGEST_LENGTH);
-                sha256.final(this->decryptkey + SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
+                sha256.final(this->decryptkey + SHA256_DIGEST_LENGTH);
             }
 
             // this->encryptkey, 'D'
@@ -1453,7 +1453,7 @@ struct ssh_crypto_struct {
             sha256_encryptkey.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptkey.update(reinterpret_cast<const uint8_t*>("D"), 1);
             sha256_encryptkey.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptkey.final(this->encryptkey, SHA256_DIGEST_LENGTH);
+            sha256_encryptkey.final(this->encryptkey);
 
             /* some ciphers need more than DIGEST_LEN bytes of input key */
             if (this->out_cipher->keysize > this->digest_len * 8) {
@@ -1462,7 +1462,7 @@ struct ssh_crypto_struct {
                 sha256.update(k_string.data.get(), k_string.size);
                 sha256.update(this->secret_hash, SHA256_DIGEST_LENGTH);
                 sha256.update(this->encryptkey, SHA256_DIGEST_LENGTH);
-                sha256.final(this->encryptkey + SHA256_DIGEST_LENGTH, SHA_DIGEST_LENGTH);
+                sha256.final(this->encryptkey + SHA256_DIGEST_LENGTH);
             }
 
             // this->decryptMAC, 'E'
@@ -1472,7 +1472,7 @@ struct ssh_crypto_struct {
             sha256_decryptMAC.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptMAC.update(reinterpret_cast<const uint8_t*>("E"), 1);
             sha256_decryptMAC.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptMAC.final(this->decryptMAC, SHA256_DIGEST_LENGTH);
+            sha256_decryptMAC.final(this->decryptMAC);
 
             // this->encryptMAC, 'F'
             SslSha256 sha256_encryptMAC;
@@ -1481,7 +1481,7 @@ struct ssh_crypto_struct {
             sha256_encryptMAC.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptMAC.update(reinterpret_cast<const uint8_t*>("F"), 1);
             sha256_encryptMAC.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptMAC.final(this->encryptMAC, SHA256_DIGEST_LENGTH);
+            sha256_encryptMAC.final(this->encryptMAC);
         }
         break;
         case SSH_MAC_SHA384:
@@ -1528,7 +1528,7 @@ struct ssh_crypto_struct {
             sha1_encryptIV.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptIV.update(reinterpret_cast<const uint8_t*>("A"), 1);
             sha1_encryptIV.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptIV.final(this->encryptIV, SHA_DIGEST_LENGTH);
+            sha1_encryptIV.final(this->encryptIV);
 
             // this->decryptIV, 'B'
             SslSha1 sha1_decryptIV;
@@ -1537,7 +1537,7 @@ struct ssh_crypto_struct {
             sha1_decryptIV.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptIV.update(reinterpret_cast<const uint8_t*>("B"), 1);
             sha1_decryptIV.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptIV.final(this->decryptIV, SHA_DIGEST_LENGTH);
+            sha1_decryptIV.final(this->decryptIV);
 
             // this->encryptkey, 'C'
             SslSha1 sha1_encryptkey;
@@ -1546,7 +1546,7 @@ struct ssh_crypto_struct {
             sha1_encryptkey.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptkey.update(reinterpret_cast<const uint8_t*>("C"), 1);
             sha1_encryptkey.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptkey.final(this->encryptkey, SHA_DIGEST_LENGTH);
+            sha1_encryptkey.final(this->encryptkey);
 
             /* some ciphers need more than DIGEST_LEN bytes of input key */
             // TODO: wont work if need is more than 2 times DIGEST_LEN
@@ -1556,7 +1556,7 @@ struct ssh_crypto_struct {
                 sha1.update(k_string.data.get(), k_string.size);
                 sha1.update(this->secret_hash, SHA_DIGEST_LENGTH);
                 sha1.update(this->encryptkey, SHA_DIGEST_LENGTH);
-                sha1.final(this->encryptkey + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH);
+                sha1.final(this->encryptkey + SHA_DIGEST_LENGTH);
             }
 
             // this->decryptkey, 'D'
@@ -1566,7 +1566,7 @@ struct ssh_crypto_struct {
             sha1_decryptkey.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptkey.update(reinterpret_cast<const uint8_t*>("D"), 1);
             sha1_decryptkey.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptkey.final(this->decryptkey, SHA_DIGEST_LENGTH);
+            sha1_decryptkey.final(this->decryptkey);
 
             if (this->in_cipher->keysize > this->digest_len * 8) {
                 SslSha1 sha1;
@@ -1574,7 +1574,7 @@ struct ssh_crypto_struct {
                 sha1.update(k_string.data.get(), k_string.size);
                 sha1.update(this->secret_hash, SHA_DIGEST_LENGTH);
                 sha1.update(this->decryptkey, SHA_DIGEST_LENGTH);
-                sha1.final(this->decryptkey + SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH);
+                sha1.final(this->decryptkey + SHA_DIGEST_LENGTH);
             }
 
             // this->encryptMAC, 'E'
@@ -1584,7 +1584,7 @@ struct ssh_crypto_struct {
             sha1_encryptMAC.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_encryptMAC.update(reinterpret_cast<const uint8_t *>("E"), 1);
             sha1_encryptMAC.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_encryptMAC.final(this->encryptMAC, SHA_DIGEST_LENGTH);
+            sha1_encryptMAC.final(this->encryptMAC);
 
             // this->decryptMAC, 'F'
             SslSha1 sha1_decryptMAC;
@@ -1593,7 +1593,7 @@ struct ssh_crypto_struct {
             sha1_decryptMAC.update(this->secret_hash, SHA_DIGEST_LENGTH);
             sha1_decryptMAC.update(reinterpret_cast<const uint8_t *>("F"), 1);
             sha1_decryptMAC.update(session_id, SHA_DIGEST_LENGTH);
-            sha1_decryptMAC.final(this->decryptMAC, SHA_DIGEST_LENGTH);
+            sha1_decryptMAC.final(this->decryptMAC);
         }
         break;
         case SSH_MAC_SHA256:
@@ -1605,7 +1605,7 @@ struct ssh_crypto_struct {
             sha256_encryptIV.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptIV.update(reinterpret_cast<const uint8_t*>("A"), 1);
             sha256_encryptIV.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptIV.final(this->encryptIV, SHA256_DIGEST_LENGTH);
+            sha256_encryptIV.final(this->encryptIV);
 
             // this->decryptIV, 'B'
             SslSha256 sha256_decryptIV;
@@ -1614,7 +1614,7 @@ struct ssh_crypto_struct {
             sha256_decryptIV.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptIV.update(reinterpret_cast<const uint8_t*>("B"), 1);
             sha256_decryptIV.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptIV.final(this->decryptIV, SHA256_DIGEST_LENGTH);
+            sha256_decryptIV.final(this->decryptIV);
 
             // this->encryptkey, 'C'
             SslSha256 sha256_encryptkey;
@@ -1623,7 +1623,7 @@ struct ssh_crypto_struct {
             sha256_encryptkey.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptkey.update(reinterpret_cast<const uint8_t*>("C"), 1);
             sha256_encryptkey.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptkey.final(this->encryptkey, SHA256_DIGEST_LENGTH);
+            sha256_encryptkey.final(this->encryptkey);
 
             /* some ciphers need more than DIGEST_LEN bytes of input key */
             if (this->out_cipher->keysize > this->digest_len * 8) {
@@ -1632,7 +1632,7 @@ struct ssh_crypto_struct {
                 sha256.update(k_string.data.get(), k_string.size);
                 sha256.update(this->secret_hash, SHA256_DIGEST_LENGTH);
                 sha256.update(this->encryptkey, SHA256_DIGEST_LENGTH);
-                sha256.final(this->encryptkey + SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
+                sha256.final(this->encryptkey + SHA256_DIGEST_LENGTH);
             }
 
             // this->decryptkey, 'D'
@@ -1642,7 +1642,7 @@ struct ssh_crypto_struct {
             sha256_decryptkey.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptkey.update(reinterpret_cast<const uint8_t*>("D"), 1);
             sha256_decryptkey.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptkey.final(this->decryptkey, SHA256_DIGEST_LENGTH);
+            sha256_decryptkey.final(this->decryptkey);
 
             if (this->in_cipher->keysize > this->digest_len * 8) {
                 SslSha256 sha256;
@@ -1650,7 +1650,7 @@ struct ssh_crypto_struct {
                 sha256.update(k_string.data.get(), k_string.size);
                 sha256.update(this->secret_hash, SHA256_DIGEST_LENGTH);
                 sha256.update(this->decryptkey, SHA256_DIGEST_LENGTH);
-                sha256.final(this->decryptkey + SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
+                sha256.final(this->decryptkey + SHA256_DIGEST_LENGTH);
             }
             // this->encryptMAC, 'E'
             SslSha256 sha256_encryptMAC;
@@ -1659,7 +1659,7 @@ struct ssh_crypto_struct {
             sha256_encryptMAC.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_encryptMAC.update(reinterpret_cast<const uint8_t*>("E"), 1);
             sha256_encryptMAC.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_encryptMAC.final(this->encryptMAC, SHA256_DIGEST_LENGTH);
+            sha256_encryptMAC.final(this->encryptMAC);
 
             // this->decryptMAC, 'F'
             SslSha256 sha256_decryptMAC;
@@ -1668,7 +1668,7 @@ struct ssh_crypto_struct {
             sha256_decryptMAC.update(this->secret_hash, SHA256_DIGEST_LENGTH);
             sha256_decryptMAC.update(reinterpret_cast<const uint8_t*>("F"), 1);
             sha256_decryptMAC.update(session_id, SHA256_DIGEST_LENGTH);
-            sha256_decryptMAC.final(this->decryptMAC, SHA256_DIGEST_LENGTH);
+            sha256_decryptMAC.final(this->decryptMAC);
         }
         break;
         case SSH_MAC_SHA384:
@@ -1680,7 +1680,7 @@ struct ssh_crypto_struct {
     }
 
 
-    unsigned char *packet_encrypt(uint32_t seq, uint8_t *data, uint32_t len, error_struct & error) {
+    unsigned char * packet_encrypt(uint32_t seq, uint8_t *data, uint32_t len, error_struct & error) {
         std::vector<uint8_t> out;
         out.reserve(len);
 
@@ -1699,7 +1699,7 @@ struct ssh_crypto_struct {
         SslHMAC_Sha1 hmac_sha1(this->encryptMAC, SHA_DIGEST_LENGTH);
         hmac_sha1.update(reinterpret_cast<uint8_t *>(&seq), sizeof(uint32_t));
         hmac_sha1.update(data, len);
-        hmac_sha1.final(this->hmacbuf, SHA_DIGEST_LENGTH);
+        hmac_sha1.final(this->hmacbuf);
 
         // hexa("Packet hmac", this->hmacbuf, SHA_DIGEST_LENGTH);
 

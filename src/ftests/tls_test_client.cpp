@@ -79,11 +79,11 @@ void rdp_request(SocketTransport & sockettransport)
         );
 
     char * pbuf = buf;
-    sockettransport.recv(&pbuf, 29);
+    sockettransport.recv_atomic(pbuf, 29);
     //(std::cout << "receive: ").write(buf, 29).flush();
 
     pbuf = buf;
-    sockettransport.recv(&pbuf, 18);
+    sockettransport.recv_atomic(pbuf, 18);
 }
 
 int tcp_connect(const char *host, int port)
@@ -145,7 +145,10 @@ int main()
     SSL_load_error_strings();
 
     try {
-        SocketTransport sockettransport("TestTLSClient", tcp_connect(host, port), host, port, 0xffffff);
+        SocketTransport sockettransport(
+            "TestTLSClient", tcp_connect(host, port), host, port,
+            to_verbose_flags(0xffffff)
+        );
 
         if ( sockettransport.sck < 0 ){
             std::cerr << "Couldn't connect socket\n";

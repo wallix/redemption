@@ -58,40 +58,85 @@
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
 // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |S|L|0|I|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+// |S|L|H|I|C|M|K|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 //  Where the bits are defined as:
 
-//   +-------------------------------------------+-----------------------------+
-//   | Value                                     | Description                 |
-//   +-------------------------------------------+-----------------------------+
-//   | S                                         | Set to 1 if the             |
-//   | TS_RAIL_LEVEL_SUPPORTED                   | client/server is capable of |
-//   |                                           | supporting Remote Programs; |
-//   |                                           | set to 0 otherwise.         |
-//   +-------------------------------------------+-----------------------------+
-//   | L                                         | Set to 1 if the             |
-//   | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED    | client/server is capable of |
-//   |                                           | supporting Docked Language  |
-//   |                                           | Bar for Remote Programs;    |
-//   |                                           | set to 0 otherwise. This    |
-//   |                                           | flag MUST be set to 0 if    |
-//   |                                           | TS_RAIL_LEVEL_SUPPORTED is  |
-//   |                                           | 0.                          |
-//   +-------------------------------------------+-----------------------------+
-//   | I                                         | Set to 1 if the             |
-//   | TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED | client/server is capable of |
-//   |                                           | supporting syncing          |
-//   |                                           | language/IME changes for    |
-//   |                                           | Remote Programs; set to 0   |
-//   |                                           | otherwise.                  |
-//   +-------------------------------------------+-----------------------------+
+//   +---------------------------------------------------+-----------------------------+
+//   | Value                                             | Description                 |
+//   +---------------------------------------------------+-----------------------------+
+//   | S                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_SUPPORTED                           | client/server is capable of |
+//   |                                                   | supporting Remote Programs; |
+//   |                                                   | set to 0 otherwise.         |
+//   +---------------------------------------------------+-----------------------------+
+//   | L                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            | client/server is capable of |
+//   |                                                   | supporting Docked Language  |
+//   |                                                   | Bar for Remote Programs;    |
+//   |                                                   | set to 0 otherwise. This    |
+//   |                                                   | flag MUST be set to 0 if    |
+//   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
+//   |                                                   | 0.                          |
+//   +---------------------------------------------------+-----------------------------+
+//   | H                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         | client/server is capable of |
+//   |                                                   | supporting extended shell   |
+//   |                                                   | integration like tabbed     |
+//   |                                                   | windows and overlay icons   |
+//   |                                                   | for Remote Programs; set to |
+//   |                                                   | 0 otherwise. This flag MUST |
+//   |                                                   | be set to 0 if              |
+//   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
+//   |                                                   | 0.                          |
+//   +---------------------------------------------------+-----------------------------+
+//   | I                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         | client/server is capable of |
+//   |                                                   | supporting syncing          |
+//   |                                                   | language/IME changes for    |
+//   |                                                   | Remote Programs; set to 0   |
+//   |                                                   | otherwise.                  |
+//   +---------------------------------------------------+-----------------------------+
+//   | C                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED | client/server is capable of |
+//   |                                                   | supporting syncing IME      |
+//   |                                                   | changes originating at the  |
+//   |                                                   | server for Remote Programs; |
+//   |                                                   | set to 0 otherwise. This    |
+//   |                                                   | flag MUST be set to 0 if    |
+//   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
+//   |                                                   | 0.                          |
+//   +---------------------------------------------------+-----------------------------+
+//   | M                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       | client/server supports      |
+//   |                                                   | hiding minimized windows of |
+//   |                                                   | Remote Programs on the      |
+//   |                                                   | server; set to 0 otherwise. |
+//   |                                                   | This flag MUST be set to 0  |
+//   |                                                   | if TS_RAIL_LEVEL_SUPPORTED  |
+//   |                                                   | is 0.                       |
+//   +---------------------------------------------------+-----------------------------+
+//   | K                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           | client/server supports      |
+//   |                                                   | syncing per-window cloak    |
+//   |                                                   | state changes originating   |
+//   |                                                   | on the client for Remote    |
+//   |                                                   | Programs; set to 0          |
+//   |                                                   | otherwise. This flag MUST   |
+//   |                                                   | be set to 0 if              |
+//   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
+//   |                                                   | 0.                          |
+//   +---------------------------------------------------+-----------------------------+
 
 enum {
-      TS_RAIL_LEVEL_SUPPORTED                   = 1
-    , TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED    = 2
-    , TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED = 8
+      TS_RAIL_LEVEL_SUPPORTED                           = 0x01
+    , TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED            = 0x02
+    , TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED         = 0x04
+    , TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED         = 0x08
+    , TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED = 0x10
+    , TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       = 0x20
+    , TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           = 0x40
 };
 
 enum {
@@ -107,20 +152,22 @@ struct RailCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->RailSupportLevel);
     }
 
-    void recv(InStream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         this->RailSupportLevel = stream.in_uint32_le();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s Rail caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Rail caps::RailSupportLevel %u", this->RailSupportLevel);
+        LOG(LOG_INFO, "Rail caps::RailSupportLevel 0x%X", this->RailSupportLevel);
     }
 };
-

@@ -23,6 +23,7 @@
 #include "widget.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "utils/colors.hpp"
 
 class WidgetMultiLine : public Widget2
 {
@@ -46,33 +47,30 @@ public:
     Font const & font;
 
 public:
-    WidgetMultiLine(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetMultiLine(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, const char * text,
-                    bool auto_resize, int group_id,
+                    int group_id,
                     int fgcolor, int bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
+    : Widget2(drawable, parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)
-    , auto_resize(auto_resize)
+    , auto_resize(false)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , font(font)
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
 
-        this->rect.cx = 0;
-        this->rect.cy = 0;
         this->set_text(text);
     }
-    
+
     void set_text(const char * text)
     {
         if (this->auto_resize) {
-            this->rect.cx = 0;
-            this->rect.cy = 0;
+            this->set_wh(0, 0);
         }
 
         const char * str = nullptr;
@@ -93,12 +91,15 @@ public:
                 this->cy_text = tm.height;
             }
             if (this->auto_resize) {
-                if (line->cx > this->rect.cx){
-                    this->rect.cx = line->cx;
+                uint16_t w = this->cx();
+                if (line->cx > w){
+                    w = line->cx;
                 }
-                if (tm.height > this->rect.cy){
-                    this->rect.cy = tm.height;
+                uint16_t h = this->cy();
+                if (tm.height > h){
+                    h = tm.height;
                 }
+                this->set_wh(w, h);
             }
             ++line;
         } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);
@@ -106,8 +107,10 @@ public:
         line->str = nullptr;
 
         if (this->auto_resize) {
-            this->rect.cx += this->x_text * 2;
-            this->rect.cy = (this->rect.cy + this->y_text * 2) * (line - &this->lines[0]);
+            uint16_t w = this->cx();
+            uint16_t h = this->cy();
+            this->set_wh(w + this->x_text * 2,
+                         (h + this->y_text * 2) * (line - &this->lines[0]));
         }
     }
 
@@ -118,25 +121,52 @@ public:
         return this->lines[num].str;
     }
 
-    void draw(const Rect& clip) override {
-        int dy = this->dy() + this->y_text;
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
-        for (line_t * line = this->lines; line->str; ++line) {
-            dy += this->y_text;
-            gdi::server_draw_text(this->drawable
-                                 , this->font
-                                 , this->x_text + this->dx()
-                                 , dy
-                                 , line->str
-                                 , this->fg_color
-                                 , this->bg_color
-                                 , clip.intersect(Rect(this->dx()
-                                 , dy
-                                 , this->cx()
-                                 , this->cy_text))
-            );
-            dy += this->y_text + this->cy_text;
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            int dy = this->y() + this->y_text;
+            this->drawable.draw(RDPOpaqueRect(rect_intersect, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
+            for (line_t * line = this->lines; line->str; ++line) {
+                dy += this->y_text;
+                gdi::server_draw_text(this->drawable
+                                     , this->font
+                                     , this->x_text + this->x()
+                                     , dy
+                                     , line->str
+                                     , this->fg_color
+                                     , this->bg_color
+                                     , gdi::ColorCtx::depth24()
+                                     , rect_intersect.intersect(
+                                                Rect(this->x(),
+                                                     dy,
+                                                     this->cx(),
+                                                     this->cy_text
+                                            ))
+                    );
+                dy += this->y_text + this->cy_text;
+            }
+
+            this->drawable.end_update();
         }
     }
-};
 
+    Dimension get_optimal_dim() override {
+        uint16_t max_line_width  = 0;
+        uint16_t max_line_height = 0;
+        line_t * line = this->lines;
+        for (; line->str; ++line) {
+            gdi::TextMetrics tm(this->font, line->str);
+            if (max_line_width < tm.width){
+                max_line_width = tm.width;
+            }
+            if (max_line_height < tm.height){
+                max_line_height = tm.height;
+            }
+        }
+        return Dimension(max_line_width + this->x_text * 2,
+            (max_line_height + this->y_text * 2) * (line - &this->lines[0]));
+    }
+};

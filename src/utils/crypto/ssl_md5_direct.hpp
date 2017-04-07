@@ -47,7 +47,7 @@ public:
         this->md5_update(data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
         //assert(MD5_DIGEST_LENGTH == out_data_size);
         this->md5_sum(out_data);

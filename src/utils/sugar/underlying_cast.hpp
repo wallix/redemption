@@ -22,7 +22,11 @@
 
 #include <type_traits>
 
-template<class E>
-constexpr typename std::underlying_type<E>::type underlying_cast(E e)
-{ return static_cast<typename std::underlying_type<E>::type>(e); }
+template<class T>
+using underlying_type_t = typename std::underlying_type<T>::type;
 
+template<class E>
+constexpr
+underlying_type_t<E>
+underlying_cast(E e)
+{ return static_cast<underlying_type_t<E>>(e); }

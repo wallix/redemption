@@ -37,7 +37,7 @@ class ssh_server_callbacks_struct(Structure):
                 c_void_p, c_int, c_int, c_char_p, c_uint32, py_object)),
         ('auth_password_server_cb',
             CFUNCTYPE(c_int,
-                c_void_p, c_char_p, c_char_p, py_object)),
+                c_char_p, c_char_p, py_object)),
         ('auth_none_server_cb',
             CFUNCTYPE(c_int,
                 c_char_p, py_object)),
@@ -74,7 +74,7 @@ CB_SERVER_SESSION_FUNCS = {
             userargp.cb_globalRequest(gtype, want_reply, bind_address, bind_port)
     ),
     'auth_password_server_cb': (
-        lambda sessionp, userp, passwordp, userargp:
+        lambda userp, passwordp, userargp:
             userargp.cb_authPassword(userp, str(passwordp))
     ),
     'auth_none_server_cb': (

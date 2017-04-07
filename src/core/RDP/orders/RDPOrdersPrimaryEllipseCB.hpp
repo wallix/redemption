@@ -149,7 +149,7 @@ public:
         return RDP::ELLIPSECB;
     }
 
-    RDPEllipseCB(const Rect & rect, uint8_t rop, uint8_t fill,
+    RDPEllipseCB(const Rect rect, uint8_t rop, uint8_t fill,
                  uint32_t back_color, uint32_t fore_color,
                  const RDPBrush & brush) :
         el(rect),
@@ -287,14 +287,14 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;

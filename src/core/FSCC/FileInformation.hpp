@@ -15,18 +15,20 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 
 #pragma once
 
 #include <cinttypes>
+#include <inttypes.h>
 
 #include "core/error.hpp"
 
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
+#include "core/ERREF/ntstatus.hpp"
 
 namespace fscc {
 
@@ -208,6 +210,457 @@ enum {
     , FSCTL_WRITE_USN_CLOSE_RECORD            = 0x900ef
 };
 
+
+static inline
+const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
+
+    switch (FSCTLStructures) {
+        case FSCTL_CREATE_OR_GET_OBJECT_ID: return "FSCTL_CREATE_OR_GET_OBJECT_ID";
+        case FSCTL_DELETE_OBJECT_ID:        return "FSCTL_DELETE_OBJECT_ID";
+        case FSCTL_GET_OBJECT_ID:           return "FSCTL_GET_OBJECT_ID";
+    }
+
+    return "unknow";
+}
+
+// [MS-FSCC]: File System Control Codes
+
+// 2.6 File Attributes
+
+// The following attributes are defined for files and directories. They can be used in any combination unless noted in the description of the attribute's meaning. There is no file attribute with the value 0x00000000 because a value of 0x00000000 in the FileAttributes field means that the file attributes for this file MUST NOT be changed when setting basic information for the file.
+
+//  +------------------------------------+-----------------------------------------------+
+//  | Value                              | Meaning                                       |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that is an archive file   |
+//  | 0x00000020                         | or directory. Applications typically use this |
+//  |                                    | attribute to mark files for backup or         |
+//  |                                    | removal.                                      |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is compressed.       |
+//  | 0x00000800                         | For a file, all of the data in the file is    |
+//  |                                    | compressed. For a directory, compression is   |
+//  |                                    | the default for newly created files and       |
+//  |                                    | subdirectories.                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_DIRECTORY           | Identifies a directory.                       |
+//  | 0x00000010                         |                                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is encrypted.        |
+//  | 0x00004000                         | For a file, all data streams in the file are  |
+//  |                                    | encrypted. For a directory, encryption is     |
+//  |                                    | default for newly created files and           |
+//  |                                    | subdirectories.                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory is hidden. It is not      |
+//  | 0x00000002                         | included in an ordinary directory listing.    |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other attributes    |
+//  | 0x00000080                         | set. set. This flag is used to clear all      |
+//  |                                    | other flags by specifying it with no other    |
+//  |                                    | flags set.                                    |
+//  |                                    | This flag MUST be ignored if other flags are  |
+//  |                                    | set.<163>                                     |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not indexed by    |
+//  | 0x00002000                         | the content indexing service.                 |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not available        |
+//  | 0x00001000                         | immediately. This attribute indicates that    |
+//  |                                    | the file data is physically moved to offline  |
+//  |                                    | storage. This attribute is used by Remote     |
+//  |                                    | Storage, which is hierarchical storage        |
+//  |                                    | management software.                          |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-only. For a  |
+//  | 0x00000001                         | file, applications can read the file but      |
+//  |                                    | cannot write to it or delete it. For a        |
+//  |                                    | directory, applications cannot delete it, but |
+//  |                                    | applications can create and delete files from |
+//  |                                    | that directory.                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an associated    |
+//  | 0x00000400                         | reparse point.                                |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.                 |
+//  | 0x00000200                         |                                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the operating system |
+//  | 0x00000004                         | uses a part of, or uses exclusively.          |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_TEMPORARY           | A file or directory that is configured with   |
+//  | 0x00000100                         | integrity support. For a file, all data       |
+//  |                                    | streams in the file have integrity support.   |
+//  |                                    | For a directory, integrity support is the     |
+//  |                                    | default for newly created files and           |
+//  |                                    | subdirectories, unless the caller specifies   |
+//  |                                    | otherwise.<164>                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is configured with   |
+//  | 0x00008000                         | integrity support. For a file, all data       |
+//  |                                    | streams in the file have integrity support.   |
+//  |                                    | For a directory, integrity support is the     |
+//  |                                    | default for newly created files and           |
+//  |                                    | subdirectories, unless the caller specifies   |
+//  |                                    | otherwise.<164>                               |
+//  +------------------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is configured to be  |
+//  | 0x00020000                         | excluded from the data integrity scan. For a  |
+//  |                                    | directory configured with                     |
+//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the default for |
+//  |                                    | newly created files and subdirectories is to  |
+//  |                                    | inherit the FILE_ATTRIBUTE_NO_SCRUB_DATA      |
+//  |                                    | attribute.<165>                               |
+//  +------------------------------------+-----------------------------------------------+
+
+// TODO enum class FileAttribute:uint32_t{None, Readonly, ...}
+enum : uint32_t {
+    FILE_ATTRIBUTE_NONE               = 0,
+    FILE_ATTRIBUTE_READONLY           = 0x00000001,
+    FILE_ATTRIBUTE_HIDDEN             = 0x00000002,
+    FILE_ATTRIBUTE_SYSTEM             = 0x00000004,
+    FILE_ATTRIBUTE_DIRECTORY          = 0x00000010,
+    FILE_ATTRIBUTE_ARCHIVE            = 0x00000020,
+    FILE_ATTRIBUTE_NORMAL             = 0x00000080,
+    FILE_ATTRIBUTE_TEMPORARY           = 0x00000100,
+    FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200,
+    FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400,
+    FILE_ATTRIBUTE_OFFLINE             = 0x00001000,
+    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000,
+    FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000,
+    FILE_ATTRIBUTE_COMPRESSED          = 0x00000800,
+    FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000,
+    FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
+};
+
+
+static inline
+std::string get_FileAttributes_name(uint32_t fileAttribute) {
+
+    std::string str;
+    (fileAttribute & FILE_ATTRIBUTE_READONLY) ? str+="FILE_ATTRIBUTE_READONLY " :str;
+    (fileAttribute & FILE_ATTRIBUTE_HIDDEN) ? str+="FILE_ATTRIBUTE_HIDDEN " :str;
+    (fileAttribute & FILE_ATTRIBUTE_SYSTEM) ? str+="FILE_ATTRIBUTE_SYSTEM " :str;
+    (fileAttribute & FILE_ATTRIBUTE_DIRECTORY) ? str+="FILE_ATTRIBUTE_DIRECTORY " : str;
+    (fileAttribute & FILE_ATTRIBUTE_ARCHIVE) ? str+="FILE_ATTRIBUTE_ARCHIVE " : str;
+    (fileAttribute & FILE_ATTRIBUTE_NORMAL) ? str+="FILE_ATTRIBUTE_NORMAL " : str;
+    (fileAttribute & FILE_ATTRIBUTE_TEMPORARY) ? str+="FILE_ATTRIBUTE_TEMPORARY " :str;
+    (fileAttribute & FILE_ATTRIBUTE_SPARSE_FILE) ? str+="FILE_ATTRIBUTE_SPARSE_FILE " : str;
+    (fileAttribute & FILE_ATTRIBUTE_REPARSE_POINT) ? str+="FILE_ATTRIBUTE_REPARSE_POINT " : str;
+    (fileAttribute & FILE_ATTRIBUTE_OFFLINE) ? str+="FILE_ATTRIBUTE_OFFLINE " : str;
+    (fileAttribute & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) ? str+="FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ":str;
+    (fileAttribute & FILE_ATTRIBUTE_ENCRYPTED) ? str+="FILE_ATTRIBUTE_ENCRYPTED " : str;
+    (fileAttribute & FILE_ATTRIBUTE_COMPRESSED) ? str+="FILE_ATTRIBUTE_COMPRESSED " : str;
+    (fileAttribute & FILE_ATTRIBUTE_INTEGRITY_STREAM) ? str+="FILE_ATTRIBUTE_INTEGRITY_STREAM " : str;
+    (fileAttribute & FILE_ATTRIBUTE_NO_SCRUB_DATA) ? str+="FILE_ATTRIBUTE_NO_SCRUB_DATA " : str;
+
+    return str;
+}
+
+
+
+
+// 2.1.3.1 FILE_OBJECTID_BUFFER Type 1
+
+// The first possible structure for the FILE_OBJECTID_BUFFER data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      ObjectId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    BirthVolumeId (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                    BirthObjectId (16 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                      DomainId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ObjectId (16 bytes): A 16-byte GUID that uniquely identifies the file or directory within the volume on which it resides. Specifically, the same object ID can be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume.
+
+// BirthVolumeId (16 bytes): A 16-byte GUID that uniquely identifies the volume on which the object resided when the object identifier was created, or zero if the volume had no object identifier at that time. After copy operations, move operations, or other file operations, this value is potentially different from the object identifier of the volume on which the object presently resides.
+
+// BirthObjectId (16 bytes): A 16-byte GUID value containing the object identifier of the object at the time it was created. Copy operations, move operations, or other file operations MAY change the value of the ObjectId member. Therefore, the BirthObjectId is potentially different from the ObjectId member at present. Specifically, the same object ID MAY be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume. The object ID is assigned at file creation time.<5>
+
+// DomainId (16 bytes): A 16-byte GUID value containing the domain identifier. This value is unused; it SHOULD be zero, and MUST be ignored.<6>
+
+enum : uint32_t {
+    GUID_SIZE = 16
+};
+
+struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
+
+    uint8_t ObjectId[GUID_SIZE] = { 0 };
+    uint8_t BirthVolumeId[GUID_SIZE] = { 0 };
+    uint8_t BirthObjectId[GUID_SIZE] = { 0 };
+    uint8_t DomainId[GUID_SIZE] = { 0 };
+
+
+    FileObjectBuffer_Type1() = default;
+
+    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ObjectId[i] = ObjectId[i];
+            this->BirthVolumeId[i] = BirthVolumeId[i];
+            this->BirthObjectId[i] = BirthObjectId[i];
+        }
+    }
+
+    inline static size_t size() {
+        return 64;   /* ObjectId(16) + BirthVolumeId(16) + */
+    }                /* BirthObjectId(16) + DomainId(16)*/
+
+    void emit(OutStream & stream) {
+        stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->BirthVolumeId, GUID_SIZE);
+        stream.out_copy_bytes(this->BirthObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->DomainId, GUID_SIZE);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 64;   // ObjectId(16) + BirthVolumeId(16) +
+                                            //     BirthObjectId(16) + DomainId(16)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileObjectBuffer_Type1: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+        stream.in_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->BirthVolumeId, GUID_SIZE);
+        stream.in_copy_bytes(this->BirthObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->DomainId, GUID_SIZE);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Object Buffer Type1:");
+        LOG(LOG_INFO, "          * ObjectId       (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthVolumeId  (16 bytes):");
+        hexdump_c(this->BirthVolumeId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * BirthObjectId  (16 bytes):");
+        hexdump_c(this->BirthObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DomainId - (16 bytes) NOT USED");
+    }
+};
+
+
+
+// 2.1.3.2 FILE_OBJECTID_BUFFER Type 2
+
+// The second possible structure for the FILE_OBJECTID_BUFFER data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      ObjectId (16 bytes)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     ExtendedInfo (48 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ObjectId (16 bytes): A 16-byte GUID that uniquely identifies the file or directory within the volume on which it resides. Specifically, the same object ID can be assigned to another file or directory on a different volume, but it MUST NOT be assigned to another file or directory on the same volume.
+
+// ExtendedInfo (48 bytes): A 48-byte value containing extended data that was set with the FSCTL_SET_OBJECT_ID_EXTENDED request. This field contains application-specific data.<7>
+
+struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_GET_OBJECT_ID Reply struct
+
+    uint8_t ObjectId[GUID_SIZE] = { 0 };
+    uint8_t ExtendedInfo[48] = { 0 };
+
+
+    const size_t ExtendedInfo_SIZE = 48;
+
+    FileObjectBuffer_Type2() = default;
+
+    FileObjectBuffer_Type2(uint8_t * ObjectId, uint8_t * ExtendedInfo)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ObjectId[i] = ObjectId[i];
+        }
+
+        for (size_t i = 0; i < this->ExtendedInfo_SIZE; i++) {
+            this->ExtendedInfo[i] = ExtendedInfo[i];
+        }
+    }
+
+    inline static size_t size() {
+        return 64;   /* ObjectId(16) + ExtendedInfo(48)*/
+    }
+
+    void emit(OutStream & stream) {
+        stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.out_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 64;   //  ObjectId(16) + ExtendedInfo(48)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileObjectBuffer_Type1: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+        stream.in_copy_bytes(this->ObjectId, GUID_SIZE);
+        stream.in_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Object Buffer Type2:");
+        LOG(LOG_INFO, "          * ObjectId     (16 bytes):");
+        hexdump_c(this->ObjectId,  GUID_SIZE);
+        LOG(LOG_INFO, "          * ExtendedInfo (48 bytes):");
+        hexdump_c(this->ExtendedInfo,  this->ExtendedInfo_SIZE);
+    }
+};
+
+
+
+
+// 2.3.5 FSCTL_DELETE_REPARSE_POINT Request
+//
+// This message requests that the server delete the reparse point from the file or directory associated with the handle on which this FSCTL was invoked. The underlying file or directory MUST NOT be deleted.
+//
+// The message MUST contain a REPARSE_GUID_DATA_BUFFER or a REPARSE_DATA_BUFFER (including subtypes) data element. Both the REPARSE_GUID_DATA_BUFFER and the REPARSE_DATA_BUFFER structures begin with a ReparseTag field. The ReparseTag value uniquely identifies the filter driver that creates/uses the reparse point, and the application's filter driver processes the reparse point data as either a REPARSE_GUID_DATA_BUFFER or a REPARSE_DATA_BUFFER, depending on the structure implemented by the filter driver for that type of reparse point.
+//
+// This message MUST only be sent for a file or directory handle.
+
+
+// 2.1.2.3 REPARSE_GUID_DATA_BUFFER
+//
+// The REPARSE_GUID_DATA_BUFFER data element stores data for a reparse point and associates a GUID with the reparse tag. This reparse data buffer MUST be used only with reparse tag values whose high bit is set to 0.
+//
+// Reparse point GUIDs are assigned by the independent software vendor (ISV). An ISV MUST link one GUID to each assigned reparse point tag, and MUST always use that GUID with that tag.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           ReparseTag                          |
+// +-------------------------------+-------------------------------+
+// |       ReparseDataLength       |           Reserved            |
+// +-------------------------------+-------------------------------+
+// |                     ReparseGuid (16 bytes)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     DataBuffer (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// ReparseTag (4 bytes): A 32-bit unsigned integer value containing the reparse point tag that uniquely identifies the owner of the reparse point.
+//
+// ReparseDataLength (2 bytes): A 16-bit unsigned integer value containing the size, in bytes, of the reparse data in the DataBuffer member.
+//
+// Reserved (2 bytes): A 16-bit field. This field SHOULD be set to 0 by the client, and MUST be ignored by the server.
+//
+// ReparseGuid (16 bytes): A 16-byte GUID that uniquely identifies the owner of the reparse point. Reparse point GUIDs are not assigned by Microsoft. A reparse point implementer MUST select one GUID to be used with their assigned reparse point tag to uniquely identify that reparse point. For more information, see [REPARSE].
+//
+// DataBuffer (variable): The content of this buffer is opaque to the file system. On receipt, its content MUST be preserved and properly returned to the caller.
+
+struct ReparseGUIDDataBuffer {
+
+  uint32_t ReparseTag = 0;
+  uint16_t ReparseDataLength = 0;
+  uint8_t ReparseGuid[GUID_SIZE] = { 0 };
+
+  std::string DataBuffer;
+
+  ReparseGUIDDataBuffer() = default;
+
+  ReparseGUIDDataBuffer(uint32_t ReparseTag, uint16_t ReparseDataLength, uint8_t * ReparseGuid, uint8_t * DataBuffer)
+    : ReparseTag(ReparseTag)
+    , ReparseDataLength(ReparseDataLength)
+    , DataBuffer(reinterpret_cast<char *>(DataBuffer), ReparseDataLength)
+    {
+        for (size_t i = 0; i < GUID_SIZE; i++) {
+            this->ReparseGuid[i] = ReparseGuid[i];
+        }
+    }
+
+    inline static size_t size() {
+        return 22;   /* ReparseTag(4) + ReparseDataLength(2) + */
+    }                /* ReparseGuid(16)*/
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->ReparseTag);
+        stream.out_uint16_le(this->ReparseDataLength);
+        stream.out_clear_bytes(2);
+        stream.out_copy_bytes(this->ReparseGuid, GUID_SIZE);
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->DataBuffer.data()), this->ReparseDataLength);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 22;   //  ReparseTag(4) + ReparseDataLength(2) +
+                                            //      ReparseGuid(16
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileObjectBuffer_Type1: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+        this->ReparseTag = stream.in_uint32_le();
+        this->ReparseDataLength = stream.in_uint16_le();
+        stream.in_skip_bytes(2);
+        stream.in_copy_bytes(this->ReparseGuid, GUID_SIZE);
+        uint8_t data[0xffff];
+        stream.in_copy_bytes(data, this->ReparseDataLength);
+        this->DataBuffer = std::string(reinterpret_cast<char *>(data), this->ReparseDataLength);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Reparse GUID Data Buffer:");
+        LOG(LOG_INFO, "          * ReparseTag        = 0x%08x (4 bytes)", this->ReparseTag);
+        LOG(LOG_INFO, "          * ReparseDataLength = %d (4 bytes)", int(this->ReparseDataLength));
+        LOG(LOG_INFO, "          * Reserved - (2 bytes) NOT USED");
+        LOG(LOG_INFO, "          * ReparseGuid (16 bytes):");
+        hexdump_c(this->ReparseGuid,  GUID_SIZE);
+        LOG(LOG_INFO, "          * DataBuffer (%d bytes):", int(this->ReparseDataLength));
+        hexdump_c(this->DataBuffer.data(),  this->ReparseDataLength);
+    }
+};
+
+
+
+
+
+
 // [MS-FSCC] - 2.4.4 FileAllocationInformation
 // ===========================================
 
@@ -256,6 +709,33 @@ enum {
 //  | 0xC0000004                  | does not match the length that is required |
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
+
+struct FileAllocationInformation {
+
+    uint64_t AllocationSize = 0;
+
+    FileAllocationInformation() = default;
+
+    FileAllocationInformation(uint64_t AllocationSize)
+    : AllocationSize(AllocationSize)
+    {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint64_le(this->AllocationSize);
+    }
+
+    void receive(InStream & stream) {
+        this->AllocationSize = stream.in_uint64_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Allocation Information:");
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
+    }
+};
+
+
+
 
 // [MS-FSCC] - 2.4.6 FileAttributeTagInformation
 // =============================================
@@ -350,6 +830,12 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Attribute Tag Information:");
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
 
@@ -468,6 +954,7 @@ public:
 
         stream.out_uint32_le(this->FileAttributes_);
 
+        //stream.out_clear_bytes(2);
         // Reserved(4), MUST NOT be transmitted.
     }
 
@@ -521,6 +1008,15 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Basic Information:");
+        LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
     }
 };  // FileBasicInformation
 
@@ -681,6 +1177,7 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBothDirectoryInformation {
+
     uint32_t NextEntryOffset = 0;
     uint32_t FileIndex       = 0;
     uint64_t CreationTime    = 0;
@@ -695,7 +1192,16 @@ class FileBothDirectoryInformation {
     std::string short_name;
     std::string file_name;
 
+
 public:
+    enum : unsigned {
+      MIN_SIZE = 93
+    };
+
+    uint32_t total_size() {
+        return this->file_name.length() + MIN_SIZE;
+    }
+
     FileBothDirectoryInformation() = default;
 
     FileBothDirectoryInformation(uint64_t CreationTime,
@@ -711,7 +1217,17 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    , file_name(file_name) {}
+    , file_name([&file_name]() {
+
+        uint8_t FileName_unicode_data[500];
+        size_t size_utf16 = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(file_name),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        const std::string str(reinterpret_cast<char *>(FileName_unicode_data), size_utf16);
+
+        return str;
+    }())
+      {}
 
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
@@ -727,43 +1243,33 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        uint8_t FileName_unicode_data[65536];
-        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            FileName_unicode_data, sizeof(FileName_unicode_data));
-
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+        stream.out_uint32_le(this->file_name.length());         // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        uint8_t ShortName_unicode_data[24]; // ShortName(24)
-        size_t size_of_ShortName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->short_name.c_str()),
-            ShortName_unicode_data, sizeof(ShortName_unicode_data));
+        REDASSERT(this->short_name.length() <= 24 /* ShortName(24) */);
 
-        REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
-
-        stream.out_sint8(size_of_ShortName_unicode_data);  // ShortNameLength(1)
+        stream.out_sint8(this->short_name.length());             // ShortNameLength(1)
 
         // Reserved(1), MUST NOT be transmitted.
 
-        stream.out_copy_bytes(ShortName_unicode_data, size_of_ShortName_unicode_data);
-        if (size_of_ShortName_unicode_data < 24  /* ShortName(24) */) {
-            stream.out_clear_bytes(24 /* ShortName(24) */ - size_of_ShortName_unicode_data);
+        stream.out_copy_bytes(this->short_name.data(), this->short_name.length());
+        if (this->short_name.length() < 24  /* ShortName(24) */) {
+            stream.out_clear_bytes(24 /* ShortName(24) */ - this->short_name.length());
         }
 
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+        stream.out_copy_bytes(this->file_name.data(), this->file_name.length());
     }
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 93;   // NextEntryOffset(4) + FileIndex(4) +
-                                            //     CreationTime(8) + LastAccessTime(8) +
-                                            //     LastWriteTime(8) + ChangeTime(8) +
-                                            //     EndOfFile(8) + AllocationSize(8) +
-                                            //     FileAttributes(4) + FileNameLength(4) +
-                                            //     EaSize(4) + ShortNameLength(1) +
-                                            //     ShortName(24)
+            const unsigned expected = MIN_SIZE;   // NextEntryOffset(4) + FileIndex(4) +
+                                                  //     CreationTime(8) + LastAccessTime(8) +
+                                                  //     LastWriteTime(8) + ChangeTime(8) +
+                                                  //     EndOfFile(8) + AllocationSize(8) +
+                                                  //     FileAttributes(4) + FileNameLength(4) +
+                                                  //     EaSize(4) + ShortNameLength(1) +
+                                                  //     ShortName(24)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
@@ -782,21 +1288,21 @@ public:
         this->AllocationSize  = stream.in_sint64_le();
         this->FileAttributes  = stream.in_uint32_le();
 
-        const uint32_t FileNameLength = stream.in_uint32_le();
+        uint32_t FileNameLength = stream.in_uint32_le();
 
         this->EaSize = stream.in_uint32_le();
 
-        const int8_t ShortNameLength = stream.in_sint8();
+        uint8_t ShortNameLength = stream.in_sint8();
 
         // Reserved(1), MUST NOT be transmitted.
 
         uint8_t const * const ShortName = stream.get_current();
-        uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
-            ShortName, ShortNameLength / 2, ShortName_utf8_string,
-            sizeof(ShortName_utf8_string));
-        this->short_name.assign(::char_ptr_cast(ShortName_utf8_string),
-            length_of_ShortName_utf8_string);
+//         uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
+//             ShortName, ShortNameLength / 2, ShortName_utf8_string,
+//             sizeof(ShortName_utf8_string));
+        this->short_name.assign(::char_ptr_cast(ShortName),
+            ShortNameLength);
 
         stream.in_skip_bytes(24);   // ShortName(24)
 
@@ -812,12 +1318,12 @@ public:
         }
 
         uint8_t const * const FileName_unicode_data = stream.get_current();
-        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            sizeof(FileName_utf8_string));
-        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
-            length_of_FileName_utf8_string);
+//         uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+//             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+//             sizeof(FileName_utf8_string));
+        this->file_name.assign(::char_ptr_cast(FileName_unicode_data),
+            FileNameLength);
 
         stream.in_skip_bytes(FileNameLength);
     }
@@ -841,6 +1347,17 @@ public:
         return size + size_of_unicode_data;
     }
 
+    std::string FileName() {
+        uint8_t FileName_utf8_string[500];
+        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+            reinterpret_cast<const uint8_t*>(this->file_name.data()), this->file_name.length() / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
+
+        const std::string str(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
+
+        return str;
+    }
+
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
@@ -862,7 +1379,245 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Both Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.length());
+        LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
+        LOG(LOG_INFO, "          * ShortNameLength = %zu (1 byte)", this->short_name.length());
+        LOG(LOG_INFO, "          * Reserved - (1 byte) NOT USED");
+        LOG(LOG_INFO, "          * short_name      = \"%s\" (24 bytes)", this->short_name);
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->FileName(), this->FileName().length());
+    }
 };  // FileBothDirectoryInformation
+
+
+
+// 2.4.10 FileDirectoryInformation
+
+// This information class is used in directory enumeration to return detailed information about the contents of a directory.
+
+// This information class returns a list that contains a FILE_DIRECTORY_INFORMATION data element for each file or directory within the target directory. This list MUST reflect the presence of a subdirectory named "." (synonymous with the target directory itself) within the target directory and one named ".." (synonymous with the parent directory of the target directory). For more details, see section 2.1.5.1.
+
+// When multiple FILE_DIRECTORY_INFORMATION data elements are present in the buffer, each MUST be aligned on an 8-byte boundary. Any bytes inserted for alignment SHOULD be set to zero, and the receiver MUST ignore them. No padding is required following the last data element.
+
+// A FILE_DIRECTORY_INFORMATION data element is as follows.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                           FileIndex                           |
+// +---------------------------------------------------------------+
+// |                          CreationTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastAccessTime                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         LastWriteTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           ChangeTime                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                           EndOfFile                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         AllocationSize                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         FileAttributes                        |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------+---------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes):  A 32-bit unsigned integer that contains the byte offset from the beginning of this entry, at which the next FILE_DIRECTORY_INFORMATION entry is located, if multiple entries are present in a buffer. This member MUST be zero if no other entries follow this one. An implementation MUST use this value to determine the location of the next entry (if multiple entries are present in a buffer).
+
+// FileIndex (4 bytes):  A 32-bit unsigned integer that contains the byte offset of the file within the parent directory. For file systems in which the position of a file within the parent directory is not fixed and can be changed at any time to maintain sort order, this field SHOULD be set to 0 and MUST be ignored.<100>
+
+// CreationTime (8 bytes):  The time when the file was created; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// LastAccessTime (8 bytes):  The last time the file was accessed; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// LastWriteTime (8 bytes):  The last time information was written to the file; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// ChangeTime (8 bytes):  The last time the file was changed; see section 2.1.1. This value MUST be greater than or equal to 0.
+
+// EndOfFile (8 bytes):  A 64-bit signed integer that contains the absolute new end-of-file position as a byte offset from the start of the file. EndOfFile specifies the offset to the byte immediately following the last valid byte in the file. Because this value is zero-based, it actually refers to the first free byte in the file. That is, it is the offset from the beginning of the file at which new bytes appended to the file will be written. The value of this field MUST be greater than or equal to 0.
+
+// AllocationSize (8 bytes):  A 64-bit signed integer that contains the file allocation size, in bytes. The value of this field MUST be an integer multiple of the cluster size.
+
+// FileAttributes (4 bytes):  A 32-bit unsigned integer that contains the file attributes. Valid attributes are as specified in section 2.6.
+
+// FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName member.
+
+// FileName (variable): A sequence of Unicode characters containing the file name. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. Dot directory names are valid for this field. For more details, see section 2.1.5.1.
+
+// This operation returns a status code, as specified in [MS-ERREF] section 2.3. The status code returned directly by the function that processes this file information class MUST be STATUS_SUCCESS or one of the following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | Error code                  | Meaning                                    |
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+class FileDirectoryInformation {
+
+    uint32_t NextEntryOffset = 0;
+    uint32_t FileIndex       = 0;
+    uint64_t CreationTime    = 0;
+    uint64_t LastAccessTime_ = 0;
+    uint64_t LastWriteTime_  = 0;
+    uint64_t ChangeTime      = 0;
+    uint64_t EndOfFile       = 0;
+    uint64_t AllocationSize  = 0;
+    uint32_t FileAttributes_ = 42;
+    std::string File_Name;
+
+public:
+    enum : unsigned {
+        MIN_SIZE = 64
+    };
+
+    uint32_t total_size() {
+        return this->File_Name.size() + MIN_SIZE;
+    }
+
+    FileDirectoryInformation() = default;
+
+    FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
+                             uint64_t CreationTime, uint64_t LastAccessTime,
+                             uint64_t LastWriteTime, uint64_t ChangeTime,
+                             uint32_t FileAttributes, std::string FileName)
+    : NextEntryOffset(NextEntryOffset)
+    , FileIndex(FileIndex)
+    , CreationTime(CreationTime)
+    , LastAccessTime_(LastAccessTime)
+    , LastWriteTime_(LastWriteTime)
+    , ChangeTime(ChangeTime)
+    , FileAttributes_(FileAttributes)
+    , File_Name([&FileName]() {
+
+        uint8_t FileName_unicode_data[500];
+        size_t size_utf16 = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(FileName.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        const std::string str(reinterpret_cast<char *>(FileName_unicode_data), size_utf16);
+
+        return str;
+    }())
+    {}
+
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->FileIndex);
+
+        stream.out_uint64_le(this->CreationTime);
+        stream.out_uint64_le(this->LastAccessTime_);
+        stream.out_uint64_le(this->LastWriteTime_);
+        stream.out_uint64_le(this->ChangeTime);
+        stream.out_uint64_le(this->EndOfFile);
+        stream.out_uint64_le(this->AllocationSize);
+        stream.out_uint32_le(this->FileAttributes_);
+
+        stream.out_uint32_le(this->File_Name.size());
+
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->File_Name.data()), this->File_Name.size());
+    }
+
+    void receive(InStream & stream) {
+
+        {
+            const unsigned expected = MIN_SIZE; // NextEntryOffset(4) + FileIndex(4) +
+                                                //     CreationTime(8) + LastAccessTime(8) +
+                                                //     LastWriteTime(8) + ChangeTime(8) +
+                                                //     EndOfFile(8) + AllocationSize(8) +
+                                                //     FileAttributes(4) + FileNameLength(4)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->FileIndex       = stream.in_uint32_le();
+
+        this->CreationTime    = stream.in_uint64_le();
+        this->LastAccessTime_ = stream.in_uint64_le();
+        this->LastWriteTime_  = stream.in_uint64_le();
+        this->ChangeTime      = stream.in_uint64_le();
+
+        this->EndOfFile       = stream.in_uint64_le();
+        this->AllocationSize  = stream.in_uint64_le();
+
+        this->FileAttributes_ = stream.in_uint32_le();
+
+        size_t size = stream.in_uint32_le();
+
+        this->File_Name.assign(::char_ptr_cast(stream.get_current()),
+            size);
+
+        stream.in_skip_bytes(size);
+    }
+
+    inline uint64_t FileAttributes() const { return this->FileAttributes_; }
+
+    inline uint64_t LastAccessTime() const { return this->LastAccessTime_; }
+
+    inline uint64_t LastWriteTime() const { return this->LastWriteTime_; }
+
+    std::string FileName() {
+        uint8_t FileName_utf8_string[500];
+        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+            reinterpret_cast<const uint8_t*>(this->File_Name.data()), this->File_Name.length() / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
+
+        const std::string str(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
+
+        return str;
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName().size());
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->FileName(), this->FileName().size());
+    }
+};  //FileDirectoryInformation
+
+
 
 // [MS-FSCC] - 2.4.11 FileDispositionInformation
 // =============================================
@@ -899,6 +1654,47 @@ public:
 //  | 0xC0000004                  | does not match the length that is required |
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
+
+struct FileDispositionInformation {
+
+    uint8_t DeletePending = 0;
+
+    FileDispositionInformation() = default;
+
+    FileDispositionInformation( uint64_t DeletePending)
+      : DeletePending(DeletePending)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->DeletePending);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 1; // DeletePending(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_FSCC_DATA_TRUNCATED);
+            }
+        }
+        this->DeletePending = stream.in_uint8();
+    }
+
+    inline static size_t size() {
+        return 1;  // DeletePending(1)
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Disposition Information:");
+        LOG(LOG_INFO, "          * DeletePending = 0x%02x (1 byte)", this->DeletePending);
+    }
+};
+
+
+
 
 // [MS-FSCC] - 2.4.13 FileEndOfFileInformation
 // ===========================================
@@ -946,6 +1742,90 @@ public:
 //  | 0xC0000004                  | does not match the length that is required |
 //  |                             | for the specified information class.       |
 //  +-----------------------------+--------------------------------------------+
+
+struct FileEndOfFileInformation {
+
+    uint64_t EndOfFile = 0;
+
+    FileEndOfFileInformation() = default;
+
+    FileEndOfFileInformation( uint64_t EndOfFile)
+      : EndOfFile(EndOfFile)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint64_le(this->EndOfFile);
+    }
+
+    void receive(InStream & stream) {
+        this->EndOfFile = stream.in_uint64_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File EndOfFile Information:");
+        LOG(LOG_INFO, "          * EndOfFile = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+    }
+};
+
+
+
+// 2.5.5 FileFsLabelInformation
+
+// This information class is used locally to set the label for a file system volume.
+
+// A FILE_FS_LABEL_INFORMATION data element, defined as follows, is provided by the caller.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                       VolumeLabelLength                       |
+// +---------------------------------------------------------------+
+// |                     VolumeLabel (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// VolumeLabelLength (4 bytes): A 32-bit unsigned integer that contains the length, in bytes, including the trailing null, if present, of the name for the volume.<150>
+
+// VolumeLabel (variable): A variable-length Unicode field containing the name of the volume. The content of this field can be a null-terminated string, or it can be a string padded with the space character to be VolumeLabelLength bytes long.
+
+// This operation returns a status code, as specified in [MS-ERREF] section 2.3. The status code returned directly by the function that processes this file information class MUST be STATUS_SUCCESS or one of the following.
+
+//  +-----------------------------+--------------------------------------------+
+//  | STATUS_INFO_LENGTH_MISMATCH | The specified information record length    |
+//  | 0xC0000004                  | does not match the length that is required |
+//  |                             | for the specified information class.       |
+//  +-----------------------------+--------------------------------------------+
+
+struct FileFsLabelInformation {
+
+    std::string VolumeLabel;
+
+    FileFsLabelInformation() = default;
+
+    FileFsLabelInformation(std::string VolumeLabel)
+      : VolumeLabel(VolumeLabel)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->VolumeLabel.size());
+        stream.out_copy_bytes(this->VolumeLabel.data(), this->VolumeLabel.size());
+    }
+
+    void receive(InStream & stream) {
+        size_t size = stream.in_uint32_le();
+        this->VolumeLabel = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Label Information:");
+        LOG(LOG_INFO, "          * VolumeLabelLength = %zu (4 bytes)", this->VolumeLabel.size());
+        LOG(LOG_INFO, "          * VolumeLabel       = \"%s\" (%zu byte(s))", this->VolumeLabel, this->VolumeLabel.size());
+    }
+
+};
+
 
 // [MS-FSCC] - 2.4.14 FileFullDirectoryInformation
 // ===============================================
@@ -1091,7 +1971,16 @@ class FileFullDirectoryInformation {
 
     std::string file_name;
 
+
 public:
+     enum : unsigned {
+      MIN_SIZE = 68
+    };
+
+    uint32_t total_size() {
+        return file_name.size() + MIN_SIZE;
+    }
+
     FileFullDirectoryInformation() = default;
 
     FileFullDirectoryInformation(uint64_t CreationTime,
@@ -1107,7 +1996,17 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    , file_name(file_name) {}
+    , file_name([&file_name]() {
+
+        uint8_t FileName_unicode_data[500];
+        size_t size_utf16 = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(file_name),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        const std::string str(reinterpret_cast<char *>(FileName_unicode_data), size_utf16);
+
+        return str;
+    }())
+    {}
 
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
@@ -1123,27 +2022,27 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        uint8_t FileName_unicode_data[65536];
-        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            FileName_unicode_data, sizeof(FileName_unicode_data));
+//         uint8_t FileName_unicode_data[65536];
+//         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+//             FileName_unicode_data, sizeof(FileName_unicode_data));
 
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+        stream.out_uint32_le(file_name.size());    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        stream.out_copy_bytes(FileName_unicode_data,
-            size_of_FileName_unicode_data);
+        stream.out_copy_bytes(file_name.data(),
+            file_name.size());
     }
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
-                                            //     CreationTime(8) + LastAccessTime(8) +
-                                            //     LastWriteTime(8) + ChangeTime(8) +
-                                            //     EndOfFile(8) + AllocationSize(8) +
-                                            //     FileAttributes(4) + FileNameLength(4) +
-                                            //     EaSize(4)
+            const unsigned expected = MIN_SIZE;   // NextEntryOffset(4) + FileIndex(4) +
+                                                 //     CreationTime(8) + LastAccessTime(8) +
+                                                 //     LastWriteTime(8) + ChangeTime(8) +
+                                                 //     EndOfFile(8) + AllocationSize(8) +
+                                                 //     FileAttributes(4) + FileNameLength(4) +
+                                                 //     EaSize(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileFullDirectoryInformation (0): expected=%u remains=%zu",
@@ -1178,12 +2077,12 @@ public:
         }
 
         uint8_t const * const FileName_unicode_data = stream.get_current();
-        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            sizeof(FileName_utf8_string));
-        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
-            length_of_FileName_utf8_string);
+//         uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+//             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+//             sizeof(FileName_utf8_string));
+        this->file_name.assign(::char_ptr_cast(FileName_unicode_data),
+            FileNameLength);
 
         stream.in_skip_bytes(FileNameLength);
     }
@@ -1196,12 +2095,7 @@ public:
                             //     FileAttributes(4) + FileNameLength(4) +
                             //     EaSize(4)
 
-        uint8_t unicode_data[65536];
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            unicode_data, sizeof(unicode_data));
-
-        return size + size_of_unicode_data;
+        return size + this->file_name.length();
     }
 
 private:
@@ -1224,6 +2118,22 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Full Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * CreationTime    = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
+        LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
+        LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", this->EaSize);
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size());
     }
 };  // FileFullDirectoryInformation
 
@@ -1303,28 +2213,45 @@ class FileNamesInformation {
     std::string file_name;
 
 public:
+    enum : unsigned {
+        MIN_SIZE = 12
+    };
+
+    uint32_t total_size() {
+        return this->file_name.length() + MIN_SIZE;
+    }
+
     FileNamesInformation() = default;
 
     explicit FileNamesInformation(const char * file_name)
-    : file_name(file_name) {}
+      :  file_name([&file_name]() {
+
+        uint8_t FileName_unicode_data[500];
+        size_t size_utf16 = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(file_name),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        const std::string str(reinterpret_cast<char *>(FileName_unicode_data), size_utf16);
+
+        return str;
+    }()) {}
 
     inline void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
-        uint8_t FileName_unicode_data[65536];
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            FileName_unicode_data, sizeof(FileName_unicode_data));
+//         uint8_t FileName_unicode_data[65536];
+//         size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+//             FileName_unicode_data, sizeof(FileName_unicode_data));
 
-        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+        stream.out_uint32_le(this->file_name.size());    // FileNameLength(4)
 
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+        stream.out_copy_bytes(this->file_name.c_str(), this->file_name.size());
     }
 
     inline void receive(InStream & stream) {
         {
-            const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
+            const unsigned expected = MIN_SIZE;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated FileNamesInformation (0): expected=%u remains=%zu",
@@ -1349,13 +2276,13 @@ public:
             }
         }
 
-        uint8_t const * const FileName_unicode_data = stream.get_current();
-        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-        const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            sizeof(FileName_utf8_string));
-        this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
-            length_of_FileName_utf8_string);
+//         uint8_t const * const FileName_unicode_data = stream.get_current();
+//         uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+//         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+//             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+//             sizeof(FileName_utf8_string));
+        this->file_name.assign(::char_ptr_cast(stream.get_current()),
+            FileNameLength);
 
         stream.in_skip_bytes(FileNameLength);
     }
@@ -1363,12 +2290,12 @@ public:
     inline size_t size() const {
         size_t size = 12;    // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
 
-        uint8_t unicode_data[65536];
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            unicode_data, sizeof(unicode_data));
+//         uint8_t unicode_data[65536];
+//         size_t size_of_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+//             unicode_data, sizeof(unicode_data));
 
-        return size + size_of_unicode_data;
+        return size + this->file_name.length();
     }
 
 private:
@@ -1385,6 +2312,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Directory Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
+        LOG(LOG_INFO, "          * FileName        = \"%s\" (%zu byte(s))", this->file_name, this->file_name.size());
     }
 };
 
@@ -1431,6 +2366,85 @@ public:
 //  |                              | required for the specified information    |
 //  |                              | class.                                    |
 //  +------------------------------+-------------------------------------------+
+
+//  2.4.34.2 FileRenameInformation for SMB2
+
+//  This information class is used to rename a file from within the SMB2 Protocol [MS-SMB2].
+
+//  A FILE_RENAME_INFORMATION_TYPE_2 data element, defined as follows, is provided by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |ReplaceIfExists|                    Reserved                   |
+// +---------------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         RootDirectory                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate that if a file with the given name already exists, it SHOULD be replaced with the given file. Set to FALSE to indicate that the rename operation MUST fail if a file with the given name already exists.
+
+//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value and MUST be ignored.
+
+//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for the directory to which the new name of the file is relative. For network operations, this value MUST always be zero.
+
+//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName field.
+
+//  FileName (variable):  A sequence of Unicode characters containing the new name of the file. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. If the RootDirectory field is zero, this member MUST specify a full pathname to be assigned to the file. For network operations, this pathname is relative to the root of the share. If the RootDirectory field is not zero, this field MUST specify a pathname, relative to RootDirectory, for the new name of the file.
+
+struct FileRenameInformation {
+
+    uint8_t ReplaceIfExists = 0;
+    uint64_t RootDirectory = 0;
+    std::string FileName;
+
+    FileRenameInformation() = default;
+
+    FileRenameInformation( uint8_t ReplaceIfExists
+                         , uint64_t RootDirectory
+                         , std::string FileName)
+      : ReplaceIfExists(ReplaceIfExists)
+      , RootDirectory(RootDirectory)
+      , FileName(FileName)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint8(this->ReplaceIfExists);
+        stream.out_clear_bytes(7);
+        stream.out_uint64_le(this->RootDirectory);
+        stream.out_uint32_le(this->FileName.size());
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->FileName.data()), this->FileName.size());
+    }
+
+    void receive(InStream & stream) {
+        this->ReplaceIfExists = stream.in_uint8();
+        stream.in_skip_bytes(7);
+        this->RootDirectory = stream.in_uint64_le();
+        size_t size = stream.in_uint32_le();
+        this->FileName = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Rename Information:");
+        LOG(LOG_INFO, "          * ReplaceIfExists = %02x (1 byte)", this->ReplaceIfExists);
+        LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
+        LOG(LOG_INFO, "          * RootDirectory   = %" PRIx64 " (8 bytes)", this->RootDirectory);
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu byte(s)", this->FileName, this->FileName.size());
+    }
+};
+
+
 
 // [MS-FSCC] - 2.4.38 FileStandardInformation
 // ==========================================
@@ -1503,6 +2517,7 @@ class FileStandardInformation {
     uint8_t  Directory      = 0;
 
 public:
+
     FileStandardInformation() = default;
 
     FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,
@@ -1517,13 +2532,10 @@ public:
     inline void emit(OutStream & stream) const {
         stream.out_sint64_le(this->AllocationSize);
         stream.out_sint64_le(this->EndOfFile);
-
         stream.out_uint32_le(this->NumberOfLinks);
-
         stream.out_uint8(this->DeletePending);
         stream.out_uint8(this->Directory);
-
-        // Reserved(2), MUST NOT be transmitted.
+        //stream.out_clear_bytes(2);
     }
 
     inline void receive(InStream & stream) {
@@ -1539,8 +2551,8 @@ public:
             }
         }
 
-        this->AllocationSize = stream.in_sint64_le();
-        this->EndOfFile      = stream.in_sint64_le();
+        this->AllocationSize = stream.in_uint64_le();
+        this->EndOfFile      = stream.in_uint64_le();
         this->NumberOfLinks  = stream.in_uint32_le();
         this->DeletePending  = stream.in_uint8();
         this->Directory      = stream.in_uint8();
@@ -1555,7 +2567,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "FileBothDirectoryInformation: AllocationSize=%" PRId64
+            "FileStandardInformation: AllocationSize=%" PRId64
                 " EndOfFile=%" PRId64 " NumberOfLinks=%" PRIu32 " "
                 "DeletePending=%" PRId8 " Directory=%" PRId8,
             this->AllocationSize, this->EndOfFile, this->NumberOfLinks,
@@ -1569,6 +2581,16 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Standard Information:");
+        LOG(LOG_INFO, "          * AllocationSize = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
+        LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
+        LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
+        LOG(LOG_INFO, "          * Reserved - (2 bytes) Not Used");
     }
 };  // FileStandardInformation
 
@@ -1707,6 +2729,8 @@ enum {
     , FILE_SUPPORT_INTEGRITY_STREAMS    = 0x04000000
 };
 
+
+
 // MaximumComponentNameLength (4 bytes): A 32-bit signed integer that
 //  contains the maximum file name component length, in bytes, supported by
 //  the specified file system. The value of this field MUST be greater than
@@ -1838,12 +2862,59 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
+
+    static inline
+std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+
+    std::string str;
+    (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
+    (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
+    (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
+
+    (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
+    (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
+    (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
+
+    (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
+    (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
+    (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
+
+
+    (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
+    (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
+    (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
+
+    (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
+    (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
+    (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
+
+    return str;
+}
+
+
+
 public:
     inline void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Attribute Information:");
+        LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
+        LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
+        LOG(LOG_INFO, "          * FileSystemNameLength       = %zu (4 bytes)", this->file_system_name.size());
+        LOG(LOG_INFO, "          * FileSystemName             = \"%s\" (%zu byte(s))", this->file_system_name, this->file_system_name.size());
     }
 };  // FileFsAttributeInformation
 
@@ -1987,6 +3058,15 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Full Size Information:");
+        LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %u (4 bytes)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * BytesPerSector                 = %u (4 bytes)", this->BytesPerSector);
+    }
 };
 
 // [MS-FSCC] - 2.5.8 FileFsSizeInformation
@@ -2111,6 +3191,14 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Size Information:");
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
+        LOG(LOG_INFO, "          * BytesPerSector           = %u (4 bytes)", this->BytesPerSector);
     }
 };
 
@@ -2301,6 +3389,16 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Volume Information:");
+        LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIx64 " (8 bytes)", this->VolumeCreationTime);
+        LOG(LOG_INFO, "          * VolumeSerialNumber = 0x%08x (4 bytes)", this->VolumeSerialNumber);
+        LOG(LOG_INFO, "          * VolumeLabelLength  = %zu (4 bytes)", this->volume_label.size());
+        LOG(LOG_INFO, "          * SupportsObjects    = 0x%02x (1 byte)", this->SupportsObjects);
+        LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
+        LOG(LOG_INFO, "          * VolumeLabel        = \"%s\" (%zu byte(s))", this->volume_label, this->volume_label.size());
     }
 };  // FileFsVolumeInformation
 
@@ -2495,133 +3593,203 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void log() {
+        LOG(LOG_INFO, "     File Fs Device Information:");
+        LOG(LOG_INFO, "          * DeviceType      = 0x%08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
+        LOG(LOG_INFO, "          * Characteristics = 0x%08x (4 bytes)", this->Characteristics);
+    }
 };
 
-// [MS-FSCC] - 2.6 File Attributes
-// ===============================
 
-// The following attributes are defined for files and directories. They can
-//  be used in any combination unless noted in the description of the
-//  attribute's meaning. There is no file attribute with the value 0x00000000
-//  because a value of 0x00000000 in the FileAttributes field means that the
-//  file attributes for this file MUST NOT be changed when setting basic
-//  information for the file.
 
-//  +------------------------------------+-------------------------------------+
-//  | Value                              | Meaning                             |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_ARCHIVE             | A file or directory that requires   |
-//  | 0x00000020                         | to be archived. Applications use    |
-//  |                                    | this attribute to mark files for    |
-//  |                                    | backup or removal.                  |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_COMPRESSED          | A file or directory that is         |
-//  | 0x00000800                         | compressed. For a file, all of the  |
-//  |                                    | data in the file is compressed. For |
-//  |                                    | a directory, compression is the     |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories.                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_DIRECTORY           | This item is a directory.           |
-//  | 0x00000010                         |                                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_ENCRYPTED           | A file or directory that is         |
-//  | 0x00004000                         | encrypted. For a file, all data     |
-//  |                                    | streams in the file are encrypted.  |
-//  |                                    | For a directory, encryption is the  |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories.                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_HIDDEN              | A file or directory that is hidden. |
-//  | 0x00000002                         | Files and directories marked with   |
-//  |                                    | this attribute do not appear in an  |
-//  |                                    | ordinary directory listing.         |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NORMAL              | A file that does not have other     |
-//  | 0x00000080                         | attributes set. This flag is used   |
-//  |                                    | to clear all other flags by         |
-//  |                                    | specifying it with no other flags   |
-//  |                                    | set.                                |
-//  |                                    | This flag MUST be ignored if other  |
-//  |                                    | flags are set.<157>                 |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | A file or directory that is not     |
-//  | 0x00002000                         | indexed by the content indexing     |
-//  |                                    | service.                            |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_OFFLINE             | The data in this file is not        |
-//  | 0x00001000                         | available immediately. This         |
-//  |                                    | attribute indicates that the file   |
-//  |                                    | data is physically moved to offline |
-//  |                                    | storage. This attribute is used by  |
-//  |                                    | Remote Storage, which is            |
-//  |                                    | hierarchical storage management     |
-//  |                                    | software.                           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_READONLY            | A file or directory that is read-   |
-//  | 0x00000001                         |only. For a file, applications can   |
-//  |                                    | read the file but cannot write to   |
-//  |                                    | it or delete it. For a directory,   |
-//  |                                    | applications cannot delete it, but  |
-//  |                                    | applications can create and delete  |
-//  |                                    | files from that directory.          |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_REPARSE_POINT       | A file or directory that has an     |
-//  | 0x00000400                         | associated reparse point.           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_SPARSE_FILE         | A file that is a sparse file.       |
-//  | 0x00000200                         |                                     |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_SYSTEM              | A file or directory that the        |
-//  | 0x00000004                         | operating system uses a part of or  |
-//  |                                    | uses exclusively.                   |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_TEMPORARY           | A file that is being used for       |
-//  | 0x00000100                         | temporary storage. The operating    |
-//  |                                    | system may choose to store this     |
-//  |                                    | file's data in memory rather than   |
-//  |                                    | on mass storage, writing the data   |
-//  |                                    | to mass storage only if data        |
-//  |                                    | remains in the file when the file   |
-//  |                                    | is closed.                          |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_INTEGRITY_STREAM    | A file or directory that is         |
-//  | 0x00008000                         | configured with integrity support.  |
-//  |                                    | For a file, all data streams in the |
-//  |                                    | file have integrity support. For a  |
-//  |                                    | directory, integrity support is the |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories, unless the caller   |
-//  |                                    | specifies otherwise.<158>           |
-//  +------------------------------------+-------------------------------------+
-//  | FILE_ATTRIBUTE_NO_SCRUB_DATA       | A file or directory that is         |
-//  | 0x00020000                         | configured to be excluded from the  |
-//  |                                    | data integrity scan. For a          |
-//  |                                    | directory configured with           |
-//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA, the   |
-//  |                                    | default for newly created files and |
-//  |                                    | subdirectories is to inherit the    |
-//  |                                    | FILE_ATTRIBUTE_NO_SCRUB_DATA        |
-//  |                                    | attribute.<159>                     |
-//  +------------------------------------+-------------------------------------+
+// 2.4.42 FileNotifyInformation
 
-enum {
-      FILE_ATTRIBUTE_ARCHIVE             = 0x00000020
-    , FILE_ATTRIBUTE_COMPRESSED          = 0x00000800
-    , FILE_ATTRIBUTE_DIRECTORY           = 0x00000010
-    , FILE_ATTRIBUTE_ENCRYPTED           = 0x00004000
-    , FILE_ATTRIBUTE_HIDDEN              = 0x00000002
-    , FILE_ATTRIBUTE_NORMAL              = 0x00000080
-    , FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
-    , FILE_ATTRIBUTE_OFFLINE             = 0x00001000
-    , FILE_ATTRIBUTE_READONLY            = 0x00000001
-    , FILE_ATTRIBUTE_REPARSE_POINT       = 0x00000400
-    , FILE_ATTRIBUTE_SPARSE_FILE         = 0x00000200
-    , FILE_ATTRIBUTE_SYSTEM              = 0x00000004
-    , FILE_ATTRIBUTE_TEMPORARY           = 0x00000100
-    , FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x00008000
-    , FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x00020000
+// The FILE_NOTIFY_INFORMATION structure contains the changes that the client is being notified of. The structure consists of the following:
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        NextEntryOffset                        |
+// +---------------------------------------------------------------+
+// |                             Action                            |
+// +---------------------------------------------------------------+
+// |                         FileNameLength                        |
+// +---------------------------------------------------------------+
+// |                       FileName (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// NextEntryOffset (4 bytes): The offset, in bytes, from the beginning of this structure to the subsequent FILE_NOTIFY_INFORMATION structure. If there are no subsequent structures, the NextEntryOffset field MUST be 0. NextEntryOffset MUST always be an integral multiple of 4. The FileName array MUST be padded to the next 4-byte boundary counted from the beginning of the structure.
+
+// Action (4 bytes): The changes that occurred on the file. This field MUST contain one of the following values.
+
+//  +------------------------------------+--------------------------------------------+
+//  | Value                              | Meaning                                    |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ADDED                  | The file was added to the directory.       |
+//  | 0x00000001                         |                                            |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED                | The file was removed from the              |
+//  | 0x00000002                         | directory.                                 |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_MODIFIED               | The file was modified. This can be         |
+//  | 0x00000003                         | a change to the data or attributes         |
+//  |                                    | of the file.                               |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_RENAMED_OLD_NAME       | The file was renamed, and this is          |
+//  | 0x00000004                         | the old name. If the new name              |
+//  |                                    | resides within the directory being         |
+//  |                                    | monitored, the client will also            |
+//  |                                    | receive the                                |
+//  |                                    | FILE_ACTION_RENAMED_NEW_NAME bit           |
+//  |                                    | value as described in the next list        |
+//  |                                    | item. If the new name resides              |
+//  |                                    | outside of the directory being             |
+//  |                                    | monitored, the client will not             |
+//  |                                    | receive the                                |
+//  |                                    | FILE_ACTION_RENAMED_NEW_NAME bit           |
+//  |                                    | value.                                     |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_RENAMED_NEW_NAME       | The file was renamed, and this is the new  |
+//  | 0x00000005                         | name. If the old name resides within the   |
+//  |                                    | directory being monitored, the client will |
+//  |                                    | also receive the                           |
+//  |                                    | FILE_ACTION_RENAME_OLD_NAME bit value. If  |
+//  |                                    | the old name resides outside of the        |
+//  |                                    | directory being monitored, the client will |
+//  |                                    | not receive the                            |
+//  |                                    | FILE_ACTION_RENAME_OLD_NAME bit value.     |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ADDED_STREAM           | The file was added to a named stream.      |
+//  | 0x00000006                         |                                            |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED_STREAM         | The file was removed from the named        |
+//  | 0x00000007                         | stream.                                    |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_MODIFIED_STREAM        | The file was modified. This can be a       |
+//  | 0x00000008                         | change to the data or attributes of the    |
+//  |                                    | file.                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_REMOVED_BY_DELETE      | An object ID was removed because the file  |
+//  | 0x00000009                         | the object ID referred to was deleted.     |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <125>                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_ID_NOT_TUNNELLED       | An attempt to tunnel object ID information |
+//  | 0x0000000A                         | to a file being created or renamed failed  |
+//  |                                    | because the object ID is in use by another |
+//  |                                    | file on the same volume.                   |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <126>                                      |
+//  +------------------------------------+--------------------------------------------+
+//  | FILE_ACTION_TUNNELLED_ID_COLLISION | An attempt to tunnel object ID information |
+//  | 0x0000000B                         | to a file being renamed failed because the |
+//  |                                    | file already has an object ID.             |
+//  |                                    |                                            |
+//  |                                    | This notification is only sent when the    |
+//  |                                    | directory being monitored is the special   |
+//  |                                    | directory                                  |
+//  |                                    | "\$Extend\$ObjId:$O:$INDEX_ALLOCATION".    |
+//  |                                    | <127>                                      |
+//  +------------------------------------+--------------------------------------------+
+
+// If two or more files have been renamed, then the corresponding FILE_NOTIFY_INFORMATION entries for each file rename MUST be consecutive in this response, in order for the client to make the correct correspondence between old and new names.
+
+// FileNameLength (4 bytes): The length, in bytes, of the file name in the FileName field.
+
+// FileName (variable): A Unicode string with the name of the file that changed.
+
+enum : uint32_t {
+
+    FILE_ACTION_ADDED                  = 0x00000001,
+    FILE_ACTION_REMOVED                = 0x00000002,
+    FILE_ACTION_MODIFIED               = 0x00000003,
+    FILE_ACTION_RENAMED_OLD_NAME       = 0x00000004,
+
+    FILE_ACTION_RENAMED_NEW_NAME       = 0x00000005,
+    FILE_ACTION_ADDED_STREAM           = 0x00000006,
+    FILE_ACTION_REMOVED_STREAM         = 0x00000007,
+    FILE_ACTION_MODIFIED_STREAM        = 0x00000008,
+    FILE_ACTION_REMOVED_BY_DELETE      = 0x00000009,
+    FILE_ACTION_ID_NOT_TUNNELLED       = 0x0000000A,
+    FILE_ACTION_TUNNELLED_ID_COLLISION = 0x0000000B,
 };
+
+static inline
+const char * get_Action_name(uint32_t action) {
+
+    switch (action) {
+        case FILE_ACTION_ADDED:                  return "FILE_ACTION_ADDED";
+        case FILE_ACTION_REMOVED:                return "FILE_ACTION_REMOVED";
+        case FILE_ACTION_MODIFIED:               return "FILE_ACTION_MODIFIED";
+        case FILE_ACTION_RENAMED_OLD_NAME:       return "FILE_ACTION_RENAMED_OLD_NAME";
+        case FILE_ACTION_RENAMED_NEW_NAME:       return "FILE_ACTION_RENAMED_NEW_NAME";
+        case FILE_ACTION_ADDED_STREAM:           return "FILE_ACTION_ADDED_STREAM";
+        case FILE_ACTION_REMOVED_STREAM:         return "FILE_ACTION_REMOVED_STREAM";
+        case FILE_ACTION_MODIFIED_STREAM:        return "FILE_ACTION_MODIFIED_STREAM";
+        case FILE_ACTION_REMOVED_BY_DELETE:      return "FILE_ACTION_REMOVED_BY_DELETE";
+        case FILE_ACTION_ID_NOT_TUNNELLED:       return "FILE_ACTION_ID_NOT_TUNNELLED";
+        case FILE_ACTION_TUNNELLED_ID_COLLISION: return "FILE_ACTION_TUNNELLED_ID_COLLISION";
+    }
+
+    return "<unknown>";
+}
+
+struct FileNotifyInformation {
+
+    uint32_t NextEntryOffset = 0;
+    uint32_t Action = 0;
+
+    std::string FileName;
+
+
+    FileNotifyInformation() = default;
+
+    FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, std::string FileName)
+      : NextEntryOffset(NextEntryOffset)
+      , Action(Action)
+      , FileName(FileName)
+      {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->NextEntryOffset);
+        stream.out_uint32_le(this->Action);
+        stream.out_uint32_le(this->FileName.size());
+        stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->FileName.data()), this->FileName.size());
+    }
+
+    void receive(InStream & stream) {
+        this->NextEntryOffset = stream.in_uint32_le();
+        this->Action = stream.in_uint32_le();
+        size_t size = stream.in_uint32_le();
+        uint8_t * data = nullptr;
+        stream.in_copy_bytes(data, size);
+        this->FileName = std::string(reinterpret_cast<const char *>(data), size);
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     File Notify Information:");
+        LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
+        LOG(LOG_INFO, "          * Action          = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileName.size());
+        LOG(LOG_INFO, "          * FileName        = \"%s\"", this->FileName);
+    }
+};
+
+
+
+
 
 }   // namespace fscc
 

@@ -1,0 +1,67 @@
+import property-set ;
+import feature ;
+import toolset ;
+
+lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <link>shared <cxxflags>-frtti ;
+lib openssl : : <name>ssl <link>shared ;
+
+lib krb5 : : <name>krb5 <link>shared ;
+lib gssglue : : <name>gssglue <link>shared ;
+
+lib crypto : : <name>crypto <link>shared ;
+lib z : : <name>z <link>shared ;
+lib snappy : : <name>snappy <link>shared ;
+# lib lzma : : <name>lzma <link>shared ;
+lib dl : : <name>dl <link>shared ;
+lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+lib bz2 : : <name>bz2 <link>shared ;
+
+## ffmpeg {
+if $(FFMPEG_LIB_PATH) = "" {
+    lib avcodec  : : <link>$(FFMPEG_LINK_MODE) <name>avcodec ;
+    lib avformat : : <link>$(FFMPEG_LINK_MODE) <name>avformat ;
+    lib avutil   : : <link>$(FFMPEG_LINK_MODE) <name>avutil ;
+    lib swscale  : : <link>$(FFMPEG_LINK_MODE) <name>swscale ;
+    lib x264     : : <link>$(FFMPEG_LINK_MODE) <name>x264 ;
+}
+else {
+    # echo ffmpeg library path: $(FFMPEG_LIB_PATH) ;
+
+    if $(FFMPEG_LINK_MODE) = "shared" {
+        constant _FFMPEG_LIBRARY_EXT : so ;
+    }
+    else {
+        constant _FFMPEG_LIBRARY_EXT : a ;
+    }
+
+    lib avcodec  : :
+        <name>avcodec
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavcodec.$(_FFMPEG_LIBRARY_EXT) ;
+    lib avformat : :
+        <name>avformat
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavformat.$(_FFMPEG_LIBRARY_EXT) ;
+    lib avutil   : :
+        <name>avutil
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libavutil.$(_FFMPEG_LIBRARY_EXT) ;
+    lib swscale  : :
+        <name>swscale
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libswscale.$(_FFMPEG_LIBRARY_EXT) ;
+    lib x264 : :
+        <name>avutil
+        <link>$(FFMPEG_LINK_MODE)
+        <file>$(FFMPEG_LIB_PATH)/libx264.$(_FFMPEG_LIBRARY_EXT) ;
+}
+alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
+
+lib pthread : : <name>pthread <link>shared ;
+## }
+
+lib libpng : : <name>png <link>shared ;
+alias png : libpng z ;
+
+lib gssapi_krb5 : : <name>gssapi_krb5 <link>shared ;
+lib rt : : <name>rt <link>shared ;

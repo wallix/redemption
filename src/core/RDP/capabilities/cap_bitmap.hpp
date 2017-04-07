@@ -160,9 +160,9 @@ struct BitmapCaps : public Capability {
     , pad2octetsB(0)
     {
     }
-    ~BitmapCaps() override {}
 
-    void emit(OutStream & stream)override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->preferredBitsPerPixel);
@@ -180,7 +180,8 @@ struct BitmapCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsB);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
 
         /* preferredBitsPerPixel(2) + receive1BitPerPixel(2) + receive4BitsPerPixel(2) + receive8BitsPerPixel(2) +
@@ -209,7 +210,8 @@ struct BitmapCaps : public Capability {
         this->pad2octetsB = stream.in_uint16_le();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s Bitmap caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
         LOG(LOG_INFO, "Bitmap caps::receive1BitPerPixel %u", this->receive1BitPerPixel);
@@ -234,20 +236,20 @@ struct BitmapCaps : public Capability {
         LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
     }
 
-    void dump(FILE * f) {
-        fprintf(f, "[Bitmap Capability Set]\n");
+    void dump(FILE * f)
+    {
+       fprintf(f, "[Bitmap Capability Set]\n");
 
-        fprintf(f, "preferredBitsPerPixel=%u\n",    unsigned(this->preferredBitsPerPixel));
-        fprintf(f, "receive1BitPerPixel=%u\n",      unsigned(this->receive1BitPerPixel));
-        fprintf(f, "receive4BitsPerPixel=%u\n",     unsigned(this->receive4BitsPerPixel));
-        fprintf(f, "receive8BitsPerPixel=%u\n",     unsigned(this->receive8BitsPerPixel));
-        fprintf(f, "desktopWidth=%u\n",             unsigned(this->desktopWidth));
-        fprintf(f, "desktopHeight=%u\n",            unsigned(this->desktopHeight));
-        fprintf(f, "desktopResizeFlag=%u\n",        unsigned(this->desktopResizeFlag));
-        fprintf(f, "bitmapCompressionFlag=%u\n",    unsigned(this->bitmapCompressionFlag));
-        fprintf(f, "highColorFlags=%u\n",           unsigned(this->highColorFlags));
-        fprintf(f, "drawingFlags=%u\n",             unsigned(this->drawingFlags));
-        fprintf(f, "multipleRectangleSupport=%u\n\n", unsigned(this->multipleRectangleSupport));
+       fprintf(f, "preferredBitsPerPixel=%u\n",    unsigned(this->preferredBitsPerPixel));
+       fprintf(f, "receive1BitPerPixel=%u\n",      unsigned(this->receive1BitPerPixel));
+       fprintf(f, "receive4BitsPerPixel=%u\n",     unsigned(this->receive4BitsPerPixel));
+       fprintf(f, "receive8BitsPerPixel=%u\n",     unsigned(this->receive8BitsPerPixel));
+       fprintf(f, "desktopWidth=%u\n",             unsigned(this->desktopWidth));
+       fprintf(f, "desktopHeight=%u\n",            unsigned(this->desktopHeight));
+       fprintf(f, "desktopResizeFlag=%u\n",        unsigned(this->desktopResizeFlag));
+       fprintf(f, "bitmapCompressionFlag=%u\n",    unsigned(this->bitmapCompressionFlag));
+       fprintf(f, "highColorFlags=%u\n",           unsigned(this->highColorFlags));
+       fprintf(f, "drawingFlags=%u\n",             unsigned(this->drawingFlags));
+       fprintf(f, "multipleRectangleSupport=%u\n\n", unsigned(this->multipleRectangleSupport));
     }
 };
-

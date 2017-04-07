@@ -588,6 +588,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         syslog(LOG_INFO, "%s ECDSA OK", __FUNCTION__);
         return SSH_OK;
     }
+    case SSH_KEYTYPE_UNKNOWN:
     default:
         syslog(LOG_INFO, "%s Unknown key type found!", __FUNCTION__);
         break;
@@ -1011,10 +1012,10 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 }
 
                 if (b->in_remain() != 0) {
-                    delete b;
                     LOG(LOG_INFO, "Signature has remaining bytes in inner "
                                 "sigblob: %lu",
                                 b->in_remain());
+                    delete b;
                     ssh_signature_free(sig);
                     return nullptr;
                 }
@@ -1153,7 +1154,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
     {
         SslSha1 sha1;
         sha1.update(digest, dlen);
-        sha1.final(hash, SHA_DIGEST_LENGTH);
+        sha1.final(hash);
         //hexa("Hash to be verified with dsa", hash, SHA_DIGEST_LENGTH);
         int rc = DSA_do_verify(hash,
                            SHA_DIGEST_LENGTH,
@@ -1174,7 +1175,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
     {
         SslSha1 sha1;
         sha1.update(digest, dlen);
-        sha1.final(hash, SHA_DIGEST_LENGTH);
+        sha1.final(hash);
         //hexa("Hash to be verified with dsa", hash, SHA_DIGEST_LENGTH);
 
         int rc = RSA_verify(NID_sha1,

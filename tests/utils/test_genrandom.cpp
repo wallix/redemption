@@ -24,9 +24,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGenRandom
+#define UNIT_TEST_MODULE TestGenRandom
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -34,7 +32,7 @@
 
 #include "utils/genrandom.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGenRandom)
+RED_AUTO_TEST_CASE(TestGenRandom)
 {
     {
         UdevRandom rnd;
@@ -49,12 +47,12 @@ BOOST_AUTO_TEST_CASE(TestGenRandom)
         // as we (dont) want.
         // however this should be quite rare.
         // so, if the test fails, I guess we should just run it again
-        BOOST_CHECK(count_null == 0);
+        RED_CHECK(count_null == 0);
 
         unsigned mem2[1024] = {};
         rnd.random(mem2, sizeof(mem2));
 
-        BOOST_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
+        RED_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
     }
 
     {
@@ -70,12 +68,12 @@ BOOST_AUTO_TEST_CASE(TestGenRandom)
         // as we (dont) want.
         // however this should be quite rare.
         // so, if the test fails, I guess we should just run it again
-        BOOST_CHECK(count_null == 0);
+        RED_CHECK(count_null == 0);
 
         unsigned mem2[1024] = {};
         rnd.random(mem2, sizeof(mem2));
 
-        BOOST_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
+        RED_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
         uint8_t mem3[1024] = {};
         rnd.random(mem3, sizeof(mem3));
         hexdump_c(mem3, sizeof(mem3));

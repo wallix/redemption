@@ -18,9 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCredSSP
+#define UNIT_TEST_MODULE TestCredSSP
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -29,11 +27,11 @@
 
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestTSRequest)
+RED_AUTO_TEST_CASE(TestTSRequest)
 {
 
     // ===== NTLMSSP_NEGOTIATE =====
-    uint8_t packet[] = {
+    constexpr static uint8_t packet[] = {
         0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1,
         0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,
         0x28, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50,
@@ -48,33 +46,30 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     s.out_copy_bytes(packet, sizeof(packet));
 
-    uint8_t sig[20];
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig1[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig1);
 
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req.version, 2);
+    RED_CHECK_EQUAL(ts_req.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
-    BOOST_CHECK_EQUAL(ts_req.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
+    RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send;
 
     ts_req.emit(to_send);
 
-    BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
+    RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    char message[1024];
-    if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig))){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(to_send, sig1);
 
     // hexdump_c(to_send.get_data(), to_send.size());
 
     // ===== NTLMSSP_CHALLENGE =====
-    uint8_t packet2[] = {
+    constexpr static uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
         0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,
         0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80, 0x4e,
@@ -101,32 +96,31 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.rewind();
     s.out_copy_bytes(packet2, sizeof(packet2));
 
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig2[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig2);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req2(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req2.version, 2);
+    RED_CHECK_EQUAL(ts_req2.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
-    BOOST_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
+    RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send2;
 
-    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
-    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
+    RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    if (!check_sig(to_send2, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(to_send2, sig2);
 
     // hexdump_c(to_send2.get_data(), to_send2.size());
 
     // ===== NTLMSSP_AUTH =====
-    uint8_t packet3[] = {
+    constexpr static uint8_t packet3[] = {
         0x30, 0x82, 0x02, 0x41, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0xa1, 0x82, 0x01, 0x12, 0x30, 0x82, 0x01,
         0x0e, 0x30, 0x82, 0x01, 0x0a, 0xa0, 0x82, 0x01,
@@ -205,34 +199,34 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet3, sizeof(packet3));
-    get_sig(s, sig, sizeof(sig));
+
+    uint8_t sig3[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig3);
 
     TSRequest ts_req3;
 
     in_s = InStream(s.get_data(), s.get_offset());
     ts_req3.recv(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req3.version, 2);
+    RED_CHECK_EQUAL(ts_req3.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
-    BOOST_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
+    RED_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
+    RED_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
     StaticOutStream<65536> to_send3;
 
-    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send3.get_offset(), 0);
     ts_req3.emit(to_send3);
 
-    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
+    RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    if (!check_sig(to_send3, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(to_send3, sig3);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
     // ===== PUBKEYAUTH =====
-    uint8_t packet4[] = {
+    constexpr static uint8_t packet4[] = {
         0x30, 0x82, 0x01, 0x2b, 0xa0, 0x03, 0x02, 0x01,
         0x02, 0xa3, 0x82, 0x01, 0x22, 0x04, 0x82, 0x01,
         0x1e, 0x01, 0x00, 0x00, 0x00, 0xc9, 0x88, 0xfc,
@@ -276,33 +270,32 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet4, sizeof(packet4));
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig4[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig4);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req4(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req4.version, 2);
+    RED_CHECK_EQUAL(ts_req4.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
+    RED_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
+    RED_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
 
     StaticOutStream<65536> to_send4;
 
-    BOOST_CHECK_EQUAL(to_send4.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send4.get_offset(), 0);
     ts_req4.emit(to_send4);
 
-    BOOST_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
+    RED_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
-    if (!check_sig(to_send4, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(to_send4, sig4);
 
     // hexdump_c(to_send4.get_data(), to_send4.size());
 
 
     // ===== AUTHINFO =====
-    uint8_t packet5[] = {
+    constexpr static uint8_t packet5[] = {
         0x30, 0x5a, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa2,
         0x53, 0x04, 0x51, 0x01, 0x00, 0x00, 0x00, 0xb3,
         0x2c, 0x3b, 0xa1, 0x36, 0xf6, 0x55, 0x71, 0x01,
@@ -319,35 +312,32 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet5, sizeof(packet5));
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig5[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig5);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req5(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req5.version, 2);
+    RED_CHECK_EQUAL(ts_req5.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req5.negoTokens.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
-    BOOST_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req5.negoTokens.size(), 0);
+    RED_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
+    RED_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send5;
 
-    BOOST_CHECK_EQUAL(to_send5.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send5.get_offset(), 0);
     ts_req5.emit(to_send5);
 
-    BOOST_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
+    RED_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
 
-    if (!check_sig(to_send5, message, sig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(to_send5, sig5);
 
     // hexdump_c(to_send5.get_data(), to_send5.size());
-
-
 }
 
 
-BOOST_AUTO_TEST_CASE(TestTSCredentials)
+RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 {
 
     uint8_t domain[] = "flatland";
@@ -361,23 +351,24 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
 
     StaticOutStream<65536> s;
 
-    ts_cred.emit(s);
-    BOOST_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
+    int emited = ts_cred.emit(s);
+    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
+    RED_CHECK_EQUAL(s.get_offset(), emited);
 
     TSCredentials ts_cred_received;
 
     InStream in_s(s.get_data(), s.get_offset());
     ts_cred_received.recv(in_s);
 
-    BOOST_CHECK_EQUAL(ts_cred_received.credType, 1);
-    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
-    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
-    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.domainName),
+    RED_CHECK_EQUAL(ts_cred_received.credType, 1);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.domainName),
                       reinterpret_cast<const char*>(domain));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.userName),
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.userName),
                       reinterpret_cast<const char*>(user));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.password),
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.password),
                       reinterpret_cast<const char*>(pass));
 
 
@@ -389,10 +380,76 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
     ts_cred.set_credentials(domain2, sizeof(domain2),
                             user2, sizeof(user2),
                             pass2, sizeof(pass2));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.domainName),
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.domainName),
                       reinterpret_cast<const char*>(domain2));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.userName),
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.userName),
                       reinterpret_cast<const char*>(user2));
-    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.password),
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.password),
                       reinterpret_cast<const char*>(pass2));
+}
+
+RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
+{
+
+    uint8_t pin[] = "3615";
+    uint8_t userHint[] = "aka";
+    uint8_t domainHint[] = "grandparc";
+
+    uint8_t cardName[] = "passepartout";
+    uint8_t readerName[] = "acrobat";
+    uint8_t containerName[] = "docker";
+    uint8_t cspName[] = "what";
+    uint32_t keySpec = 32;
+
+    TSCredentials ts_cred(pin, sizeof(pin),
+                          userHint, sizeof(userHint),
+                          domainHint, sizeof(domainHint),
+                          keySpec, cardName, sizeof(cardName),
+                          readerName, sizeof(readerName),
+                          containerName, sizeof(containerName),
+                          cspName, sizeof(cspName));
+
+    StaticOutStream<65536> s;
+
+    int emited = ts_cred.emit(s);
+    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
+    RED_CHECK_EQUAL(s.get_offset(), emited);
+
+    TSCredentials ts_cred_received;
+
+    InStream in_s(s.get_data(), s.get_offset());
+    ts_cred_received.recv(in_s);
+
+    RED_CHECK_EQUAL(ts_cred_received.credType, 2);
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin_length,
+                      sizeof(pin));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.userHint_length,
+                      sizeof(userHint));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length,
+                      sizeof(domainHint));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.pin),
+                      reinterpret_cast<const char*>(pin));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.userHint),
+                      reinterpret_cast<const char*>(userHint));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.domainHint),
+                      reinterpret_cast<const char*>(domainHint));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec,
+                      keySpec);
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cardName_length,
+                      sizeof(cardName));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.readerName_length,
+                      sizeof(readerName));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.containerName_length,
+                      sizeof(containerName));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length,
+                      sizeof(cspName));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cardName),
+                      reinterpret_cast<const char*>(cardName));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.readerName),
+                      reinterpret_cast<const char*>(readerName));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.containerName),
+                      reinterpret_cast<const char*>(containerName));
+    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cspName),
+                      reinterpret_cast<const char*>(cspName));
+
 }

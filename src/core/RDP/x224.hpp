@@ -30,7 +30,7 @@
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "fastpath.hpp"
+#include "core/RDP/fastpath.hpp"
 #include "utils/parse.hpp"
 
 //##############################################################################
@@ -332,7 +332,9 @@ namespace X224
             size_t nbbytes = 0;
             Parse data(*end);
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
-            t.recv(end, 1);
+
+            t.recv_atomic(*end, 1);
+            *end += 1;
 
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
@@ -350,12 +352,14 @@ namespace X224
                     throw Error(ERR_RDP_FASTPATH);
                 }
 
-                t.recv(end, 1);
+                t.recv_atomic(*end, 1);
+                *end += 1;
                 nbbytes++;
 
                 uint16_t lg = data.in_uint8();
                 if (lg & 0x80){
-                    t.recv(end, 1);
+                    t.recv_atomic(*end, 1);
+                    *end += 1;
                     nbbytes++;
                     uint8_t byte = data.in_uint8();
                     lg = (lg & 0x7F) << 8 | byte;
@@ -367,13 +371,15 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 };
-                t.recv(end, this->length - nbbytes);
+                t.recv_atomic(*end, this->length - nbbytes);
+                *end += this->length - nbbytes;
 
                 return;
             }
             else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
                 /* 4 bytes */
-                t.recv(end, X224::TPKT_HEADER_LEN - nbbytes);
+                t.recv_atomic(*end, X224::TPKT_HEADER_LEN - nbbytes);
+                *end += X224::TPKT_HEADER_LEN - nbbytes;
                 nbbytes = X224::TPKT_HEADER_LEN;
                 data.in_skip_bytes(1);
                 uint16_t tpkt_len = data.in_uint16_be();
@@ -387,7 +393,8 @@ namespace X224
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 }
-                t.recv(end, tpkt_len - nbbytes );
+                t.recv_atomic(*end, tpkt_len - nbbytes );
+                *end += tpkt_len - nbbytes;
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
                 switch (tpdu_type & 0xF0) {
@@ -755,6 +762,7 @@ namespace X224
     {
         CR_TPDU_Send(OutStream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_requestedProtocols)
         {
+
             stream.out_uint8(0x03); // version 3
             stream.out_uint8(0x00);
             size_t cookie_len = strlen(cookie);
@@ -1102,8 +1110,10 @@ namespace X224
         }
     }; // END CLASS CC_TPDU_Recv
 
+
     struct CC_TPDU_Send
     {
+
         CC_TPDU_Send(OutStream & stream, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
             stream.out_uint8(0x03); // version 3
@@ -1169,6 +1179,7 @@ namespace X224
                 stream.out_uint16_le(8);
                 stream.out_uint32_le(rdp_neg_code);
             }
+
         }
     };
 

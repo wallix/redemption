@@ -5,25 +5,33 @@ import ctypes
 import ctypes.util
 
 def usage():
-  print("%s: Usage library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
+  print("%s: Usage {rec|ver|dec} library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
 
 
-if len(sys.argv) < 3 or not (sys.argv[2] == '--' or (sys.argv[2] != '--' and len(sys.argv) > 4 and sys.argv[4] == '--')):
+if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (sys.argv[3] != '--' and len(sys.argv) > 5 and sys.argv[5] == '--')):
   usage()
   exit(1)
 
+role = sys.argv[1]
+pathlib = sys.argv[2]
 
-pathlib = sys.argv[1]
-arg_consumed = 2
+if sys.argv[1] in ['rec','ver','dec']:
+    role = 'red' + sys.argv[1]
+elif not sys.argv[1] in ['redrec','redver','reddec']:
+    print("Bad role, required rec, ver or dec:")
+    usage()
+    sys.exit(11)
+
+arg_consumed = 3
 hmac_key_str = '\xe3\x8d\xa1\x5e\x50\x1e\x4f\x6a\x01\xef\xde\x6c\xd9\xb3\x3a\x3f\x2b\x41\x72\x13\x1e\x97\x5b\x4c\x39\x54\x23\x14\x43\xae\x22\xae'
 key_str = '\x56\x3e\xb6\xe8\x15\x8f\x0e\xed\x2e\x5f\xb6\xbc\x28\x93\xbc\x15\x27\x0d\x7e\x78\x15\xfa\x80\x4a\x72\x3e\xf4\xfb\x31\x5f\xf4\xb2'
 
-if sys.argv[2] != '--':
+if sys.argv[3] != '--':
     import binascii
-    if len(sys.argv[2]) != 64 or len(sys.argv[3]) != 64:
+    if len(sys.argv[3]) != 64 or len(sys.argv[4]) != 64:
         raise 'hmac_key or key len is not 64'
-    hmac_key_str = binascii.hexlify(sys.argv[2])
-    key_str = binascii.hexlify(sys.argv[3])
+    hmac_key_str = binascii.hexlify(sys.argv[3])
+    key_str = binascii.hexlify(sys.argv[4])
     arg_consumed += 2
 
 
@@ -31,25 +39,31 @@ GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
 GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
 
 def get_hmac_key(resbuf):
-    libred.memcpy(resbuf, hmac_key_str, 32)
     return 0
 
 def get_trace_key(base, lg, resbuf):
     name = base[:lg]
     libred.memcpy(resbuf, key_str, 32)
     return 0
-    
+
 
 get_hmac_key_func = GETHMACKEY(get_hmac_key)
 get_trace_key_func = GETTRACEKEY(get_trace_key)
 
-libred = ctypes.CDLL(pathlib)
-libred.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
-libred.do_main.restype = ctypes.c_int
+try:
+    libred = ctypes.CDLL(pathlib)
+    libred.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
+    libred.do_main.restype = ctypes.c_int
 
-libred.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-libred.memcpy.restype = ctypes.c_int
+    libred.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    libred.memcpy.restype = ctypes.c_int
 
-myargv = ctypes.c_char_p * (len(sys.argv) - arg_consumed)
-argv = myargv(*tuple(sys.argv[arg_consumed:]))
-libred.do_main(len(argv), argv, get_hmac_key_func, get_trace_key_func)
+    args = sys.argv[arg_consumed:]
+    args[0] = role
+    myargv = ctypes.c_char_p * len(args)
+    argv = myargv(*tuple(args))
+    errcode = libred.do_main(len(args), argv, get_hmac_key_func, get_trace_key_func)
+    sys.exit(errcode)
+except Exception as e:
+    print("Failed to load redrec library: %s\n" % str(e))
+    sys.exit(10)

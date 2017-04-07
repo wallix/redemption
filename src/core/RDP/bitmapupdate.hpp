@@ -326,14 +326,13 @@ struct RDPBitmapData {
         return this->bitmap_length;
     }
 
-    void log(int level, const char * message) const {
+    void log(int level) const {
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
             LOG( level
-               , "%s: BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
+               , "BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
                  "width=%u, height=%u, bitsPerPixel=%u, flags=0x%04X, bitmapLength=%u, "
                  "cbCompMainBodySize=%u, cbScanWidth=%u, cbUncompressedSize=%u)"
-               , message
                , this->dest_left
                , this->dest_top
                , this->dest_right
@@ -350,9 +349,8 @@ struct RDPBitmapData {
         }
         else {
             LOG( level
-               , "%s: BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
+               , "BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
                  "width=%u, height=%u, bitsPerPixel=%u, flags=0x%04X, bitmapLength=%u)"
-               , message
                , this->dest_left
                , this->dest_top
                , this->dest_right
@@ -364,6 +362,13 @@ struct RDPBitmapData {
                , this->bitmap_length
                );
         }
+    }
+
+    void move(int offset_x, int offset_y) {
+        this->dest_left   += offset_x;
+        this->dest_top    += offset_y;
+        this->dest_right  += offset_x;
+        this->dest_bottom += offset_y;
     }
 };  // struct RDPBitmapData
 

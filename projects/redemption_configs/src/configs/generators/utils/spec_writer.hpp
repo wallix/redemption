@@ -355,8 +355,8 @@ public:
     { this->inherit().do_write(x, pack); }
 
 private:
-    void do_start_section(std::string const & section_name) {}
-    void do_stop_section(std::string const & section_name) {}
+    void do_start_section(std::string const & section_name) { (void)section_name; }
+    void do_stop_section(std::string const & section_name) { (void)section_name; }
     void do_sep() {}
     void do_init() {}
     void do_finish() {}

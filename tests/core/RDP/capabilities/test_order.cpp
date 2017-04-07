@@ -21,16 +21,14 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityOrder
+#define UNIT_TEST_MODULE TestCapabilityOrder
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/order.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
+RED_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 {
     OrderCaps order_caps;
     for (uint8_t i = 0; i< 16; i++){
@@ -64,29 +62,29 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
         test_order_os[i] = i;
     }
 
-    BOOST_CHECK_EQUAL(order_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
-    BOOST_CHECK_EQUAL(order_caps.len, static_cast<uint16_t>(CAPLEN_ORDER));
+    RED_CHECK_EQUAL(order_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
+    RED_CHECK_EQUAL(order_caps.len, static_cast<uint16_t>(CAPLEN_ORDER));
     for (size_t i = 0; i< 16; i++){
-        BOOST_CHECK_EQUAL(order_caps.terminalDescriptor[i], test_order_td[i]);
+        RED_CHECK_EQUAL(order_caps.terminalDescriptor[i], test_order_td[i]);
     }
-    BOOST_CHECK_EQUAL(order_caps.pad4octetsA, static_cast<uint32_t>(0));
-    BOOST_CHECK_EQUAL(order_caps.desktopSaveXGranularity, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(order_caps.desktopSaveYGranularity, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(order_caps.pad2octetsA, static_cast<uint16_t>(3));
-    BOOST_CHECK_EQUAL(order_caps.maximumOrderLevel, static_cast<uint16_t>(4));
-    BOOST_CHECK_EQUAL(order_caps.numberFonts, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(order_caps.orderFlags, static_cast<uint16_t>(6));
+    RED_CHECK_EQUAL(order_caps.pad4octetsA, static_cast<uint32_t>(0));
+    RED_CHECK_EQUAL(order_caps.desktopSaveXGranularity, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(order_caps.desktopSaveYGranularity, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(order_caps.pad2octetsA, static_cast<uint16_t>(3));
+    RED_CHECK_EQUAL(order_caps.maximumOrderLevel, static_cast<uint16_t>(4));
+    RED_CHECK_EQUAL(order_caps.numberFonts, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(order_caps.orderFlags, static_cast<uint16_t>(6));
     for (size_t i = 0; i< NB_ORDER_SUPPORT; i++){
-        BOOST_CHECK_EQUAL(order_caps.orderSupport[i], test_order_os[i]);
+        RED_CHECK_EQUAL(order_caps.orderSupport[i], test_order_os[i]);
     }
-    BOOST_CHECK_EQUAL(order_caps.textFlags, static_cast<uint16_t>(7));
-    BOOST_CHECK_EQUAL(order_caps.orderSupportExFlags, static_cast<uint16_t>(8));
-    BOOST_CHECK_EQUAL(order_caps.pad4octetsB, static_cast<uint32_t>(9));
-    BOOST_CHECK_EQUAL(order_caps.desktopSaveSize, static_cast<uint32_t>(10));
-    BOOST_CHECK_EQUAL(order_caps.pad2octetsC, static_cast<uint16_t>(11));
-    BOOST_CHECK_EQUAL(order_caps.pad2octetsD, static_cast<uint16_t>(12));
-    BOOST_CHECK_EQUAL(order_caps.textANSICodePage, static_cast<uint16_t>(13));
-    BOOST_CHECK_EQUAL(order_caps.pad2octetsE, static_cast<uint16_t>(14));
+    RED_CHECK_EQUAL(order_caps.textFlags, static_cast<uint16_t>(7));
+    RED_CHECK_EQUAL(order_caps.orderSupportExFlags, static_cast<uint16_t>(8));
+    RED_CHECK_EQUAL(order_caps.pad4octetsB, static_cast<uint32_t>(9));
+    RED_CHECK_EQUAL(order_caps.desktopSaveSize, static_cast<uint32_t>(10));
+    RED_CHECK_EQUAL(order_caps.pad2octetsC, static_cast<uint16_t>(11));
+    RED_CHECK_EQUAL(order_caps.pad2octetsD, static_cast<uint16_t>(12));
+    RED_CHECK_EQUAL(order_caps.textANSICodePage, static_cast<uint16_t>(13));
+    RED_CHECK_EQUAL(order_caps.pad2octetsE, static_cast<uint16_t>(14));
 
     StaticOutStream<1024> out_stream;
     order_caps.emit(out_stream);
@@ -95,32 +93,32 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 
     OrderCaps order_caps2;
 
-    BOOST_CHECK_EQUAL(order_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
-    BOOST_CHECK_EQUAL(order_caps2.len, static_cast<uint16_t>(CAPLEN_ORDER));
+    RED_CHECK_EQUAL(order_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
+    RED_CHECK_EQUAL(order_caps2.len, static_cast<uint16_t>(CAPLEN_ORDER));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_ORDER), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_ORDER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_ORDER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_ORDER), stream.in_uint16_le());
     order_caps2.recv(stream, CAPLEN_ORDER);
 
     for (size_t i = 0; i< 16; i++){
-        BOOST_CHECK_EQUAL(order_caps2.terminalDescriptor[i], test_order_td[i]);
+        RED_CHECK_EQUAL(order_caps2.terminalDescriptor[i], test_order_td[i]);
     }
-    BOOST_CHECK_EQUAL(order_caps2.pad4octetsA, static_cast<uint32_t>(0));
-    BOOST_CHECK_EQUAL(order_caps2.desktopSaveXGranularity, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(order_caps2.desktopSaveYGranularity, static_cast<uint16_t>(2));
-    BOOST_CHECK_EQUAL(order_caps2.pad2octetsA, static_cast<uint16_t>(3));
-    BOOST_CHECK_EQUAL(order_caps2.maximumOrderLevel, static_cast<uint16_t>(4));
-    BOOST_CHECK_EQUAL(order_caps2.numberFonts, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(order_caps2.orderFlags, static_cast<uint16_t>(6));
+    RED_CHECK_EQUAL(order_caps2.pad4octetsA, static_cast<uint32_t>(0));
+    RED_CHECK_EQUAL(order_caps2.desktopSaveXGranularity, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(order_caps2.desktopSaveYGranularity, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(order_caps2.pad2octetsA, static_cast<uint16_t>(3));
+    RED_CHECK_EQUAL(order_caps2.maximumOrderLevel, static_cast<uint16_t>(4));
+    RED_CHECK_EQUAL(order_caps2.numberFonts, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(order_caps2.orderFlags, static_cast<uint16_t>(6));
     for (size_t i = 0; i< NB_ORDER_SUPPORT; i++){
-        BOOST_CHECK_EQUAL(order_caps2.orderSupport[i], test_order_os[i]);
+        RED_CHECK_EQUAL(order_caps2.orderSupport[i], test_order_os[i]);
     }
-    BOOST_CHECK_EQUAL(order_caps2.textFlags, static_cast<uint16_t>(7));
-    BOOST_CHECK_EQUAL(order_caps2.orderSupportExFlags, static_cast<uint16_t>(8));
-    BOOST_CHECK_EQUAL(order_caps2.pad4octetsB, static_cast<uint32_t>(9));
-    BOOST_CHECK_EQUAL(order_caps2.desktopSaveSize, static_cast<uint32_t>(10));
-    BOOST_CHECK_EQUAL(order_caps2.pad2octetsC, static_cast<uint16_t>(11));
-    BOOST_CHECK_EQUAL(order_caps2.pad2octetsD, static_cast<uint16_t>(12));
-    BOOST_CHECK_EQUAL(order_caps2.textANSICodePage, static_cast<uint16_t>(13));
-    BOOST_CHECK_EQUAL(order_caps2.pad2octetsE, static_cast<uint16_t>(14));
+    RED_CHECK_EQUAL(order_caps2.textFlags, static_cast<uint16_t>(7));
+    RED_CHECK_EQUAL(order_caps2.orderSupportExFlags, static_cast<uint16_t>(8));
+    RED_CHECK_EQUAL(order_caps2.pad4octetsB, static_cast<uint32_t>(9));
+    RED_CHECK_EQUAL(order_caps2.desktopSaveSize, static_cast<uint32_t>(10));
+    RED_CHECK_EQUAL(order_caps2.pad2octetsC, static_cast<uint16_t>(11));
+    RED_CHECK_EQUAL(order_caps2.pad2octetsD, static_cast<uint16_t>(12));
+    RED_CHECK_EQUAL(order_caps2.textANSICodePage, static_cast<uint16_t>(13));
+    RED_CHECK_EQUAL(order_caps2.pad2octetsE, static_cast<uint16_t>(14));
 }

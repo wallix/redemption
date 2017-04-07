@@ -19,9 +19,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPDRChannel
+#define UNIT_TEST_MODULE TestRDPDRChannel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -37,6 +35,7 @@
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 
 #include "../../../front/fake_front.hpp"
+
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
@@ -92,7 +91,7 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
+RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -107,11 +106,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -140,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -152,13 +151,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto * end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -181,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
             uint8_t * chunk_data = virtual_channel_data;
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -198,25 +194,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -231,11 +218,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -264,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_drive.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -276,13 +263,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -305,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -322,25 +306,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -355,11 +330,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -388,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_print.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -400,13 +375,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -429,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -446,25 +418,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -479,11 +442,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -512,7 +475,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_no_drive_no_print.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -524,13 +487,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -553,7 +513,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -570,25 +530,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
+RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -603,11 +554,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -636,7 +587,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_device_remove.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -648,13 +599,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -677,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -694,25 +642,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
+RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -727,11 +666,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -760,7 +699,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
         ignore_existence_check__for_test_only);
 
     #include "fixtures/test_rdpdr_channel_fragmented_header.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -772,13 +711,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -803,7 +739,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -820,25 +756,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
+RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -853,11 +780,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
                     511 // verbose
                    );
 
-    int verbose = MODRDP_LOGLEVEL_RDPDR | MODRDP_LOGLEVEL_RDPDR_DUMP;
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params;
+    NullAuthentifier authentifier;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
 
-    file_system_virtual_channel_params.authentifier                 = nullptr;
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
 
@@ -879,7 +806,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     FileSystemDriveManager file_system_drive_manager;
 
     #include "fixtures/test_rdpdr_channel_capability_negotiation.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, static_cast<int>(verbose));
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -891,13 +818,10 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    bool end_of_file_reached = false;
-
-    try
-    {
+    auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv(&end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -922,7 +846,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv(&end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -939,20 +863,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
-    }
-    catch (Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            LOG(LOG_ERR, "Exception=%d", e.id);
-            throw;
-        }
-
-        end_of_file_reached = true;
-    }
-
-    BOOST_CHECK(end_of_file_reached || t.get_status());
+    };
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }

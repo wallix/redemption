@@ -33,14 +33,14 @@ struct local_fd
     local_fd(local_fd const &) = delete;
     local_fd & operator=(local_fd const &) = delete;
 
-    local_fd(int fd) noexcept : fd(fd) {}
+    explicit local_fd(int fd) noexcept : fd_(fd) {}
 
     local_fd(char const * pathname, int flags) noexcept
-    : fd(::open(pathname, flags))
+    : fd_(::open(pathname, flags))
     {}
 
     local_fd(char const * pathname, int flags, mode_t mode) noexcept
-    : fd(::open(pathname, flags, mode))
+    : fd_(::open(pathname, flags, mode))
     {}
 
     local_fd(std::string const & pathname, int flags) noexcept
@@ -51,14 +51,14 @@ struct local_fd
     : local_fd(pathname.c_str(), flags, mode)
     {}
 
-    ~local_fd() { if (this->is_open()) ::close(fd); }
+    ~local_fd() { if (this->is_open()) ::close(this->fd_); }
 
     explicit operator bool () const noexcept { return this->is_open(); }
     bool operator!() const noexcept { return !this->is_open(); }
-    bool is_open() const noexcept { return this->fd >= 0; }
+    bool is_open() const noexcept { return this->fd_ >= 0; }
 
-    int get() const noexcept { return fd; }
+    int fd() const noexcept { return this->fd_; }
 
 private:
-    int fd;
+    int fd_;
 };

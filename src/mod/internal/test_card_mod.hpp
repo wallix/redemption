@@ -27,7 +27,7 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap_from_file.hpp"
 
 class TestCardMod : public InternalMod
 {
@@ -39,12 +39,12 @@ class TestCardMod : public InternalMod
 
 public:
     TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, bool unit_test = true)
-    : InternalMod(front, width, height, font)
+    : InternalMod(front, width, height, font, Theme{}, false)
     , font(font)
     , unit_test(unit_test)
     {}
 
-    void rdp_input_invalidate(const Rect & /*rect*/) override {}
+    void rdp_input_invalidate(Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
 
@@ -59,6 +59,8 @@ public:
 
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                        int16_t /*param1*/, int16_t /*param2*/) override {}
+
+    void refresh(Rect /*rect*/) override {}
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
@@ -75,16 +77,18 @@ public:
     {
         this->front.begin_update();
 
-        const Rect & clip = this->get_screen_rect();
+        const Rect clip = this->get_screen_rect();
 
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip);
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip);
+        auto const color_ctx = gdi::ColorCtx::depth24();
+
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip, color_ctx);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip, color_ctx);
 
         Rect winrect = this->get_screen_rect().shrink(30);
-        this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
+        this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip, color_ctx);
 
 
         Bitmap bitmap = bitmap_from_file(SHARE_PATH "/" "Philips_PM5544_640.png");
@@ -99,41 +103,41 @@ public:
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->front.draw(
             RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110));
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110));
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110));
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(200, 145, 1, 110));
+            Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1));
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1));
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1));
+            Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
-            Rect(145, 200, 110, 1));
+            Rect(145, 200, 110, 1), color_ctx);
 
-        gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 50, "Red  ", RED, BLACK, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 70, "Green", GREEN, BLACK, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, clip);
-        gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 50, "Red  ", RED, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 70, "Green", GREEN, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, color_ctx, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, color_ctx, clip);
 
         Bitmap card = bitmap_from_file(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,
@@ -161,7 +165,7 @@ public:
             80, 50, 0), clip, logo);
 
         if (!unit_test) {
-            //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip);
+            //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
             this->front.sync();
 
             Bitmap wab_logo_blue = bitmap_from_file(SHARE_PATH "/" "wablogoblue.png");
@@ -192,7 +196,7 @@ public:
                     bitmap_data.flags           = 0;
                     bitmap_data.bitmap_length   = tile.bmp_size();
 
-                    bitmap_data.log(LOG_INFO, "replay");
+                    bitmap_data.log(LOG_INFO);
 
                     this->front.draw(bitmap_data, tile);
                 }
@@ -202,4 +206,3 @@ public:
         this->front.end_update();
     }
 };
-

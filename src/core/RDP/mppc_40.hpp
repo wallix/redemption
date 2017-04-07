@@ -199,16 +199,18 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             ** get more bits before we process length of match
             */
 
-            /* how may bits do we need to get? */
+            /* how many bits do we need to get? */
             int tmp2 = 32 - bits_left;
 
             while (tmp2) {
                 if (cur_bits_left < tmp2) {
                     /* we have less bits than we need */
-                    uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
-                    d32       |= static_cast<uint64_t>(i32) << ((32 - bits_left) - cur_bits_left);
-                    bits_left += cur_bits_left;
-                    tmp2      -= cur_bits_left;
+                    if (cur_bits_left) {
+                        uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
+                        d32       |= i32 << ((32 - bits_left) - cur_bits_left);
+                        bits_left += cur_bits_left;
+                        tmp2      -= cur_bits_left;
+                    }
                     if (cptr < cbuf + len) {
                         /* more compressed data available */
                         cur_uint8_t   = *cptr++;
@@ -376,10 +378,12 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             while (tmp3) {
                 if (cur_bits_left < tmp3) {
                     /* we have less bits than we need */
-                    uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
-                    d32       |= i32 << ((32 - bits_left) - cur_bits_left);
-                    bits_left += cur_bits_left;
-                    tmp3      -= cur_bits_left;
+                    if (cur_bits_left) {
+                        uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
+                        d32       |= i32 << ((32 - bits_left) - cur_bits_left);
+                        bits_left += cur_bits_left;
+                        tmp3      -= cur_bits_left;
+                    }
                     if (cptr < cbuf + len) {
                         /* more compressed data available */
                         cur_uint8_t   = *cptr++;
@@ -458,7 +462,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_40_enc structure
      */
-    explicit rdp_mppc_40_enc(uint32_t verbose = 0)
+    explicit rdp_mppc_40_enc(bool verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)
@@ -694,7 +698,7 @@ private:
 
                 this->hash_tab_mgr.reset();
 
-                if (this->verbose & 512) {
+                if (this->verbose) {
                     LOG(LOG_INFO, "Unable to undo changes made in hash table.");
                 }
             }
@@ -733,4 +737,3 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
 };
-

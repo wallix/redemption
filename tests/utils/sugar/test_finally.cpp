@@ -19,14 +19,12 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFinally
+#define UNIT_TEST_MODULE TestFinally
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/finally.hpp"
 
-BOOST_AUTO_TEST_CASE(TestFinally)
+RED_AUTO_TEST_CASE(TestFinally)
 {
     int i = 0;
 
@@ -34,32 +32,29 @@ BOOST_AUTO_TEST_CASE(TestFinally)
         [&]{ ++i; },
         [&]{ ++i; }
     );
-    BOOST_CHECK_EQUAL(i, 2);
+    RED_CHECK_EQUAL(i, 2);
 
-    try {
+    RED_CHECK_THROW(
         try_except(
             [&]{ throw 0; },
             [&]{ ++i; }
-        );
-    } catch (...)
-    { ++i; }
-    BOOST_CHECK_EQUAL(i, 4);
+        ),
+        int
+    );
 
-    try {
+    RED_CHECK_THROW(
         rethrow_try_except(
             [&]{ throw 0; },
             [&]{ throw ""; }
-        );
-    } catch (char const *)
-    { ++i; }
-    BOOST_CHECK_EQUAL(i, 5);
+        ),
+        char const *
+    );
 
-    try {
+    RED_CHECK_THROW(
         rethrow_try_except(
             [&]() -> int { throw 0; },
             [&]{ throw ""; }
-        );
-    } catch (char const *)
-    { ++i; }
-    BOOST_CHECK_EQUAL(i, 6);
+        ),
+        char const *
+    );
 }

@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBmpCachePersister
+#define UNIT_TEST_MODULE TestBmpCachePersister
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
+RED_AUTO_TEST_CASE(TestBmpCachePersister)
 {
     uint8_t  bpp              = 8;
     bool     use_waiting_list = false;
@@ -42,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , verbose
+                      , to_verbose_flags(verbose)
                       );
 
     int          result;
@@ -293,10 +291,10 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     CheckTransport t(outdata, sizeof(outdata)-1, verbose);
 
-    BmpCachePersister::save_all_to_disk(bmp_cache, t, verbose);
+    BmpCachePersister::save_all_to_disk(bmp_cache, t, to_verbose_flags(verbose));
 }
 
-BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
+RED_AUTO_TEST_CASE(TestBmpCachePersister1)
 {
     uint8_t  bpp              = 8;
     bool     use_waiting_list = false;
@@ -308,13 +306,13 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , verbose
+                      , to_verbose_flags(verbose)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     GeneratorTransport t(outdata, sizeof(outdata));
 
-    BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", verbose);
+    BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
 
     RDP::BitmapCachePersistentListEntry persistent_list[] = {
         { 0x99E1C40C, 0x17C187AF },
@@ -327,17 +325,17 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister1)
     uint16_t first_entry_index = 0;
     bmp_cache_persister.process_key_list(cache_id, persistent_list, number_of_entries, first_entry_index);
 
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
 
-    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[2]);
+    RED_CHECK(!bmp_cache.get_cache(cache_id)[2]);
 
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[3].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[3].sig.sig_32[1] == 0x0A888EF6));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[3].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[3].sig.sig_32[1] == 0x0A888EF6));
 
-    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[4]);
+    RED_CHECK(!bmp_cache.get_cache(cache_id)[4]);
 }
 
-BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
+RED_AUTO_TEST_CASE(TestBmpCachePersister2)
 {
     uint8_t  bpp              = 8;
     bool     use_waiting_list = false;
@@ -349,18 +347,18 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister2)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , verbose
+                      , to_verbose_flags(verbose)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     GeneratorTransport t(outdata, sizeof(outdata));
 
-    BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", verbose);
+    BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
 
     uint8_t cache_id = 2;
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
-    BOOST_CHECK((bmp_cache.get_cache(cache_id)[2].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[2].sig.sig_32[1] == 0x0A888EF6));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C) && (bmp_cache.get_cache(cache_id)[0].sig.sig_32[1] == 0x17C187AF));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[1].sig.sig_32[0] == 0x03E8896E) && (bmp_cache.get_cache(cache_id)[1].sig.sig_32[1] == 0x5C267FC8));
+    RED_CHECK((bmp_cache.get_cache(cache_id)[2].sig.sig_32[0] == 0x63D8DC64) && (bmp_cache.get_cache(cache_id)[2].sig.sig_32[1] == 0x0A888EF6));
 
-    BOOST_CHECK(!bmp_cache.get_cache(cache_id)[3]);
+    RED_CHECK(!bmp_cache.get_cache(cache_id)[3]);
 }

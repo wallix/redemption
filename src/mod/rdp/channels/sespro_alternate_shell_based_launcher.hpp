@@ -34,11 +34,12 @@ private:
 
     bool stopped = false;
 
-    uint32_t verbose;
+    const RDPVerbose verbose;
 
 public:
-    explicit SessionProbeAlternateShellBasedLauncher(uint32_t verbose)
-    : verbose(verbose) {}
+    explicit SessionProbeAlternateShellBasedLauncher(RDPVerbose verbose)
+    : verbose(verbose)
+    {}
 
     wait_obj* get_event() override { return nullptr; }
 
@@ -47,7 +48,7 @@ public:
     bool on_clipboard_monitor_ready() override { return false; }
 
     bool on_drive_access() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_access");
         }
@@ -64,7 +65,7 @@ public:
     }
 
     bool on_drive_redirection_initialize() override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
         }
@@ -80,7 +81,7 @@ public:
         (void)offset;
         (void)length;
 
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_image_read");
         }
@@ -118,7 +119,7 @@ public:
     }
 
     void stop(bool bLaunchSuccessful) override {
-        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> stop");
         }
@@ -128,22 +129,22 @@ public:
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
                         "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
                         "Is the target running under Microsoft Server products? "
-                        "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters."
+                        "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. "
                         "Please also check the temporary directory to ensure there is enough free space.");
             }
             else {
                 LOG(LOG_ERR,
-                    "SessionProbeClipboardBasedLauncher :=> "
+                    "SessionProbeAlternateShellBasedLauncher :=> "
                         "Session Probe launch has failed for unknown reason.");
             }
         }

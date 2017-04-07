@@ -368,18 +368,28 @@ public:
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
+    }
+
+    void move(int offset_x, int offset_y) {
+        this->nLeftRect += offset_x;
+        this->nTopRect  += offset_y;
+
+        if (this->nDeltaEntries) {
+            this->deltaEncodedRectangles[0].leftDelta += offset_x;
+            this->deltaEncodedRectangles[0].topDelta  += offset_y;
+        }
     }
 };  // class RDPMultiOpaqueRect
 

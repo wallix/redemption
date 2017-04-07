@@ -24,8 +24,8 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 #include "RDPSerializer.hpp"
-#include "gdi/input_pointer_api.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"
 #include "mcs.hpp"
@@ -92,6 +92,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data
+                       // TODO enum Verbose
                        , uint32_t log_condition, uint32_t verbose) {
     REDASSERT(!compression_support || mppc_enc);
 
@@ -146,7 +147,8 @@ enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_SYNCHRONIZE,
     SERVER_UPDATE_POINTER_COLOR,
     SERVER_UPDATE_POINTER_CACHED,
-    SERVER_UPDATE_POINTER_POSITION
+    SERVER_UPDATE_POINTER_POSITION,
+    SERVER_UPDATE_POINTER_NEW
 };
 
 inline
@@ -155,6 +157,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
                        , uint16_t data_extra
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data_common
+                       // TODO enum Verbose
                        , uint32_t verbose) {
     if (verbose & 4) {
         LOG( LOG_INFO
@@ -203,6 +206,11 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
             case SERVER_UPDATE_POINTER_POSITION:
                 updateCode = FastPath::UpdateType::PTR_POSITION;
+                break;
+
+            case SERVER_UPDATE_POINTER_NEW:
+LOG(LOG_INFO, "Send Fast-Path New Pointer Update");
+                updateCode = FastPath::UpdateType::POINTER;
                 break;
 
             default:
@@ -297,17 +305,24 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             case SERVER_UPDATE_POINTER_COLOR:
             case SERVER_UPDATE_POINTER_CACHED:
             case SERVER_UPDATE_POINTER_POSITION:
+            case SERVER_UPDATE_POINTER_NEW:
                 {
                     pduType2 = PDUTYPE2_POINTER;
 
                     static constexpr uint16_t update_type_table[] {
                         RDP_POINTER_COLOR,
                         RDP_POINTER_CACHED,
-                        RDP_POINTER_MOVE
+                        RDP_POINTER_MOVE,
+                        RDP_POINTER_NEW
                     };
                     static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED, "");
                     static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION, "");
+                    static_assert(SERVER_UPDATE_POINTER_POSITION + 1 == SERVER_UPDATE_POINTER_NEW, "");
                     uint16_t const updateType = update_type_table[type - SERVER_UPDATE_POINTER_COLOR];
+
+if (updateType == RDP_POINTER_NEW) {
+    LOG(LOG_INFO, "Send Slow-Path New Pointer Update");
+}
 
                     StaticOutStream<64> data;
 
@@ -410,7 +425,7 @@ namespace detail
     };
 }
 
-class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer, public gdi::MouseInputApi
+class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer
 {
     uint16_t     & userid;
     int          & shareid;
@@ -424,6 +439,8 @@ class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSer
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
+    bool send_new_pointer;
+
     Transport & trans;
 
 public:
@@ -432,7 +449,6 @@ public:
                      , int & shareid
                      , int & encryptionLevel
                      , CryptContext & encrypt
-                     , const Inifile & ini
                      , const uint8_t bpp
                      , BmpCache & bmp_cache
                      , GlyphCache & gly_cache
@@ -444,12 +460,13 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
-                     , uint32_t verbose
+                     , bool send_new_pointer
+                     , Verbose verbose
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, verbose)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
@@ -458,15 +475,16 @@ public:
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
         , compression(compression)
+        , send_new_pointer(send_new_pointer)
         , trans(trans) {
         this->init_orders();
         this->init_bitmaps();
     }
 
-    ~GraphicsUpdatePDU() override {}
+    ~GraphicsUpdatePDU() = default;
 
     void init_orders() {
-        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+        if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -475,7 +493,7 @@ public:
     }
 
     void init_bitmaps() {
-        if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+        if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
                , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
                , this->userid
@@ -496,7 +514,7 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+            if (bool(this->verbose & Verbose::internal_buffer)) {
                 LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%zu"
                    , this->order_count);
             }
@@ -504,7 +522,7 @@ protected:
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_ORDERS
-                                , this->order_count, this->buffer_stream_orders, this->verbose);
+                                , this->order_count, this->buffer_stream_orders, underlying_cast(this->verbose));
 
             this->order_count = 0;
             this->buffer_stream_orders.rewind();
@@ -514,7 +532,7 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->ini.get<cfg::debug::primary_orders>() > 3) {
+            if (bool(this->verbose & Verbose::internal_buffer)) {
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
                    , this->bitmap_count, this->offset_bitmap_count);
@@ -524,7 +542,7 @@ protected:
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
                                 , this->userid, SERVER_UPDATE_GRAPHICS_BITMAP, 0
-                                , this->buffer_stream_bitmaps, this->verbose);
+                                , this->buffer_stream_bitmaps, underlying_cast(this->verbose));
 
             this->bitmap_count = 0;
             this->buffer_stream_bitmaps.rewind();
@@ -707,21 +725,185 @@ protected:
 //      The contents of this byte should be ignored.
     }
 
+    void GenerateNewPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
+    {
+//    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
+//      contained in the colorPtrAttr field.
+        stream.out_uint16_le(cursor.only_black_white ? 1 : 32);
+
+        stream.out_uint16_le(cache_idx);
+
+//    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
+//      x-coordinates and y-coordinates of the pointer hotspot.
+//            2.2.9.1.1.4.1  Point (TS_POINT16)
+//            ---------------------------------
+//            The TS_POINT16 structure specifies a point relative to the
+//            top-left corner of the server's desktop.
+
+//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(cursor.x);
+
+//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(cursor.y);
+
+//    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
+//      pixels (the maximum allowed pointer width is 32 pixels).
+
+        stream.out_uint16_le(cursor.width);
+
+//    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
+//      in pixels (the maximum allowed pointer height is 32 pixels).
+
+        stream.out_uint16_le(cursor.height);
+
+
+        const unsigned int remainder = (cursor.width % 8);
+        const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        const unsigned int xor_padded_line_length_in_byte = (cursor.only_black_white ? and_padded_line_length_in_byte : cursor.width * 4);
+
+
+//    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the andMaskData field.
+
+        stream.out_uint16_le(and_padded_line_length_in_byte * cursor.height);
+
+//    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the xorMaskData field.
+
+        stream.out_uint16_le(xor_padded_line_length_in_byte * cursor.height);
+
+//    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
+//      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
+//      is being sent, then each scan-line will consume 10 bytes (3 pixels per
+//      scan-line multiplied by 3 bpp, rounded up to the next even number of
+//      bytes).
+
+        const unsigned int source_xor_line_length_in_byte = cursor.width * 3;
+        const unsigned int source_xor_padded_line_length_in_byte =
+            ((source_xor_line_length_in_byte % 2) ?
+             source_xor_line_length_in_byte + 1 :
+             source_xor_line_length_in_byte);
+
+        if (cursor.only_black_white) {
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
+
+                      uint8_t  xor_bit_generation_mask = 7;
+
+                      uint8_t xor_byte = 0;
+
+                for (unsigned int w = 0; w < cursor.width; ++w) {
+                    if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
+                        if (xor_bit_generation_mask) {
+                            xor_byte |= (1 << xor_bit_generation_mask);
+                        }
+                        else {
+                            xor_byte |= 1;
+                        }
+                    }
+
+                    if (xor_bit_generation_mask) {
+                        xor_bit_generation_mask--;
+                    }
+                    else {
+                        xor_bit_generation_mask = 7;
+                        *pdest = xor_byte;
+                        xor_byte = 0;
+                        pdest++;
+                    }
+                    psource += 3;
+                }
+                if (xor_bit_generation_mask != 7) {
+                    *pdest = xor_byte;
+                    xor_byte = 0;
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+        }
+        else {
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + (cursor.height - h - 1) * xor_padded_line_length_in_byte;
+
+                for (unsigned int w = 0; w < cursor.width; ++w) {
+                    * pdest      = * psource;
+                    *(pdest + 1) = *(psource + 1);
+                    *(pdest + 2) = *(psource + 2);
+                    *(pdest + 3) = 0;
+
+                    pdest   += 4;
+                    psource += 3;
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+        }
+
+//    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
+//      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
+//      is being sent, then each scan-line will consume 2 bytes (7 pixels per
+//      scan-line multiplied by 1 bpp, rounded up to the next even number of
+//      bytes).
+
+        if (cursor.only_black_white) {
+            uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
+
+            for (unsigned int h = 0; h < cursor.height; ++h) {
+                const uint8_t* psource = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
+                      uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
+
+                memcpy(pdest, psource, and_padded_line_length_in_byte);
+            }
+
+            stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * cursor.height); /* mask */
+        }
+        else {
+            stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
+        }
+
+//    colorPointerData (1 byte): Single byte representing unused padding.
+//      The contents of this byte should be ignored.
+    }
+
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if (this->verbose & 4) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
                 cache_idx, cursor.x, cursor.y);
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-        GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+
+        if (this->send_new_pointer) {
+            GenerateNewPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+        }
+        else {
+            GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+        }
 
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
-                            , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
-                            , 0, stream, this->verbose);
+                            , this->encrypt, this->userid
+                            , (this->send_new_pointer ? SERVER_UPDATE_POINTER_NEW : SERVER_UPDATE_POINTER_COLOR)
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & 4) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
         }
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
@@ -758,7 +940,7 @@ protected:
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
     void set_pointer(int cache_idx) override {
-        if (this->verbose & 4) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
         }
 
@@ -768,9 +950,9 @@ protected:
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
-                            , 0, stream, this->verbose);
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & 4) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
@@ -778,8 +960,8 @@ protected:
 public:
     using RDPSerializer::set_pointer;
 
-    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
-        if (this->verbose & 4) {
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
 
@@ -790,9 +972,9 @@ public:
         ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
-                            , 0, stream, this->verbose);
+                            , 0, stream, underlying_cast(this->verbose));
 
-        if (this->verbose & 4) {
+        if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position done");
         }
     }

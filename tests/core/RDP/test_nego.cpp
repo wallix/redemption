@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNego
+#define UNIT_TEST_MODULE TestNego
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include "core/RDP/nego.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestNego)
+RED_AUTO_TEST_CASE(TestNego)
 {
     LOG(LOG_INFO, "============= Test Nego Client Side ===========");
     const char client[] =
@@ -111,23 +109,23 @@ BOOST_AUTO_TEST_CASE(TestNego)
     NullServerNotifier null_server_notifier;
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj);
     nego.set_identity(user, domain, pass, host);
+
+    nego.send_negotiation_request();
+    nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+
     const bool server_cert_store = true;
-    nego.server_event(
-            server_cert_store,
-            ServerCertCheck::always_succeed,
-            null_server_notifier,
-            "/tmp/certif"
+
+    nego.recv_connection_confirm(
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        null_server_notifier,
+        "/tmp/certif"
         );
-    nego.server_event(
-            server_cert_store,
-            ServerCertCheck::always_succeed,
-            null_server_notifier,
-            "/tmp/certif"
-        );
+        
+    RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
 
-
-// BOOST_AUTO_TEST_CASE(TestNego2)
+// RED_AUTO_TEST_CASE(TestNego2)
 // {
 //     LOG(LOG_INFO, "============= Test Nego Server Side ===========");
 //     const char client[65000] =
@@ -146,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 // }
 
 
-BOOST_AUTO_TEST_CASE(TestSetIdentity) {
+RED_AUTO_TEST_CASE(TestSetIdentity) {
     LogTransport null_transport;
 
     LCGRandom rand(0);
@@ -157,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestSetIdentity) {
 
     nego.set_identity("Administrateur", "QA", pass, "Server");
 
-    BOOST_CHECK_EQUAL(0, ::memcmp(pass, nego.password, sizeof(pass)));
+    RED_CHECK_EQUAL(0, ::memcmp(pass, nego.password, sizeof(pass)));
 
     hexdump(pass, sizeof(pass));
 }

@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define UNIT_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -33,9 +31,9 @@
 #include "utils/virtual_channel_data_sender.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestVirtualChannelDataSender)
+RED_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
     
 }

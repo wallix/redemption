@@ -27,14 +27,11 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "gdi/graphic_cmd_color_converter.hpp"
+#include "gdi/graphic_api.hpp"
 
 //#include <openssl/ssl.h>
 
-class FakeFront;
-using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
-
-class FakeFront : public FakeFrontBase
+class FakeFront : public FrontAPI
 {
 public:
     uint32_t                    verbose;
@@ -51,32 +48,139 @@ public:
 
     RDPDrawable gd;
 
-private:
-    struct ColorDecoder {
-        uint8_t    mod_bpp;
-        uint32_t operator()(uint32_t c) const {
-            return color_decode_opaquerect(c, this->mod_bpp, BGRPalette::classic_332());
+public:
+    using FrontAPI::FrontAPI;
+
+    bool retrieve_client_capability_set(Capability & caps) override {
+        if (caps.capabilityType == CAPSTYPE_BITMAPCACHE_REV2) {
+            return false;
         }
-    };
 
-    friend gdi::GraphicCoreAccess;
-
-    ColorDecoder get_color_converter() const {
-        return {this->mod_bpp};
+        return FrontAPI::retrieve_client_capability_set(caps);
     }
 
-    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
+
+    void draw(RDPDestBlt          const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}
+
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}
+
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPScrBlt           const & cmd, Rect clip) override {
+        this->draw_impl(cmd, clip);
+    }
+
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {
+        this->draw_impl(cmd, clip);
+    }
+
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->draw_impl(cmd, clip, color_ctx);
+    }
+
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
+        this->draw_impl(cmd, bmp);
+    }
+
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
+        this->draw_impl(cmd, clip, bmp);
+    }
+
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        this->draw_impl(cmd, clip, color_ctx, bmp);
+    }
+
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
+        this->draw_impl(cmd, clip, color_ctx, gly_cache);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
+        this->draw_impl(cmd);
+    }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(RDPColCache   const & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+    void draw(RDPBrushCache const & cmd) override {
+        this->draw_impl(cmd);
+    }
+
+private:
+    void draw_impl(const RDPBitmapData & cmd, const Bitmap & bmp) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            bitmap_data.log(LOG_INFO, "FakeFront");
+            cmd.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->gd.draw(bitmap_data, bmp);
+        this->gd.draw(cmd, bmp);
     }
 
     template<class Cmd, class... Ts>
-    void draw_impl(Cmd const & cmd, Rect const & clip, Ts const & ... args) {
+    void draw_impl(Cmd const & cmd, Rect clip, Ts const & ... args) {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
@@ -98,9 +202,7 @@ private:
     }
 
 public:
-    bool can_be_start_capture(auth_api*) override { return false; }
-    bool can_be_pause_capture() override { return false; }
-    bool can_be_resume_capture() override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     void set_palette(const BGRPalette &) override {
@@ -156,7 +258,7 @@ public:
         //}
     }
 
-    int server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, int bpp) override {
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         if (this->verbose > 10) {
@@ -164,7 +266,7 @@ public:
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
         }
-        return 1;
+        return ResizeResult::done;
     }
 
     void dump_png(const char * prefix) {
@@ -185,7 +287,7 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose)
-    : FakeFrontBase(false, false)
+    : FrontAPI(false, false)
     , verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
@@ -194,11 +296,11 @@ public:
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
-    , gd(info.width, info.height, 24) {
+    , gd(info.width, info.height)
+    {
         if (this->mod_bpp == 8) {
             this->mod_palette = BGRPalette::classic_332();
         }
-        this->set_depths(gdi::GraphicDepth::from_bpp(this->mod_bpp));
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto

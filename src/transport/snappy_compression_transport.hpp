@@ -48,61 +48,61 @@ public:
     , uncompressed_data(nullptr)
     , uncompressed_data_length(0)
     , uncompressed_data_buffer() {
-        this->verbose = verbose;
+        (void)verbose;
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) override {
-        uint8_t * temp_data        = reinterpret_cast<uint8_t *>(*pbuffer);
-        size_t    temp_data_length = len;
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+        size_t    remaining_size = len;
 
-        while (temp_data_length) {
+        while (remaining_size) {
             if (this->uncompressed_data_length) {
                 REDASSERT(this->uncompressed_data);
 
-                const size_t data_length = std::min<size_t>(temp_data_length, this->uncompressed_data_length);
+                const size_t data_length = std::min<size_t>(remaining_size, this->uncompressed_data_length);
 
-                ::memcpy(temp_data, this->uncompressed_data, data_length);
+                ::memcpy(&buffer[len-remaining_size], this->uncompressed_data, data_length);
 
                 this->uncompressed_data        += data_length;
                 this->uncompressed_data_length -= data_length;
 
-                temp_data        += data_length;
-                temp_data_length -= data_length;
+                remaining_size -= data_length;
             }
             else {
                 uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
-                auto end = data_buf;
-                this->source_transport.recv(&end, sizeof(uint16_t));  // compressed_data_length(2);
-
-                const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
-                if (this->verbose) {
-                    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
+                // read compressed_data_length(2);
+                if (!this->source_transport.atomic_read(data_buf, sizeof(uint16_t))){
+                    if (remaining_size == len) {
+                        return false;
+                    }
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
 
-                end = data_buf;
-                this->source_transport.recv(&end, compressed_data_length);
+                const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
+                //if (this->verbose) {
+                //    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
+                //}
 
+                if (!this->source_transport.atomic_read(data_buf, compressed_data_length)){
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
 
                 snappy_status status = ::snappy_uncompress(
-                      reinterpret_cast<char *>(data_buf) , end-data_buf
+                      reinterpret_cast<char *>(data_buf) , compressed_data_length
                     , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
-                if (this->verbose & 0x2 || (status != SNAPPY_OK)) {
+                if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
                     LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
                        , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %d", status);
                 }
-                if (this->verbose) {
-                    LOG( LOG_INFO, "SnappyCompressionInTransport::do_recv: uncompressed_data_length=%zu"
-                       , this->uncompressed_data_length);
-                }
             }
         }
-
-        (*pbuffer) = (*pbuffer) + len;
+        return true;
     }
+
+
 };  // class SnappyCompressionInTransport
 
 
@@ -124,16 +124,16 @@ public:
     , target_transport(tt)
     , uncompressed_data()
     , uncompressed_data_length(0) {
-        this->verbose = verbose;
+        (void)verbose;
         REDASSERT(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
         REDASSERT(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
 
     ~SnappyCompressionOutTransport() override {
         if (this->uncompressed_data_length) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "SnappyCompressionOutTransport::~SnappyCompressionOutTransport: Compress");
-            }
+            //if (this->verbose & 0x4) {
+            //    LOG(LOG_INFO, "SnappyCompressionOutTransport::~SnappyCompressionOutTransport: Compress");
+            //}
             this->compress(this->uncompressed_data, this->uncompressed_data_length);
 
             this->uncompressed_data_length = 0;
@@ -142,9 +142,9 @@ public:
 
 private:
     void compress(const uint8_t * const data, size_t data_length) const {
-        if (this->verbose) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: data_length=%zu", data_length);
-        }
+        //if (this->verbose) {
+        //    LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: data_length=%zu", data_length);
+        //}
 
         StaticOutStream<SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH> data_stream;
         size_t  compressed_data_length = data_stream.get_capacity();
@@ -155,13 +155,13 @@ private:
 
         snappy_status status = ::snappy_compress( reinterpret_cast<const char *>(data), data_length
                                                 , reinterpret_cast<char *>(data_stream.get_current()), &compressed_data_length);
-        if (this->verbose & 0x2 || (status != SNAPPY_OK)) {
+        if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
             LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
                , "SnappyCompressionOutTransport::compress: snappy_compress return %d", status);
         }
-        if (this->verbose) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: compressed_data_length=%zu", compressed_data_length);
-        }
+        //if (this->verbose) {
+        //    LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: compressed_data_length=%zu", compressed_data_length);
+        //}
 
         data_stream.out_skip_bytes(compressed_data_length);
 
@@ -170,12 +170,12 @@ private:
         this->target_transport.send(data_stream.get_data(), data_stream.get_offset());
     }
 
-    void do_send(const char * const buffer, size_t len) override {
-        if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: len=%zu", len);
-        }
+    void do_send(const uint8_t * const buffer, size_t len) override {
+        //if (this->verbose & 0x4) {
+        //    LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: len=%zu", len);
+        //}
 
-        const uint8_t * temp_data        = reinterpret_cast<const uint8_t *>(buffer);
+        const uint8_t * temp_data        = buffer;
         size_t          temp_data_length = len;
 
         while (temp_data_length) {
@@ -214,17 +214,17 @@ private:
             }
         }
 
-        if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: uncompressed_data_length=%zu", this->uncompressed_data_length);
-        }
+        //if (this->verbose & 0x4) {
+        //    LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: uncompressed_data_length=%zu", this->uncompressed_data_length);
+        //}
     }
 
 public:
     bool next() override {
         if (this->uncompressed_data_length) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "SnappyCompressionOutTransport::next: Compress");
-            }
+            //if (this->verbose & 0x4) {
+            //    LOG(LOG_INFO, "SnappyCompressionOutTransport::next: Compress");
+            //}
             this->compress(this->uncompressed_data, this->uncompressed_data_length);
 
             this->uncompressed_data_length = 0;

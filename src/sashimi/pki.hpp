@@ -84,6 +84,7 @@ struct ssh_key_struct {
         return "ssh-rsa1";
         case SSH_KEYTYPE_ECDSA:
         return this->ecdsa_type_c();
+        case SSH_KEYTYPE_UNKNOWN:
         default:
             break;
         }
@@ -123,16 +124,11 @@ struct ssh_signature_struct {
 
     const char *type_c() const {
         switch (this->sig_type) {
-        case SSH_KEYTYPE_DSS:
-        return "ssh-dss";
-        case SSH_KEYTYPE_RSA:
-        return "ssh-rsa";
-        case SSH_KEYTYPE_RSA1:
-        return "ssh-rsa1";
-        case SSH_KEYTYPE_ECDSA:
-        return this->ecdsa_type_c();
-        default:
-            break;
+            case SSH_KEYTYPE_DSS: return "ssh-dss";
+            case SSH_KEYTYPE_RSA: return "ssh-rsa";
+            case SSH_KEYTYPE_RSA1: return "ssh-rsa1";
+            case SSH_KEYTYPE_ECDSA: return this->ecdsa_type_c();
+            case SSH_KEYTYPE_UNKNOWN: default: break;
         }
         return "ssh-keytype-unknown";
     }

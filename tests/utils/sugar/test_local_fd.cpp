@@ -18,26 +18,24 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
-#define BOOST_TEST_MODULE TestLocalFd
+#define UNIT_TEST_MODULE TestLocalFd
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/local_fd.hpp"
 
 #include <string>
 
-BOOST_AUTO_TEST_CASE(TestLocalFd)
+RED_AUTO_TEST_CASE(TestLocalFd)
 {
     std::string const unknown_file = "/tmp/local_fd_unknown_file";
-    BOOST_CHECK(!local_fd(unknown_file, O_RDONLY).is_open());
-    BOOST_CHECK(!bool(local_fd(unknown_file, O_RDONLY)));
-    BOOST_CHECK(!local_fd(unknown_file, O_RDONLY));
+    RED_CHECK(!local_fd(unknown_file, O_RDONLY).is_open());
+    RED_CHECK(!bool(local_fd(unknown_file, O_RDONLY)));
+    RED_CHECK(!local_fd(unknown_file, O_RDONLY));
 
     local_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
-    BOOST_CHECK(fd.is_open());
-    BOOST_CHECK_GE(fd.get(), 0);
+    RED_CHECK(fd.is_open());
+    RED_CHECK_GE(fd.fd(), 0);
 
     unlink(unknown_file.c_str());
 }

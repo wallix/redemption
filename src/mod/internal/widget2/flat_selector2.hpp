@@ -42,8 +42,10 @@
 class WidgetSelectorFlat2 : public WidgetParent
 {
 public:
-    int bg_color;
-    const bool less_than_800;
+    CompositeArray composite_array;
+
+    bool less_than_800;
+
     WidgetLabel device_label;
     WidgetLabel target_group_label;
     WidgetLabel target_label;
@@ -68,7 +70,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-    CompositeArray composite_array;
+    int bg_color;
 
     Font const & font;
 
@@ -91,7 +93,7 @@ public:
     enum {
         IDX_TARGETGROUP,
         IDX_TARGET,
-IDX_PROTOCOL,
+        IDX_PROTOCOL,
         IDX_CLOSETIME
     };
 
@@ -102,30 +104,34 @@ IDX_PROTOCOL,
         FILTER_SEPARATOR = 5,
         NAV_SEPARATOR = 15
     };
+
+    WidgetFlatButton * extra_button;
+
 public:
     WidgetSelectorFlat2(gdi::GraphicApi & drawable,
-                        const char * device_name, int16_t left, int16_t top, uint16_t width,
-                        uint16_t height, Widget2 & parent, NotifyApi* notifier,
+                        const char * device_name,
+                        // TODO use Rect
+                        int16_t left, int16_t top, uint16_t width, uint16_t height,
+                        Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol,
                         WidgetFlatButton * extra_button,
                         Font const & font, Theme const & theme, Translation::language_t lang)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
-        , bg_color(theme.global.bgcolor)
-        , less_than_800(this->rect.cx < 800)
-        , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
-                       true, -10, theme.global.fgcolor, theme.global.bgcolor, font)
-        , target_group_label(drawable, 0, 0, *this, nullptr, TR("target_group", lang), true,
-                              -10, theme.selector_label.fgcolor,
+        : WidgetParent(drawable, parent, notifier)
+        , less_than_800(width < 800)
+        , device_label(drawable, *this, nullptr, device_name,
+                       -10, theme.global.fgcolor, theme.global.bgcolor, font)
+        , target_group_label(drawable, *this, nullptr, TR(trkeys::authorization, lang),
+                             -10, theme.selector_label.fgcolor,
                              theme.selector_label.bgcolor, font, 5)
-        , target_label(drawable, 0, 0, *this, nullptr, TR("target", lang), true, -10,
+        , target_label(drawable, *this, nullptr, TR(trkeys::target, lang), -10,
                        theme.selector_label.fgcolor,
                        theme.selector_label.bgcolor, font, 5)
-        , protocol_label(drawable, 0, 0, *this, nullptr, TR("protocol", lang), true, -10,
+        , protocol_label(drawable, *this, nullptr, TR(trkeys::protocol, lang), -10,
                          theme.selector_label.fgcolor,
                          theme.selector_label.bgcolor, font, 5)
-        , selector_lines(drawable, Rect(0, 0, width - (this->less_than_800 ? 0 : 30), 1),
+        , selector_lines(drawable,
                          *this, this, 0, 3,
                          theme.selector_line1.bgcolor,
                          theme.selector_line1.fgcolor,
@@ -136,51 +142,53 @@ public:
                          theme.selector_selected.bgcolor,
                          theme.selector_selected.fgcolor,
                          font, 2, -11)
-        , filter_target_group(drawable, 0, 0, 120, *this, this,
+        , filter_target_group(drawable, *this, this,
                               filter_target_group?filter_target_group:nullptr, -12,
                               theme.edit.fgcolor, theme.edit.bgcolor,
                               theme.edit.focus_color, font, -1, 1, 1)
-        , filter_target(drawable, 0, 0, 340, *this, this, filter_target?filter_target:nullptr,
+        , filter_target(drawable, *this, this, filter_target?filter_target:nullptr,
                         -12, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1, 1, 1)
-        , filter_protocol(drawable, 0, 0, 110, *this, this,
+        , filter_protocol(drawable, *this, this,
                           filter_protocol?filter_protocol:nullptr, -12,
                           theme.edit.fgcolor, theme.edit.bgcolor,
                           theme.edit.focus_color, font, -1, 1, 1)
           //BEGIN WidgetPager
-        , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
+        , first_page(drawable, *this, notifier, "◀◂", -15,
                      theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, font, 6, 2, true)
-        , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
+                     theme.global.focus_color, 2, font, 6, 2, true)
+        , prev_page(drawable, *this, notifier, "◀", -15,
                     theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, font, 6, 2, true)
-        , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
+                    theme.global.focus_color, 2, font, 6, 2, true)
+        , current_page(drawable, *this, notifier,
                        current_page ? current_page : "XXXX", -15,
                        theme.edit.fgcolor, theme.edit.bgcolor,
                        theme.edit.focus_color, font, -1, 1, 1)
-        , number_page(drawable, 0, 0, *this, nullptr,
+        , number_page(drawable, *this, nullptr,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", true, -100, theme.global.fgcolor,
+                      : "/XXX", -100, theme.global.fgcolor,
                       theme.global.bgcolor, font)
-        , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
+        , next_page(drawable, *this, notifier, "▶", -15,
                     theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, font, 6, 2, true)
-        , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
+                    theme.global.focus_color, 2, font, 6, 2, true)
+        , last_page(drawable, *this, notifier, "▸▶", -15,
                     theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, font, 6, 2, true)
+                    theme.global.focus_color, 2, font, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, 0, 0, *this, this, TR("logout", lang), true, -16,
+        , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
                  theme.global.fgcolor, theme.global.bgcolor,
-                 theme.global.focus_color, font, 6, 2)
-        , apply(drawable, 0, 0, *this, this, TR("filter", lang), true, -12,
+                 theme.global.focus_color, 2, font, 6, 2)
+        , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
                 theme.global.fgcolor, theme.global.bgcolor,
-                theme.global.focus_color, font, 6, 2)
-        , connect(drawable, 0, 0, *this, this, TR("connect", lang), true, -18,
+                theme.global.focus_color, 2, font, 6, 2)
+        , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
                   theme.global.fgcolor, theme.global.bgcolor,
-                  theme.global.focus_color, font, 6, 2)
+                  theme.global.focus_color, 2, font, 6, 2)
+        , bg_color(theme.global.bgcolor)
         , font(font)
-        ,left(left)
-        ,top(top)
+        , left(left)
+        , top(top)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
@@ -205,21 +213,94 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
         }
 
-        this->rearrange();
+        this->move_size_widget(left, top, width, height);
     }
 
     ~WidgetSelectorFlat2() override {
         this->clear();
     }
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->set_xy(left, top);
+        this->set_wh(width, height);
+
+        this->left = left;
+        this->top  = top;
+
+        Dimension dim = this->device_label.get_optimal_dim();
+        this->device_label.set_wh(dim);
+        this->device_label.set_xy(left + TEXT_MARGIN, top + VERTICAL_MARGIN);
+
+
+        dim = this->target_group_label.get_optimal_dim();
+        this->target_group_label.set_wh(dim);
+
+        dim = this->target_label.get_optimal_dim();
+        this->target_label.set_wh(dim);
+
+        dim = this->protocol_label.get_optimal_dim();
+        this->protocol_label.set_wh(dim);
+
+
+        dim = this->filter_target_group.get_optimal_dim();
+        this->filter_target_group.set_wh(dim);
+
+        dim = this->filter_target.get_optimal_dim();
+        this->filter_target.set_wh(dim);
+
+        dim = this->filter_protocol.get_optimal_dim();
+        this->filter_protocol.set_wh(dim);
+
+
+        dim = this->first_page.get_optimal_dim();
+        this->first_page.set_wh(dim);
+
+        dim = this->prev_page.get_optimal_dim();
+        this->prev_page.set_wh(dim);
+
+
+        dim = this->current_page.get_optimal_dim();
+        this->current_page.set_wh(this->first_page.cy() + 2, dim.h);
+
+        dim = this->number_page.get_optimal_dim();
+        this->number_page.set_wh(dim);
+
+        dim = this->next_page.get_optimal_dim();
+        this->next_page.set_wh(dim);
+
+        dim = this->last_page.get_optimal_dim();
+        this->last_page.set_wh(dim);
+
+
+        dim = this->logout.get_optimal_dim();
+        this->logout.set_wh(dim);
+
+        dim = this->apply.get_optimal_dim();
+        this->apply.set_wh(dim);
+
+        dim = this->connect.get_optimal_dim();
+        this->connect.set_wh(dim);
+
+
+        this->less_than_800 = (this->cx() < 800);
+
+        this->selector_lines.set_wh(width - (this->less_than_800 ? 0 : 30),
+            this->selector_lines.cy());
+
+        if (this->extra_button) {
+            this->extra_button->set_xy(left + 60, top + height - 60);
+        }
+
+        this->rearrange();
+    }
+
     int get_bg_color() const override {
         return this->bg_color;
     }
 
+private:
     void rearrange() {
         gdi::TextMetrics tm1(this->font, this->target_group_label.get_text());
         int target_group_min_width = tm1.width + 5;
@@ -243,92 +324,99 @@ public:
 
         {
             // filter button position
-            this->apply.set_button_y(this->top + VERTICAL_MARGIN);
-            this->apply.set_button_x(this->left + this->cx() - (this->apply.cx() + TEXT_MARGIN));
+            this->apply.set_xy(this->left + this->cx() - (this->apply.cx() + TEXT_MARGIN),
+                               this->top + VERTICAL_MARGIN);
         }
 
         {
             // labels and filters position
             uint16_t offset = this->less_than_800 ? 0 : HORIZONTAL_MARGIN;
-            uint16_t labels_y = this->device_label.ly() + HORIZONTAL_MARGIN;
+            uint16_t labels_y = this->device_label.bottom() + HORIZONTAL_MARGIN;
             uint16_t filters_y = labels_y + this->target_group_label.cy()
                 + FILTER_SEPARATOR;
             // target group
-            this->target_group_label.rect.cx = columns_width[IDX_TARGETGROUP] +
-                this->selector_lines.border * 2;
-            this->target_group_label.rect.x = this->left + offset;
-            this->target_group_label.rect.y = labels_y;
-            this->filter_target_group.set_edit_x(this->target_group_label.dx());
-            this->filter_target_group.set_edit_cx(this->target_group_label.cx() -
-                                                  FILTER_SEPARATOR);
-            this->filter_target_group.set_edit_y(filters_y);
-            offset += this->target_group_label.rect.cx;
+            this->target_group_label.set_wh(
+                columns_width[IDX_TARGETGROUP] + this->selector_lines.border * 2,
+                this->target_group_label.cy());
+            this->target_group_label.set_xy(this->left + offset, labels_y);
+            this->filter_target_group.set_xy(this->target_group_label.x(), filters_y);
+            this->filter_target_group.set_wh(
+                this->target_group_label.cx() - FILTER_SEPARATOR,
+                this->filter_target_group.cy());
+            offset += this->target_group_label.cx();
 
             // target
-            this->target_label.rect.cx = columns_width[IDX_TARGET] +
-                this->selector_lines.border * 2;
-            this->target_label.rect.x = this->left + offset;
-            this->target_label.rect.y = labels_y;
-            this->filter_target.set_edit_x(this->target_label.dx());
-            this->filter_target.set_edit_cx(this->target_label.cx() - FILTER_SEPARATOR);
-            this->filter_target.set_edit_y(filters_y);
-            offset += this->target_label.rect.cx;
+            this->target_label.set_wh(
+                columns_width[IDX_TARGET] + this->selector_lines.border * 2,
+                this->target_label.cy());
+            this->target_label.set_xy(this->left + offset, labels_y);
+            this->filter_target.set_xy(this->target_label.x(), filters_y);
+            this->filter_target.set_wh(
+                this->target_label.cx() - FILTER_SEPARATOR,
+                this->filter_target.cy());
+            offset += this->target_label.cx();
 
             // protocol
-            this->protocol_label.rect.cx = columns_width[IDX_PROTOCOL] +
-                this->selector_lines.border * 2;
-            this->protocol_label.rect.x = this->left + offset;
-            this->protocol_label.rect.y = labels_y;
-            this->filter_protocol.set_edit_x(this->protocol_label.dx());
-            this->filter_protocol.set_edit_cx(this->protocol_label.cx());
-            this->filter_protocol.set_edit_y(filters_y);
-            offset += this->protocol_label.rect.cx;
+            this->protocol_label.set_wh(
+                columns_width[IDX_PROTOCOL] + this->selector_lines.border * 2,
+                this->protocol_label.cy());
+            this->protocol_label.set_xy(this->left + offset, labels_y);
+            this->filter_protocol.set_xy(this->protocol_label.x(), filters_y);
+            this->filter_protocol.set_wh(
+                this->protocol_label.cx(),
+                this->filter_protocol.cy());
+            offset += this->protocol_label.cx();
 
             (void)offset;
         }
         {
             // selector list position
-            this->selector_lines.rect.x = this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN);
-            this->selector_lines.rect.y = this->filter_target_group.ly() + FILTER_SEPARATOR;
+            this->selector_lines.set_xy(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN),
+                                        this->filter_target_group.bottom() + FILTER_SEPARATOR);
         }
         {
             // Navigation buttons
             uint16_t nav_bottom_y = this->cy() - (this->connect.cy() + VERTICAL_MARGIN);
-            this->connect.set_button_y(this->top + nav_bottom_y);
-            this->logout.set_button_y(this->top + nav_bottom_y);
+            this->connect.set_xy(this->connect.x(), this->top + nav_bottom_y);
+            this->logout.set_xy(this->logout.x(), this->top + nav_bottom_y);
 
-            uint16_t nav_top_y = this->connect.dy() - (this->last_page.cy() + VERTICAL_MARGIN);
-            this->last_page.set_button_y(nav_top_y);
-            this->next_page.set_button_y(nav_top_y);
-            this->number_page.rect.y = nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2;
-            this->current_page.set_edit_y(nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
-            this->prev_page.set_button_y(nav_top_y);
-            this->first_page.set_button_y(nav_top_y);
+            uint16_t nav_top_y = this->connect.y() - (this->last_page.cy() + VERTICAL_MARGIN);
+            this->last_page.set_xy(this->last_page.x(), nav_top_y);
+            this->next_page.set_xy(this->next_page.x(), nav_top_y);
+            this->number_page.set_xy(this->number_page.x(),
+                nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2);
+            this->current_page.set_xy(this->current_page.x(),
+                nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
+            this->prev_page.set_xy(this->prev_page.x(), nav_top_y);
+            this->first_page.set_xy(this->first_page.x(), nav_top_y);
 
             uint16_t nav_offset_x = this->cx() - (this->last_page.cx() + TEXT_MARGIN);
-            this->last_page.set_button_x(this->left + nav_offset_x);
+            this->last_page.set_xy(this->left + nav_offset_x, this->last_page.y());
 
             nav_offset_x -= (this->next_page.cx() + NAV_SEPARATOR);
-            this->next_page.set_button_x(this->left + nav_offset_x);
+            this->next_page.set_xy(this->left + nav_offset_x, this->next_page.y());
 
             nav_offset_x -= (this->number_page.cx() + NAV_SEPARATOR);
-            this->number_page.rect.x = this->left + nav_offset_x;
+            this->number_page.set_xy(this->left + nav_offset_x, this->number_page.y());
 
             nav_offset_x -= this->current_page.cx();
-            this->current_page.set_edit_x(this->left + nav_offset_x);
+            this->current_page.set_xy(this->left + nav_offset_x, this->current_page.y());
 
             nav_offset_x -= (this->prev_page.cx() + NAV_SEPARATOR);
-            this->prev_page.set_button_x(this->left + nav_offset_x);
+            this->prev_page.set_xy(this->left + nav_offset_x, this->prev_page.y());
 
             nav_offset_x -= (this->first_page.cx() + NAV_SEPARATOR);
-            this->first_page.set_button_x(this->left + nav_offset_x);
+            this->first_page.set_xy(this->left + nav_offset_x, this->first_page.y());
 
-            int nav_w = this->last_page.lx() - this->first_page.dx();
-            this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
-            this->logout.set_button_x(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
+            int nav_w = this->last_page.right() - this->first_page.x();
+            this->connect.set_xy(this->last_page.right() - nav_w/4 - this->connect.cx()/2,
+                this->connect.y());
+            this->logout.set_xy(this->first_page.x() + nav_w/4 - this->logout.cx()/2,
+                this->logout.y());
         }
     }
 
+public:
     void ask_for_connection() {
         if (this->notifier) {
             this->notifier->notify(&this->connect, NOTIFY_SUBMIT);
@@ -383,6 +471,10 @@ public:
         }
     }
 
-
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y,
+                      Rect const preferred_display_rect, int iter) override {
+        WidgetParent::show_tooltip(widget, text, x, y,
+            (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect),
+            iter);
+    }
 };
-

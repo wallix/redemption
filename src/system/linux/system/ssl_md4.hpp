@@ -44,14 +44,8 @@ public:
         MD4_Update(&this->md4, data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        if (DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[DIGEST_LENGTH];
-            MD4_Final(tmp, &this->md4);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
         MD4_Final(out_data, &this->md4);
     }
 };

@@ -38,7 +38,7 @@ public:
         , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, 4, 2)
         , selected(false)
     {
-        this->label.rect.x = this->dx() + this->label.cy() + 2;
+        this->label.rect.x = this->x() + this->label.cy() + 2;
         this->rect.cx = this->label.cx() + this->label.cy() + 3;
         this->rect.cy = this->label.cy() + 2;
         this->tab_flag = IGNORE_TAB;
@@ -47,36 +47,36 @@ public:
 
     virtual ~WidgetRadioButton() {}
 
-    virtual void draw(const Rect& clip)
+    virtual void draw(const Rect clip)
     {
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx(), this->dy(),
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x(), this->y(),
                                                this->label.cy() + 1, this->cy()),
                                           this->label.bg_color),
                             clip);
         if (this->selected) {
             int sqx = this->label.cy() / 3 + 1;
-            this->drawable.draw(RDPOpaqueRect(Rect(this->dx() + sqx, this->dy() + sqx,
+            this->drawable.draw(RDPOpaqueRect(Rect(this->x() + sqx, this->y() + sqx,
                                                    sqx , sqx),
                                               this->label.fg_color),
                                 clip);
         }
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx(), this->dy(),
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x(), this->y(),
                                                this->cx(), 1),
                                           this->label.fg_color),
                             clip);
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx(), this->dy(),
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x(), this->y(),
                                                1, this->cy()),
                                           this->label.fg_color),
                             clip);
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx() + this->label.cy() + 1, this->dy(),
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x() + this->label.cy() + 1, this->y(),
                                                1, this->cy()),
                                           this->label.fg_color),
                             clip);
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx() + this->cx() - 1, this->dy(),
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x() + this->cx() - 1, this->y(),
                                                1, this->cy()),
                                           this->label.fg_color),
                             clip);
-        this->drawable.draw(RDPOpaqueRect(Rect(this->dx(), this->dy() + this->cy() - 1,
+        this->drawable.draw(RDPOpaqueRect(Rect(this->x(), this->y() + this->cy() - 1,
                                                this->cx(), 1),
                                           this->label.fg_color),
                             clip);
@@ -130,8 +130,8 @@ public:
     virtual void add_elem(const char * text) {
         if (this->size == AUTOSIZE)
             return;
-        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->lx() + 10,
-                                                          this->dy(),this->parent,
+        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->right() + 10,
+                                                          this->y(),this->parent,
                                                           this, text, true, 0,
                                                           this->fgcolor, this->bgcolor);
 
@@ -156,7 +156,7 @@ public:
         return this->selected;
     }
 
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         if (this->size > 0) {
             this->drawable.draw(RDPOpaqueRect(this->rect,
                                               this->child_list[0]->label.bg_color),
@@ -187,7 +187,7 @@ public:
             }
         }
         if (ret) {
-            if (x > (ret->dx() + ret->cy())) {
+            if (x > (ret->x() + ret->cy())) {
                 res = -1;
             }
         }

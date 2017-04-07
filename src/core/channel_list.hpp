@@ -58,6 +58,7 @@ namespace CHANNELS {
     {
         static const size_t max_size_name = 7;
 
+        // TODO ChannelName{ uint64_t internal_name; };
         char     name[max_size_name+1];
         uint32_t flags;
         int      chanid;
@@ -129,17 +130,17 @@ namespace CHANNELS {
             return channel;
         }
 
-        //const ChannelDef * get_by_id(int chanid) const {
-        //    const ChannelDef * channel = nullptr;
-        //    for (size_t index = 0; index < this->size(); index++) {
-        //        const ChannelDef & item = this->items[index];
-        //        if (item.chanid == chanid) {
-        //            channel = &item;
-        //            break;
-        //        }
-        //    }
-        //    return channel;
-        //}
+        const ChannelDef * get_by_id(int chanid) const {
+           const ChannelDef * channel = nullptr;
+           for (size_t index = 0; index < this->size(); index++) {
+               const ChannelDef & item = this->items[index];
+               if (item.chanid == chanid) {
+                   channel = &item;
+                   break;
+               }
+           }
+           return channel;
+        }
 
         int get_index_by_id(int chanid) const {
             int res = -1;
@@ -353,9 +354,9 @@ namespace CHANNELS {
     static const uint32_t PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT = 1024 * 1024 * 10;   // 10 Mb
 
     struct VirtualChannelPDU {
-        uint32_t verbose;
+        bool verbose;
 
-        explicit VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
+        explicit VirtualChannelPDU(bool verbose = 0) : verbose(verbose) {}
 
         void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
@@ -390,7 +391,7 @@ namespace CHANNELS {
                     stream.out_uint32_le(flags);
                     stream.out_copy_bytes(chunk, chunk_size);
 
-                    if (enable_verbose && (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0))) {
+                    if (enable_verbose && this->verbose) {
                         LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
                         hexdump_d(stream.get_data(), stream.get_offset());
                     }

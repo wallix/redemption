@@ -51,55 +51,6 @@ inline static char * in_place_windows_to_linux_newline_convert(char * s) {
     return s;
 }
 
-//char * in_place_linux_to_windows_newline_convert(char * s, size_t buffer_size,
-//                                                 bool cancel_if_buffer_too_small,
-//                                                 size_t & out_result_size) {
-//    REDASSERT(strlen(s) + 1 /* null character */ <= buffer_size);
-//    REDASSERT(buffer_size);
-//
-//    size_t newline_count = 0;
-//    size_t s_length      = 0;
-//    for (char * p = s; *p; p++, s_length++) {
-//        if (*p == '\n') {
-//            newline_count++;
-//        }
-//    }
-//
-//    size_t estumated_result_length = s_length + newline_count;
-//    out_result_size = estumated_result_length + 1;
-//    if (cancel_if_buffer_too_small && ((estumated_result_length + 1) > buffer_size)) {
-//        return nullptr;
-//    }
-//
-//    char * src = s + s_length - 1;  // Last character.
-//
-//    while (estumated_result_length + 1 /* null character */ > buffer_size) {
-//        estumated_result_length -= ((*src == '\n') ? 2 : 1);
-//        src--;
-//    }
-//
-//    char * dest = s + estumated_result_length;
-//
-//    *dest = '\0';
-//    dest--;
-//
-//    while ((dest != src) && (src >= s)) {
-//        if ((*src) == '\n') {
-//            *dest = '\n';
-//            dest--;
-//            *dest = '\r';
-//        }
-//        else {
-//            *dest = *src;
-//        }
-//
-//        src--;
-//        dest--;
-//    }
-//
-//    return s;
-//}
-
 inline static size_t linux_to_windows_newline_convert(char const * s,
         size_t s_length, char * d, size_t max_d_length) {
     size_t d_length = 0;

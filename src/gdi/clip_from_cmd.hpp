@@ -42,16 +42,16 @@
 #include "utils/sugar/array_view.hpp"
 
 
-inline Rect const & clip_from_cmd(RDPScrBlt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDPDestBlt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDPPatBlt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDPMemBlt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDPMem3Blt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDPOpaqueRect const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDP::RDPMultiScrBlt const & cmd) { return cmd.rect; }
-inline Rect const & clip_from_cmd(RDP::RDPMultiPatBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPScrBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPDestBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPPatBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPMemBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPMem3Blt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDPOpaqueRect const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDP::RDPMultiScrBlt const & cmd) { return cmd.rect; }
+inline Rect clip_from_cmd(RDP::RDPMultiPatBlt const & cmd) { return cmd.rect; }
 
-inline Rect const & clip_from_cmd(RDPGlyphIndex const & cmd) { return cmd.bk; }
+inline Rect clip_from_cmd(RDPGlyphIndex const & cmd) { return cmd.bk; }
 
 inline Rect clip_from_cmd(RDPEllipseSC const & cmd) { return cmd.el.get_rect(); }
 inline Rect clip_from_cmd(RDPEllipseCB const & cmd) { return cmd.el.get_rect(); }

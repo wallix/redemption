@@ -83,12 +83,20 @@ namespace configs {
     {};
 }
 
-#include "configs/variant/includes.hpp"
+// members
+//@{
+#include "core/font.hpp"
+#include "utils/theme.hpp"
+#include "utils/redirection_info.hpp"
+//@}
 
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/enums_func_ini.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
+#include "utils/fileutils.hpp" // file_exist
+
+class Inifile;
 
 namespace configs
 {
@@ -98,20 +106,65 @@ namespace configs
         auto const err = ::configs::parse(x, u, av);
         if (err) {
             LOG(
-                LOG_ERR,
-                "parsing error with parameter '%s' in section [%s] for \"%*s\": %s",
+                LOG_WARNING,
+                "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
                 key, context, int(av.size()), av.data(), err.c_str()
             );
         }
         return err;
     }
+
+    template<class CfgType>
+    void post_set_value(VariablesConfiguration &, CfgType const &)
+    {}
+
+    inline void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value)
+    {
+        Theme & theme = static_cast<cfg::theme&>(vars).value;
+
+        auto & str = cfg_value.value;
+        if (static_cast<cfg::debug::config>(vars).value) {
+            LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
+        }
+
+        // load theme
+
+        {
+            char theme_path[1024] = {};
+            snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, str.c_str());
+            theme_path[sizeof(theme_path) - 1] = 0;
+
+            ConfigurationLoader theme_load;
+            ThemeHolder theme_holder(theme);
+            theme_load.cparse(theme_holder, theme_path);
+        }
+
+        if (theme.global.logo) {
+            char logo_path[1024] = {};
+            snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_PNG, str.c_str());
+            logo_path[sizeof(logo_path) - 1] = 0;
+            if (!file_exist(logo_path)) {
+                snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_BMP, str.c_str());
+                logo_path[sizeof(logo_path) - 1] = 0;
+                if (!file_exist(logo_path)) {
+                    theme.global.logo = false;
+                    return;
+                }
+            }
+            theme.global.logo_path = logo_path;
+        }
+    }
 }
+
 
 class Inifile
 {
 public:
     using authid_t = ::authid_t;
     using parse_error = configs::parse_error;
+
+    // TODO temporary
+    using debug_section_type = cfg::debug;
 
 
     explicit Inifile()
@@ -164,6 +217,7 @@ private:
             configs::spec_type<typename T::mapped_type>{},
             std::forward<Args>(args)...
         );
+        configs::post_set_value(this->variables, static_cast<T&>(this->variables));
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
@@ -363,8 +417,6 @@ public:
         return {*const_cast<Inifile*>(this)};
     }
 
-    void check_record_config();
-
 private:
     std::set<unsigned> to_send_index;
     configs::VariablesConfiguration variables;
@@ -404,10 +456,10 @@ private:
         this->push_to_send_index<cfg::globals::target>();
         this->ask<cfg::globals::target_device>();
         this->ask<cfg::globals::target_user>();
+        this->push_to_send_index<cfg::session_log::session_log_redirection>();
 
         static_cast<Field<cfg::context::target_port>&>(this->fields).asked_ = true;
     }
 };
 
 #include "configs/autogen/set_value.tcc"
-#include "configs/variant/check_record_config.tcc"

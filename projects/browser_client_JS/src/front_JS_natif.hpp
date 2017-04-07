@@ -32,7 +32,6 @@
 #include <math.h>
 
 
-
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -83,6 +82,7 @@
 
 // nodejs --stack-size=250568 sandbox/test_websocket.js
 
+//  nodejs sandbox/websocket.js
 
 
 class Front_JS_Natif : public FrontAPI
@@ -163,26 +163,6 @@ public:
     //int                  _bufferRDPClipboardMetaFilePicBPP;
     //const Keylayout_r  * _keylayout;
 
-
-    enum : uint8_t {
-          FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
-        , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
-    };
-
-    enum : uint16_t {
-        KBD_FLAGS_EXTENDED = 0x0100
-    };
-
-    enum: uint8_t {
-        SCANCODE_ALTGR  = 0x38,
-        SCANCODE_SHIFT  = 0x36,
-        SCANCODE_ENTER  = 0x1C,
-        SCANCODE_BK_SPC = 0x0E,
-        SCANCODE_CTRL   = 0x1D,
-        SCANCODE_DELETE = 0x53
-    };
-
-
     //bool setClientInfo() ;
 
     //void writeClientInfo() ;
@@ -251,37 +231,6 @@ public:
     */
 
 
-    void connect(char * ip, char * user, char * password, int port) {
-
-        Inifile ini;
-        ModRDPParams mod_rdp_params( user                   //"administrateur"
-                                   , password               //"S3cur3!1nux"
-                                   , ip                     //"10.10.47.35"
-                                   , "192.168.1.100"
-                                   , 7
-                                   , 511
-                                   );
-        mod_rdp_params.device_id                       = "device_id";
-        mod_rdp_params.enable_tls                      = false;
-        mod_rdp_params.enable_nla                      = false;
-        mod_rdp_params.enable_fastpath                 = false;
-        mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
-        mod_rdp_params.enable_new_pointer              = false;
-        mod_rdp_params.server_redirection_support      = true;
-
-        this->_trans = new TransportWebSocket(this);
-
-        LCGRandom gen(0);
-        if (this->_trans != nullptr) {
-            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-            reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
-        }
-
-        //while (!this->_mod->is_up_and_running()) {;
-            this->_mod->draw_event(time(nullptr), *(this));
-        //}
-    }
 
     void disconnect() {
         delete(this->_mod);
@@ -311,7 +260,7 @@ public:
         y = z;
     }
 
-    int switchRGBA(int bgr) {
+    /*int switchRGBA(int bgr) {
 
         uint8_t b = bgr >> 24;
         uint8_t g = bgr >> 16;
@@ -319,7 +268,7 @@ public:
         uint8_t a = bgr;
 
         return ( (r << 24) + (g << 16) + (b << 8) + a );
-    }
+    }*/
 
 
 
@@ -330,6 +279,7 @@ public:
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+        //EM_ASM_({ console.log('RDPOpaqueRect ');}, 0);
         Rect rect(cmd.rect.intersect(clip).intersect(this->_info.width, this->_info.height));
         uint32_t color((uint32_t) color_decode_opaquerect(cmd.color, 16, this->mod_palette));
 
@@ -339,6 +289,7 @@ public:
 
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+        //EM_ASM_({ console.log('RDPScrBlt ');}, 0);
         const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
         if (rect.isempty()) {
 
@@ -376,9 +327,11 @@ public:
 
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+        //EM_ASM_({ console.log('RDPMemBlt ');}, 0);
         Rect rectBmp(cmd.rect);
-        const Rect& rect = clip.intersect(rectBmp);
+        const +Rect rect = clip.intersect(rectBmp);
         if (rect.isempty()){
+            return;
 
         } else {
 
@@ -426,6 +379,20 @@ public:
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
                         EM_ASM_({drawable.rDPMemBlt_0x66($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
+                break;
+
+                case 0x88: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(24, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt_0x88($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
                                                     rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
                 }
                 break;
@@ -576,7 +543,8 @@ public:
 
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        const Rect& rect = clip.intersect(cmd.rect);
+        //EM_ASM_({ console.log('RDPMem3Blt ');}, 0);
+        const +Rect rect = clip.intersect(cmd.rect);
         if (rect.isempty() || bitmap.cx() <= 0 || bitmap.cy() <= 0){
 
         } else {
@@ -599,6 +567,7 @@ public:
 
 
     virtual void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        //EM_ASM_({ console.log('RDPBitmapData ');}, 0);
 
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
                      (bitmap_data.dest_right  - bitmap_data.dest_left + 5),
@@ -644,6 +613,14 @@ public:
     virtual void draw(const RDP::RAIL::CachedIcon & order) override {}
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override {}
+
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {}
+
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {}
+
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {}
+
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {}
 
     virtual void draw(const RDPColCache   & cmd) override {}
 
@@ -739,19 +716,13 @@ public:
 
 /*
     void wheelEvent() {}
-
-    void RefreshPressed() {}
-
-    void RefreshReleased() {}
-
-    void refresh(int x, int y, int w, int h);
 */
 
 };
 
 
 
-Front_JS_Natif front(0);
+Front_JS_Natif front(0x04000000 | 0x40000000);
 
 
 
@@ -779,28 +750,34 @@ extern "C" void charPressed(char code) {
 
 extern "C" void enterPressed() {
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
     }
 }
 
 extern "C" void backspacePressed() {
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
     }
 }
 
 extern "C" void CtrlAltDelPressed() {
-    //EM_ASM_({ getDataOctet(); }, 0);
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
 
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+    }
+}
+
+extern "C" void refreshPressed() {
+    if (front._mod !=  nullptr) {
+        Rect rect(0, 0, front._info.width, front._info.height);
+        front._mod->rdp_input_invalidate(rect);
     }
 }
 
@@ -813,16 +790,64 @@ extern "C" void CtrlAltDelPressed() {
 //--------------------------------
 
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
-    front.connect(ip, user, password, port);
+    Inifile ini;
+    ModRDPParams mod_rdp_params( user
+                               , password
+                               , ip
+                               , "192.168.1.100"
+                               , 7
+                               , 511
+                               );
+    mod_rdp_params.device_id                       = "device_id";
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    mod_rdp_params.enable_bitmap_update            = true;
+    mod_rdp_params.enable_new_pointer              = false;
+    mod_rdp_params.server_redirection_support      = true;
+    mod_rdp_params.verbose                         = 0xFF;
+    
+
+    front._trans = new TransportWebSocket(&front);
+
+    TimeSystem timeobj;
+
+    LCGRandom gen(0);
+    if (front._trans != nullptr) {
+        front._mod = new mod_rdp(*(front._trans), front, front._info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
+        reinterpret_cast<TransportWebSocket *>(front._trans)->setMod(front._mod);
+    }
+
+//    while (!front._mod->is_up_and_running()) {
+//        sleep(1);
+//        front._mod->draw_event(time(nullptr), front);
+//    }
 }
 
-extern "C" void disconnexion() {
+extern "C" int up_and_running() {
+    return front._mod->is_up_and_running();
+}
+
+
+extern "C" void client_event() {
+    try {
+        front._mod->draw_event(time(nullptr), front);
+    }
+    catch (...){
+        LOG(LOG_INFO, "Exception raised by draw_event: mod should be terminated");
+    };
+}
+
+
+extern "C" void disconnection() {
     front.disconnect();
 }
 
-extern "C" void recv_value(int value) {
+extern "C" void recv_value(uint8_t data) {
     if (front._trans !=  nullptr) {
-        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value);
+        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(data);
+        //EM_ASM_({ console.log("Client : received from Server : "+$0); }, data);
     }
 }
 

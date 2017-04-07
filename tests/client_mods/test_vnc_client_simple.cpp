@@ -22,9 +22,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestVncClientSimple
+#define UNIT_TEST_MODULE TestVncClientSimple
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -34,9 +32,10 @@
 #include "mod/vnc/vnc.hpp"
 #include "front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
-    BOOST_CHECK(1);
+    RED_CHECK(1);
 
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -248,6 +247,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
+    NullAuthentifier authentifier;
+
     mod_vnc mod(
           t
         , "10.10.3.103"
@@ -267,29 +268,29 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , is_socket_transport
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
-        , nullptr       // acl
+        , authentifier       // acl
         , verbose);
     mod.get_event().set();
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
     }
-//    BOOST_CHECK(t.status);
+//    RED_CHECK(t.status);
 
     mod.draw_event(time(nullptr), front);
     mod.rdp_input_up_and_running();
     mod.draw_event(time(nullptr), front);
 
-    BOOST_CHECK_EQUAL(front.info.width, 800);
-    BOOST_CHECK_EQUAL(front.info.height, 600);
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
 
 //    mod.draw_event(time(nullptr), front);
-////    BOOST_CHECK(t.status);
+////    RED_CHECK(t.status);
 
 //    mod.draw_event(time(nullptr), front);
-////    BOOST_CHECK(t.status);
+////    RED_CHECK(t.status);
 
 //    mod.draw_event(time(nullptr), front);
-////    BOOST_CHECK(t.status);
+////    RED_CHECK(t.status);
 
 }

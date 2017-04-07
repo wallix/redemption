@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetGrid
+#define UNIT_TEST_MODULE TestWidgetGrid
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -36,23 +34,22 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
+RED_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestDraw drawable(800, 600);
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-    bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 10;
-    // int xtext = 4;
-    // int ytext = 1;
 
     const uint16_t line_number   = 5;
     const uint16_t column_number = 4;
@@ -62,16 +59,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
+    WidgetGrid wgrid(drawable.gd, parent, notifier, line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
-
-/*
-    wgrid.set_sizing_strategy(0, 50, 150);
-    wgrid.set_sizing_strategy(1, 150, 800);
-    wgrid.set_sizing_strategy(2, 50, 150);
-    wgrid.set_sizing_strategy(3, 50, 100);
-*/
+    wgrid.set_wh(640, 480);
+    wgrid.set_xy(x, y);
 
     Widget2  * widgetTable[128] = { nullptr };
     uint16_t   widget_count     = 0;
@@ -81,13 +73,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
             char text[256];
             snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
             if ((line_index == 2) && (column_index == 3)) {
-                widgetTable[widget_count] = new WidgetFlatButton(drawable.gd, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, font, 2, 2);
+                widgetTable[widget_count] = new WidgetFlatButton(drawable.gd, wgrid, notifier,
+                                                            text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2, font, 2, 2);
             }
             else {
-                widgetTable[widget_count] = new WidgetLabel(drawable.gd, 0, 0, wgrid, notifier,
-                                                            text, auto_resize, id, fg_color, bg_color, font);
+                widgetTable[widget_count] = new WidgetLabel(drawable.gd, wgrid, notifier,
+                                                            text, id, fg_color, bg_color, font);
             }
+
+            Dimension dim = widgetTable[widget_count]->get_optimal_dim();
+            widgetTable[widget_count]->set_wh(dim);
+
             wgrid.set_widget(line_index, column_index, widgetTable[widget_count]);
             widget_count++;
         }
@@ -106,55 +102,42 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_selection(2);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(wgrid.x(),
+                                    wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x6a\x7c\x36\x9b\x0d\x29\x45\x4e\xc1\x11\xfb\x4f\x7d\x6f\xb0\x77\x9f\x04\x42\xee"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9");
 
 
     wgrid.set_selection(4);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xfe\x86\x48\x43\x70\xe4\x82\x4d\x3a\xe6\x27\xaf\x87\xe0\x3b\x1c\x89\xc7\x89\x9d"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74");
 
 
-    uint16_t mouse_x = wgrid.dx() + 50;
-    uint16_t mouse_y = widgetTable[5]->dy();
+    uint16_t mouse_x = wgrid.x() + 50;
+    uint16_t mouse_y = widgetTable[5]->y();
 
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, nullptr);
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, nullptr);
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xe2\xeb\x65\x88\xc5\xa9\xe5\x46\x2d\x7c\x73\x60\xa3\x84\xff\xd3\x00\xb3\x6f\x11"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1");
 
 
     Keymap2 keymap;
@@ -170,17 +153,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.rdp_input_scancode(0,0,0,0, &keymap);
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xfa\xae\x15\x37\x9b\x05\xa7\x97\x6e\xa5\xde\x86\x14\x55\xfe\xe3\xac\xed\x4d\xfc"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32");
 
     wgrid.clear();
 
@@ -190,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
+RED_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
@@ -207,8 +186,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -218,11 +197,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     if (!check_sig(drawable.gd.impl(), message,
         "\xc2\x24\xac\x83\xee\xdc\x69\x2d\x01\x94"
         "\xfc\xe9\x2b\x45\xa8\x4a\xa9\x89\xde\x6d")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
+RED_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
@@ -239,8 +218,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -250,11 +229,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     if (!check_sig(drawable.gd.impl(), message,
         "\x40\x9a\xff\xfd\x37\x16\x19\xa3\x3a\x92"
         "\xac\x4c\x1d\x7c\x6e\x47\xd1\x14\x33\x01")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
+RED_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
@@ -271,8 +250,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -282,11 +261,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     if (!check_sig(drawable.gd.impl(), message,
         "\x55\xb9\x08\xd3\x42\x16\x47\x4d\x62\xa7"
         "\xfc\xce\x0d\x18\x9c\x29\x82\xd6\xf2\x38")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
+RED_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
@@ -303,8 +282,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -314,11 +293,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     if (!check_sig(drawable.gd.impl(), message,
         "\x3c\xa9\xf2\x32\x51\xc4\x70\x8c\xfe\x26"
         "\xc8\x37\xa1\xdb\x5a\xdb\x82\xad\x1f\x67")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
+RED_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
@@ -335,8 +314,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -346,11 +325,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     if (!check_sig(drawable.gd.impl(), message,
         "\x14\x49\x6b\x6a\xf0\xb8\x40\x0d\x5f\x61"
         "\xe6\x5d\x91\x13\x34\x89\x8d\x3c\xb8\xd0")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
     TestDraw drawable(800, 600);
 
@@ -367,8 +346,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     0 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     0 + wlabel.y(),
                                      wlabel.cx(),
                                      wlabel.cy()));
 
@@ -378,11 +357,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     if (!check_sig(drawable.gd.impl(), message,
         "\x5b\x6c\x88\xf2\x0b\x35\x40\xbe\x8e\x44"
         "\xc0\x45\x4c\xed\x3a\x77\xc3\x3c\x30\x1a")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -399,8 +378,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
-                                     5 + wlabel.dy(),
+    wlabel.rdp_input_invalidate(Rect(20 + wlabel.x(),
+                                     5 + wlabel.y(),
                                      30,
                                      10));
 
@@ -410,11 +389,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     if (!check_sig(drawable.gd.impl(), message,
         "\xa1\x7a\x59\x8d\x51\x87\x8f\xf5\x90\x75"
         "\x02\xec\x6e\x61\x49\xbd\xaa\x92\x8f\x01")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
+RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 {
     TestDraw drawable(800, 600);
 
@@ -428,7 +407,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         , event(0)
         {}
 
-        virtual void draw(const Rect&)
+        virtual void draw(const Rect)
         {}
 
         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
@@ -447,22 +426,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_char('a');
 
     wlabel.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
+RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestDraw drawable(800, 600);
 
@@ -501,7 +480,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     if (!check_sig(drawable.gd.impl(), message,
         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 
     //ask to widget to redraw at it's current position
@@ -512,7 +491,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     if (!check_sig(drawable.gd.impl(), message,
         "\x47\x60\x43\x39\x74\x53\x46\x46\xd0\x1a"
         "\x3a\x30\x71\xfd\xee\xa6\x3a\x6c\xaa\x75")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
     wcomposite.clear();
 }

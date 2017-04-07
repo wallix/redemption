@@ -32,22 +32,30 @@ public:
     int color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
-    : Widget2(drawable, rect, parent, notifier, group_id)
+    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    : Widget2(drawable, parent, notifier, group_id)
     , color(color)
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
     }
 
-    void draw(const Rect& clip) override {
-        this->drawable.draw(
-            RDPOpaqueRect(
-                clip,
-                this->color
-            ), this->rect
-        );
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(
+                RDPOpaqueRect(
+                    rect_intersect,
+                    this->color
+                ),
+                rect_intersect,
+                gdi::ColorCtx::depth24()
+            );
+
+            this->drawable.end_update();
+        }
     }
 };
-
-

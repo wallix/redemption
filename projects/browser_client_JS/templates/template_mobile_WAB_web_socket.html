@@ -40,8 +40,10 @@
         /* SOCKET CONNECTION */
 
         var url = 'http://' + ip + ':' + port;
+	//url = "http://localhost:8080" // test
         console.log("url = " + url);
-        socket = io.connect("http://localhost:8080");
+
+        socket = io.connect(url); 
 
         document.getElementById("errorMsgDiv").style = "display:none";
         //drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);

@@ -21,16 +21,40 @@
 
 #pragma once
 
-enum {
-    MODRDP_LOGLEVEL_FSDRVMGR            = 0x00002000, 
-    MODRDP_LOGLEVEL_SESPROBE_LAUNCHER   = 0x00004000,
-    MODRDP_LOGLEVEL_SESPROBE_REPETITIVE = 0x00008000,
+#include "utils/verbose_flags.hpp"
 
-    MODRDP_LOGLEVEL_SESPROBE            = 0x02000000,
-    MODRDP_LOGLEVEL_CLIPRDR             = 0x04000000,
-    MODRDP_LOGLEVEL_RDPDR               = 0x08000000,
 
-    MODRDP_LOGLEVEL_SESPROBE_DUMP       = 0x20000000,
-    MODRDP_LOGLEVEL_CLIPRDR_DUMP        = 0x40000000,
-    MODRDP_LOGLEVEL_RDPDR_DUMP          = 0x80000000,
+REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
+{
+    none,
+
+    basic_trace         = 0x00000001,
+    basic_trace2        = 0x00000002,
+    basic_trace3        = 0x00000004,
+    basic_trace4        = 0x00000008,
+    basic_trace5        = 0x00000020,
+    basic_trace6        = 0x00000010,
+    graphics            = 0x00000040,
+    basic_trace7        = 0x00000080,
+    credssp             = 0x00000400,
+
+    cache_persister     = 0x00000100,
+
+    rail_order          = 0x00000200,
+
+    fsdrvmgr            = 0x00002000,
+    sesprobe_launcher   = 0x00004000,
+    sesprobe_repetitive = 0x00008000,
+
+    asynchronous_task   = 0x00800000,
+    rail                = 0x01000000,
+    sesprobe            = 0x02000000,
+    cliprdr             = 0x04000000,
+    rdpdr               = 0x08000000,
+
+    rail_dump           = 0x10000000,
+    sesprobe_dump       = 0x20000000,
+    cliprdr_dump        = 0x40000000,
+    rdpdr_dump          = 0x80000000,
 };
+

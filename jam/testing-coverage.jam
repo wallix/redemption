@@ -1,0 +1,148 @@
+import testing ;
+
+import type ;
+type.register PYTHON : py ;
+
+actions id {
+    touch $(<);
+}
+
+import toolset ;
+import feature : feature ;
+
+feature.feature <covfile> : : free ;
+toolset.flags cover COVERFILE : <covfile> ;
+
+feature.feature <covflag> : : free ;
+toolset.flags cover COVERFLAG : <covflag> ;
+
+actions cover
+{
+    echo "Computing coverage for $(COVERFILE)"
+    if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
+        if [ ! -e "$(REDEMPTION_SRC_PATH)/$(COVERFILE)" ]; then
+            echo "source file $(REDEMPTION_SRC_PATH)/$(COVERFILE) missing"
+        fi
+        echo "NO COVERAGE"
+        touch "$(<)"
+    else
+        # echo "COVERFILE = $(COVERFILE)"
+        # echo "source = $(>)"
+        # echo "target = $(<)"
+        COVER_PATH="$(COVERAGE_PREFIX)coverage/$(COVERFILE)"
+        COVER_GCNO=$(>:P)"/tests/$(COVERFILE:P)/$(<:B).gcno"
+        mkdir -p "$COVER_PATH"
+        if [ ! -e $COVER_GCNO ]; then
+            echo "coverage file "$COVER_GCNO" does not exist"
+            exit 1
+        fi
+
+        #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o "$COVER_GCNO" $(>:S=) > "$COVER_PATH"/report.coverage"
+        gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $COVER_GCNO $(>:S=) > "$COVER_PATH"/report.coverage
+        if [ $? -eq 0 ]; then
+            mv *.gcov "$COVER_PATH"
+            if [ $? -eq 0 ]; then
+
+                if [ ! -e "$(REDEMPTION_SRC_PATH)/$(COVERFILE)" ]; then
+                    echo "source file $(REDEMPTION_SRC_PATH)/$(COVERFILE) missing"
+                    exit 1
+                fi
+
+                # If no gcov file available for coverage target create an empty one
+                if [ ! -e "$COVER_PATH/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
+                    touch "$COVER_PATH/$(COVERFILE:B)$(COVERFILE:S).gcov"
+                fi
+
+                etags -o "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).TAGS $(REDEMPTION_SRC_PATH)/$(COVERFILE)
+                if [ $? -eq 0 ]; then
+                    python tools/coverage.py $(COVERFILE) "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).TAGS "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).gcov $(REDEMPTION_SRC_PATH) > "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).report
+                    if [ $? -ne 0 ]; then
+                        echo "python tools/coverage.py failed"
+                        exit 1
+                    fi
+                    cat "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).report
+                    touch $(<)
+                else
+                    echo "etags failed"
+                    exit 1
+                fi
+            else
+                echo "gcov mv failed"
+                exit 1
+            fi
+        else
+            echo "gcov failed"
+            exit 1
+        fi
+    fi
+}
+
+rule test-run ( target : sources + : tested ? : requirements * )
+{
+#    ECHO " TEST RUN" ;
+    local ROOT_TEST_DIR = $(REDEMPTION_TEST_PATH) ;
+    if $(sources:P) = "system" {
+        ROOT_TEST_DIR = $(SYSTEMTESTDIR) ;
+    }
+    sources = $(ROOT_TEST_DIR)/$(sources) ;
+
+    local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+    local basepath = "" ;
+    local path = $(sources[0]:P) ;
+    while $(path) != $(ROOT_TEST_DIR) {
+        basepath = $(path:B)/$(basepath) ;
+        path = $(path:P) ;
+    }
+
+#    ECHO "base = $(base)" ;
+#    ECHO "sources = $(sources)" ;
+#    ECHO "target = $(target)" ;
+    #run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
+    unit-test $(target) : $(sources) : $(TEST_DEPENDENCIES) $(requirements) ;
+
+    if ($(tested)) {
+        make $(target:S=.coverage) : $(target) : id
+            : <variant>coverage:<action>@cover
+              <covfile>$(tested)
+              $(requirements)
+            ;
+    }
+}
+
+rule test-canonical ( base : requirements * )
+{
+    #basetarget = $(base:B) ;
+    #base = $(base:P) ;
+    #echo "base=" $(base) ;
+    #while "$(base)" != "" {
+    #    basetarget = $(base:B)_$(basetarget) ;
+    #    base = $(base:P) ;
+    #}
+    #target = test_$(basetarget) ;
+
+    target = test_$(base:B) ;
+    source = $(base:P)/test_$(base:B).cpp ;
+    tested = $(base) ;
+
+    #echo "target=" $(target) ;
+    #echo "source=" $(source) ;
+    #echo "tested=" $(tested) ;
+
+
+    test-run $(target) : $(source) : $(tested) : $(requirements) ;
+}
+
+variant coverage : san : ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov : ;
+
+constant GCOV :
+    <variant>coverage:<cxxflags>--profile-arcs
+    <variant>coverage:<cxxflags>--test-coverage
+    <variant>coverage:<cxxflags>--coverage
+    #<variant>coverage:<link>shared
+    <variant>coverage:<library>gcov
+;
+constant GCOV_NO_BUILD : <variant>coverage:<build>no ;

@@ -29,8 +29,9 @@
 class SessionServer : public Server
 {
     CryptoContext & cctx;
+    Random & rnd;
 
-    // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_ip_transparent>() = true).
+    // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_transparent_mode>() = true).
     unsigned uid;
     unsigned gid;
     bool debug_config;
@@ -38,12 +39,16 @@ class SessionServer : public Server
     std::string config_filename;
 
 public:
-    SessionServer(CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true)
-        : cctx(cctx)
-        , uid(uid)
-        , gid(gid)
-        , debug_config(debug_config)
-        , config_filename(config_filename)
+    SessionServer(
+        CryptoContext & cctx, Random & rnd,
+        unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true
+    )
+    : cctx(cctx)
+    , rnd(rnd)
+    , uid(uid)
+    , gid(gid)
+    , debug_config(debug_config)
+    , config_filename(config_filename)
     {
     }
 
@@ -66,15 +71,20 @@ public:
         }
 
         char source_ip[256];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
         const int source_port = ntohs(u.s4.sin_port);
-#pragma GCC diagnostic pop
+        REDEMPTION_DIAGNOSTIC_POP
         /* start new process */
         const pid_t pid = fork();
         switch (pid) {
         case 0: /* child */
+        // TODO: see exit status of child, we could use it to diagnose session behaviours
+        // TODO: we could probably use some session launcher object here. Something like
+        // an abstraction layer that would manage either forking of threading behavior
+        // this would also likely have some effect on network ressources management
+        // (that means the select() on ressources could be managed by that layer)
             {
                 close(incoming_sck);
 
@@ -103,10 +113,10 @@ public:
                 }
 
                 char target_ip[256];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
                 const int target_port = ntohs(localAddress.s4.sin_port);
-#pragma GCC diagnostic pop
+                REDEMPTION_DIAGNOSTIC_POP
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
@@ -116,7 +126,7 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.get<cfg::globals::enable_ip_transparent>() &&
+                if (ini.get<cfg::globals::enable_transparent_mode>() &&
                     (0 != strcmp(source_ip, "127.0.0.1"))) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
@@ -170,11 +180,11 @@ public:
                     ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.set_acl<cfg::globals::target>(target_ip);
-                    if (ini.get<cfg::globals::enable_ip_transparent>()
+                    if (ini.get<cfg::globals::enable_transparent_mode>()
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
-                    Session session(sck, ini, this->cctx);
+                    Session session(sck, ini, this->cctx, this->rnd);
 
                     // Suppress session file
                     unlink(session_file);
@@ -189,7 +199,7 @@ public:
                 else {
                     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
                 }
-                return START_WANT_STOP;
+                _exit(0);
             }
             break;
         default: /* father */

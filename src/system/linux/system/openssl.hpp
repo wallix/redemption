@@ -33,8 +33,9 @@
 #include <memory>
 
 // TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 
 extern "C" {
     inline int openssl_print_fp(const char *str, size_t len, void * error_message)
@@ -834,6 +835,10 @@ struct TLSContext
             throw Error(checking_exception);
         }
 
+        if (error_message) {
+            error_message->clear();
+        }
+
         LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
     }
 
@@ -1113,6 +1118,11 @@ struct TLSContext
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
+    ssize_t privrecv_tls(uint8_t * data, size_t len)
+    {
+        return this->privrecv_tls(reinterpret_cast<char *>(data), len);
+    }
+
     ssize_t privrecv_tls(char * data, size_t len)
     {
         char * pbuffer = data;
@@ -1172,9 +1182,9 @@ struct TLSContext
         return len;
     }
 
-    ssize_t privsend_tls(const char * data, size_t len)
+    ssize_t privsend_tls(const uint8_t * data, size_t len)
     {
-        const char * const buffer = data;
+        const uint8_t * const buffer = data;
         size_t remaining_len = len;
         size_t offset = 0;
         while (remaining_len > 0){
@@ -1198,7 +1208,7 @@ struct TLSContext
 
                 default:
                 {
-                    LOG(LOG_INFO, "Failure in SSL library");
+                    LOG(LOG_INFO, "Failure in SSL library, error=%ld, %s [%u]", error, strerror(errno), errno);
                     uint32_t errcount = 0;
                     errcount++;
                     LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
@@ -1214,3 +1224,5 @@ struct TLSContext
     }
 
 };
+
+REDEMPTION_DIAGNOSTIC_POP

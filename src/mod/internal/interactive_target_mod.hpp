@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "utils/translation.hpp"
-#include "core/front_api.hpp"
 #include "configs/config.hpp"
-#include "widget2/flat_interactive_target.hpp"
-#include "widget2/screen.hpp"
-#include "internal_mod.hpp"
 #include "configs/config_access.hpp"
-#include "widget2/language_button.hpp"
+#include "core/front_api.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "utils/translation.hpp"
+#include "mod/internal/widget2/flat_interactive_target.hpp"
+#include "mod/internal/widget2/language_button.hpp"
+#include "mod/internal/widget2/screen.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
@@ -43,7 +43,7 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
 >;
 
-class InteractiveTargetMod : public InternalMod, public NotifyApi
+class InteractiveTargetMod : public LocallyIntegrableMod, public NotifyApi
 {
     bool ask_device;
     bool ask_login;
@@ -55,21 +55,21 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
         , challenge(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
             this->ask_device, this->ask_login, this->ask_password,
             vars.get<cfg::theme>(),
-            TR("target_info_required", language(vars)),
-            TR("device", language(vars)), vars.get<cfg::globals::target_device>().c_str(),
-            TR("login", language(vars)), vars.get<cfg::globals::target_user>().c_str(),
-            TR("password", language(vars)),
+            TR(trkeys::target_info_required, language(vars)),
+            TR(trkeys::device, language(vars)), vars.get<cfg::globals::target_device>().c_str(),
+            TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
+            TR(trkeys::password, language(vars)),
             vars.get<cfg::font>(),
             &this->language_button)
         , vars(vars)
@@ -90,7 +90,7 @@ public:
             this->challenge.set_widget_focus(&this->challenge.password_edit,
                                              Widget2::focus_reason_tabkey);
         }
-        this->screen.refresh(this->screen.rect);
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~InteractiveTargetMod() override {
@@ -134,11 +134,15 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi &) override {
-        (void)now;
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
         this->event.reset();
     }
 
     bool is_up_and_running() override { return true; }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->challenge.move_size_widget(left, top, width, height);
+    }
+};

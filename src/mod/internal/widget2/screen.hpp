@@ -43,9 +43,9 @@ public:
 
     Font const & font;
 
-    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = nullptr, Theme const & theme = Theme())
-        : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
+    WidgetScreen(gdi::GraphicApi & drawable, Font const & font,
+                 NotifyApi * notifier, Theme const & theme)
+        : WidgetParent(drawable, *this, notifier)
         , theme(theme)
         , tooltip(nullptr)
         , current_over(nullptr)
@@ -56,6 +56,8 @@ public:
         this->impl = &composite_array;
 
         this->tab_flag = IGNORE_TAB;
+
+        this->set_xy(0, 0);
     }
 
     ~WidgetScreen() override {
@@ -65,33 +67,41 @@ public:
         }
     }
 
-    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) override {
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y,
+                      Rect const preferred_display_rect, int = 10) override {
         if (text == nullptr) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
-                this->refresh(this->tooltip->rect);
+                this->rdp_input_invalidate(this->tooltip->get_rect());
                 delete this->tooltip;
                 this->tooltip = nullptr;
             }
         }
         else if (this->tooltip == nullptr) {
+            Rect display_rect = this->get_rect();
+            if (!preferred_display_rect.isempty()) {
+                display_rect = this->get_rect().intersect(preferred_display_rect);
+            }
+
             this->tooltip = new WidgetTooltip(this->drawable,
-                                              x, y,
                                               *this, widget,
                                               text,
                                               this->theme.tooltip.fgcolor,
                                               this->theme.tooltip.bgcolor,
                                               this->theme.tooltip.border_color,
                                               this->font);
-            int w = this->tooltip->get_tooltip_cx();
-            int h = this->tooltip->get_tooltip_cy();
-            int sw = this->rect.cx;
+            Dimension dim = this->tooltip->get_optimal_dim();
+            this->tooltip->set_wh(dim);
+
+            int w = this->tooltip->cx();
+            int h = this->tooltip->cy();
+            int sw = display_rect.x + display_rect.cx;
             int posx = ((x + w) > sw)?(sw - w):x;
             int posy = (y > h)?(y - h):0;
-            this->tooltip->set_tooltip_xy(posx, posy);
+            this->tooltip->set_xy(posx, posy);
 
             this->add_widget(this->tooltip);
-            this->refresh(this->tooltip->rect);
+            this->rdp_input_invalidate(this->tooltip->get_rect());
         }
     }
 
@@ -135,12 +145,21 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
-            if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
-                this->drawable.set_pointer(edit_pointer);
+            const Pointer* pointer = &this->normal_pointer;
+
+            if (nullptr != w) {
+                if (Pointer::POINTER_EDIT == w->pointer_flag) {
+                    pointer = &this->edit_pointer;
+                }
+                else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
+                    const Pointer* temp_pointer = w->get_pointer();
+                    if (temp_pointer) {
+                        pointer = temp_pointer;
+                    }
+                }
             }
-            else {
-                this->drawable.set_pointer(normal_pointer);
-            }
+            this->drawable.set_pointer(*pointer);
+
             this->current_over = w;
         }
         if (this->tooltip) {
@@ -163,4 +182,3 @@ public:
         WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 };
-

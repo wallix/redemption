@@ -405,7 +405,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         int length;
         uint8_t* data;
         uint32_t SeqNo(MessageSeqNo);
-        uint8_t digest[16];
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
@@ -443,10 +442,11 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
         hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data, length);
-        hmac_md5.final(digest, sizeof(digest));
+        hmac_md5.final(digest);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
 
@@ -507,7 +507,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         int length = 0;
         uint8_t* data = nullptr;
         uint32_t SeqNo(MessageSeqNo);
-        uint8_t digest[16] = {};
+        uint8_t digest[SslMd5::DIGEST_LENGTH] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
         NTLMContext* context = nullptr;
@@ -558,7 +558,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
         hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-        hmac_md5.final(digest, sizeof(digest));
+        hmac_md5.final(digest);
 
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "======== DECRYPT ==========");

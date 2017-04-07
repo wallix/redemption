@@ -1,0 +1,26 @@
+rule includes ( properties * )
+{
+    local incs ;
+
+    incs += <include>$(REDEMPTION_SRC_PATH) ;
+    incs += <include>$(SYSTEM_SRC_PATH) ;
+    incs += <include>$(REDEMPTION_INCLUDE_PATH) ;
+
+    incs += <include>$(OCR1_INCLUDE_PATH) ;
+    incs += <include>$(MLN_INCLUDES_PATH) ;
+    incs += <include>$(PPOCR_INCLUDES_PATH) ;
+    incs += <include>$(PROGRAM_OPTIONS_INCLUDES_PATH) ;
+
+    ## configs @{
+    incs += <include>$(REDEMPTION_CONFIG_PATH)/redemption_src ;
+    incs += <include>$(REDEMPTION_CONFIG_AUTOGEN_PATH) ;
+    ## @}
+
+    if $(FFMPEG_INC_PATH) != ""
+    {
+        # echo ffmpeg include path: $(FFMPEG_INC_PATH) ;
+        incs += <cxxflags>-isystem" $(FFMPEG_INC_PATH)" ;
+    }
+
+    return $(incs) ;
+}

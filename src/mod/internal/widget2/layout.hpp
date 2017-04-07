@@ -30,7 +30,7 @@ struct WidgetLayout : public Widget2 {
     Widget2 * items[LAYOUT_SIZE_MAX];
     size_t    nb_items;
 
-    WidgetLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLayout(gdi::GraphicApi & drawable, const Rect rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)
@@ -39,22 +39,31 @@ struct WidgetLayout : public Widget2 {
 
     virtual ~WidgetLayout() {
     }
-    virtual void draw(const Rect& clip) {
+    virtual void draw(const Rect clip) {
         for (size_t i = 0; i < this->nb_items; ++i) {
             Widget2 *w = this->items[i];
             w->refresh(clip.intersect(this->rect));
         }
     }
-    virtual void set_xy(int16_t x, int16_t y) {
+
+    void set_x(int16_t x) override {
         for (size_t i = 0, max = this->nb_items; i < max; ++i) {
             Widget2 * w = this->items[i];
-            uint16_t dx = w->rect.x - this->rect.x;
-            uint16_t dy = w->rect.y - this->rect.y;
-            this->items[i]->set_xy(x + dx, y + dy);
+            uint16_t dx = w->x() - this->x();
+            this->items[i]->set_x(x + dx);
         }
-        this->rect.x = x;
-        this->rect.y = y;
+        Widget2::set_x(x);
     }
+
+    void set_y(int16_t y) override {
+        for (size_t i = 0, max = this->nb_items; i < max; ++i) {
+            Widget2 * w = this->items[i];
+            uint16_t dy = w->y() - this->dy;
+            this->items[i]->set_y(y + dy);
+        }
+        Widget2::set_y(y);
+    }
+
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         Widget2 * ret = 0;
@@ -112,7 +121,7 @@ struct WidgetLayout : public Widget2 {
     //     size_t index = origin;
     //     int pos_x = this->rect.x;
     //     if (index > 0) {
-    //         pos_x = this->items[index - 1]->lx();
+    //         pos_x = this->items[index - 1]->right();
     //     }
     //     for (; index < this->nb_items; index++) {
     //         Widget2 * w = this->items[index];
@@ -129,7 +138,7 @@ struct WidgetLayout : public Widget2 {
     //     size_t index = origin;
     //     int pos_y = this->rect.y;
     //     if (index > 0) {
-    //         pos_y = this->items[index - 1]->ly();
+    //         pos_y = this->items[index - 1]->bottom();
     //     }
     //     for (; index < this->nb_items; index++) {
     //         Widget2 * w = this->items[index];
@@ -145,7 +154,7 @@ struct WidgetLayout : public Widget2 {
     // void add_widget_hori(Widget2 * w) {
     //     int pos_x = this->rect.x;
     //     if (this->nb_items > 0) {
-    //         pos_x = this->items[this->nb_items - 1]->lx();
+    //         pos_x = this->items[this->nb_items - 1]->right();
     //     }
     //     w->set_xy(pos_x, this->rect.y);
     //     this->rect.cx += w->cx();
@@ -157,7 +166,7 @@ struct WidgetLayout : public Widget2 {
     // void add_widget_verti(Widget2 * w) {
     //     int pos_y = this->rect.y;
     //     if (this->nb_items > 0) {
-    //         pos_y = this->items[this->nb_items - 1]->ly();
+    //         pos_y = this->items[this->nb_items - 1]->bottom();
     //     }
     //     w->set_xy(this->rect.x, pos_y);
     //     this->rect.cy += w->cy();

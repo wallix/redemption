@@ -1,39 +1,110 @@
 #!/usr/bin/python -O
+# -*- coding: utf-8 -*-
+#
 
 import ctypes
 import ctypes.util
+import sys
+import os
+import pwd
+
+# If this code is not called from __main__
+# You have to inject a proxy object in the module namespace
+
+def get_proxy():
+    configs = wabconfig.Config('wabengine')
+    client = wabengine.client.sync_clientSynClient('localhost', configs['port'])
+    try:
+        proxy = client.authenticate_as_operator()
+    except wabengine.common.AuthenticationFailed, exp:
+        Logger().error("%s" % exp)
+    return proxy
+
+proxy = None
+if __name__ == '__main__':
+    try:
+        from wabha.utils import *
+        original_gid = os.getegid()
+        original_uid = os.geteuid()
+
+        os.setegid(pwd.getpwnam("wabuser").pw_gid)
+        os.seteuid(pwd.getpwnam("wabuser").pw_uid)
+        if ha_status() > HA_MASTER:
+            # If HA is configured we run this script only on the MASTER node
+            sys.exit(-1)
+
+        proxy = get_proxy()
+
+        os.seteuid(original_uid)
+        os.setegid(original_gid)
+    except:
+        pass
+
 
 GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
-GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
+GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint)
 
 def get_hmac_key(resbuf):
-    data = '\xe3\x8d\xa1\x5e\x50\x1e\x4f\x6a\x01\xef\xde\x6c\xd9\xb3\x3a\x3f\x2b\x41\x72\x13\x1e\x97\x5b\x4c\x39\x54\x23\x14\x43\xae\x22\xae'
-    libredver.vermemcpy(resbuf, data, 32)
+    if proxy:
+        sign_key = proxy.get_trace_sign_key()
+        libredrec.recmemcpy(resbuf, sign_key, 32)
     return 0
 
-def get_trace_key(base, lg, resbuf):
-    name = base[:lg]
-    data = '\x56\x3e\xb6\xe8\x15\x8f\x0e\xed\x2e\x5f\xb6\xbc\x28\x93\xbc\x15\x27\x0d\x7e\x78\x15\xfa\x80\x4a\x72\x3e\xf4\xfb\x31\x5f\xf4\xb2'
-#    data = '\x47\xa0\xb0\xe8\xc3\x86\x72\xb9\x66\x25\xf2\x35\x47\xa8\xc5\xab\x8c\x7c\xf2\x5b\x88\xc0\x23\xb0\xac\x03\xaa\x5d\x5b\xca\xf9\xda'
-    libredver.vermemcpy(resbuf, data, 32)
+def get_trace_key(base, lg, resbuf, flag):
+    if proxy:
+        name = base[:lg]
+        trace_key = proxy.get_trace_encryption_key(name, flag==1)
+        libredrec.recmemcpy(resbuf, trace_key, 32)
     return 0
-    
+
 
 get_hmac_key_func = GETHMACKEY(get_hmac_key)
 get_trace_key_func = GETTRACEKEY(get_trace_key)
+libredrec = ctypes.CDLL('libredrec.so')
 
-try:
-    libredver = ctypes.CDLL('/usr/lib/libredver.so')
-    libredver.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
-    libredver.do_main.restype = ctypes.c_int
 
-    libredver.vermemcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-    libredver.vermemcpy.restype = ctypes.c_int
+def verify(cryptoapi, argv):
+    from wabha.utils import cryptoapi
+    args = ["redver"].extend(argv)
+    global proxy
+    proxy = cryptoapi
+    tmpout = os.tmpfile()
+    tmperr = os.tmpfile()
+    stdoutfd = os.dup(sys.__stdout__.fileno())
+    stderrfd = os.dup(sys.__stderr__.fileno())
+    sys.stdout.flush()
+    os.dup2(tmpout.fileno(), 1)
+    sys.stderr.flush()
+    os.dup2(tmperr.fileno(), 2)
+    rcode = _verify(args)
+    os.fsync(1)
+    os.fsync(2)
+    os.lseek(1, 0, os.SEEK_SET)
+    os.lseek(2, 0, os.SEEK_SET)
+    os.dup2(stdoutfd, 1)
+    os.dup2(stderrfd, 2)
+    sout = tmpout.readlines()
+    serr = tmperr.readlines()
+    return rcode, sout, serr
 
-    import sys
-    myargv = ctypes.c_char_p * len(sys.argv)
-    argv = myargv(*tuple(sys.argv))
-    libredver.do_main(len(sys.argv), argv, get_hmac_key_func, get_trace_key_func)
-except Exception, e:
-    import traceback
-    print "Failed to load redver library\n", traceback.format_exc(e)
+def _verify(sys_argv):
+    libredrec.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
+    libredrec.do_main.restype = ctypes.c_int
+
+    libredrec.recmemcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    libredrec.recmemcpy.restype = ctypes.c_int
+
+    myargv = ctypes.c_char_p * len(sys_argv)
+    argv = myargv(*tuple(sys_argv))
+    res = libredrec.do_main(len(sys_argv), argv, get_hmac_key_func, get_trace_key_func)
+    return res
+
+if __name__ == '__main__':
+    try:
+        argv = sys.argv
+        res = _verify(argv);
+        sys.exit(res)
+    except Exception, e:
+        import traceback
+        print "Failed to load redver library\n", traceback.format_exc(e)
+        sys.exit(-1)

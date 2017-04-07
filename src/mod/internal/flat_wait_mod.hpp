@@ -22,17 +22,15 @@
 
 #pragma once
 
-#include "core/front_api.hpp"
 #include "configs/config.hpp"
-#include "widget2/language_button.hpp"
-#include "widget2/flat_wait.hpp"
-#include "widget2/screen.hpp"
-#include "internal_mod.hpp"
-#include "copy_paste.hpp"
-#include "utils/timeout.hpp"
-
 #include "configs/config_access.hpp"
-
+#include "core/front_api.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "utils/timeout.hpp"
+#include "widget2/flat_wait.hpp"
+#include "widget2/language_button.hpp"
+#include "widget2/screen.hpp"
 
 using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
@@ -42,10 +40,11 @@ using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
-class FlatWaitMod : public InternalMod, public NotifyApi
+class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
     FlatWait wait_widget;
@@ -56,12 +55,12 @@ class FlatWaitMod : public InternalMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
-                const char * caption, const char * message, time_t now,
+    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
+                const char * caption, const char * message, time_t now, ClientExecute & client_execute,
                 bool showform = false, uint32_t flag = 0)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
-        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
+        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
                       &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
@@ -69,6 +68,7 @@ public:
                       showform, flag)
         , vars(vars)
         , timeout(now, 600)
+        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
         this->screen.add_widget(&this->wait_widget);
         if (this->wait_widget.hasform) {
@@ -78,7 +78,7 @@ public:
             this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget2::focus_reason_tabkey);
         }
         this->screen.set_widget_focus(&this->wait_widget, Widget2::focus_reason_tabkey);
-        this->screen.refresh(this->screen.rect);
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~FlatWaitMod() override {
@@ -90,10 +90,12 @@ public:
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
             case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-            default:
+            case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
                 if (this->copy_paste) {
                     copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event);
                 };
+                break;
+            default:;
         }
     }
 
@@ -124,7 +126,13 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi &) override {
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->refused();
@@ -133,9 +141,6 @@ public:
             this->event.set(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-            if (!this->copy_paste && event.waked_up_by_time) {
-                this->copy_paste.ready(this->front);
-            }
             this->event.reset();
             break;
         }
@@ -144,10 +149,14 @@ public:
     bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        (void)length;
+        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->wait_widget.move_size_widget(left, top, width, height);
+    }
+};

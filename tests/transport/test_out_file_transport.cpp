@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestInFileTransport
+#define UNIT_TEST_MODULE TestInFileTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
@@ -37,39 +35,33 @@
 #include "transport/out_file_transport.hpp"
 #include "core/error.hpp"
 
-BOOST_AUTO_TEST_CASE(TestInFileTransport)
+RED_AUTO_TEST_CASE(TestInFileTransport)
 {
+    char tmpname[128] = "/tmp/test_transportXXXXXX";
+    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
     {
-        char tmpname[128];
-        sprintf(tmpname, "/tmp/test_transportXXXXXX");
-        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-        {
-            OutFileTransport ft(fd);
-            ft.send("We write, ", 10);
-            ft.send("and again, ", 11);
-            ft.send("and so on.", 10);
-        }
-        ::close(fd);
-        fd = ::open(tmpname, O_RDONLY);
-        {
-            char buf[128];
-            char * pbuf = buf;
-            InFileTransport ft(fd);
-            ft.recv(&pbuf, 10);
-            ft.recv(&pbuf, 11);
-            ft.recv(&pbuf, 10);
-            BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
-            try {
-                char * pbuf = buf;
-                ft.recv(&pbuf, 1);
-                BOOST_CHECK(false);
-            }
-            catch(Error & e) {
-                BOOST_CHECK_EQUAL(e.id, ERR_TRANSPORT_NO_MORE_DATA);
-            }
-        }
-        ::close(fd);
-        ::unlink(tmpname);
+        OutFileTransport ft(fd);
+        ft.send("We write, ", 10);
+        ft.send("and again, ", 11);
+        ft.send("and so on.", 10);
     }
+    ::close(fd);
+    fd = ::open(tmpname, O_RDONLY);
+    {
+        char buf[128];
+        char * pbuf = buf;
+        InFileTransport ft(fd);
+        ft.recv_atomic(pbuf, 10);
+            pbuf += 10;
+            ft.recv_atomic(pbuf, 11);
+            pbuf += 11;
+            ft.recv_atomic(pbuf, 10);
+            pbuf += 10;
+        RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+        pbuf = buf;
+        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_atomic(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+    }
+    ::close(fd);
+    ::unlink(tmpname);
 }
 

@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
 #include "utils/log.hpp"
@@ -29,10 +28,10 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
     uint32_t chunk_data_length)
 {
     if (send) {
-        LOG(LOG_INFO, "Sending on channel (-1) n bytes");
+        LOG(LOG_INFO, "Sending on channel (%d) n bytes", chunk_data_length);
     }
     else {
-        LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
+        LOG(LOG_INFO, "Recv done on channel (%d) n bytes", chunk_data_length);
     }
     const uint32_t dest = (from_or_to_client
                            ? 0  // Client
@@ -47,10 +46,43 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
         sizeof(chunk_data_length));
     hexdump_c(chunk_data, chunk_data_length);
     if (send) {
-        LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
+        LOG(LOG_INFO, "Sent dumped on channel (%d) n bytes", chunk_data_length);
     }
     else {
-        LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+        LOG(LOG_INFO, "Dump done on channel (%d) n bytes", chunk_data_length);
+    }
+}
+
+inline static void msgdump_d(bool send, bool from_or_to_client,
+    uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
+    uint32_t chunk_data_length)
+{
+    if (send) {
+        LOG(LOG_INFO, "Sending on channel (%d) n bytes", total_length);
+    }
+    else {
+        LOG(LOG_INFO, "Recv done on channel (%d) n bytes", total_length);
+    }
+    const uint32_t dest = (from_or_to_client
+                           ? 0  // Client
+                           : 1  // Server
+                          );
+    hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+        sizeof(dest));
+    hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+        sizeof(total_length));
+    hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+    hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+        sizeof(chunk_data_length));
+    hexdump_c(chunk_data, chunk_data_length);
+    if (total_length > chunk_data_length) {
+        LOG(LOG_INFO, "/* ---- */ \"...                                                             \" //................");
+    }
+    if (send) {
+        LOG(LOG_INFO, "Sent dumped on channel (%d) n bytes", total_length);
+    }
+    else {
+        LOG(LOG_INFO, "Dump done on channel (%d) n bytes", total_length);
     }
 }
 

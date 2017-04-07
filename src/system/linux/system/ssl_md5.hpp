@@ -32,7 +32,7 @@ class SslMd5
     MD5_CTX md5;
 
 public:
-    enum : int { DIGEST_LENGTH = MD5_DIGEST_LENGTH};
+    enum : int { DIGEST_LENGTH = MD5_DIGEST_LENGTH };
 
     SslMd5()
     {
@@ -44,14 +44,8 @@ public:
         MD5_Update(&this->md5, data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        if (DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[DIGEST_LENGTH];
-            MD5_Final(tmp, &this->md5);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
         MD5_Final(out_data, &this->md5);
     }
 };

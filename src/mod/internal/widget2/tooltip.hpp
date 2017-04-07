@@ -32,70 +32,86 @@ class WidgetTooltip : public Widget2
     uint h_border;
     WidgetMultiLine desc;
     int border_color;
+
 public:
-    WidgetTooltip(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2 & parent,
+    WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor, int bgcolor, int border_color, Font const & font)
-        : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
+        : Widget2(drawable, parent, notifier, 0)
         , w_border(10)
         , h_border(10)
-        , desc(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, font, 0, 0)
+        , desc(drawable, *this, this, text, 0, fgcolor, bgcolor, font, 0, 0)
         , border_color(border_color)
     {
-        this->tab_flag = IGNORE_TAB;
+        this->tab_flag   = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-        this->rect.cx = this->desc.rect.cx + 2*w_border;
-        this->rect.cy = this->desc.rect.cy + 2*h_border;
     }
 
     ~WidgetTooltip() override {
     }
 
+    Dimension get_optimal_dim() override {
+        Dimension dim = this->desc.get_optimal_dim();
+
+        dim.w += 2 * this->w_border;
+        dim.h += 2 * this->h_border;
+
+        return dim;
+    }
+
     void set_text(const char * text)
     {
         this->desc.set_text(text);
-        this->rect.cx = this->desc.rect.cx + 2*w_border;
-        this->rect.cy = this->desc.rect.cy + 2*h_border;
+        Dimension dim = this->desc.get_optimal_dim();
+        this->desc.set_wh(dim);
+
+        this->set_wh(this->desc.cx() + 2 * w_border,
+                     this->desc.cy() + 2 * h_border);
     }
 
-    void draw(const Rect& clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->rect, desc.bg_color), clip);
-        this->desc.draw(clip);
-        this->draw_border(clip);
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), rect_intersect, gdi::ColorCtx::depth24());
+            this->desc.rdp_input_invalidate(rect_intersect);
+            this->draw_border(rect_intersect);
+
+            this->drawable.end_update();
+        }
     }
 
-    int get_tooltip_cx() {
-        return this->rect.cx;
-    }
-    int get_tooltip_cy() {
-        return this->rect.cy;
+    void set_xy(int16_t x, int16_t y) override {
+        Widget2::set_xy(x, y);
+        this->desc.set_xy(x + w_border, y + h_border);
     }
 
-    void set_tooltip_xy(int x, int y) {
-        this->rect.x = x;
-        this->rect.y = y;
-        this->desc.rect.x = x + w_border;
-        this->desc.rect.y = y + h_border;
+    void set_wh(uint16_t w, uint16_t h) override {
+        Widget2::set_wh(w, h);
+        this->desc.set_wh(w -  2 * w_border, h - 2 * h_border);
     }
 
-    void draw_border(const Rect& clip)
+    using Widget2::set_wh;
+
+    void draw_border(const Rect clip)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx() - 1, 1
-        )), this->border_color), this->rect);
+            this->x(), this->y(), this->cx() - 1, 1
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), this->border_color), this->rect);
+            this->x(), this->y() + 1, 1, this->cy() - 2
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), this->border_color), this->rect);
+            this->x() + this->cx() - 1, this->y(), 1, this->cy()
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + this->cy() - 1, this->cx() - 1, 1
-        )), this->border_color), this->rect);
+            this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
+        )), this->border_color), clip, gdi::ColorCtx::depth24());
     }
 };
-

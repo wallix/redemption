@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetLabelGrid
+#define UNIT_TEST_MODULE TestWidgetLabelGrid
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -35,30 +33,32 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceLabelGrid)
+RED_AUTO_TEST_CASE(TraceLabelGrid)
 {
     TestDraw drawable(800, 600);
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
     NotifyApi * notifier = nullptr;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
-    // int xtext = 4;
-    // int ytext = 1;
 
     const uint16_t line_number   = 5;
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    WidgetLabelGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier,
+    WidgetLabelGrid wgrid(drawable.gd, parent, notifier,
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
                           WINBLUE, WHITE, MEDIUM_BLUE, WHITE, font,
                           grid_border, id);
+    wgrid.set_wh(640, 480);
+    wgrid.set_xy(x, y);
 
     const char * texts0[] = { "target_group", "target", "protocol", "timeframe" };
     wgrid.add_line(texts0);
@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
 
 
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 
@@ -90,13 +90,13 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
     //                "\x3f\xce\x8f\x0b\x25\x8b\xf7\x3b\xcf\x01")){
-    //     BOOST_CHECK_MESSAGE(false, message);
+    //     RED_CHECK_MESSAGE(false, message);
     // }
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
-    wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
-                                    0 + wgrid.dy(),
+    wgrid.rdp_input_invalidate(Rect(0 + wgrid.x(),
+                                    0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
 
@@ -104,6 +104,6 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
     //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
-    //     BOOST_CHECK_MESSAGE(false, message);
+    //     RED_CHECK_MESSAGE(false, message);
     // }
 }

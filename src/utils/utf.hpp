@@ -25,11 +25,10 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 // #include <wctype.h>
-
-#include "utils/log.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -384,6 +383,7 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
+
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
 {
@@ -458,48 +458,15 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
-// UTF8toUnicode never writes the trailing zero
-//static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
-//{
-//    size_t i_t = 0;
-//    uint32_t ucode = 0;
-//    size_t i = 0;
-//    for (; (ucode = source[i]) != 0 ; i++){
-//        switch (ucode >> 4){
-//            case 0:
-//                // should never happen, catched by test above
-//                goto UTF8toUnicode_exit;
-//            break;
-//            case 1: case 2: case 3:
-//            case 4: case 5: case 6: case 7:
-//            break;
-//            /* handle U+0080..U+07FF inline : 2 bytes sequences */
-//            case 0xC: case 0xD:
-//                ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
-//                i+=1;
-//            break;
-//             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
-//            case 0xE:
-//                ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
-//                i+=2;
-//            break;
-//            case 0xF:
-//                ucode = ((ucode & 0x07) << 18)|((source[i+1] & 0x3F) << 12)|((source[i+2] & 0x3F) << 6)|(source[i+3] & 0x3F);
-//                i+=3;
-//            break;
-//            case 8: case 9: case 0x0A: case 0x0B:
-//                // these should never happen on valid UTF8
-//                goto UTF8toUnicode_exit;
-//            break;
-//        }
-//        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
-//        target[i_t] = ucode;
-//        i_t += 1;
-//    }
-//    // write final 0
-//UTF8toUnicode_exit:
-//    return i_t;
-//}
+
+constexpr uint32_t utf8_2_bytes_to_ucs(uint8_t a, uint8_t b) noexcept
+{ return ((a & 0x1F) << 6 ) |  (b & 0x3F); }
+
+constexpr uint32_t utf8_3_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c) noexcept
+{ return ((a & 0x0F) << 12) | ((b & 0x3F) << 6) |  (c & 0x3F); }
+
+constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t d) noexcept
+{ return ((a & 0x07) << 18) | ((b & 0x3F) << 12) | ((c & 0x3F) << 6) | (d & 0x3F); }
 
 class UTF8toUnicodeIterator
 {
@@ -526,16 +493,16 @@ public:
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-                this->ucode = ((this->ucode & 0x1F) << 6)|(source[0] & 0x3F);
+                this->ucode = utf8_2_bytes_to_ucs(this->ucode, source[0]);
                 source += 1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                this->ucode = ((this->ucode & 0x0F) << 12)|((source[0] & 0x3F) << 6)|(source[1] & 0x3F);
+                this->ucode = utf8_3_bytes_to_ucs(this->ucode, source[0], source[1]);
                 source += 2;
             break;
             case 0xF:
-                this->ucode = ((this->ucode & 0x07) << 18)|((source[0] & 0x3F) << 12)|((source[1] & 0x3F) << 6)|(source[2] & 0x3F);
+                this->ucode = utf8_4_bytes_to_ucs(this->ucode, source[0], source[1], source[2]);
                 source += 3;
             break;
             // these should never happen on valid UTF8
@@ -925,10 +892,10 @@ static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_
 }
 
 static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
-    const uint16_t* utf16_str = reinterpret_cast<const uint16_t*>(utf16_s);
+//    const uint16_t* utf16_str = reinterpret_cast<const uint16_t*>(utf16_s);
 
     size_t length = 0;
-    for (; *utf16_str != 0; ++utf16_str, length++);
+    for (; *utf16_s || *(utf16_s + 1); utf16_s += 2, length++);
 
     return length;
 }

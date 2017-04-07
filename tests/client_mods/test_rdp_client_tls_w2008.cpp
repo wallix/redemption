@@ -21,16 +21,16 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientTLSW2008
+#define UNIT_TEST_MODULE TestRdpClientTLSW2008
+
+
 #include "system/redemption_unit_tests.hpp"
 
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -41,7 +41,8 @@
 
 #include "../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
 
@@ -63,8 +64,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     //const char * name       = "RDP W2008 TLS Target";
     // Uncomment the code block below to generate testing data.
-    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
-    //                                     verbose);
+    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000);
 
     // Uncomment the code block below to generate testing data.
     //std::string  error_message;
@@ -94,7 +94,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                , "10.10.47.35"
                                , "192.168.1.100"
                                , 7
-                               , 511
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
+                               , to_verbose_flags(511)
                                );
     mod_rdp_params.device_id                       = "device_id";
     //mod_rdp_params.enable_tls                      = true;
@@ -103,7 +105,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     mod_rdp_params.enable_mem3blt                  = false;
-    //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -112,22 +113,24 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.server_redirection_support        = true;
+    mod_rdp_params.large_pointer_support             = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
         LOG(LOG_INFO,
             "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -140,7 +143,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //front.dump_png("trace_w2008_tls_");
 }
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket2)
+RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     int verbose = 256;
 
@@ -159,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     FakeFront front(info, verbose);
 
     //const char * name       = "RDP W2008 TLS Target";
-    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
+    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000);
 
     //std::string  error_message;
     //SocketTransport     t( name
@@ -186,7 +189,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
                                , "10.10.47.16"
                                , "10.10.43.33"
                                , 7
-                               , 511
+                               , ini.get<cfg::font>()
+                               , ini.get<cfg::theme>()
+                               , to_verbose_flags(2023)
                                );
     mod_rdp_params.device_id                       = "device_id";
     //mod_rdp_params.enable_tls                      = true;
@@ -195,7 +200,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
     mod_rdp_params.enable_mem3blt                  = false;
-    //mod_rdp_params.enable_bitmap_update            = false;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
@@ -204,21 +208,23 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.server_redirection_support        = true;
+    mod_rdp_params.large_pointer_support             = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
+    NullAuthentifier authentifier;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params);
+        gen, timeobj, mod_rdp_params, authentifier);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

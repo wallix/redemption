@@ -25,6 +25,7 @@
 #include "mod/internal/widget2/widget.hpp"
 #include "utils/sugar/cast.hpp"
 #include "gdi/graphic_api.hpp"
+#include "utils/log.hpp"
 
 class WidgetLabel : public Widget2
 {
@@ -37,7 +38,6 @@ public:
     int y_text;
     uint32_t bg_color;
     uint32_t fg_color;
-    bool auto_resize;
     bool tool;
 
     int w_border;
@@ -46,17 +46,16 @@ public:
     Font const & font;
 
 public:
-    WidgetLabel(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                NotifyApi* notifier, const char * text, bool auto_resize,
+    WidgetLabel(gdi::GraphicApi & drawable, Widget2& parent,
+                NotifyApi* notifier, const char * text,
                 int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, parent, notifier, group_id)
     , initial_x_text(xtext)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , auto_resize(auto_resize)
     , tool(false)
     , w_border(x_text)
     , h_border(y_text)
@@ -80,11 +79,6 @@ public:
                                 ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
-            if (this->auto_resize) {
-                gdi::TextMetrics tm(this->font, this->buffer);
-                this->rect.cx = this->x_text * 2 + tm.width;
-                this->rect.cy = this->y_text * 2 + tm.height;
-            }
         }
     }
 
@@ -93,22 +87,55 @@ public:
         return this->buffer;
     }
 
-    void draw(const Rect& clip) override {
-        this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        gdi::server_draw_text(this->drawable,
-                              this->font,
-                              this->x_text + this->dx(),
-                              this->y_text + this->dy(),
-                              this->get_text(),
-                              this->fg_color,
-                              this->bg_color,
-                              this->rect.intersect(clip)
+    void rdp_input_invalidate(Rect clip) override {
+        Rect rect_intersect = clip.intersect(this->get_rect());
+
+        if (!rect_intersect.isempty()) {
+            this->drawable.begin_update();
+
+            this->draw(rect_intersect, this->get_rect(), this->drawable, this->buffer,
+                this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
+
+            this->drawable.end_update();
+        }
+    }
+
+    static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
+                     char const* text, uint32_t fgcolor, uint32_t bgcolor,
+                     Font const & font, int xtext, int ytext) {
+        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, gdi::ColorCtx::depth24());
+        gdi::server_draw_text(drawable,
+                              font,
+                              xtext + rect.x,
+                              ytext + rect.y,
+                              text,
+                              fgcolor,
+                              bgcolor,
+                              gdi::ColorCtx::depth24(),
+                              rect.intersect(clip)
                               );
     }
 
     Dimension get_optimal_dim() override {
-        gdi::TextMetrics tm(this->font, this->buffer);
+        gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
         return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
+    }
+
+    static Dimension get_optimal_dim(Font const & font, char const* text, int xtext, int ytext) {
+        char buffer[buffer_size];
+
+        buffer[0] = 0;
+        if (text) {
+            const size_t remain_n = buffer_size - 1;
+            const size_t n = strlen(text);
+            const size_t max = ((remain_n >= n) ? n :
+                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
+            memcpy(buffer, text, max);
+            buffer[max] = 0;
+        }
+
+        gdi::TextMetrics tm(font, (buffer[0] ? buffer : "Édp"));
+        return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
     }
 
     bool shift_text(int pos_x) {
@@ -135,12 +162,15 @@ public:
             if (device_flags == MOUSE_FLAG_MOVE) {
                 // TODO: tm.height unused ?
                 gdi::TextMetrics tm(this->font, this->buffer);
-                if (tm.width > this->rect.cx) {
-                    this->show_tooltip(this, this->buffer, x, y);
+                if (tm.width > this->cx()) {
+                    this->show_tooltip(this, this->buffer, x, y, Rect(0, 0, 0, 0));
                 }
             }
         }
     }
 
+    void auto_resize() {
+        Dimension dim = this->get_optimal_dim();
+        this->set_wh(dim);
+    }
 };
-

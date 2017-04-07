@@ -28,7 +28,6 @@
 
 namespace detail_
 {
-
 template<const EVP_MD * (* evp)(), std::size_t DigestLength>
 class basic_HMAC
 {
@@ -57,22 +56,68 @@ public:
         }
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t (&out_data)[DigestLength])
     {
         unsigned int len = 0;
-        if (DigestLength > out_data_size){
-            uint8_t tmp[DigestLength];
-            int res = HMAC_Final(&this->hmac, tmp, &len);
-            if (res == 0) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
         int res = HMAC_Final(&this->hmac, out_data, &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
+    }
+};
+
+template<const EVP_MD * (* evp)(), std::size_t DigestLength>
+class DelayedHMAC
+{
+    bool initialized = false;
+    HMAC_CTX hmac;
+
+public:
+    DelayedHMAC() {}
+
+    void init(const uint8_t * const key, size_t key_size)
+    {
+        if (this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }        
+        HMAC_CTX_init(&this->hmac);
+        int res = HMAC_Init_ex(&this->hmac, key, key_size, evp(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+        this->initialized = true;
+    }
+
+    ~DelayedHMAC()
+    {
+        if (this->initialized){
+            HMAC_CTX_cleanup(&this->hmac);
+        }
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        if (!this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }        
+        int res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t (&out_data)[DigestLength])
+    {
+        if (!this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }        
+        unsigned int len = 0;
+        int res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+        HMAC_CTX_cleanup(&this->hmac);
+        this->initialized = false;
     }
 };
 

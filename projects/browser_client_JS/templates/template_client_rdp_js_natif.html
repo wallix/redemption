@@ -1,0 +1,1299 @@
+
+<!DOCTYPE html>
+
+
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<title>WAB Access Manager - RDP Session</title>
+<meta name="robots" content="nofollow" />
+<meta name="description" content="WAB Access Manager RDP client">
+<meta name="viewport" content="width=device-width height=device-height user-scalable=no">
+<meta name="cursor-event-mode" content="native">
+<meta name="touch-event-mode" content="pure-with-mouse-conversion">
+<!-- <link rel="SHORTCUT ICON" href="favicon.ico"/> -->
+<!-- Bootstrap CSS -->
+<!-- <link rel="stylesheet" href="css/bootstrap-3.3.6.min.css" /> -->
+
+<!-- Theme -->
+<!-- <link rel="stylesheet" href="themes/flatly/flatly-theme-3.3.6.min.css" /> -->
+<!-- <link rel="stylesheet" href="css/wabam.css?v=1.2-beta1" /> -->
+
+
+
+<!-- <link rel="stylesheet" href="css/wprdp-style.css?v=1.2-beta1"> -->
+<!-- <link rel="stylesheet" href="css/wprdp-vkb.css?v=1.2-beta1"> -->
+<!-- <link rel="stylesheet" href="css/font-awesome-4.5.0.min.css"> -->
+
+<style type="text/css">
+
+</style>
+
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+<!-- <script src="js/jquery-1.12.2.min.js"></script> -->
+<!-- <script src="js/bootstrap-3.3.6.min.js"></script> -->
+<!-- <script src="js/wprdp.js?v=1.2-beta1" type="text/javascript"></script> -->
+<!-- <script src="js/wprdpsc.js?v=1.2-beta1" type="text/javascript"></script> -->
+<script type="text/javascript">
+
+
+	    var n1 = 0;
+
+	    function startTimer() {
+		var d1 = new Date();
+		n1 = d1.getTime();
+	    }
+
+	    function endTimer() {
+		var d2 = new Date();
+		var n2 = d2.getTime();
+		console.log(n2 - n1);
+	    }
+
+
+
+            var wsBase = "<%=wsUri%>"; // socket URI
+			var protocol = (window.location.protocol == "https:" ? "wss:" : "ws:");
+            var wsBase = protocol + "//" + window.location.host + window.location.pathname + "/ws";
+            var authId = "<%=authorizationId%>";
+            var RIMtablet = navigator.appVersion && (-1 != navigator.appVersion.indexOf('RIM Tablet'));
+            var mhx = 100;
+            var mhy = 100;
+            var dragX = 0;
+            var dragY = 0;
+            var inDrag = false;
+            var rdp = null;
+            var disconnectSent = false;
+
+            var displayBeforeUnloadMessage = true;
+            var reasonMsg = null;
+
+            //responsive design
+            var resizeTimer = null;
+
+          	//Touch devices
+            var lastTouchEvent;
+          	var rightClickTimer;
+          	var dblClickTimer;
+          	var canDblClick = false;
+          	var isAndroid = !!~window.navigator.userAgent.indexOf('Android');
+          	var isFirefox = !!~window.navigator.userAgent.indexOf('Firefox');
+          	var isChrome = !!~window.navigator.userAgent.indexOf('Chrome');
+          	var isIpad = !!~window.navigator.userAgent.indexOf('iPad');
+            var isIphone = !!~window.navigator.userAgent.indexOf('iPhone');
+          	var areaContentLength;
+
+          	//Zoom
+          	var touchForZoom = false;
+          	var x1Start, y1Start, x2Start, y2Start, zoomStart = 1, dStart;
+          	var zoomLvl = 0.01;
+
+
+            function isTouchDevice() {
+            	try {
+        	    	document.createEvent("TouchEvent");
+        	    	return true;
+        	  	} catch (e) {
+        			return false;
+        		}
+            }
+
+            function RDPrun() {
+                /*var wsUri = wsBase
+                       + '?authorizationId=' + encodeURIComponent(authId);
+                //<% if ( runAsAdmin ) { %>
+                	wsUri += '&rdpAsAdmin=true';
+                //<% } %>
+
+
+                $('#dvLoading').css('visibility', 'visible');
+
+                rdp = new wprdp.RDP(wsUri, document.getElementById('screen'), !RIMtablet, RIMtablet);
+
+                rdp.addEvent('alert', function(msg) {
+                        alert(msg);
+                 });
+
+                rdp.addEvent('connected', function() {
+                   // $(window).bind('resize', OnDesktopSize);
+                    window.addEventListener('beforeunload', function (e) {
+                    	var mess = '<%=rdpMsg.pleaseConfirm1()%>';
+                    	if ( rdp.RDPconnected )
+                    		mess = '<%=rdpMsg.pleaseConfirm2()%>';
+
+                    	if ( reasonMsg != null ) {
+                    		mess = reasonMsg + '\n' + mess;
+                    	}
+                    	if ( displayBeforeUnloadMessage == true ) {
+                    	  (e || window.event).returnValue = mess;
+                    	  return mess;
+                    	}
+                    });
+                });
+                rdp.addEvent('disconnected', function() {
+                    OnDesktopSize();
+                    $(window).unbind('resize', ResizeCanvas);
+                });
+                rdp.addEvent('disconnected', function() {
+                    $('#extracommands *').prop('disabled',true);
+                    $('#ctrlaltdelete').unbind('click');
+                    $('#numlock').unbind('click');
+                    $('#capslock').unbind('click');
+                    $('#numlock').removeClass('enabled');
+                    $('#capslock').removeClass('enabled');
+                    $('#disconnect').unbind('click');
+
+                    $('#showclipboard').unbind('click');
+                    $('#showclipboard').css('color', '#6e6e6e');
+    	        	$('#showclipboard').html('<%=rdpMsg.showClipboard()%>');
+
+                    $('#sendclipboard').unbind('click');
+
+                    $('#downloadfile').unbind('click');
+    	        	$('#downloadfile').css('color', '#6e6e6e');
+    	        	$('#downloadfile').html('<%=rdpMsg.downloadFile()%>');
+                    });
+                rdp.addEvent('mouserelease', ResetRdpMouseFlags);
+                rdp.addEvent('touch2', function() {
+                    ShowMouseHelper($('#mousehelper').hasClass('invisible'));
+                });
+
+                rdp.addEvent('touch4', function() {
+                    if (confirm('<%=rdpMsg.areYouSureYouWantToDisconnect()%>')) {
+                        rdp.Disconnect();
+                        window.close();
+                    }
+                });
+
+                $('#extracommands').css( 'visibility', 'visible' );
+                $('#ctrlaltdelete').bind('click', sendCtrlAltDel);
+                $('#numlock').bind('click', function(evt) {sendLock(evt, 'numlock');});
+                $('#capslock').bind('click', function(evt) {sendLock(evt, 'capslock');});
+                $('#disconnect').bind('click', sendDisconnect);
+
+                //<% if ( enableClipboardDown ) { %>
+                window.addEventListener('clipboardevent', onClipboardCopy);
+                //<% } %>
+
+                //<% if ( enableClipboardFile ) { %>
+                window.addEventListener('clipboardfileevent', onClipboardFileCopy);
+                //<% } %>
+
+                // Workaround Socket Connection issue within Chrome: wait 500ms...
+                setTimeout(function() {
+                    rdp.Run();
+                }, 500);*/
+            }
+
+            function SetRdpMouseFlags() {
+                var mf = {
+                    'r': $('#rclick').checked,
+                    'm': $('#mclick').checked,
+                    'a': $('#aclick').checked,
+                    's': $('#sclick').checked,
+                    'c': $('#cclick').checked,
+                };
+                rdp.SetArtificialMouseFlags(mf);
+            }
+            function ResetRdpMouseFlags() {
+                $('#rclick').checked = false;
+                $('#mclick').checked = false;
+                $('#aclick').checked = false;
+                $('#sclick').checked = false;
+                $('#cclick').checked = false;
+                rdp.SetArtificialMouseFlags(null);
+            }
+            function ShowMouseHelper(show) {
+                var mh = $('#mousehelper');
+                inDrag = false;
+                if (show) {
+                    mh.setStyles({'position':'absolute','top':mhy,'left':mhx,'z-index':999});
+                    mh.bind('mousedown',DragStart);
+                    $('#rclick').bind('change', SetRdpMouseFlags);
+                    $('#mclick').bind('change', SetRdpMouseFlags);
+                    $('#aclick').bind('change', SetRdpMouseFlags);
+                    $('#sclick').bind('change', SetRdpMouseFlags);
+                    $('#cclick').bind('change', SetRdpMouseFlags);
+                    mh.removeClass('invisible');
+                } else {
+                    mh.removeEvents();
+                    mh.addClass('invisible');
+                    $('#rclick').removeEvents();
+                    $('#mclick').removeEvents();
+                    $('#aclick').removeEvents();
+                    $('#sclick').removeEvents();
+                    $('#cclick').removeEvents();
+                }
+            }
+
+            function OnDesktopSize() {
+            	var w = Math.max($(window).width(), 500); //500 = min RDP width
+                var h = Math.max($(window).height(), 350 + $('#extracommands').height());//350 = min RDP height
+
+                if (RIMtablet) {
+                    // Toplevel bar not removable
+                    h -= 31;
+                }
+                if (w % 2) {
+                   w -= 1;
+                }
+                //var canvasWrap = document.getElementById('canvasWrap');
+                //canvasWrap.style.width =  w + 'px';
+                //canvasWrap.style.height =   (h - 40) + 'px';
+
+                //var canvas = document.getElementById('screen');
+                //canvas.style.position = 'inherit';
+                //canvas.style.margin = "0 auto";
+
+                /*<% if (RDPClient.getPresetWidth() != -1) { %>
+                canvas.setAttribute("width",  <%=RDPClient.getPresetWidth()%>);
+                canvasWrap.style.overflowX='auto';
+                <% } else { %>*/
+                //canvas.setAttribute("width", w);
+                //canvasWrap.style.overflowX='hidden'; //not hidde overflow, it makes an issue for zoom
+                //<% } %>
+                /*<% if (RDPClient.getPresetHeight() != -1) {%>
+                canvas.setAttribute("height", <%=RDPClient.getPresetHeight()%>);
+                canvasWrap.style.overflowY='auto';
+                <% } else { %>*/
+                //canvas.setAttribute("height", h - 40);
+//                 canvasWrap.style.overflowY='hidden'; //not hidde overflow, it makes an issue for zoom
+                //<% } %>
+
+               ResizeCanvas();
+            }
+
+            function DragStart(evt) {
+                var mh = $('#mousehelper');
+                if (!mh.hasClass('invisible')) {
+                    inDrag = true;
+                    dragX = evt.page.x;
+                    dragY = evt.page.y;
+                    window.bind('mouseup',DragEnd);
+                    window.bind('touchmove',DragMove);
+                }
+            }
+            function DragEnd(evt) {
+                inDrag = false;
+                var mh = $('#mousehelper');
+                window.removeEvent('touchmove',DragMove);
+                window.removeEvent('mouseup',DragEnd);
+            }
+            function DragMove(evt) {
+                if (inDrag) {
+                    var dx = evt.page.x - dragX;
+                    var dy = evt.page.y - dragY;
+                    dragX = evt.page.x;
+                    dragY = evt.page.y;
+                    var mh = $('#mousehelper');
+                    if (!mh.hasClass('invisible')) {
+                        mhx += dx;
+                        mhy += dy;
+                        mh.setStyles({'top':mhy,'left':mhx});
+                    }
+                }
+            }
+
+            function ResizeCanvas() {
+            	var canvasWrap = document.getElementById("canvasWrap");
+               	var canvas = document.getElementById("screen");
+               	//make rdp screen more responsive
+               	var availableHeight = $('body').height() - $('#extracommands').height()
+               	var canvasRatio = 1.0 * $(canvas).width() / $(canvas).height();
+               	var wrapRatio = 1.0 * $('body').width() / availableHeight;
+               	if(wrapRatio > canvasRatio) {
+            		//max height, width auto
+            	   	$(canvasWrap).css('width', 'auto');
+                   	$(canvasWrap).css('height', '100%');
+                   	$(canvas).css('width','auto');
+                   	$(canvas).css('height', availableHeight + 'px');
+               	} else {
+            	  	//max width, height auto
+            	   	$(canvasWrap).css('width', '100%');
+                   	$(canvasWrap).css('height', 'auto') ;
+                   	$(canvas).css('width','100%');
+                   	$(canvas).css('height', 'auto');
+               	}
+
+               	$(canvas).css('transform', '');
+            }
+
+		    var sendDisconnect = function() {
+            	var mess = '<%=rdpMsg.pleaseConfirm1()%>';
+            	if ( rdp.RDPconnected )
+            		mess = '<%=rdpMsg.pleaseConfirm2()%>';
+				if (confirm(mess)) {
+				    $('#extracommands').css('visibility', 'hidden');
+				    rdp.Disconnect();
+				    displayBeforeUnloadMessage = false;
+				    window.close();
+				}
+	        };
+
+	        //<% if ( enableClipboardUp ) { %>
+	        var getClipboardDivContent = function (areaId) {
+	        	var divContent = $('#' + areaId).val();
+
+	        	var re, tmp, result;
+
+	        	/*switch ( _browser.name ) {
+		        	case "chrome" :
+		        	case "safari" :
+		        		// New line produces ascii 10 character
+		        		re = new RegExp('\n', 'g');
+			        	tmp = '\r\n';
+			        	result = divContent.replace(re, tmp);
+		        		break;
+		        	case "firefox" :
+		        		// New line produces <br> tag
+		        		re = new RegExp('<br>', 'g');
+			        	tmp = '\r\n';
+			        	result = divContent.replace(re, tmp);
+		        		break;
+		        	case "ie" : //IE + Edge
+		        		// New line produces double ascii=13+ascii=10 characters
+		        		re = new RegExp('\r\n\r\n', 'g');
+			        	tmp = '\r\n';
+			        	result = divContent.replace(re, tmp);
+		        		break;
+		        	default:
+		        		throw "Unsupported browser";
+		        		break;
+	        	}*/
+
+            	return result;
+	        }
+	        //<% } %>
+
+	        var stringToBuf = function (str) {
+	        	/*var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+	        	var bufView = new Uint16Array(buf);
+
+	        	for (var i=0, strLen=str.length; i < strLen; i++) {
+	        	  bufView[i] = str.charCodeAt(i);
+	        	}
+
+	        	return buf;*/
+	        }
+
+	        var uintToString = function (uintArray) {
+	            var encodedString = String.fromCharCode.apply(null, uintArray);
+	            return encodedString;
+	        }
+
+	        //<% if ( enableClipboardDown ) { %>
+	        var onClipboardCopy = function( event ) {
+	        	var array16 = event.detail.clipcontent;
+
+	        	var myString = uintToString(array16); // offset due to operationId and data length
+	        	$('#clipboardContent').val(myString);
+	        	$('#showclipboard a').css('color', '#ff5500');
+
+	        	$('#showclipboard a').html('<%=rdpMsg.showClipboard()%> <sup> *</sup>');
+	        }
+	        //<% } %>
+
+	        //<% if ( enableClipboardFile ) { %>
+	        function getFileUploadDownloadURL( currentURL, downUp ) {
+	        	var rdpFileDownload = '<%=RdpConstants.RDP_DOWNLOAD_SERVLET%>';
+	        	var rdpFileUpload = '<%=RdpConstants.RDP_UPLOAD_SERVLET%>';
+	        	var rdpServlet = '<%=RdpConstants.RDP_SERVLET%>';
+
+        		var resultURL = currentURL.replace('/' + rdpServlet, downUp ? '/' + rdpFileDownload : '/' + rdpFileUpload);
+
+	        	return resultURL;
+	        }
+
+	        function fillFileUploadFormData() {
+	        	// var initialForm = new FormData($('#uploadform')[0]);
+	        	var fileList = $('#fileinput').prop('files');
+	        	var formData = new FormData();
+	        	formData.append('<%=RdpConstants.RDP_SOCKET_ID_PARAM%>', rdp.sid);
+	        	// First adding file names
+	        	for (var i = 0; i < fileList.length; ++i)
+	            {
+	                formData.append('<%=UploadConstants.LOCAL_FILE_NAME_PARAM%>', fileList[i].name);
+	                formData.append('<%=SshConstants.LOCAL_FILE_SIZE_PARAM%>', fileList[i].size);
+	            }
+	        	// Adding file content
+	        	for (var i = 0; i < fileList.length; ++i)
+	            {
+	                formData.append('file['+i+']', fileList[i], fileList[i].name);
+	            }
+
+	        	return formData;
+	        }
+
+	        var onClipboardFileCopy = function( event ) {
+	        	var numFiles = event.detail.numfiles;
+
+	        	$('#downloadfile a').css('color', '#ff5500');
+	        	$('#downloadfile a').html('<%=rdpMsg.downloadFile()%> <sup> (' + numFiles + ')</sup>');
+	        }
+	        var downloadFiles = function() {
+	        	$('#downloadfile a').css('color', '');
+	        	$('#downloadfile a').html('<%=rdpMsg.downloadFile()%>');
+	        	var downloadURL = getFileUploadDownloadURL(window.location.pathname, true) + '?<%=RdpConstants.RDP_SOCKET_ID_PARAM%>='	+ rdp.sid;
+	        	$('#downloadfileiframe').attr('src', downloadURL);
+            }
+
+	        var uploadFiles = function() {
+	        	$('#fileinput').trigger('click');
+            }
+	        //<% } %>
+
+            var sendCtrlAltDel = function() { rdp.SendComb(1); };
+
+            var sendLock = function(evt, locktype) {
+            	rdp.SendKey(locktype);
+
+            	if ( $(evt.target).hasClass('enabled') ) {
+            		$(evt.target).removeClass('enabled');
+            	}
+            	else {
+            		$(evt.target).addClass('enabled');
+            	}
+
+            	rdp.lastKeydownTarget = $('#screen');
+            };
+
+            //<% if ( enableClipboardWindow ) { %>
+	            //<% if ( enableClipboardUp ) { %>
+	            var sendClipboard = function( areaId ) {
+	            	var divContent = getClipboardDivContent(areaId);
+
+	            	var contentBuffer = stringToBuf( divContent );
+
+	            	rdp.SendClipboard( contentBuffer );
+	            }
+	            //<% } %>
+            //<% } %>
+            $(document).ready( function() {
+                OnDesktopSize();
+                if (RIMtablet) {
+                    // Set default performance flags to modem
+                    $('#perf').value = '2';
+                }
+               $(window).bind('resize', ResizeCanvas);
+
+                //<% if ( enableClipboardWindow ) { %>
+                	$('#clipboardDiv').on('shown.bs.modal', function () {
+                	  	//reset the "show clipboard" css menu
+                		$('#showclipboard a').css('color', '#6e6e6e');
+        	        	$('#showclipboard a').html('<%=rdpMsg.showClipboard()%>');
+                	});
+	                //<% if ( enableClipboardUp ) { %>
+	                	$('#sendclipboard').click( function() {sendClipboard('clipboardContent');} );
+	                //<% } %>
+                //<% } %>
+
+                //<% if ( enableClipboardFile ) { %>
+                $('#downloadfile').click( function() {downloadFiles();} );
+                $('#uploadfile').click( function() {uploadFiles();} );
+                $('#uploadform').on('submit', function(event){
+                    event.preventDefault();
+                    var upload_data = fillFileUploadFormData();
+                    /* $.ajax({
+                        url: $(this).attr('action'),
+                        type: $(this).attr('method'),
+                        data: $(this).serialize()
+                        }); */
+                    $.ajax({
+                        type: $(this).attr('method'),
+                        url: $(this).attr('action'),
+                        data: upload_data,
+                        contentType: false,
+                        processData: false
+                    });
+                });
+
+                //<% } %>
+
+                // Special handling of webkit nightly builds
+                var webkitOK = false;
+                var wkVA = RegExp("( AppleWebKit/)([^ ]+)").exec(navigator.userAgent);
+                if (wkVA && (wkVA.length > 2)) {
+                    if (wkVA[2].indexOf('+') != -1) {
+                        webkitOK = true;
+                    }
+                }
+                var layout = getDefaultInputLayout();
+
+                //wprdp.setLayout(layout);
+
+                var option = document.getElementById("input_layout_" + layout);
+                if (option) {
+                	option.selected = true;
+                }
+
+                /*var wsOK = RIMtablet || webkitOK ||
+                    (_browser.name==='firefox' && (_browser.version >= 11.0)) ||
+                    (_browser.name === 'chrome' && (_browser.version >= 17)) ||
+                    (_browser.name === 'safari' && (_browser.version >= 6)) ||
+                    (_browser.name === 'ie' && (_browser.version >= 10.0));
+                if (wsOK) {
+                	RDPrun();
+                } else {
+                    alert('Sorry!\nYour Browser (' + _browser.name + ' ' + _browser.version
+                            + ') does not yet\nprovide the required HTML5 features '
+                            + 'for this application.\n');
+                }*/
+
+                //Update view for touch device
+                if(isTouchDevice()) updateViewForMobile();
+
+        	} );
+
+            function getDefaultInputLayout() {
+            	var lang;
+
+            	if(typeof(Storage) !== "undefined") {
+            		lang = localStorage.getItem("input_layout");
+            		if (lang) {
+            			return lang;
+            		}
+            	}
+
+            	lang = navigator.language || navigator.userLanguage;
+            	if (lang) {
+            		switch (lang.toLowerCase()) {
+            	    default:
+            	        return "us";
+
+            	    case "en-uk":
+            	    case "uk":
+            	        return "uk";
+
+            	    case "fr-fr":
+            	    case "fr":
+            	    	return "fr";
+
+            	    case "es-es":
+            	    case "es":
+            	    	return "es";
+
+            	    case "de-de":
+            	    case "de":
+            	    	return "de";
+
+            	    case "ru":
+            	    	return "ru";
+            	}
+            	} else {
+            		return "us";
+            	}
+            }
+
+            function changeLayout( layout ) {
+            	wprdp.setLayout(layout);
+            	$('#layoutselect').blur();
+            	rdp.lastKeydownTarget = $('#screen');
+            }
+
+            function submitFiles() {
+            	var submitUrl = getFileUploadDownloadURL(window.location.pathname, false);
+            	$('#uploadform').attr('action', submitUrl);
+            	$('#uploadform').submit();
+            }
+
+            //************************************
+            //			TOUCH DEVICES
+            //************************************
+
+            //Update the view for touch device
+            function updateViewForMobile() {
+            	updateMenu();
+            	bindTouchEvent();
+            }
+
+            //Update the menu for touch devices
+            function updateMenu() {
+            	$('.desktopOnly').remove();
+            	$('.mobileOnly').show();
+            }
+
+            //Show/Hide virtual keyboard
+            function toggleKeyboard() {
+            	var canvas = $('#screen');
+            	var input = $('#rdpKeyboardInput');
+
+            	//create input if doesn't exist
+            	if(!$(input).length) {
+            		createInputKeyboard();
+            		input = $('#rdpKeyboardInput');
+            	}
+
+            	if($(input).hasClass('openned')) {
+            		//close keyboard
+            		$(canvas).focus();
+            		$(input).removeClass('openned');
+            		$(input).remove();
+            	} else {
+            		//open keyboard
+            		$(input).focus();
+            		$(input).addClass('openned');
+            	}
+            }
+
+            //Enable/disable the zoom mode for canvas
+            function toggleZoomMode() {
+            	touchForZoom = !touchForZoom;
+            	var zoomMenu = $('#canvasNavigation').get(0);
+            	if(touchForZoom) {
+            		$(zoomMenu).css('color', '#ff5500');
+            	} else {
+            		$(zoomMenu).css('color', '');
+            	}
+            }
+
+
+            //Adding event listener
+            function on(elem, type, fn) {
+            	elem.addEventListener(type, fn);
+            }
+
+            function createInputKeyboard() {
+            	$('body').append('<input id="rdpKeyboardInput" type="text" autocapitalize="none" autocorrect="off"></input>');
+            	var input = document.getElementById('rdpKeyboardInput');
+        		$(input).css('position', 'absolute');
+        		$(input).css('top', '-32000px');
+        		$(input).css('left', '-32000px');
+        		$(input).css('width', '10px'); //do not set to 0, due to backspace close keyboard
+        		$(input).css('height', '10px'); //do not set to 0, due to backspace close keyboard
+        		$(input).css('opacity', '0');
+        		$(input).css('background-color', 'transparent');
+        		$(input).css('border-style', 'none');
+        		$(input).css('outline-style', 'none');
+
+        		//events
+        		//if(isAndroid) {
+       			on(input, 'keydown', function(e){
+       				areaContentLength = input.value.length;
+       				e.stopPropagation();
+       			});
+
+       			on(input, 'keyup', function(e) {
+       				e.stopPropagation();
+       				if(e.keyCode == 13) {
+       					// \n
+       					rdp.SendKey('Enter');
+       				} else if((e.keyCode === getDefaultKeyCode() || e.keyCode == 8)
+       						&& (input.value.length < areaContentLength || input.value.length === 0)) {
+       					//compare current input value with the areaContentLength to know if we need to send a backspace
+       					rdp.SendKey('Backspace'); //backspace
+       					areaContentLength = input.value.length;
+       				} else {
+       					//normal value
+       					var key = input.value;
+						var cmbKey = rdp.getMobileCmbForKey(key);
+						if(cmbKey) {
+							for(var i = 0; i < cmbKey.length; i++) {
+								var cmb = cmbKey[i];
+
+								if(rdp.isKeyForKeyDown(cmb)) {
+									var modifier = cmb.substring(0, cmb.length - 'Down'.length);
+
+									//create correct event for RDP
+									var evt = new Event('keydown');
+									if(modifier === 'AltGraph') evt.key = modifier;
+									evt.keyCode = modifier;
+									rdp.lastKeydownTarget = $('#screen').get(0);
+
+									rdp.onKd(evt);
+								} else if(rdp.isKeyForKeyUp(cmb)) {
+									var modifier = cmb.substring(0, cmb.length - 'Up'.length);
+
+									//create correct event for RDP
+									var evt = new Event('keyup');
+									if(modifier === 'AltGraph') evt.key = modifier;
+									evt.keyCode = modifier;
+									rdp.lastKeydownTarget = $('#screen').get(0);
+
+									rdp.onKu(evt);
+								} else {
+									rdp.SendKey(cmb);
+								}
+							}
+						}
+       				}
+
+       				//reset the value
+       				if(isFirefox) {
+       					//Firefox for Android issue
+       					//when setting a value to an input, the input need to loose focus
+       					//to the new value become effective.
+       					//So we use a workaround: select()
+       					//see: http://stackoverflow.com/questions/35551974/reset-input-value-for-androidfirefox
+       					input.select();
+       				} else {
+       					input.value = '';
+       					input.textContent = '';
+       				}
+       			});
+            }
+
+            function getDefaultKeyCode() {
+            	if(isAndroid) {
+            		if(isFirefox) return 0;
+            		if(isChrome) return 229;
+            	}
+            	return -1;
+            }
+
+            //Bind usefull events for mobile and touch devices
+            function bindTouchEvent() {
+            	var canvas = $('#screen');
+				$(canvas).on("touchstart", function(e) {
+					e.stopPropagation();
+					e.preventDefault();
+
+
+					if(!touchForZoom) {
+						//close virtual keyborad if needed
+						if($('#rdpKeyboardInput').hasClass('openned')) {
+							toggleKeyboard();
+						}
+
+						//do with event
+						if(e.originalEvent.touches.length == 1) {
+							//simple touch
+							e.pageX = e.originalEvent.touches[0].pageX;
+							e.pageY = e.originalEvent.touches[0].pageY;
+							lastTouchEvent = e;
+							rightClickTimer = setTimeout(doRightClick, 1000);
+							$(this).trigger({
+								type: 'mousedown',
+								pageX: e.pageX,
+								pageY: e.pageY,
+								which: 0 //left
+							});
+						}
+					} else {
+						if(e.originalEvent.touches.length >= 2 )
+							doTouchStartToZoom(this, e)
+						else
+							doTouchStartToTranslate(this, e);
+					}
+				});
+
+				$(canvas).on("dblclick", function(e) {
+					doDblClick();
+				});
+
+				$(canvas).on("touchmove", function(e) {
+					e.stopPropagation();
+					e.preventDefault();
+
+					if(!touchForZoom) {
+						if(e.originalEvent.touches.length == 1) {
+							//simple touch
+							e.pageX = e.originalEvent.touches[0].pageX;
+							e.pageY = e.originalEvent.touches[0].pageY;
+							if(Math.abs(e.pageX - lastTouchEvent.pageX) > 1
+									|| Math.abs(e.pageY - lastTouchEvent.pageY) > 1) {
+								clearTimeout(rightClickTimer);
+							}
+							lastTouchEvent = e;
+							if(!canDblClick) {
+								$(this).trigger({
+									type: 'mousemove',
+									pageX: e.pageX,
+									pageY: e.pageY,
+									which: 0 //left
+								});
+							}
+						}
+					} else {
+
+						if(e.originalEvent.touches.length >= 2 )
+							doTouchMoveToZoom(this, e)
+						else
+							doTouchMoveToTranslate(this, e);
+					}
+				});
+
+				$(canvas).on("touchend", function(e) {
+					clearTimeout(rightClickTimer);
+					e.stopPropagation();
+					e.preventDefault();
+
+					if(!touchForZoom) {
+						$(this).trigger({
+							type: 'mouseup',
+							pageX: lastTouchEvent.pageX,
+							pageY: lastTouchEvent.pageY,
+							which: 0 //left
+						});
+
+						if(!canDblClick) {
+							canDblClick = true;
+							dblClickTimer = setTimeout(function(){ canDblClick = false; }, 150);
+						} else {
+							//send dbl click
+							canDblClick = false;
+							$(this).dblclick(); //send dblclick event
+						}
+						//reset saved event
+						clearLastTouchEvent();
+					} else {
+						doTouchEnd($('#screen').get(0), e);
+					}
+				});
+            }
+
+            //Reset the saved event
+            function clearLastTouchEvent() {
+            	lastTouchEvent = null;
+            }
+
+            //Simulate right click
+            function doRightClick() {
+            	var canvas = $('#screen');
+            	if(rdp) {
+            		//On windows, context menu is visible only on mouseup.
+            		//So we need to fire right click mousedown
+            		//followed by right click mouseup
+					$(canvas).trigger({
+						type: 'mousedown',
+						pageX: lastTouchEvent.pageX,
+						pageY: lastTouchEvent.pageY,
+						which: 3 //right
+					});
+					setTimeout(function() {
+						$(canvas).trigger({
+							type: 'mouseup',
+							pageX: lastTouchEvent.pageX,
+							pageY: lastTouchEvent.pageY,
+							which: 3 //right
+						});
+					}, 10);
+            	}
+            }
+
+            //Trigger mousedown + up twice
+            function doDblClick() {
+            	//reset values
+            	clearTimeout(dblClickTimer);
+            	canDblClick = false;
+
+            	//send dbl click
+            	var canvas = $('#screen');
+            	var evt = lastTouchEvent;
+
+            	for(var i = 0; i < 2; i++) {
+            		$(canvas).trigger({
+    					type: 'mousedown',
+    					pageX: evt.pageX,
+    					pageY: evt.pageY,
+    					which: 0 //left
+    				});
+
+                	$(canvas).trigger({
+    					type: 'mouseup',
+    					pageX: evt.pageX,
+    					pageY: evt.pageY,
+    					which: 0 //left
+    				});
+            	}
+            }
+
+            //Zoom (scale) canvas
+            function doTouchStartToZoom(canvas, e) {
+            	var canvasRect = canvas.getBoundingClientRect();
+            	var e1 = e.originalEvent.touches[0];
+                var e2 = e.originalEvent.touches[1];
+                x1Start = e1.pageX;
+                y1Start = e1.pageY;
+                x2Start = e2.pageX;
+                y2Start = e2.pageY;
+
+                dStart = Math.sqrt( Math.pow(x2Start - x1Start, 2) + Math.pow(y2Start - y1Start, 2));
+                zoomStart = canvas.getBoundingClientRect().width / canvas.offsetWidth;
+            }
+
+            //Zoom (scale) canvas
+            function doTouchMoveToZoom(canvas, e) {
+            	var canvasRect = canvas.getBoundingClientRect();
+            	var e1 = e.originalEvent.touches[0];
+                var e2 = e.originalEvent.touches[1];
+                var x1End = e1.pageX;
+                var y1End = e1.pageY;
+                var x2End = e2.pageX;
+                var y2End = e2.pageY;
+
+                //==== Zoom
+                var dEnd = Math.sqrt(Math.pow(x2End - x1End, 2) + Math.pow(y2End - y1End, 2));
+                var dDiff = dEnd - dStart;
+
+                var zoomEnd = zoomStart + (dDiff * zoomLvl);
+                zoomEnd = Math.max(zoomEnd, 1);
+
+                //==== Translate
+                var translateValues = getTranslateValues(canvas);
+				var translateX = translateValues[0];
+                var translateY = translateValues[1];
+
+                //security
+                if(canvasRect.width <= $(window).width() || zoomEnd == 1) {
+                	translateX = 0;
+                }
+                if(canvasRect.height <= $(canvas).height() || zoomEnd == 1){
+                	translateY = 0;
+                }
+
+                //==== Apply CSS
+                applyCSSZoom(canvas, zoomEnd, translateX, translateY);
+                zoomStart = zoomEnd;
+                x1Start = x1End;
+                y1Start = y1End;
+                x2Start = x2End;
+                y2Start = y2End;
+                dStart = dEnd;
+            }
+
+            //Translate canvas
+            function doTouchStartToTranslate(canvas, e) {
+            	x1Start = e.originalEvent.touches[0].pageX;
+            	y1Start = e.originalEvent.touches[0].pageY;
+            }
+
+            //Translate canvas
+            function doTouchMoveToTranslate(canvas, e) {
+            	x1End = e.originalEvent.touches[0].pageX;
+            	y1End = e.originalEvent.touches[0].pageY;
+
+            	var translateValues = getTranslateValues(canvas);
+
+            	if(!x1Start) x1Start = x1End;
+            	if(!y1Start) y1Start = y1End;
+
+            	var canvasRect = canvas.getBoundingClientRect();
+            	var currentZoom = getScaleValue(canvas);
+
+            	var newTranslateX;
+            	if(canvasRect.width > $(window).width()) {
+            		var dx= x1End - x1Start;
+	            	if(dx + canvasRect.left >= 0) {
+	            		dx = -canvasRect.left;
+	            	} else if( dx + canvasRect.right <= $(window).width()) {
+	            		dx = -canvasRect.right + $(window).width();
+	            	}
+	            	dx /= currentZoom;
+	            	newTranslateX = translateValues[0] + dx;
+            	} else {
+            		//all canvas width is shown in the window,
+            		//not allow to translateX
+            		newTranslateX = 0;
+            	}
+
+            	var newTranslateY;
+            	if(canvasRect.height > $(canvas).height()) {
+	            	var dy = y1End - y1Start;
+	            	if(dy + canvasRect.top >= $('#extracommands').height()) {
+	            		dy = $('#extracommands').height() - canvasRect.top;
+	            	} else if (dy + canvasRect.bottom <= $(canvas).height() +  $('#extracommands').height()) {
+	            		dy = -canvasRect.bottom + $(canvas).height() + $('#extracommands').height();
+	            	}
+	            	dy /= currentZoom;
+	            	newTranslateY = translateValues[1] + dy
+            	} else {
+            		//all canvas height is shown in the window,
+            		//not allow to translateY
+            		newTranslateY = 0;
+            	}
+
+            	applyCSSZoom(canvas, currentZoom, newTranslateX, newTranslateY);
+
+            	x1Start = x1End;
+            	y1Start = y1End;
+            }
+
+            function applyCSSZoom(canvas, zoom, x, y) {
+            	//apply CSS
+            	$(canvas).css('-ms-transform', 'scale(' + zoom + ') translate(' + x + 'px,' + y + 'px)');
+            	$(canvas).css('-o-transform', 'scale(' + zoom + ') translate(' + x + 'px,' + y + 'px)');
+              	$(canvas).css('-moz-transform', 'scale(' + zoom + ') translate(' + x + 'px,' + y + 'px)');
+              	$(canvas).css('-webkit-transform', 'scale(' + zoom + ') translate(' + x + 'px,' + y + 'px)');
+              	$(canvas).css('transform', 'scale(' + zoom + ') translate(' + x + 'px,' + y + 'px)');
+            }
+
+            function doTouchEnd(canvas, e) {
+            	x1Start = null;
+            	x2Start = null;
+            	y1Start = null;
+            	y2Start = null;
+            }
+
+            //Return [translateX, translateY]
+            function getTranslateValues(canvas) {
+            	//Get the css matrix(scaleX, skewY, skewX, scaleY, translateX, translateY)
+            	var transform = $(canvas).css('transform');
+            	if(!transform) return [0,0];
+            	var translate = transform.match(/matrix\((.*)\)/);
+            	if(!translate || translate.length != 2) return [0,0];
+            	var matrix = translate[1].split(',');
+            	if(!matrix || matrix.length != 6) return [0,0];
+            	return [parseInt(matrix[4]) / matrix[0], parseInt(matrix[5]) / matrix[3]];
+            }
+
+          //Return [translateX, translateY]
+            function getScaleValue(canvas) {
+            	//Get the css matrix(scaleX, skewY, skewX, scaleY, translateX, translateY)
+            	var transform = $(canvas).css('transform');
+            	if(!transform) return 1;
+            	var translate = transform.match(/matrix\((.*)\)/);
+            	if(!translate || translate.length != 2) return 1;
+            	var matrix = translate[1].split(',');
+            	if(!matrix || matrix.length != 6) return 1;
+            	return parseFloat(matrix[0]);
+            }
+        </script>
+</head>
+
+<body id="wrapper">
+
+<!--
+    <script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+-->
+
+    <script>
+
+      var socket;
+
+      var ipTarget;
+      var userTarget;
+      var passwordTarget;
+      var portTarget;
+
+      function connecting() {
+
+        console.log('>> connecting()');
+
+        ipTarget       = document.getElementById("ip").value;
+        userTarget     = document.getElementById("user").value;
+        passwordTarget = document.getElementById("password").value;
+        portTarget     = document.getElementById("port").value;
+
+
+        /* SOCKET CONNECTION */
+
+        /* Test */
+        var ip = 'localhost';
+        var port = 8080;
+        /* Test */
+
+        var url = 'http://' + ip + ':' + port.toString();
+        console.log("url = " + url);
+
+        /* Connection */
+        //socket = io.connect(url);
+        /* Connection */
+
+
+
+        document.getElementById("errorMsgDiv").style = "display:none";
+
+        var pip       = allocate(intArrayFromString(ipTarget)      , 'i8', ALLOC_NORMAL);
+        var puser     = allocate(intArrayFromString(userTarget)    , 'i8', ALLOC_NORMAL);
+        var ppassword = allocate(intArrayFromString(passwordTarget), 'i8', ALLOC_NORMAL);
+
+        document.getElementById("form").style = "display:none";
+        document.getElementById("emscripten_canvas").style = "display:block";
+
+		socket = new WebSocket("ws://localhost:8080", "rdp-protocol");
+        socket.binaryType = 'arraybuffer';
+
+		socket.addEventListener('open', function (event) { // receive from server
+        	_connexion(pip, puser, ppassword, port);
+        	_client_event();
+		});
+
+        socket.addEventListener('message', function (event) { // receive from server
+            //var len = ( ((data[4] << 12) | (data[5] << 8) | (data[6] << 4) | data[7])) *2;
+            var data = new Uint8Array(event.data);
+            //var len = (data[2] << 4) | data[3];
+
+            var text = "";
+            console.log('Received Binary Message of ' + data.length + ' bytes');
+            for (var i = 0 ; i < data.length ; ++i){
+                text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+            }
+             console.log("Client : Server Says : "+text);
+
+            /*for (var i = 0; i < len; i+=2) {
+                _recv_value((data[i] << 4) | data [i+1]);
+            }*/
+            for (var i = 0; i < data.length; i++) {
+                _recv_value(data[i]);
+            }
+        });
+
+        socket.addEventListener('disconnect', function() {
+          console.log('disconnected from server');
+        });
+      }
+
+	  function send_to_serveur(data, size) { // Send to server
+      //var test_data = [ 3, 0, 0, 30, 25, 224, 0, 0, 0, 0, 0, 67, 111, 111, 107, 105, 101, 58, 32, 109, 115, 116, 115, 104, 97, 115, 104, 61, 13 ];
+
+			console.log("Sending "+size+" bytes to server");
+
+			// TODO: as we are waiting websocket ready before connecting, the test below should not be necessary now
+            if (socket.readyState == 1){
+				var text = "";
+				for (var i = 0 ; i < data.length ; ++i){
+					text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+				}
+		  		console.log("Data Sent to Server : "+text);
+                socket.send(data); //, { binary: true });
+            } else {
+				//TODO: replace that with onready event from websocket
+				console.log("Waiting for server to be ready");
+                setInterval(function() { send_to_serveur(data, size); }, 1000);
+            }
+            //socket.send(JSON.stringify({data:data, msg:'message : sending data', index:0}));
+      }
+
+    </script>
+	<!-- NavBar -->
+	<nav id="extracommands" class="navbar navbar-default navbar-static-top">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand mobileOnly" style="display: none;" href="#" onclick="toggleKeyboard();">
+					<i class="fa fa-keyboard-o fa-lg"></i>
+				</a>
+				<a id="canvasNavigation" class="navbar-brand mobileOnly" style="display: none;" href="#" onclick="toggleZoomMode();">
+					<i class="fa fa-arrows-alt fa-lg"></i>
+				</a>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+				<ul class="nav navbar-nav">
+					<li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+							<span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li id="ctrlaltdelete"><a href="#><%=rdpMsg.ctrlAltDelete()%"></a></li>
+							<li id="numlock" class="desktopOnly"><a href="#><%=rdpMsg.numLock()%"></a></li>
+							<li id="capslock" class="desktopOnly"><a href="#><%=rdpMsg.capsLock()%"></a></li>
+						</ul>
+					</li>
+					<li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+							<span class="caret"></span>
+						</a>
+							<li id="showclipboard" data-toggle="modal" data-target="#clipboardDiv"><a href="#><%=rdpMsg.showClipboard()%"></a></li>
+							<li id="sendclipboard"><a href="#><%=rdpMsg.sendClipboard()%"></a></li>
+							<li id="downloadfile"><a href="#><%=rdpMsg.downloadFile()%"></a></li>
+							<li id="uploadfile"><a href="#><%=rdpMsg.uploadFile()%"></a></li>
+						</ul>
+					</li>
+					<li>
+						<select id="layoutselect" onchange="changeLayout(this.value)">
+				  			<option id="input_layout_us" value="us><%=rdpMsg.unitedStates() %"></option>
+				  			<option id="input_layout_fr" value="fr><%=rdpMsg.french()%"></option>
+				            <option id="input_layout_uk" value="uk><%=rdpMsg.unitedKingdom() %>"</option>
+				            <option id="input_layout_es" value="es><%=rdpMsg.spain() %"></option>
+				            <option id="input_layout_de" value="de><%=rdpMsg.germany() %"></option>
+				            <option id="input_layout_ru" value="ru><%=rdpMsg.russian() %"></option>
+				        </select>
+					</li>
+				</ul>
+
+				<ul class="nav navbar-nav navbar-right">
+					<li id="disconnect"><a href="#"><i class="fa fa-sign-out fa-lg"></i> </a></li>
+				</ul>
+			</div><!-- /.navbar-collapse -->
+		</div>
+		<iframe id="downloadfileiframe" style="display:none;"></iframe>
+		<div class="hiddenfile">
+			  <form id="uploadform" method="post" enctype="multipart/form-data">
+			  	<input name="upload" type="file" id="fileinput" onchange="submitFiles()" multiple="true"/>
+			  </form>
+		</div>
+	</nav>
+
+	<div id="clipboardDiv" class="modal fade" tabindex="-1" role="dialog">
+		<div class="modal-dialog">
+	    	<div class="modal-content">
+	      		<div id="clipboardHeader" class="modal-header">
+	        		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        		<div id="clipboardHeaderTitle><%=rdpMsg.clipboard()%"></div>
+	      		</div>
+		      	<div class="modal-body">
+		        	<textarea id="clipboardContent" class="form-control" placeholder="<%=rdpMsg.pasteYourTextHere()%>" rows="10"></textarea>
+		      	</div>
+		      	<div class="modal-footer">
+		        	<button type="button" class="btn btn-default btn-sm" data-dismiss="modal><%=commonMsg.close()%"></button>
+		      	</div>
+	    	</div><!-- /.modal-content -->
+	  	</div><!-- /.modal-dialog -->
+	</div><!--  /.modal -->
+
+	<div id="form" style ="display:block">
+		<form action="demo_form.asp" width="1024px" height="768px">
+			  IP :       <input type="text" id="ip"><br>
+			  User :     <input type="text" id="user"><br>
+			  Password : <input type="text" id="password"><br>
+			  Port :     <input type="text" id="port"><br>
+			  <font color='Red'>
+			  	<div id="errorMsgDiv" style ="display:none"></div>
+			  </font>
+			  <input type="button" value="Connect" onclick="connecting();">
+		</form>
+	</div>
+
+	<div class="emscripten_border" id="emscripten_canvas" style ="display:none">
+      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" onclick="setFocuxOnText()" onmouseenter="setFocuxOnText()" ></canvas>
+		<div>
+			<input type="button" value="Disconnect" onclick="disconnecting();">
+			<input type="button" value="CTRL ALT DELETE" onclick="CTRL_ALT_DELETE();">
+			<input type="button" value="Refresh" onclick="refreshPressed();">
+			<input id="hidden_input_text" style="width:0; opacity:0"  accept-charset="UTF-8"/>
+		</div>
+    	</div>
+    </div>
+	<div id="dvLoading"
+		style="position: fixed; left: 45%; top: 45%; visibility: hidden;"></div>
+	<noscript>
+		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
+	</noscript>
+
+    <script type='text/javascript'>
+	      var Module = {
+		canvas: (function() {
+		  var canvas = document.getElementById('canvas');
+		  return canvas;
+		})(),
+	      };
+
+    </script>
+
+    <script src='draw.js'></script>
+
+
+	  {{{ SCRIPT }}}
+
+
+    <script type='text/javascript'>
+	      window.onload = function() {
+			_run_main();
+	      };
+
+    </script>
+
+
+
+</body>
+</html>

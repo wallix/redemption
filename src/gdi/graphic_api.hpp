@@ -23,8 +23,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <cassert>
 #include <cstdint>
-#include <iostream>
 
 #include "utils/sugar/noncopyable.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
@@ -67,32 +67,38 @@ namespace RDP {
         class WindowIcon;
         class CachedIcon;
         class DeletedWindow;
+        class NewOrExistingNotificationIcons;
+        class DeletedNotificationIcons;
+        class ActivelyMonitoredDesktop;
+        class NonMonitoredDesktop;
     }
 }
 
 namespace gdi {
 
-struct GraphicDepth
+struct Depth
 {
-    static constexpr GraphicDepth unspecified() { return {0}; }
-    static constexpr GraphicDepth depth8() { return {1}; }
-    static constexpr GraphicDepth depth15() { return {2}; }
-    static constexpr GraphicDepth depth16() { return {3}; }
-    static constexpr GraphicDepth depth24() { return {4}; }
+    static constexpr Depth unspecified() { return {0}; }
+    static constexpr Depth depth8() { return {1}; }
+    static constexpr Depth depth15() { return {2}; }
+    static constexpr Depth depth16() { return {3}; }
+    static constexpr Depth depth24() { return {4}; }
 
-    static constexpr GraphicDepth from_bpp(uint8_t bpp) {
+    static constexpr Depth from_bpp(uint8_t bpp) {
         return {
             bpp == 8  ? depth8() :
             bpp == 15 ? depth15() :
             bpp == 16 ? depth16() :
             bpp == 24 ? depth24() :
-            bpp == 32 ? depth24() :
+            bpp == 32 ? depth24() : // TODO useless ?
             unspecified()
         };
     }
 
-    constexpr GraphicDepth(GraphicDepth const &) = default;
-    GraphicDepth & operator=(GraphicDepth const &) = default;
+    Depth() = default;
+
+    constexpr Depth(Depth const &) = default;
+    Depth & operator=(Depth const &) = default;
 
 private:
     struct bpp_table { uint8_t table[5] = {0, 8, 15, 16, 24}; };
@@ -108,11 +114,11 @@ public:
     constexpr bool is_depth16() const { return this->depth_ == depth16().depth_; }
     constexpr bool is_depth24() const { return this->depth_ == depth24().depth_; }
 
-    constexpr bool contains(GraphicDepth depth) const {
+    constexpr bool contains(Depth depth) const {
         return this->is_unspecified() || depth.is_unspecified() || (this->depth_ == depth.depth_);
     }
 
-    constexpr GraphicDepth const & depth_or(GraphicDepth const & default_depth) const {
+    constexpr Depth const & depth_or(Depth const & default_depth) const {
         return this->is_unspecified() ? default_depth : *this;
     }
 
@@ -125,64 +131,100 @@ public:
     constexpr operator PrivateDepth () const { return static_cast<PrivateDepth>(this->depth_); }
 
 private:
-    constexpr GraphicDepth(uint8_t depth) : depth_(depth) {}
+    constexpr Depth(uint8_t depth) : depth_(depth) {}
 
     uint8_t depth_;
 };
 
-constexpr bool operator < (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+constexpr bool operator < (Depth const & depth1, Depth const & depth2) {
     return depth1.id() < depth2.id();
 }
 
-constexpr bool operator > (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+constexpr bool operator > (Depth const & depth1, Depth const & depth2) {
     return (depth2 < depth1);
 }
 
-constexpr bool operator <= (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+constexpr bool operator <= (Depth const & depth1, Depth const & depth2) {
     return !(depth2 < depth1);
 }
 
-constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+constexpr bool operator >= (Depth const & depth1, Depth const & depth2) {
     return !(depth1 < depth2);
 }
 
 
+struct ColorCtx
+{
+    ColorCtx(Depth depth, BGRPalette const * palette)
+    : depth_(depth)
+    , palette_(palette)
+    {
+        assert(depth == Depth::depth8() ? bool(palette) : true);
+    }
+
+    Depth depth() const { return this->depth_; }
+    BGRPalette const * palette() const { return this->palette_; }
+
+
+    static ColorCtx depth8(BGRPalette && palette) = delete;
+    static ColorCtx depth8(BGRPalette const & palette) { return {Depth::depth8(), &palette}; }
+
+    static ColorCtx depth15() { return {Depth::depth15(), nullptr}; }
+    static ColorCtx depth16() { return {Depth::depth16(), nullptr}; }
+    static ColorCtx depth24() { return {Depth::depth24(), nullptr}; }
+
+    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const * palette)
+    { return {Depth::from_bpp(bpp), palette}; }
+
+    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const && palette) = delete;
+    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const & palette)
+    { return {Depth::from_bpp(bpp), &palette}; }
+
+private:
+    Depth depth_;
+    BGRPalette const * palette_;
+};
+
+
 struct GraphicApi : private noncopyable
 {
-    GraphicApi(GraphicDepth const & order_depths = GraphicDepth::unspecified())
-    : order_depth_(order_depths)
-    {}
+    GraphicApi() {}
 
     virtual ~GraphicApi() = default;
 
     virtual void set_pointer(Pointer      const &) {}
     virtual void set_palette(BGRPalette   const &) {}
 
-    virtual void draw(RDP::FrameMarker    const & order) = 0;
-    virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPPatBlt           const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPOpaqueRect       const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPScrBlt           const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPLineTo           const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPPolygonSC        const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPPolygonCB        const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPPolyline         const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPEllipseSC        const & cmd, Rect const & clip) = 0;
-    virtual void draw(RDPEllipseCB        const & cmd, Rect const & clip) = 0;
+    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
+    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
+    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
+    virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
+    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
+    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
-    virtual void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
-    virtual void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) = 0;
-    virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
+
+    virtual void draw(RDPPatBlt           const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPLineTo           const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPPolyline         const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
+    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow &) {}
-    virtual void draw(const RDP::RAIL::WindowIcon          &) {}
-    virtual void draw(const RDP::RAIL::CachedIcon          &) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow       &) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow            &) {}
+    virtual void draw(const RDP::RAIL::WindowIcon                     &) {}
+    virtual void draw(const RDP::RAIL::CachedIcon                     &) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow                  &) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       &) {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            &) {}
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
     virtual void draw(RDPColCache   const &) {}
@@ -195,340 +237,62 @@ struct GraphicApi : private noncopyable
 
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
-
-    GraphicDepth const & order_depth() const {
-        return this->order_depth_;
-    }
-
-private:
-    GraphicDepth order_depth_;
-
-protected:
-    void set_depths(GraphicDepth const & depths) {
-        this->order_depth_ = depths;
-    }
 };
 
 
-struct GraphicCoreAccess
+class BlackoutGraphic final : public GraphicApi
 {
-    template<class Derived, class... Ts>
-    static void draw(Derived & derived, Ts const & ... args) {
-        derived.draw_impl(args...);
-    }
-
-    template<class Derived>
-    static auto graphic_proxy(Derived & derived)
-    -> decltype(derived.get_graphic_proxy()) {
-        return derived.get_graphic_proxy();
-    }
-
-    template<class Derived>
-    static auto color_converter(Derived const & derived)
-    -> decltype(derived.get_color_converter()) {
-        return derived.get_color_converter();
-    }
-};
-
-
-/**
- * \code
- * struct Graphic : gdi::GraphicBase<Graphic>
- * {
- * private:
- *   friend gdi::GraphicCoreAccess;
- *
- *   template<class Cmd, class... Args>
- *   void draw_impl(Cmd const & cmd, Args const & ...) { log(cmd_name(cmd)); }
- * };
- * \endcode
- */
-template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-class GraphicBase : public InterfaceBase
-{
-    static_assert(std::is_base_of<GraphicApi, InterfaceBase>::value, "InterfaceBase isn't a GraphicApi");
-
-    friend CoreAccess;
-
-protected:
-    using core_access = CoreAccess;
-    using base_type = GraphicBase;
-
 public:
-    using InterfaceBase::InterfaceBase;
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
-    void draw(RDP::FrameMarker    const & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
 
-    void draw(RDPDestBlt          const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPMultiDstBlt      const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPatBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPOpaqueRect       const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPScrBlt           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPLineTo           const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolygonSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolygonCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPPolyline         const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPEllipseSC        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
-    void draw(RDPEllipseCB        const & cmd, Rect const & clip) override { this->draw_(cmd, clip); }
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_(cmd, bmp); }
-
-    void draw(RDPMemBlt           const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->draw_(cmd, clip, bmp);
-    }
-
-    void draw(RDPMem3Blt          const & cmd, Rect const & clip, Bitmap const & bmp) override {
-        this->draw_(cmd, clip, bmp);
-    }
-
-    void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) override {
-        this->draw_(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) override { this->draw_(order); }
-
-    void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
-    void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }
-
-protected:
-    Derived & derived() {
-        return static_cast<Derived&>(*this);
-    }
-
-private:
-    template<class... Ts>
-    void draw_(Ts const & ... args) {
-        CoreAccess::draw(this->derived(), args...);
-    }
-};
-
-
-/**
- * \code
- * struct Graphic : gdi::GraphicProxyBase<Graphic>
- * {
- * private:
- *   gdi::GraphicApi & internal;
- *
- *   friend gdi::GraphicCoreAccess;
- *
- *   gdi::GraphicApi & get_graphic_proxy() { return this->internal; }
- * };
- * \endcode
- */
-template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicProxyBase : GraphicBase<Derived, InterfaceBase, CoreAccess>
-{
-    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicProxyBase;
-    friend CoreAccess;
-
-    void set_pointer(Pointer    const & pointer) override {
-        CoreAccess::graphic_proxy(this->derived()).set_pointer(pointer);
-    }
-
-    void set_palette(BGRPalette const & palette) override {
-        CoreAccess::graphic_proxy(this->derived()).set_palette(palette);
-    }
-
-    void sync() override {
-        CoreAccess::graphic_proxy(this->derived()).sync();
-    }
-
-    void set_row(std::size_t rownum, const uint8_t * data) override {
-        CoreAccess::graphic_proxy(this->derived()).set_row(rownum, data);
-    }
-
-    void begin_update() override {
-        CoreAccess::graphic_proxy(this->derived()).begin_update();
-    }
-
-    void end_update() override {
-        CoreAccess::graphic_proxy(this->derived()).end_update();
-    }
-
-protected:
-    template<class... Ts>
-    void draw_impl(Ts const & ... args) {
-        CoreAccess::graphic_proxy(this->derived()).draw(args...);
-    }
-};
-
-
-struct draw_tag {};
-struct set_tag {};
-struct sync_tag {};
-struct set_row_tag {};
-struct begin_update_tag{};
-struct end_update_tag{};
-
-template<class Graphic>
-struct GraphicUniformProxy
-{
-    using proxy_type = GraphicUniformProxy;
-
-    GraphicUniformProxy() = default;
-    GraphicUniformProxy(Graphic && graphic) : graphic_(std::move(graphic)) {}
-    GraphicUniformProxy(Graphic const & graphic) : graphic_(graphic) {}
-
-    template<class Graphic_>
-    GraphicUniformProxy(Graphic_ && graphic)
-    : graphic_(std::forward<Graphic_>(graphic))
-    {}
-
-    template<class... Ts>
-    void draw(Ts const & ... args) {
-        this->graphic_(draw_tag{}, args...);
-    }
-
-    void set_pointer(Pointer    const & pointer) {
-        this->graphic_(set_tag{}, pointer);
-    }
-
-    void set_palette(BGRPalette const & palette) {
-        this->graphic_(set_tag{}, palette);
-    }
-
-    void sync() {
-        this->graphic_(sync_tag{});
-    }
-
-    void set_row(std::size_t rownum, const uint8_t * data) {
-        this->graphic_(set_row_tag{}, rownum, data);
-    }
-
-    void begin_update() {
-        this->graphic_(begin_update_tag{});
-    }
-
-    void end_update() {
-        this->graphic_(end_update_tag{});
-    }
-
-private:
-    Graphic graphic_;
-};
-
-
-template<class Graphic>
-struct GraphicUniformDistribution
-{
-    Graphic graphic_;
-
-    template<class... Ts>
-    void operator()(draw_tag, Ts const & ... args) {
-        this->graphic_.draw(args...);
-    }
-
-    void operator()(set_tag, Pointer const & pointer) {
-        this->graphic_.set_pointer(pointer);
-    }
-
-    void operator()(set_tag, BGRPalette const & palette) {
-        this->graphic_.set_palette(palette);
-    }
-
-    void operator()(sync_tag) {
-        this->graphic_.sync();
-    }
-
-    void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
-        this->graphic_.set_row(rownum, data);
-    }
-
-    void operator()(begin_update_tag) {
-        this->graphic_.begin_update();
-    }
-
-    void operator()(end_update_tag) {
-        this->graphic_.end_update();
-    }
-};
-
-
-struct self_fn
-{
-    template<class T> T & operator()(T & x) const { return x; }
-    template<class T> T operator()(T && x) const { return std::move(x); }
-
-    template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
-};
-
-template<class GraphicList, class Projection = self_fn>
-struct GraphicUniformDispatcherList
-{
-    GraphicList & graphics_;
-    Projection projection_;
-
-    template<class Tag, class... Ts>
-    void operator()(Tag tag, Ts const & ... args) {
-        for (auto && graphic : this->graphics_) {
-            this->projection_(graphic)(tag, args...);
-        }
-    }
-};
-
-
-template<class Projection>
-struct GraphicUniformProjection
-{
-    Projection projection_;
-
-    template<class Graphic>
-    auto operator()(Graphic & graphic)
-    -> GraphicUniformDistribution<decltype(projection_(graphic))>
+    static gdi::BlackoutGraphic & instance()
     {
-        return {this->projection_(graphic)};
+        static gdi::BlackoutGraphic gd;
+        return gd;
     }
-};
 
-/**
- * \code
- * struct GraphicDispatcher : gdi::GraphicProxyBase<Graphic>
- * {
- * private:
- *   std::vector<std::reference_wrapper<gdi::GraphicApi>> graphics;
- *
- *   friend gdi::GraphicCoreAccess;
- *
- *   GraphicDispatcherList<std::vector<std::reference_wrapper<gdi::GraphicApi>>>
- *   get_graphic_proxy() { return this->graphics; }
- * };
- * \endcode
- */
-template<class GraphicList, class Projection = self_fn>
-struct GraphicDispatcherList
-: GraphicUniformProxy<
-    GraphicUniformDispatcherList<
-        GraphicList,
-        GraphicUniformProjection<Projection>
-    >
->
-{
-    GraphicDispatcherList(GraphicList & graphic_list, Projection proj = Projection{})
-    : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection<Projection>{proj}}}
-    {}
-};
-
-
-class BlackoutGraphic final : public GraphicBase<BlackoutGraphic>
-{
-    friend gdi::GraphicCoreAccess;
-
+private:
     template<class... Args>
     void draw_impl(Args const & ...) {}
 
-    using base_type_ = GraphicBase<BlackoutGraphic>;
-
 public:
-    using base_type_::base_type_;
+    BlackoutGraphic()
+    {}
 };
+
+inline gdi::GraphicApi & null_gd() {
+    return gdi::BlackoutGraphic::instance();
+}
 
 
 struct TextMetrics
@@ -551,12 +315,15 @@ struct TextMetrics
 
 
 // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+// TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?
 static inline void server_draw_text(
-                GraphicApi & drawable,
-                Font const & font, int16_t x, int16_t y, const char * text,
-                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-{
-    // TODO static not const is a bad idea
+    GraphicApi & drawable, Font const & font,
+    int16_t x, int16_t y, const char * text,
+    uint32_t fgcolor, uint32_t bgcolor,
+    ColorCtx color_ctx,
+    Rect clip
+) {
+    // BUG TODO static not const is a bad idea
     static GlyphCache mod_glyph_cache;
 
     UTF8toUnicodeIterator unicode_iter(text);
@@ -620,7 +387,7 @@ static inline void server_draw_text(
 
         x += total_width;
 
-        drawable.draw(glyphindex, clip, mod_glyph_cache);
+        drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
     }
 }
 

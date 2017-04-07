@@ -22,6 +22,7 @@
 #pragma once
 
 #include <ctime>
+#include <vector>
 
 #include "core/callback.hpp"
 #include "core/font.hpp"
@@ -38,13 +39,58 @@ enum {
     BUTTON_STATE_DOWN = 1
 };
 
+class EventHandler {
+public:
+    class CB {
+    public:
+        virtual ~CB() = default;
+
+        virtual void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) = 0;
+    };
+
+private:
+    wait_obj* event_;
+
+    CB* cb_;
+
+    int fd_;
+
+public:
+    EventHandler(wait_obj* event, CB* cb, int fd = INVALID_SOCKET)
+    : event_(event)
+    , cb_(cb)
+    , fd_(fd) {
+        REDASSERT(event_);
+        REDASSERT(cb_);
+    }
+
+    void operator()(time_t now, gdi::GraphicApi& drawable) {
+        if (this->cb_) {
+            (*this->cb_)(now, this->event_, drawable);
+        }
+    }
+
+    wait_obj* get_event() const {
+        return this->event_;
+    }
+
+    int get_fd() const {
+        return this->fd_;
+    }
+};
+
 class mod_api : public Callback
 {
 protected:
-    wait_obj           event;
-    RDPPen             pen;
+    wait_obj event;
 
 public:
+     enum : uint8_t {
+         CLIENT_UNLOGGED,
+         CLIENT_LOGGED
+     };
+    uint8_t logged_on = CLIENT_UNLOGGED;
+
     mod_api()
     {
         this->event.set(0);
@@ -53,13 +99,10 @@ public:
     ~mod_api() override {}
 
     virtual wait_obj& get_event() { return this->event; }
-    virtual wait_obj * get_secondary_event() { return nullptr; }
 
-    virtual wait_obj * get_asynchronous_task_event(int & out_fd) { out_fd = -1; return nullptr; }
-    virtual void process_asynchronous_task() {}
+    virtual int get_fd() const { return INVALID_SOCKET; }
 
-    virtual wait_obj * get_session_probe_launcher_event() { return nullptr; }
-    virtual void process_session_probe_launcher() {}
+    virtual void get_event_handlers(std::vector<EventHandler>&/* out_event_handlers*/) {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;
@@ -77,8 +120,20 @@ public:
 
     virtual bool is_up_and_running() { return false; }
 
-    virtual void disconnect() {}
+    virtual void disconnect(time_t now) { (void)now; }
 
     virtual void display_osd_message(std::string const &) {}
-};
 
+    virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
+
+    virtual bool disable_input_event_and_graphics_update(
+            bool disable_input_event, bool disable_graphics_update) {
+        (void)disable_input_event;
+        (void)disable_graphics_update;
+        return false;
+    }
+
+    virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
+
+    virtual Dimension get_dim() const { return Dimension(); }
+};

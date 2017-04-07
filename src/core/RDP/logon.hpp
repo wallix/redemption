@@ -721,7 +721,7 @@ struct ExtendedInfoPacket {
     uint32_t clientSessionId;
     uint32_t performanceFlags;
     uint16_t cbAutoReconnectLen;
-    uint8_t autoReconnectCookie[29];
+    uint8_t autoReconnectCookie[28];
     uint16_t reserved1;
     uint16_t reserved2;
     ClientTimeZone clientTimeZone;      // optionals Extra attributes from TS_TIME_ZONE_INFORMATION
@@ -736,24 +736,22 @@ struct ExtendedInfoPacket {
     , reserved1(0) //           if this field is present, the reserved2 field MUST be present.
     , reserved2(0) //.......... this field MUST be present if the reserved1 field is present.
     {
-        memset(clientAddress, 0, 81);
-        memset(clientDir, 0, 256);
-        memset(autoReconnectCookie, 0, 29);
+        ::memset(this->clientAddress, 0, sizeof(this->clientAddress));
+        ::memset(this->clientDir, 0, sizeof(this->clientDir));
+        ::memset(this->autoReconnectCookie, 0, sizeof(this->autoReconnectCookie));
 
-        clientAddressFamily = 2;
+        this->clientAddressFamily = 2;
         const char * defaultAddress = "0.0.0.0";
-        memcpy(this->clientAddress, defaultAddress, strlen(defaultAddress)+1);
+        ::memcpy(this->clientAddress, defaultAddress, ::strlen(defaultAddress) + 1);
         this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
 
         const char * defaultClientDir = "C:\\Windows\\System32\\mstscax.dll";
-        memcpy(this->clientDir, defaultClientDir, strlen(defaultClientDir)+1);
-        this->cbClientDir = 2 * strlen(defaultClientDir) + 2;
+        ::memcpy(this->clientDir, defaultClientDir, ::strlen(defaultClientDir) + 1);
+        this->cbClientDir = 2 * ::strlen(defaultClientDir) + 2;
 
         clientSessionId = 0;
-
     } // END CONSTRUCTOR
 }; // END STRUCT : ExtendedInfoPacket
-
 
 struct InfoPacket {
     uint8_t rdp5_support;
@@ -782,11 +780,11 @@ struct InfoPacket {
     , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
     , extendedInfoPacket()
     {
-        memset(this->Domain,         0, sizeof(this->Domain));
-        memset(this->UserName,       0, sizeof(this->UserName));
-        memset(this->Password,       0, sizeof(this->Password));
-        memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
-        memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
+        ::memset(this->Domain,         0, sizeof(this->Domain));
+        ::memset(this->UserName,       0, sizeof(this->UserName));
+        ::memset(this->Password,       0, sizeof(this->Password));
+        ::memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
+        ::memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
 
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;
@@ -815,11 +813,11 @@ struct InfoPacket {
     , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
     , extendedInfoPacket()
     {
-        memset(this->Domain,         0, sizeof(this->Domain));
-        memset(this->UserName,       0, sizeof(this->UserName));
-        memset(this->Password,       0, sizeof(this->Password));
-        memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
-        memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
+        ::memset(this->Domain,         0, sizeof(this->Domain));
+        ::memset(this->UserName,       0, sizeof(this->UserName));
+        ::memset(this->Password,       0, sizeof(this->Password));
+        ::memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
+        ::memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
 
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;
@@ -926,9 +924,10 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.clientSessionId);
             stream.out_uint32_le(this->extendedInfoPacket.performanceFlags);
 
-            stream.out_uint16_le(0); // cbAutoReconnectLen is 0, as there is no AutoReconnectCookie Sent
-//            stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
-//            stream.out_unistr(this->extendedInfoPacket.autoReconnectCookie);
+            stream.out_uint16_le(this->extendedInfoPacket.cbAutoReconnectLen);
+            if (this->extendedInfoPacket.cbAutoReconnectLen) {
+                stream.out_copy_bytes(this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
+            }
 
             // These are sent by mctsc, but not by rdesktop
 //            stream.out_uint16_le(this->extendedInfoPacket.reserved1);
@@ -1076,9 +1075,15 @@ struct InfoPacket {
                 this->extendedInfoPacket.cbAutoReconnectLen = 0;
                 return;
             }
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.autoReconnectCookie,
-                                        this->extendedInfoPacket.cbAutoReconnectLen,
-                                        sizeof(this->extendedInfoPacket.autoReconnectCookie));
+            if (this->extendedInfoPacket.cbAutoReconnectLen) {
+                if (0x0000001C != this->extendedInfoPacket.cbAutoReconnectLen) {
+                    LOG(LOG_ERR, "Wrong data size when reading autoReconnectCookie. Expected=%u Got=%u",
+                        0x0000001C, unsigned(this->extendedInfoPacket.cbAutoReconnectLen));
+                    return;
+                }
+
+                stream.in_copy_bytes(this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
+            }
 
             if (stream.get_current() + 4 > stream.get_data_end()){
                 // LOG(LOG_WARNING, "Missing InfoPacket.reserved"); // But seems to be OK
@@ -1143,7 +1148,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", this->extendedInfoPacket.clientSessionId);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags %u", this->extendedInfoPacket.performanceFlags);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", this->extendedInfoPacket.cbAutoReconnectLen);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
+        //LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", this->extendedInfoPacket.reserved1);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
         // Extended - Client Time Zone

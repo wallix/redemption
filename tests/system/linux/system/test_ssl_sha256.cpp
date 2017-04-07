@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestSha256
+#define UNIT_TEST_MODULE TestSha256
 
 #include "system/ssl_sha256.hpp"
 

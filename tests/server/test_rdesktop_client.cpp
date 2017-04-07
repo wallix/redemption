@@ -22,9 +22,7 @@
     when connecting from mstsc (mocked up)
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFrontRdesktopClient
+#define UNIT_TEST_MODULE TestFrontRdesktopClient
 #include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
@@ -46,7 +44,8 @@
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
 
-BOOST_AUTO_TEST_CASE(TestIncomingConnection)
+
+RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
     // Uncomment the code block below to generate testing data.
     //// This server only support one incoming connection before closing listener
@@ -96,10 +95,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
     //                           , ini.get<cfg::debug::front>(), 0);
 
-    LCGRandom gen(0);
-
-    CryptoContext cctx(gen, ini);
-
     // Comment the code block below to generate testing data.
     #include "../fixtures/trace_rdesktop_client.hpp"
 
@@ -111,12 +106,16 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::tls_fallback_legacy>(true);
     ini.set<cfg::client::bogus_user_id>(false);
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
+    ini.set<cfg::globals::large_pointer_support>(false);
 
     time_t now = 1450864840;
 
+    LCGRandom gen(0);
+    CryptoContext cctx;
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
-    Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);
+    NullAuthentifier authentifier;
+    Front front( front_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
@@ -125,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    BOOST_CHECK_EQUAL(1, front.up_and_running);
+    RED_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
     mod.draw_event(time(nullptr), front);
 

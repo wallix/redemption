@@ -20,15 +20,13 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRedirectionInfo
+#define UNIT_TEST_MODULE TestRedirectionInfo
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "utils/redirection_info.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRedirectionInfo)
+RED_AUTO_TEST_CASE(TestRedirectionInfo)
 {
     RedirectionInfo rinfo;
     rinfo.valid = true;
@@ -40,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestRedirectionInfo)
 
     rinfo.log(LOG_INFO, "test rinfo");
 
-    BOOST_CHECK_EQUAL(rinfo.session_id, 3333);
+    RED_CHECK_EQUAL(rinfo.session_id, 3333);
     rinfo.reset();
-    BOOST_CHECK_EQUAL(rinfo.session_id, 0);
+    RED_CHECK_EQUAL(rinfo.session_id, 0);
 }

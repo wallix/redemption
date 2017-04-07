@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "core/front_api.hpp"
-#include "mod/mod_api.hpp"
-#include "widget2/flat_wab_close.hpp"
-#include "widget2/screen.hpp"
-#include "internal_mod.hpp"
-#include "utils/timeout.hpp"
 #include "configs/config_access.hpp"
+#include "core/front_api.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "mod/internal/widget2/flat_wab_close.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/internal_mod.hpp"
+#include "mod/mod_api.hpp"
+#include "utils/timeout.hpp"
 
 #include <chrono>
 
@@ -47,13 +48,14 @@ using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::theme,                       vcfg::accessmode::get>
 >;
 
-class FlatWabCloseMod : public InternalMod, public NotifyApi
+class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 {
-    FlatWabClose     close_widget;
+    FlatWabClose close_widget;
+
     Timeout timeout;
+
     FlatWabCloseModVariables vars;
 
-private:
     bool showtimer;
     struct temporary_text {
         char text[255];
@@ -61,7 +63,7 @@ private:
         explicit temporary_text(FlatWabCloseModVariables vars)
         {
             if (vars.get<cfg::context::module>() == "selector") {
-                snprintf(text, sizeof(text), "%s", TR("selector", language(vars)));
+                snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)));
             }
             else {
                 // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman
@@ -80,11 +82,11 @@ private:
 
 public:
     FlatWabCloseMod(FlatWabCloseModVariables vars,
-                    FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
-                    bool showtimer = false, bool back_selector = false)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+                    FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
+                    ClientExecute & client_execute, bool showtimer = false, bool back_selector = false)
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , close_widget(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
             vars.get<cfg::context::auth_error_message>().c_str(),
             (vars.is_asked<cfg::globals::auth_user>()
@@ -112,7 +114,7 @@ public:
         this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
         this->screen.set_widget_focus(&this->close_widget, Widget2::focus_reason_tabkey);
 
-        this->screen.refresh(this->screen.rect);
+        this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
     ~FlatWabCloseMod() override {
@@ -136,7 +138,9 @@ public:
         }
     }
 
-    void draw_event(time_t now, gdi::GraphicApi &) override {
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
@@ -155,5 +159,8 @@ public:
     }
 
     bool is_up_and_running() override { return true; }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->close_widget.move_size_widget(left, top, width, height);
+    }
+};

@@ -145,7 +145,7 @@ class RDPScrBlt {
         return RDP::SCREENBLT;
     }
 
-    RDPScrBlt(const Rect & rect, uint8_t rop, uint16_t srcx, uint16_t srcy) :
+    RDPScrBlt(const Rect rect, uint8_t rop, uint16_t srcx, uint16_t srcy) :
         rect(rect), rop(rop), srcx(srcx), srcy(srcy)
         {}
 
@@ -241,19 +241,22 @@ class RDPScrBlt {
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(RDP::SCREENBLT, clip));
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(RDP::SCREENBLT, clip));
         printf("%s", buffer);
     }
 
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
 
+        this->srcx += offset_x;
+        this->srcy += offset_y;
+    }
 };
-
-

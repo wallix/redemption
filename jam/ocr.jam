@@ -1,0 +1,26 @@
+obj ocr.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
+
+## ppocr {
+
+alias ppocr_src :
+    $(PPOCR_SRC_PATH)/ppocr/box_char/box.cpp
+    $(PPOCR_SRC_PATH)/ppocr/box_char/make_box_character.cpp
+    $(PPOCR_SRC_PATH)/ppocr/image/coordinate.cpp
+    $(PPOCR_SRC_PATH)/ppocr/image/image.cpp
+    $(PPOCR_SRC_PATH)/ppocr/image/image_from_file.cpp
+    $(PPOCR_SRC_PATH)/ppocr/loader2/glyphs_loader.cpp
+    $(PPOCR_SRC_PATH)/ppocr/loader2/image_io.cpp
+    $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp
+    $(PPOCR_SRC_PATH)/ppocr/utils/image_compare.cpp
+    [ glob
+        $(PPOCR_SRC_PATH)/ppocr/ocr2/*.cpp
+        $(PPOCR_SRC_PATH)/ppocr/strategies/*.cpp
+    ]
+    $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp
+;
+
+lib ppocr : ppocr_src : <link>static ;
+
+## } ppocr
+
+lib ocr : ocr.o ppocr : <link>static ;

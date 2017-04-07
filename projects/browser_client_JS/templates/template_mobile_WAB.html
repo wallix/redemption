@@ -1,4 +1,3 @@
-<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
 
 <!DOCTYPE html>
 
@@ -30,6 +29,9 @@
 <style type="text/css">
 
 </style>
+
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+
 <!-- <script src="js/jquery-1.12.2.min.js"></script> -->
 <!-- <script src="js/bootstrap-3.3.6.min.js"></script> -->
 <!-- <script src="js/wprdp.js?v=1.2-beta1" type="text/javascript"></script> -->
@@ -1052,86 +1054,107 @@
 
 <body id="wrapper">
 
+<!--
     <script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+-->
 
     <script>
 
       var socket;
 
-      function connecting()
-      {
+      var ipTarget;
+      var userTarget;
+      var passwordTarget;
+      var portTarget;
+
+      function connecting() {
+
         console.log('>> connecting()');
 
-        var ip = document.getElementById("ip").value;
-        var user = document.getElementById("user").value;
-        var password = document.getElementById("password").value;
-        var port = document.getElementById("port").value;
+        ipTarget       = document.getElementById("ip").value;
+        userTarget     = document.getElementById("user").value;
+        passwordTarget = document.getElementById("password").value;
+        portTarget     = document.getElementById("port").value;
+
 
         /* SOCKET CONNECTION */
 
         /* Test */
-        ip = 'localhost';
-        port = 8080;
+        var ip = 'localhost';
+        var port = 8080;
         /* Test */
 
         var url = 'http://' + ip + ':' + port.toString();
         console.log("url = " + url);
-        socket = io.connect(url);
+
+        /* Connection */
+        //socket = io.connect(url);
+        /* Connection */
+
+
 
         document.getElementById("errorMsgDiv").style = "display:none";
-        //drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
 
-        var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
-        var puser = allocate(intArrayFromString(user), 'i8', ALLOC_NORMAL);
-        var ppassword = allocate(intArrayFromString(password), 'i8', ALLOC_NORMAL);
+        var pip       = allocate(intArrayFromString(ipTarget)      , 'i8', ALLOC_NORMAL);
+        var puser     = allocate(intArrayFromString(userTarget)    , 'i8', ALLOC_NORMAL);
+        var ppassword = allocate(intArrayFromString(passwordTarget), 'i8', ALLOC_NORMAL);
 
         document.getElementById("form").style = "display:none";
         document.getElementById("emscripten_canvas").style = "display:block";
 
-        _connexion(pip, puser, ppassword, port);
+		socket = new WebSocket("ws://localhost:8080", "rdp-protocol");
+        socket.binaryType = 'arraybuffer';
 
-        /* EVENTS LISTENERS */
-        socket.on('event', function (data) {
-          console.log("Client : received from Server : " + data.data[0]+" " + data.data[1]+" "+ data.data[2]+" "+ data.data[3]+ "...  len=" + data.data.length);
-          for (var i = 0; i < data.data.length; i++) {
-                _recv_value(data.data[i]);
-          }
+		socket.addEventListener('open', function (event) { // receive from server
+        	_connexion(pip, puser, ppassword, port);
+		});
+
+        socket.addEventListener('message', function (event) { // receive from server
+            //var len = ( ((data[4] << 12) | (data[5] << 8) | (data[6] << 4) | data[7])) *2;
+            var data = new Uint8Array(event.data);
+            //var len = (data[2] << 4) | data[3];
+
+			var text = "";
+            console.log('Received Binary Message of ' + data.length + ' bytes');
+            for (var i = 0 ; i < data.length ; ++i){
+                text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+            }
+             console.log("Client : Server Says : "+text);
+
+            /*for (var i = 0; i < len; i+=2) {
+                _recv_value((data[i] << 4) | data [i+1]);
+            }*/
+            for (var i = 0; i < data.length; i++) {
+                _recv_value(data[i]);
+            }
         });
 
-        socket.on('data', function (elem) {
-          console.log("data rcv" + elem.data + " " + elem.len);
-        });
-
-        socket.on('message', function (msg) {
-           console.log("Client : received from Server : " + msg);
-        });
-
-        socket.on('disconnect', function() {
+        socket.addEventListener('disconnect', function() {
           console.log('disconnected from server');
         });
 
       }
 
+	  function send_to_serveur(data, size) { // Send to server
+      //var test_data = [ 3, 0, 0, 30, 25, 224, 0, 0, 0, 0, 0, 67, 111, 111, 107, 105, 101, 58, 32, 109, 115, 116, 115, 104, 97, 115, 104, 61, 13 ];
 
-      function helloServer()
-      {
-          console.log("Socket id = " + socket.id);
-          console.log(" poke ! helloServer");
-  //        socket = io.connect('http://localhost:8080');
-          //socket.emit('poke', 'helloServer Hi server, how are you ?');
+			console.log("Sending "+size+" bytes to server");
 
-          var data = {
-                       "type":"text",
-                       "content":"0x0005",
-                       "index":"0"
-                     };
-          send_to_serveur(data, 0);
-      }
-
-      function send_to_serveur(data, size)
-      {
-        console.log('send_to_serveur');
-        socket.send(JSON.stringify({data:data, msg:'send_to_serveur : sending data', index:0}));
+			// TODO: as we are waiting websocket ready before connecting, the test below should not be necessary now
+            if (socket.readyState == 1){
+				var text = "";
+				for (var i = 0 ; i < data.length ; ++i){
+					text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+				}
+		  		console.log("Data Sent to Server : "+text);
+                socket.send(data); //, { binary: true });
+            } else {
+				//TODO: replace that with onready event from websocket
+				console.log("Waiting for server to be ready");
+                setInterval(function() { send_to_serveur(data, size); }, 1000);
+            }
+            //socket.send(JSON.stringify({data:data, msg:'message : sending data', index:0}));
       }
 
     </script>
@@ -1236,6 +1259,7 @@
 		<div>
 			<input type="button" value="Disconnect" onclick="disconnecting();">
 			<input type="button" value="CTRL ALT DELETE" onclick="CTRL_ALT_DELETE();">
+			<input type="button" value="Refresh" onclick="refreshPressed();">
 			<input id="hidden_input_text" style="width:0; opacity:0"  accept-charset="UTF-8"/>
 		</div>
     	</div>
@@ -1254,13 +1278,9 @@
 		})(),
 	      };
 
-	      /*var script = document.createElement('script');
-              script.src = "test_emscripten_browser_client_JS.js";
-              document.body.appendChild(script);*/
-
     </script>
 
-<script src='draw.js'></script>
+    <script src='draw.js'></script>
 
 
 	  {{{ SCRIPT }}}
@@ -1277,4 +1297,3 @@
 
 </body>
 </html>
-

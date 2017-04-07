@@ -28,45 +28,77 @@
 #include "virchan.hpp"
 #include "utils/stream.hpp"
 
-// 2.2.1.1.2  Window List Capability Set
-// =====================================
+// [MS-RDPERP] - 2.2.1.1.2 Window List Capability Set
+// ==================================================
 
-// The Window List Capability Set is sent by the server in the Demand Active PDU and by the client in
-// the Confirm Active PDU, as specified in [MS-RDPBCGR] section 2.2.1.13. It indicates that the client
-// and server are capable of communicating Windowing Alternate Secondary Drawing Orders as
-// extensions to the core RDP protocol drawing orders (see section 2.2.1.3).
+// The Window List Capability Set is sent by the server in the Demand Active
+//  PDU and by the client in the Confirm Active PDU, as specified in
+//  [MS-RDPBCGR] section 2.2.1.13. It indicates that the client and server
+//  are capable of communicating Windowing Alternate Secondary Drawing Orders
+//  as extensions to the core RDP protocol drawing orders (see section
+//  2.2.1.3).
 
-// WndSupportLevel (4 bytes): An unsigned 32-bit integer. The windowing support level. This
-//    field MUST be set to one of the following values. <2>
-//    +-------------------------------+---------------------------------------------------------+
-//    | TS_WINDOW_LEVEL_NOT_SUPPORTED | The client or server is not capable of supporting       |
-//    | 0x00000000                    | Windowing Alternate Secondary Drawing Orders.           |
-//    +-------------------------------+---------------------------------------------------------+
-//    | TS_WINDOW_LEVEL_SUPPORTED     | The client or server is capable of supporting Windowing |
-//    | 0x00000001                    | Alternate Secondary Drawing Orders.                     |
-//    +-------------------------------+---------------------------------------------------------+
-//    | TS_WINDOW_LEVEL_SUPPORTED_EX  | The client or server is capable of supporting Windowing |
-//    | 0x00000002                    | Alternate Secondary Drawing Orders and the following    |
-//    |                               | flags:                                                  |
-//    |                               | * WINDOW_ORDER_FIELD_CLIENTAREASIZE                     |
-//    |                               | * WINDOW_ORDER_FIELD_RPCONTENT                          |
-//    |                               | * WINDOW_ORDER_FIELD_ROOTPARENT                         |
-//    +-------------------------------+---------------------------------------------------------+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |       CapabilitySetType       |        LengthCapability       |
+// +-------------------------------+-------------------------------+
+// |                        WndSupportLevel                        |
+// +---------------+-------------------------------+---------------+
+// | NumIconCaches |      NumIconCacheEntries      |
+// +---------------+-------------------------------+
 
-// NumIconCaches (1 byte): An unsigned 8-bit integer. The number of icon caches requested by
-//    the server (Demand Active PDU) or supported by the client (Confirm Active PDU).
-//    The server maintains an icon cache and refers to it to avoid sending duplicate icon information
-//    (see section 2.2.1.3.1.2.3). The client also maintains an icon cache and refers to it when the
-//    server sends across a Cached Icon Window Information Order.
+// CapabilitySetType (2 bytes): An unsigned 16-bit integer. The type of
+//  capability set. This field MUST be set to 0x0018 (CAPSTYPE_WINDOW).
 
-// NumIconCacheEntries (2 bytes): An unsigned 16-bit integer. The number of entries within
-//    each icon cache requested by the server (Demand Active PDU) or supported by the client
-//    (Confirm Active PDU).
+// LengthCapability (2 bytes): An unsigned 16-bit integer. Specifies the
+//  combined length of the CapabilitySetType, LengthCapability,
+//  WndSupportLevel, NumIconCaches, and NumIconCacheEntries fields, in bytes.
 
-//    The server maintains an icon cache and refers to it to avoid sending duplicate icon information
-//    (see section 2.2.1.3.1.2.3). The client also maintains an icon cache and refers to it when the
-//    server sends across a Cached Icon Window Information Order.
+// WndSupportLevel (4 bytes): An unsigned 32-bit integer. The windowing
+//  support level. This field MUST be set to one of the following values.<2>
 
+//  +-------------------------------+----------------------------------------+
+//  | Value                         | Meaning                                |
+//  +-------------------------------+----------------------------------------+
+//  | TS_WINDOW_LEVEL_NOT_SUPPORTED | The client or server is not capable of |
+//  | 0x00000000                    | supporting Windowing Alternate         |
+//  |                               | Secondary Drawing Orders.              |
+//  +-------------------------------+----------------------------------------+
+//  | TS_WINDOW_LEVEL_SUPPORTED     | The client or server is capable of     |
+//  | 0x00000001                    | supporting Windowing Alternate         |
+//  |                               | Secondary Drawing Orders.              |
+//  +-------------------------------+----------------------------------------+
+//  | TS_WINDOW_LEVEL_SUPPORTED_EX  | The client or server is capable of     |
+//  | 0x00000002                    | supporting Windowing Alternate         |
+//  |                               | Secondary Drawing Orders and the       |
+//  |                               | following flags:                       |
+//  |                               |                                        |
+//  |                               | * WINDOW_ORDER_FIELD_CLIENTAREASIZE    |
+//  |                               |                                        |
+//  |                               | * WINDOW_ORDER_FIELD_RPCONTENT         |
+//  |                               |                                        |
+//  |                               | * WINDOW_ORDER_FIELD_ROOTPARENT        |
+//  +-------------------------------+----------------------------------------+
+
+// NumIconCaches (1 byte): An unsigned 8-bit integer. The number of icon
+//  caches requested by the server (Demand Active PDU) or supported by the
+//  client (Confirm Active PDU).
+
+//  The server maintains an icon cache and refers to it to avoid sending
+//  duplicate icon information (see section 2.2.1.3.1.2.3). The client also
+//  maintains an icon cache and refers to it when the server sends across a
+//  Cached Icon Window Information Order.
+
+// NumIconCacheEntries (2 bytes): An unsigned 16-bit integer. The number of
+//  entries within each icon cache requested by the server (Demand Active
+//  PDU) or supported by the client (Confirm Active PDU).
+
+//  The server maintains an icon cache and refers to it to avoid sending
+//  duplicate icon information (see section 2.2.1.3.1.2.3). The client also
+//  maintains an icon cache and refers to it when the server sends across a
+//  Cached Icon Window Information Order.
 
 enum  {
         TS_WINDOW_LEVEL_NOT_SUPPORTED
@@ -91,7 +123,8 @@ struct WindowListCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)override {
+    void emit(OutStream & stream)
+    {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->WndSupportLevel);
@@ -99,20 +132,19 @@ struct WindowListCaps : public Capability {
         stream.out_uint16_le(this->NumIconCacheEntries);
     }
 
-    void recv(InStream & stream, uint16_t len)override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         this->WndSupportLevel = stream.in_uint32_le();
         this->NumIconCaches = stream.in_uint8();
         this->NumIconCacheEntries = stream.in_uint16_le();
     }
 
-    void log(const char * msg)override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s WindowsList caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "WindowsList caps::WndSupportLevel %u", this->WndSupportLevel);
+        LOG(LOG_INFO, "WindowsList caps::WndSupportLevel 0x%X", this->WndSupportLevel);
         LOG(LOG_INFO, "WindowsList caps::NumIconCaches %u", this->NumIconCaches);
         LOG(LOG_INFO, "WindowsList caps::NumIconCacheEntries %u", this->NumIconCacheEntries);
     }
 };
-
-
-

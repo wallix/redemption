@@ -29,20 +29,20 @@
 #include "utils/rect.hpp"
 
 /* region */
-struct Region {
+struct SubRegion {
     std::vector<Rect> rects;
 
-    Region() {}
-    ~Region() {}
+    SubRegion() {}
+    ~SubRegion() {}
 
-    void subtract_rect(const Rect & rect) {
+    void subtract_rect(const Rect rect) {
         std::vector<Rect> new_rects;
 
         std::size_t count = this->rects.size();
         for (std::size_t i = 0; i < count; i++) {
             Rect rect1 = this->rects[i];
             if (!rect.contains(rect1)) {
-                const Rect & sect = rect.intersect(rect1);
+                const Rect sect = rect.intersect(rect1);
 
                 if (sect.isempty()) {
                     new_rects.push_back(rect1);

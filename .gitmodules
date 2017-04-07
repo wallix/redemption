@@ -1,3 +1,6 @@
 [submodule "modules/program_options"]
 	path = modules/program_options
 	url = https://github.com/wallix/program_options.git
+[submodule "modules/ppocr"]
+	path = modules/ppocr
+	url = https://github.com/wallix/ppocr.git

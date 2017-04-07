@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
+    // return ustime(a) < ustime(b)
     return a.tv_sec < b.tv_sec
        || (a.tv_sec == b.tv_sec
         && a.tv_usec < b.tv_usec);

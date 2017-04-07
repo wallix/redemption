@@ -20,9 +20,7 @@
  *
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatInteractiveTarget
+#define UNIT_TEST_MODULE TestFlatInteractiveTarget
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -38,7 +36,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
+RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 {
     {
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
@@ -47,7 +45,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable.gd, 800, 600, font);
+        WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+        parent.set_wh(800, 600);
+
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -58,16 +58,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target.png");
 
-        char message[1024];
-        if (!check_sig(drawable.gd.impl(), message,
-            "\x5b\x12\x73\x34\x4c\x7e\xb3\xd2\xa8\x06\xb1\x03\xe9\x8f\xf7\xcf\x24\x40\x90\x62"
-        )){
-            BOOST_CHECK_MESSAGE(false, message);
-        }
+        RED_CHECK_SIG(drawable.gd, "\xaa\xa8\x12\x8e\xa4\x6b\xfc\xaf\xc8\x0b\xdc\xe0\xf7\x99\x87\xf6\x7e\x58\x19\x45");
     }
     {
         // ASK DEVICE
@@ -76,7 +71,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable.gd, 800, 600, font);
+        WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+        parent.set_wh(800, 600);
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -87,16 +83,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-1.png");
 
-        char message[1024];
-        if (!check_sig(drawable.gd.impl(), message,
-            "\x3e\x8c\x9b\x27\x32\x3a\xb9\xe5\xdd\x91\xf2\xdf\x46\x6a\x0f\x3c\xa7\xfd\xea\x3b"
-        )){
-            BOOST_CHECK_MESSAGE(false, message);
-        }
+        RED_CHECK_SIG(drawable.gd, "\xe9\x5b\xae\xe5\xec\x96\xcb\x00\xd1\x5a\x21\x25\xc0\xa7\xb9\xf4\xbd\x20\x99\xdc");
     }
     {
         // ASK PASSWORD
@@ -105,7 +96,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable.gd, 800, 600, font);
+        WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+        parent.set_wh(800, 600);
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -116,16 +108,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-2.png");
 
-        char message[1024];
-        if (!check_sig(drawable.gd.impl(), message,
-            "\xbb\x37\x56\x8c\x63\x4d\xad\xab\xfd\x47\x25\xed\x10\x9b\x05\x0b\x2f\x3b\x8f\xcf"
-       )){
-            BOOST_CHECK_MESSAGE(false, message);
-        }
+        RED_CHECK_SIG(drawable.gd, "\xcb\xcc\x5c\x60\x2a\x42\x5d\x88\x35\x7b\x58\x25\x80\x46\x5c\x7f\x88\x67\x3b\x28");
     }
     {
         // ASK LOGIN + PASSWORD
@@ -134,7 +121,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable.gd, 800, 600, font);
+        WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+        parent.set_wh(800, 600);
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -145,16 +133,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-3.png");
 
-        char message[1024];
-        if (!check_sig(drawable.gd.impl(), message,
-            "\x64\x96\x0a\xf7\xce\x87\xcf\xf8\x80\x88\xaa\x9d\xa1\x28\xf9\xe6\x50\x63\x1f\xe5"
-       )){
-            BOOST_CHECK_MESSAGE(false, message);
-        }
+        RED_CHECK_SIG(drawable.gd, "\xf8\xdc\xd6\x82\x09\x02\xb1\x0b\xcd\x61\x49\x28\x90\x41\xa8\xd6\x8f\xad\xd0\x21");
     }
     {
         // ASK DEVICE + PASSWORD
@@ -163,7 +146,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable.gd, 800, 600, font);
+        WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+        parent.set_wh(800, 600);
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -174,16 +158,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
         // ask to widget to redraw at it's current position
-        interactive.rdp_input_invalidate(interactive.rect);
+        interactive.rdp_input_invalidate(interactive.get_rect());
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-4.png");
 
-        char message[1024];
-        if (!check_sig(drawable.gd.impl(), message,
-            "\x6a\xb7\xdb\x5a\x9d\xfd\xed\xb5\xa1\x77\x1b\xfe\x2e\xee\xe7\xd6\xec\x2d\xb4\xa2"
-                       )){
-            BOOST_CHECK_MESSAGE(false, message);
-        }
+        RED_CHECK_SIG(drawable.gd, "\xca\x85\x6d\x9d\xb1\x80\xb8\xd2\xe9\x59\x88\xb6\xa0\x95\x20\xaf\xff\x96\xef\xd9");
     }
 
 }

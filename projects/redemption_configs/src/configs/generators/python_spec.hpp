@@ -73,7 +73,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 
     template<class Pack>
     void do_member(
-        std::string const & section_name,
+        std::string const & /*section_name*/,
         std::string const & member_name,
         Pack const & infos
     ) {
@@ -309,7 +309,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 
     template<class T, class E>
     enable_if_enum_t<T>
-    write_type(type_<T> t, E const & x)
+    write_type(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {

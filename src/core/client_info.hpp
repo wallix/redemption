@@ -31,6 +31,8 @@
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
 
@@ -61,7 +63,8 @@ struct ClientInfo {
 
     /* pointer info */
     int pointer_cache_entries = 0;
-    /* other */
+    bool supported_new_pointer_update = false;
+
     //uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
@@ -91,12 +94,18 @@ struct ClientInfo {
 
     ClientTimeZone client_time_zone;
 
+    uint16_t cbAutoReconnectCookie = 0;
+    uint8_t  autoReconnectCookie[28] = { 0 };
+
     GlyphCache::number_of_entries_t number_of_entries_in_glyph_cache = { {
           NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES, NUMBER_OF_GLYPH_CACHE_ENTRIES
         , NUMBER_OF_GLYPH_CACHE_ENTRIES
     } };
+
+    LargePointerCaps        large_pointer_caps;
+    MultiFragmentUpdateCaps multi_fragment_update_caps;
 
     ClientInfo() = default;
 
@@ -146,7 +155,7 @@ struct ClientInfo {
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
                                        | INFO_UNICODE
-                                       | INFO_MAXIMIZESHELL
+                                       // | INFO_MAXIMIZESHELL // unnecessary. Following by "'RDP' failed at RDP_GET_LICENSE state" if absent.
                                        ;
 
         if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
@@ -170,6 +179,12 @@ struct ClientInfo {
         snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
 
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;
+
+        if (infoPacket.extendedInfoPacket.cbAutoReconnectLen) {
+            this->cbAutoReconnectCookie = infoPacket.extendedInfoPacket.cbAutoReconnectLen;
+
+            ::memcpy(this->autoReconnectCookie, infoPacket.extendedInfoPacket.autoReconnectCookie, sizeof(this->autoReconnectCookie));
+        }
     }
 };
 

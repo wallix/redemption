@@ -35,6 +35,8 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/buffer.hpp"
 
+#include "cxx/cxx.hpp"
+
 /*
  * All implementations MUST be able to process packets with an
  * uncompressed payload length of 32768 bytes or less and a total packet
@@ -43,6 +45,8 @@
 #define CHANNEL_TOTAL_PACKET_SIZE 35000
 #define CHANNEL_MAX_PACKET 32768
 #define CHANNEL_INITIAL_WINDOW 64000
+
+
 
 struct options_struct {
     int nbidentity;
@@ -266,17 +270,13 @@ struct ssh_channel_struct {
      * @brief Open a channel by sending a SSH_OPEN_CHANNEL message and
      *        wait for the reply.
      *
-     * @param[in]  channel  The current channel.
-     *
-     * @param[in]  type_c   A C string describing the kind of channel (e.g. "exec").
+     * @param[in]  channel_type_c   A C string describing the kind of channel (e.g. "exec").
      *
      * @param[in]  window   The receiving window of the channel. The window is the
      *                      maximum size of data that can stay in buffers and
      *                      network.
      *
      * @param[in]  maxpacket The maximum packet size allowed (like MTU).
-     *
-     * @param[in]  payload   The buffer containing additional payload for the query.
      */
     // TODO: I'm not sure constructor should be different of open ?
     // Well, maybe if channel is opened from the remote side when receiving a message
@@ -577,6 +577,7 @@ struct ssh_agent_struct {
             switch (res){
             default:
                 pos += res;
+                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:
@@ -591,6 +592,7 @@ struct ssh_agent_struct {
             switch (res){
             default:
                 pos += res;
+                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:
@@ -646,16 +648,6 @@ struct ssh_agent_struct {
         return 0;
     }
 
-
-    // TODO: move this method to error ?
-    void set_error(error_struct & error, int eid, int code, const char *function, const char *descr, ...)
-    {
-        (void)function;
-        ssh_set_error(error, code, descr);
-        error.eid = eid;
-        syslog(LOG_ERR, "%s", error.error_buffer);
-    }
-
     int ssh_agent_get_ident_count_channel_ssh2_server(ssh_session_struct * server_session, error_struct & error)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
@@ -668,7 +660,8 @@ struct ssh_agent_struct {
 
             if (this->agent_talk_channel_server(server_session, &request, reply, error) < 0) {
                 syslog(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);
-                this->set_error(error, 0, SSH_NO_ERROR, __FUNCTION__, "");
+                error.error_code = SSH_NO_ERROR;
+                error.eid = 0;
                 throw error;
             }
 
@@ -683,12 +676,14 @@ struct ssh_agent_struct {
 
             if ((type == SSH_AGENT_FAILURE) || (type == SSH_COM_AGENT2_FAILURE) || (type == SSH2_AGENT_FAILURE)) {
                 syslog(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);
-                this->set_error(error, 0, SSH_NO_ERROR, __FUNCTION__, "");
+                error.error_code = SSH_NO_ERROR;
+                error.eid = 0;
                 throw error;
             }
 
             if (type != SSH2_AGENT_IDENTITIES_ANSWER) {
-                this->set_error(error, -1, SSH_FATAL, __FUNCTION__, "Bad authentication reply message type: %d", type);
+                ssh_set_error(error, SSH_FATAL, "Bad authentication reply message type: %d", type);
+                error.eid = -1;
                 syslog(LOG_INFO, "%s type = not SSH2_AGENT_IDENTITIES_ANSWER ---", __FUNCTION__);
                 throw error;
             }
@@ -697,8 +692,8 @@ struct ssh_agent_struct {
             syslog(LOG_INFO, "Agent count: %d", this->count);
 
             if (this->count > 1024) {
-                this->set_error(error, -1, SSH_FATAL, __FUNCTION__,
-                    "Too many identities in authentication reply: %d", this->count);
+                ssh_set_error(error, SSH_FATAL, "Too many identities in authentication reply: %d", this->count);
+                error.eid = -1;
                 throw error;
             }
         } catch (error_struct & error) {
@@ -878,7 +873,7 @@ struct ssh_auth_auto_state_struct {
     }
 };
 
-#include "sashimi/session.hpp"
+#include "sashimi/ssh_session.hpp"
 
 int ssh_poll_ctx_dopoll(struct ssh_poll_ctx_struct * ctx, int timeout);
 int dopoll(ssh_poll_ctx_struct * ctx, int timeout);

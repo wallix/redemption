@@ -25,9 +25,6 @@ from select     import select
 from time       import time
 from time       import strftime
 from time       import ctime
-from time       import timezone
-from time       import altzone
-from time       import daylight
 from time       import sleep
 from time       import mktime
 from datetime   import datetime
@@ -133,6 +130,7 @@ class Sesman():
         self.proxy_conx  = conn
         self.addr        = addr
         self.full_path   = None
+        self.full_log_path = None
 
         self.engine = engine.Engine()
 
@@ -155,6 +153,7 @@ class Sesman():
         self.shared[u'selector_lines_per_page'] = u'0'
         self.shared[u'real_target_device']      = MAGICASK
         self.shared[u'reporting']               = u''
+        self.shared[u'session_log_redirection'] = u'False'
 
         self._trace_type = self.engine.get_trace_type()
         self.language           = None
@@ -171,6 +170,8 @@ class Sesman():
         self.shared[u'auth_channel_answer'] = u''
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
+
+        self.shared[u'recording_started'] = u'False'
 
         self.internal_target = False
         self.check_session_parameters = False
@@ -201,14 +202,12 @@ class Sesman():
         self.send_data({
             u"module": u'transitory',
             u"forcemodule": False,
-            u"timezone": -3600,
             u"message": u'',
             u"rec_path": u'',
+            u"session_log_path": u'',
             u"is_rec": False,
             u"selector_number_of_pages": 1,
-            u"target_service": u'',
             u"proxy_opt": u'',
-            u"target_port": 3389,
             u"device_id": u'',
             u"session_id": u'',
             u"trace_type": 0,
@@ -219,6 +218,9 @@ class Sesman():
             u"target_application": u'',
             u'target_host': u'',
             u'target_password': u'',
+            u"target_service": u'',
+            u"target_str": u'',
+            u"target_port": 3389,
             u'selector_group_filter': u'',
             u'selector_device_filter': u'',
             u'selector_proto_filter': u'',
@@ -227,6 +229,25 @@ class Sesman():
             u'auth_channel_answer': u'',
             u'auth_channel_result': u'',
             u'auth_channel_target': u'',
+
+            u'pattern_kill': u'',
+            u'pattern_notify': u'',
+            u'reporting': u'',
+            u'target_login': u'',
+            u'target_device': u'',
+            u'proto_dest': u'',
+            u'target_application_account': u'',
+            u'target_application_password': u'',
+            u'rt_display': 0,
+            u'opt_message': u'',
+
+            u'ticket': u'',
+            u'comment': u'',
+            u'duration': u'',
+            u'showform': False,
+            u'formflag': 0,
+
+            u'recording_started' : False,
             })
         self.engine.reset_proxy_rights()
 
@@ -307,18 +328,12 @@ class Sesman():
         _data = ''
         try:
             # Fetch Data from Redemption
-            try:
-                while True:
-                    _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
-                    _packet_size, = unpack(">H", self.proxy_conx.recv(2))
-                    _data += self.proxy_conx.recv(_packet_size)
-                    if not _is_multi_packet:
-                        break
-            except Exception, e:
-                if DEBUG:
-                    import traceback
-                    Logger().info(u"Socket Closed : %s" % traceback.format_exc(e))
-                raise AuthentifierSocketClosed()
+            while True:
+                _is_multi_packet, = unpack(">H", self.proxy_conx.recv(2))
+                _packet_size, = unpack(">H", self.proxy_conx.recv(2))
+                _data += self.proxy_conx.recv(_packet_size)
+                if not _is_multi_packet:
+                    break
             _data = _data.decode('utf-8')
         except AuthentifierSocketClosed, e:
             raise
@@ -606,6 +621,7 @@ class Sesman():
                 real_wab_login = self.engine.get_username()
                 self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
                                                                           real_wab_login)
+
             self.language = self.engine.get_language()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
@@ -806,7 +822,7 @@ class Sesman():
                         self.internal_target = True if s[2] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
-                    self.target_group = s[0].split(';')[0]
+                    self.target_group = s[0]
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
                     _status = True
                 else:
@@ -846,6 +862,7 @@ class Sesman():
               u'is_rec'         : u'False'
             , u'rec_path'       : u""
             , u'trace_type'     : u"0"
+            , u'module': u'transitory'
         }
 
         try:
@@ -916,6 +933,57 @@ class Sesman():
                                        ["NO", "YES"][_status]))
                     else:
                         self.send_data(data_to_send)
+
+        except Exception, e:
+            if DEBUG:
+                import traceback
+                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+            _status, _error = False, TR(u"Connection closed by client")
+
+        return _status, _error
+
+    def check_session_log_redirection(self, logRedirected, user):
+        Logger().info(u"Checking session log redirection")
+
+        _status, _error = True, u''
+        data_to_send = {
+            u'session_log_path' : u'',
+            u'module': u'transitory'
+        }
+
+        try:
+            self.full_log_path = u""
+            session_log_path = u""
+            if logRedirected:
+                try:
+                    os.stat(RECORD_PATH)
+                except OSError:
+                    try:
+                        os.mkdir(RECORD_PATH)
+                    except Exception:
+                        Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                        _status, _error = False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                if _status:
+                    # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
+                    # NB :  backslashes are replaced by pipes for IE compatibility
+                    random.seed(self.pid)
+
+                    #keeping code synchronized with wabengine/src/common/data.py
+                    session_log_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
+                    session_log_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+                    session_log_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
+                    session_log_path += u"%s," % gethostname()
+                    session_log_path += u"%s" % random.randint(1000, 9999)
+                    # remove all "dangerous" characters in filename
+                    import re
+                    session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
+
+                    Logger().info(u"Session log will be redirected to %s" % session_log_path)
+
+                    self.full_log_path = RECORD_PATH + session_log_path + u".log"
+                    data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
+                    self.send_data(data_to_send)
 
         except Exception, e:
             if DEBUG:
@@ -1179,21 +1247,23 @@ class Sesman():
         extra_info = self.engine.get_target_extra_info()
         _status, _error = self.check_video_recording(
             extra_info.is_recorded,
-            mdecode(self.engine.get_username()) if self.engine.get_username() else self.shared.get(u'login'))
+            mdecode(self.engine.get_username()))
+        if not _status:
+            self.send_data({u'rejected': _error})
 
+        _status, _error = self.check_session_log_redirection(
+            self.shared[u'session_log_redirection'].lower() == u'true',
+            mdecode(self.engine.get_username()))
         if not _status:
             self.send_data({u'rejected': _error})
 
         Logger().info(u"Fetching protocol")
-
         kv = {}
         if _status:
             target_login_info = self.engine.get_target_login_info(selected_target)
             proto_info = self.engine.get_target_protocols(selected_target)
             kv[u'proto_dest'] = proto_info.protocol
-            if proto_info.protocol == u'RDP':
-                kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-                kv[u'timezone'] = str(altzone if daylight else timezone)
+            kv[u'target_str'] = target_login_info.get_target_str()
 
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
@@ -1202,14 +1272,19 @@ class Sesman():
         if _status:
             kv['password'] = 'pass'
 
+            # id to recognize primary user for session probe
+            kv['primary_user_id'] = self.engine.get_username()
+
             # register signal
             signal.signal(signal.SIGUSR1, self.kill_handler)
             signal.signal(signal.SIGUSR2, self.check_handler)
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
+
             # Add connection to the observer
             session_id = self.engine.start_session(selected_target, self.pid,
-                                                   self.effective_login)
+                                                   self.effective_login,
+                                                   session_log_path=self.full_log_path)
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
@@ -1240,6 +1315,7 @@ class Sesman():
                 or now < deconnection_time):
                 # deconnection time to epoch
                 tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                Logger().info(u"timeclose='%s'" % int(mktime(tt)))
                 kv[u'timeclose'] = int(mktime(tt))
                 if not self.infinite_connection:
                     _status, _error = self.interactive_display_message(
@@ -1255,6 +1331,8 @@ class Sesman():
         proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
         kv[u'mode_console'] = u"allow"
 
+        self.shared[u'recording_started'] = u'False'
+
         self.reporting_reason  = None
         self.reporting_target  = None
         self.reporting_message = None
@@ -1264,6 +1342,8 @@ class Sesman():
 
         if _status:
             for physical_target in self.engine.get_effective_target(selected_target):
+                kv[u'recording_started'] = False
+
                 physical_info = self.engine.get_physical_target_info(physical_target)
                 if not _status:
                     physical_target = None
@@ -1278,42 +1358,13 @@ class Sesman():
                     Logger().info("Account locked on jump server, %s." % _error)
                     continue
 
+                physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
-                if proto_info.protocol == u'RDP':
-                    connectionpolicy_kv = {}
+                if physical_proto_info.protocol == u'RDP':
+                    kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
-                    #Logger().info(u"%s" % conn_opts)
-
-                    rdp_section = conn_opts.get('rdp')
-                    if rdp_section is not None:
-                        connectionpolicy_kv[u'use_client_provided_alternate_shell'] = rdp_section.get('use_client_provided_alternate_shell')
-
-                    session_probe_section = conn_opts.get('session_probe')
-                    if session_probe_section is not None:
-                        connectionpolicy_kv[u'session_probe']                         = session_probe_section.get('enable_session_probe')
-                        connectionpolicy_kv[u'session_probe_use_smart_launcher']      = session_probe_section.get('use_smart_launcher')
-                        connectionpolicy_kv[u'enable_session_probe_launch_mask']      = session_probe_section.get('enable_launch_mask')
-                        connectionpolicy_kv[u'session_probe_on_launch_failure']       = session_probe_section.get('on_launch_failure')
-                        connectionpolicy_kv[u'session_probe_launch_timeout']          = session_probe_section.get('launch_timeout')
-                        connectionpolicy_kv[u'session_probe_launch_fallback_timeout'] = session_probe_section.get('launch_fallback_timeout')
-                        connectionpolicy_kv[u'session_probe_start_launch_timeout_timer_only_after_logon'] = session_probe_section.get('start_launch_timeout_timer_only_after_logon')
-                        connectionpolicy_kv[u'session_probe_keepalive_timeout']       = session_probe_section.get('keepalive_timeout')
-                        connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
-                        connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
-
-                        connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
-
-                    server_cert_section = conn_opts.get('server_cert')
-                    if server_cert_section is not None:
-                        connectionpolicy_kv[u'server_cert_store']             = server_cert_section.get('server_cert_store')
-                        connectionpolicy_kv[u'server_cert_check']             = server_cert_section.get('server_cert_check')
-                        connectionpolicy_kv[u'server_access_allowed_message'] = server_cert_section.get('server_access_allowed_message')
-                        connectionpolicy_kv[u'server_cert_create_message']    = server_cert_section.get('server_cert_create_message')
-                        connectionpolicy_kv[u'server_cert_success_message']   = server_cert_section.get('server_cert_success_message')
-                        connectionpolicy_kv[u'server_cert_failure_message']   = server_cert_section.get('server_cert_failure_message')
-                        connectionpolicy_kv[u'server_cert_error_message']     = server_cert_section.get('server_cert_error_message')
-
+                    connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
                     kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
@@ -1321,10 +1372,9 @@ class Sesman():
                     app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
+                    kv[u'alternate_shell'] = app_params.program
                     if app_params.params is not None:
-                        kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
-                    else:
-                        kv[u'alternate_shell'] = app_params.program
+                        kv[u'shell_arguments'] = app_params.params
                     kv[u'shell_working_directory'] = app_params.workingdir
 
                     kv[u'target_application'] = "%s@%s" % \
@@ -1337,7 +1387,9 @@ class Sesman():
                                 self.target_context.login or ""
                         if u'${PASSWORD}' in app_params.params:
                             kv[u'target_application_password'] = \
-                                self.engine.get_target_password(selected_target)
+                                self.engine.get_target_password(selected_target) \
+                                or self.engine.get_primary_password(selected_target) \
+                                or ''
 
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
@@ -1420,23 +1472,27 @@ class Sesman():
                             None
                             )
 
-                    if not trace_written:
-                        # write mwrm path to rdptrc (allow real time display)
-                        trace_written = True
-                        _status, _error = self.engine.write_trace(self.full_path)
-                        if not _status:
-                            _error = TR("Trace writer failed for %s") % self.full_path
-                            Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
-                            self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                            break
+                    # if not trace_written:
+                    #     # write mwrm path to rdptrc (allow real time display)
+                    #     trace_written = True
+                    #     _status, _error = self.engine.write_trace(self.full_path)
+                    #     if not _status:
+                    #         _error = TR("Trace writer failed for %s") % self.full_path
+                    #         Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                    #         self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                    #         break
 
                     update_args = { "is_application": bool(application),
                                     "target_host": self._physical_target_host }
                     if is_interactive_login:
                         update_args["effective_login"] = kv.get('target_login')
+                    if self.full_path:
+                        # RT available if recording
+                        # TODO: decorrelate RT and recording
+                        update_args["rt"] = True
 
-                    self.engine.update_session(physical_target,
-                                               **update_args)
+                    self.engine.update_session_target(physical_target,
+                                                      **update_args)
 
                     if not _status:
                         Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
@@ -1468,7 +1524,7 @@ class Sesman():
                         # Looping on keepalived socket
                         while True:
                             r = []
-                            Logger().info(u"Waiting on proxy")
+                            Logger().debug(u"Waiting on proxy")
                             got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
@@ -1486,6 +1542,17 @@ class Sesman():
                                 self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data();
+
+                                if self.shared.get(u'recording_started') == u'True':
+                                    if not trace_written:
+                                        # write mwrm path to rdptrc (allow real time display)
+                                        trace_written = True
+                                        Logger().info(u"Call write trace")
+                                        _status, _error = self.engine.write_trace(self.full_path)
+                                        if not _status:
+                                            _error = TR("Trace writer failed for %s") % self.full_path
+                                            Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                            self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
@@ -1529,8 +1596,7 @@ class Sesman():
                                             update_args["target_host"] = redir_host
                                         if redir_login:
                                             update_args["target_account"] = redir_login
-                                        self.engine.update_session(physical_target,
-                                                                   **update_args)
+                                        self.engine.update_session(**update_args)
                                     elif _reporting_reason == u'SESSION_EXCEPTION':
                                         Logger().info(u"RDP connection terminated. Reason: Session exception")
                                         release_reason = u'Session exception: ' + _reporting_message
@@ -1541,12 +1607,30 @@ class Sesman():
                                         release_reason = u'Session exception: ' + _reporting_message
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
+                                    elif _reporting_reason == u'SESSION_PROBE_LAUNCH_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe launch failed')
+                                        release_reason = u'Interrupt: Session Probe launch failed'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_launch_failed")})
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
-                                        release_reason = u'Session Probe Keepalive missed'
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe keepalive missed')
+                                        release_reason = u'Interrupt: Session Probe keepalive missed'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block outbound connection')
+                                        release_reason = u'Interrupt: Session Probe failed to block outbound connection'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block process')
+                                        release_reason = u'Interrupt: Session Probe failed to block process'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -1555,9 +1639,12 @@ class Sesman():
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
                                     if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        account_login = selected_target.account.login
-                                        application_password = self.engine.get_target_password(selected_target)
-
+                                        app_info = self.engine.get_target_login_info(selected_target)
+                                        account_login = app_info.account_login
+                                        application_password = \
+                                            self.engine.get_target_password(selected_target) \
+                                            or self.engine.get_primary_password(selected_target) \
+                                            or ''
                                         _message = { 'user' : account_login, 'password' : application_password }
 
                                         #Logger().info(u"GetWabSessionParameters (response):" % json.dumps(_message))
@@ -1611,9 +1698,10 @@ class Sesman():
             if close_box and self.back_selector:
                 self.send_data({ u'module': u'close_back',
                                  u'selector' : u'False' })
-                _status, _error = self.receive_data()
-                if _status and self.shared.get(u'selector') == MAGICASK:
-                    return None, "Go back to selector"
+                while True:
+                    _status, _error = self.receive_data()
+                    if _status and self.shared.get(u'selector') == MAGICASK:
+                        return None, "Go back to selector"
             else:
                 self.send_data({u'module': u'close'})
         # Error
@@ -1659,6 +1747,16 @@ class Sesman():
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(filesystem, used)
         elif reason == u'SESSION_EXCEPTION':
             pass
+        elif reason == u'SESSION_EXCEPTION_NO_RECORD':
+            pass
+        elif reason == u'SESSION_PROBE_LAUNCH_FAILED':
+            pass
+        elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
+            pass
+        elif reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
+            pass
+        elif reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+            pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')
             Logger().info("Server Redirection: login='%s', host='%s'" % (nlogin, nhost))
@@ -1674,6 +1772,54 @@ class Sesman():
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
+
+    def fetch_connectionpolicy(self, conn_opts):
+        cp_spec = {
+            'rdp': {
+                u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
+                u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
+                u'use_client_provided_remoteapp': 'use_client_provided_remoteapp'
+                },
+            'session_probe': {
+                u'session_probe' : 'enable_session_probe',
+                u'session_probe_use_smart_launcher' : 'use_smart_launcher',
+                u'session_probe_enable_launch_mask' : 'enable_launch_mask',
+                u'session_probe_on_launch_failure' : 'on_launch_failure',
+                u'session_probe_launch_timeout' : 'launch_timeout',
+                u'session_probe_launch_fallback_timeout' : 'launch_fallback_timeout',
+                u'session_probe_start_launch_timeout_timer_only_after_logon' : 'start_launch_timeout_timer_only_after_logon',
+                u'session_probe_keepalive_timeout' : 'keepalive_timeout',
+                u'session_probe_on_keepalive_timeout_disconnect_user' : 'on_keepalive_timeout_disconnect_user',
+                u'session_probe_end_disconnected_session' : 'end_disconnected_session',
+                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
+                u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
+                u'session_probe_idle_session_limit' : 'idle_session_limit',
+                u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
+                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
+                u'session_probe_extra_system_processes' : 'extra_system_processes'
+                },
+            'server_cert': {
+                u'server_cert_store' : 'server_cert_store',
+                u'server_cert_check' : 'server_cert_check',
+                u'server_access_allowed_message' : 'server_access_allowed_message',
+                u'server_cert_create_message' : 'server_cert_create_message',
+                u'server_cert_success_message' : 'server_cert_success_message',
+                u'server_cert_failure_message' : 'server_cert_failure_message',
+                u'server_cert_error_message' : 'server_cert_error_message'
+            }
+        }
+
+        connectionpolicy_kv = {}
+
+        #Logger().info(u"%s" % conn_opts)
+
+        for (section, matches) in cp_spec.items():
+            section_values = conn_opts.get(section)
+            if section_values is not None:
+                for (config_key, cp_key) in matches.items():
+                    connectionpolicy_kv[config_key] = section_values.get(cp_key)
+
+        return connectionpolicy_kv
 
     def kill_handler(self, signum, frame):
         # Logger().info("KILL_HANDLER = %s" % signum)

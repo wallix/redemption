@@ -18,15 +18,13 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestIter
+#define UNIT_TEST_MODULE TestIter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/iter.hpp"
 #include <string>
 
-BOOST_AUTO_TEST_CASE(TestIter)
+RED_AUTO_TEST_CASE(TestIter)
 {
     std::string g;
     {
@@ -34,7 +32,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -42,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -51,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(p, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -59,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, s+3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -68,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, p)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -76,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "012");
+        RED_CHECK_EQUAL(g, "012");
     }
     g.clear();
     {
@@ -84,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s + 2, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "234");
+        RED_CHECK_EQUAL(g, "234");
     }
     g.clear();
     {
@@ -92,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s.begin(), 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "abc");
+        RED_CHECK_EQUAL(g, "abc");
     }
     g.clear();
     {
@@ -100,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "abc");
+        RED_CHECK_EQUAL(g, "abc");
     }
     g.clear();
     {
@@ -108,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s, 3)) {
             g.push_back(c);
         }
-        BOOST_CHECK_EQUAL(g, "abc");
+        RED_CHECK_EQUAL(g, "abc");
     }
     g.clear();
     {
@@ -116,6 +114,6 @@ BOOST_AUTO_TEST_CASE(TestIter)
         for (char c : iter(s.begin(), s.end())) {
             g.push_back(c);
           }
-        BOOST_CHECK_EQUAL(g, s);
+        RED_CHECK_EQUAL(g, s);
     }
 }

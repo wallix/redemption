@@ -1,0 +1,11 @@
+#!/bin/bash
+
+d="$(dirname "$0")"
+
+for f in "$@" ; do
+  out="$f.monochrome.${f/*./}"
+  "$d"/img_win2012_smoothing_to_monochrome "$f" "$out"
+  txt="${f/.*/}";
+  pngtopnm "$out" > "$txt".pbm
+  echo "$txt" > "$txt".txt
+done

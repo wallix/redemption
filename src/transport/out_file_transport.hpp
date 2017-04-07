@@ -24,68 +24,47 @@
 #include "utils/fdbuf.hpp"
 #include "transport/transport.hpp"
 
-namespace detail
-{
-    struct NoCurrentPath2 {
-        template<class Buf>
-        static const char * current_path(Buf &)
-        { return nullptr; }
-    };
-}
-
-template <class Buf, class PathTraits = detail::NoCurrentPath2>
-class OutputTransportFile
+class OutFileTransport
 : public Transport
 {
-    Buf buf;
+    io::posix::fdbuf file;
 
 public:
-    OutputTransportFile() = default;
-
-    template<class T>
-    explicit OutputTransportFile(const T & buf_params)
-    : buf(buf_params)
-    {}
+    explicit OutFileTransport(int fd, auth_api * auth = nullptr) noexcept
+    : file(fd)
+    {
+        if (auth) {
+            this->authentifier = auth;
+        }
+    }
 
     bool disconnect() override {
-        return !this->buf.close();
+        return !this->file.close();
     }
 
 private:
-    void do_send(const char * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
+    void do_send(const uint8_t * data, size_t len) override
+    {
+        const ssize_t res = this->file.write(data, len);
         if (res < 0) {
             this->status = false;
+            auto eid = ERR_TRANSPORT_WRITE_FAILED;
             if (errno == ENOSPC) {
-                char message[1024];
-                const char * filename = PathTraits::current_path(this->buf);
-                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
-                this->authentifier->report("FILESYSTEM_FULL", message);
+                this->authentifier->report("FILESYSTEM_FULL", "100|unknow");
                 errno = ENOSPC;
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
             }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
+            throw Error(eid, errno);
         }
         this->last_quantum_sent += res;
     }
 
 protected:
-    Buf & buffer() noexcept
-    { return this->buf; }
+    io::posix::fdbuf & buffer() noexcept
+    { return this->file; }
 
-    const Buf & buffer() const noexcept
-    { return this->buf; }
+    const io::posix::fdbuf & buffer() const noexcept
+    { return this->file; }
 
-    typedef OutputTransportFile TransportType;
-};
-
-
-struct OutFileTransport
-: OutputTransportFile<io::posix::fdbuf>
-{
-    explicit OutFileTransport(int fd) noexcept
-    : OutFileTransport::TransportType(fd)
-    {}
+    typedef OutFileTransport TransportType;
 };

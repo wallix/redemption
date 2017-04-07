@@ -24,25 +24,25 @@
 
 #pragma once
 
+#include "utils/log.hpp"
+
+#include <cstddef>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/tcp.h>
 #include <signal.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/un.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <sys/un.h>
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/select.hpp"
 #include "utils/log.hpp"
-
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 static inline bool try_again(int errnum){
     int res = false;
@@ -64,8 +64,6 @@ static inline bool try_again(int errnum){
     }
     return res;
 }
-
-namespace detail_ { namespace netutils {
 
 inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     /* set snd buffer to at least 32 Kbytes */
@@ -91,32 +89,9 @@ inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     return true;
 }
 
-inline int connect_sck(
-    int sck, int nbretry, int retry_delai_ms,
-    sockaddr & addr, socklen_t addr_len,
-    const char * ip, int port,
-    array_view<char> out_ip_addr
-) {
+inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr, socklen_t addr_len, const char * target)
+{
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-
-    char ip_addr[256];
-    memset(ip_addr, 0, sizeof(ip_addr));
-    if ((addr.sa_family == AF_INET) && !isdigit(*ip)) {
-        union
-        {
-            struct sockaddr s;
-            struct sockaddr_storage ss;
-            struct sockaddr_in s4;
-            struct sockaddr_in6 s6;
-        } u;
-        memset(&u, 0, sizeof(u));
-        memcpy(&u.s, &addr, sizeof(u.s));
-        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u.s4.sin_addr));
-
-        if (out_ip_addr.data()) {
-            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
-        }
-    }
 
     int trial = 0;
     for (; trial < nbretry ; trial++){
@@ -127,13 +102,13 @@ inline int connect_sck(
         }
         int const err =  errno;
         if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s (%s) failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
+            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, strerror(err));
         }
         if ((err == EINPROGRESS) || (err == EALREADY)){
             // try again
             fd_set fds;
-            FD_ZERO(&fds);
-            FD_SET(sck, &fds);
+            io_fd_zero(fds);
+            io_fd_set(sck, fds);
             struct timeval timeout = {
                 retry_delai_ms / 1000,
                 1000 * (retry_delai_ms % 1000)
@@ -150,42 +125,42 @@ inline int connect_sck(
     }
 
     if (trial >= nbretry){
-        if (port == -1) {
-            LOG(LOG_INFO, "All trials done connecting to %s", ip);
-        }
-        else {
-            LOG(LOG_INFO, "All trials done connecting to %s:%d", ip, port);
-        }
+        LOG(LOG_INFO, "All trials done connecting to %s", target);
         return -1;
     }
 
-    if (port == -1) {
-        LOG(LOG_INFO, "connection to %s succeeded : socket %d", ip, sck);
-    }
-    else {
-        LOG(LOG_INFO, "connection to %s:%d succeeded : socket %d", ip, port, sck);
-    }
-
+    LOG(LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
     return sck;
 }
 
-} }
+static int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
+{
+    if (!inet_aton(ip, &s4_sin_addr)) {
+        struct addrinfo * addr_info = nullptr;
+        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
+        if (result) {
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)\n",
+                ip, (result == EAI_SYSTEM) ? errno : result
+                  , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
+            return -1;
+        }
+        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
+        freeaddrinfo(addr_info);
+    }
+    return 0;
+}
 
 static inline int ip_connect(const char* ip, int port,
-             int nbretry = 3, int retry_delai_ms = 1000,
-             array_view<char> out_ip_addr = {})
+             int nbretry /* 3 */, int retry_delai_ms /*1000*/)
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+
+
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
     int sck = socket(PF_INET, SOCK_STREAM, 0);
-
-    /* set snd buffer to at least 32 Kbytes */
-    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
-        return -1;
-    }
 
     union
     {
@@ -197,34 +172,29 @@ static inline int ip_connect(const char* ip, int port,
 
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
     u.s4.sin_port = htons(port);
-    u.s4.sin_addr.s_addr = inet_addr(ip);
-
-    if (u.s4.sin_addr.s_addr == INADDR_NONE) {
-        struct addrinfo * addr_info = nullptr;
-        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
-
-        if (result) {
-            int          _error;
-            const char * _strerror;
-
-            if (result == EAI_SYSTEM) {
-                _error    = errno;
-                _strerror = strerror(errno);
-            }
-            else {
-                _error    = result;
-                _strerror = gai_strerror(result);
-            }
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
-                ip, _error, _strerror);
-            return -1;
-        }
-        u.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
-        freeaddrinfo(addr_info);
+    REDEMPTION_DIAGNOSTIC_POP
+    int status = resolve_ipv4_address(ip, u.s4.sin_addr);
+    if (status){
+        LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
+        close(sck);
+        return status;
     }
 
-    return detail_::netutils::connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), ip, port, out_ip_addr);
+    /* set snd buffer to at least 32 Kbytes */
+    if (!set_snd_buffer(sck, 32768)) {
+        LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        close(sck);
+        return -1;
+    }
+
+
+    char text_target[256];
+    snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
+
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target);
 }
 
 
@@ -232,6 +202,9 @@ static inline int ip_connect(const char* ip, int port,
 static inline int local_connect(const char* sck_name,
              int nbretry = 3, int retry_delai_ms = 1000)
 {
+    char target[1024] = {};
+    snprintf(target, sizeof(target), "%s", sck_name);
+
     LOG(LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
@@ -240,7 +213,7 @@ static inline int local_connect(const char* sck_name,
     int sck = socket(AF_UNIX, SOCK_STREAM, 0);
 
     /* set snd buffer to at least 32 Kbytes */
-    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
+    if (!set_snd_buffer(sck, 32768)) {
         return -1;
     }
 
@@ -255,13 +228,5 @@ static inline int local_connect(const char* sck_name,
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    return detail_::netutils::connect_sck(
-        sck, nbretry, retry_delai_ms,
-        u.addr,
-        static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
-        sck_name, -1, {}
-    );
+    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target);
 }
-
-#pragma GCC diagnostic pop
-

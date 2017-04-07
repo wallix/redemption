@@ -4,30 +4,57 @@ Future branch: [![Build Status from future](https://travis-ci.org/wallix/redempt
 
 
 Dependencies
-------------
+============
 
 To compile ReDemPtion you need the following packages:
-- boost-build
-- libboost-dev (contains bjam : software build tool)
-- libboost-test-dev
+- libboost-dev (contains bjam : software build tool) (http://sourceforge.net/projects/boost/files/boost/)
+- libboost-test-dev (unit-test dependency)
 - libssl-dev
-- locales
 - libkrb5-dev
 - libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
-- python2.7-dev or python2.6-dev
+- libffmpeg-dev (see below)
+- python2 or python3o
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
-Optionally:
-- python (python-dev)
+<!--Optionally:
+- python (python-dev)-->
 
-Submodule (`$ git submodule init && git submodule update`):
-- https://github.com/wallix/program_options.git
+Submodule ($ `git submodule update --init`):
+- https://github.com/wallix/program_options
+- https://github.com/wallix/ppocr
+
+## FFmpeg:
+
+### Ubuntu (16.04):
+<!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 (?) and 54 version)-->
+- libavcodec-dev
+- libavformat-dev
+- libavutil-dev
+- libswscale-dev
+- libavcodec-ffmpeg56
+- libavformat-ffmpeg56
+- libavutil-ffmpeg54
+- libswscale-ffmpeg3
+<!-- - libbz2-dev -->
+<!-- END optional -->
+
+### Other distros:
+- https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
+
+And set environment variable (optionally)
+- `export FFMPEG_INC_PATH=/my/ffmpeg/include/path`
+- `export FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
+- `export FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
+
+## Environment variable setting
+
+List with `grep '\[ setvar' jam/defines.jam`
 
 
 FAQ
----
+===
 
 Q - Why did you fork xrdp instead of contributing to the project ?
 ------------------------------------------------------------------
@@ -104,7 +131,7 @@ $ `bjam` or `bjam toolset=compiler` (see http://www.boost.org/build/doc/html/bbv
 
 Compile executables without tests (as user):
 
-$ `bjam exe`
+$ `bjam exe libs`
 
 and install (as administrator):
 

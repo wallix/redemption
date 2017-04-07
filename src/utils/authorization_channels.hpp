@@ -129,11 +129,10 @@ public:
             case rdpdr::RDPDR_DTYP_SMARTCARD:
                 return this->rdpdr_restriction_[4];
 
-            default:;
+            default:
+                assert("Unknown RDPDR DeviceType");
+                return false;
         }
-
-        assert(true && "Unknown RDPDR DeviceType");
-        return false;
     }
 
     inline bool rdpdr_drive_read_is_authorized() const noexcept {
@@ -364,7 +363,9 @@ private:
         return false;
     }
 
+    // TODO sorted ChannelName{ uint64_t internal_name; };
     std::string allow_;
+    // TODO sorted ChannelName{ uint64_t internal_name; };
     std::string deny_;
     bool all_allow_ = false;
     bool all_deny_ = false;

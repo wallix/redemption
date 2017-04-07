@@ -28,6 +28,7 @@
 #include "utils/difftimeval.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/select.hpp"
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,
@@ -92,13 +93,26 @@ public:
         }
     }
 
-// NOTE: old-style-cast is ignored because of FD_xxx macros using it behind the hood
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-    void add_to_fd_set(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
+    void wait_on_timeout(timeval & timeout) const
     {
+        // TODO: And what exactly means that set_state state variable in wait_obj ?
+        // if it means 'already triggered' it's one more reason to wake up fast...
+        if (this->set_state) {
+            struct timeval now = tvtime();
+            timeval remain = how_long_to_wait(this->trigger_time, now);
+            if (lessthantimeval(remain, timeout)) {
+                timeout = remain;
+            }
+        }
+    }
+
+    void wait_on_fd(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
+    {
+        // TODO: shouldn't we *always* have a timeout ?
+        // TODO: And what exactly means that set_state state variable in wait_obj ?
+        // if it means 'already triggered' it's one more reason to wake up fast...
         if (fd > INVALID_SOCKET) {
-            FD_SET(fd, &rfds);
+            io_fd_set(fd, rfds);
             max = (static_cast<unsigned>(fd) > max) ? fd : max;
         }
         if ((fd <= INVALID_SOCKET || this->object_and_time) && this->set_state) {
@@ -116,7 +130,7 @@ public:
         this->waked_up_by_time = false;
 
         if (fd > INVALID_SOCKET) {
-            bool res = FD_ISSET(fd, &rfds);
+            bool res = io_fd_isset(fd, rfds);
 
             if (res || !this->object_and_time) {
                 return res;
@@ -132,6 +146,19 @@ public:
 
         return false;
     }
-#pragma GCC diagnostic pop
+
+    bool is_set()
+    {
+        this->waked_up_by_time = false;
+
+        if (this->set_state) {
+            if (tvtime() >= this->trigger_time) {
+                this->waked_up_by_time = true;
+                return true;
+            }
+        }
+
+        return false;
+    }
 };
 

@@ -15,34 +15,38 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2013
-  Author(s): Christophe Grosjean, Meng Tan
+  Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestAuthentifierNew
+#define UNIT_TEST_MODULE TestAuthentifierNew
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
-// #define LOGPRINT
+//#define LOGPRINT
 
 //#include "acl/module_manager.hpp"
-#include "transport/count_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "acl/authentifier.hpp"
 
-struct ActivityAlwaysTrue : ActivityChecker {
-    bool check_and_reset_activity() override { return true; }
-};
-struct ActivityAlwaysFalse : ActivityChecker {
-    bool check_and_reset_activity() override { return false; }
-};
-
-
-BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
+class CountTransport
+: public Transport
 {
-    BackEvent_t signal = BACK_EVENT_NONE;
+    bool do_atomic_read(uint8_t *, size_t len) override {
+        this->last_quantum_received += len;
+        return true;
+    }
+
+    void do_send(const uint8_t * const, size_t len) override {
+        // TODO move that to base class : accounting_send(len) (or base class send could just do accounting)
+        this->last_quantum_sent += len;
+    }
+};
+
+RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
+{
+    BackEvent_t signal       = BACK_EVENT_NONE;
+    BackEvent_t front_signal = BACK_EVENT_NONE;
 
     Inifile ini;
 
@@ -54,12 +58,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\x85"
+           "\x00\x00\x01\xA3"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
+           "session_log_redirection\n!True\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -77,11 +82,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "accept_message\n!False\n"
            "display_message\n!False\n"
            "real_target_device\n!\n"
-
         // Time: 10043
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
-
     ;
 
 //    printf("len=%x\n",
@@ -111,33 +114,47 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ;
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    ActivityAlwaysTrue activity_checker;
-    SessionManager sesman(mm.ini, activity_checker, acl_trans, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
+    bool has_activity = true;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal);
+    acl_serial.check(sesman, mm, 10011, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
     // Receive answer, OK to connect
     sesman.receive();
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, signal);
-    sesman.check(mm, 10042, signal);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10012, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10042, signal, front_signal,has_activity);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, signal);
-    sesman.check(mm, 10072, signal);
+    RED_CHECK_EQUAL(has_activity, false);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10043, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10072, signal, front_signal,has_activity);
     // still connected
-    BOOST_CHECK_EQUAL(mm.last_module, false);
+    RED_CHECK_EQUAL(mm.last_module, false);
     // If no keepalive is received after 30 seconds => disconnection
-    sesman.check(mm, 10073, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, true);
+    RED_CHECK_EQUAL(has_activity, false);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10073, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, true);
+    RED_CHECK_EQUAL(mm.last_module, true);
 }
 
 
 
-BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
+RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 {
 
-    BackEvent_t signal = BACK_EVENT_NONE;
+    BackEvent_t signal       = BACK_EVENT_NONE;
+    BackEvent_t front_signal = BACK_EVENT_NONE;
 
     Inifile ini;
 
@@ -149,12 +166,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\x85"
+           "\x00\x00\x01\xA3"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
            "target_device\nASK\n"
            "target_login\nASK\n"
+           "session_log_redirection\n!True\n"
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
@@ -179,7 +197,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
-
     ;
 
 //    printf("len=%x\n",
@@ -217,46 +234,69 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ;
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    ActivityAlwaysTrue activity_checker;
-    SessionManager sesman(mm.ini, activity_checker, acl_trans, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
+    bool has_activity = true;
     CountTransport keepalivetrans;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal);
+    acl_serial.check(sesman, mm, 10011, signal, front_signal,has_activity);
     // Receive answer, OK to connect
     sesman.receive();
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, signal);
-    sesman.check(mm, 10042, signal);
+    acl_serial.check(sesman, mm, 10012, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10042, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
     // Send keepalive=ASK
-    sesman.check(mm, 10043, signal);
+    acl_serial.check(sesman, mm, 10043, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, signal);
+    acl_serial.check(sesman, mm, 10045, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
 
     // koopalive=True => unknown var...
     sesman.receive();
-    sesman.check(mm, 10072, signal);
-    sesman.check(mm, 10075, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
+    acl_serial.check(sesman, mm, 10072, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10075, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
+    RED_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, signal);
-    sesman.check(mm, 10105, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    acl_serial.check(sesman, mm, 10076, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
+    acl_serial.check(sesman, mm, 10105, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(false, has_activity);
+    has_activity = true;
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
     // Keep alive not received, disconnection
-    sesman.check(mm, 10106, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, true);  // close box
+    acl_serial.check(sesman, mm, 10106, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(true, has_activity);
+    has_activity = true;
+    RED_CHECK_EQUAL(mm.last_module, true);  // close box
 }
 
-BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
+RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 {
 
-    BackEvent_t signal = BACK_EVENT_NONE;
+    BackEvent_t signal       = BACK_EVENT_NONE;
+    BackEvent_t front_signal = BACK_EVENT_NONE;
 
     Inifile ini;
     ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
@@ -266,12 +306,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\x85"
+        "\x00\x00\x01\xA3"
         "login\nASK\n"
         "ip_client\n!\n"
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
+        "session_log_redirection\n!True\n"
         "bpp\n!24\n"
         "height\n!600\n"
         "width\n!800\n"
@@ -359,63 +400,85 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
-    ActivityAlwaysFalse activity_checker;
-    SessionManager sesman(ini, activity_checker, acl_trans, 10010);
+    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
 
+    bool has_activity = false;
     // Ask next_module, send inital data to ACL
-    sesman.check(mm, 10011, signal);
+    acl_serial.check(sesman, mm, 10011, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
     // Receive answer, OK to connect
     sesman.receive();
+
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
-    sesman.check(mm, 10012, signal);
-    sesman.check(mm, 10042, signal);
+    acl_serial.check(sesman, mm, 10012, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10042, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
     // Send keepalive=ASK
-    sesman.check(mm, 10043, signal);
+    acl_serial.check(sesman, mm, 10043, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
 
     sesman.receive();
     //  keepalive=True
-    sesman.check(mm, 10045, signal);
+    acl_serial.check(sesman, mm, 10045, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
 
     // keepalive=True
     sesman.receive();
-    sesman.check(mm, 10072, signal);
-    sesman.check(mm, 10075, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
+    acl_serial.check(sesman, mm, 10072, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10075, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(mm.last_module, false);  // still connected
+    RED_CHECK_EQUAL(has_activity, false);
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.check(mm, 10076, signal);
+    acl_serial.check(sesman, mm, 10076, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
     sesman.receive();
-    sesman.check(mm, 10079, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    acl_serial.check(sesman, mm, 10079, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     // Send keepalive=ASK
-    sesman.check(mm, 10106, signal);
-    sesman.check(mm, 10135, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    acl_serial.check(sesman, mm, 10106, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10135, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
+    RED_CHECK_EQUAL(has_activity, false);
 
     sesman.receive();
-    sesman.check(mm, 10136, signal);
-    sesman.check(mm, 10165, signal);
+    acl_serial.check(sesman, mm, 10136, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10165, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
 
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
-    sesman.check(mm, 10166, signal);
+    acl_serial.check(sesman, mm, 10166, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
     sesman.receive();
-    sesman.check(mm, 10195, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    acl_serial.check(sesman, mm, 10195, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10196, signal);
-    sesman.check(mm, 10225, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
+    acl_serial.check(sesman, mm, 10196, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10225, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
-    sesman.check(mm, 10227, signal);
-    sesman.check(mm, 10255, signal);
-    BOOST_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
+    acl_serial.check(sesman, mm, 10227, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    acl_serial.check(sesman, mm, 10255, signal, front_signal,has_activity);
+    RED_CHECK_EQUAL(has_activity, false);
+    RED_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
 }

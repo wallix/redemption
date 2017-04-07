@@ -1027,7 +1027,7 @@ class RDPPatBlt {
         return RDP::PATBLT;
     }
 
-    RDPPatBlt(const Rect & rect, uint8_t rop,
+    RDPPatBlt(const Rect rect, uint8_t rop,
               uint32_t back_color, uint32_t fore_color,
               const RDPBrush & brush) :
         rect(rect),
@@ -1201,18 +1201,19 @@ class RDPPatBlt {
         return lg;
     }
 
-    void log(int level, const Rect & clip) const {
+    void log(int level, const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect & clip) const {
+    void print(const Rect clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
         printf("%s", buffer);
     }
 
+    void move(int offset_x, int offset_y) {
+        this->rect = this->rect.offset(offset_x, offset_y);
+    }
 };
-
-

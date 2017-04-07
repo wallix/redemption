@@ -36,6 +36,8 @@
 
 #include "utils/invalid_socket.hpp"
 
+#include "utils/verbose_flags.hpp"
+
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
 // The output format can be extensively customised by use of the flags parameter.
@@ -47,7 +49,6 @@ public:
     int sck;
     int sck_closed;
     const char * name;
-    uint32_t verbose;
 
     char ip_address[128];
     int  port;
@@ -55,15 +56,21 @@ public:
     std::string * error_message;
     TLSContext * tls;
 
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        dump = 0x100,
+    };
+
     SocketTransport( const char * name, int sck, const char *ip_address, int port
-                   , uint32_t verbose, std::string * error_message = nullptr)
+                   , Verbose verbose, std::string * error_message = nullptr)
     : sck(sck)
     , sck_closed(0)
     , name(name)
-    , verbose(verbose)
     , port(port)
     , error_message(error_message)
     , tls(nullptr)
+    , verbose(verbose)
     {
         strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
         this->ip_address[127] = 0;
@@ -87,12 +94,14 @@ public:
             delete this->tls;
         }
 
-        if (verbose) {
+        if (bool(verbose)) {
             LOG( LOG_INFO
                , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
                , this->name, this->sck, this->get_total_received(), this->get_total_sent());
         }
     }
+
+    int get_fd() const override { return this->sck; }
 
     const uint8_t * get_public_key() const override {
         return this->tls ? this->tls->public_key.get() : nullptr;
@@ -199,7 +208,7 @@ public:
 
     bool connect() override {
         if (this->sck_closed == 1){
-            this->sck = ip_connect(this->ip_address, this->port, 3, 1000, {});
+            this->sck = ip_connect(this->ip_address, this->port, 3, 1000);
             this->sck_closed = 0;
         }
         return true;
@@ -210,9 +219,9 @@ public:
         int rv = 0;
         fd_set rfds;
 
-        FD_ZERO(&rfds);
+        io_fd_zero(rfds);
         if (this->sck > 0) {
-            FD_SET(this->sck, &rfds);
+            io_fd_set(this->sck, rfds);
             timeval time { 0, 0 };
             rv = select(this->sck + 1, &rfds, nullptr, nullptr, &time); /* don't wait */
             if (rv > 0) {
@@ -227,36 +236,43 @@ public:
         return rv;
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
-        if (this->verbose & 0x100){
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
-        char * start = *pbuffer;
 
-        ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+        ssize_t res = (this->tls) ? this->tls->privrecv_tls(buffer, len) : this->privrecv(buffer, len);
+        //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
+
+        // we properly reached end of file on a block boundary
+        if (res == 0){
+            return false;
+        }
+
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
-        *pbuffer += res;
 
         if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
 
-        if (this->verbose & 0x100){
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, len);
-            hexdump_c(start, len);
+            hexdump_c(buffer, len);
             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
         // TODO move that to base class : accounting_recv(len)
         this->last_quantum_received += len;
+        return true;
     }
 
-    void do_send(const char * const buffer, size_t len) override {
+
+    void do_send(const uint8_t * const buffer, size_t len) override {
         if (len == 0) { return; }
 
-        if (this->verbose & 0x100){
+        if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
             hexdump_c(buffer, len);
             LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
@@ -278,7 +294,7 @@ public:
     }
 
 private:
-    ssize_t privrecv(char * data, size_t len)
+    ssize_t privrecv(uint8_t * data, size_t len)
     {
         size_t remaining_len = len;
 
@@ -289,8 +305,8 @@ private:
                     if (try_again(errno)) {
                         fd_set fds;
                         struct timeval time = { 0, 100000 };
-                        FD_ZERO(&fds);
-                        FD_SET(this->sck, &fds);
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
                         ::select(this->sck + 1, &fds, nullptr, nullptr, &time);
                         continue;
                     }
@@ -306,13 +322,24 @@ private:
                 default: /* some data received */
                     data += res;
                     remaining_len -= res;
+                    if (remaining_len > 0) {
+                        fd_set fds;
+                        struct timeval time = { 1, 0 };
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
+                        if ((::select(this->sck + 1, &fds, nullptr, nullptr, &time) < 1) ||
+                            !io_fd_isset(this->sck, fds)) {
+                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes", this->name, this->sck, remaining_len);
+                            return -1;
+                        }
+                    }
                 break;
             }
         }
         return len;
     }
 
-    ssize_t privsend(const char * data, size_t len)
+    ssize_t privsend(const uint8_t * data, size_t len)
     {
         size_t total = 0;
         while (total < len) {
@@ -322,8 +349,8 @@ private:
                 if (try_again(errno)) {
                     fd_set wfds;
                     struct timeval time = { 0, 10000 };
-                    FD_ZERO(&wfds);
-                    FD_SET(this->sck, &wfds);
+                    io_fd_zero(wfds);
+                    io_fd_set(this->sck, wfds);
                     select(this->sck + 1, nullptr, &wfds, nullptr, &time);
                     continue;
                 }
@@ -338,5 +365,3 @@ private:
     }
 
 };
-
-#pragma GCC diagnostic pop

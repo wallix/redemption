@@ -33,7 +33,7 @@
 class InStream;
 struct Keymap2;
 
-enum {
+enum : uint16_t {
     RDP_INPUT_SYNCHRONIZE          = 0,
     RDP_INPUT_CODEPOINT            = 1,
     RDP_INPUT_VIRTKEY              = 2,
@@ -43,23 +43,22 @@ enum {
 };
 
 /* Device flags */
-enum {
+enum : uint16_t {
     KBD_FLAG_RIGHT                 = 0x0001,
     KBD_FLAG_EXT                   = 0x0100,
     KBD_FLAG_QUIET                 = 0x1000,
     KBD_FLAG_DOWN                  = 0x4000,
     KBD_FLAG_UP                    = 0x8000
-
 };
 
 /* These are for synchronization; not for keystrokes */
-enum {
+enum : uint16_t {
     KBD_FLAG_SCROLL                = 0x0001,
     KBD_FLAG_NUMLOCK               = 0x0002,
     KBD_FLAG_CAPITAL               = 0x0004
 };
 
-enum {
+enum : uint16_t {
     MOUSE_FLAG_MOVE                = 0x0800,
     MOUSE_FLAG_BUTTON1             = 0x1000,
     MOUSE_FLAG_BUTTON2             = 0x2000,
@@ -71,9 +70,20 @@ enum {
     MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
-enum {
-    FASTPATH_INPUT_KBDFLAGS_RELEASE = 0x01
+enum : uint8_t {
+    FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
+  , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
 };
+
+enum: uint8_t {
+    KBD_SCANCODE_ALTGR  = 0x38,
+    KBD_SCANCODE_SHIFT  = 0x36,
+    KBD_SCANCODE_ENTER  = 0x1C,
+    KBD_SCANCODE_BK_SPC = 0x0E,
+    KBD_SCANCODE_CTRL   = 0x1D,
+    KBD_SCANCODE_DELETE = 0x53
+};
+
 
 struct RdpInput : noncopyable
 {
@@ -82,7 +92,7 @@ struct RdpInput : noncopyable
     virtual void rdp_input_unicode(uint16_t unicode, uint8_t flag) { (void)unicode; (void)flag; }
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
-    virtual void rdp_input_invalidate(const Rect & r) = 0;
+    virtual void rdp_input_invalidate(Rect r) = 0;
     virtual void rdp_input_invalidate2(array_view<Rect const> vr) {
         for (Rect const & rect : vr) {
             if (!rect.isempty()) {
@@ -97,6 +107,8 @@ struct RdpInput : noncopyable
     { (void)left; (void)top; (void)right; (void)bottom; }
 
     virtual void rdp_suppress_display_updates() {}
+
+    virtual void refresh(Rect clip) = 0;
 };
 
 struct Callback : RdpInput

@@ -25,27 +25,32 @@ else
   find "$d" -maxdepth 1 -mindepth 1 -name 'test_*' -executable
 fi \
 | while read f ; do
-  echo -n "$f"
   outvalgrind=`valgrind \
     --leak-check=full \
     --max-stackframe=234425648 \
     --track-fds=yes \
     --suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy \
     "$f" 2>&1`
-  alloc=`grep -E '^==[0-9]+==   total heap usage:' -m1 <<< "$outvalgrind"`
-  read p t h u n1 a n2 other <<< "$alloc"
+  error=`grep -E '^==[0-9]+== ERROR SUMMARY' -m1 <<< "$outvalgrind"`
+  read p e s n other <<< "$error"
   grep -E '^==[0-9]+== +at 0x[A-F0-9]+: ' -q <<< "$outvalgrind"
-  if [ $? = 0 ] ; then
+  if [ $? = 0 ] || [ $n != 0 ] ; then
+    alloc=`grep -E '^==[0-9]+==   total heap usage:' -m1 <<< "$outvalgrind"`
+    read p t h u n1 a n2 other <<< "$alloc"
+    echo -n "$f"
+    if [[ $n1 != $n2 ]] ; then
+        echo -n -e "  \e[38;5;221;1m$n1 allocs, $n2 frees\e[0m"
+    fi
     echo -e "  \e[38;5;221;1mfail\e[0m"
     echo "$outvalgrind" | ./tools/valgrind-filter/valgrind-output-color
-    echo "$f (valgrind error)" >&2
-  elif [[ $n1 != $n2 ]] ; then
-    echo -e "  \e[38;5;221;1m$n1 allocs, $n2 frees\e[0m"
-    echo "$f (leak: $n1 allocs, $n2 frees)" >&2
+    echo "$f (valgrind ${error#* })" >&2
+    if [[ $n1 != $n2 ]] ; then
+        echo "$f (leak: $n1 allocs, $n2 frees)" >&2
+    fi
   else
-    echo '  ok'
+    echo "$f  ok"
   fi
-done 2>/tmp/valgrind_files_error
+done >/tmp/valgrind_files_error
 
 echo
 exec cat /tmp/valgrind_files_error

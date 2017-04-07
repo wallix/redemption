@@ -222,7 +222,8 @@ struct DrawGdiPlusCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream) override {
+    void emit(OutStream & stream)
+    {
 //        LOG(LOG_INFO, "DrawGdiPlus caps emit not implemented");
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -246,7 +247,8 @@ struct DrawGdiPlusCaps : public Capability {
         stream.out_uint16_le(this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         this->len = len;
         this->drawGDIPlusSupportLevel = stream.in_uint32_le();
         this->GdipVersion = stream.in_uint32_le();
@@ -268,7 +270,8 @@ struct DrawGdiPlusCaps : public Capability {
         this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize = stream.in_uint16_le();
     }
 
-    void log(const char * msg) override {
+    void log(const char * msg)
+    {
         LOG(LOG_INFO, "%s DrawGdiPlus caps (%u bytes)", msg, this->len);
 
         LOG(LOG_INFO, "DrawGdiPlus caps::drawGDIPlusSupportLevel %u", this->drawGDIPlusSupportLevel);
@@ -291,4 +294,3 @@ struct DrawGdiPlusCaps : public Capability {
         LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheMaxSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
     }
 };
-

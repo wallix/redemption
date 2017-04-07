@@ -21,6 +21,10 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#include "sashimi/channels.hpp"
+
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 
 // ================================= SSH_MSG_SERVICE_ACCEPT =================================
 
@@ -62,6 +66,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
         this->packet_send();
 
+        REDEMPTION_CXX_FALLTHROUGH;
     // Beware, this is fallthrough behavior to opening
     // But maybe we should have some error if we call open and channel is already opening
     // instead of accepting it.
@@ -111,7 +116,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
         err = SSH_ERROR;
         break;
     default:
-        ssh_set_error(this->error, SSH_FATAL,"Bad state in channel_open: %d",channel->state);
+        ssh_set_error(this->error, SSH_FATAL,"Bad state in channel_open: %d", int(channel->state));
         err = SSH_ERROR;
     }
     return err;
@@ -210,11 +215,9 @@ inline int ssh_auth_reply_success_server(SshServerSession * server_session) {
  * @brief remove the poll handle from session and assign them to a event,
  * when used in blocking mode.
  *
- * @param event     The ssh_event object
- * @param session   The session to add to the event.
+ * @param ctx     The poll_ctx_struct object
+ * @param server_session   The session to add to the event.
  *
- * @returns SSH_OK      on success
- *          SSH_ERROR   on failure
  */
 void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, SshServerSession * server_session)
 {
@@ -226,7 +229,7 @@ void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, SshServerSession * 
 /**
  * @brief Set temporary prompts for keyboard-interactive callback.
  *
- * @param[in] session      The ssh session to use.
+ * @param[in] server_session      The ssh session to use.
  *
  * @param[in] name         The name.
  *
@@ -286,7 +289,7 @@ int ssh_userauth_kbdint_settmpprompts_server(SshServerSession * server_session, 
 /**
  * @brief Set temporary unique (or none) prompt for keyboard-interactive callback.
  *
- * @param[in] session      The ssh session to use.
+ * @param[in] server_session      The ssh session to use.
  *
  * @param[in] name         The name.
  *
@@ -318,7 +321,7 @@ int ssh_userauth_kbdint_settmpprompt_server(SshServerSession * server_session, c
 /**
  * @brief Get the number of answers the client has given.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  server_session  The ssh session to use.
  *
  * @returns             The number of answers.
  */
@@ -334,7 +337,7 @@ int ssh_userauth_kbdint_getnanswers_server(SshServerSession * server_session, er
 /**
  * @brief Get the answer for a question from a message block.
  *
- * @param[in]  session  The ssh session to use.
+ * @param[in]  server_session  The ssh session to use.
  *
  * @param[in]  i index  The number of the ith answer.
  *
@@ -418,10 +421,6 @@ ssh_gssapi_creds ssh_gssapi_get_creds_server(SshServerSession * server_session){
  *
  * @param[in]  orig_port    The source port (the local server).
  *
- * @return              SSH_OK on success,
- *                      SSH_ERROR if an error occurred,
- *                      SSH_AGAIN if in nonblocking mode and call has
- *                      to be done again.
  * @warning This function does not bind the local port and does not automatically
  *          forward the content of a socket to the channel. You still have to
  *          use channel_read and channel_write for this.
@@ -518,8 +517,6 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
  * @param[in]  dest     The destination buffer which will get the data.
  *
  * @param[in]  count    The count of bytes to be read.
- *
- * @param[in]  is_stderr A boolean value to mark reading from the stderr flow.
  *
  * @return              The number of bytes read, 0 on end of file or SSH_ERROR
  *                      on error. In nonblocking mode it Can return 0 if no data
@@ -731,8 +728,6 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
  * @brief Send a global request (needed for forward listening) and wait for the
  * result.
  *
- * @param[in]  session  The SSH session handle.
- *
  * @param[in]  request  The type of request (defined in RFC).
  *
  * @param[in]  buffer   Additional data to put in packet.
@@ -747,7 +742,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
 int SshServerSession::global_request_server(const char *request, ssh_buffer_struct* buffer, int reply) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
-    int rc;
+    int rc = SSH_OK;
 
     if (this->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
         this->out_buffer->out_uint8(SSH_MSG_GLOBAL_REQUEST);
@@ -776,10 +771,8 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
         return SSH_ERROR;
     }
 
-    rc = SSH_OK;
     while(1){
         if (this->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING){
-            rc = SSH_OK;
             break;
         }
 
@@ -791,9 +784,7 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
             return SSH_ERROR;
         }
 
-        if (!(this->flags&SSH_SESSION_FLAG_BLOCKING)){
-            rc = (this->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING)
-                ? SSH_OK : SSH_AGAIN;
+        if (!this->flags & SSH_SESSION_FLAG_BLOCKING){
             break;
         }
     }
@@ -801,13 +792,13 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
     switch(this->global_req_state){
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
         syslog(LOG_INFO, "Global request %s success",request);
-        rc=SSH_OK;
+        rc = SSH_OK;
         break;
     case SSH_CHANNEL_REQ_STATE_DENIED:
         syslog(LOG_INFO, "Global request %s failed", request);
         ssh_set_error(this->error, SSH_REQUEST_DENIED,
                       "Global request %s failed", request);
-        rc=SSH_ERROR;
+        rc = SSH_ERROR;
         break;
     case SSH_CHANNEL_REQ_STATE_ERROR:
     case SSH_CHANNEL_REQ_STATE_NONE:
@@ -1012,3 +1003,4 @@ int SshServerSession::ssh_channel_open_reverse_forward_server(ssh_channel channe
     return err;
 }
 
+REDEMPTION_DIAGNOSTIC_POP

@@ -37,7 +37,7 @@
 #include "utils/urandom_read.hpp"
 #include "utils/sugar/exchange.hpp"
 #include "utils/chex_to_int.hpp"
-#include "utils/apps/cryptofile.hpp"
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 
 namespace transbuf {
@@ -144,8 +144,8 @@ struct MetaLine
     time_t  ctime;
     time_t  start_time;
     time_t  stop_time;
-    unsigned char hash1[MD_HASH_LENGTH];
-    unsigned char hash2[MD_HASH_LENGTH];
+    unsigned char hash1[MD_HASH::DIGEST_LENGTH];
+    unsigned char hash2[MD_HASH::DIGEST_LENGTH];
 };
 
 class InMetaSequenceTransport : public Transport
@@ -738,7 +738,6 @@ public:
     MetaLine meta_line;
     char meta_path[2048];
     int encryption;
-    uint32_t verbose;
 
     int buf_close()
     { return this->cfb.file_close(); }
@@ -766,6 +765,7 @@ public:
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED");
                 return -ERR_TRANSPORT_READ_FAILED;
             }
             if (ret == 0) {
@@ -857,7 +857,7 @@ public:
     }
 
     int buf_read_meta_file_v1(MetaLine & meta_line) {
-        char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
+        char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + (1+MD_HASH::DIGEST_LENGTH*2) * 2 + 2];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
         if (len < 0) {
             return -len;
@@ -945,7 +945,7 @@ public:
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
             (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
-            (1 + MD_HASH_LENGTH*2) * 2 +
+            (1 + MD_HASH::DIGEST_LENGTH*2) * 2 +
             2
         ];
         ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
@@ -971,7 +971,6 @@ public:
 
         auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
 
-        LOG(LOG_INFO, "meta_line.filename=%s", meta_line.filename);
 
         int err = 0;
         auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
@@ -1055,9 +1054,8 @@ private:
             canonical_path( this->meta_line.filename
                           , original_path, sizeof(original_path)
                           , basename, sizeof(basename)
-                          , extension, sizeof(extension)
-                          , this->verbose);
-            snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
+                          , extension, sizeof(extension));
+            std::snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
 
             if (file_exist(filename)) {
                 strcpy(this->meta_line.filename, filename);
@@ -1068,18 +1066,19 @@ private:
     }
 
 public:
-    InMetaSequenceTransport(CryptoContext * cctx,
+    InMetaSequenceTransport(
+        CryptoContext * cctx,
         const char * filename,
         const char * extension,
-        int encryption,
-        uint32_t verbose)
+        int encryption)
     : cfb(cctx, encryption)
     , buf_meta(cctx, encryption)
     , meta_header_version(1)
     , meta_header_has_checksum(false)
     , encryption(encryption)
-    , verbose(verbose)
     {
+        assert(encryption ? bool(cctx) : true);
+
         temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
         this->buf_meta.open(meta_filename);
@@ -1121,17 +1120,8 @@ public:
         canonical_path( meta_filename
                       , this->meta_path, sizeof(this->meta_path)
                       , basename, sizeof(basename)
-                      , extension2, sizeof(extension2)
-                      , this->verbose);
-
-        this->verbose = verbose;
+                      , extension2, sizeof(extension2));
     }
-
-//    InMetaSequenceTransport(CryptoContext * cctx, const char * filename, int encryption, uint32_t verbose)
-//    : buf(filename, cctx, cctx, encryption, verbose)
-//    {
-//        this->verbose = verbose;
-//    }
 
     ~InMetaSequenceTransport(){
         this->cfb.file_close();
@@ -1177,17 +1167,23 @@ public:
         return true;
     }
 
-    void do_recv(char ** pbuffer, size_t len) override {
-        const ssize_t res = this->buf_read(*pbuffer, len);
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+
+        const ssize_t res = this->buf_read(buffer, len);
         if (res < 0){
             this->status = false;
             throw Error(ERR_TRANSPORT_READ_FAILED, res);
         }
-        *pbuffer += res;
+
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
+            if (res == 0){
+                return false;
+            }
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
+        return true;
     }
+
 };

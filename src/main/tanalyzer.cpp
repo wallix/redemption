@@ -54,15 +54,28 @@
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "capture/transparentplayer.hpp"
 #include "main/version.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "program_options/program_options.hpp"
 
-
-class Analyzer : public gdi::GraphicProxyBase<Analyzer, FrontAPI>
+struct GraphicNull
 {
-    friend gdi::GraphicCoreAccess;
+    GraphicNull() = default;
 
-    struct NullFn { template<class... Ts> void operator()(Ts const & ...) {} };
-    gdi::GraphicUniformProxy<NullFn> get_graphic_proxy() { return {}; }
+    template<class... Ts>
+    void draw(Ts const & ...) {}
+
+    void set_pointer(Pointer    const &) {}
+    void set_palette(BGRPalette const &) {}
+    void sync() {}
+    void set_row(std::size_t, const uint8_t *) {}
+    void begin_update() {}
+    void end_update() {}
+};
+
+
+class Analyzer : public FrontAPI
+{
+    GraphicNull get_graphic_proxy() { return {}; }
 
 private:
     CHANNELS::ChannelDefArray channel_list;
@@ -129,16 +142,11 @@ private:
 
 public:
     // DrawApi
-    void begin_update() override { REDASSERT(false); }
-    void end_update() override { REDASSERT(false); }
-
-    bool can_be_start_capture(auth_api*) override { REDASSERT(false); return false; }
-    bool can_be_pause_capture() override { REDASSERT(false); return false; }
-    bool can_be_resume_capture() override { REDASSERT(false); return false; }
+    bool can_be_start_capture() override { REDASSERT(false); return false; }
     bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->channel_list;
     }
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * /*data*/
@@ -147,9 +155,9 @@ public:
             channel.name, channel.chanid, length, chunk_size, flags);
     }
 
-    int server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
-        return 1;
+        return ResizeResult::done;
     }
 
     void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
@@ -438,8 +446,72 @@ public:
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 
+public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+    void set_pointer(Pointer    const & pointer) override {
+        this->get_graphic_proxy().set_pointer(pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        this->get_graphic_proxy().set_palette(palette);
+    }
+
+    void sync() override {
+        this->get_graphic_proxy().sync();
+    }
+
+    void set_row(std::size_t rownum, const uint8_t * data) override {
+        this->get_graphic_proxy().set_row(rownum, data);
+    }
+
+    void begin_update() override {
+        this->get_graphic_proxy().begin_update();
+    }
+
+    void end_update() override {
+        this->get_graphic_proxy().end_update();
+    }
+
+protected:
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
+        this->get_graphic_proxy().draw(args...);
+    }
+
+public:
     Analyzer()
-    : base_type(false, false)
+    : FrontAPI(false, false)
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, 0, 0, RDPBrush())
@@ -452,7 +524,8 @@ public:
     , multiopaquerect()
     , multipatblt()
     , multiscrblt()
-    , polyline() {
+    , polyline()
+    {
         InitializeVirtualChannelList();
     }
 
@@ -544,21 +617,17 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    int fd = open(input_filename.c_str(), O_RDONLY);
-    if (fd != -1) {
-        {
-            InFileTransport trans(fd);
-            Analyzer        analyzer;
+    local_fd file(input_filename.c_str(), O_RDONLY);
+    if (file.is_open()) {
+        InFileTransport trans(file.fd());
+        Analyzer        analyzer;
 
-            TransparentPlayer player(&trans, &analyzer);
+        TransparentPlayer player(&trans, &analyzer);
 
-            while (player.interpret_chunk(/*real_time = */false));
+        while (player.interpret_chunk(/*real_time = */false));
 
-            LOG(LOG_INFO, "");
-            analyzer.show_statistic();
-        }
-
-        close(fd);
+        std::cout << "\n";
+        analyzer.show_statistic();
     }
     else {
         std::cout << "Failed to open input file: " << input_filename << "\n\n";

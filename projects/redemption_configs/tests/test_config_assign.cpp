@@ -23,10 +23,9 @@
 #define BOOST_TEST_MODULE TestStrings
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 #include "configs/config.hpp"
 
 #include <chrono>
@@ -143,8 +142,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::opt_message>(cs);
     ini.set<cfg::context::opt_message>(s);
     ini.set_acl<cfg::context::opt_width>(1);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(cs);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(s);
+    ini.set<cfg::context::session_probe_outbound_connection_monitoring_rules>(cs);
+    ini.set<cfg::context::session_probe_outbound_connection_monitoring_rules>(s);
     ini.set_acl<cfg::context::password>(cs);
     ini.set_acl<cfg::context::password>(s);
     ini.set<cfg::context::pattern_kill>(cs);
@@ -205,10 +204,10 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::close_timeout>(std::chrono::seconds{1});
     ini.set<cfg::globals::globals::device_id>(cs);
     ini.set<cfg::globals::globals::device_id>(s);
-    ini.set<cfg::globals::globals::disable_proxy_opt>(true);
+    ini.set<cfg::globals::globals::enable_wab_integration>(true);
     ini.set<cfg::globals::globals::enable_bitmap_update>(true);
     ini.set<cfg::globals::globals::enable_close_box>(true);
-    ini.set<cfg::globals::globals::enable_ip_transparent>(true);
+    ini.set<cfg::globals::globals::enable_transparent_mode>(true);
     ini.set<cfg::globals::globals::enable_osd>(true);
     ini.set<cfg::globals::globals::enable_osd_display_remote_target>(true);
     ini.set<cfg::globals::globals::encryptionLevel>(Level::high);
@@ -263,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::enable_kerberos>(true);
     ini.set<cfg::mod_rdp::enable_nla>(true);
     ini.set<cfg::mod_rdp::enable_session_probe>(true);
-    ini.set<cfg::mod_rdp::enable_session_probe_launch_mask>(true);
+    ini.set<cfg::mod_rdp::session_probe_enable_launch_mask>(true);
     ini.set<cfg::mod_rdp::extra_orders>(cslist);
     ini.set<cfg::mod_rdp::extra_orders>(slist);
     ini.set<cfg::mod_rdp::fast_path>(true);
@@ -283,7 +282,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::server_cert_store>(true);
     ini.set<cfg::mod_rdp::server_cert_success_message>(ServerNotification::admin);
     ini.set<cfg::mod_rdp::server_redirection_support>(true);
-    ini.set<cfg::mod_rdp::session_probe_alternate_shell>(s);
+    ini.set<cfg::mod_rdp::session_probe_exe_or_file>(s);
+    ini.set<cfg::mod_rdp::session_probe_arguments>(s);
     ini.set<cfg::mod_rdp::session_probe_customize_executable_name>(true);
     ini.set<cfg::mod_rdp::session_probe_end_disconnected_session>(true);
     ini.set<cfg::mod_rdp::session_probe_keepalive_timeout>(std::chrono::seconds{1});

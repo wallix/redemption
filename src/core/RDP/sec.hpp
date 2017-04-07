@@ -744,14 +744,12 @@ enum {
     class SecSpecialPacket_Recv
     {
         public:
-        uint32_t verbose;
         uint32_t flags;
 
         InStream payload;
 
         SecSpecialPacket_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : verbose(0)
-            , flags([&stream](){
+            : flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
                     LOG(LOG_ERR, "flags expected: need=%u remains=%zu", need, stream.in_remain());
@@ -774,15 +772,15 @@ enum {
 
                     // TODO we should check signature
                     stream.in_skip_bytes(8); /* signature */
-                    if (this->verbose >= 0x200){
-                        LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c(stream.get_current(), stream.in_remain());
-                    }
+                    //if (this->verbose >= 0x200){
+                    //    LOG(LOG_INFO, "Receiving encrypted TPDU");
+                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //}
                     crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
-                    if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
-                        hexdump_c(stream.get_current(), stream.in_remain());
-                    }
+                    //if (this->verbose >= 0x80){
+                    //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
+                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //}
                 }
                 return InStream(stream.get_current(), stream.in_remain());
             }())
@@ -796,12 +794,10 @@ enum {
     class Sec_Recv
     {
         public:
-        uint32_t verbose;
         uint32_t flags;
         InStream payload;
         Sec_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : verbose(0)
-            , flags([&stream, this, encryptionLevel, &crypt](){
+            : flags([&stream, this, encryptionLevel, &crypt](){
                 uint32_t flags = 0;
                 if (encryptionLevel){
                     const unsigned need = 4; /* flags(4) */
@@ -823,15 +819,15 @@ enum {
 
                         // TODO shouldn't we check signature ?
                         stream.in_skip_bytes(8); /* signature */
-                        if (this->verbose >= 0x200){
-                            LOG(LOG_INFO, "Receiving encrypted TPDU");
-                            hexdump_c(stream.get_current(), stream.in_remain());
-                        }
+                        //if (this->verbose >= 0x200){
+                        //    LOG(LOG_INFO, "Receiving encrypted TPDU");
+                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //}
                         crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
-                        if (this->verbose >= 0x80){
-                            LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
-                            hexdump_c(stream.get_current(), stream.in_remain());
-                        }
+                        //if (this->verbose >= 0x80){
+                        //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
+                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //}
                     }
                 }
                 return flags;
@@ -851,9 +847,10 @@ enum {
                 stream.out_uint32_le(flags);
             }
             if (flags & SEC_ENCRYPT){
-                uint8_t signature[8] = {};
+                size_t const sig_sz = 8;
+                auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current());
                 crypt.sign(data, len, signature);
-                stream.out_copy_bytes(signature, 8);
+                stream.out_skip_bytes(sig_sz);
                 crypt.decrypt(data, len);
             }
         }
@@ -914,12 +911,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -929,12 +926,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -944,12 +941,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 32);
             }
 
             {
@@ -960,12 +957,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -975,12 +972,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob1);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -990,12 +987,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob2);
             }
 
             {
@@ -1003,7 +1000,7 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->licensingEncryptionKey, SslMd5::DIGEST_LENGTH);
+                md5.final(this->licensingEncryptionKey);
             }
         }
 
@@ -1405,12 +1402,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1420,12 +1417,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1435,12 +1432,12 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 32);
             }
 
             {
@@ -1451,12 +1448,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1466,12 +1463,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob1);
             }
             {
 
@@ -1482,12 +1479,12 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob2);
             }
 
             {
@@ -1495,14 +1492,14 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->key1);
             }
             {
                 SslMd5 md5;
                 md5.update(this->blob2, sizeof(this->blob2));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->key2);
             }
         }
     };

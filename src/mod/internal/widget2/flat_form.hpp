@@ -31,87 +31,90 @@
 #include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "utils/translation.hpp"
-#include "regex/regex.hpp"
 #include "gdi/graphic_api.hpp"
 
 
 class FlatForm : public WidgetParent
 {
 public:
+    CompositeArray composite_array;
 
-enum {
-    NONE = 0x00,
-    COMMENT_DISPLAY = 0x01,
-    COMMENT_MANDATORY = 0x02,
-    TICKET_DISPLAY = 0x04,
-    TICKET_MANDATORY = 0x08,
-    DURATION_DISPLAY = 0x10,
-    DURATION_MANDATORY = 0x20,
-};
+    WidgetLabel      warning_msg;
+    WidgetLabel      duration_label;
+    WidgetEdit       duration_edit;
+    WidgetLabel      duration_format;
+    WidgetLabel      ticket_label;
+    WidgetEdit       ticket_edit;
+    WidgetLabel      comment_label;
+    WidgetEdit       comment_edit;
+    WidgetLabel      notes;
+    WidgetFlatButton confirm;
+
+    int flags;
+
+    enum {
+        NONE               = 0x00,
+        COMMENT_DISPLAY    = 0x01,
+        COMMENT_MANDATORY  = 0x02,
+        TICKET_DISPLAY     = 0x04,
+        TICKET_MANDATORY   = 0x08,
+        DURATION_DISPLAY   = 0x10,
+        DURATION_MANDATORY = 0x20,
+    };
+
     const char * generic_warning;
     const char * format_warning;
     const char * toohigh_warning;
     const char * field_comment;
     const char * field_ticket;
     const char * field_duration;
+
     char warning_buffer[512];
-    // WidgetGroupBox groupbox;
-    WidgetLabel warning_msg;
-
-    WidgetLabel comment_label;
-    WidgetEdit comment_edit;
-    WidgetLabel ticket_label;
-    WidgetEdit ticket_edit;
-    WidgetLabel duration_label;
-    WidgetEdit duration_edit;
-    WidgetLabel duration_format;
-    WidgetLabel notes;
-    WidgetFlatButton confirm;
-
-    CompositeArray composite_array;
-    int flags;
 
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
-        , generic_warning(TR("%s field_required", lang))
-        , format_warning(TR("%s invalid_format", lang))
-        , toohigh_warning(TR("%s toohigh_duration", lang))
-        , field_comment(TR("comment", lang))
-        , field_ticket(TR("ticket", lang))
-        , field_duration(TR("duration", lang))
-        , warning_buffer()
-        , warning_msg(drawable, 10, 0, *this, nullptr, "", true, group_id,
+        : WidgetParent(drawable, parent, notifier, group_id)
+        , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
-        , comment_label(drawable, 0, 10, *this, nullptr, TR("comment", lang), true,
-                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , comment_edit(drawable, this->comment_label.lx() + 20, 10, 300, *this, this,
-                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                       theme.edit.focus_color, font, -1, 1, 1)
-        , ticket_label(drawable, 0, 40, *this, nullptr, TR("ticket", lang), true,
-                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , ticket_edit(drawable, this->ticket_label.lx() + 20, 40, 300, *this, this,
-                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, font, -1, 1, 1)
-        , duration_label(drawable, 0, 70, *this, nullptr, TR("duration", lang), true,
+        , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang),
                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , duration_edit(drawable, this->duration_label.lx() + 20, 70, 300, *this, this,
+        , duration_edit(drawable, *this, this,
                         nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                         theme.edit.focus_color, font, -1, 1, 1)
-        , duration_format(drawable, 0, 100, *this, nullptr, TR("note_duration_format", lang),
-                          true, group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , notes(drawable, 0, 120, *this, nullptr, TR("note_required", lang), true,
+        , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang),
+                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang),
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_edit(drawable, *this, this,
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, font, -1, 1, 1)
+        , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang),
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , comment_edit(drawable, *this, this,
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
+        , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang),
                 group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-        , confirm(drawable, 0, 0, *this, this, TR("confirm", lang), true, group_id,
-                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font,
+        , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
+        , generic_warning(TR(trkeys::fmt_field_required, lang))
+        , format_warning(TR(trkeys::fmt_invalid_format, lang))
+        , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
+        , field_comment(TR(trkeys::comment, lang))
+        , field_ticket(TR(trkeys::ticket, lang))
+        , field_duration(TR(trkeys::duration, lang))
+        , warning_buffer()
     {
         this->set_bg_color(theme.global.bgcolor);
+
         this->impl = &composite_array;
+
         this->add_widget(&this->warning_msg);
+
         if (this->flags & DURATION_DISPLAY) {
             this->add_widget(&this->duration_label);
             this->add_widget(&this->duration_edit);
@@ -126,87 +129,212 @@ enum {
             this->add_widget(&this->comment_edit);
         }
         if (this->flags & DURATION_MANDATORY) {
-            this->duration_label.set_text(TR("duration_r", lang));
+            this->duration_label.set_text(TR(trkeys::duration_r, lang));
         }
         if (this->flags & TICKET_MANDATORY) {
-            this->ticket_label.set_text(TR("ticket_r", lang));
+            this->ticket_label.set_text(TR(trkeys::ticket_r, lang));
         }
         if (this->flags & COMMENT_MANDATORY) {
-            this->comment_label.set_text(TR("comment_r", lang));
+            this->comment_label.set_text(TR(trkeys::comment_r, lang));
         }
 
-        int labelmaxwidth = std::max(this->comment_label.cx(),
-                                     std::max(this->ticket_label.cx(),
-                                              this->duration_label.cx()));
-        this->warning_msg.rect.x = left + labelmaxwidth + 20;
-        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
-        this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
-        this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
-                                        this->duration_format.cx() - 20);
-        this->duration_format.rect.x = labelmaxwidth + 20;
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
-            this->notes.rect.x = left + labelmaxwidth + 20;
-        }
-
-        int y = 20;
-        if (this->flags & DURATION_DISPLAY) {
-            this->duration_label.set_xy(this->duration_label.dx(), top + y);
-            this->duration_edit.set_edit_y(top + y);
-            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
-            y += 30;
-        }
-        if (this->flags & TICKET_DISPLAY) {
-            this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
-            this->ticket_edit.set_edit_y(top + y);
-            y += 30;
-        }
-        if (this->flags & COMMENT_DISPLAY) {
-            this->comment_label.set_xy(this->comment_label.dx(), top + y);
-            this->comment_edit.set_edit_y(top + y);
-            y += 30;
-        }
-
-        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
-            this->notes.set_xy(this->notes.dx(), top + y);
         }
 
         this->add_widget(&this->confirm);
-        this->confirm.set_button_x(left + width - this->confirm.cx());
-        this->confirm.set_button_y(top + y + 10);
+
+        this->move_size_widget(left, top, width, height);
+    }
+
+    FlatForm(gdi::GraphicApi& drawable,
+             Widget2 & parent, NotifyApi* notifier, int group_id,
+             Font const & font, Theme const & theme, Translation::language_t lang,
+             int flags = 0)
+        : WidgetParent(drawable, parent, notifier, group_id)
+        , warning_msg(drawable, *this, nullptr, "", group_id,
+                      theme.global.error_color, theme.global.bgcolor, font)
+        , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang),
+                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , duration_edit(drawable, *this, this,
+                        nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                        theme.edit.focus_color, font, -1, 1, 1)
+        , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang),
+                          group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang),
+                       group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , ticket_edit(drawable, *this, this,
+                      nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                      theme.edit.focus_color, font, -1, 1, 1)
+        , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang),
+                        group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , comment_edit(drawable, *this, this,
+                       nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
+                       theme.edit.focus_color, font, -1, 1, 1)
+        , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang),
+                group_id, theme.global.fgcolor, theme.global.bgcolor, font)
+        , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
+                  theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
+                  6, 2)
+        , flags(flags)
+        , generic_warning(TR(trkeys::fmt_field_required, lang))
+        , format_warning(TR(trkeys::fmt_invalid_format, lang))
+        , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
+        , field_comment(TR(trkeys::comment, lang))
+        , field_ticket(TR(trkeys::ticket, lang))
+        , field_duration(TR(trkeys::duration, lang))
+        , warning_buffer()
+    {
+        this->set_bg_color(theme.global.bgcolor);
+
+        this->impl = &composite_array;
+
+        this->add_widget(&this->warning_msg);
+
+        if (this->flags & DURATION_DISPLAY) {
+            this->add_widget(&this->duration_label);
+            this->add_widget(&this->duration_edit);
+            this->add_widget(&this->duration_format);
+        }
+        if (this->flags & TICKET_DISPLAY) {
+            this->add_widget(&this->ticket_label);
+            this->add_widget(&this->ticket_edit);
+        }
+        if (this->flags & COMMENT_DISPLAY) {
+            this->add_widget(&this->comment_label);
+            this->add_widget(&this->comment_edit);
+        }
+        if (this->flags & DURATION_MANDATORY) {
+            this->duration_label.set_text(TR(trkeys::duration_r, lang));
+        }
+        if (this->flags & TICKET_MANDATORY) {
+            this->ticket_label.set_text(TR(trkeys::ticket_r, lang));
+        }
+        if (this->flags & COMMENT_MANDATORY) {
+            this->comment_label.set_text(TR(trkeys::comment_r, lang));
+        }
+
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            this->add_widget(&this->notes);
+        }
+
+        this->add_widget(&this->confirm);
     }
 
     ~FlatForm() override {
         this->clear();
     }
 
-    void move_xy(int16_t x, int16_t y) {
-        this->rect.x += x;
-        this->rect.y += y;
-        this->WidgetParent::move_xy(x,y);
-    }
-    void set_xy(int16_t x, int16_t y) override {
-        this->move_xy(x - this->rect.x, y - this->rect.y);
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->set_xy(left, top);
+        this->set_wh(width, height);
+
+        Dimension dim;
+
+        uint16_t labelmaxwidth = 0;
+
+        if (this->flags & DURATION_DISPLAY) {
+            dim = this->duration_label.get_optimal_dim();
+            this->duration_label.set_wh(dim);
+
+            labelmaxwidth = std::max(labelmaxwidth, this->duration_label.cx());
+        }
+
+        if (this->flags & TICKET_DISPLAY) {
+            dim = this->ticket_label.get_optimal_dim();
+            this->ticket_label.set_wh(dim);
+
+            labelmaxwidth = std::max(labelmaxwidth, this->ticket_label.cx());
+        }
+
+        if (this->flags & COMMENT_DISPLAY) {
+            dim = this->comment_label.get_optimal_dim();
+            this->comment_label.set_wh(dim);
+
+            labelmaxwidth = std::max(labelmaxwidth, this->comment_label.cx());
+        }
+
+        dim = this->warning_msg.get_optimal_dim();
+        this->warning_msg.set_wh(width - labelmaxwidth - 20, dim.h);
+        this->warning_msg.set_xy(left + labelmaxwidth + 20, top);
+
+        int y = 20;
+
+        if (this->flags & DURATION_DISPLAY) {
+            this->duration_label.set_xy(left, top + y);
+
+            dim = this->duration_format.get_optimal_dim();
+            this->duration_format.set_wh(dim);
+
+            dim = this->duration_edit.get_optimal_dim();
+            this->duration_edit.set_wh((width - labelmaxwidth - 20) - this->duration_format.cx() - 20,
+                                       dim.h);
+            this->duration_edit.set_xy(left + labelmaxwidth + 20, top + y);
+
+            this->duration_format.set_xy(this->duration_edit.right() + 10, top + y + 2);
+
+            y += 30;
+        }
+
+        if (this->flags & TICKET_DISPLAY) {
+            this->ticket_label.set_xy(left, top + y);
+
+            dim = this->ticket_edit.get_optimal_dim();
+            this->ticket_edit.set_wh(width - labelmaxwidth - 20, dim.h);
+            this->ticket_edit.set_xy(left + labelmaxwidth + 20, top + y);
+
+            y += 30;
+        }
+
+        if (this->flags & COMMENT_DISPLAY) {
+            this->comment_label.set_xy(left, top + y);
+
+            dim = this->comment_edit.get_optimal_dim();
+            this->comment_edit.set_wh(width - labelmaxwidth - 20, dim.h);
+            this->comment_edit.set_xy(left + labelmaxwidth + 20, top + y);
+
+            y += 30;
+        }
+
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            dim = this->notes.get_optimal_dim();
+            this->notes.set_wh(width - labelmaxwidth - 20, dim.h);
+            this->notes.set_xy(left + labelmaxwidth + 20, top + y);
+        }
+
+        dim = this->confirm.get_optimal_dim();
+        this->confirm.set_wh(dim);
+        this->confirm.set_xy(left + width - this->confirm.cx(), top + y + 10);
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
-        if (widget->group_id == this->confirm.group_id) {
+        if ((widget->group_id == this->confirm.group_id) &&
+            (NOTIFY_COPY != event) &&
+            (NOTIFY_CUT != event) &&
+            (NOTIFY_PASTE != event)) {
             if (NOTIFY_SUBMIT == event) {
                 this->check_confirmation();
             }
         }
         else {
-            WidgetParent::notify(widget, event);
+            if ((NOTIFY_COPY == event) ||
+                (NOTIFY_CUT == event) ||
+                (NOTIFY_PASTE == event)) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
+            }
         }
     }
+
     void set_warning_buffer(const char * field, const char * format) {
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-        sprintf(this->warning_buffer, format, field);
-        #pragma GCC diagnostic pop
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        std::sprintf(this->warning_buffer, format, field);
+        REDEMPTION_DIAGNOSTIC_POP
         this->warning_msg.set_text(this->warning_buffer);
     }
 
@@ -255,7 +383,7 @@ enum {
             (this->duration_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_duration, this->generic_warning);
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
         if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
@@ -271,7 +399,7 @@ enum {
                     this->set_warning_buffer(this->field_duration, this->toohigh_warning);
                 }
                 this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
-                this->draw(this->rect);
+                this->rdp_input_invalidate(this->get_rect());
                 return;
             }
         }
@@ -280,7 +408,7 @@ enum {
             (this->ticket_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_ticket, this->generic_warning);
             this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
         if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
@@ -288,7 +416,7 @@ enum {
             (this->comment_edit.num_chars == 0)) {
             this->set_warning_buffer(this->field_comment, this->generic_warning);
             this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
-            this->draw(this->rect);
+            this->rdp_input_invalidate(this->get_rect());
             return;
         }
 
@@ -311,4 +439,3 @@ enum {
         }
     }
 };
-

@@ -48,8 +48,8 @@ class LanguageButton : public WidgetFlatButton
             Font const & font,
             Theme const & theme
         )
-        : WidgetFlatButton(drawable, 0, 0, *this, this, nullptr, true, -1,
-                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font, 7, 7)
+        : WidgetFlatButton(drawable, *this, this, nullptr, -1,
+                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font, 7, 7)
         , front(front)
         , parent(parent)
     {
@@ -90,27 +90,28 @@ class LanguageButton : public WidgetFlatButton
             }
         }
 
-        this->label.set_text(this->locales[0].locale_name);
-        this->set_button_cx(this->label.rect.cx);
-        this->set_button_cy(this->label.rect.cy);
+        this->set_text(this->locales[0].locale_name);
+
+        Dimension dim = this->get_optimal_dim();
+        this->set_wh(dim);
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
         (void)widget;
         if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
-            auto rect = this->rect;
+            Rect rect = this->get_rect();
 
             this->selected_language = (this->selected_language + 1) % this->locales.size();
-            this->label.set_text(this->locales[this->selected_language].locale_name);
+            this->set_text(this->locales[this->selected_language].locale_name);
 
-            this->set_button_cx(this->label.rect.cx);
-            this->set_button_cy(this->label.rect.cy);
-            rect.cx = std::max(rect.cx, this->rect.cx);
-            rect.cy = std::max(rect.cy, this->rect.cy);
-            this->parent.draw(rect);
+            Dimension dim = this->get_optimal_dim();
+            this->set_wh(dim);
+
+            rect.cx = std::max(rect.cx, this->cx());
+            rect.cy = std::max(rect.cy, this->cy());
+            this->parent.rdp_input_invalidate(rect);
 
             front.set_keylayout(this->locales[this->selected_language].LCID);
         }
     }
 };
-

@@ -1,4 +1,6 @@
-#define BOOST_TEST_MODULE TestAes
+#define UNIT_TEST_MODULE TestAes
+
+#define LOGNULL
 
 #include "utils/crypto/ssl_aes_direct.hpp"
 

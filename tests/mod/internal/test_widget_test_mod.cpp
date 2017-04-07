@@ -18,17 +18,17 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetTestMod
+#define UNIT_TEST_MODULE TestWidgetTestMod
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestDialogMod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -39,19 +39,33 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front, 0);
 
     Font font;
+
+    Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    WidgetTestMod d(front, 800, 600, font, Theme()/*, "Title", "Hello, World", "OK", 0*/);
+    std::unique_ptr<mod_api> managed_mod(
+        new Bouncer2Mod(front, 800, 600, font, true));
+
+    GCC::UserData::CSMonitor cs_monitor;
+
+    cs_monitor.monitorCount = 0;
+
+    WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
+        std::move(managed_mod), client_execute, cs_monitor);
+    d.draw_event(100001, front);
+/*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+*/
 
 /*
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
     LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("True", res));
+    RED_CHECK(0 == strcmp("True", res));
 */
 }

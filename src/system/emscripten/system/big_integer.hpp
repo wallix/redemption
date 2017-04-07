@@ -20,6 +20,8 @@ public:
     BigInteger(BigInteger const &) = default;
     BigInteger(BigInteger &&) = default;
 
+    BigInteger(const uint8_t * modulus, size_t modulus_size) {}
+
 
     BigInteger(std::string s) { // "std::string" constructor
         if( isdigit(s[0]) ) { // if not signed

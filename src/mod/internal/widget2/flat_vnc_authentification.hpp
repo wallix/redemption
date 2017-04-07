@@ -50,52 +50,67 @@ public:
                             Widget2 & parent, NotifyApi* notifier, const char * password,
                             Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , message_label(drawable, 0, 0, *this, nullptr, label_text_message, true, -13,
+        : WidgetParent(drawable, parent, notifier)
+        , message_label(drawable, *this, nullptr, label_text_message, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_label(drawable, 0, 0, *this, nullptr, label_text_password, true, -13,
+        , password_label(drawable, *this, nullptr, label_text_password, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
+        , password_edit(drawable, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font, -1u, 1, 1, true)
-        // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
-        , img(drawable, 0, 0,
-              theme.global.logo ? theme.global.logo_path :
+                        theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
+        , img(drawable,
+              theme.global.logo ? theme.global.logo_path.c_str() :
               SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
         , fgcolor(theme.global.fgcolor)
         , bgcolor(theme.global.bgcolor)
     {
+        this->set_xy(0, 0);
+        this->set_wh(width, height);
+
         this->impl = &composite_array;
 
+        Dimension dim = this->message_label.get_optimal_dim();
+        this->message_label.set_wh(dim);
+
+        dim = this->password_label.get_optimal_dim();
+        this->password_label.set_wh(dim);
+
+        this->add_widget(&this->img);
         this->add_widget(&this->message_label);
         this->add_widget(&this->password_label);
         this->add_widget(&this->password_edit);
-        this->add_widget(&this->img);
 
         // Center bloc positionning
         // Login and Password boxes
-        int cbloc_w = std::max<int>(this->message_label.rect.cx,
-            this->password_label.rect.cx + this->password_edit.rect.cx + 10);
-        int cbloc_h = this->message_label.rect.cy +
-            std::max(this->password_label.rect.cy, this->password_edit.rect.cy) + 20;
+        int cbloc_w = std::max<int>(this->message_label.cx(),
+            this->password_label.cx() + this->password_edit.cx() + 10);
+        int cbloc_h = this->message_label.cy() +
+            std::max(this->password_label.cy(), this->password_edit.cy()) + 20;
 
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 3;
 
-        this->message_label.set_xy((width  - this->message_label.rect.cx) / 2, y_cbloc);
+        this->message_label.set_xy((width  - this->message_label.cx()) / 2, y_cbloc);
 
-        this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.rect.cy + 20);
-        this->password_edit.set_xy(x_cbloc + this->password_label.rect.cx + 10,
-            y_cbloc + this->message_label.rect.cy + 20);
+        this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.cy() + 20);
+        this->password_edit.set_xy(x_cbloc + this->password_label.cx() + 10,
+            y_cbloc + this->message_label.cy() + 20 - this->password_edit.get_border_height());
 
-        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+        this->password_label.set_xy(this->password_label.x(),
+            this->password_label.y() + (this->password_edit.cy() - this->password_label.cy()) / 2);
+
+        dim = this->img.get_optimal_dim();
+        this->img.set_wh(dim);
 
         int bottom_height = (height - cbloc_h) / 2;
-        int bbloc_h = this->img.rect.cy/* + 10 + this->version_label.rect.cy*/;
+        int bbloc_h = this->img.cy()/* + 10 + this->version_label.rect.cy*/;
         int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
+        this->img.set_xy((width - this->img.cx()) / 2, y_bbloc);
+        if (this->img.y() + this->img.cy() > height) {
+            this->img.set_xy(this->img.x(), 0);
+        }
     }
 
     ~FlatVNCAuthentification() override {
@@ -127,5 +142,3 @@ public:
         }
     }
 };
-
-

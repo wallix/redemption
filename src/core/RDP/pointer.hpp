@@ -29,24 +29,31 @@
 struct Pointer {
     enum  {
         POINTER_NULL             ,
-        POINTER_NORMAL           ,     
+        POINTER_NORMAL           ,
         POINTER_EDIT             ,
         POINTER_DRAWABLE_DEFAULT ,
-        POINTER_SYSTEM_DEFAULT   
+        POINTER_SYSTEM_DEFAULT   ,
+        POINTER_SIZENESW         ,  // Double-pointed arrow pointing northeast and southwest
+        POINTER_SIZENS           ,  // Double-pointed arrow pointing north and south
+        POINTER_SIZENWSE         ,  // Double-pointed arrow pointing northwest and southeast
+        POINTER_SIZEWE           ,  // Double-pointed arrow pointing west and east
+
+        POINTER_CUSTOM
     };
 
 public:
     // Bitmap sizes (in bytes)
     enum {
-          DATA_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
-        , MASK_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
+          MAX_WIDTH  = 96
+        , MAX_HEIGHT = 96
+        , MAX_BPP    = 32
     };
     enum {
-          MAX_WIDTH  = 32
-        , MAX_HEIGHT = 32
+          DATA_SIZE = MAX_WIDTH * MAX_HEIGHT * MAX_BPP / 8
+        , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
-    unsigned bpp;
+//    unsigned bpp;
     unsigned width;
     unsigned height;
     uint8_t  pointer_type;
@@ -58,19 +65,22 @@ public:
     uint8_t data[DATA_SIZE];
     uint8_t mask[MASK_SIZE];
 
+    bool only_black_white = false;
+
 public:
-    explicit Pointer(uint8_t pointer_type = POINTER_NULL) 
+    explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     : pointer_type(pointer_type)
     {
         switch (pointer_type) {
             default:
             case POINTER_NULL:
                 {
-                    this->bpp    = 24;
-                    this->width  = 32;
-                    this->height = 32;
-                    this->x      = 0;
-                    this->y      = 0;
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 0;
+                    this->y                = 0;
+                    this->only_black_white = true;
                     ::memset(this->data, 0, DATA_SIZE);
                     ::memset(this->mask, 0xFF, MASK_SIZE);
                 }
@@ -78,11 +88,12 @@ public:
 
             case POINTER_NORMAL:
                 {
-                    this->bpp    = 24;
-                    this->width  = 32;
-                    this->height = 32;
-                    this->x      = 0; /* hotspot */
-                    this->y      = 0;
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 0; /* hotspot */
+                    this->y                = 0;
+                    this->only_black_white = true;
                     const char * data_cursor0 =
                         /* 0000 */ "................................"
                         /* 0060 */ "................................"
@@ -164,11 +175,12 @@ public:
 
             case POINTER_EDIT:
                 {
-                    this->bpp    = 24;
-                    this->width  = 32;
-                    this->height = 32;
-                    this->x      = 15; /* hotspot */
-                    this->y      = 16;
+//                    this->bpp                = 24;
+                    this->width              = 32;
+                    this->height             = 32;
+                    this->x                  = 15; /* hotspot */
+                    this->y                  = 16;
+                    this->only_black_white = true;
                     const char * data_cursor1 =
                         /* 0000 */ "................................"
                         /* 0060 */ "................................"
@@ -249,11 +261,12 @@ public:
 
             case POINTER_DRAWABLE_DEFAULT:
                 {
-                    this->bpp    = 24;
-                    this->width  = 32;
-                    this->height = 32;
-                    this->x      = 0; /* hotspot */
-                    this->y      = 0;
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 0; /* hotspot */
+                    this->y                = 0;
+                    this->only_black_white = true;
                     const char * data_cursor2 =
                         /* 0000 */ "................................"
                         /* 0060 */ "................................"
@@ -335,12 +348,13 @@ public:
 
             case POINTER_SYSTEM_DEFAULT:
                 {
-                    this->bpp    = 24;
-                    this->width  = 32;
-                    this->height = 32;
-                    this->x      = 10; /* hotspot */
-                    this->y      = 10;
-                    const char * data_cursor2 =
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 10; /* hotspot */
+                    this->y                = 10;
+                    this->only_black_white = true;
+                    const char * data_cursor3 =
                         /* 0000 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         /* 0060 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         /* 00c0 */ "XXXXXXXXXXXXXXXXXX..XXXXXXXXXXXX"
@@ -376,12 +390,12 @@ public:
                         ;
                     uint8_t * tmp = this->data;
                     for (size_t i = 0 ; i < this->width * this->height ; i++) {
-                        uint8_t v = (data_cursor2[i] == 'X') ? 0 : 0xFF;
+                        uint8_t v = (data_cursor3[i] == 'X') ? 0 : 0xFF;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
                     }
 
-                    const char * mask_cursor2 =
+                    const char * mask_cursor3 =
                         /* 0000 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xcf\xff"
                         /* 0008 */ "\xff\xff\x87\xff"
@@ -415,17 +429,363 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor2, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor3, this->width * this->height / 8);
                 }
                 break;  // case POINTER_SYSTEM_DEFAULT:
+
+            case POINTER_SIZENS:
+                {
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 10; /* hotspot */
+                    this->y                = 10;
+                    this->only_black_white = true;
+                    const char * data_cursor4 =
+                        /* 0000 */ "................................"
+                        /* 0060 */ "................................"
+                        /* 00c0 */ "................................"
+                        /* 0120 */ "................................"
+                        /* 0180 */ "................................"
+                        /* 01e0 */ "................................"
+                        /* 0240 */ "................................"
+                        /* 02a0 */ "................................"
+                        /* 0300 */ "................................"
+                        /* 0360 */ "................................"
+                        /* 03c0 */ "................................"
+                        /* 0420 */ "..........X....................."
+                        /* 0480 */ ".........X.X...................."
+                        /* 04e0 */ "........X...X..................."
+                        /* 0540 */ ".......X.....X.................."
+                        /* 05a0 */ "......X.......X................."
+                        /* 0600 */ "......XXXX.XXXX................."
+                        /* 0660 */ ".........X.X...................."
+                        /* 06c0 */ ".........X.X...................."
+                        /* 0720 */ ".........X.X...................."
+                        /* 0780 */ ".........X.X...................."
+                        /* 07e0 */ ".........X.X...................."
+                        /* 0840 */ ".........X.X...................."
+                        /* 08a0 */ ".........X.X...................."
+                        /* 0900 */ ".........X.X...................."
+                        /* 0960 */ ".........X.X...................."
+                        /* 09c0 */ "......XXXX.XXXX................."
+                        /* 0a20 */ "......X.......X................."
+                        /* 0a80 */ ".......X.....X.................."
+                        /* 0ae0 */ "........X...X..................."
+                        /* 0b40 */ ".........X.X...................."
+                        /* 0ba0 */ "..........X....................."
+                        ;
+                    uint8_t * tmp = this->data;
+                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                        uint8_t v = (data_cursor4[i] == 'X') ? 0xFF : 0;
+                        tmp[0] = tmp[1] = tmp[2] = v;
+                        tmp += 3;
+                    }
+
+                    const char * mask_cursor4 =
+                        /* 0000 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0008 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0010 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0018 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0020 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0028 */ "\xff\xff\xff\xff"
+                                   "\xff\xdf\xff\xff"
+                        /* 0030 */ "\xff\x8f\xff\xff"
+                                   "\xff\x07\xff\xff"
+                        /* 0038 */ "\xfe\x03\xff\xff"
+                                   "\xfc\x01\xff\xff"
+                        /* 0040 */ "\xfc\x01\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0048 */ "\xff\x8f\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0050 */ "\xff\x8f\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0058 */ "\xff\x8f\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0060 */ "\xff\x8f\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0068 */ "\xfc\x01\xff\xff"
+                                   "\xfc\x01\xff\xff"
+                        /* 0070 */ "\xfe\x03\xff\xff"
+                                   "\xff\x07\xff\xff"
+                        /* 0078 */ "\xff\x8f\xff\xff"
+                                   "\xff\xdf\xff\xff"
+                        ;
+                    ::memcpy(this->mask, mask_cursor4, this->width * this->height / 8);
+                }
+                break;  // case POINTER_SIZENS:
+
+            case POINTER_SIZENESW:
+                {
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 10; /* hotspot */
+                    this->y                = 10;
+                    this->only_black_white = true;
+                    const char * data_cursor5 =
+                        /* 0000 */ "................................"
+                        /* 0060 */ "................................"
+                        /* 00c0 */ "................................"
+                        /* 0120 */ "................................"
+                        /* 0180 */ "................................"
+                        /* 01e0 */ "................................"
+                        /* 0240 */ "................................"
+                        /* 02a0 */ "................................"
+                        /* 0300 */ "................................"
+                        /* 0360 */ "................................"
+                        /* 03c0 */ "................................"
+                        /* 0420 */ "................................"
+                        /* 0480 */ "................................"
+                        /* 04e0 */ "................................"
+                        /* 0540 */ "...XXXXXXX......................"
+                        /* 05a0 */ "...X.....X......................"
+                        /* 0600 */ "...X....X......................."
+                        /* 0660 */ "...X...X........................"
+                        /* 06c0 */ "...X..X.X.................. ...."
+                        /* 0720 */ "...X.X.X.X......................"
+                        /* 0780 */ "...XX...X.X....................."
+                        /* 07e0 */ ".........X.X...................."
+                        /* 0840 */ "..........X.X...XX.............."
+                        /* 08a0 */ "...........X.X.X.X.............."
+                        /* 0900 */ "............X.X..X.............."
+                        /* 0960 */ ".............X...X.............."
+                        /* 09c0 */ "............X....X.............."
+                        /* 0a20 */ "...........X.....X.............."
+                        /* 0a80 */ "...........XXXXXXX.............."
+                        /* 0ae0 */ "................................"
+                        /* 0b40 */ "................................"
+                        /* 0ba0 */ "................................"
+                        ;
+                    uint8_t * tmp = this->data;
+                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                        uint8_t v = (data_cursor5[i] == 'X') ? 0xFF : 0;
+                        tmp[0] = tmp[1] = tmp[2] = v;
+                        tmp += 3;
+                    }
+
+                    const char * mask_cursor5 =
+                        /* 0000 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0008 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0010 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0018 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0020 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0028 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0030 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0038 */ "\xe0\x3f\xff\xff"
+                                   "\xe0\x3f\xff\xff"
+                        /* 0040 */ "\xe0\x7f\xff\xff"
+                                   "\xe0\xff\xff\xff"
+                        /* 0048 */ "\xe0\x7f\xff\xff"
+                                   "\xe2\x3f\xff\xff"
+                        /* 0050 */ "\xe7\x1f\xff\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0058 */ "\xff\xc7\x3f\xff"
+                                   "\xff\xe2\x3f\xff"
+                        /* 0060 */ "\xff\xf0\x3f\xff"
+                                   "\xff\xf8\x3f\xff"
+                        /* 0068 */ "\xff\xf0\x3f\xff"
+                                   "\xff\xe0\x3f\xff"
+                        /* 0070 */ "\xff\xe0\x3f\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0078 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        ;
+                    ::memcpy(this->mask, mask_cursor5, this->width * this->height / 8);
+                }
+                break;  // case POINTER_SIZENESW:
+
+            case POINTER_SIZENWSE:
+                {
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 10; /* hotspot */
+                    this->y                = 10;
+                    this->only_black_white = true;
+                    const char * data_cursor6 =
+                        /* 0000 */ "................................"
+                        /* 0060 */ "................................"
+                        /* 00c0 */ "................................"
+                        /* 0120 */ "................................"
+                        /* 0180 */ "................................"
+                        /* 01e0 */ "................................"
+                        /* 0240 */ "................................"
+                        /* 02a0 */ "................................"
+                        /* 0300 */ "................................"
+                        /* 0360 */ "................................"
+                        /* 03c0 */ "................................"
+                        /* 0420 */ "................................"
+                        /* 0480 */ "................................"
+                        /* 04e0 */ "................................"
+                        /* 0540 */ "...........XXXXXXX.............."
+                        /* 05a0 */ "...........X.....X.............."
+                        /* 0600 */ "............X....X.............."
+                        /* 0660 */ ".............X...X.............."
+                        /* 06c0 */ "............X.X..X.............."
+                        /* 0720 */ "...........X.X.X.X.............."
+                        /* 0780 */ "..........X.X...XX.............."
+                        /* 07e0 */ ".........X.X...................."
+                        /* 0840 */ "...XX...X.X....................."
+                        /* 08a0 */ "...X.X.X.X......................"
+                        /* 0900 */ "...X..X.X......................."
+                        /* 0960 */ "...X...X........................"
+                        /* 09c0 */ "...X....X......................."
+                        /* 0a20 */ "...X.....X......................"
+                        /* 0a80 */ "...XXXXXXX......................"
+                        /* 0ae0 */ "................................"
+                        /* 0b40 */ "................................"
+                        /* 0ba0 */ "................................"
+                        ;
+                    uint8_t * tmp = this->data;
+                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                        uint8_t v = (data_cursor6[i] == 'X') ? 0xFF : 0;
+                        tmp[0] = tmp[1] = tmp[2] = v;
+                        tmp += 3;
+                    }
+
+                    const char * mask_cursor6 =
+                        /* 0000 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0008 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0010 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0018 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0020 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0028 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0030 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0038 */ "\xff\xe0\x3f\xff"
+                                   "\xff\xe0\x3f\xff"
+                        /* 0040 */ "\xff\xf0\x3f\xff"
+                                   "\xff\xf8\x3f\xff"
+                        /* 0048 */ "\xff\xf0\x3f\xff"
+                                   "\xff\xe2\x3f\xff"
+                        /* 0050 */ "\xff\xc7\x3f\xff"
+                                   "\xff\x8f\xff\xff"
+                        /* 0058 */ "\xe7\x1f\xff\xff"
+                                   "\xe2\x3f\xff\xff"
+                        /* 0060 */ "\xe0\x7f\xff\xff"
+                                   "\xe0\xff\xff\xff"
+                        /* 0068 */ "\xe0\x7f\xff\xff"
+                                   "\xe0\x3f\xff\xff"
+                        /* 0070 */ "\xe0\x3f\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0078 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        ;
+                    ::memcpy(this->mask, mask_cursor6, this->width * this->height / 8);
+                }
+                break;  // case POINTER_SIZENWSE:
+
+            case POINTER_SIZEWE:
+                {
+//                    this->bpp              = 24;
+                    this->width            = 32;
+                    this->height           = 32;
+                    this->x                = 10; /* hotspot */
+                    this->y                = 10;
+                    this->only_black_white = true;
+                    const char * data_cursor7 =
+                        /* 0000 */ "................................"
+                        /* 0060 */ "................................"
+                        /* 00c0 */ "................................"
+                        /* 0120 */ "................................"
+                        /* 0180 */ "................................"
+                        /* 01e0 */ "................................"
+                        /* 0240 */ "................................"
+                        /* 02a0 */ "................................"
+                        /* 0300 */ "................................"
+                        /* 0360 */ "................................"
+                        /* 03c0 */ "................................"
+                        /* 0420 */ "................................"
+                        /* 0480 */ "................................"
+                        /* 04e0 */ "................................"
+                        /* 0540 */ "................................"
+                        /* 05a0 */ "................................"
+                        /* 0600 */ "................................"
+                        /* 0660 */ "....XX.........XX..............."
+                        /* 06c0 */ "...X.X.........X.X.............."
+                        /* 0720 */ "..X..X.........X..X............."
+                        /* 0780 */ ".X...XXXXXXXXXXX...X............"
+                        /* 07e0 */ "X...................X..........."
+                        /* 0840 */ ".X...XXXXXXXXXXX...X............"
+                        /* 08a0 */ "..X..X.........X..X............."
+                        /* 0900 */ "...X.X.........X.X.............."
+                        /* 0960 */ "....XX.........XX..............."
+                        /* 09c0 */ "................................"
+                        /* 0a20 */ "................................"
+                        /* 0a80 */ "................................"
+                        /* 0ae0 */ "................................"
+                        /* 0b40 */ "................................"
+                        /* 0ba0 */ "................................"
+                        ;
+                    uint8_t * tmp = this->data;
+                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                        uint8_t v = (data_cursor7[i] == 'X') ? 0xFF : 0;
+                        tmp[0] = tmp[1] = tmp[2] = v;
+                        tmp += 3;
+                    }
+
+                    const char * mask_cursor7 =
+                        /* 0000 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0008 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0010 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0018 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0020 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0028 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0030 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0038 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0040 */ "\xff\xff\xff\xff"
+                                   "\xf3\xfe\x7f\xff"
+                        /* 0048 */ "\xe3\xfe\x3f\xff"
+                                   "\xc3\xfe\x1f\xff"
+                        /* 0050 */ "\x80\x00\x0f\xff"
+                                   "\x00\x00\x07\xff"
+                        /* 0058 */ "\x80\x00\x0f\xff"
+                                   "\xc3\xfe\x1f\xff"
+                        /* 0060 */ "\xe3\xfe\x3f\xff"
+                                   "\xf3\xfe\x7f\xff"
+                        /* 0068 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0070 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        /* 0078 */ "\xff\xff\xff\xff"
+                                   "\xff\xff\xff\xff"
+                        ;
+                    ::memcpy(this->mask, mask_cursor7, this->width * this->height / 8);
+                }
+                break;  // case POINTER_SIZEWE:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
 
-    ~Pointer() = default;
-
-    void initialize(unsigned bpp, unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
+    void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {
-        this->bpp    = bpp;
+//        this->bpp    = bpp;
         this->width  = width;
         this->height = height;
         this->x      = x;
@@ -450,22 +810,48 @@ public:
     //}
 
     unsigned data_size() const {
-        switch (this->bpp){
-        case 1:
-            return (this->width * this->height) / 8;
-        case 4:
-            return (this->width * this->height) / 2;
-        default:
-            return (this->width * this->height) * nbbytes(this->bpp);
-        }
+        const unsigned int xor_line_length_in_byte = this->width * 3;
+        const unsigned int xor_padded_line_length_in_byte =
+            ((xor_line_length_in_byte % 2) ?
+             xor_line_length_in_byte + 1 :
+             xor_line_length_in_byte);
+
+        return (xor_padded_line_length_in_byte * this->height);
     }
 
     unsigned mask_size() const {
-        return (this->width * this->height) / 8;
+        const unsigned int remainder = (this->width % 8);
+        const unsigned int and_line_length_in_byte = this->width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        return (and_padded_line_length_in_byte * this->height);
     }
 
     bool is_valid() const {
-        return (this->width && this->height && this->bpp);
+        return (this->width && this->height/* && this->bpp*/);
+    }
+
+    void update_bw() {
+        const unsigned int xor_line_length_in_byte = this->width * 3;
+        const unsigned int xor_padded_line_length_in_byte =
+            ((xor_line_length_in_byte % 2) ?
+             xor_line_length_in_byte + 1 :
+             xor_line_length_in_byte);
+        for (unsigned int h = 0; h < this->height; ++h) {
+            const uint8_t* xorMask = this->data + (this->height - h - 1) * xor_padded_line_length_in_byte;
+            for (unsigned int w = 0; w < this->width; ++w) {
+                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
+                xorMask++;
+                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
+                xorMask++;
+                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
+                xorMask++;
+            }
+        }
+
+        this->only_black_white = true;
     }
 };
-

@@ -26,9 +26,6 @@
 #define BOOST_TEST_MODULE TestConfig
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 // #define LOGPRINT
 
@@ -126,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -161,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -207,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -315,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
         "encryptionLevel=low\n"
         "trace_type=2\n"
         "listen_address=192.168.1.1\n"
-        "enable_ip_transparent=yes\n"
+        "enable_transparent_mode=yes\n"
         "certificate_password=redemption\n"
         "png_path=/var/tmp/wab/recorded/rdp\n"
         "wrm_path=/var/wab/recorded/rdp\n"
@@ -361,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
         "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
         "shell_working_directory=C:\\WINDOWS\\\n"
         "enable_session_probe=true\n"
-        "enable_session_probe_launch_mask=false\n"
+        "session_probe_enable_launch_mask=false\n"
         "session_probe_launch_timeout=0\n"
         "session_probe_keepalive_timeout=0\n"
         "\n"
@@ -445,7 +442,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -480,7 +477,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -526,7 +523,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("C:\\WINDOWS\\",                  ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -560,7 +557,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "encryptionLevel=medium\n"
                           "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
-                          "enable_ip_transparent=no\n"
+                          "enable_transparent_mode=no\n"
                           "certificate_password=\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
@@ -667,7 +664,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -702,7 +699,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -745,7 +742,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -778,7 +775,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy\n"
-                          "enable_ip_transparent=true\n"
+                          "enable_transparent_mode=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "shell_working_directory=\n"
@@ -864,7 +861,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -888,7 +885,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -935,7 +932,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -968,7 +965,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy RDP\n"
-                          "enable_ip_transparent=true\n"
+                          "enable_transparent_mode=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "close_timeout=300\n"
@@ -1061,7 +1058,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -1085,7 +1082,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1132,7 +1129,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1165,7 +1162,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
                           "certificate_password=redemption\n"
-                          "enable_ip_transparent=False\n"
+                          "enable_transparent_mode=False\n"
                           "[client]\n"
                           "bitmap_compression=TRuE\n"
                           "\n"
@@ -1233,7 +1230,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1257,7 +1254,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1303,7 +1300,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1331,7 +1328,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "trace_type=2\n"
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
-                           "enable_ip_transparent=yes\n"
+                           "enable_transparent_mode=yes\n"
                            "glyph_cache=yes\n"
                            "[client]\n"
                            "bitmap_compression=no\n"
@@ -1405,7 +1402,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1429,7 +1426,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1475,7 +1472,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL("%HOMEDRIVE%%HOMEPATH%",          ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::ignore_and_continue,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1564,7 +1561,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1588,7 +1585,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1634,7 +1631,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1724,7 +1721,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1748,7 +1745,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::front>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_int>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
@@ -1794,7 +1791,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_rdp::shell_working_directory>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
@@ -1933,11 +1930,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("16",   ini.get_acl_field(AUTHID_CONTEXT_OPT_BPP).c_str());
     BOOST_CHECK_EQUAL("1024", ini.get_acl_field(AUTHID_CONTEXT_OPT_HEIGHT).c_str());
     BOOST_CHECK_EQUAL("1280", ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).c_str());
-
-
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE).set(cstr_array_view("Message d'erreur."));
-
-    BOOST_CHECK_EQUAL("Message d'erreur.", ini.get<cfg::context::auth_error_message>());
 
 
     // selector, ...
@@ -2185,7 +2177,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
    BOOST_CHECK_EQUAL(AUTHID_UNKNOWN, authid_from_string("8899676"));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_DISPLAY_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_DISPLAY_MESSAGE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_ACCEPT_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_ACCEPT_MESSAGE)));
-   BOOST_CHECK_EQUAL(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_MODE_CONSOLE, authid_from_string(string_from_authid(AUTHID_CONTEXT_MODE_CONSOLE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_TIMEZONE, authid_from_string(string_from_authid(AUTHID_CONTEXT_TIMEZONE)));
 }

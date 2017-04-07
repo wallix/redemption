@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_TEST_MODULE mod_exp
+#define UNIT_TEST_MODULE mod_exp
 
 #include "system/ssl_mod_exp.hpp"
 #include "system/common/test_ssl_mod_exp.cpp"

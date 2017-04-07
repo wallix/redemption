@@ -35,89 +35,113 @@
 
 class FlatWait : public WidgetParent
 {
-public:
-
-    WidgetGroupBox groupbox;
-    int bg_color;
-
-    WidgetMultiLine dialog;
-    FlatForm form;
-    WidgetFlatButton goselector;
-    WidgetFlatButton exit;
-    bool hasform;
+private:
     CompositeArray composite_array;
 
+    WidgetGroupBox     groupbox;
+    WidgetMultiLine    dialog;
+public:
+    FlatForm           form;
+    WidgetFlatButton   goselector;
+private:
+    WidgetFlatButton   exit;
+    WidgetFlatButton * extra_button;
+
+public:
+    bool hasform;
+
+private:
+    int bg_color;
+
+public:
     FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
-        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier, group_id)
-        , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption,
+        : WidgetParent(drawable, parent, notifier, group_id)
+        , groupbox(drawable, *this, nullptr, caption,
                    theme.global.fgcolor, theme.global.bgcolor, font)
-        , bg_color(theme.global.bgcolor)
-        , dialog(drawable, 0, 0, this->groupbox, nullptr, text, true, -10,
+        , dialog(drawable, this->groupbox, nullptr, text, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-        , form(drawable, left, top, width - 80, 150, *this, this, -20, font, theme, lang, required)
-        , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", lang), true, -12,
+        , form(drawable, *this, this, -20, font, theme, lang, required)
+        , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                      theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, font, 6, 2)
-        , exit(drawable, 0, 0, this->groupbox, this, TR("exit", lang), true, -11,
-               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font,
+                     theme.global.focus_color, 2, font, 6, 2)
+        , exit(drawable, this->groupbox, this, TR(trkeys::exit, lang), -11,
+               theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                6, 2)
+        , extra_button(extra_button)
         , hasform(showform)
+        , bg_color(theme.global.bgcolor)
     {
         this->impl = &composite_array;
-        // this->groupbox.add_widget(&this->title);
+
         this->groupbox.add_widget(&this->dialog);
-
-        // int total_width = this->dialog.cx();
-        // total_width = std::min(width + total_width, 2 * width);
-        // total_width = total_width / 2;
-        // int total_width = width - 80;
-        // int total_height = this->dialog.cy() + this->goselector.cy() + 20;
-        // if (showform) {
-        //     total_height += this->form.cy();
-        // }
-        // int starty = (height - total_height) / 2;
-        const int starty = 20;
-        int y = starty;
-        this->dialog.rect.x = left + 30; // dialog has 10 margin.
-        // this->dialog.rect.x = (this->cx() - total_width) / 2;
-        this->dialog.rect.y = top + y + 10;
-
-        y = this->dialog.dy() + this->dialog.cy() + 20;
 
         if (showform) {
             this->groupbox.add_widget(&this->form);
-            this->form.move_xy(40, y - top);
-            y = this->form.ly() + 10;
         }
 
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_button_x(left + width - 40 - this->exit.cx());
-        this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
-
-        this->goselector.set_button_y(y);
-        this->exit.set_button_y(y);
-
-        y += this->goselector.cy() + 20;
-        this->groupbox.rect.cy = y - top;
-        this->groupbox.move_xy(0, (height - (y - top)) / 2);
         this->add_widget(&this->groupbox);
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(left + 60);
-            extra_button->set_button_y(top + height - 60);
         }
+
+        this->move_size_widget(left, top, width, height);
     }
 
     ~FlatWait() override {
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->set_xy(left, top);
+        this->set_wh(width, height);
+
+        this->groupbox.set_xy(left, top);
+        this->groupbox.set_wh(width, height);
+
+        if (this->hasform) {
+            this->form.set_wh(width - 80, 150);
+            this->form.set_xy(left, top);
+        }
+
+        int y = 20;
+
+        Dimension dim = this->dialog.get_optimal_dim();
+        this->dialog.set_wh(dim);
+        this->dialog.set_xy(left + 30, top + y + 10);
+
+        y = this->dialog.y() + this->dialog.cy() + 20;
+
+        if (this->hasform) {
+            this->form.move_size_widget(left + 40, y, this->form.cx(), this->form.cy());
+
+            y = this->form.bottom() + 10;
+        }
+
+        dim = this->exit.get_optimal_dim();
+        this->exit.set_wh(dim);
+        this->exit.set_xy(left + width - 40 - this->exit.cx(), y);
+
+        dim = this->goselector.get_optimal_dim();
+        this->goselector.set_wh(dim);
+        this->goselector.set_xy(this->exit.x() - (this->goselector.cx() + 10), y);
+
+        y += this->goselector.cy() + 20;
+
+        this->groupbox.set_wh(this->groupbox.cx(), y - top);
+        this->groupbox.move_xy(0, (height - (y - top)) / 2);
+
+        if (this->extra_button) {
+            this->extra_button->set_xy(left + 60, top + height - 60);
+        }
     }
 
     int get_bg_color() const override {
@@ -134,6 +158,11 @@ public:
         }
         else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
             this->send_notify(NOTIFY_TEXT_CHANGED);
+        }
+        else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
         }
         else {
             WidgetParent::notify(widget, event);
@@ -154,5 +183,3 @@ public:
         }
     }
 };
-
-

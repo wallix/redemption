@@ -41,7 +41,8 @@
 #include "utils/stream.hpp"
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
-#include "utils/sugar/compiler_attributes.hpp"
+
+#include "cxx/cxx.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "system/ssl_sha1.hpp"
@@ -140,7 +141,7 @@ protected:
                 for (; first != last; first += this->line_size_) {
                     sha1.update(first, this->line_size_);
                 }
-                sha1.final(this->sha1_, 20);
+                sha1.final(this->sha1_);
             }
             memcpy(sig, this->sha1_, sizeof(this->sha1_));
         }
@@ -331,7 +332,7 @@ public:
         }
     }
 
-    Bitmap(const Bitmap & src_bmp, const Rect & r)
+    Bitmap(const Bitmap & src_bmp, const Rect r)
     : data_bitmap(src_bmp.data_bitmap)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
@@ -342,7 +343,7 @@ public:
         }
 
         this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
-        if (this->bpp() == 8){
+        if (this->bpp() == 8) {
             this->data_bitmap->palette() = src_bmp.data_bitmap->palette();
         }
 
@@ -708,7 +709,7 @@ private:
                         mask = 1;
                         fom_mask = input[0]; input++;
                     }
-                    CPP_FALLTHROUGH;
+                    REDEMPTION_CXX_FALLTHROUGH;
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){

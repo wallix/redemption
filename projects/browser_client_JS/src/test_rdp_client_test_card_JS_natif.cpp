@@ -1,4 +1,4 @@
-#define LOGNULL
+#define LOGASMJS
 #include "front_JS_natif.hpp"
 
 

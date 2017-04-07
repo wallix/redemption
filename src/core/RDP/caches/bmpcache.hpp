@@ -29,6 +29,7 @@
 
 #include "utils/bitmap.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "utils/verbose_flags.hpp"
 
 using std::size_t;
 
@@ -394,10 +395,16 @@ private:
     Cache<cache_lite_element> waiting_list;
     Bitmap waiting_list_bitmap;
 
-          uint32_t stamp;
-    const uint32_t verbose;
+    uint32_t stamp;
 
 public:
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        life = 1,
+        persistent = 512,
+    };
+
     BmpCache(Owner owner,
              const uint8_t bpp,
              uint8_t number_of_cache,
@@ -407,7 +414,7 @@ public:
              CacheOption c2 = CacheOption(),
              CacheOption c3 = CacheOption(),
              CacheOption c4 = CacheOption(),
-             uint32_t verbose = 0)
+             Verbose verbose = {})
     : owner(owner)
     , bpp(bpp)
     , number_of_cache(number_of_cache)
@@ -446,7 +453,7 @@ public:
         this->storage.reserve(this->size_elements);
         this->lite_storage.reserve(this->size_lite_elements);
 
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::life)) {
             LOG( LOG_INFO
                 , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
                     "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
@@ -503,13 +510,13 @@ public:
     }
 
     ~BmpCache() {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::life)) {
             this->log();
         }
     }
 
     void reset() {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::life)) {
             this->log();
         }
         this->stamp = 0;
@@ -675,7 +682,7 @@ public:
 
         const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
         if (cache_index_32 != cache_range<cache_element>::invalid_cache_index) {
-            if (this->verbose & 512) {
+            if (bool(this->verbose & Verbose::persistent)) {
                 if (persistent) {
                     LOG( LOG_INFO
                         , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
@@ -690,7 +697,7 @@ public:
             //    LOG(LOG_INFO, "cache_id    = %u;", id_real);
             //    LOG(LOG_INFO, "cache_index = %u;", cache_index_32);
             //    LOG(LOG_INFO,
-            //        "BOOST_CHECK_EQUAL(((FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
+            //        "RED_CHECK_EQUAL(((FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
             //            "bmp_cache.cache_bitmap(*bmp_%d));",
             //        this->finding_counter - 1);
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
@@ -713,7 +720,7 @@ public:
                 id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                 id          |= IN_WAIT_LIST;
 
-                if (this->verbose & 512) {
+                if (bool(this->verbose & Verbose::persistent)) {
                     LOG( LOG_INFO, "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
                         , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                         , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
@@ -724,7 +731,7 @@ public:
                 this->waiting_list.remove(le_compare);
                 this->waiting_list[cache_index_32].reset();
 
-                if (this->verbose & 512) {
+                if (bool(this->verbose & Verbose::persistent)) {
                     LOG( LOG_INFO
                         , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
                         , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
@@ -778,7 +785,7 @@ public:
         //    LOG(LOG_INFO, "cache_id    = %u;", id);
         //    LOG(LOG_INFO, "cache_index = %u;", oldest_cidx);
         //    LOG(LOG_INFO,
-        //        "BOOST_CHECK_EQUAL(((ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
+        //        "RED_CHECK_EQUAL(((ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
         //            "bmp_cache.cache_bitmap(bmp_%d));",
         //        this->finding_counter - 1);
         //    LOG(LOG_INFO, "}");

@@ -21,22 +21,20 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityCompDesk
+#define UNIT_TEST_MODULE TestCapabilityCompDesk
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "core/RDP/capabilities/compdesk.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
+RED_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
 {
     CompDeskCaps compdesk_caps;
     compdesk_caps.CompDeskSupportLevel = COMPDESK_SUPPORTED;
 
-    BOOST_CHECK_EQUAL(compdesk_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_COMPDESK));
-    BOOST_CHECK_EQUAL(compdesk_caps.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
-    BOOST_CHECK_EQUAL(compdesk_caps.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));
+    RED_CHECK_EQUAL(compdesk_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_COMPDESK));
+    RED_CHECK_EQUAL(compdesk_caps.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
+    RED_CHECK_EQUAL(compdesk_caps.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));
 
     StaticOutStream<1024> out_stream;
     compdesk_caps.emit(out_stream);
@@ -44,12 +42,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
 
     CompDeskCaps compdesk_caps2;
 
-    BOOST_CHECK_EQUAL(compdesk_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_COMPDESK));
-    BOOST_CHECK_EQUAL(compdesk_caps2.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
+    RED_CHECK_EQUAL(compdesk_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_COMPDESK));
+    RED_CHECK_EQUAL(compdesk_caps2.len, static_cast<uint16_t>(CAPLEN_COMPDESK));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_COMPDESK), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_COMPDESK), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_COMPDESK), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_COMPDESK), stream.in_uint16_le());
     compdesk_caps2.recv(stream, CAPLEN_COMPDESK);
 
-    BOOST_CHECK_EQUAL(compdesk_caps2.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));
+    RED_CHECK_EQUAL(compdesk_caps2.CompDeskSupportLevel, static_cast<uint16_t>(COMPDESK_SUPPORTED));
 }

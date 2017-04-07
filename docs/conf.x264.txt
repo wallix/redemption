@@ -1,0 +1,3 @@
+./configure --enable-static --enable-pic --extra-cflags='-fPIC' --extra-ldflags='-fPIC'
+make
+make install

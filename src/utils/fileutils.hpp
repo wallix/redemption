@@ -66,6 +66,7 @@ static inline int filesize(const char * path)
     if (status >= 0){
         return sb.st_size;
     }
+//    LOG(LOG_INFO, "%s", strerror(errno));
     return -1;
 }
 
@@ -117,7 +118,7 @@ void MakePath(std::string & fullpath, const char * directory,
 
 static inline bool canonical_path( const char * fullpath, char * path, size_t path_len
                                  , char * basename, size_t basename_len, char * extension
-                                 , size_t extension_len, uint32_t verbose = 255)
+                                 , size_t extension_len)
 {
     const char * end_of_path = strrchr(fullpath, '/');
     if (end_of_path){
@@ -126,9 +127,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
             path[end_of_path + 1 - fullpath] = 0;
         }
         else {
-            if (verbose >= 255) {
-                LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
-            }
+            LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
             return false;
         }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
@@ -141,9 +140,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
                     basename[start_of_extension - end_of_path - 1] = 0;
                 }
                 else {
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
-                    }
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
                     return false;
                 }
             }
@@ -173,9 +170,7 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
                     basename[start_of_extension - fullpath] = 0;
                 }
                 else {
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
-                    }
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
                     return false;
                 }
             }
@@ -193,136 +188,11 @@ static inline bool canonical_path( const char * fullpath, char * path, size_t pa
             }
         }
     }
-    if (verbose >= 255) {
-        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
-    }
     return true;
 }
 
-static inline void pathncpy(char * dest, const char * src, const size_t n) {
-    size_t src_len = strnlen(src, n);
-    if (src_len >= n || (src_len == 0 && n < 3)) {
-        LOG(LOG_INFO, "can't copy path, no room in dest path (available %d): %s\n", static_cast<int>(n), src);
-        throw Error(ERR_PATH_TOO_LONG);
-    }
-    if (src_len == 0){
-        memcpy(dest, "./", 3);
-    }
-    else {
-        memcpy(dest, src, src_len + 1);
-        if (src[src_len - 1] != '/') {
-            if (src_len + 1 >= n) {
-                LOG(LOG_INFO, "can't copy path, no room in dest path to add trailing slash: %s\n", src);
-                throw Error(ERR_PATH_TOO_LONG);
-            }
-            dest[src_len] = '/';
-            dest[src_len+1] = 0;
-        }
-    }
-}
 
-static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
-{
-    struct D {
-        DIR * d;
-
-        ~D() { closedir(d); }
-        operator DIR * () const { return d; }
-    } d{opendir(path)};
-
-    if (d){
-//        char static_buffer[8192];
-        char buffer[8192];
-        size_t path_len = strlen(path);
-        size_t prefix_len = strlen(prefix);
-        size_t file_len = 1024;
-//        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
-//        char * buffer = static_buffer;
-
-/*
-        if (file_len < 4000){
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", static_cast<unsigned>(file_len));
-            }
-            file_len = 4000;
-        }
-        else {
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", static_cast<unsigned>(file_len));
-            }
-
-            char * buffer = (char*)malloc(file_len + path_len + 1);
-            if (!buffer){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Memory allocation failed for file name buffer, using static buffer");
-                }
-                buffer = static_buffer;
-                file_len = 4000;
-            }
-        }
-*/
-        if (file_len + path_len + 1 > sizeof(buffer)) {
-            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
-            return;
-        }
-        strncpy(buffer, path, file_len + path_len + 1);
-        if (buffer[path_len] != '/'){
-            buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
-        }
-
-        // TODO size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?
-        const size_t len = offsetof(struct dirent, d_name) + file_len;
-        struct E {
-            dirent * entryp;
-
-            ~E() { free(entryp); }
-            operator dirent * () const { return entryp; }
-            dirent * operator -> () const { return entryp; }
-        } entryp{static_cast<struct dirent *>(malloc(len))};
-        if (!entryp){
-            LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
-            return;
-        }
-        struct dirent * result;
-        for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
-            if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
-                continue;
-            }
-
-            if (strncmp(entryp->d_name, prefix, prefix_len)){
-                continue;
-            }
-
-            strncpy(buffer + path_len, entryp->d_name, file_len);
-            const char * eob = buffer + path_len + strlen(entryp->d_name);
-            const bool extension = ((eob[-4] == '.') && (eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
-                          || ((eob[-4] == '.') && (eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
-                          || ((eob[-5] == '.') && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
-                          || ((eob[-4] == '.') && (eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's'))
-                          ;
-
-            if (!extension){
-                continue;
-            }
-
-            struct stat st;
-            if (stat(buffer, &st) < 0){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
-                }
-                continue;
-            }
-            if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
-            }
-        }
-    }
-    else {
-        LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
-    }
-}
-
-static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose) {
+static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid) {
     struct stat st;
     int status = 0;
 
@@ -331,24 +201,18 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
-                if (verbose >= 255) {
-                    LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
-                }
+                LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
             }
             if (groupid >= 0) {
                 if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
-                    if (verbose >= 255) {
-                        LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
-                    }
+                    LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                 }
             }
 
         }
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
-            if (verbose >= 255) {
-                LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
-            }
+            LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
             status = -1;
         }
     }
@@ -356,7 +220,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 }
 
 
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255)
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid)
 {
     char * pTemp;
     char * pSearch;
@@ -376,12 +240,12 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
         }
 
         pSearch[0] = 0;
-        status = _internal_make_directory(copy_directory, mode, groupid, verbose);
+        status = _internal_make_directory(copy_directory, mode, groupid);
         *pSearch = '/';
     }
 
     if (status == 0) {
-        status = _internal_make_directory(directory, mode, groupid, verbose);
+        status = _internal_make_directory(directory, mode, groupid);
     }
 
     free(copy_directory);

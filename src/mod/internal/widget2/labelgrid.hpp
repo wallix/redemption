@@ -34,14 +34,14 @@ struct WidgetLabelGrid : public WidgetGrid {
 
     Font const & font;
 
-    WidgetLabelGrid(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLabelGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
                uint32_t bg_color_focus, uint32_t fg_color_focus,
                uint32_t bg_color_selection, uint32_t fg_color_selection,
                Font const & font, uint16_t border = 0, int group_id = 0)
-        : WidgetGrid(drawable, rect, parent, notifier, nb_lines, nb_columns,
+        : WidgetGrid(drawable, parent, notifier, nb_lines, nb_columns,
                      bg_color_1, fg_color_1, bg_color_2, fg_color_2,
                      bg_color_focus, fg_color_focus,
                      bg_color_selection, fg_color_selection, border, group_id)
@@ -75,11 +75,15 @@ struct WidgetLabelGrid : public WidgetGrid {
         REDASSERT(this->nb_rows <= GRID_NB_ROWS_MAX);
         for (int i = 0; i < this->nb_columns; i++) {
             bool odd = this->nb_rows & 1;
-            WidgetLabel * label = new WidgetLabel(this->drawable, 0, 0, *this, this,
-                                              entries[i], true, this->group_id,
+            WidgetLabel * label = new WidgetLabel(this->drawable, *this, this,
+                                              entries[i], this->group_id,
                                               odd ? this->fg_color_1 : this->fg_color_2,
                                               odd ? this->bg_color_1 : this->bg_color_2,
                                               this->font, x_padding_label, y_padding_label);
+
+            Dimension dim = label->get_optimal_dim();
+            label->set_wh(dim);
+
             label->tool = true;
             this->set_widget(this->nb_rows, i, label);
             this->toDelete[i][this->nb_rows] = true;
@@ -97,6 +101,3 @@ struct WidgetLabelGrid : public WidgetGrid {
     }
 
 };
-
-
-

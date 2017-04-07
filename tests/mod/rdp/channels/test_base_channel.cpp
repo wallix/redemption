@@ -20,18 +20,17 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define UNIT_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
 //#define LOGPRINT
+#include "utils/log.hpp"
 
 //#include "path/to/file.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

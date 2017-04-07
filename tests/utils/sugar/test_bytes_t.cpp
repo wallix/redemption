@@ -20,17 +20,28 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBytesT
+#define UNIT_TEST_MODULE TestBytesT
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/bytes_t.hpp"
 
 #include <type_traits>
 
+template<class T, class U>
+constexpr auto is_callable_impl(U & x, int)
+-> decltype(void(T(x)), std::true_type{})
+{ return 1; }
 
-BOOST_AUTO_TEST_CASE(TestBytesT)
+template<class T, class U>
+constexpr std::false_type is_callable_impl(U &, char)
+{ return {}; }
+
+template<class T, class U>
+constexpr auto is_callable(U & x)
+-> decltype(is_callable_impl<T>(x, 1))
+{ return {}; }
+
+RED_AUTO_TEST_CASE(TestBytesT)
 {
     char a[2]{};
     uint8_t ua[2]{};
@@ -55,31 +66,31 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     const_bytes_t{cus};
     const_bytes_t{bytes_t{a}};
 
-    BOOST_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(a));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(ua).to_charp()), voidp(ua));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(s).to_charp()), voidp(s));
-    BOOST_CHECK_EQUAL(voidp(bytes_t(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(bytes_t(ua).to_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(bytes_t(s).to_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(bytes_t(us).to_charp()), voidp(us));
 
-    BOOST_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(bytes_t(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(bytes_t(a).to_charp()), voidp(bytes_t(a).to_u8p()));
 
-    BOOST_CHECK(bool(bytes_t(a)));
-    BOOST_CHECK(!bool(bytes_t{}));
+    RED_CHECK(bool(bytes_t(a)));
+    RED_CHECK(!bool(bytes_t{}));
 
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(a));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(ua).to_charp()), voidp(ua));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(s).to_charp()), voidp(s));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(ua).to_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(s).to_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(us).to_charp()), voidp(us));
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(ca).to_charp()), voidp(ca));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cua).to_charp()), voidp(cus));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cs).to_charp()), voidp(cs));
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(cus).to_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(ca).to_charp()), voidp(ca));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cua).to_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cs).to_charp()), voidp(cs));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(cus).to_charp()), voidp(cus));
 
-    BOOST_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(const_bytes_t(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(const_bytes_t(a).to_charp()), voidp(const_bytes_t(a).to_u8p()));
 
-    BOOST_CHECK(bool(const_bytes_t(a)));
-    BOOST_CHECK(!bool(const_bytes_t{}));
+    RED_CHECK(bool(const_bytes_t(a)));
+    RED_CHECK(!bool(const_bytes_t{}));
 
 
     bytes_t bs{s};
@@ -91,41 +102,43 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     array_view_const_char cav{cs, 1};
     array_view_const_u8 cuav{cus, 1};
 
+    std::false_type no;
+
     bytes_array{bs, 1};
-    bytes_array{a};
-    bytes_array{ua};
+    is_callable<bytes_array>(a) = no;
+    is_callable<bytes_array>(ua) = no;
     bytes_array{av};
     bytes_array{uav};
     bytes_array{ba};
 
     const_bytes_array{bs, 1};
-    const_bytes_array{a};
-    const_bytes_array{ua};
+    is_callable<const_bytes_array>(a) = no;
+    is_callable<const_bytes_array>(ua) = no;
     const_bytes_array{av};
     const_bytes_array{uav};
     const_bytes_array{ba};
 
     const_bytes_array{cbs, 1};
-    const_bytes_array{ca};
-    const_bytes_array{cua};
+    is_callable<const_bytes_array>(ca) = no;
+    is_callable<const_bytes_array>(cua) = no;
     const_bytes_array{cav};
     const_bytes_array{cuav};
     const_bytes_array{cba};
 
-    bytes_array{} = a;
-    bytes_array{} = ua;
+    std::is_assignable<bytes_array, decltype(a)>::type{} = no;
+    std::is_assignable<bytes_array, decltype(ua)>::type{} = no;
     bytes_array{} = av;
     bytes_array{} = uav;
     bytes_array{} = ba;
 
-    const_bytes_array{} = a;
-    const_bytes_array{} = ua;
+    std::is_assignable<const_bytes_array, decltype(a)>::type{} = no;
+    std::is_assignable<const_bytes_array, decltype(ua)>::type{} = no;
     const_bytes_array{} = av;
     const_bytes_array{} = uav;
     const_bytes_array{} = ba;
 
-    const_bytes_array{} = ca;
-    const_bytes_array{} = cua;
+    std::is_assignable<const_bytes_array, decltype(ca)>::type{} = no;
+    std::is_assignable<const_bytes_array, decltype(cua)>::type{} = no;
     const_bytes_array{} = cav;
     const_bytes_array{} = cuav;
     const_bytes_array{} = cba;
@@ -134,20 +147,14 @@ BOOST_AUTO_TEST_CASE(TestBytesT)
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
-    [](bytes_array){}(a);
-    [](bytes_array){}(ua);
     [](bytes_array){}(av);
     [](bytes_array){}(uav);
     [](bytes_array){}(ba);
 
-    [](const_bytes_array){}(a);
-    [](const_bytes_array){}(ua);
     [](const_bytes_array){}(av);
     [](const_bytes_array){}(uav);
     [](const_bytes_array){}(ba);
 
-    [](const_bytes_array){}(ca);
-    [](const_bytes_array){}(cua);
     [](const_bytes_array){}(cav);
     [](const_bytes_array){}(cuav);
     [](const_bytes_array){}(cba);

@@ -117,8 +117,9 @@ class SesmanConfig(object):
             , u'authentication_failed' : u"Echec d'authentification."
             , u'account_locked' : u"Compte verrouillé."
             , u'start_session_failed' : u'Echec de démarage de session.'
-            , u'pattern_kill' : u' Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
-            , u'session_probe_keepalive_missed' : u' Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
+            , u'pattern_kill' : u'Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_launch_failed' : u'Impossible de lancer Session Probe, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_keepalive_missed' : u'Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -203,8 +204,9 @@ class SesmanConfig(object):
             , u'authentication_failed' : u'Authentication failed.'
             , u'account_locked' : u"Account locked."
             , u'start_session_failed' : u'Failed to start session.'
-            , u'pattern_kill' : u' Forbidden pattern detected, connection closed by manager.'
-            , u'session_probe_keepalive_missed' : u' Session Probe keepalive missed, connection closed by manager.'
+            , u'pattern_kill' : u'Forbidden pattern detected, connection closed by manager.'
+            , u'session_probe_launch_failed' : u'Could not launch Session Probe, connection closed by manager.'
+            , u'session_probe_keepalive_missed' : u'Session Probe keepalive missed, connection closed by manager.'
             }
         }
 

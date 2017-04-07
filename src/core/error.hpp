@@ -37,6 +37,7 @@ enum error_type {
     ERR_BUFFER_TOO_SMALL,
     ERR_NOT_YET_SUPPORTED,
     ERR_UNEXPECTED,
+    ERR_DISCONNECT_BY_USER,
 
     ERR_MEMORY_ALLOCATION_FAILED = 200,
 
@@ -293,6 +294,11 @@ enum error_type {
     ERR_RDP45_COMPRESS_BUFFER_OVERFLOW = 22100,
 
     ERR_RAIL_PDU_TRUNCATED = 22200,
+    ERR_RAIL_LOGON_FAILED_OR_WARNING,
+    ERR_RAIL_NOT_ENABLED,
+    ERR_RAIL_CLIENT_EXECUTE,
+    ERR_RAIL_STARTING_PROGRAM,
+    ERR_RAIL_UNAUTHORIZED_PROGRAM,
 
     ERR_RDPDR_PDU_TRUNCATED = 22300,
     ERR_RDPDR_READ_REQUEST,
@@ -309,7 +315,6 @@ enum error_type {
     ERR_PDBC_SAVE,
 
     ERR_SESSION_PROBE_LAUNCH = 24200,
-    ERR_SESSION_PROBE_KEEPALIVE,
     ERR_SESSION_PROBE_ENDING_IN_PROGRESS,
     ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION,
 
@@ -320,6 +325,13 @@ enum error_type {
     ERR_SSL_CALL_SHA1_INIT_FAILED,
     ERR_SSL_CALL_SHA1_UPDATE_FAILED,
     ERR_SSL_CALL_SHA1_FINAL_FAILED,
+    ERR_SSL_CALL_SHA256_INIT_FAILED,
+    ERR_SSL_CALL_SHA256_UPDATE_FAILED,
+    ERR_SSL_CALL_SHA256_FINAL_FAILED,
+    
+    ERR_CRYPTO_BUFFER_TOO_SMALL = 25500,
+    ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL,
+    ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT,
 
     ERR_SSH_PARSE_PRIVATE_DSA_KEY,
     ERR_SSH_PARSE_PRIVATE_RSA_KEY
@@ -368,10 +380,6 @@ public:
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
             return "Composite Widget Destroyed without child list not empty";
 
-        case ERR_SESSION_PROBE_LAUNCH:
-            return "Could not launch Session Probe";
-        case ERR_SESSION_PROBE_KEEPALIVE:
-            return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
 
@@ -380,6 +388,15 @@ public:
 
         case ERR_LIC:
             return "An error occurred during the licensing protocol";
+
+        case ERR_RAIL_CLIENT_EXECUTE:
+            return "The RemoteApp program did not start on the remote computer";
+
+        case ERR_RAIL_STARTING_PROGRAM:
+            return "Cannot start the RemoteApp program";
+
+        case ERR_RAIL_UNAUTHORIZED_PROGRAM:
+            return "The RemoteApp program is not in the list of authorized programs";
 
         default:
             {
