@@ -1,0 +1,22 @@
+# ~/user-config.jam
+# or
+# root-project/project-config.jam
+
+# uses ccache with gcc
+using gcc : : ccache g++ : <cxxflags>-fdiagnostics-color=always ;
+using gcc : 4.9 : ccache g++-4.9 : <cxxflags>-fdiagnostics-color=always ;
+using gcc : 6.0 : ccache /usr/lib/gcc-snapshot/bin/g++ : <cxxflags>-fdiagnostics-color=always ;
+
+# bjam --toolset=gcc-cache6.0
+#using gcc : cache : ccache g++ : <cxxflags>-fdiagnostics-color=always ;
+#using gcc : cache6.0 : ccache /usr/lib/gcc-snapshot/bin/g++ : <cxxflags>-fdiagnostics-color=always ;
+#using gcc : cache4.9 : ccache g++-4.9 : <cxxflags>-fdiagnostics-color=always ;
+
+# uses ccache with clang
+using clang : : ccache clang++ : <cxxflags>-fcolor-diagnostics ;
+#using clang : : clang++ : <cxxflags>-fcolor-diagnostics <cxxflags>-Qunused-arguments <cxxflags>-Wno-overlength-strings ;
+
+#using clang : cache : ccache clang++ : <cxxflags>-fcolor-diagnostics ;
+
+# bjam --toolset=clang-scan
+using clang : scan : scan-build clang++ : <cxxflags>-fcolor-diagnostics ;

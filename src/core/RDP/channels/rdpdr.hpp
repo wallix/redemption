@@ -835,7 +835,8 @@ public:
 //  | 0x00000010                                 | Specification (XPS) format.                |
 //  +--------------------------------------------+--------------------------------------------+
 
-enum :  uint32_t {
+// TODO strong enum RDPDR_PRINTER_ANNOUNCE_FLAG
+enum : uint32_t {
     RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII          = 0x00000001
   , RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER = 0x00000002
   , RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER = 0x00000004
@@ -843,16 +844,17 @@ enum :  uint32_t {
   , RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT      = 0x00000010
 };
 
-static const char * get_rdpdr_printer_flags_name(uint32_t flags) {
-
+static std::string get_rdpdr_printer_flags_name(uint32_t flags)
+{
     std::string str;
-    (flags & RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII) ? str+="RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII " :str;
-    (flags & RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER) ? str+="RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER " :str;
-    (flags & RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER) ? str+="RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER " :str;
-    (flags & RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER) ? str+="RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER " : str;
-    (flags & RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT) ? str+="RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT " : str;
-
-    return str.c_str();
+    #define ASTR(f) if (flags & f) str += #f " "
+    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII);
+    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER);
+    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER);
+    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER);
+    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT);
+    #undef ASTR
+    return str;
 }
 
 
@@ -1001,7 +1003,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId);
         LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->DeviceDataLength));
-        LOG(LOG_INFO, "          * Flags           = 0x%08x (4 bytes): %s", this->Flags, get_rdpdr_printer_flags_name(this->Flags));
+        LOG(LOG_INFO, "          * Flags           = 0x%08x (4 bytes): %s", this->Flags, get_rdpdr_printer_flags_name(this->Flags).c_str());
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
         LOG(LOG_INFO, "          * PnPNameLen      = %zu (4 bytes)", this->PnPNameLen);
         LOG(LOG_INFO, "          * DriverNameLen   = %zu (4 bytes)", this->DriverNameLen);

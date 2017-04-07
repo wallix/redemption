@@ -37,7 +37,7 @@ class InCryptoTransport : public Transport
     bool eof;
     size_t file_len;
     size_t current_len;
-    
+
     CryptoContext & cctx;
     char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
                                           // or already decrypted/decompressed data
@@ -49,7 +49,7 @@ class InCryptoTransport : public Transport
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
     int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
     bool encrypted;
-    
+
 public:
     explicit InCryptoTransport(CryptoContext & cctx, int encryption) noexcept
         : fd(-1)
@@ -65,7 +65,7 @@ public:
         , encryption(encryption)
         , encrypted(false)
     {
-    } 
+    }
 
     ~InCryptoTransport() {
     }
@@ -84,7 +84,7 @@ public:
     void hash(const char * pathname)
     {
         this->open(pathname);
-        
+
     }
 
     void open(const char * pathname)
@@ -92,8 +92,8 @@ public:
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        
-       
+
+
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -243,7 +243,7 @@ public:
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
     }
-    
+
     void close()
     {
         if (!this->is_open()){
@@ -290,7 +290,7 @@ private:
         }
     }
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override 
+    bool do_atomic_read(uint8_t * buffer, size_t len) override
     {
         if (this->encrypted){
             if (this->state & CF_EOF) {
@@ -302,7 +302,7 @@ private:
                 // If we do not have any clear data available read some
 
                 if (!this->raw_size) {
-                    
+
                     // Read a full ciphered block at once
                     uint8_t hlen[4] = {};
                     this->raw_read(hlen, 4);
@@ -392,9 +392,8 @@ private:
                 this->raw_size = 0;
                 this->clear_pos = 0;
             }
-            int res = -1;
             while(remaining_len){
-                res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
+                ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
                 if (res <= 0){
                     if (res == 0) {
                         break;
@@ -421,6 +420,6 @@ private:
             this->last_quantum_received += len;
         }
         return true;
-    }    
+    }
 
 };
