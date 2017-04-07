@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderPatBlt
+#define UNIT_TEST_MODULE TestOrderPatBlt
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT

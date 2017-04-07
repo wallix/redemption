@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBitmapUpdate
+#define UNIT_TEST_MODULE TestBitmapUpdate
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

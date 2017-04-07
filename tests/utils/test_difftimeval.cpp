@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDiffTimeval
+#define UNIT_TEST_MODULE TestDiffTimeval
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/difftimeval.hpp"

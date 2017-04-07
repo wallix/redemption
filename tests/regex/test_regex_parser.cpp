@@ -22,9 +22,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDfaRegexParser
+#define UNIT_TEST_MODULE TestDfaRegexParser
 #include "system/redemption_unit_tests.hpp"
 
 #include "regex/regex_parser.hpp"

@@ -22,9 +22,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestVncClientSimple
+#define UNIT_TEST_MODULE TestVncClientSimple
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

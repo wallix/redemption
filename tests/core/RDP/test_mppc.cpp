@@ -22,9 +22,7 @@
    Unit test for MPPC compression
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMPPC
+#define UNIT_TEST_MODULE TestMPPC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

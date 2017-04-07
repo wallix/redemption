@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWaitObj
+#define UNIT_TEST_MODULE TestWaitObj
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/wait_obj.hpp"

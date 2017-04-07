@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMPPC40
+#define UNIT_TEST_MODULE TestMPPC40
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL

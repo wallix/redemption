@@ -18,10 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
-#define BOOST_TEST_MODULE TestArrayView
+#define UNIT_TEST_MODULE TestArrayView
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/array_view.hpp"

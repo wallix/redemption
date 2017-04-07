@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlmAvPair
+#define UNIT_TEST_MODULE TestNtlmAvPair
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

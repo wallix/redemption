@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestError
+#define UNIT_TEST_MODULE TestError
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/error.hpp"

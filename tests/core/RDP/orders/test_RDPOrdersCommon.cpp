@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPOrdersCommon
+#define UNIT_TEST_MODULE TestRDPOrdersCommon
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

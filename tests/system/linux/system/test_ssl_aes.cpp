@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestAes
+#define UNIT_TEST_MODULE TestAes
 
 #include "system/ssl_aes.hpp"
 

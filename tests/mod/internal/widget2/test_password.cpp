@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetPassword
+#define UNIT_TEST_MODULE TestWidgetPassword
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

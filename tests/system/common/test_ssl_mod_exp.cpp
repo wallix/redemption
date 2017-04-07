@@ -20,8 +20,6 @@
 
 #pragma once
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 #include "system/redemption_unit_tests.hpp"
 
 RED_AUTO_TEST_CASE(TestModExp)

@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestUnderLyingCast
+#define UNIT_TEST_MODULE TestUnderLyingCast
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/underlying_cast.hpp"

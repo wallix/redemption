@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBytesT
+#define UNIT_TEST_MODULE TestBytesT
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/bytes_t.hpp"

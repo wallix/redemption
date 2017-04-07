@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestSha256
+#define UNIT_TEST_MODULE TestSha256
 
 #include "utils/crypto/ssl_sha256_direct.hpp"
 

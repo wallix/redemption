@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityShare
+#define UNIT_TEST_MODULE TestCapabilityShare
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

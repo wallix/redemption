@@ -18,9 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestUniquePtr
+#define UNIT_TEST_MODULE TestUniquePtr
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/make_unique.hpp"

@@ -20,9 +20,7 @@
    Unit test to capture interface to video recording to flv or mp4frecv
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWrmCapture
+#define UNIT_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
 

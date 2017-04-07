@@ -22,9 +22,7 @@
     when connecting from mstsc (mocked up)
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFrontMstscClient
+#define UNIT_TEST_MODULE TestFrontMstscClient
 #include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.

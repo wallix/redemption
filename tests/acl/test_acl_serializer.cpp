@@ -20,9 +20,7 @@
    Unit tests for Acl Serializer
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestAclSerializer
+#define UNIT_TEST_MODULE TestAclSerializer
 #include "system/redemption_unit_tests.hpp"
 
 

@@ -20,9 +20,7 @@
    Unit test to detect memory leak in OCR module
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNewOCR
+#define UNIT_TEST_MODULE TestNewOCR
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

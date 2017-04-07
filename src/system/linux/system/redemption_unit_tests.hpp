@@ -1,5 +1,7 @@
 #pragma once
 
+#define BOOST_TEST_MODULE UNIT_TEST_MODULE
+
 #include <boost/test/auto_unit_test.hpp>
 
 // // fixed link error (API changed)

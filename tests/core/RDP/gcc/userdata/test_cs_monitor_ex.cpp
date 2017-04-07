@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCS_MONITOR_EX
+#define UNIT_TEST_MODULE TestCS_MONITOR_EX
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

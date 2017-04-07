@@ -23,9 +23,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGdCmdConverter
+#define UNIT_TEST_MODULE TestGdCmdConverter
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
