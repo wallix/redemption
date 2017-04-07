@@ -596,10 +596,10 @@ inline void load_hash(
 
 static inline bool meta_line_stat_equal_stat(MetaLine2 const & metadata, struct stat64 const & sb)
 {
-    return 
+    return
 //           metadata.dev == sb.st_dev
 //        && metadata.ino == sb.st_ino
-//        && 
+//        &&
            metadata.mode == sb.st_mode
         && metadata.uid == sb.st_uid
         && metadata.gid == sb.st_gid
@@ -1395,7 +1395,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                 in_wrm_trans.next();
             }
 
-            LOG(LOG_INFO, "player begin_capture = %u", begin_capture.tv_sec);
+            LOG(LOG_INFO, "player begin_capture = %lu", begin_capture.tv_sec);
             FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
             if (show_file_metadata) {
