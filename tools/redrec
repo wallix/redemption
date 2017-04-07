@@ -5,22 +5,24 @@ import ctypes
 import ctypes.util
 
 def usage():
-  print("%s: Usage {rec|ver|dec} library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
+  print("%s: Usage [{rec|ver|dec}] library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
 
+
+role = 'redrec'
+
+if len(sys.argv) > 1:
+    if sys.argv[1] in ['rec','ver','dec']:
+        role = 'red' + sys.argv[1]
+    elif not sys.argv[1] in ['redrec','redver','reddec']:
+        new_argv=[sys.argv[0], 'rec']
+        new_argv.extend(sys.argv[1:])
+        sys.argv = new_argv
 
 if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (sys.argv[3] != '--' and len(sys.argv) > 5 and sys.argv[5] == '--')):
   usage()
   exit(1)
 
-role = sys.argv[1]
 pathlib = sys.argv[2]
-
-if sys.argv[1] in ['rec','ver','dec']:
-    role = 'red' + sys.argv[1]
-elif not sys.argv[1] in ['redrec','redver','reddec']:
-    print("Bad role, required rec, ver or dec:")
-    usage()
-    sys.exit(11)
 
 arg_consumed = 3
 hmac_key_str = '\xe3\x8d\xa1\x5e\x50\x1e\x4f\x6a\x01\xef\xde\x6c\xd9\xb3\x3a\x3f\x2b\x41\x72\x13\x1e\x97\x5b\x4c\x39\x54\x23\x14\x43\xae\x22\xae'
@@ -58,8 +60,9 @@ try:
     libred.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
     libred.memcpy.restype = ctypes.c_int
 
-    args = sys.argv[arg_consumed:]
-    args[0] = role
+    args = [sys.argv[0]]
+    args.extend(sys.argv[arg_consumed:])
+    args[1] = role
     myargv = ctypes.c_char_p * len(args)
     argv = myargv(*tuple(args))
     errcode = libred.do_main(len(args), argv, get_hmac_key_func, get_trace_key_func)
