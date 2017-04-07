@@ -1050,20 +1050,33 @@ private:
         int y = e->y();
         if (this->_front->is_replaying) {
             if (x > 44 && x < this->_width - 104  && y > this->_height+2 && y < this->_height + 14) {
-                this->stopRelease();
+
+                this->_timer_replay.stop();
+
                 int bar_len = this->_width - 148;
                 int bar_click = x - 44;
                 double read_len_tmp = (bar_click * this->movie_time) / bar_len;
                 this->begin = int(read_len_tmp);
+
+                this->movie_time_pause = {0, 0};
+                this->current_time_movie = this->begin;
                 this->_running = true;
                 this->is_paused = false;
+
+                this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
                 this->barRepaint(this->_width-148, QColor(Qt::black));
-                this->movie_time_start = tvtime();
+                this->barRepaint(this->current_time_movie, QColor(Qt::green));
+                this->movie_timer_label.setText(QString( std::to_string(this->begin).c_str()) +QString("/")+QString(std::to_string(movie_time).c_str()));
+
                 this->_buttonCtrlAltDel.setText("Pause");
                 this->movie_status.setText("  Play ");
 
-                time_t started_rec(this->_front->replay_mod.get()->get_reader()->record_now.tv_sec);
-                this->_front->load_replay_mod(this->_movie_name, {this->begin+started_rec, 0}, {0, 0});
+                this->slotRepaint();
+
+                //time_t started_rec(this->_front->replay_mod.get()->get_reader()->record_now.tv_sec);
+                this->_front->load_replay_mod(this->_movie_name, {this->begin, 0}, {0, 0});
+
+                this->movie_time_start = tvtime();
 
                 this->_timer_replay.start(1);
             }
@@ -1133,7 +1146,7 @@ public Q_SLOTS:
     void playReplay() {
         struct timeval now = tvtime();
         time_t movie_time_tmp = this->current_time_movie;
-        this->current_time_movie = ((now.tv_usec - this->movie_time_start.tv_usec) / 1000000) + now.tv_sec - this->movie_time_start.tv_sec + this->begin;
+        this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
         if (this->current_time_movie > movie_time_tmp) {
             this->barRepaint(this->current_time_movie, QColor(Qt::green));
         }
@@ -1150,7 +1163,7 @@ public Q_SLOTS:
         if (this->current_time_movie >= this->movie_time) {
             struct timeval now = tvtime();
 
-            this->current_time_movie = ((now.tv_usec - this->movie_time_start.tv_usec) / 1000000) + now.tv_sec - this->movie_time_start.tv_sec + this->begin;
+            this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
 
             this->_timer_replay.stop();
             this->movie_timer_label.setText(QString("  ") + QString(std::to_string(this->current_time_movie).c_str()) + QString("/") + QString(std::to_string(movie_time).c_str()));
@@ -1452,7 +1465,6 @@ public:
 
     void load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) override {
         try {
-            LOG(LOG_INFO, "read_len_tmp=%u", begin_read.tv_sec);
             this->replay_mod.reset(new ReplayMod( *this
                                                 , (this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()

@@ -712,6 +712,7 @@ public:
 
     bool break_privplay_client;
     uint64_t movie_elapsed_client;
+    uint64_t begin_to_elapse;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -768,6 +769,7 @@ public:
         , statistics()
         , break_privplay_client(false)
         , movie_elapsed_client(0)
+        , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -1190,6 +1192,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
             }
@@ -1475,6 +1478,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
             }
@@ -1712,9 +1716,33 @@ private:
     bool privplay_client(CbUpdateProgress update_progess) {
 
         struct timeval now     = tvtime();
-        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
 
         bool res(false);
+
+        while (this->begin_to_elapse >= this->movie_elapsed_client) {
+            if (this->next_order()) {
+                if (bool(this->verbose & Verbose::play)) {
+                    LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                }
+
+                if (this->remaining_order_count > 0) {
+                    res = true;
+                }
+
+                this->interpret_order();
+
+                if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
+                    break_privplay_client = true;
+                }
+                if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+                    break_privplay_client = true;
+                }
+            } else {
+                break_privplay_client = true;
+            }
+        }
 
         if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {
@@ -1740,6 +1768,7 @@ private:
 
                     update_progess(this->record_now.tv_sec);
                 }
+
                 if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                     break_privplay_client = true;
                 }
