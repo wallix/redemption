@@ -60,7 +60,6 @@ RED_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw_line(10, 0, 10, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect.shrink(5));
 
-    char message[1024];
     RED_CHECK_SIG(gd, "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
 
     // uncomment to see result in png file

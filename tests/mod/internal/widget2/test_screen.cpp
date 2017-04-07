@@ -94,8 +94,6 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
 
-    char message[1024];
-
     RED_CHECK(notifier1.sender == nullptr);
     RED_CHECK(notifier2.sender == &wbutton2);
     RED_CHECK(notifier3.sender == nullptr);
