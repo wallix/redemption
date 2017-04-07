@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestMd4
+#define UNIT_TEST_MODULE TestMd4
 
 #include "system/ssl_md4.hpp"
 

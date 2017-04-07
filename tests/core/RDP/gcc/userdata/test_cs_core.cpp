@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCS_CORE
+#define UNIT_TEST_MODULE TestCS_CORE
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
 {
     const char indata[] =
         "\x01\xc0"         // TS_UD_HEADER::type = CS_CORE (0xc001)
@@ -81,8 +79,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     InStream stream(buf, sz);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
-    BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
-    BOOST_CHECK_EQUAL(216, cs_core.length);
+    RED_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
+    RED_CHECK_EQUAL(216, cs_core.length);
 
     cs_core.log("Client Received");
 }

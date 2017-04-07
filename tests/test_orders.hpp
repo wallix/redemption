@@ -63,7 +63,7 @@ void check_datas(size_t lg_data, uint8_t * data,
                         static_cast<unsigned>(expected_result[i]),
                         static_cast<unsigned>(data[i]));
 
-        BOOST_CHECK_MESSAGE(lg_result == lg_data, buffer);
+        RED_CHECK_MESSAGE(lg_result == lg_data, buffer);
         return;
     }
 
@@ -92,7 +92,7 @@ void check_datas(size_t lg_data, uint8_t * data,
                         static_cast<int>(data[i]),
                         static_cast<unsigned>(i));
 
-        BOOST_CHECK_MESSAGE(expected_result[i] == data[i], buffer);
+        RED_CHECK_MESSAGE(expected_result[i] == data[i], buffer);
     }
 }
 
@@ -112,7 +112,7 @@ void check(const RDPOrderCommon & common,
     idx += cmd.str(buffer + idx, 2048 - idx, common);
     buffer[2047] = 0;
 
-    BOOST_CHECK_MESSAGE((expected_common == common) && (expected_cmd == cmd), buffer);
+    RED_CHECK_MESSAGE((expected_common == common) && (expected_cmd == cmd), buffer);
 }
 
 template <class RDPOrderType>
@@ -128,5 +128,5 @@ void check(const RDPOrderType & cmd, const RDPOrderType & expected_cmd,
     idx += cmd.str(buffer + idx, 2048 - idx);
     buffer[2047] = 0;
 
-    BOOST_CHECK_MESSAGE(expected_cmd == cmd, buffer);
+    RED_CHECK_MESSAGE(expected_cmd == cmd, buffer);
 }

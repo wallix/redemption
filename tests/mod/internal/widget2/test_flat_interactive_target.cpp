@@ -20,9 +20,7 @@
  *
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatInteractiveTarget
+#define UNIT_TEST_MODULE TestFlatInteractiveTarget
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -38,7 +36,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
+RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 {
     {
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
@@ -64,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target.png");
 
-        CHECK_SIG(drawable.gd, "\xaa\xa8\x12\x8e\xa4\x6b\xfc\xaf\xc8\x0b\xdc\xe0\xf7\x99\x87\xf6\x7e\x58\x19\x45");
+        RED_CHECK_SIG(drawable.gd, "\xaa\xa8\x12\x8e\xa4\x6b\xfc\xaf\xc8\x0b\xdc\xe0\xf7\x99\x87\xf6\x7e\x58\x19\x45");
     }
     {
         // ASK DEVICE
@@ -89,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-1.png");
 
-        CHECK_SIG(drawable.gd, "\xe9\x5b\xae\xe5\xec\x96\xcb\x00\xd1\x5a\x21\x25\xc0\xa7\xb9\xf4\xbd\x20\x99\xdc");
+        RED_CHECK_SIG(drawable.gd, "\xe9\x5b\xae\xe5\xec\x96\xcb\x00\xd1\x5a\x21\x25\xc0\xa7\xb9\xf4\xbd\x20\x99\xdc");
     }
     {
         // ASK PASSWORD
@@ -114,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-2.png");
 
-        CHECK_SIG(drawable.gd, "\xcb\xcc\x5c\x60\x2a\x42\x5d\x88\x35\x7b\x58\x25\x80\x46\x5c\x7f\x88\x67\x3b\x28");
+        RED_CHECK_SIG(drawable.gd, "\xcb\xcc\x5c\x60\x2a\x42\x5d\x88\x35\x7b\x58\x25\x80\x46\x5c\x7f\x88\x67\x3b\x28");
     }
     {
         // ASK LOGIN + PASSWORD
@@ -139,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-3.png");
 
-        CHECK_SIG(drawable.gd, "\xf8\xdc\xd6\x82\x09\x02\xb1\x0b\xcd\x61\x49\x28\x90\x41\xa8\xd6\x8f\xad\xd0\x21");
+        RED_CHECK_SIG(drawable.gd, "\xf8\xdc\xd6\x82\x09\x02\xb1\x0b\xcd\x61\x49\x28\x90\x41\xa8\xd6\x8f\xad\xd0\x21");
     }
     {
         // ASK DEVICE + PASSWORD
@@ -164,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 
         // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-4.png");
 
-        CHECK_SIG(drawable.gd, "\xca\x85\x6d\x9d\xb1\x80\xb8\xd2\xe9\x59\x88\xb6\xa0\x95\x20\xaf\xff\x96\xef\xd9");
+        RED_CHECK_SIG(drawable.gd, "\xca\x85\x6d\x9d\xb1\x80\xb8\xd2\xe9\x59\x88\xb6\xa0\x95\x20\xaf\xff\x96\xef\xd9");
     }
 
 }

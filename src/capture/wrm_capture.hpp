@@ -83,7 +83,7 @@ public:
         this->filename_gen[0] = 0;
     }
 
-    const char * get(int count) const
+    const char * get(unsigned count) const
     {
         std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                 , this->filename, count, this->extension);
@@ -251,7 +251,7 @@ public:
     , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
     {
 //        LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
-    
+
     }
 
 
@@ -479,7 +479,7 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1));
+                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1u));
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
                 LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception NO_ROOM");

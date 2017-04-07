@@ -21,16 +21,14 @@
     Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityGlyphSupport
+#define UNIT_TEST_MODULE TestCapabilityGlyphSupport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
+RED_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 {
     GlyphCacheCaps glyphcache_caps;
 
@@ -42,28 +40,28 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
     glyphcache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
     glyphcache_caps.pad2octets        = 3;
 
-    BOOST_CHECK_EQUAL(glyphcache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_GLYPHCACHE));
-    BOOST_CHECK_EQUAL(glyphcache_caps.len,            GlyphCacheCaps::LENGTH_CAPABILITY);
+    RED_CHECK_EQUAL(glyphcache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_GLYPHCACHE));
+    RED_CHECK_EQUAL(glyphcache_caps.len,            GlyphCacheCaps::LENGTH_CAPABILITY);
 
     StaticOutStream<1024> out_stream;
     glyphcache_caps.emit(out_stream);
 
-    BOOST_CHECK_EQUAL(out_stream.get_offset(), GlyphCacheCaps::LENGTH_CAPABILITY);
+    RED_CHECK_EQUAL(out_stream.get_offset(), GlyphCacheCaps::LENGTH_CAPABILITY);
 
     InStream stream(out_stream.get_data(), out_stream.get_offset());
 
     GlyphCacheCaps glyphcache_caps2;
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_GLYPHCACHE),               stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(GlyphCacheCaps::LENGTH_CAPABILITY), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_GLYPHCACHE),               stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(GlyphCacheCaps::LENGTH_CAPABILITY), stream.in_uint16_le());
 
     glyphcache_caps2.recv(stream, GlyphCacheCaps::LENGTH_CAPABILITY);
 
     for (uint8_t i = 0; i < GlyphCacheCaps::NUMBER_OF_CACHE; ++i) {
-        BOOST_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheEntries,         128);
-        BOOST_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheMaximumCellSize, 256);
+        RED_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheEntries,         128);
+        RED_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheMaximumCellSize, 256);
     }
-    BOOST_CHECK_EQUAL(glyphcache_caps2.FragCache,         16777216);
-    BOOST_CHECK_EQUAL(glyphcache_caps2.GlyphSupportLevel, static_cast<uint16_t>(GlyphCacheCaps::GLYPH_SUPPORT_FULL));
-    BOOST_CHECK_EQUAL(glyphcache_caps2.pad2octets,        3);
+    RED_CHECK_EQUAL(glyphcache_caps2.FragCache,         16777216);
+    RED_CHECK_EQUAL(glyphcache_caps2.GlyphSupportLevel, static_cast<uint16_t>(GlyphCacheCaps::GLYPH_SUPPORT_FULL));
+    RED_CHECK_EQUAL(glyphcache_caps2.pad2octets,        3);
 }

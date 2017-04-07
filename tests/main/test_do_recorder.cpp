@@ -19,12 +19,8 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDoRecorder
+#define UNIT_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
-
-#include <check_mem.hpp>
 
 #define LOGPRINT
 //#define LOGNULL
@@ -77,7 +73,7 @@ extern "C" {
 
 // python tools/decrypter.py -i tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -o decrypted.out
 
-BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
+RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
    LOG(LOG_INFO, "=================== TestDecrypterEncryptedData =============");
     char const * argv[] {
@@ -95,12 +91,12 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(0, unlink("./decrypted.out"));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(0, unlink("./decrypted.out"));
+    RED_CHECK_EQUAL(0, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
+RED_AUTO_TEST_CASE(TestDecrypterClearData)
 {
    LOG(LOG_INFO, "=================== TestDecrypterClearData =============");
     char const * argv[] {
@@ -118,12 +114,12 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestReverseIterators)
+RED_AUTO_TEST_CASE(TestReverseIterators)
 {
    LOG(LOG_INFO, "=================== TestReverseIterators =============");
 
@@ -155,12 +151,12 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
     char filename[128];
     memcpy(filename, line, filename_len);
 
-    BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
+    RED_CHECK(0 == memcmp("ff fff", filename, filename_len));
 
 }
 
 
-BOOST_AUTO_TEST_CASE(TestLineReader)
+RED_AUTO_TEST_CASE(TestLineReader)
 {
    LOG(LOG_INFO, "=================== TestLineReader =============");
     char const * filename = "/tmp/test_app_verifier_s.txt";
@@ -175,13 +171,13 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
         ifile_read ifile;
         ifile.open(filename);
         LineReader line_reader(ifile);
-        BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(5, line_reader.get_buf().size());
-        BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(6, line_reader.get_buf().size());
-        BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(7, line_reader.get_buf().size());
-        BOOST_CHECK(not line_reader.next_line());
+        RED_CHECK(line_reader.next_line());
+        RED_CHECK_EQUAL(5, line_reader.get_buf().size());
+        RED_CHECK(line_reader.next_line());
+        RED_CHECK_EQUAL(6, line_reader.get_buf().size());
+        RED_CHECK(line_reader.next_line());
+        RED_CHECK_EQUAL(7, line_reader.get_buf().size());
+        RED_CHECK(not line_reader.next_line());
     }
 
     std::size_t const big_line_len = LineReader::line_max - LineReader::line_max / 4;
@@ -194,11 +190,11 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
         ifile_read ifile;
         ifile.open(filename);
         LineReader line_reader(ifile);
-        BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
-        BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
-        BOOST_CHECK(!line_reader.next_line());
+        RED_CHECK(line_reader.next_line());
+        RED_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
+        RED_CHECK(line_reader.next_line());
+        RED_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
+        RED_CHECK(!line_reader.next_line());
     }
 
     std::ofstream(filename) << std::string(LineReader::line_max + 20, 'a');
@@ -207,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
         ifile_read ifile;
         ifile.open(filename);
         LineReader line_reader(ifile);
-        BOOST_CHECK_EXCEPTION(line_reader.next_line(), Error, [](Error const & e) {
+        RED_CHECK_EXCEPTION(line_reader.next_line(), Error, [](Error const & e) {
             return e.id == ERR_TRANSPORT_READ_FAILED && e.errnum == 0;
         });
     }
@@ -221,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
 template<class Exception>
 bool is_except( Exception const & ) { return true; }
 
-BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
+RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
    LOG(LOG_INFO, "=================== TestVerifierFileNotFound =============");
     char const * argv[] = {
@@ -235,11 +231,11 @@ BOOST_AUTO_TEST_CASE(TestVerifierFileNotFound)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(res, -1);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(res, -1);
 }
 
-BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
+RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
    LOG(LOG_INFO, "=================== TestVerifierEncryptedDataFailure =============");
     char const * argv[] = {
@@ -258,11 +254,11 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(1, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(1, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
+RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
    LOG(LOG_INFO, "=================== TestVerifierEncryptedData =============");
     char const * argv[] = {
@@ -281,11 +277,11 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestVerifierClearData)
+RED_AUTO_TEST_CASE(TestVerifierClearData)
 {
    LOG(LOG_INFO, "=================== TestVerifierClearData =============");
     char const * argv[] {
@@ -304,15 +300,15 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
+RED_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
     LOG(LOG_INFO, "=================== TestVerifierUpdateData =============");
 //    Inifile ini;
@@ -375,8 +371,8 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
       return out.str();
     };
 
-    BOOST_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
-    BOOST_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+    RED_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    RED_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
 
     char const * argv[] {
         "verifier.py",
@@ -394,15 +390,15 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(0, res);
 
     mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
     mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
         WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
 
-    BOOST_CHECK_EQUAL(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
-    BOOST_CHECK_EQUAL(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+    RED_CHECK_EQUAL(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    RED_CHECK_EQUAL(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
 
     remove(tmp_hash_mwrm);
     remove(tmp_recorded_mwrm);
@@ -413,7 +409,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
 #undef MWRM_FILENAME
 }
 
-BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
+RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
     LOG(LOG_INFO, "=================== TestVerifierClearDataStatFailed =============");
     char const * argv[] {
@@ -431,14 +427,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    BOOST_CHECK_EQUAL(1, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    RED_CHECK_EQUAL(1, res);
 }
 
-BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
+RED_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
     LOG(LOG_INFO, "=================== ReadClearHeaderV2 =============");
     ifile_read fd;
@@ -446,28 +442,28 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
     MwrmReader reader(fd);
 
     reader.read_meta_headers(false);
-    BOOST_CHECK(reader.header.version == 2);
-    BOOST_CHECK(!reader.header.has_checksum);
+    RED_CHECK(reader.header.version == 2);
+    RED_CHECK(!reader.header.has_checksum);
 
     MetaLine2 meta_line;
-    BOOST_CHECK(reader.read_meta_file(meta_line));
-    BOOST_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK(reader.read_meta_file(meta_line));
+    RED_CHECK_EQUAL(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
                         "wab-5-0-0.yourdomain,7681-000000.wrm");
-    BOOST_CHECK_EQUAL(meta_line.size, 181826);
-    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
-    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
-    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
-    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
-    BOOST_CHECK_EQUAL(meta_line.ino, 81);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816421);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816421);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+    RED_CHECK_EQUAL(meta_line.size, 181826);
+    RED_CHECK_EQUAL(meta_line.mode, 33056);
+    RED_CHECK_EQUAL(meta_line.uid, 1001);
+    RED_CHECK_EQUAL(meta_line.gid, 1001);
+    RED_CHECK_EQUAL(meta_line.dev, 65030);
+    RED_CHECK_EQUAL(meta_line.ino, 81);
+    RED_CHECK_EQUAL(meta_line.mtime, 1455816421);
+    RED_CHECK_EQUAL(meta_line.ctime, 1455816421);
+    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
+    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
 }
 
-BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
+RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
     LOG(LOG_INFO, "=================== (ReadClearHeaderV1 =============");
     ifile_read fd;
@@ -475,38 +471,38 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
     MwrmReader reader(fd);
 
     reader.read_meta_headers(false);
-    BOOST_CHECK(reader.header.version == 1);
-    BOOST_CHECK(!reader.header.has_checksum);
+    RED_CHECK(reader.header.version == 1);
+    RED_CHECK(!reader.header.has_checksum);
 
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
-    BOOST_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK_EQUAL(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
                         "wab-5-0-0.yourdomain,7681-000000.wrm");
-    BOOST_CHECK_EQUAL(meta_line.size, 0);
-    BOOST_CHECK_EQUAL(meta_line.mode, 0);
-    BOOST_CHECK_EQUAL(meta_line.uid, 0);
-    BOOST_CHECK_EQUAL(meta_line.gid, 0);
-    BOOST_CHECK_EQUAL(meta_line.dev, 0);
-    BOOST_CHECK_EQUAL(meta_line.ino, 0);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 0);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 0);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+    RED_CHECK_EQUAL(meta_line.size, 0);
+    RED_CHECK_EQUAL(meta_line.mode, 0);
+    RED_CHECK_EQUAL(meta_line.uid, 0);
+    RED_CHECK_EQUAL(meta_line.gid, 0);
+    RED_CHECK_EQUAL(meta_line.dev, 0);
+    RED_CHECK_EQUAL(meta_line.ino, 0);
+    RED_CHECK_EQUAL(meta_line.mtime, 0);
+    RED_CHECK_EQUAL(meta_line.ctime, 0);
+    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
+    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
 
-    BOOST_CHECK(0 == memcmp(meta_line.hash1,
+    RED_CHECK(0 == memcmp(meta_line.hash1,
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
                         32));
-    BOOST_CHECK(0 == memcmp(meta_line.hash2,
+    RED_CHECK(0 == memcmp(meta_line.hash2,
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
                         32));
 
 }
 
-BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
+RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
     LOG(LOG_INFO, "=================== ReadClearHeaderV2Checksum =============");
     ifile_read fd;
@@ -514,34 +510,34 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     MwrmReader reader(fd);
 
     reader.read_meta_headers(false);
-    BOOST_CHECK(reader.header.version == 2);
-    BOOST_CHECK(reader.header.has_checksum);
+    RED_CHECK(reader.header.version == 2);
+    RED_CHECK(reader.header.has_checksum);
 
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
-    BOOST_CHECK(true);
-    BOOST_CHECK_EQUAL(meta_line.filename, "./tests/fixtures/sample0.wrm");
-    BOOST_CHECK_EQUAL(meta_line.size, 1);
-    BOOST_CHECK_EQUAL(meta_line.mode, 2);
-    BOOST_CHECK_EQUAL(meta_line.uid, 3);
-    BOOST_CHECK_EQUAL(meta_line.gid, 4);
-    BOOST_CHECK_EQUAL(meta_line.dev, 5);
-    BOOST_CHECK_EQUAL(meta_line.ino, 6);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    BOOST_CHECK(0 == memcmp(meta_line.hash1,
+    RED_CHECK(true);
+    RED_CHECK_EQUAL(meta_line.filename, "./tests/fixtures/sample0.wrm");
+    RED_CHECK_EQUAL(meta_line.size, 1);
+    RED_CHECK_EQUAL(meta_line.mode, 2);
+    RED_CHECK_EQUAL(meta_line.uid, 3);
+    RED_CHECK_EQUAL(meta_line.gid, 4);
+    RED_CHECK_EQUAL(meta_line.dev, 5);
+    RED_CHECK_EQUAL(meta_line.ino, 6);
+    RED_CHECK_EQUAL(meta_line.mtime, 7);
+    RED_CHECK_EQUAL(meta_line.ctime, 8);
+    RED_CHECK_EQUAL(meta_line.start_time, 1352304810);
+    RED_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+    RED_CHECK(0 == memcmp(meta_line.hash1,
                         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
                         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA",
                         32));
-    BOOST_CHECK(0 == memcmp(meta_line.hash2,
+    RED_CHECK(0 == memcmp(meta_line.hash2,
                         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
                         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB",
                         32));
 }
 
-BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
+RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {
     LOG(LOG_INFO, "=================== ReadEncryptedHeaderV2Checksum =============");
 
@@ -558,36 +554,36 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     MwrmReader reader(fd);
 
     reader.read_meta_headers(true);
-    BOOST_CHECK(reader.header.version == 2);
-    BOOST_CHECK(reader.header.has_checksum);
+    RED_CHECK(reader.header.version == 2);
+    RED_CHECK(reader.header.has_checksum);
 
     MetaLine2 meta_line;
-    BOOST_CHECK(reader.read_meta_file(meta_line));
+    RED_CHECK(reader.read_meta_file(meta_line));
 
     {
         std::string expected("/var/wab/recorded/rdp"
                              "/toto@10.10.43.13,Administrateur@QA@cible,"
                              "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
-        BOOST_REQUIRE_EQUAL(meta_line.filename, expected);
+        RED_REQUIRE_EQUAL(meta_line.filename, expected);
     }
-    BOOST_CHECK_EQUAL(meta_line.size, 163032);
-    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
-    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
-    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
-    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
-    BOOST_CHECK_EQUAL(meta_line.ino, 89);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816632);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816632);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1455816611);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    CHECK_MEM_AC(meta_line.hash1,
+    RED_CHECK_EQUAL(meta_line.size, 163032);
+    RED_CHECK_EQUAL(meta_line.mode, 33056);
+    RED_CHECK_EQUAL(meta_line.uid, 1001);
+    RED_CHECK_EQUAL(meta_line.gid, 1001);
+    RED_CHECK_EQUAL(meta_line.dev, 65030);
+    RED_CHECK_EQUAL(meta_line.ino, 89);
+    RED_CHECK_EQUAL(meta_line.mtime, 1455816632);
+    RED_CHECK_EQUAL(meta_line.ctime, 1455816632);
+    RED_CHECK_EQUAL(meta_line.start_time, 1455816611);
+    RED_CHECK_EQUAL(meta_line.stop_time, 1455816633);
+    RED_CHECK_MEM_AC(meta_line.hash1,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
       "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
-    CHECK_MEM_AC(meta_line.hash2,
+    RED_CHECK_MEM_AC(meta_line.hash2,
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
       "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
 
-    BOOST_CHECK(!reader.read_meta_file(meta_line));
+    RED_CHECK(!reader.read_meta_file(meta_line));
 }
 
 inline int hmac_2016_fn(char * buffer)
@@ -691,7 +687,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
 
 
 
-BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted)
+RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
 {
     LOG(LOG_INFO, "=================== TestDecrypterEncrypted =============");
     char const * argv[] {
@@ -705,14 +701,14 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted1)
+RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
 {
     LOG(LOG_INFO, "=================== TestDecrypterEncrypted1 =============");
 
@@ -725,14 +721,14 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncrypted1)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
+RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 {
     LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
@@ -749,14 +745,14 @@ BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
+RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
 {
     LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
@@ -773,15 +769,15 @@ BOOST_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
+RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 {
     LOG(LOG_INFO, "=================== TestVerifierMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
@@ -797,17 +793,17 @@ BOOST_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(1, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(1, res);
 }
 
 // "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
 // verify as 1
 
-BOOST_AUTO_TEST_CASE(TestVerifier4714)
+RED_AUTO_TEST_CASE(TestVerifier4714)
 {
     LOG(LOG_INFO, "=================== TestVerifier4714 =============");
 
@@ -820,11 +816,11 @@ BOOST_AUTO_TEST_CASE(TestVerifier4714)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(-1, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(-1, res);
 }
 
 
@@ -833,7 +829,7 @@ BOOST_AUTO_TEST_CASE(TestVerifier4714)
 //Input file is unencrypted (no hash).
 //verify ok (1)
 
-BOOST_AUTO_TEST_CASE(TestVerifier7192)
+RED_AUTO_TEST_CASE(TestVerifier7192)
 {
     LOG(LOG_INFO, "=================== TestVerifier7192 =============");
 
@@ -846,11 +842,11 @@ BOOST_AUTO_TEST_CASE(TestVerifier7192)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 
@@ -859,7 +855,7 @@ BOOST_AUTO_TEST_CASE(TestVerifier7192)
 //Input file is unencrypted (no hash).
 //verify ok (1)
 
-BOOST_AUTO_TEST_CASE(TestVerifier2510)
+RED_AUTO_TEST_CASE(TestVerifier2510)
 {
     LOG(LOG_INFO, "=================== TestVerifier2510 =============");
 
@@ -872,11 +868,11 @@ BOOST_AUTO_TEST_CASE(TestVerifier2510)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 
@@ -1122,7 +1118,7 @@ BOOST_AUTO_TEST_CASE(TestVerifier2510)
 
 //verify ok (4)
 
-BOOST_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
+RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
 {
     LOG(LOG_INFO, "=================== TestVerifier1914MigratedNocryptHasChecksum =============");
 
@@ -1135,11 +1131,11 @@ BOOST_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(0, res);
 }
 
 // cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm
@@ -1155,7 +1151,7 @@ BOOST_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
 
 //verify failed
 
-BOOST_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
+RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
 {
     LOG(LOG_INFO, "=================== TestVerifier9904NocryptNochecksumStatinfo =============");
 
@@ -1168,14 +1164,14 @@ BOOST_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    BOOST_CHECK_EQUAL(true, true);
+    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    BOOST_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    BOOST_CHECK_EQUAL(1, res);
+    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    RED_CHECK_EQUAL(1, res);
 }
 
-BOOST_AUTO_TEST_CASE(TestAppRecorder)
+RED_AUTO_TEST_CASE(TestAppRecorder)
 {
    LOG(LOG_INFO, "=================== TestAppRecorder =============");
      char const * argv[] {
@@ -1196,169 +1192,169 @@ BOOST_AUTO_TEST_CASE(TestAppRecorder)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = do_main(argc, argv, hmac_fn, trace_fn);
-    BOOST_CHECK_EQUAL(0, res);
+    RED_CHECK_EQUAL(0, res);
 
     const char * filename;
     filename = "/tmp/recorder.1-000000.flv";
-    BOOST_CHECK_EQUAL(13451264, filesize(filename));
+    RED_CHECK_EQUAL(13451264, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1-000001.flv";
-    BOOST_CHECK_EQUAL(1641846, filesize(filename));
+    RED_CHECK_EQUAL(1641846, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1.flv";
-    BOOST_CHECK_EQUAL(15092851, filesize(filename));
+    RED_CHECK_EQUAL(15092851, filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
+RED_AUTO_TEST_CASE(TestClearTargetFiles)
 {
     {
         char tmpdirname[128];
         sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-        BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
+        RED_CHECK(nullptr != mkdtemp(tmpdirname));
 
 //        int fd = ::mkostemp(tmpdirname, O_WRONLY|O_CREAT);
 
         char toto_mwrm[512]; sprintf(toto_mwrm, "%s/%s", tmpdirname, "toto.mwrm");
-        { int fd = ::creat(toto_mwrm, 0777); BOOST_CHECK_EQUAL(10, write(fd, "toto_mwrm", sizeof("toto_mwrm"))); close(fd); }
+        { int fd = ::creat(toto_mwrm, 0777); RED_CHECK_EQUAL(10, write(fd, "toto_mwrm", sizeof("toto_mwrm"))); close(fd); }
 
         char toto_0_wrm[512]; sprintf(toto_0_wrm, "%s/%s", tmpdirname, "toto_0.mwrm");
-        { int fd = ::creat(toto_0_wrm, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_wrm", sizeof("toto_0_wrm"))); close(fd); }
+        { int fd = ::creat(toto_0_wrm, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_wrm", sizeof("toto_0_wrm"))); close(fd); }
 
         char toto_1_wrm[512]; sprintf(toto_1_wrm, "%s/%s", tmpdirname, "toto_1.wrm");
-        { int fd = ::creat(toto_1_wrm, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_wrm", sizeof("toto_1_wrm"))); close(fd); }
+        { int fd = ::creat(toto_1_wrm, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_wrm", sizeof("toto_1_wrm"))); close(fd); }
 
         char toto_0_flv[512]; sprintf(toto_0_flv, "%s/%s", tmpdirname, "toto_0.flv");
-        { int fd = ::creat(toto_0_flv, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_flv", sizeof("toto_0_flv"))); close(fd); }
+        { int fd = ::creat(toto_0_flv, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_flv", sizeof("toto_0_flv"))); close(fd); }
 
         char toto_1_flv[512]; sprintf(toto_1_flv, "%s/%s", tmpdirname, "toto_1.flv");
-        { int fd = ::creat(toto_1_flv, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_flv", sizeof("toto_1_flv"))); close(fd); }
+        { int fd = ::creat(toto_1_flv, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_flv", sizeof("toto_1_flv"))); close(fd); }
 
         char toto_meta[512]; sprintf(toto_meta, "%s/%s", tmpdirname, "toto.meta");
-        { int fd = ::creat(toto_meta, 0777); BOOST_CHECK_EQUAL(10, write(fd, "toto_meta", sizeof("toto_meta"))); close(fd); }
+        { int fd = ::creat(toto_meta, 0777); RED_CHECK_EQUAL(10, write(fd, "toto_meta", sizeof("toto_meta"))); close(fd); }
 
         char toto_0_png[512]; sprintf(toto_0_png, "%s/%s", tmpdirname, "toto_0.png");
-        { int fd = ::creat(toto_0_png, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_0_png", sizeof("toto_0_png"))); close(fd); }
+        { int fd = ::creat(toto_0_png, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_png", sizeof("toto_0_png"))); close(fd); }
 
         char toto_1_png[512]; sprintf(toto_1_png, "%s/%s", tmpdirname, "toto_1.png");
-        { int fd = ::creat(toto_1_png, 0777); BOOST_CHECK_EQUAL(11, write(fd, "toto_1_png", sizeof("toto_1_png"))); close(fd); }
+        { int fd = ::creat(toto_1_png, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_png", sizeof("toto_1_png"))); close(fd); }
 
         char tititi_mwrm[512]; sprintf(tititi_mwrm, "%s/%s", tmpdirname, "tititi.mwrm");
-        { int fd = ::creat(tititi_mwrm, 0777); BOOST_CHECK_EQUAL(12, write(fd, "tititi_mwrm", sizeof("tititi_mwrm"))); close(fd); }
+        { int fd = ::creat(tititi_mwrm, 0777); RED_CHECK_EQUAL(12, write(fd, "tititi_mwrm", sizeof("tititi_mwrm"))); close(fd); }
 
         char tititi_0_wrm[512]; sprintf(tititi_0_wrm, "%s/%s", tmpdirname, "tititi_0.mwrm");
-        { int fd = ::creat(tititi_0_wrm, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_wrm", sizeof("tititi_0_wrm"))); close(fd); }
+        { int fd = ::creat(tititi_0_wrm, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_wrm", sizeof("tititi_0_wrm"))); close(fd); }
 
         char tititi_1_wrm[512]; sprintf(tititi_1_wrm, "%s/%s", tmpdirname, "tititi_1.wrm");
-        { int fd = ::creat(tititi_1_wrm, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_wrm", sizeof("tititi_1_wrm"))); close(fd); }
+        { int fd = ::creat(tititi_1_wrm, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_wrm", sizeof("tititi_1_wrm"))); close(fd); }
 
         char tititi_0_flv[512]; sprintf(tititi_0_flv, "%s/%s", tmpdirname, "tititi_0.flv");
-        { int fd = ::creat(tititi_0_flv, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_flv", sizeof("tititi_0_flv"))); close(fd); }
+        { int fd = ::creat(tititi_0_flv, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_flv", sizeof("tititi_0_flv"))); close(fd); }
 
         char tititi_1_flv[512]; sprintf(tititi_1_flv, "%s/%s", tmpdirname, "tititi_1.flv");
-        { int fd = ::creat(tititi_1_flv, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_flv", sizeof("tititi_1_flv"))); close(fd); }
+        { int fd = ::creat(tititi_1_flv, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_flv", sizeof("tititi_1_flv"))); close(fd); }
 
         char tititi_meta[512]; sprintf(tititi_meta, "%s/%s", tmpdirname, "tititi.meta");
-        { int fd = ::creat(tititi_meta, 0777); BOOST_CHECK_EQUAL(12, write(fd, "tititi_meta", sizeof("tititi_meta"))); close(fd); }
+        { int fd = ::creat(tititi_meta, 0777); RED_CHECK_EQUAL(12, write(fd, "tititi_meta", sizeof("tititi_meta"))); close(fd); }
 
         char tititi_0_png[512]; sprintf(tititi_0_png, "%s/%s", tmpdirname, "tititi_0.png");
-        { int fd = ::creat(tititi_0_png, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_0_png", sizeof("tititi_0_png"))); close(fd); }
+        { int fd = ::creat(tititi_0_png, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_png", sizeof("tititi_0_png"))); close(fd); }
 
         char tititi_1_png[512]; sprintf(tititi_1_png, "%s/%s", tmpdirname, "tititi_1.png");
-        { int fd = ::creat(tititi_1_png, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_png", sizeof("tititi_1_png"))); close(fd); }
+        { int fd = ::creat(tititi_1_png, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_png", sizeof("tititi_1_png"))); close(fd); }
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_flv));
-        BOOST_CHECK_EQUAL(10, filesize(toto_meta));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_flv));
+        RED_CHECK_EQUAL(11, filesize(toto_1_flv));
+        RED_CHECK_EQUAL(10, filesize(toto_meta));
+        RED_CHECK_EQUAL(11, filesize(toto_0_png));
+        RED_CHECK_EQUAL(11, filesize(toto_1_png));
+        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        RED_CHECK_EQUAL(12, filesize(tititi_meta));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
 
         clear_files_flv_meta_png(tmpdirname, "ddd");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_flv));
-        BOOST_CHECK_EQUAL(10, filesize(toto_meta));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_flv));
+        RED_CHECK_EQUAL(11, filesize(toto_1_flv));
+        RED_CHECK_EQUAL(10, filesize(toto_meta));
+        RED_CHECK_EQUAL(11, filesize(toto_0_png));
+        RED_CHECK_EQUAL(11, filesize(toto_1_png));
+        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        RED_CHECK_EQUAL(12, filesize(tititi_meta));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
 
         clear_files_flv_meta_png(tmpdirname, "toto");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_meta));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
+        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        RED_CHECK_EQUAL(12, filesize(tititi_meta));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
 
         clear_files_flv_meta_png(tmpdirname, "titititi");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_meta));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_png));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_png));
+        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_meta));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
+        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
+        RED_CHECK_EQUAL(12, filesize(tititi_meta));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
 
         clear_files_flv_meta_png(tmpdirname, "tititi");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
-        BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        BOOST_CHECK_EQUAL(-1, filesize(tititi_0_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(tititi_1_flv));
-        BOOST_CHECK_EQUAL(-1, filesize(tititi_meta));
-        BOOST_CHECK_EQUAL(-1, filesize(tititi_0_png));
-        BOOST_CHECK_EQUAL(-1, filesize(tititi_1_png));
+        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
+        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
+        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
+        RED_CHECK_EQUAL(-1, filesize(toto_meta));
+        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
+        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
+        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
+        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
+        RED_CHECK_EQUAL(-1, filesize(tititi_0_flv));
+        RED_CHECK_EQUAL(-1, filesize(tititi_1_flv));
+        RED_CHECK_EQUAL(-1, filesize(tititi_meta));
+        RED_CHECK_EQUAL(-1, filesize(tititi_0_png));
+        RED_CHECK_EQUAL(-1, filesize(tititi_1_png));
 
         ::unlink(toto_mwrm);
         ::unlink(toto_0_wrm);

@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestPattUtils
+#define UNIT_TEST_MODULE TestPattUtils
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
@@ -28,73 +26,73 @@
 
 #include "utils/pattutils.hpp"
 
-BOOST_AUTO_TEST_CASE(TestKbdPattern)
+RED_AUTO_TEST_CASE(TestKbdPattern)
 {
-    BOOST_CHECK(!contains_kbd_pattern(""));
+    RED_CHECK(!contains_kbd_pattern(""));
 
-    BOOST_CHECK(!contains_kbd_pattern("AT"));
+    RED_CHECK(!contains_kbd_pattern("AT"));
 
-    BOOST_CHECK(!contains_kbd_pattern("Bloc-notes"));
+    RED_CHECK(!contains_kbd_pattern("Bloc-notes"));
 
-    BOOST_CHECK(contains_kbd_pattern("$kbd:gpedit"));
+    RED_CHECK(contains_kbd_pattern("$kbd:gpedit"));
 
-    BOOST_CHECK(contains_kbd_pattern(" $kbd:gpedit\x01" "AT"));
+    RED_CHECK(contains_kbd_pattern(" $kbd:gpedit\x01" "AT"));
 
-    BOOST_CHECK(contains_kbd_pattern(" $kbd:kill\x01 " "AT "));
+    RED_CHECK(contains_kbd_pattern(" $kbd:kill\x01 " "AT "));
 
-    BOOST_CHECK(contains_kbd_pattern("AT\x01$kbd:kill"));
+    RED_CHECK(contains_kbd_pattern("AT\x01$kbd:kill"));
 
-    BOOST_CHECK(!contains_kbd_pattern("$ocr:Bloc-notes"));
+    RED_CHECK(!contains_kbd_pattern("$ocr:Bloc-notes"));
 
-    BOOST_CHECK(contains_kbd_pattern("$ocr-kbd:cmd"));
+    RED_CHECK(contains_kbd_pattern("$ocr-kbd:cmd"));
 
-    BOOST_CHECK(contains_kbd_pattern("$kbd-ocr:cmd"));
+    RED_CHECK(contains_kbd_pattern("$kbd-ocr:cmd"));
 }
 
-BOOST_AUTO_TEST_CASE(TestOcrPattern)
+RED_AUTO_TEST_CASE(TestOcrPattern)
 {
-    BOOST_CHECK(!contains_ocr_pattern(""));
+    RED_CHECK(!contains_ocr_pattern(""));
 
-    BOOST_CHECK(contains_ocr_pattern("AT"));
+    RED_CHECK(contains_ocr_pattern("AT"));
 
-    BOOST_CHECK(contains_ocr_pattern("Bloc-notes"));
+    RED_CHECK(contains_ocr_pattern("Bloc-notes"));
 
-    BOOST_CHECK(contains_ocr_pattern("$ocr:Bloc-notes"));
+    RED_CHECK(contains_ocr_pattern("$ocr:Bloc-notes"));
 
-    BOOST_CHECK(contains_ocr_pattern("$ocr:Bloc-notes\x01" "AT"));
+    RED_CHECK(contains_ocr_pattern("$ocr:Bloc-notes\x01" "AT"));
 
-    BOOST_CHECK(contains_ocr_pattern("$kbd:kill\x01" " AT"));
+    RED_CHECK(contains_ocr_pattern("$kbd:kill\x01" " AT"));
 
-    BOOST_CHECK(contains_ocr_pattern(" AT\x01$kbd:kill"));
+    RED_CHECK(contains_ocr_pattern(" AT\x01$kbd:kill"));
 
-    BOOST_CHECK(!contains_ocr_pattern("$kbd:kill"));
+    RED_CHECK(!contains_ocr_pattern("$kbd:kill"));
 
-    BOOST_CHECK(contains_ocr_pattern("$ocr-kbd:cmd"));
+    RED_CHECK(contains_ocr_pattern("$ocr-kbd:cmd"));
 
-    BOOST_CHECK(contains_ocr_pattern("$kbd-ocr:cmd"));
+    RED_CHECK(contains_ocr_pattern("$kbd-ocr:cmd"));
 }
 
-BOOST_AUTO_TEST_CASE(TestKbdOrOcrPattern)
+RED_AUTO_TEST_CASE(TestKbdOrOcrPattern)
 {
-    BOOST_CHECK(!contains_kbd_or_ocr_pattern(""));
+    RED_CHECK(!contains_kbd_or_ocr_pattern(""));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("AT"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("AT"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("Bloc-notes"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("Bloc-notes"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("$kbd:gpedit"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("$kbd:gpedit"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern(" $kbd:gpedit\x01" "AT"));
+    RED_CHECK(contains_kbd_or_ocr_pattern(" $kbd:gpedit\x01" "AT"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern(" $kbd:kill\x01 " "AT "));
+    RED_CHECK(contains_kbd_or_ocr_pattern(" $kbd:kill\x01 " "AT "));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("AT\x01$kbd:kill"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("AT\x01$kbd:kill"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("$ocr:Bloc-notes"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("$ocr:Bloc-notes"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("$ocr-kbd:cmd"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("$ocr-kbd:cmd"));
 
-    BOOST_CHECK(contains_kbd_or_ocr_pattern("$kbd-ocr:cmd"));
+    RED_CHECK(contains_kbd_or_ocr_pattern("$kbd-ocr:cmd"));
 
-    BOOST_CHECK(!contains_kbd_or_ocr_pattern("$ocm:10.10.46.0/24:3389"));
+    RED_CHECK(!contains_kbd_or_ocr_pattern("$ocm:10.10.46.0/24:3389"));
 }

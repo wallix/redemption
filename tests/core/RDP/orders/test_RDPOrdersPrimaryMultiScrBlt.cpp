@@ -21,16 +21,14 @@
     Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderMultiScrBlt
+#define UNIT_TEST_MODULE TestOrderMultiScrBlt
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMultiScrBlt)
+RED_AUTO_TEST_CASE(TestMultiScrBlt)
 {
 
 }

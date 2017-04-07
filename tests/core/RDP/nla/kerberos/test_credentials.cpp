@@ -18,9 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestkrbCredentials
+#define UNIT_TEST_MODULE TestkrbCredentials
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -28,7 +26,7 @@
 #include "core/RDP/nla/kerberos/credentials.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestTSRequest)
+RED_AUTO_TEST_CASE(TestTSRequest)
 {
 
 }

@@ -21,24 +21,22 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityFont
+#define UNIT_TEST_MODULE TestCapabilityFont
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "core/RDP/capabilities/cap_font.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
+RED_AUTO_TEST_CASE(TestCapabilityFontEmit)
 {
     FontCaps font_caps;
     font_caps.fontSupportFlags = 32769;
     font_caps.pad2octets = 65535;
 
-    BOOST_CHECK_EQUAL(font_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
-    BOOST_CHECK_EQUAL(font_caps.len, static_cast<uint16_t>(CAPLEN_FONT));
-    BOOST_CHECK_EQUAL(font_caps.fontSupportFlags, static_cast<uint16_t>(32769));
-    BOOST_CHECK_EQUAL(font_caps.pad2octets, static_cast<uint16_t>(65535));
+    RED_CHECK_EQUAL(font_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
+    RED_CHECK_EQUAL(font_caps.len, static_cast<uint16_t>(CAPLEN_FONT));
+    RED_CHECK_EQUAL(font_caps.fontSupportFlags, static_cast<uint16_t>(32769));
+    RED_CHECK_EQUAL(font_caps.pad2octets, static_cast<uint16_t>(65535));
 
     StaticOutStream<1024> out_stream;
     font_caps.emit(out_stream);
@@ -47,12 +45,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 
     FontCaps font_caps2;
 
-    BOOST_CHECK_EQUAL(font_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
-    BOOST_CHECK_EQUAL(font_caps2.len, static_cast<uint16_t>(CAPLEN_FONT));
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_FONT), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FONT), stream.in_uint16_le());
+    RED_CHECK_EQUAL(font_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
+    RED_CHECK_EQUAL(font_caps2.len, static_cast<uint16_t>(CAPLEN_FONT));
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_FONT), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FONT), stream.in_uint16_le());
     font_caps2.recv(stream, CAPLEN_FONT);
 
-    BOOST_CHECK_EQUAL(font_caps2.fontSupportFlags, static_cast<uint16_t>(32769));
-    BOOST_CHECK_EQUAL(font_caps2.pad2octets, static_cast<uint16_t>(65535));
+    RED_CHECK_EQUAL(font_caps2.fontSupportFlags, static_cast<uint16_t>(32769));
+    RED_CHECK_EQUAL(font_caps2.pad2octets, static_cast<uint16_t>(65535));
 }

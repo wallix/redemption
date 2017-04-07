@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMCS
+#define UNIT_TEST_MODULE TestMCS
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/mcs.hpp"
 
-BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
+RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 {
     size_t payload_length = 369;
     GeneratorTransport t(
@@ -71,56 +69,56 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
-    BOOST_CHECK_EQUAL(101, mcs.tag);
-    BOOST_CHECK_EQUAL(369, mcs.tag_len + 5);
+    RED_CHECK_EQUAL(101, mcs.tag);
+    RED_CHECK_EQUAL(369, mcs.tag_len + 5);
 
-    BOOST_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
-    BOOST_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
-    BOOST_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
-    BOOST_CHECK_EQUAL(1, mcs.targetParameters.numPriorities);
-    BOOST_CHECK_EQUAL(0, mcs.targetParameters.minThroughput);
-    BOOST_CHECK_EQUAL(1, mcs.targetParameters.maxHeight);
-    BOOST_CHECK_EQUAL(65535, mcs.targetParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);
+    RED_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
+    RED_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
+    RED_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
+    RED_CHECK_EQUAL(1, mcs.targetParameters.numPriorities);
+    RED_CHECK_EQUAL(0, mcs.targetParameters.minThroughput);
+    RED_CHECK_EQUAL(1, mcs.targetParameters.maxHeight);
+    RED_CHECK_EQUAL(65535, mcs.targetParameters.maxMCSPDUsize);
+    RED_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxChannelIds);
-    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxUserIds);
-    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxTokenIds);
-    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.numPriorities);
-    BOOST_CHECK_EQUAL(0, mcs.minimumParameters.minThroughput);
-    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxHeight);
-    BOOST_CHECK_EQUAL(1056, mcs.minimumParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.minimumParameters.protocolVersion);
+    RED_CHECK_EQUAL(1, mcs.minimumParameters.maxChannelIds);
+    RED_CHECK_EQUAL(1, mcs.minimumParameters.maxUserIds);
+    RED_CHECK_EQUAL(1, mcs.minimumParameters.maxTokenIds);
+    RED_CHECK_EQUAL(1, mcs.minimumParameters.numPriorities);
+    RED_CHECK_EQUAL(0, mcs.minimumParameters.minThroughput);
+    RED_CHECK_EQUAL(1, mcs.minimumParameters.maxHeight);
+    RED_CHECK_EQUAL(1056, mcs.minimumParameters.maxMCSPDUsize);
+    RED_CHECK_EQUAL(2, mcs.minimumParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxChannelIds);
-    BOOST_CHECK_EQUAL(64535, mcs.maximumParameters.maxUserIds);
-    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxTokenIds);
-    BOOST_CHECK_EQUAL(1, mcs.maximumParameters.numPriorities);
-    BOOST_CHECK_EQUAL(0, mcs.maximumParameters.minThroughput);
-    BOOST_CHECK_EQUAL(1, mcs.maximumParameters.maxHeight);
-    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);
+    RED_CHECK_EQUAL(65535, mcs.maximumParameters.maxChannelIds);
+    RED_CHECK_EQUAL(64535, mcs.maximumParameters.maxUserIds);
+    RED_CHECK_EQUAL(65535, mcs.maximumParameters.maxTokenIds);
+    RED_CHECK_EQUAL(1, mcs.maximumParameters.numPriorities);
+    RED_CHECK_EQUAL(0, mcs.maximumParameters.minThroughput);
+    RED_CHECK_EQUAL(1, mcs.maximumParameters.maxHeight);
+    RED_CHECK_EQUAL(65535, mcs.maximumParameters.maxMCSPDUsize);
+    RED_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(1, mcs.len_callingDomainSelector);
-    BOOST_CHECK_EQUAL(0, memcmp("\x01", mcs.callingDomainSelector, 1));
+    RED_CHECK_EQUAL(1, mcs.len_callingDomainSelector);
+    RED_CHECK_EQUAL(0, memcmp("\x01", mcs.callingDomainSelector, 1));
 
-    BOOST_CHECK_EQUAL(1, mcs.len_calledDomainSelector);
-    BOOST_CHECK_EQUAL(0, memcmp("\x01", mcs.calledDomainSelector, 1));
+    RED_CHECK_EQUAL(1, mcs.len_calledDomainSelector);
+    RED_CHECK_EQUAL(0, memcmp("\x01", mcs.calledDomainSelector, 1));
 
-    BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
+    RED_CHECK_EQUAL(true, mcs.upwardFlag);
 
-    BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
-    BOOST_CHECK_EQUAL(263, mcs.payload.in_remain()); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload.get_capacity(), payload.get_capacity() - mcs._header_size);
+    RED_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
+    RED_CHECK_EQUAL(263, mcs.payload.in_remain()); // USER_DATA (after len)
+    RED_CHECK_EQUAL(mcs.payload.get_capacity(), payload.get_capacity() - mcs._header_size);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
+RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 {
     StaticOutStream<1024> stream;
     size_t payload_length = 263;
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(106, stream.get_offset());
+    RED_CHECK_EQUAL(106, stream.get_offset());
 
     const char * expected =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
@@ -133,10 +131,10 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 /* 0070 */ "\x07" //.....|.......... |
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), 106));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), 106));
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
+RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
 {
     size_t payload_length = 93;
     GeneratorTransport t(
@@ -155,32 +153,32 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     InStream payload(buf, payload_length);
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
-    BOOST_CHECK_EQUAL(102, mcs.tag);
-    BOOST_CHECK_EQUAL(90, mcs.tag_len);
+    RED_CHECK_EQUAL(102, mcs.tag);
+    RED_CHECK_EQUAL(90, mcs.tag_len);
 
-    BOOST_CHECK_EQUAL(0, mcs.result);
-    BOOST_CHECK_EQUAL(0, mcs.connectId);
+    RED_CHECK_EQUAL(0, mcs.result);
+    RED_CHECK_EQUAL(0, mcs.connectId);
 
-    BOOST_CHECK_EQUAL(34, mcs.domainParameters.maxChannelIds);
-    BOOST_CHECK_EQUAL(3, mcs.domainParameters.maxUserIds);
-    BOOST_CHECK_EQUAL(0, mcs.domainParameters.maxTokenIds);
-    BOOST_CHECK_EQUAL(1, mcs.domainParameters.numPriorities);
-    BOOST_CHECK_EQUAL(0, mcs.domainParameters.minThroughput);
-    BOOST_CHECK_EQUAL(1, mcs.domainParameters.maxHeight);
-    BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
+    RED_CHECK_EQUAL(34, mcs.domainParameters.maxChannelIds);
+    RED_CHECK_EQUAL(3, mcs.domainParameters.maxUserIds);
+    RED_CHECK_EQUAL(0, mcs.domainParameters.maxTokenIds);
+    RED_CHECK_EQUAL(1, mcs.domainParameters.numPriorities);
+    RED_CHECK_EQUAL(0, mcs.domainParameters.minThroughput);
+    RED_CHECK_EQUAL(1, mcs.domainParameters.maxHeight);
+    RED_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
+    RED_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(54, mcs.payload.get_capacity());
-    BOOST_CHECK_EQUAL(39, payload_length - mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(54, mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(39, payload_length - mcs.payload.get_capacity());
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
+RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
 {
     StaticOutStream<1024> stream;
     size_t payload_size = 54;
     size_t header_size = 39;
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(header_size, stream.get_offset());
+    RED_CHECK_EQUAL(header_size, stream.get_offset());
 
     const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -233,16 +231,16 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
         "\x36" // PAYLOAD LEN
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
+RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 {
     StaticOutStream<2048> stream;
     size_t payload_size = 1024;
     size_t header_size = 43;
-    BOOST_CHECK_NO_THROW(MCS::CONNECT_RESPONSE_Send(stream, payload_size, MCS::BER_ENCODING));
-    BOOST_CHECK_EQUAL(header_size, stream.get_offset());
+    RED_CHECK_NO_THROW(MCS::CONNECT_RESPONSE_Send(stream, payload_size, MCS::BER_ENCODING));
+    RED_CHECK_EQUAL(header_size, stream.get_offset());
 
     const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -295,17 +293,17 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
         "\x82\x04\x00" // PAYLOAD LEN
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
+RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
     StaticOutPerStream<1024> stream;
     size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
     MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x04"  // ErectDomainRequest * 4
@@ -315,10 +313,10 @@ BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
         "\x00"  // subInterval
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
+RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
 {
     size_t length = 5;
     GeneratorTransport t(
@@ -335,27 +333,27 @@ BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
     InStream stream(buf, length);
     MCS::ErectDomainRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
-    BOOST_CHECK_EQUAL(0, mcs.subHeight);
-    BOOST_CHECK_EQUAL(0, mcs.subInterval);
+    RED_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
+    RED_CHECK_EQUAL(0, mcs.subHeight);
+    RED_CHECK_EQUAL(0, mcs.subInterval);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
+RED_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
 {
     StaticOutStream<1024> stream;
     size_t length = 2;
     MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x20"  // DisconnectProviderUltimatum * 4
         "\x00"  // reason
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
+RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 {
     size_t length = 2;
     GeneratorTransport t(
@@ -369,26 +367,26 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
     InStream stream(buf, length);
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_DisconnectProviderUltimatum), mcs.type);
-    BOOST_CHECK_EQUAL(0, mcs.reason);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_DisconnectProviderUltimatum), mcs.type);
+    RED_CHECK_EQUAL(0, mcs.reason);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
+RED_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 {
     StaticOutStream<1024> stream;
     size_t length = 1;
     MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x28"  // AttachUserRequest * 4
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
+RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 {
     size_t length = 1;
     GeneratorTransport t(
@@ -400,25 +398,25 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 
     InStream stream(buf, length);
     MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserRequest), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserRequest), mcs.type);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
+RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 {
     StaticOutStream<1024> stream;
     size_t length = 2;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x2C"  //  AttachUserConfirm * 4
         "\x00"
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
+RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 {
     size_t length = 2;
     GeneratorTransport t(
@@ -432,17 +430,17 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
-    BOOST_CHECK_EQUAL(0 , mcs.result);
-    BOOST_CHECK_EQUAL(false , mcs.initiator_flag);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
+    RED_CHECK_EQUAL(0 , mcs.result);
+    RED_CHECK_EQUAL(false , mcs.initiator_flag);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
+RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
 {
     StaticOutStream<1024> stream;
     size_t length = 4;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x2E"  //  AttachUserConfirm * 4
@@ -450,10 +448,10 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
         "\x00\x01"
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
+RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
 {
     size_t length = 4;
     GeneratorTransport t(
@@ -468,18 +466,18 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(0) , mcs.result);
-    BOOST_CHECK_EQUAL(true , mcs.initiator_flag);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1) , mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(0) , mcs.result);
+    RED_CHECK_EQUAL(true , mcs.initiator_flag);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1) , mcs.initiator);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
+RED_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
 {
     StaticOutStream<1024> stream;
     size_t length = 5;
     MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x38"  // ChannelJoinRequest * 4
@@ -487,10 +485,10 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
         "\x03\xec" // channelId = 1004
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
+RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 {
     size_t length = 5;
     GeneratorTransport t(
@@ -506,17 +504,17 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 
     MCS::ChannelJoinRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinRequest), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004), mcs.channelId);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinRequest), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004), mcs.channelId);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
+RED_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 {
     StaticOutStream<1024> stream;
     size_t length = 8;
     MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x3E"  // ChannelJoinConfirm * 4
@@ -526,10 +524,10 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
         "\x03\xec" // channelId = 1004
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
+RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 {
     size_t length = 8;
     GeneratorTransport t(
@@ -546,20 +544,20 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
     InStream stream(buf, length);
     MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinConfirm), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::RT_SUCCESSFUL), mcs.result);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3) , mcs.initiator);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.requested);
-    BOOST_CHECK_EQUAL(true , mcs.channelId_flag);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinConfirm), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::RT_SUCCESSFUL), mcs.result);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(3) , mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.requested);
+    RED_CHECK_EQUAL(true , mcs.channelId_flag);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
+RED_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
     StaticOutPerStream<1024> stream;
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x64"  // SendDataRequest * 4
@@ -568,10 +566,10 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
     ;
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
+RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 {
     size_t length = 8 + 379;
     GeneratorTransport t(
@@ -617,20 +615,20 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     InStream stream(buf, length);
     MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataRequest), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataRequest), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
+RED_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
     StaticOutPerStream<1024> stream;
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.get_offset());
+    RED_CHECK_EQUAL(length, stream.get_offset());
 
     const char * expected =
         "\x68"  // SendDataIndication * 4
@@ -639,10 +637,10 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
     ;
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
+RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 {
     size_t length = 8 + 379;
     GeneratorTransport t(
@@ -688,16 +686,16 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload.get_capacity());
 }
 
 
-BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
+RED_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 {
     size_t length = 8 + 363;
     GeneratorTransport t(
@@ -740,86 +738,86 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1),                             mcs.initiator);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004),             mcs.channelId);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(1),                 mcs.dataPriority);
-    BOOST_CHECK_EQUAL(static_cast<uint8_t>(3),                 mcs.segmentation);
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1),                             mcs.initiator);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(1004),             mcs.channelId);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(1),                 mcs.dataPriority);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(3),                 mcs.segmentation);
+    RED_CHECK_EQUAL(static_cast<uint16_t>(363),              mcs.payload.get_capacity());
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
+RED_AUTO_TEST_CASE(TestRecv_NotImplemented)
 {
     StaticInStream<1024> istream;
     StaticOutStream<1024> ostream;
     int const ERR_MCS = static_cast<int>(::ERR_MCS);
 
-    CHECK_EXCEPTION_ERROR_ID(MCS::PlumbDomainIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::PlumbDomainIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelsConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelsConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::PurgeTokensIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::PurgeTokensIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::RejectMCSPDUUltimatum_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::RejectMCSPDUUltimatum_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelLeaveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelLeaveRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveResponse_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveResponse_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
-    CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::PlumbDomainIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::PlumbDomainIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelsConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeChannelsConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::MergeTokensConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::PurgeTokensIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::PurgeTokensIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::RejectMCSPDUUltimatum_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::RejectMCSPDUUltimatum_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::DetachUserIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelLeaveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelLeaveRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelConveneConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelDisbandIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelAdmitIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::ChannelExpelIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::UniformSendDataIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGrabConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenInhibitConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveResponse_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveResponse_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenGiveConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseIndication_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenPleaseIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenReleaseConfirm_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestRequest_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestRequest_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);
+    RED_CHECK_EXCEPTION_ERROR_ID(MCS::TokenTestConfirm_Send mcs(ostream, MCS::PER_ENCODING), ERR_MCS);
 }

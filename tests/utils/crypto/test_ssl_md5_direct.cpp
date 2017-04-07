@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestMd5
+#define UNIT_TEST_MODULE TestMd5
 
 #include "utils/crypto/ssl_md5_direct.hpp"
 #include "utils/crypto/ssl_md4_direct.hpp"

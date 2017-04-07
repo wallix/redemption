@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSnappyCompressionTransport
+#define UNIT_TEST_MODULE TestSnappyCompressionTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -29,7 +27,7 @@
 #include "transport/snappy_compression_transport.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
+RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 {
     //size_t source_length = 56000;
     //LOG(LOG_INFO, "snappy_max_compressed_length(%u)=%u", source_length, ::snappy_max_compressed_length(source_length));
@@ -70,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 
 
             in_trans.recv_atomic(in_buffer, 21);
-            BOOST_CHECK_EQUAL(in_data,
+            RED_CHECK_EQUAL(in_data,
                 "azert"
                 "azert"
                 "azert"
@@ -78,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 
             in_buffer = in_data;
             in_trans.recv_atomic(in_buffer, 31);
-            BOOST_CHECK_EQUAL(in_data,
+            RED_CHECK_EQUAL(in_data,
                 "wallix"
                 "wallix"
                 "wallix"
@@ -87,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 
             in_buffer = in_data;
             in_trans.recv_atomic(in_buffer, 65);
-            BOOST_CHECK_EQUAL(in_data,
+            RED_CHECK_EQUAL(in_data,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"

@@ -21,22 +21,20 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/frameacknowledge.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
+RED_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
 {
     FrameAcknowledgeCaps frameacknowledge_caps;
     frameacknowledge_caps.maxUnacknowledgedFrameCount = 65536;
 
-    BOOST_CHECK_EQUAL(frameacknowledge_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
-    BOOST_CHECK_EQUAL(frameacknowledge_caps.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
-    BOOST_CHECK_EQUAL(frameacknowledge_caps.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
+    RED_CHECK_EQUAL(frameacknowledge_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
+    RED_CHECK_EQUAL(frameacknowledge_caps.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
+    RED_CHECK_EQUAL(frameacknowledge_caps.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
 
     StaticOutStream<1024> out_stream;
     frameacknowledge_caps.emit(out_stream);
@@ -45,12 +43,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
 
     FrameAcknowledgeCaps frameacknowledge_caps2;
 
-    BOOST_CHECK_EQUAL(frameacknowledge_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
-    BOOST_CHECK_EQUAL(frameacknowledge_caps2.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
+    RED_CHECK_EQUAL(frameacknowledge_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
+    RED_CHECK_EQUAL(frameacknowledge_caps2.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
     frameacknowledge_caps2.recv(stream, CAPLEN_FRAME_ACKNOWLEDGE);
 
-    BOOST_CHECK_EQUAL(frameacknowledge_caps2.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
+    RED_CHECK_EQUAL(frameacknowledge_caps2.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));
 }

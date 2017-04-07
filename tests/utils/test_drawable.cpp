@@ -22,9 +22,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDrawable
+#define UNIT_TEST_MODULE TestDrawable
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -36,7 +34,7 @@
 #include "utils/drawable.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestLineTo)
+RED_AUTO_TEST_CASE(TestLineTo)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -62,15 +60,14 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw_line(10, 0, 10, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect.shrink(5));
 
-    char message[1024];
-    CHECK_SIG(gd, "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
+    RED_CHECK_SIG(gd, "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
 
     // uncomment to see result in png file
     //save_to_png("/tmp/test_line_000.png", gd.impl());
     //dump_png("/tmp/test_line_005_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestEllipse)
+RED_AUTO_TEST_CASE(TestEllipse)
 {
     uint16_t width = 1280;
     uint16_t height = 1024;
@@ -192,13 +189,13 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 //
 //     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-    CHECK_SIG(gd, "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e");
+    RED_CHECK_SIG(gd, "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e");
 
     // uncomment to see result in png file
     //save_to_png("/tmp/test_ellipse_001.png", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestPatBlt)
+RED_AUTO_TEST_CASE(TestPatBlt)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -257,13 +254,13 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     // Should be purple
     gd.patblt(screen_rect.shrink(125), 0xFA, gd.u32bgr_to_color(BLUE));
 
-    CHECK_SIG(gd, "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad");
+    RED_CHECK_SIG(gd, "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_patblt_000_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestDestBlt)
+RED_AUTO_TEST_CASE(TestDestBlt)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -277,13 +274,13 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     // RED inverted becomes CYAN
     gd.destblt(screen_rect.shrink(15), 0x55);
 
-    CHECK_SIG(gd, "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb");
+    RED_CHECK_SIG(gd, "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_destblt_000_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestAddMouse)
+RED_AUTO_TEST_CASE(TestAddMouse)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -294,19 +291,19 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.set_mouse_cursor_pos(100, 100);
     gd.trace_mouse();
-    CHECK_SIG(gd, "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0");
+    RED_CHECK_SIG(gd, "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_mouse_000_", gd.impl());
 
     gd.clear_mouse();
-    CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_mouse_001_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestAddMouse2)
+RED_AUTO_TEST_CASE(TestAddMouse2)
 {
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
@@ -317,19 +314,19 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(BLACK)); // BLACK
     gd.set_mouse_cursor_pos(638, 470);
     gd.trace_mouse();
-    CHECK_SIG(gd, "\xd1\x1b\xe6\x6b\x0a\x66\x87\xd2\x06\x07\x5a\x52\x90\x8a\x37\xc7\x8c\x46\x46\x4b");
+    RED_CHECK_SIG(gd, "\xd1\x1b\xe6\x6b\x0a\x66\x87\xd2\x06\x07\x5a\x52\x90\x8a\x37\xc7\x8c\x46\x46\x4b");
 
     // uncomment to see result in png file
     //dump_png("test_mouse2_visible_", gd.impl());
 
     gd.clear_mouse();
-    CHECK_SIG(gd, "\xf9\x71\xf3\x63\x57\xcc\x45\x41\x40\x90\xce\xce\xce\x55\xa9\x1e\xe1\x9a\xab\x29");
+    RED_CHECK_SIG(gd, "\xf9\x71\xf3\x63\x57\xcc\x45\x41\x40\x90\xce\xce\xce\x55\xa9\x1e\xe1\x9a\xab\x29");
 
     // uncomment to see result in png file
     //dump_png("test_mouse2_clear_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestAddMouse3)
+RED_AUTO_TEST_CASE(TestAddMouse3)
 {
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
@@ -343,19 +340,19 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.set_mouse_cursor_pos(0, 0);
     gd.trace_mouse();
-    CHECK_SIG(gd, "\xec\x2b\xf0\xb0\xe0\x8a\x60\x64\xba\x8d\x2d\xbb\x33\xc7\x58\xd0\x4b\x19\x21\x3f");
+    RED_CHECK_SIG(gd, "\xec\x2b\xf0\xb0\xe0\x8a\x60\x64\xba\x8d\x2d\xbb\x33\xc7\x58\xd0\x4b\x19\x21\x3f");
 
     // uncomment to see result in png file
     //dump_png("test_mouse3_visible_", gd.impl());
 
     gd.clear_mouse();
-    CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
     // uncomment to see result in png file
     //dump_png("test_mouse3_clear_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestTimestampMouse)
+RED_AUTO_TEST_CASE(TestTimestampMouse)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -379,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_isdst =  0;
 
     gd.trace_timestamp(now);
-    CHECK_SIG(gd, "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
+    RED_CHECK_SIG(gd, "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_timestamp_000_", gd.impl());
@@ -397,14 +394,14 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
 
     gd.clear_timestamp();
     gd.trace_timestamp(now);
-    CHECK_SIG(gd, "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
+    RED_CHECK_SIG(gd, "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_timestamp_001_", gd.impl());
 
 
     gd.clear_timestamp();
-    CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_timestamp_002_", gd.impl());
@@ -427,76 +424,76 @@ inline void test_scrblt2_impl(Drawable & gd, const uint8_t rop, const int cx, co
 #define test_scrblt2(rop, cx, cy, name, sig) do { \
     Drawable gd(640, 480);                        \
     test_scrblt2_impl(gd, rop, cx, cy, name);     \
-    CHECK_SIG(gd, sig);                           \
+    RED_CHECK_SIG(gd, sig);                           \
 } while (0)
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
+RED_AUTO_TEST_CASE(TestDrawableScrBltDown)
 {
     test_scrblt2(0x00, 0, 20, "down00",
     "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46");
 }
 
-//BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
+//RED_AUTO_TEST_CASE(TestDrawableScrBltDown)
 //{
 //    test_scrblt(0x00, 0, 20, "down00",
 //    "\x3c\x39\xae\x2b\x84\x5b\xc6\xa8\x75\xc1\xaf\xbb\x5c\x26\xa9\x1f\x94\x24\xc4\x68");
 //}
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight)
+RED_AUTO_TEST_CASE(TestDrawableScrBltRight)
 {
     test_scrblt2(0x00, 20, 0, "right00",
     "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft)
+RED_AUTO_TEST_CASE(TestDrawableScrBltLeft)
 {
     test_scrblt2(0x00, -20, 0, "left00",
     "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp)
+RED_AUTO_TEST_CASE(TestDrawableScrBltUp)
 {
     test_scrblt2(0x00, 0, -20, "up00",
     "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp)
+RED_AUTO_TEST_CASE(TestDrawableScrBltLeftUp)
 {
     test_scrblt2(0x00, -20, -20, "left_up00",
     "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown11)
+RED_AUTO_TEST_CASE(TestDrawableScrBltDown11)
 {
     test_scrblt2(0x11, 0, 20, "down11",
     "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight11)
+RED_AUTO_TEST_CASE(TestDrawableScrBltRight11)
 {
     test_scrblt2(0x11, 20, 0, "right11",
     "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
+RED_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
 {
     test_scrblt2(0x11, -20, 0, "left11",
     "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp11)
+RED_AUTO_TEST_CASE(TestDrawableScrBltUp11)
 {
     test_scrblt2(0x11, 0, -20, "up11",
     "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18");
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
+RED_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
 {
     test_scrblt2(0x11, -20, -20, "left_up11",
     "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb");
 }
 
-BOOST_AUTO_TEST_CASE(TestMemblt)
+RED_AUTO_TEST_CASE(TestMemblt)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -516,13 +513,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     gd.black_color(Rect(45, 45, 20, 20));
     gd.white_color(Rect(65, 65, 20, 20));
 
-    CHECK_SIG(gd, "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d");
+    RED_CHECK_SIG(gd, "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d");
 
     // uncomment to see result in png file
     //dump_png("./test_memblt_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestMemblt2)
+RED_AUTO_TEST_CASE(TestMemblt2)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 320;
@@ -644,13 +641,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    CHECK_SIG(gd, "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda");
+    RED_CHECK_SIG(gd, "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda");
 
     // uncomment to see result in png file
     //dump_png("./test_memblt2_", gd.impl());
 }
 
-BOOST_AUTO_TEST_CASE(TestMemblt3)
+RED_AUTO_TEST_CASE(TestMemblt3)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 320;
@@ -760,7 +757,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    CHECK_SIG(gd, "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
+    RED_CHECK_SIG(gd, "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
 
     // uncomment to see result in png file
     //dump_png("./test_memblt3_", gd.impl());

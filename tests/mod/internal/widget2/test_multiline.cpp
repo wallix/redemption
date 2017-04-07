@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetMultiLine
+#define UNIT_TEST_MODULE TestWidgetMultiLine
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
     TestDraw drawable(800, 600);
 
@@ -76,10 +74,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
-    CHECK_SIG(drawable.gd, "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4");
+    RED_CHECK_SIG(drawable.gd, "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 {
     TestDraw drawable(800, 600);
 
@@ -115,10 +113,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
 
-    CHECK_SIG(drawable.gd, "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a");
+    RED_CHECK_SIG(drawable.gd, "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 {
     TestDraw drawable(800, 600);
 
@@ -154,10 +152,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
 
-    CHECK_SIG(drawable.gd, "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5");
+    RED_CHECK_SIG(drawable.gd, "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 {
     TestDraw drawable(800, 600);
 
@@ -193,10 +191,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
 
-    CHECK_SIG(drawable.gd, "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7");
+    RED_CHECK_SIG(drawable.gd, "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 {
     TestDraw drawable(800, 600);
 
@@ -232,10 +230,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
 
-    CHECK_SIG(drawable.gd, "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf");
+    RED_CHECK_SIG(drawable.gd, "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 {
     TestDraw drawable(800, 600);
 
@@ -271,10 +269,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
 
-    CHECK_SIG(drawable.gd, "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f");
+    RED_CHECK_SIG(drawable.gd, "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 {
     TestDraw drawable(800, 600);
 
@@ -310,10 +308,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
 
-    CHECK_SIG(drawable.gd, "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78");
+    RED_CHECK_SIG(drawable.gd, "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -349,10 +347,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
 
-    CHECK_SIG(drawable.gd, "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e");
+    RED_CHECK_SIG(drawable.gd, "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
+RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 {
     TestDraw drawable(800, 600);
 
@@ -386,5 +384,5 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 
-    CHECK_SIG(drawable.gd, "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c");
+    RED_CHECK_SIG(drawable.gd, "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c");
 }

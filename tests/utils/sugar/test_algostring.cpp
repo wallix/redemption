@@ -18,15 +18,13 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSplitter
+#define UNIT_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include <string>
 
-BOOST_AUTO_TEST_CASE(TestTrim)
+RED_AUTO_TEST_CASE(TestTrim)
 {
     char const s[] = " \t abcd   ";
     auto left_s = s+3;
@@ -34,18 +32,18 @@ BOOST_AUTO_TEST_CASE(TestTrim)
     auto first = std::begin(s);
     auto last = std::end(s) - 1;
 
-    BOOST_CHECK_EQUAL(ltrim(first, last), left_s);
-    BOOST_CHECK_EQUAL(rtrim(first, last), right_s);
+    RED_CHECK_EQUAL(ltrim(first, last), left_s);
+    RED_CHECK_EQUAL(rtrim(first, last), right_s);
 
     using range_type = range<char const *>;
     range_type trimmed{left_s, right_s};
     range_type r{first, last};
 
-    BOOST_CHECK(trim(first, last) == trimmed);
-    BOOST_CHECK(trim(r) == trimmed);
+    RED_CHECK(trim(first, last) == trimmed);
+    RED_CHECK(trim(r) == trimmed);
 }
 
-BOOST_AUTO_TEST_CASE(Test_escape_delimiters)
+RED_AUTO_TEST_CASE(Test_escape_delimiters)
 {
     std::string s;
     char as[16]{};
@@ -53,15 +51,15 @@ BOOST_AUTO_TEST_CASE(Test_escape_delimiters)
     #define CHECK(Escaped, S)                                          \
         s.clear();                                                     \
         append_escaped_delimiters(s, S);                                \
-        BOOST_CHECK_EQUAL(Escaped, s);                                 \
+        RED_CHECK_EQUAL(Escaped, s);                                 \
         s.clear();                                                     \
         append_escaped_delimiters(s, std::string(S));                   \
-        BOOST_CHECK_EQUAL(Escaped, s);                                 \
+        RED_CHECK_EQUAL(Escaped, s);                                 \
         std::fill(std::begin(as), std::end(as), 0);                    \
         p = append_escaped_delimiters(as, sizeof(as), S);               \
-        BOOST_CHECK_EQUAL(sizeof(Escaped)-1u, p.first - as);           \
-        BOOST_CHECK_EQUAL(sizeof(S)-1u, p.second - S);                 \
-        BOOST_CHECK_EQUAL(Escaped, as)
+        RED_CHECK_EQUAL(sizeof(Escaped)-1u, p.first - as);           \
+        RED_CHECK_EQUAL(sizeof(S)-1u, p.second - S);                 \
+        RED_CHECK_EQUAL(Escaped, as)
     CHECK("", "");
     CHECK("\\\\", "\\");
     CHECK("\\\"", "\"");
@@ -78,20 +76,20 @@ BOOST_AUTO_TEST_CASE(Test_escape_delimiters)
 
     char long_astr[] = "0123456789";
     p = append_escaped_delimiters(as, 5, long_astr);
-    BOOST_CHECK_EQUAL(5, p.first - as);
-    BOOST_CHECK_EQUAL(5, p.second - long_astr);
-    BOOST_CHECK_EQUAL("01234", as);
+    RED_CHECK_EQUAL(5, p.first - as);
+    RED_CHECK_EQUAL(5, p.second - long_astr);
+    RED_CHECK_EQUAL("01234", as);
 
     std::fill(std::begin(as), std::begin(as) + 5, 0);
     char long_astr2[] = "\\0\\1\\2\\3\\4\\5\\6";
     p = append_escaped_delimiters(as, 5, long_astr2);
-    BOOST_CHECK_EQUAL(5, p.first - as);
-    BOOST_CHECK_EQUAL(3, p.second - long_astr2);
-    BOOST_CHECK_EQUAL("\\\\0\\\\", as);
+    RED_CHECK_EQUAL(5, p.first - as);
+    RED_CHECK_EQUAL(3, p.second - long_astr2);
+    RED_CHECK_EQUAL("\\\\0\\\\", as);
 
     std::fill(std::begin(as), std::begin(as) + 4, 0);
     p = append_escaped_delimiters(as, 4, long_astr2);
-    BOOST_CHECK_EQUAL(3, p.first - as);
-    BOOST_CHECK_EQUAL(2, p.second - long_astr2);
-    BOOST_CHECK_EQUAL("\\\\0", as);
+    RED_CHECK_EQUAL(3, p.first - as);
+    RED_CHECK_EQUAL(2, p.second - long_astr2);
+    RED_CHECK_EQUAL("\\\\0", as);
 }

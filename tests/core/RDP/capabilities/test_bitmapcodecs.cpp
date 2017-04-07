@@ -18,16 +18,14 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBitmapCodecs
+#define UNIT_TEST_MODULE TestBitmapCodecs
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "utils/stream.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
+RED_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
 {
     StaticOutStream<1024> out_stream;
     BitmapCodecCaps cap;

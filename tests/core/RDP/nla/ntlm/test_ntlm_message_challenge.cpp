@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlmMessageChallenge
+#define UNIT_TEST_MODULE TestNtlmMessageChallenge
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestChallenge)
+RED_AUTO_TEST_CASE(TestChallenge)
 {
     StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
@@ -66,20 +64,20 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req2(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req2.version, 2);
+    RED_CHECK_EQUAL(ts_req2.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
-    BOOST_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
+    RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send2;
 
-    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
-    BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
+    RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    CHECK_SIG(to_send2, sig);
+    RED_CHECK_SIG(to_send2, sig);
 
     NTLMChallengeMessage ChallengeMsg;
 
@@ -89,20 +87,20 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     InStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     ChallengeMsg.recv(token);
 
-    BOOST_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
+    RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     ChallengeMsg.negoFlags.print();
 
-    BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
-    BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
-    CHECK_MEM_C(
+    RED_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
+    RED_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
+    RED_CHECK_MEM_C(
         make_array_view(ChallengeMsg.TargetName.buffer.ostream.get_data(), ChallengeMsg.TargetName.len),
         "\x57\x00\x49\x00\x4e\x00\x37\x00"
     );
     // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetName.buffer.ostream.size());
-    BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
-    BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
-    CHECK_MEM_C(
+    RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
+    RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
+    RED_CHECK_MEM_C(
         make_array_view(ChallengeMsg.TargetInfo.buffer.ostream.get_data(), ChallengeMsg.TargetInfo.len),
         "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
@@ -113,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
     InStream servChall(ChallengeMsg.serverChallenge, 8);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
-    BOOST_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
+    RED_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
     // ChallengeMsg.version.print();
 
@@ -129,17 +127,17 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     InStream in_tosend(tosend.get_data(), tosend.get_offset());
     ChallengeMsgDuplicate.recv(in_tosend);
 
-    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
 
-    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.len, 8);
-    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.bufferOffset, 56);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.len, 8);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.bufferOffset, 56);
 
-    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
-    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
     InStream servChall2(ChallengeMsgDuplicate.serverChallenge, 8);
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
-    BOOST_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
+    RED_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 
     // ChallengeMsgDuplicate.AvPairList.print();
 }

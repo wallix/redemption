@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlmMessageAuthenticate
+#define UNIT_TEST_MODULE TestNtlmMessageAuthenticate
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAuthenticate)
+RED_AUTO_TEST_CASE(TestAuthenticate)
 {
     // ===== NTLMSSP_AUTH =====
     constexpr static uint8_t packet3[] = {
@@ -119,20 +117,20 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req3(in_s);
 
-    BOOST_CHECK_EQUAL(ts_req3.version, 2);
+    RED_CHECK_EQUAL(ts_req3.version, 2);
 
-    BOOST_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
-    BOOST_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
-    BOOST_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
+    RED_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
+    RED_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
     StaticOutStream<65536> to_send3;
 
-    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0);
+    RED_CHECK_EQUAL(to_send3.get_offset(), 0);
     ts_req3.emit(to_send3);
 
-    BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
+    RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    CHECK_SIG(to_send3, sig);
+    RED_CHECK_SIG(to_send3, sig);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
@@ -142,20 +140,20 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     InStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
     AuthMsg.recv(token);
 
-    BOOST_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
+    RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
 
-    BOOST_CHECK_EQUAL(AuthMsg.LmChallengeResponse.len, 24);
-    BOOST_CHECK_EQUAL(AuthMsg.LmChallengeResponse.bufferOffset, 106);
-    BOOST_CHECK_EQUAL(AuthMsg.NtChallengeResponse.len, 112);
-    BOOST_CHECK_EQUAL(AuthMsg.NtChallengeResponse.bufferOffset, 130);
-    BOOST_CHECK_EQUAL(AuthMsg.DomainName.len, 8);
-    BOOST_CHECK_EQUAL(AuthMsg.DomainName.bufferOffset, 72);
-    BOOST_CHECK_EQUAL(AuthMsg.UserName.len, 16);
-    BOOST_CHECK_EQUAL(AuthMsg.UserName.bufferOffset, 80);
-    BOOST_CHECK_EQUAL(AuthMsg.Workstation.len, 10);
-    BOOST_CHECK_EQUAL(AuthMsg.Workstation.bufferOffset, 96);
-    BOOST_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.len, 16);
+    RED_CHECK_EQUAL(AuthMsg.LmChallengeResponse.len, 24);
+    RED_CHECK_EQUAL(AuthMsg.LmChallengeResponse.bufferOffset, 106);
+    RED_CHECK_EQUAL(AuthMsg.NtChallengeResponse.len, 112);
+    RED_CHECK_EQUAL(AuthMsg.NtChallengeResponse.bufferOffset, 130);
+    RED_CHECK_EQUAL(AuthMsg.DomainName.len, 8);
+    RED_CHECK_EQUAL(AuthMsg.DomainName.bufferOffset, 72);
+    RED_CHECK_EQUAL(AuthMsg.UserName.len, 16);
+    RED_CHECK_EQUAL(AuthMsg.UserName.bufferOffset, 80);
+    RED_CHECK_EQUAL(AuthMsg.Workstation.len, 10);
+    RED_CHECK_EQUAL(AuthMsg.Workstation.bufferOffset, 96);
+    RED_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.len, 16);
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
@@ -164,11 +162,11 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
-    CHECK_MEM_AC(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3");
+    RED_CHECK_MEM_AC(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3");
 
     // LOG(LOG_INFO, "Lm Response . ClientChallenge ===========\n");
     // hexdump_c(lmResponse.ClientChallenge, 8);
-    CHECK_MEM_AC(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AC(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
 
 
     // NtChallengeResponse
@@ -178,17 +176,17 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
-    CHECK_MEM_AC(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10");
+    RED_CHECK_MEM_AC(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10");
 
-    BOOST_CHECK_EQUAL(ntResponse.Challenge.RespType, 1);
-    BOOST_CHECK_EQUAL(ntResponse.Challenge.HiRespType, 1);
+    RED_CHECK_EQUAL(ntResponse.Challenge.RespType, 1);
+    RED_CHECK_EQUAL(ntResponse.Challenge.HiRespType, 1);
     // LOG(LOG_INFO, "Nt Response . Challenge . Timestamp ===========\n");
     // hexdump_c(ntResponse.Challenge.Timestamp, 8);
-    CHECK_MEM_AC(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01");
+    RED_CHECK_MEM_AC(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01");
 
     // LOG(LOG_INFO, "Nt Response . Challenge . ClientChallenge ===========\n");
     // hexdump_c(ntResponse.Challenge.ClientChallenge, 8);
-    CHECK_MEM_AC(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AC(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
 
     // LOG(LOG_INFO, "Nt Response . Challenge . AvPairList ===========\n");
     // ntResponse.Challenge.AvPairList.print();
@@ -196,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // Domain Name
     // LOG(LOG_INFO, "Domain Name ===========\n");
     // hexdump_c(AuthMsg.DomainName.Buffer.get_data(), AuthMsg.DomainName.Buffer.size());
-    CHECK_MEM_C(
+    RED_CHECK_MEM_C(
         make_array_view(AuthMsg.DomainName.buffer.ostream.get_data(), AuthMsg.DomainName.len),
         "\x77\x00\x69\x00\x6e\x00\x37\x00"
     );
@@ -204,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // User Name
     // LOG(LOG_INFO, "User Name ===========\n");
     // hexdump_c(AuthMsg.UserName.Buffer.get_data(), AuthMsg.UserName.Buffer.size());
-    CHECK_MEM_C(
+    RED_CHECK_MEM_C(
         make_array_view(AuthMsg.UserName.buffer.ostream.get_data(), AuthMsg.UserName.len),
         "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"
     );
@@ -212,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // Work Station
     // LOG(LOG_INFO, "Work Station ===========\n");
     // hexdump_c(AuthMsg.Workstation.Buffer.get_data(), AuthMsg.Workstation.Buffer.size());
-    CHECK_MEM_C(
+    RED_CHECK_MEM_C(
         make_array_view(AuthMsg.Workstation.buffer.ostream.get_data(), AuthMsg.Workstation.len),
         "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"
     );
@@ -221,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // LOG(LOG_INFO, "Encrypted Random Session Key ===========\n");
     // hexdump_c(AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
     //           AuthMsg.EncryptedRandomSessionKey.Buffer.size());
-    CHECK_MEM_C(
+    RED_CHECK_MEM_C(
         make_array_view(
             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
             AuthMsg.EncryptedRandomSessionKey.len
@@ -237,18 +235,18 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     InStream in_tosend(tosend.get_data(), tosend.get_offset());
     AuthMsgDuplicate.recv(in_tosend);
 
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     // AuthMsgDuplicate.negoFlags.print();
 
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.len, 24);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 72);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.len, 112);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.bufferOffset, 96);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.DomainName.len, 8);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 208);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.UserName.len, 16);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 216);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.len, 10);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.len, 16);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.len, 24);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 72);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.len, 112);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.bufferOffset, 96);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.len, 8);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 208);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.len, 16);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 216);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.len, 10);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.len, 16);
 }

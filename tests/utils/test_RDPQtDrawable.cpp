@@ -2,9 +2,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPQtDrawable
+#define UNIT_TEST_MODULE TestRDPQtDrawable
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -16,7 +14,7 @@
 #include <QApplication>
 
 
-BOOST_AUTO_TEST_CASE(TestRDPQtDrawable)
+RED_AUTO_TEST_CASE(TestRDPQtDrawable)
 {
     int argc(0);
     char *argv[] {"myprog"};

@@ -18,9 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSnappyCompressionTransport
+#define UNIT_TEST_MODULE TestSnappyCompressionTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 #include <iostream>
 #include <sstream>
 
-BOOST_AUTO_TEST_CASE(TestCompressionTransportBuilder)
+RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 {
     std::stringbuf buf;
     auto * oldbuf = std::cout.rdbuf(&buf);
@@ -56,8 +54,8 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 
     std::cout.rdbuf(oldbuf);
 
-    BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
+    RED_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
 
     CompressionTestTransportBuilder t(trans, WrmCompressionAlgorithm::gzip);
-    BOOST_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
+    RED_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
 }

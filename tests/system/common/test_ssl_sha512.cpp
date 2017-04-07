@@ -18,14 +18,11 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
 #include "system/redemption_unit_tests.hpp"
-#include "check_mem.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSslSha512)
+RED_AUTO_TEST_CASE(TestSslSha512)
 {
     uint8_t sig[SslSha512::DIGEST_LENGTH];
 
@@ -103,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha512)
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        CHECK_MEM_AC(
+        RED_CHECK_MEM_AC(
             sig,
             "\x78\xcd\x2d\xe8\xa7\xd0\xe9\xd6"
             "\xa5\xc6\x10\x6b\x7a\xd5\x8a\x6d"
@@ -126,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha512)
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        CHECK_MEM_AC(
+        RED_CHECK_MEM_AC(
             sig,
             "\x78\xcd\x2d\xe8\xa7\xd0\xe9\xd6"
             "\xa5\xc6\x10\x6b\x7a\xd5\x8a\x6d"
@@ -140,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha512)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestSslHmacSHA512)
+RED_AUTO_TEST_CASE(TestSslHmacSHA512)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
@@ -153,9 +150,9 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA512)
     uint8_t sig[SslSha512::DIGEST_LENGTH];
     hmac.final(sig);
 
-    BOOST_CHECK_EQUAL(SslSha512::DIGEST_LENGTH, 64);
+    RED_CHECK_EQUAL(SslSha512::DIGEST_LENGTH, 64);
 
-    CHECK_MEM_AC(
+    RED_CHECK_MEM_AC(
         sig,
         "\xb4\x2a\xf0\x90\x57\xba\xc1\xe2\xd4\x17\x08\xe4\x8a\x90\x2e\x09"
         "\xb5\xff\x7f\x12\xab\x42\x8a\x4f\xe8\x66\x53\xc7\x3d\xd2\x48\xfb"

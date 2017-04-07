@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetLabel
+#define UNIT_TEST_MODULE TestWidgetLabel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
+RED_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestDraw drawable(800, 600);
 
@@ -70,10 +68,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 
     //drawable.save_to_png("/tmp/label0.png");
 
-    CHECK_SIG(drawable.gd, "\x95\x82\x5d\x61\x2b\x30\xe5\x65\x2f\x7e\x77\xb6\x66\x0b\x1c\xd2\x50\x01\x3f\x1d");
+    RED_CHECK_SIG(drawable.gd, "\x95\x82\x5d\x61\x2b\x30\xe5\x65\x2f\x7e\x77\xb6\x66\x0b\x1c\xd2\x50\x01\x3f\x1d");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
+RED_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
@@ -104,10 +102,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 
     //drawable.save_to_png("/tmp/label2.png");
 
-    CHECK_SIG(drawable.gd, "\xe5\x01\x49\x35\x8d\x89\xbb\xd5\xd3\x61\xab\x3a\x03\x97\x2c\x03\xf5\xa3\x12\x83");
+    RED_CHECK_SIG(drawable.gd, "\xe5\x01\x49\x35\x8d\x89\xbb\xd5\xd3\x61\xab\x3a\x03\x97\x2c\x03\xf5\xa3\x12\x83");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
+RED_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
@@ -138,10 +136,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 
     //drawable.save_to_png("/tmp/label3.png");
 
-    CHECK_SIG(drawable.gd, "\x57\x4f\x69\x68\x76\xe8\xd5\xd4\x4f\xfd\xa0\x39\x8e\xd9\x6f\x83\x4d\x21\x71\xb7");
+    RED_CHECK_SIG(drawable.gd, "\x57\x4f\x69\x68\x76\xe8\xd5\xd4\x4f\xfd\xa0\x39\x8e\xd9\x6f\x83\x4d\x21\x71\xb7");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
+RED_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
@@ -172,10 +170,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 
     //drawable.save_to_png("/tmp/label4.png");
 
-    CHECK_SIG(drawable.gd, "\x40\xc5\x45\x15\xf4\x30\xad\x65\xf4\x88\x3c\xec\xdf\xdf\xf3\xcb\xd6\x5d\x34\x86");
+    RED_CHECK_SIG(drawable.gd, "\x40\xc5\x45\x15\xf4\x30\xad\x65\xf4\x88\x3c\xec\xdf\xdf\xf3\xcb\xd6\x5d\x34\x86");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
+RED_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
@@ -206,10 +204,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 
     //drawable.save_to_png("/tmp/label5.png");
 
-    CHECK_SIG(drawable.gd, "\x3a\x3d\xc2\x64\xad\x03\x20\x54\xb5\x2e\x4c\xd9\x5a\x1b\x43\x6c\x91\xa7\x4c\xc1");
+    RED_CHECK_SIG(drawable.gd, "\x3a\x3d\xc2\x64\xad\x03\x20\x54\xb5\x2e\x4c\xd9\x5a\x1b\x43\x6c\x91\xa7\x4c\xc1");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
+RED_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
@@ -240,10 +238,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 
     //drawable.save_to_png("/tmp/label6.png");
 
-    CHECK_SIG(drawable.gd, "\xad\xb7\x7e\x8b\xd1\xc3\x99\x8d\xc7\xae\x41\x68\xb8\x67\x3e\x11\xfe\x78\x5f\xfd");
+    RED_CHECK_SIG(drawable.gd, "\xad\xb7\x7e\x8b\xd1\xc3\x99\x8d\xc7\xae\x41\x68\xb8\x67\x3e\x11\xfe\x78\x5f\xfd");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
     TestDraw drawable(800, 600);
 
@@ -274,10 +272,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
 
     //drawable.save_to_png("/tmp/label7.png");
 
-    CHECK_SIG(drawable.gd, "\x08\x53\x1a\x07\xeb\x45\x84\xf8\x62\x54\x8e\x45\xe1\xa4\xde\x60\xe5\xf4\xd6\x5c");
+    RED_CHECK_SIG(drawable.gd, "\x08\x53\x1a\x07\xeb\x45\x84\xf8\x62\x54\x8e\x45\xe1\xa4\xde\x60\xe5\xf4\xd6\x5c");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -308,10 +306,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 
     //drawable.save_to_png("/tmp/label8.png");
 
-    CHECK_SIG(drawable.gd, "\x9e\x7a\x67\xb5\x0b\x65\x85\x15\x2e\xe6\xf5\x5d\x48\xd5\xbd\x92\x04\xa8\x61\x91");
+    RED_CHECK_SIG(drawable.gd, "\x9e\x7a\x67\xb5\x0b\x65\x85\x15\x2e\xe6\xf5\x5d\x48\xd5\xbd\x92\x04\xa8\x61\x91");
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
+RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 {
     TestDraw drawable(800, 600);
 
@@ -346,22 +344,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     wlabel.set_xy(x, y);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, nullptr);
-    BOOST_CHECK(widget_for_receive_event.sender == nullptr);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == nullptr);
+    RED_CHECK(widget_for_receive_event.event == 0);
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, nullptr);
-    BOOST_CHECK(widget_for_receive_event.sender == nullptr);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == nullptr);
+    RED_CHECK(widget_for_receive_event.event == 0);
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_char('a');
 
     wlabel.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(widget_for_receive_event.sender == nullptr);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == nullptr);
+    RED_CHECK(widget_for_receive_event.event == 0);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
+RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestDraw drawable(800, 600);
 
@@ -426,21 +424,21 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
    //drawable.save_to_png("/tmp/label9.png");
 
-    CHECK_SIG(drawable.gd, "\xe0\x70\x43\x8a\x56\xfb\x53\xb4\xa7\xab\x15\xda\x6c\x6d\x7e\xc2\xc8\xd4\xca\xac");
+    RED_CHECK_SIG(drawable.gd, "\xe0\x70\x43\x8a\x56\xfb\x53\xb4\xa7\xab\x15\xda\x6c\x6d\x7e\xc2\xc8\xd4\xca\xac");
 
     //ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     // drawable.save_to_png("/tmp/label10.png");
 
-    CHECK_SIG(drawable.gd, "\x04\x53\x86\xe9\xcd\xab\x74\xa4\x8f\x7c\x35\x56\xd8\xb4\xb2\x85\x48\x6f\x20\x92");
+    RED_CHECK_SIG(drawable.gd, "\x04\x53\x86\xe9\xcd\xab\x74\xa4\x8f\x7c\x35\x56\xd8\xb4\xb2\x85\x48\x6f\x20\x92");
     wcomposite.clear();
 }
 
 /* TODO
  * the entry point exists in module: it's rdp_input_invalidate
  * je just have to change received values to widget messages */
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
+RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
 {
     TestDraw drawable(800, 600);
 
@@ -469,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
     wlabel.set_xy(x, y);
 
 
-    BOOST_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
+    RED_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),
@@ -479,5 +477,5 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
 
     //drawable.save_to_png("/tmp/label2.png");
 
-    CHECK_SIG(drawable.gd, "\x9c\x1b\x03\xb9\xc2\xf2\xf8\x77\xa8\x14\x50\x2c\x23\xc1\x0d\x36\xb6\x20\x10\xee");
+    RED_CHECK_SIG(drawable.gd, "\x9c\x1b\x03\xb9\xc2\xf2\xf8\x77\xa8\x14\x50\x2c\x23\xc1\x0d\x36\xb6\x20\x10\xee");
 }

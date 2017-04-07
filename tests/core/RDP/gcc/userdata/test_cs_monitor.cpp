@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCS_MONITOR
+#define UNIT_TEST_MODULE TestCS_MONITOR
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 
 #define TS_MONITOR_PRIMARY 0x00000001
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 {
     const char indata[] =
         "\x05\xc0"         // TS_UD_HEADER::type = CS_MONITOR (0xc005)
@@ -57,15 +55,15 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
     GCC::UserData::CSMonitor cs_monitor;
     InStream stream(buf);
     cs_monitor.recv(stream);
-    BOOST_CHECK_EQUAL(32, cs_monitor.length);
-    BOOST_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);
-    BOOST_CHECK_EQUAL(1, cs_monitor.monitorCount);
+    RED_CHECK_EQUAL(32, cs_monitor.length);
+    RED_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);
+    RED_CHECK_EQUAL(1, cs_monitor.monitorCount);
 
-    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].left);  //(left, top) = (0,0)
-    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].top);
-    BOOST_CHECK_EQUAL(100, cs_monitor.monitorDefArray[0].right); //(right, bottom) = (100,-60)
-    BOOST_CHECK_EQUAL(-60, cs_monitor.monitorDefArray[0].bottom);
-	BOOST_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
+    RED_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].left);  //(left, top) = (0,0)
+    RED_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].top);
+    RED_CHECK_EQUAL(100, cs_monitor.monitorDefArray[0].right); //(right, bottom) = (100,-60)
+    RED_CHECK_EQUAL(-60, cs_monitor.monitorDefArray[0].bottom);
+	RED_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
 
     cs_monitor.log("Client Received");
 

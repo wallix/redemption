@@ -19,9 +19,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCLIPRDRChannel
+#define UNIT_TEST_MODULE TestCLIPRDRChannel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -91,7 +89,7 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -177,16 +175,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -272,16 +270,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -367,16 +365,16 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -462,13 +460,13 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 class NullSender : public VirtualChannelDataSender {
@@ -476,7 +474,7 @@ public:
     virtual void operator() (uint32_t, uint32_t, const uint8_t*, uint32_t) override {}
 };
 
-BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
+RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;

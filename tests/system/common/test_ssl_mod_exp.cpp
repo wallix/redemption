@@ -20,13 +20,9 @@
 
 #pragma once
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 #include "system/redemption_unit_tests.hpp"
 
-#include "check_mem.hpp"
-
-BOOST_AUTO_TEST_CASE(TestModExp)
+RED_AUTO_TEST_CASE(TestModExp)
 {
     char inr[] = "\xc";
     char modulus[] = "\x3";
@@ -43,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestModExp)
       , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
     );
 
-    BOOST_CHECK_EQUAL(len, 0);
+    RED_CHECK_EQUAL(len, 0);
 
 
     // 12^4 % 5 = 48 % 5 = 3
@@ -55,8 +51,8 @@ BOOST_AUTO_TEST_CASE(TestModExp)
       , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
     );
 
-    BOOST_CHECK_EQUAL(len, 1);
-    BOOST_CHECK_EQUAL(*out, '\x1');
+    RED_CHECK_EQUAL(len, 1);
+    RED_CHECK_EQUAL(*out, '\x1');
 
 
     // 12^4 % 17 = 48 % 17 = 13
@@ -68,12 +64,12 @@ BOOST_AUTO_TEST_CASE(TestModExp)
       , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
     );
 
-    BOOST_CHECK_EQUAL(len, 1);
-    BOOST_CHECK_EQUAL(*out, '\xd');
+    RED_CHECK_EQUAL(len, 1);
+    RED_CHECK_EQUAL(*out, '\xd');
 }
 
 
-BOOST_AUTO_TEST_CASE(TestBigModExp)
+RED_AUTO_TEST_CASE(TestBigModExp)
 {
     char inr[] = "c9bt8v6pbtr73";
     char modulus[] = "6TBD*S^0b5F*^%";
@@ -87,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestBigModExp)
       , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
     );
 
-    BOOST_CHECK_EQUAL(len, sizeof(modulus)-1);
-    CHECK_MEM_C(
+    RED_CHECK_EQUAL(len, sizeof(modulus)-1);
+    RED_CHECK_MEM_C(
         make_array_view(out, sizeof(out)-1),
         "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"
     );

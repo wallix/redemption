@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestParseIpContrack
+#define UNIT_TEST_MODULE TestParseIpContrack
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 #include <fcntl.h>
 
 
-BOOST_AUTO_TEST_CASE(ParseIpConntrack)
+RED_AUTO_TEST_CASE(ParseIpConntrack)
 {
     char tmpname[] = "/tmp/test_conntrack_XXXXXX";
     int fd = ::mkostemp(tmpname, O_RDWR|O_CREAT);
@@ -57,10 +55,10 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 packets=90 bytes=10061 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 packets=89 bytes=38707 [ASSURED] mark=0 secmark=0 use=2\n"
 "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 packets=1139 bytes=82008 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
     int res = write(fd, conntrack, sizeof(conntrack)-1);
-    BOOST_CHECK_EQUAL(res, sizeof(conntrack)-1);
+    RED_CHECK_EQUAL(res, sizeof(conntrack)-1);
 
     // ----------------------------------------------------
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
 
     const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
 
@@ -68,31 +66,31 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 
     LineBuffer line(fd);
     int status = line.readline();
-    BOOST_CHECK_EQUAL(status, 1);
-    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
-    BOOST_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
-    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
+    RED_CHECK_EQUAL(status, 1);
+    RED_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
+    RED_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
+    RED_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
 
     // ----------------------------------------------------
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     char transparent_target[256] = {};
     // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 packets=96 bytes=10739 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
 
     res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
-    BOOST_CHECK_EQUAL(res, 0);
-    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
+    RED_CHECK_EQUAL(res, 0);
+    RED_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
 
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     transparent_target[0] = 0;
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
-    BOOST_CHECK_EQUAL(res, -1);
-    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+    RED_CHECK_EQUAL(res, -1);
+    RED_CHECK_EQUAL(0, strcmp(transparent_target, ""));
 
     close(fd);
     unlink(tmpname);
 }
 
-BOOST_AUTO_TEST_CASE(ParseIpConntrack2)
+RED_AUTO_TEST_CASE(ParseIpConntrack2)
 {
     // ip_conntrack without packets and
 
@@ -118,10 +116,10 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack2)
 "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 [ASSURED] mark=0 secmark=0 use=2\n"
 "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 mark=0 secmark=0 use=2\n";
     int res = write(fd, conntrack, sizeof(conntrack)-1);
-    BOOST_CHECK_EQUAL(res, sizeof(conntrack)-1);
+    RED_CHECK_EQUAL(res, sizeof(conntrack)-1);
 
     // ----------------------------------------------------
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
 
     const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 mark=0 secmark=0 use=2\n";
 
@@ -129,25 +127,25 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack2)
 
     LineBuffer line(fd);
     int status = line.readline();
-    BOOST_CHECK_EQUAL(status, 1);
-    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
-    BOOST_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
-    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
+    RED_CHECK_EQUAL(status, 1);
+    RED_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
+    RED_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
+    RED_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
 
     // ----------------------------------------------------
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     char transparent_target[256] = {};
     // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 [ASSURED] mark=0 secmark=0 use=2\n"
 
     res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
-    BOOST_CHECK_EQUAL(res, 0);
-    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
+    RED_CHECK_EQUAL(res, 0);
+    RED_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
 
-    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     transparent_target[0] = 0;
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
-    BOOST_CHECK_EQUAL(res, -1);
-    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+    RED_CHECK_EQUAL(res, -1);
+    RED_CHECK_EQUAL(0, strcmp(transparent_target, ""));
 
     close(fd);
     unlink(tmpname);

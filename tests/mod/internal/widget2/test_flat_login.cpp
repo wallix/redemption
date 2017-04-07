@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatLogin
+#define UNIT_TEST_MODULE TestFlatLogin
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin)
+RED_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
 
@@ -54,10 +52,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
-    CHECK_SIG(drawable.gd, "\xe1\x2b\x7f\xd9\x2d\x5f\xf3\xcf\x05\xd4\x77\x40\x02\xb9\x8f\x66\x7e\xdb\xc6\xb7");
+    RED_CHECK_SIG(drawable.gd, "\xe1\x2b\x7f\xd9\x2d\x5f\xf3\xcf\x05\xd4\x77\x40\x02\xb9\x8f\x66\x7e\xdb\xc6\xb7");
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
+RED_AUTO_TEST_CASE(TraceFlatLogin2)
 {
     TestDraw drawable(800, 600);
     WidgetFlatButton * extra_button = nullptr;
@@ -81,10 +79,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
-    CHECK_SIG(drawable.gd, "\xb7\xe9\xfc\xaf\x84\xd8\x49\x7d\xb4\x23\x82\x34\xab\x4d\x74\xcf\x59\x67\x7c\x91");
+    RED_CHECK_SIG(drawable.gd, "\xb7\xe9\xfc\xaf\x84\xd8\x49\x7d\xb4\x23\x82\x34\xab\x4d\x74\xcf\x59\x67\x7c\x91");
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
+RED_AUTO_TEST_CASE(TraceFlatLogin3)
 {
     TestDraw drawable(800, 600);
     struct Notify : NotifyApi {
@@ -113,15 +111,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
-    BOOST_CHECK(notifier.sender == nullptr);
-    BOOST_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.sender == nullptr);
+    RED_CHECK(notifier.event == 0);
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK(notifier.sender == &flat_login);
-    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier.sender == &flat_login);
+    RED_CHECK(notifier.event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -131,18 +129,18 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
-    CHECK_SIG(drawable.gd, "\x5d\x90\xcb\x7a\x0a\xe1\xa6\x4e\x36\x4a\x96\xc5\x3a\x13\x30\x47\x12\xf0\xe6\xef");
+    RED_CHECK_SIG(drawable.gd, "\x5d\x90\xcb\x7a\x0a\xe1\xa6\x4e\x36\x4a\x96\xc5\x3a\x13\x30\x47\x12\xf0\xe6\xef");
 
     notifier.sender = nullptr;
     notifier.event = 0;
     keymap.push_kevent(Keymap2::KEVENT_ESC); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK(notifier.sender == &flat_login);
-    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.sender == &flat_login);
+    RED_CHECK(notifier.event == NOTIFY_CANCEL);
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
+RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 {
     TestDraw drawable(800, 600);
 
@@ -167,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
-    CHECK_SIG(drawable.gd, "\x5b\xf0\x1e\xc8\xa7\x15\x79\x55\x58\x91\x41\xde\xcc\x2f\xf3\xbc\x96\x83\xbe\xad");
+    RED_CHECK_SIG(drawable.gd, "\x5b\xf0\x1e\xc8\xa7\x15\x79\x55\x58\x91\x41\xde\xcc\x2f\xf3\xbc\x96\x83\xbe\xad");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -175,10 +173,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    CHECK_SIG(drawable.gd, "\x33\xf1\x7f\x2b\x18\x67\x10\xe8\x72\x0c\x76\xb1\xf9\xe2\x40\xdc\x62\x16\x00\xbb");
+    RED_CHECK_SIG(drawable.gd, "\x33\xf1\x7f\x2b\x18\x67\x10\xe8\x72\x0c\x76\xb1\xf9\xe2\x40\xdc\x62\x16\x00\xbb");
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
+RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 {
     TestDraw drawable(800, 600);
 
@@ -203,10 +201,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
-    CHECK_SIG(drawable.gd, "\x7f\xc9\xe7\xbb\x07\x22\x69\xb6\xc4\x0b\xf5\x35\xd6\x33\x27\xe0\xd9\x4d\x4c\xa4");
+    RED_CHECK_SIG(drawable.gd, "\x7f\xc9\xe7\xbb\x07\x22\x69\xb6\xc4\x0b\xf5\x35\xd6\x33\x27\xe0\xd9\x4d\x4c\xa4");
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
+RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -231,10 +229,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login8.png");
 
-    CHECK_SIG(drawable.gd, "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35");
+    RED_CHECK_SIG(drawable.gd, "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35");
 }
 
-BOOST_AUTO_TEST_CASE(EventWidgetOk)
+RED_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
@@ -261,6 +259,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
                          nullptr, nullptr, "Login", "Password", "", extra_button, font,
                          Translator{}, Theme{});
 
-    BOOST_CHECK(notifier.sender == nullptr);
-    BOOST_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.sender == nullptr);
+    RED_CHECK(notifier.event == 0);
 }

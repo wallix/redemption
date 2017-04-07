@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOutFileTransport
+#define UNIT_TEST_MODULE TestOutFileTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
@@ -37,7 +35,7 @@
 #include "transport/out_file_transport.hpp"
 #include "core/error.hpp"
 
-BOOST_AUTO_TEST_CASE(TestOutFileTransport)
+RED_AUTO_TEST_CASE(TestOutFileTransport)
 {
     {
         char tmpname[128];
@@ -61,9 +59,9 @@ BOOST_AUTO_TEST_CASE(TestOutFileTransport)
             pbuf += 11;
             ft.recv_atomic(pbuf, 10);
             pbuf += 10;
-            BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+            RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
             pbuf = buf;
-            CHECK_EXCEPTION_ERROR_ID(ft.recv_atomic(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+            RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_atomic(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
         }
         ::close(fd);
         ::unlink(tmpname);
