@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     listAvPair.emit(stream);
     RED_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
-    listAvPair.print();
+    //listAvPair.log();
 }
 
 
@@ -66,5 +66,5 @@ RED_AUTO_TEST_CASE(TestAvPairRecv)
 
     InStream in_stream(TargetInfo);
     avpairlist.recv(in_stream);
-    avpairlist.print();
+    //avpairlist.log();
 }

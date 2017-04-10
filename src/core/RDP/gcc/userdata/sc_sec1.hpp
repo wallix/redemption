@@ -497,7 +497,7 @@ struct SCSecurity {
         }
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) /* TODO const*/
     {
         stream.out_uint16_le(SC_SECURITY);
 
@@ -713,7 +713,7 @@ struct SCSecurity {
         }
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data SC_SECURITY (%u bytes)", msg, this->length);

@@ -552,12 +552,12 @@ public:
         r.add(e);
     }
 
-    const Bitmap & get(uint8_t id, uint16_t idx) {
+    const Bitmap & get(uint8_t id, uint16_t idx) const {
         if ((id & IN_WAIT_LIST) || (id == MAXIMUM_NUMBER_OF_CACHES)) {
             REDASSERT((this->owner != Mod_rdp) && this->waiting_list_bitmap.is_valid());
             return this->waiting_list_bitmap;
         }
-        Cache<cache_element> & r = this->caches[id];
+        Cache<cache_element> const & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             REDASSERT(this->owner != Front);
             // Last bitmap cache entry is used by waiting list.
