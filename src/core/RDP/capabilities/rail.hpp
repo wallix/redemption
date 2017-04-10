@@ -152,7 +152,7 @@ struct RailCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -165,7 +165,7 @@ struct RailCaps : public Capability {
         this->RailSupportLevel = stream.in_uint32_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Rail caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Rail caps::RailSupportLevel 0x%X", this->RailSupportLevel);
