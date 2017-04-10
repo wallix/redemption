@@ -333,7 +333,7 @@ struct NTLMAuthenticateMessage {
         memset(this->MIC, 0x00, 16);
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;
@@ -483,7 +483,7 @@ struct LMv2_Response {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->Response, 16);
         stream.out_copy_bytes(this->ClientChallenge, 8);
     }
@@ -582,7 +582,7 @@ struct NTLMv2_Client_Challenge {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         // ULONG length;
 
         this->RespType = 0x01;
@@ -648,7 +648,7 @@ struct NTLMv2_Response {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         stream.out_copy_bytes(this->Response, 16);
         this->Challenge.emit(stream);
     }

@@ -123,7 +123,7 @@ struct CSMonitor {
     , monitorDefArray()
     , permissive(false) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         REDASSERT((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
 
         stream.out_uint16_le(this->userDataType);
@@ -200,7 +200,7 @@ struct CSMonitor {
         }
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         char buffer[2048];
 

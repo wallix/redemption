@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     ChallengeMsg.recv(token);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
-    ChallengeMsg.negoFlags.print();
+    //ChallengeMsg.negoFlags.log();
 
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     // ChallengeMsg.version.print();
 
-    ChallengeMsg.AvPairList.print();
+    //ChallengeMsg.AvPairList.log();
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 

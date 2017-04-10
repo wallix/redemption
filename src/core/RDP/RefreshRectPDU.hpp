@@ -182,7 +182,7 @@ struct RefreshRectPDU {
         area_count++;
     }
 
-    void emit(Transport & trans) {
+    void emit(Transport & trans) /* TODO const*/ {
         this->buffer_stream.set_out_uint8(this->area_count,
                                           this->offset_area_count);
 

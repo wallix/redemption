@@ -891,7 +891,7 @@ struct ChangeNotifyResponse {
       , OutputBufferLength(OutputBufferLength)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->StructureSize);
         stream.out_uint16_le(this->OutputBufferOffset);
         stream.out_uint32_le(this->OutputBufferLength);
@@ -903,7 +903,7 @@ struct ChangeNotifyResponse {
         this->OutputBufferLength = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Disposition Information:");
         LOG(LOG_INFO, "          * StructureSize      = %d (2 bytes)", int(this->StructureSize));
         LOG(LOG_INFO, "          * OutputBufferOffset = %d (2 bytes)", int(this->OutputBufferOffset));

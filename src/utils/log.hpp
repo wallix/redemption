@@ -101,7 +101,7 @@ namespace {
 
 template<std::size_t n>
 redemption_log_s<n*2+1>
-log_array_02x_format(uint8_t (&d)[n])
+log_array_02x_format(uint8_t const (&d)[n])
 {
     redemption_log_s<n*2+1> r;
     char * p = r.data;

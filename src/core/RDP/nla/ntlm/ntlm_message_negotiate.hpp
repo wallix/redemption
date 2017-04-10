@@ -167,7 +167,7 @@ struct NTLMNegotiateMessage {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
             currentOffset -= 8;

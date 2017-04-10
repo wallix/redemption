@@ -590,7 +590,7 @@ struct SystemTime {
         ;
     } // END CONSTRUCTOR
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(wYear);
         stream.out_uint16_le(wMonth);
         stream.out_uint16_le(wDayOfWeek);
@@ -679,7 +679,7 @@ struct ClientTimeZone {
 
     } // END CONSTRUCTOR
 
-    void emit(OutStream & /*stream*/) {
+    void emit(OutStream & /*stream*/) const {
     }
 
     void recv(InStream & stream) {
@@ -848,7 +848,7 @@ struct InfoPacket {
         }
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS/* | INFO_NOAUDIOPLAYBACK*/ );
 
@@ -1097,7 +1097,7 @@ struct InfoPacket {
          }
     } // END FUNCT : recv()
 
-    void log(const char * msg, uint32_t password_printing_mode, bool show_alternate_shell = true){
+    void log(const char * msg, uint32_t password_printing_mode, bool show_alternate_shell = true) const {
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
@@ -1127,7 +1127,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char *>(this->Password), password_printing_mode));
+        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char const*>(this->Password), password_printing_mode));
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
