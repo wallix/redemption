@@ -4258,7 +4258,6 @@ public:
                 };
 
                 for (auto idx : idxs){
-//                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
                     order_caps.orderSupport[idx] &= this->client_order_caps.orderSupport[idx];
                 }
 
@@ -4266,7 +4265,6 @@ public:
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
 
-//                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
                 order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",

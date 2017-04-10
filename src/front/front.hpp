@@ -4796,14 +4796,6 @@ public:
         this->send_palette();
     }
 
-    uint8_t get_order_cap(int idx) const override {
-        return this->client_info.order_caps.orderSupport[idx];
-    }
-
-    uint16_t get_order_caps_ex_flags() const override {
-        return this->client_info.order_caps.orderSupportExFlags;
-    }
-
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
