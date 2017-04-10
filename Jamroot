@@ -132,7 +132,7 @@ constant EXE_DEPENDENCIES :
 
 constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
-    <library>libboost_unit_test
+    <library>libunit_test
     <include>$(REDEMPTION_TEST_PATH)
     <cxxflags>-frtti
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
@@ -142,9 +142,7 @@ constant OBJ_TEST_DEPENDENCIES :
 
 constant TEST_DEPENDENCIES :
     $(OBJ_TEST_DEPENDENCIES)
-    <define>BOOST_AUTO_TEST_MAIN
-    <define>BOOST_TEST_DYN_LINK
-    <define>REDEMPTION_DECL_LOG_TEST
+    $(UNIT_TEST_DEPENDENCIES)
 ;
 
 
@@ -1187,7 +1185,7 @@ lib sashimi :
 unit-test test_buffer :
     $(REDEMPTION_TEST_PATH)/sashimi/test_buffer.cpp
     sashimi_error
-    libboost_unit_test
+    libunit_test
     :
     $(TEST_DEPENDENCIES)
     ;
@@ -1196,7 +1194,7 @@ unit-test test_crypto :
     $(REDEMPTION_TEST_PATH)/sashimi/test_crypto.cpp
     sashimi_error
     crypto
-    libboost_unit_test
+    libunit_test
     :
     $(TEST_DEPENDENCIES)
     ;
