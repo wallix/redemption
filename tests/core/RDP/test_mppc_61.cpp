@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMPPC61
+#define UNIT_TEST_MODULE TestMPPC61
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -28,13 +26,13 @@
 
 #include "core/RDP/mppc_61.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRDP61BlukCompression)
+RED_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {
     rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> mppc_61_enc;
 }
 
 
-BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
+RED_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
 {
     rdp_mppc_61_enc_sequential_search_match_finder mppc_enc_match_finder_d;
     rdp_mppc_enc_match_finder & mppc_enc_match_finder = mppc_enc_match_finder_d;
@@ -44,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
     };
     mppc_enc_match_finder.find_match(historyBuffer, 4, 4);
-    BOOST_CHECK_EQUAL(0, mppc_enc_match_finder.match_details_stream.get_offset());
+    RED_CHECK_EQUAL(0, mppc_enc_match_finder.match_details_stream.get_offset());
 
 
     uint8_t historyBuffer1[] = {
@@ -55,8 +53,8 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'i'
     };
     mppc_enc_match_finder.find_match(historyBuffer1, 16, 9);
-    BOOST_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
+    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
+    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
                                 "\x09\x00\x00\x00\x00\x00\x00\x00", 8));
 
 
@@ -68,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k'
     };
     mppc_enc_match_finder.find_match(historyBuffer2, 16, 10);
-    BOOST_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
+    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
+    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
                                 "\x09\x00\x01\x00\x02\x00\x00\x00", 8));
 
 
@@ -83,8 +81,8 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k'
     };
     mppc_enc_match_finder.find_match(historyBuffer3, 32, 10);
-    BOOST_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
+    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
+    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
                                 "\x0A\x00\x00\x00\x11\x00\x00\x00", 8));
 
 
@@ -98,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k', 'b'
     };
     mppc_enc_match_finder.find_match(historyBuffer4, 32, 11);
-    BOOST_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
+    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
+    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
                                 "\x09\x00\x01\x00\x12\x00\x00\x00", 8));
 }

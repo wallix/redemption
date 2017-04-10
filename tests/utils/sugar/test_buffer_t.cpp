@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBufferT
+#define UNIT_TEST_MODULE TestBufferT
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/buffer_t.hpp"
@@ -30,7 +28,7 @@
 #include <type_traits>
 
 
-BOOST_AUTO_TEST_CASE(TestBufferT)
+RED_AUTO_TEST_CASE(TestBufferT)
 {
     char a[2]{};
     uint8_t ua[2]{};

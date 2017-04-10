@@ -18,15 +18,12 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSign
+#define UNIT_TEST_MODULE TestSign
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/crypto/ssl_sign.hpp"
-#include "check_mem.hpp"
 
-BOOST_AUTO_TEST_CASE(TestSign)
+RED_AUTO_TEST_CASE(TestSign)
 {
     const uint8_t key[] = "key";
     // const uint8_t key[] = "";
@@ -39,9 +36,5 @@ BOOST_AUTO_TEST_CASE(TestSign)
     uint8_t sig[16];
     hmac.final(sig, sizeof(sig));
     // hexdump96_c(sig, sizeof(sig));
-    CHECK_MEM(
-        sig, sizeof(sig),
-        "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b"
-        "\x91\xc2\xe2\x12\x39\x80\xe1\x94"
-    );
+    RED_CHECK_MEM_AC(sig, "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b\x91\xc2\xe2\x12\x39\x80\xe1\x94");
 }

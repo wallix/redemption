@@ -18,20 +18,18 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestError
+#define UNIT_TEST_MODULE TestError
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/error.hpp"
 
-BOOST_AUTO_TEST_CASE(TestError)
+RED_AUTO_TEST_CASE(TestError)
 {
     Error e(ERR_SSL_CALL_FAILED);
 
-    BOOST_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
+    RED_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
 
-    BOOST_CHECK_EQUAL(0, strcmp("Exception", e.errmsg(false)));
+    RED_CHECK_EQUAL(0, strcmp("Exception", e.errmsg(false)));
 
-    BOOST_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
+    RED_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
 }

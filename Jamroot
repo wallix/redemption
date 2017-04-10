@@ -142,6 +142,8 @@ constant OBJ_TEST_DEPENDENCIES :
 
 constant TEST_DEPENDENCIES :
     $(OBJ_TEST_DEPENDENCIES)
+    <define>BOOST_AUTO_TEST_MAIN
+    <define>BOOST_TEST_DYN_LINK
     <define>REDEMPTION_DECL_LOG_TEST
 ;
 
@@ -559,7 +561,6 @@ test-canonical core/RDP/capabilities/window.hpp ;
 # TODO test-canonical transport/detail/meta_writer.hpp ;
 test-canonical transport/out_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/in_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-test-canonical transport/count_transport.hpp ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>png <library>snappy <library>dl <library>z ;

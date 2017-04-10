@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFlatWabCloseMod
+#define UNIT_TEST_MODULE TestFlatWabCloseMod
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include "mod/internal/flat_wab_close_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestWabCloseMod)
+RED_AUTO_TEST_CASE(TestWabCloseMod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -56,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
 
-BOOST_AUTO_TEST_CASE(TestWabCloseMod2)
+RED_AUTO_TEST_CASE(TestWabCloseMod2)
 {
     ClientInfo info;
     info.keylayout = 0x040C;

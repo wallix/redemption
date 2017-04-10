@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetScroll
+#define UNIT_TEST_MODULE TestWidgetScroll
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
+RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
 {
     TestDraw drawable(800, 600);
 
@@ -62,13 +60,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
 
     //drawable.save_to_png("scroll0.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xaf\x8d\xda\xea\xbe\x5c\x0b\x53\xf4\x28\xe3\xbc\x29\x49\xa1\x4c\x75\x7f\xc5\xbf"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xaf\x8d\xda\xea\xbe\x5c\x0b\x53\xf4\x28\xe3\xbc\x29\x49\xa1\x4c\x75\x7f\xc5\xbf");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
@@ -77,14 +69,10 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBar)
 
     //drawable.save_to_png("scroll1.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x68\xec\xba\xe1\xbe\x41\x74\x31\x17\xd2\x89\x2c\x35\x1a\xa0\x6a\x10\x06\xa1\x9a"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x68\xec\xba\xe1\xbe\x41\x74\x31\x17\xd2\x89\x2c\x35\x1a\xa0\x6a\x10\x06\xa1\x9a");
 }
 
-BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
+RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
 {
     TestDraw drawable(800, 600);
 
@@ -114,13 +102,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
 
     //drawable.save_to_png("scroll2.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x35\x2b\x65\xcf\x60\x37\xc3\x4f\x19\x5e\xf5\xf7\x55\xb6\x87\x3b\x2b\x84\x52\x41"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x35\x2b\x65\xcf\x60\x37\xc3\x4f\x19\x5e\xf5\xf7\x55\xb6\x87\x3b\x2b\x84\x52\x41");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
@@ -129,14 +111,10 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBar)
 
     //drawable.save_to_png("scroll3.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x22\x74\x49\xb3\xe6\xc2\x89\x21\xf5\x98\xe0\x63\x21\xeb\x5f\xfd\xe2\xe4\x61\x02"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x22\x74\x49\xb3\xe6\xc2\x89\x21\xf5\x98\xe0\x63\x21\xeb\x5f\xfd\xe2\xe4\x61\x02");
 }
 
-BOOST_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
+RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
 {
     TestDraw drawable(800, 600);
 
@@ -166,13 +144,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
 
     //drawable.save_to_png("scroll4.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x18\x49\xe8\x32\x2b\x96\x81\xd8\xc6\xd2\xf0\x56\xae\x03\x40\xb2\x18\xef\x04\x25"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x18\x49\xe8\x32\x2b\x96\x81\xd8\xc6\xd2\xf0\x56\xae\x03\x40\xb2\x18\xef\x04\x25");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
@@ -181,14 +153,10 @@ BOOST_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
 
     //drawable.save_to_png("scroll5.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x51\x9c\x6b\xd3\x11\x49\x22\x1c\x3e\x59\x41\x73\x93\xf7\x75\xe0\xae\x00\x09\xa8"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x51\x9c\x6b\xd3\x11\x49\x22\x1c\x3e\x59\x41\x73\x93\xf7\x75\xe0\xae\x00\x09\xa8");
 }
 
-BOOST_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
+RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
 {
     TestDraw drawable(800, 600);
 
@@ -218,13 +186,7 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
 
     //drawable.save_to_png("scroll6.png");
 
-    char message[1024];
-
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x48\x75\xb9\x15\x1f\xe5\x3c\x10\x9b\x9e\x70\x42\xf4\xa4\xa2\x9f\xe1\x7b\x47\xd8"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x48\x75\xb9\x15\x1f\xe5\x3c\x10\x9b\x9e\x70\x42\xf4\xa4\xa2\x9f\xe1\x7b\x47\xd8");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
@@ -233,9 +195,5 @@ BOOST_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
 
     //drawable.save_to_png("scroll7.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xb2\xb0\x07\x74\xcd\x55\xa1\x2d\xd2\x16\xc2\x74\x4f\xde\x50\x0c\x34\x37\x9b\x09"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xb2\xb0\x07\x74\xcd\x55\xa1\x2d\xd2\x16\xc2\x74\x4f\xde\x50\x0c\x34\x37\x9b\x09");
 }

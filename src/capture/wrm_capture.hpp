@@ -83,7 +83,7 @@ public:
         this->filename_gen[0] = 0;
     }
 
-    const char * get(int count) const
+    const char * get(unsigned count) const
     {
         std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                 , this->filename, count, this->extension);
@@ -250,8 +250,8 @@ public:
     , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
     , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
     {
-        LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
-    
+//        LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
+
     }
 
 
@@ -320,7 +320,7 @@ public:
         );
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
+//        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
 
         OutCryptoTransport hash_buf_encrypt_transport(this->with_encryption, false, this->cctx, this->rnd);
         hash_buf_encrypt_transport.open(this->hf_.filename, S_IRUSR|S_IRGRP);
@@ -421,7 +421,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const int groupid,
         auth_api * authentifier)
     : buf(with_encryption, with_checksum, cctx, rnd, fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid) {
-        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport()");
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
@@ -442,12 +441,10 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
             }
         }
-        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport() done");
     }
 
     ~wrmcapture_OutMetaSequenceTransport()
     {
-        LOG(LOG_INFO, "wrmcapture_OutMetaSequenceTransport::destructor");
     }
 
     void timestamp(timeval now) override {
@@ -455,8 +452,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
     }
 
     bool next() override {
-        LOG(LOG_INFO, "OutMetaSequenceTransport::next()");
-
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
@@ -470,7 +465,6 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         ++this->seqno;
-        LOG(LOG_INFO, "OutMetaSequenceTransport::next() done");
         return true;
     }
 
@@ -485,19 +479,18 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1));
+                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1u));
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
-                LOG(LOG_INFO, "OutMetaSequenceTransport::do_send() exception NO_ROOM");
+                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception NO_ROOM");
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
             }
             else {
-                LOG(LOG_INFO, "OutMetaSequenceTransport::do_send() exception WRITE_FAILED");
+                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception WRITE_FAILED");
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
         this->last_quantum_sent += res;
-        LOG(LOG_INFO, "OutMetaSequenceTransport::do_send() done");
     }
 };
 
@@ -1546,7 +1539,6 @@ public:
 
     ~WrmCaptureImpl()
     {
-        LOG(LOG_INFO, "~WrmCaptureImpl()\n");
     }
     // shadow text
     bool kbd_input(const timeval& now, uint32_t uchar) override {

@@ -18,26 +18,24 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSplitter
+#define UNIT_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 #include <string>
 
-BOOST_AUTO_TEST_CASE(TestSplitter)
+RED_AUTO_TEST_CASE(TestSplitter)
 {
     const char text[] = "abc,de,efg,h,ijk,lmn";
     std::string s;
     for (auto r : get_line(text, ',')) {
         s.append(r.begin(), r.size()) += ':';
     }
-    BOOST_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
+    RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 }
 
-BOOST_AUTO_TEST_CASE(TestSplitter2)
+RED_AUTO_TEST_CASE(TestSplitter2)
 {
     const char * drives = " export ,, , \t share \t ,";
 
@@ -49,5 +47,5 @@ BOOST_AUTO_TEST_CASE(TestSplitter2)
 
         s.append(begin(trimmed_range), end(trimmed_range)) += ',';
     }
-    BOOST_CHECK_EQUAL(s, "export,share,");
+    RED_CHECK_EQUAL(s, "export,share,");
 }

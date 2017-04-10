@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestVNC
+#define UNIT_TEST_MODULE TestVNC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -29,7 +27,7 @@
 #include "mod/vnc/vnc.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
+RED_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {
     struct testable_mod_vnc : mod_vnc {
         static void testable_fill_encoding_types_buffer(
@@ -45,12 +43,12 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
         uint16_t number_of_encodings = 0;
         testable_mod_vnc::testable_fill_encoding_types_buffer("16,2,0,1,-239",
             stream, number_of_encodings, 1);
-        BOOST_CHECK(!memcmp(stream.get_data(),
+        RED_CHECK(!memcmp(stream.get_data(),
                             "\x00\x00\x00\x10\x00\x00\x00\x02"
                             "\x00\x00\x00\x00\x00\x00\x00\x01"
                             "\xFF\xFF\xFF\x11",
                             20));
-        BOOST_CHECK_EQUAL(number_of_encodings, 5);
+        RED_CHECK_EQUAL(number_of_encodings, 5);
     }
 
     {
@@ -58,17 +56,17 @@ BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
         uint16_t number_of_encodings = 0;
         testable_mod_vnc::testable_fill_encoding_types_buffer(
             "\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings, 1);
-        BOOST_CHECK(!memcmp(stream.get_data(),
+        RED_CHECK(!memcmp(stream.get_data(),
                             "\x00\x00\x00\x10\x00\x00\x00\x02"
                             "\x00\x00\x00\x00\x00\x00\x00\x01"
                             "\xFF\xFF\xFF\x11",
                             20));
-        BOOST_CHECK_EQUAL(number_of_encodings, 5);
+        RED_CHECK_EQUAL(number_of_encodings, 5);
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestVncMouse)
+RED_AUTO_TEST_CASE(TestVncMouse)
 {
     char data[] =
         "\x05\x00\x00\x0a\x00\x0a"                          // move 10, 10

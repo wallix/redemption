@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderScrBlt
+#define UNIT_TEST_MODULE TestOrderScrBlt
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT
@@ -33,7 +31,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestScrBlt)
+RED_AUTO_TEST_CASE(TestScrBlt)
 {
     using namespace RDP;
 
@@ -65,10 +63,10 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
         cmd.receive(in_stream, header);
@@ -107,10 +105,10 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
         cmd.receive(in_stream, header);
@@ -148,10 +146,10 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
         cmd.receive(in_stream, header);
@@ -188,10 +186,10 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
         cmd.receive(in_stream, header);

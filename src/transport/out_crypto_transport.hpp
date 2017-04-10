@@ -45,7 +45,7 @@ public:
     {
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
-    } 
+    }
 
     const char * get_tmp(){
         return &this->tmpname[0];
@@ -76,7 +76,7 @@ public:
                 LOG(LOG_INFO, "%s", mes);
             }
         }
-        catch (Error e){
+        catch (Error const & e){
             LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %d", e.id);
         }
     }
@@ -93,21 +93,20 @@ public:
 
     void open(const char * finalname, int groupid)
     {
-        LOG(LOG_INFO, "finalname is %s", finalname);
         // This should avoid double open, we do not want that
         if (this->fd != -1){
-            LOG(LOG_INFO, "OutCryptoTransport::open (double open error) %s", finalname);
+            LOG(LOG_ERR, "OutCryptoTransport::open (double open error) %s", finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         // also ensure pathes are not to long, we will copy them in the object
         if (strlen(finalname) >= 2047-15){
-            LOG(LOG_INFO, "OutCryptoTransport::open finalname oversize");
+            LOG(LOG_ERR, "OutCryptoTransport::open finalname oversize");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
         this->fd = ::mkostemps(this->tmpname, 4, O_WRONLY | O_CREAT);
         if (this->fd == -1){
-            LOG(LOG_INFO, "OutCryptoTransport::open : open failed (%s -> %s)", this->tmpname, finalname);
+            LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s)", this->tmpname, finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
 
@@ -127,19 +126,19 @@ public:
         ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
         this->raw_write(res.buf.data(), res.buf.size());
     }
-    
+
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         // This should avoid double closes, we do not want that
         if (this->fd == -1){
-            LOG(LOG_INFO, "OutCryptoTransport::close error (double close error)");
+            LOG(LOG_ERR, "OutCryptoTransport::close error (double close error)");
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
         this->raw_write(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
-                LOG( LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%u : %s\n"
+                LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%u : %s\n"
                    , this->tmpname, this->finalname, errno, strerror(errno));
                 ::close(this->fd);
                 this->fd = -1;
@@ -152,16 +151,16 @@ public:
     }
 
 private:
-    void do_send(const uint8_t * data, size_t len) override 
+    void do_send(const uint8_t * data, size_t len) override
     {
         if (this->fd == -1){
-        LOG(LOG_INFO, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
+        LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.write(data, len);
         this->raw_write(res.buf.data(), res.buf.size());
     }
-    
+
     void raw_write(const uint8_t * data, size_t len)
     {
         size_t total_sent = 0;
@@ -176,5 +175,5 @@ private:
             total_sent += ret;
         }
     }
-    
+
 };

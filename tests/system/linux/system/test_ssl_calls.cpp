@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestCalls
+#define UNIT_TEST_MODULE TestCalls
 
 #define LOGNULL
 

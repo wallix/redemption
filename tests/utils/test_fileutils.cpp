@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFileUtils
+#define UNIT_TEST_MODULE TestFileUtils
 #include "system/redemption_unit_tests.hpp"
 
 // #define LOGPRINT
@@ -30,7 +28,7 @@
 
 #include "utils/fileutils.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBasename)
+RED_AUTO_TEST_CASE(TestBasename)
 {
 // basename() change behavior depending if <filegen.h> is included
 // or not. The POSIX version chnage it's argument, not the glibc one
@@ -47,87 +45,87 @@ BOOST_AUTO_TEST_CASE(TestBasename)
 //          ".."        ".."
     {
         char path[]= "/usr/lib";
-        BOOST_CHECK(0 == strcmp(basename(path), "lib"));
+        RED_CHECK(0 == strcmp(basename(path), "lib"));
     }
     {
         char path[]= "/usr/lib";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(3, len);
-        BOOST_CHECK(0 == memcmp(base, "lib", len));
+        RED_CHECK_EQUAL(3, len);
+        RED_CHECK(0 == memcmp(base, "lib", len));
 
     }
 
     {
         char path[]= "/usr/lib/";
-        BOOST_CHECK(0 == strcmp(basename(path), ""));
+        RED_CHECK(0 == strcmp(basename(path), ""));
     }
     {
         char path[]= "/usr/lib/";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(0, len);
-        BOOST_CHECK(0 == memcmp(base, "", len));
+        RED_CHECK_EQUAL(0, len);
+        RED_CHECK(0 == memcmp(base, "", len));
 
     }
     {
         char path[]= "/usr/";
-        BOOST_CHECK(0 == strcmp(basename(path), ""));
+        RED_CHECK(0 == strcmp(basename(path), ""));
     }
     {
         char path[]= "/usr";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(3, len);
-        BOOST_CHECK(0 == memcmp(base, "usr", len));
+        RED_CHECK_EQUAL(3, len);
+        RED_CHECK(0 == memcmp(base, "usr", len));
 
     }
     {
         char path[]= "usr";
-        BOOST_CHECK(0 == strcmp(basename(path), "usr"));
+        RED_CHECK(0 == strcmp(basename(path), "usr"));
     }
     {
         char path[]= "usr";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(3, len);
-        BOOST_CHECK(0 == memcmp(base, "usr", len));
+        RED_CHECK_EQUAL(3, len);
+        RED_CHECK(0 == memcmp(base, "usr", len));
 
     }
     {
         char path[]= "/";
-        BOOST_CHECK(0 == strcmp(basename(path), ""));
+        RED_CHECK(0 == strcmp(basename(path), ""));
     }
     {
         char path[]= "/";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(0, len);
-        BOOST_CHECK(0 == memcmp(base, "", len));
+        RED_CHECK_EQUAL(0, len);
+        RED_CHECK(0 == memcmp(base, "", len));
 
     }
     {
         char path[]= ".";
-        BOOST_CHECK(0 == strcmp(basename(path), "."));
+        RED_CHECK(0 == strcmp(basename(path), "."));
     }
     {
         char path[]= ".";
         size_t len = 0;
         char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(1, len);
-        BOOST_CHECK(0 == memcmp(base, ".", len));
+        RED_CHECK_EQUAL(1, len);
+        RED_CHECK(0 == memcmp(base, ".", len));
 
     }
     {
         char path[]= "..";
-        BOOST_CHECK(0 == strcmp(basename(path), ".."));
+        RED_CHECK(0 == strcmp(basename(path), ".."));
     }
     {
         const char path[]= "..";
         size_t len = 0;
         const char * base = basename_len(path, len);
-        BOOST_CHECK_EQUAL(2, len);
-        BOOST_CHECK(0 == memcmp(base, "..", len));
+        RED_CHECK_EQUAL(2, len);
+        RED_CHECK(0 == memcmp(base, "..", len));
 
     }
 
@@ -141,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TestBasename)
 
 
 
-BOOST_AUTO_TEST_CASE(CanonicalPath)
+RED_AUTO_TEST_CASE(CanonicalPath)
 {
   // check that function that splits a path between canonical parts has expected behavior
   // Parts are:
@@ -158,70 +156,70 @@ BOOST_AUTO_TEST_CASE(CanonicalPath)
   strcpy(extension, "no extension");
 
   canonical_path("./titi/result.tmp", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("./titi/", path);
-  BOOST_CHECK_EQUAL("result", basename);
-  BOOST_CHECK_EQUAL(".tmp", extension);
+  RED_CHECK_EQUAL("./titi/", path);
+  RED_CHECK_EQUAL("result", basename);
+  RED_CHECK_EQUAL(".tmp", extension);
 
 
   strcpy(path, "no path");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path("result", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("no path", path);
-  BOOST_CHECK_EQUAL("result", basename);
-  BOOST_CHECK_EQUAL("no extension", extension);
+  RED_CHECK_EQUAL("no path", path);
+  RED_CHECK_EQUAL("result", basename);
+  RED_CHECK_EQUAL("no extension", extension);
 
   strcpy(path, "no path");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path("result/", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("result/", path);
-  BOOST_CHECK_EQUAL("no basename", basename);
-  BOOST_CHECK_EQUAL("no extension", extension);
+  RED_CHECK_EQUAL("result/", path);
+  RED_CHECK_EQUAL("no basename", basename);
+  RED_CHECK_EQUAL("no extension", extension);
 
   strcpy(path, "no path");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path("result.tmp", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("no path", path);
-  BOOST_CHECK_EQUAL("result", basename);
-  BOOST_CHECK_EQUAL(".tmp", extension);
+  RED_CHECK_EQUAL("no path", path);
+  RED_CHECK_EQUAL("result", basename);
+  RED_CHECK_EQUAL(".tmp", extension);
 
   strcpy(path, "no extension");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path("tmp/.tmp", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("tmp/", path);
-  BOOST_CHECK_EQUAL("no basename", basename);
-  BOOST_CHECK_EQUAL(".tmp", extension);
+  RED_CHECK_EQUAL("tmp/", path);
+  RED_CHECK_EQUAL("no basename", basename);
+  RED_CHECK_EQUAL(".tmp", extension);
 
   strcpy(path, "no path");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path(".tmp", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("no path", path);
-  BOOST_CHECK_EQUAL("no basename", basename);
-  BOOST_CHECK_EQUAL(".tmp", extension);
+  RED_CHECK_EQUAL("no path", path);
+  RED_CHECK_EQUAL("no basename", basename);
+  RED_CHECK_EQUAL(".tmp", extension);
 
   strcpy(path, "no path");
   strcpy(basename, "no basename");
   strcpy(extension, "no extension");
   canonical_path("", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("no path", path);
-  BOOST_CHECK_EQUAL("no basename", basename);
-  BOOST_CHECK_EQUAL("no extension", extension);
+  RED_CHECK_EQUAL("no path", path);
+  RED_CHECK_EQUAL("no basename", basename);
+  RED_CHECK_EQUAL("no extension", extension);
 }
 
-BOOST_AUTO_TEST_CASE(TestParsePath)
+RED_AUTO_TEST_CASE(TestParsePath)
 {
     {
         std::string directory;
         std::string filename ;
         std::string extension;
         ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
-        BOOST_CHECK_EQUAL(".ini"          , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL("rdpproxy"      , filename );
+        RED_CHECK_EQUAL(".ini"          , extension);
     }
 
     {
@@ -229,9 +227,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
-        BOOST_CHECK_EQUAL(""              , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL("rdpproxy"      , filename );
+        RED_CHECK_EQUAL(""              , extension);
     }
 
     {
@@ -239,9 +237,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath("/etc/rdpproxy/", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL(""              , filename );
-        BOOST_CHECK_EQUAL(""              , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL(""              , filename );
+        RED_CHECK_EQUAL(""              , extension);
     }
 
     {
@@ -249,9 +247,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath("rdpproxy.ini", directory, filename, extension);
-        BOOST_CHECK_EQUAL(""        , directory);
-        BOOST_CHECK_EQUAL("rdpproxy", filename );
-        BOOST_CHECK_EQUAL(".ini"    , extension);
+        RED_CHECK_EQUAL(""        , directory);
+        RED_CHECK_EQUAL("rdpproxy", filename );
+        RED_CHECK_EQUAL(".ini"    , extension);
     }
 
     {
@@ -259,9 +257,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath("rdpproxy.", directory, filename, extension);
-        BOOST_CHECK_EQUAL(""        , directory);
-        BOOST_CHECK_EQUAL("rdpproxy", filename );
-        BOOST_CHECK_EQUAL("."       , extension);
+        RED_CHECK_EQUAL(""        , directory);
+        RED_CHECK_EQUAL("rdpproxy", filename );
+        RED_CHECK_EQUAL("."       , extension);
     }
 
     {
@@ -269,9 +267,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath("rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL(""        , directory);
-        BOOST_CHECK_EQUAL("rdpproxy", filename );
-        BOOST_CHECK_EQUAL(""        , extension);
+        RED_CHECK_EQUAL(""        , directory);
+        RED_CHECK_EQUAL("rdpproxy", filename );
+        RED_CHECK_EQUAL(""        , extension);
     }
 
     {
@@ -279,9 +277,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename ;
         std::string extension;
         ParsePath(".rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL(""         , directory);
-        BOOST_CHECK_EQUAL(".rdpproxy", filename );
-        BOOST_CHECK_EQUAL(""         , extension);
+        RED_CHECK_EQUAL(""         , directory);
+        RED_CHECK_EQUAL(".rdpproxy", filename );
+        RED_CHECK_EQUAL(""         , extension);
     }
 
     {
@@ -289,9 +287,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
-        BOOST_CHECK_EQUAL(".ini"          , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL("rdpproxy"      , filename );
+        RED_CHECK_EQUAL(".ini"          , extension);
     }
 
     {
@@ -299,9 +297,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
-        BOOST_CHECK_EQUAL(".conf"         , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL("rdpproxy"      , filename );
+        RED_CHECK_EQUAL(".conf"         , extension);
     }
 
     {
@@ -309,9 +307,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename            ;
         std::string extension = ".conf" ;
         ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        BOOST_CHECK_EQUAL("rdpproxy"      , filename );
-        BOOST_CHECK_EQUAL(".conf"         , extension);
+        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
+        RED_CHECK_EQUAL("rdpproxy"      , filename );
+        RED_CHECK_EQUAL(".conf"         , extension);
     }
 
     {
@@ -319,9 +317,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath("rdpproxy.ini", directory, filename, extension);
-        BOOST_CHECK_EQUAL("./"      , directory);
-        BOOST_CHECK_EQUAL("rdpproxy", filename );
-        BOOST_CHECK_EQUAL(".ini"    , extension);
+        RED_CHECK_EQUAL("./"      , directory);
+        RED_CHECK_EQUAL("rdpproxy", filename );
+        RED_CHECK_EQUAL(".ini"    , extension);
     }
 
     {
@@ -329,9 +327,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath("rdpproxy", directory, filename, extension);
-        BOOST_CHECK_EQUAL("./"      , directory);
-        BOOST_CHECK_EQUAL("rdpproxy", filename );
-        BOOST_CHECK_EQUAL(".conf"   , extension);
+        RED_CHECK_EQUAL("./"      , directory);
+        RED_CHECK_EQUAL("rdpproxy", filename );
+        RED_CHECK_EQUAL(".conf"   , extension);
     }
 
     {
@@ -339,9 +337,9 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath(".rdpproxy.ini", directory, filename, extension);
-        BOOST_CHECK_EQUAL("./"       , directory);
-        BOOST_CHECK_EQUAL(".rdpproxy", filename );
-        BOOST_CHECK_EQUAL(".ini"     , extension);
+        RED_CHECK_EQUAL("./"       , directory);
+        RED_CHECK_EQUAL(".rdpproxy", filename );
+        RED_CHECK_EQUAL(".ini"     , extension);
     }
 
     {
@@ -349,53 +347,53 @@ BOOST_AUTO_TEST_CASE(TestParsePath)
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
         ParsePath("", directory, filename, extension);
-        BOOST_CHECK_EQUAL("./"    , directory);
-        BOOST_CHECK_EQUAL("sesman", filename );
-        BOOST_CHECK_EQUAL(".conf" , extension);
+        RED_CHECK_EQUAL("./"    , directory);
+        RED_CHECK_EQUAL("sesman", filename );
+        RED_CHECK_EQUAL(".conf" , extension);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestMakePath)
+RED_AUTO_TEST_CASE(TestMakePath)
 {
     {
         std::string fullpath;
         MakePath(fullpath, nullptr, nullptr, nullptr);
-        BOOST_CHECK_EQUAL("", fullpath);
+        RED_CHECK_EQUAL("", fullpath);
     }
 
     {
         std::string fullpath;
         MakePath(fullpath, "", "", "");
-        BOOST_CHECK_EQUAL("", fullpath);
+        RED_CHECK_EQUAL("", fullpath);
     }
 
     {
         std::string fullpath;
         MakePath(fullpath, "/etc/rdpproxy/", "rdpproxy", ".ini");
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
+        RED_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
     }
 
     {
         std::string fullpath;
         MakePath(fullpath, "/etc/rdpproxy", "rdpproxy", "ini");
-        BOOST_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
+        RED_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
+RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 {
     char tmpdirname[128];
     sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-    BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
-    BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
+    RED_CHECK(nullptr != mkdtemp(tmpdirname));
+    RED_CHECK_EQUAL(true, file_exist(tmpdirname));
 
     recursive_delete_directory(tmpdirname);
 
-    BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(false, file_exist(tmpdirname));
 
     recursive_create_directory(tmpdirname, 0777, getgid());
 
-    BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(true, file_exist(tmpdirname));
 
     char tmpfilename[128];
     strcpy(tmpfilename, tmpdirname);
@@ -403,26 +401,26 @@ BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
     close(mkstemp(tmpfilename));
 
     recursive_delete_directory(tmpdirname);
-    BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(false, file_exist(tmpdirname));
 
 }
 
-BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
+RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
 {
     char tmpdirname[128];
     sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-    BOOST_CHECK(nullptr != mkdtemp(tmpdirname));
-    BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
+    RED_CHECK(nullptr != mkdtemp(tmpdirname));
+    RED_CHECK_EQUAL(true, file_exist(tmpdirname));
 
     // Add a trailing slash to tmpdirname
     strcat(tmpdirname, "/");
     recursive_delete_directory(tmpdirname);
 
-    BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(false, file_exist(tmpdirname));
 
     recursive_create_directory(tmpdirname, 0777, getgid());
 
-    BOOST_CHECK_EQUAL(true, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(true, file_exist(tmpdirname));
 
     char tmpfilename[128];
     strcpy(tmpfilename, tmpdirname);
@@ -430,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     close(mkstemp(tmpfilename));
 
     recursive_delete_directory(tmpdirname);
-    BOOST_CHECK_EQUAL(false, file_exist(tmpdirname));
+    RED_CHECK_EQUAL(false, file_exist(tmpdirname));
 }
 
 

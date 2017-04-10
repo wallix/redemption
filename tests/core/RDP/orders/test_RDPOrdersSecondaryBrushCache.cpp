@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderColCache
+#define UNIT_TEST_MODULE TestOrderColCache
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT
@@ -33,7 +31,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
+RED_AUTO_TEST_CASE(TestBrushCache1BPP)
 {
     using namespace RDP;
 
@@ -74,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+        RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(in_stream);
 
         RDPBrushCache cmd(0, BMF_1BPP, 8, 8, 0, 8, pattern);

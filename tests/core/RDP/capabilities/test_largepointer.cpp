@@ -21,22 +21,20 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/largepointer.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
+RED_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 {
     LargePointerCaps largepointer_caps;
     largepointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
 
-    BOOST_CHECK_EQUAL(largepointer_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
-    BOOST_CHECK_EQUAL(largepointer_caps.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
-    BOOST_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(largepointer_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
+    RED_CHECK_EQUAL(largepointer_caps.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
+    RED_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, static_cast<uint16_t>(1));
 
     StaticOutStream<1024> out_stream;
     largepointer_caps.emit(out_stream);
@@ -45,12 +43,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 
     LargePointerCaps largepointer_caps2;
 
-    BOOST_CHECK_EQUAL(largepointer_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
-    BOOST_CHECK_EQUAL(largepointer_caps2.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
+    RED_CHECK_EQUAL(largepointer_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
+    RED_CHECK_EQUAL(largepointer_caps2.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_LARGE_POINTER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_LARGE_POINTER), stream.in_uint16_le());
     largepointer_caps2.recv(stream, CAPLEN_LARGE_POINTER);
 
-    BOOST_CHECK_EQUAL(largepointer_caps2.largePointerSupportFlags, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(largepointer_caps2.largePointerSupportFlags, static_cast<uint16_t>(1));
 }

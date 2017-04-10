@@ -18,9 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNLA
+#define UNIT_TEST_MODULE TestNLA
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -28,7 +26,7 @@
 
 #include "transport/test_transport.hpp"
 
-// BOOST_AUTO_TEST_CASE(TestNla)
+// RED_AUTO_TEST_CASE(TestNla)
 // {
 //     LogTransport logtrans;
 //     rdpCredssp credssp(logtrans);
@@ -36,7 +34,7 @@
 //     credssp.credssp_client_authenticate();
 // }
 
-BOOST_AUTO_TEST_CASE(TestNlaclient)
+RED_AUTO_TEST_CASE(TestNlaclient)
 {
     const char client[65000] =
         // negotiate
@@ -108,12 +106,12 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
     LCGTime timeobj;
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     int res = credssp.credssp_client_authenticate();
-    BOOST_CHECK_EQUAL(res, 1);
+    RED_CHECK_EQUAL(res, 1);
 }
 
 
 
-BOOST_AUTO_TEST_CASE(TestNlaserver)
+RED_AUTO_TEST_CASE(TestNlaserver)
 {
 
     const char client[65000] =
@@ -186,6 +184,6 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
-    BOOST_CHECK_EQUAL(res, 1);
+    RED_CHECK_EQUAL(res, 1);
 }
 

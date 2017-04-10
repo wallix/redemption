@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetGrid
+#define UNIT_TEST_MODULE TestWidgetGrid
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -36,7 +34,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
+RED_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestDraw drawable(800, 600);
 
@@ -111,12 +109,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9");
 
 
     wgrid.set_selection(4);
@@ -128,11 +121,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74");
 
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -148,11 +137,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1");
 
 
     Keymap2 keymap;
@@ -174,11 +159,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
-    if (!check_sig(drawable.gd.impl(), message,
-        "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32");
 
     wgrid.clear();
 
@@ -188,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
+RED_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
@@ -216,11 +197,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     if (!check_sig(drawable.gd.impl(), message,
         "\xc2\x24\xac\x83\xee\xdc\x69\x2d\x01\x94"
         "\xfc\xe9\x2b\x45\xa8\x4a\xa9\x89\xde\x6d")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
+RED_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
@@ -248,11 +229,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     if (!check_sig(drawable.gd.impl(), message,
         "\x40\x9a\xff\xfd\x37\x16\x19\xa3\x3a\x92"
         "\xac\x4c\x1d\x7c\x6e\x47\xd1\x14\x33\x01")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
+RED_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
@@ -280,11 +261,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     if (!check_sig(drawable.gd.impl(), message,
         "\x55\xb9\x08\xd3\x42\x16\x47\x4d\x62\xa7"
         "\xfc\xce\x0d\x18\x9c\x29\x82\xd6\xf2\x38")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
+RED_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
@@ -312,11 +293,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     if (!check_sig(drawable.gd.impl(), message,
         "\x3c\xa9\xf2\x32\x51\xc4\x70\x8c\xfe\x26"
         "\xc8\x37\xa1\xdb\x5a\xdb\x82\xad\x1f\x67")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
+RED_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
@@ -344,11 +325,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     if (!check_sig(drawable.gd.impl(), message,
         "\x14\x49\x6b\x6a\xf0\xb8\x40\x0d\x5f\x61"
         "\xe6\x5d\x91\x13\x34\x89\x8d\x3c\xb8\xd0")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
     TestDraw drawable(800, 600);
 
@@ -376,11 +357,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     if (!check_sig(drawable.gd.impl(), message,
         "\x5b\x6c\x88\xf2\x0b\x35\x40\xbe\x8e\x44"
         "\xc0\x45\x4c\xed\x3a\x77\xc3\x3c\x30\x1a")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
+RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
     TestDraw drawable(800, 600);
 
@@ -408,11 +389,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     if (!check_sig(drawable.gd.impl(), message,
         "\xa1\x7a\x59\x8d\x51\x87\x8f\xf5\x90\x75"
         "\x02\xec\x6e\x61\x49\xbd\xaa\x92\x8f\x01")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
+RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 {
     TestDraw drawable(800, 600);
 
@@ -445,22 +426,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_char('a');
 
     wlabel.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    BOOST_CHECK(widget_for_receive_event.sender == 0);
-    BOOST_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.sender == 0);
+    RED_CHECK(widget_for_receive_event.event == 0);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
+RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestDraw drawable(800, 600);
 
@@ -499,7 +480,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     if (!check_sig(drawable.gd.impl(), message,
         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
 
     //ask to widget to redraw at it's current position
@@ -510,7 +491,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     if (!check_sig(drawable.gd.impl(), message,
         "\x47\x60\x43\x39\x74\x53\x46\x46\xd0\x1a"
         "\x3a\x30\x71\xfd\xee\xa6\x3a\x6c\xaa\x75")){
-        BOOST_CHECK_MESSAGE(false, message);
+        RED_CHECK_MESSAGE(false, message);
     }
     wcomposite.clear();
 }

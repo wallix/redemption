@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestMd5
+#define UNIT_TEST_MODULE TestMd5
 
 #define LOGNULL
 

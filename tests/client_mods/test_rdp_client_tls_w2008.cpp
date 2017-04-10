@@ -21,9 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientTLSW2008
+#define UNIT_TEST_MODULE TestRdpClientTLSW2008
 
 
 #include "system/redemption_unit_tests.hpp"
@@ -44,7 +42,7 @@
 #include "../front/fake_front.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
 
@@ -132,10 +130,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO,
             "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -148,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //front.dump_png("trace_w2008_tls_");
 }
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket2)
+RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     int verbose = 256;
 
@@ -229,10 +227,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

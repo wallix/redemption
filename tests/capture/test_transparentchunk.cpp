@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE Testtransparentchunk
+#define UNIT_TEST_MODULE Testtransparentchunk
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
@@ -30,7 +28,7 @@
 
 #include "capture/transparentchunk.hpp"
 
-BOOST_AUTO_TEST_CASE(Testtransparentchunk)
+RED_AUTO_TEST_CASE(Testtransparentchunk)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 }

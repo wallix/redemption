@@ -240,7 +240,7 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /
             count -= elapsed;
         }
     }
-    return std::chrono::microseconds(frame_interval - tick);
+    return frame_interval - tick;
 }
 
 //@}

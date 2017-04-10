@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestSha1
+#define UNIT_TEST_MODULE TestSha1
 
 #include "utils/crypto/ssl_sha1_direct.hpp"
 

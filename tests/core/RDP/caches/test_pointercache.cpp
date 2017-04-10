@@ -19,15 +19,13 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define UNIT_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/caches/pointercache.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+RED_AUTO_TEST_CASE(TestXXX)
 {
 }

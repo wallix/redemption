@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPOrdersCommon
+#define UNIT_TEST_MODULE TestRDPOrdersCommon
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 
 // Tests on opaque rect also cover RDPOrdersCommon
 // TODO "we should have a way in coverage.reference file to say that coverage is performed for a module using some other coverage test"
-BOOST_AUTO_TEST_CASE(TestOpaqueRect)
+RED_AUTO_TEST_CASE(TestOpaqueRect)
 {
     using namespace RDP;
 
@@ -40,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOrderCommon state_common(RECT, Rect(700, 200, 100, 200));
         RDPOpaqueRect state_orect(Rect(0, 0, 800, 600), 0);
 
-        BOOST_CHECK_EQUAL(0, out_stream.get_offset());
+        RED_CHECK_EQUAL(0, out_stream.get_offset());
 
         RDPOrderCommon newcommon(RECT, Rect(0, 400, 800, 76));
         RDPOpaqueRect(Rect(0, 0, 800, 600), 0).emit(out_stream, newcommon, state_common, state_orect);
@@ -59,14 +57,14 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
-        BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
-        BOOST_CHECK_EQUAL(400, common_cmd.clip.y);
-        BOOST_CHECK_EQUAL(800, common_cmd.clip.cx);
-        BOOST_CHECK_EQUAL(76, common_cmd.clip.cy);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(0, common_cmd.clip.x);
+        RED_CHECK_EQUAL(400, common_cmd.clip.y);
+        RED_CHECK_EQUAL(800, common_cmd.clip.cx);
+        RED_CHECK_EQUAL(76, common_cmd.clip.cy);
 
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         cmd.receive(in_stream, header);
@@ -82,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
-        BOOST_CHECK_EQUAL(0, (out_stream.get_offset()));
+        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 0, 800, 600));
         RDPOpaqueRect(Rect(0, 0, 10, 10), 0xFFFFFF).emit(out_stream, newcommon, state_common, state_orect);
@@ -94,10 +92,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -128,10 +126,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -164,10 +162,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -197,10 +195,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -230,10 +228,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -265,10 +263,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -302,10 +300,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -342,10 +340,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -383,10 +381,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);
@@ -420,10 +418,10 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(RECT), common_cmd.order);
 
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
         cmd.receive(in_stream, header);

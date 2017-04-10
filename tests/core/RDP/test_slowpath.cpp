@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSlowPath
+#define UNIT_TEST_MODULE TestSlowPath
 
 #include "system/redemption_unit_tests.hpp"
 
@@ -33,7 +31,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/slowpath.hpp"
 
-BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
+RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
     const char *payload =
 /* 0000 */ "\x08\x00\x00\x00\xae\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xae\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xae\xcb\x72\x01" // ..r...........r. |
@@ -53,13 +51,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 
     {
         auto end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_new(end, payload_length);
+        in_t.recv_atomic(end, payload_length);
     }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
-    BOOST_CHECK_EQUAL(8, in_cie.numEvents);
-    BOOST_CHECK_EQUAL(96, in_cie.payload.get_capacity());
+    RED_CHECK_EQUAL(8, in_cie.numEvents);
+    RED_CHECK_EQUAL(96, in_cie.payload.get_capacity());
 
     SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
 
@@ -77,8 +75,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
     for (uint16_t i = 0; i < in_cie.numEvents; i++) {
         SlowPath::InputEvent_Recv in_ie(in_cie.payload);
 
-        BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
-        BOOST_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
+        RED_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
+        RED_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
 
         SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
 
@@ -109,18 +107,18 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         break;
 
         default:
-            BOOST_CHECK(false);
+            RED_CHECK(false);
         break;
         }
     }
 
     out_t.send(out_s.get_data(), out_s.get_offset());
 
-    BOOST_CHECK_EQUAL(true, out_t.get_status());
-} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
+    RED_CHECK_EQUAL(true, out_t.get_status());
+} // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
-BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
+RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
     const char *payload =
 /* 0000 */ "\x04\x00\x00\x00\xd6\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xd6\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xd6\xcb\x72\x01" // ..r...........r. |
@@ -136,13 +134,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
 
     {
         auto * end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_new(end, payload_length);
+        in_t.recv_atomic(end, payload_length);
     }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
-    BOOST_CHECK_EQUAL(4, in_cie.numEvents);
-    BOOST_CHECK_EQUAL(48, in_cie.payload.get_capacity());
+    RED_CHECK_EQUAL(4, in_cie.numEvents);
+    RED_CHECK_EQUAL(48, in_cie.payload.get_capacity());
 
     SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
 
@@ -156,8 +154,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
     for (uint16_t i = 0; i < in_cie.numEvents; i++) {
         SlowPath::InputEvent_Recv in_ie(in_cie.payload);
 
-        BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
-        BOOST_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
+        RED_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
+        RED_CHECK_EQUAL(6,               in_ie.payload.get_capacity());
 
         SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
 
@@ -188,12 +186,12 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         break;
 
         default:
-            BOOST_CHECK(false);
+            RED_CHECK(false);
         break;
         }
     }
 
     out_t.send(out_s.get_data(), out_s.get_offset());
 
-    BOOST_CHECK_EQUAL(true, out_t.get_status());
-} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
+    RED_CHECK_EQUAL(true, out_t.get_status());
+} // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

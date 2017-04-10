@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestLogon
+#define UNIT_TEST_MODULE TestLogon
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include "core/RDP/logon.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestLogon)
+RED_AUTO_TEST_CASE(TestLogon)
 {
     // TODO Really the test below is useless, we are testing assignment!
     // TODO Infopacket should be replaced by some constructor with parameters and test fixed
@@ -71,8 +69,8 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER
                                                    | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
-    BOOST_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
-    BOOST_CHECK_EQUAL(infoPacket.flags, static_cast<uint32_t>
+    RED_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
+    RED_CHECK_EQUAL(infoPacket.flags, static_cast<uint32_t>
         (INFO_MOUSE
         |INFO_DISABLECTRLALTDEL
         |INFO_UNICODE
@@ -83,17 +81,17 @@ BOOST_AUTO_TEST_CASE(TestLogon)
         |INFO_LOGONERRORS
         |INFO_NOAUDIOPLAYBACK
         ));
-    BOOST_CHECK_EQUAL(0, memcmp(infoPacket.Domain, "Domain_Test", infoPacket.cbDomain));
-    BOOST_CHECK_EQUAL(infoPacket.cbDomain, strlen("Domain_Test"));
-    BOOST_CHECK_EQUAL(0, memcmp(infoPacket.UserName, "UserName_Test", infoPacket.cbUserName));
-    BOOST_CHECK_EQUAL(infoPacket.cbUserName, strlen("UserName_Test"));
-    BOOST_CHECK_EQUAL(0, memcmp(infoPacket.Password, "Password_Test", infoPacket.cbPassword));
-    BOOST_CHECK_EQUAL(infoPacket.cbPassword, strlen("Password_Test"));
-    BOOST_CHECK_EQUAL(0, memcmp(infoPacket.AlternateShell, "Program_Test", infoPacket.cbAlternateShell));
-    BOOST_CHECK_EQUAL(infoPacket.cbAlternateShell, strlen("Program_Test"));
-    BOOST_CHECK_EQUAL(0, memcmp(infoPacket.WorkingDir, "Directory_Test", infoPacket.cbWorkingDir));
-    BOOST_CHECK_EQUAL(infoPacket.cbWorkingDir, strlen("Directory_Test"));
-    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
+    RED_CHECK_EQUAL(0, memcmp(infoPacket.Domain, "Domain_Test", infoPacket.cbDomain));
+    RED_CHECK_EQUAL(infoPacket.cbDomain, strlen("Domain_Test"));
+    RED_CHECK_EQUAL(0, memcmp(infoPacket.UserName, "UserName_Test", infoPacket.cbUserName));
+    RED_CHECK_EQUAL(infoPacket.cbUserName, strlen("UserName_Test"));
+    RED_CHECK_EQUAL(0, memcmp(infoPacket.Password, "Password_Test", infoPacket.cbPassword));
+    RED_CHECK_EQUAL(infoPacket.cbPassword, strlen("Password_Test"));
+    RED_CHECK_EQUAL(0, memcmp(infoPacket.AlternateShell, "Program_Test", infoPacket.cbAlternateShell));
+    RED_CHECK_EQUAL(infoPacket.cbAlternateShell, strlen("Program_Test"));
+    RED_CHECK_EQUAL(0, memcmp(infoPacket.WorkingDir, "Directory_Test", infoPacket.cbWorkingDir));
+    RED_CHECK_EQUAL(infoPacket.cbWorkingDir, strlen("Directory_Test"));
+    RED_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
         (PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 
 }

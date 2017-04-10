@@ -1,0 +1,25 @@
+# Bash
+
+In your `~/.bashrc`:
+
+```bash
+bf () {
+  bjam "$@" 2>&1 | $REDEMPTION_PATH/tools/bjam/bjam_filter.awk | sed "s#$HOME/#~/#g
+  return ${PIPESTATUS[0]}
+}
+
+source $REDEMPTION_PATH/tools/bjam/bjam_completion.bash
+```
+
+# Zsh
+
+In your `~/.zshrc`:
+
+```bash
+bf () {
+  bjam "$@" 2>&1 | $REDEMPTION_PATH/tools/bjam/bjam_filter.awk | sed "s#$HOME/#~/#g
+  return ${pipestatus[1]}
+}
+
+source $REDEMPTION_PATH/tools/bjam/bjam_completion.zsh
+```

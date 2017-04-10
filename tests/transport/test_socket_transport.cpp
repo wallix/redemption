@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSocketTransport
+#define UNIT_TEST_MODULE TestSocketTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -45,7 +43,7 @@
 // this is done through one select loop listening on everybody and non blocking calls
 // (non blocking calls should not even be necessary thanks to select)
 
-BOOST_AUTO_TEST_CASE(TestSocketTransport)
+RED_AUTO_TEST_CASE(TestSocketTransport)
 {
     class ServerOnce : public Server
     {
@@ -119,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
-        BOOST_CHECK_EQUAL(true, true);
+        RED_CHECK_EQUAL(true, true);
         int max = listener.sck;
         FD_SET(max, &rfds);
 
@@ -163,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             for (int i = 0 ; i < nb_recv_sck ; i++){
                 if (FD_ISSET(recv_sck[i], & rfds)){
                     LOG(LOG_INFO, "activity on %d", recv_sck[i]);
-                    sck_trans[i]->recv_new(p, 5);
+                    sck_trans[i]->recv_atomic(p, 5);
                     p += 5;
                     nb_inbuffer += 5;
                     LOG(LOG_INFO, "received %*s\n", nb_inbuffer, buffer);
@@ -196,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
 
                 }
                 else {
-                    BOOST_CHECK(false);
+                    RED_CHECK(false);
                     run = false;
                 }
             }

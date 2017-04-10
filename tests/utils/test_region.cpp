@@ -24,9 +24,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSubRegion
+#define UNIT_TEST_MODULE TestSubRegion
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -36,7 +34,7 @@
 //#include <boost/foreach.hpp>
 
 
-BOOST_AUTO_TEST_CASE(TestSubRegion)
+RED_AUTO_TEST_CASE(TestSubRegion)
 {
     /* create a region */
 
@@ -50,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestSubRegion)
     for (size_t i = 0 ; i < region.rects.size() ; i++){
         sum_left += region.rects[i].x;
     }
-    BOOST_CHECK_EQUAL(30, sum_left);
+    RED_CHECK_EQUAL(30, sum_left);
 
     /* A region is basically a zone defined by adding or substracting rects */
     // if we subtract a rectangle inside region, we get 4 smaller rectangle around it
@@ -66,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestSubRegion)
     //
     SubRegion region2;
     region2.rects.push_back(Rect(10,10,90,90));
-    BOOST_CHECK_EQUAL(1, region2.rects.size());
+    RED_CHECK_EQUAL(1, region2.rects.size());
 
     // (10,10)
     //   x----------------x
@@ -79,17 +77,17 @@ BOOST_AUTO_TEST_CASE(TestSubRegion)
     //   x----------------x
     //                  (100, 100)
     region2.subtract_rect(Rect(30, 30, 20, 20));
-    BOOST_CHECK_EQUAL(4, region2.rects.size());
+    RED_CHECK_EQUAL(4, region2.rects.size());
 
-    BOOST_CHECK_EQUAL(region2.rects[0], Rect(10, 10, 90, 20)); // A
-    BOOST_CHECK_EQUAL(region2.rects[1], Rect(10, 30, 20, 20)); // B
-    BOOST_CHECK_EQUAL(region2.rects[2], Rect(50, 30, 50, 20)); // C
-    BOOST_CHECK_EQUAL(region2.rects[3], Rect(10, 50, 90, 50)); // D
+    RED_CHECK_EQUAL(region2.rects[0], Rect(10, 10, 90, 20)); // A
+    RED_CHECK_EQUAL(region2.rects[1], Rect(10, 30, 20, 20)); // B
+    RED_CHECK_EQUAL(region2.rects[2], Rect(50, 30, 50, 20)); // C
+    RED_CHECK_EQUAL(region2.rects[3], Rect(10, 50, 90, 50)); // D
 
     // we substract a traversing rectangle
     SubRegion region3;
     region3.rects.push_back(Rect(10,10,90,90));
-    BOOST_CHECK_EQUAL(1, region3.rects.size());
+    RED_CHECK_EQUAL(1, region3.rects.size());
 
 
     //         x-----x
@@ -106,8 +104,8 @@ BOOST_AUTO_TEST_CASE(TestSubRegion)
     //         x-----x
 
     region3.subtract_rect(Rect(30, 5, 20, 150));
-    BOOST_CHECK_EQUAL(2, region3.rects.size());
+    RED_CHECK_EQUAL(2, region3.rects.size());
 
-    BOOST_CHECK_EQUAL(region3.rects[0], Rect(10, 10, 20, 90)); // A
-    BOOST_CHECK_EQUAL(region3.rects[1], Rect(50, 10, 50, 90)); // B
+    RED_CHECK_EQUAL(region3.rects[0], Rect(10, 10, 20, 90)); // A
+    RED_CHECK_EQUAL(region3.rects[1], Rect(50, 10, 50, 90)); // B
 }

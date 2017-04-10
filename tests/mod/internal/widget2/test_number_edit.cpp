@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetNumberEdit
+#define UNIT_TEST_MODULE TestWidgetNumberEdit
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
+RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 {
     TestDraw drawable(800, 600);
 
@@ -65,12 +63,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");
-    char message[1024];
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
+    RED_CHECK_SIG(drawable.gd, "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -79,23 +72,15 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-1.png");
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-    BOOST_CHECK(notifier.sender == nullptr);
-    BOOST_CHECK(notifier.event == 0);
+    RED_CHECK_SIG(drawable.gd, "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c");
+    RED_CHECK(notifier.sender == nullptr);
+    RED_CHECK(notifier.event == 0);
 
     keymap.push('2');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
 //    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-2.png");
-    if (!check_sig(drawable.gd.impl(), message,
-        "\xff\xd0\xe8\xbf\x21\x94\xdb\x15\x15\x32\x17\x1d\x89\x4d\x79\xae\xda\x97\xf7\x92"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-    BOOST_CHECK(notifier.sender == &wnumber_edit);
-    BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    RED_CHECK_SIG(drawable.gd, "\xff\xd0\xe8\xbf\x21\x94\xdb\x15\x15\x32\x17\x1d\x89\x4d\x79\xae\xda\x97\xf7\x92");
+    RED_CHECK(notifier.sender == &wnumber_edit);
+    RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
 }

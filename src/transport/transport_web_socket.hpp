@@ -100,7 +100,7 @@ class TransportWebSocket :  public Transport
         }
     }
 
-    void do_recv_new(uint8_t * pbuffer, size_t len) override {
+    bool do_atomic_read(uint8_t * pbuffer, size_t len) override {
 
         if (this->buffer !=  nullptr) {
 
@@ -122,8 +122,8 @@ class TransportWebSocket :  public Transport
                 EM_ASM_({ console.log('do_recv len='+$0); }, len);
             }
         } else {
-
         }
+        return true;
     }
 
 public:

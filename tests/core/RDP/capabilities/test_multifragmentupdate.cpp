@@ -21,22 +21,20 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
+RED_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
 {
     MultiFragmentUpdateCaps multifragmentupdate_caps;
     multifragmentupdate_caps.MaxRequestSize = 65536;
 
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE));
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps.len, static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE));
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps.MaxRequestSize, static_cast<uint32_t>(65536));
+    RED_CHECK_EQUAL(multifragmentupdate_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE));
+    RED_CHECK_EQUAL(multifragmentupdate_caps.len, static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE));
+    RED_CHECK_EQUAL(multifragmentupdate_caps.MaxRequestSize, static_cast<uint32_t>(65536));
 
     StaticOutStream<1024> out_stream;
     multifragmentupdate_caps.emit(out_stream);
@@ -45,12 +43,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
 
     MultiFragmentUpdateCaps multifragmentupdate_caps2;
 
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE));
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps2.len, static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE));
+    RED_CHECK_EQUAL(multifragmentupdate_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE));
+    RED_CHECK_EQUAL(multifragmentupdate_caps2.len, static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_MULTIFRAGMENTUPDATE), stream.in_uint16_le());
     multifragmentupdate_caps2.recv(stream, CAPLEN_MULTIFRAGMENTUPDATE);
 
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps2.MaxRequestSize, static_cast<uint32_t>(65536));
+    RED_CHECK_EQUAL(multifragmentupdate_caps2.MaxRequestSize, static_cast<uint32_t>(65536));
 }

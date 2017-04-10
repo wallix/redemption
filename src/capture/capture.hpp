@@ -712,6 +712,7 @@ public:
 
     bool break_privplay_client;
     uint64_t movie_elapsed_client;
+    uint64_t begin_to_elapse;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -768,6 +769,7 @@ public:
         , statistics()
         , break_privplay_client(false)
         , movie_elapsed_client(0)
+        , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -827,42 +829,37 @@ public:
                 gd->sync();
             }
 
-            try {
-                uint8_t buf[HEADER_SIZE];
-                this->trans->recv_new(buf, HEADER_SIZE);
-                InStream header(buf);
-                this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
-                this->chunk_size = header.in_uint32_le();
-                this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-
-                if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
-                    switch (this->chunk_type) {
-                        case WrmChunkType::RDP_UPDATE_ORDERS:
-                            this->statistics.graphics_update_chunk++; break;
-                        case WrmChunkType::RDP_UPDATE_BITMAP:
-                            this->statistics.bitmap_update_chunk++;   break;
-                        case WrmChunkType::TIMESTAMP:
-                            this->statistics.timestamp_chunk++;       break;
-                        default: ;
-                    }
-                    if (this->chunk_size > 65536){
-                        LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
-                        throw Error(ERR_WRM);
-                    }
-                    this->stream = InStream(this->stream_buf);
-                    if (this->chunk_size - HEADER_SIZE > 0) {
-                        this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                        this->trans->recv_new(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                    }
-                }
+            uint8_t buf[HEADER_SIZE];
+            if (!this->trans->atomic_read(buf, HEADER_SIZE)){
+                return false;
             }
-            catch (Error & e){
-                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
-                    return false;
-                }
+            InStream header(buf);
+            this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
+            this->chunk_size = header.in_uint32_le();
+            this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-                LOG(LOG_ERR,"receive error \"%s\" (%u)", e.errmsg(false), e.id);
-                throw;
+            if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
+            && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
+                switch (this->chunk_type) {
+                    case WrmChunkType::RDP_UPDATE_ORDERS:
+                        this->statistics.graphics_update_chunk++; break;
+                    case WrmChunkType::RDP_UPDATE_BITMAP:
+                        this->statistics.bitmap_update_chunk++;   break;
+                    case WrmChunkType::TIMESTAMP:
+                        this->statistics.timestamp_chunk++;       break;
+                    default: ;
+                }
+                if (this->chunk_size > 65536){
+                    LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
+                    throw Error(ERR_WRM);
+                }
+                this->stream = InStream(this->stream_buf);
+                if (this->chunk_size - HEADER_SIZE > 0) {
+                    this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
+                    if (!this->trans->atomic_read(this->stream_buf, this->chunk_size - HEADER_SIZE)){
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                    }
+                }
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
@@ -1195,6 +1192,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
             }
@@ -1330,7 +1328,9 @@ public:
                 // If no drawable is available ignore images chunks
                 this->stream.rewind();
                 std::size_t sz = this->chunk_size - HEADER_SIZE;
-                this->trans->recv_new(this->stream_buf, sz);
+                if (!this->trans->atomic_read(this->stream_buf, sz)){
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                }
                 this->stream = InStream(this->stream_buf, sz, sz);
             }
             this->remaining_order_count = 0;
@@ -1478,6 +1478,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
             }
@@ -1715,9 +1716,33 @@ private:
     bool privplay_client(CbUpdateProgress update_progess) {
 
         struct timeval now     = tvtime();
-        uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
+        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
 
         bool res(false);
+
+        while (this->begin_to_elapse >= this->movie_elapsed_client) {
+            if (this->next_order()) {
+                if (bool(this->verbose & Verbose::play)) {
+                    LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                }
+
+                if (this->remaining_order_count > 0) {
+                    res = true;
+                }
+
+                this->interpret_order();
+
+                if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
+                    break_privplay_client = true;
+                }
+                if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+                    break_privplay_client = true;
+                }
+            } else {
+                break_privplay_client = true;
+            }
+        }
 
         if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {
@@ -1731,7 +1756,6 @@ private:
                 }
 
                 this->interpret_order();
-
                 if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
                     for (gdi::CaptureApi * cap : this->capture_consumers){
                         cap->periodic_snapshot(
@@ -1744,6 +1768,7 @@ private:
 
                     update_progess(this->record_now.tv_sec);
                 }
+
                 if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                     break_privplay_client = true;
                 }

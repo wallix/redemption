@@ -136,29 +136,28 @@ public:
         return 0;
     }
 
-//     void recv(char ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         this->do_recv(reinterpret_cast<uint8_t **>(pbuffer), len);
-//     }
-
     void send(const char * const buffer, size_t len)
     {
         this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
     }
 
-//     void recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         this->do_recv(pbuffer, len);
-//     }
 
-    void recv_new(char * buffer, size_t len)
+    /// recv_atomic read len bytes into buffer or throw an Error
+    /// if EOF is encountered at that point it's also an error and
+    /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
+    ///
+    void recv_atomic(uint8_t * buffer, size_t len)
     {
-        return this->do_recv_new(reinterpret_cast<uint8_t*>(buffer), len);
+        if (!this->do_atomic_read(buffer, len)){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
     }
 
-    void recv_new(uint8_t * buffer, size_t len)
+    void recv_atomic(char * buffer, size_t len)
     {
-        return this->do_recv_new(buffer, len);
+        if (!this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len)){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
     }
 
     /// atomic_read either read len bytes into buffer or throw an Error
@@ -166,16 +165,15 @@ public:
     /// or false if nothing was read (End of File reached at block frontier)
     /// if an exception is thrown buffer is dirty and may have been modified.
     ///
-    bool atomic_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
-    {
-        return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
-    }
-
     bool atomic_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
     {
         return this->do_atomic_read(buffer, len);
     }
 
+    bool atomic_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
+    }
 
     void send(const uint8_t * const buffer, size_t len)
     {
@@ -193,24 +191,10 @@ public:
     }
 
 private:
-//     virtual void do_recv(uint8_t ** pbuffer, size_t len) __attribute__((deprecated))
-//     {
-//         (void)pbuffer;
-//         (void)len;
-//         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-//     }
-
-
-    // Atomic read read exactly the amount of data requested or return an error
-
+    /// Atomic read read exactly the amount of data requested or return an error
+    /// @see atomic_read
+    ///
     virtual bool do_atomic_read(uint8_t * buffer, size_t len) {
-        (void)buffer;
-        (void)len;
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
-    }
-
-
-    virtual void do_recv_new(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
