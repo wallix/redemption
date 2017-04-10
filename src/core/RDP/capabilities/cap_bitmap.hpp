@@ -161,7 +161,7 @@ struct BitmapCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -210,7 +210,7 @@ struct BitmapCaps : public Capability {
         this->pad2octetsB = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Bitmap caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
@@ -236,7 +236,7 @@ struct BitmapCaps : public Capability {
         LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
     }
 
-    void dump(FILE * f)
+    void dump(FILE * f) const
     {
        fprintf(f, "[Bitmap Capability Set]\n");
 

@@ -88,7 +88,6 @@ public:
     virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
     { (void)channelId; (void)data; (void)size; }
     virtual void send_fastpath_data(InStream &) {}
-    virtual bool retrieve_client_capability_set(Capability &) { return true; }
 
     virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
@@ -105,8 +104,6 @@ public:
     // RemoteApp.
     virtual void send_savesessioninfo() {}
 
-    virtual void recv_disconnect_provider_ultimatum() {}
-
     virtual void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) {
         (void)auto_reconnect;
     }
@@ -114,4 +111,3 @@ public:
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
 };
-

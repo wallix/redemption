@@ -30,9 +30,17 @@
 
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/logon.hpp"
+#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/cap_bmpcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/general.hpp"
 #include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/offscreencache.hpp"
+#include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/rail.hpp"
+#include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
 
@@ -106,6 +114,18 @@ struct ClientInfo {
 
     LargePointerCaps        large_pointer_caps;
     MultiFragmentUpdateCaps multi_fragment_update_caps;
+
+    GeneralCaps             general_caps;
+    BitmapCaps              bitmap_caps;
+    OrderCaps               order_caps;
+    BmpCacheCaps            bmp_cache_caps;
+    BmpCache2Caps           bmp_cache_2_caps;
+    OffScreenCacheCaps      off_screen_cache_caps;
+    GlyphCacheCaps          glyph_cache_caps;
+    RailCaps                rail_caps;
+    WindowListCaps          window_list_caps;
+
+    bool use_bmp_cache_2 = false;
 
     ClientInfo() = default;
 

@@ -24,9 +24,11 @@
 #define BOOST_TEST_MODULE TestInteractiveTargetMod
 #include "system/redemption_unit_tests.hpp"
 
-
 #define LOGNULL
+//#define LOGPRINT
 
+#include "core/RDP/capabilities/window.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "../../front/fake_front.hpp"
 
@@ -43,7 +45,8 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile             ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -72,7 +75,8 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile             ini;
 
@@ -97,7 +101,8 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -145,7 +150,8 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
     info.height = 1200;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");

@@ -62,7 +62,7 @@ struct CompDeskCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -82,7 +82,7 @@ struct CompDeskCaps : public Capability {
         this->CompDeskSupportLevel = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s CompDesk caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "CompDeskCaps caps::CompDeskSupportLevel %u", this->CompDeskSupportLevel);

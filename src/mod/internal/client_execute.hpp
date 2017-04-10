@@ -146,15 +146,16 @@ class ClientExecute : public windowing_api
 
     std::string window_title;
 
-    bool window_level_supported_ex = false;
+    bool const window_level_supported_ex;
 
     bool verbose;
 
 public:
-    ClientExecute(FrontAPI & front, bool verbose)
+    ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
     , window_title(INTERNAL_MODULE_WINDOW_TITLE)
+    , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -1458,11 +1459,6 @@ public:
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
         this->mod_  = &mod;
         this->font_ = &font;
-
-        WindowListCaps window_list_caps;
-        this->front_->retrieve_client_capability_set(window_list_caps);
-
-        this->window_level_supported_ex = (window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX);
 
         this->front_width  = front_width;
         this->front_height = front_height;

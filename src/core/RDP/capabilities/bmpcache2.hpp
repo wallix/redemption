@@ -147,7 +147,7 @@ struct BmpCache2Caps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -181,7 +181,7 @@ struct BmpCache2Caps : public Capability {
         stream.in_skip_bytes(12);
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s BitmapCache2 caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
@@ -209,4 +209,3 @@ struct BmpCache2Caps : public Capability {
             (this->bitmapCache4CellInfo & 0x80000000) ? "yes" : "no");
     }
 };
-

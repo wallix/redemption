@@ -61,6 +61,9 @@ BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                  | PERF_DISABLE_FULLWINDOWDRAG
                                  | PERF_DISABLE_MENUANIMATIONS;
 
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
+
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
 
@@ -168,6 +171,9 @@ BOOST_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     info.large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
 
     info.multi_fragment_update_caps.MaxRequestSize = 38055;
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
