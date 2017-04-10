@@ -246,11 +246,5 @@ public:
         this->str(buffer, sizeof(buffer));
         LOG(level, "%s", buffer);
     }
-
-    void print() const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        printf("%s\n", buffer);
-    }
 };
 
