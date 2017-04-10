@@ -20,7 +20,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestRedirectionInfo
+#define RED_TEST_MODULE TestRedirectionInfo
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

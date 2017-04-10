@@ -18,7 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestNonCopyable
+#define RED_TEST_MODULE TestNonCopyable
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/noncopyable.hpp"

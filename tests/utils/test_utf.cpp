@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestLul
+#define RED_TEST_MODULE TestLul
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/cast.hpp"

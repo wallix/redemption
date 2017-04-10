@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestMPPC50
+#define RED_TEST_MODULE TestMPPC50
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

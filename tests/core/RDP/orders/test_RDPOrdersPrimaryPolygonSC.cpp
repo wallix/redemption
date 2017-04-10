@@ -22,7 +22,7 @@
   Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestOrderPolygonSC
+#define RED_TEST_MODULE TestOrderPolygonSC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT

@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestReplayMod
+#define RED_TEST_MODULE TestReplayMod
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

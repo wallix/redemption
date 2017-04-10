@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestFinally
+#define RED_TEST_MODULE TestFinally
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/finally.hpp"

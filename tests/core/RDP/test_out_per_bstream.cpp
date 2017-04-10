@@ -21,7 +21,7 @@
    Using lib boost functions, some tests need to be added
 */
 
-#define UNIT_TEST_MODULE TestOutPerStream
+#define RED_TEST_MODULE TestOutPerStream
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

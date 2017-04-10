@@ -19,7 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#define UNIT_TEST_MODULE TestFlatDialog
+#define RED_TEST_MODULE TestFlatDialog
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

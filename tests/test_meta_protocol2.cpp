@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestVerifier
+#define RED_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT

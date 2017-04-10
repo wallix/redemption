@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestRefreshRectPDU
+#define RED_TEST_MODULE TestRefreshRectPDU
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL

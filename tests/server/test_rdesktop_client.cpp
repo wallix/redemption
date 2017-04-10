@@ -22,7 +22,7 @@
     when connecting from mstsc (mocked up)
 */
 
-#define UNIT_TEST_MODULE TestFrontRdesktopClient
+#define RED_TEST_MODULE TestFrontRdesktopClient
 #include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.

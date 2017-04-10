@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestTranslation
+#define RED_TEST_MODULE TestTranslation
 #include "system/redemption_unit_tests.hpp"
 
 

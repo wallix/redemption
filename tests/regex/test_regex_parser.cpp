@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestDfaRegexParser
+#define RED_TEST_MODULE TestDfaRegexParser
 #include "system/redemption_unit_tests.hpp"
 
 #include "regex/regex_parser.hpp"

@@ -21,7 +21,7 @@
    Using lib boost test functions
 */
 
-#define UNIT_TEST_MODULE TestCrypto
+#define RED_TEST_MODULE TestCrypto
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT

@@ -21,7 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestOrderOpaqueRect
+#define RED_TEST_MODULE TestOrderOpaqueRect
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT

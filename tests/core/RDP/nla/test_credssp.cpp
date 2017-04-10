@@ -18,7 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestCredSSP
+#define RED_TEST_MODULE TestCredSSP
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -21,7 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define UNIT_TEST_MODULE TestRdpClientLargePointer
+#define RED_TEST_MODULE TestRdpClientLargePointer
 
 
 #include "system/redemption_unit_tests.hpp"

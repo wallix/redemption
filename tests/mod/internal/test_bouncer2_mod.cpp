@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestBouncer2Mod
+#define RED_TEST_MODULE TestBouncer2Mod
 #include "system/redemption_unit_tests.hpp"
 
 

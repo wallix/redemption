@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestVncClientSimple
+#define RED_TEST_MODULE TestVncClientSimple
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

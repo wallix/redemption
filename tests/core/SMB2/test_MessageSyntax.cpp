@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestGCC
+#define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

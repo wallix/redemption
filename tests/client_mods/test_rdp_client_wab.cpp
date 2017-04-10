@@ -21,7 +21,7 @@
     Unit test to writing RDP orders to file and rereading them
 */
 
-#define UNIT_TEST_MODULE TestRdpClientWab
+#define RED_TEST_MODULE TestRdpClientWab
 #include "system/redemption_unit_tests.hpp"
 
 

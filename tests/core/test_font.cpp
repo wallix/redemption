@@ -23,7 +23,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestFont
+#define RED_TEST_MODULE TestFont
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
