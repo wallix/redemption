@@ -580,9 +580,10 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
 
 struct TestFstat : Fstat
 {
-    int stat(const char * /*filename*/, struct stat & stat) override
+    int stat(const char * /*filename*/, struct stat & st) override
     {
-        stat = {};
+        using struct_stat = struct stat;
+        st = struct_stat{};
         return 0;
     }
 };
