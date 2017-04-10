@@ -228,7 +228,7 @@ struct GeneralCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -273,7 +273,7 @@ struct GeneralCaps : public Capability {
         this->suppressOutputSupport = stream.in_uint8();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "General caps::major %u", this->os_major);

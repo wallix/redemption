@@ -73,7 +73,7 @@ struct LargePointerCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -86,10 +86,9 @@ struct LargePointerCaps : public Capability {
         this->largePointerSupportFlags = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s LargePointer caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "LargePointer caps::largePointerSupportFlags %u", this->largePointerSupportFlags);
     }
 };
-

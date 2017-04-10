@@ -21,9 +21,10 @@
 #define RED_TEST_MODULE TestFlatWabCloseMod
 #include "system/redemption_unit_tests.hpp"
 
-
 #define LOGNULL
+//#define LOGPRINT
 
+#include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"
 #include "../../front/fake_front.hpp"
@@ -39,7 +40,8 @@ RED_AUTO_TEST_CASE(TestWabCloseMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -63,7 +65,8 @@ RED_AUTO_TEST_CASE(TestWabCloseMod2)
     info.height = 1536;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 

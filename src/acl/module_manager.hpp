@@ -771,7 +771,8 @@ public:
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
+        , client_execute(front, this->front.client_info.window_list_caps,
+                         ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         this->no_mod.get_event().reset();

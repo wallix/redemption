@@ -82,7 +82,7 @@ struct PointerCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -109,7 +109,7 @@ struct PointerCaps : public Capability {
         this->pointerCacheSize = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Pointer caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Pointer caps::colorPointerFlag %u", this->colorPointerFlag);
@@ -118,4 +118,3 @@ struct PointerCaps : public Capability {
         LOG(LOG_INFO, "Pointer caps::pointerCacheSize %u", this->pointerCacheSize);
     }
 };
-
