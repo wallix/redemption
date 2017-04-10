@@ -130,9 +130,6 @@ public:
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
 
-            // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
-            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>(), *this->front, mm, ini);
-
             if (this->ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
@@ -259,12 +256,6 @@ public:
 
                 try {
                     if (this->front->up_and_running) {
-                        if (this->ini.get<cfg::video::inactivity_pause>()
-                            && mm.connected
-                            && this->front->capture) {
-                            pause_record.check(now, *this->front);
-                        }
-
                         // new value incoming from authentifier
                         if (this->ini.check_from_acl()) {
                             this->front->update_config(ini.get<cfg::video::rt_display>());

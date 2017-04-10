@@ -372,7 +372,6 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::path>(), "record_tmp_path", set(CPP_MACRO(RECORD_TMP_PATH)));
         W.member(A, type_<types::path>(), "record_path", set(CPP_MACRO(RECORD_PATH)));
         W.sep();
-        W.member(type_<bool>(), "inactivity_pause", set(false));
         W.member(type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
         W.sep();
 
