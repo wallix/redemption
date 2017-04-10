@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestNtlmMessageChallenge
+#define RED_TEST_MODULE TestNtlmMessageChallenge
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

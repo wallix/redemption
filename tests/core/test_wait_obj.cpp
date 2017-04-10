@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestWaitObj
+#define RED_TEST_MODULE TestWaitObj
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/wait_obj.hpp"

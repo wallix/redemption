@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestWidgetGroupBox
+#define RED_TEST_MODULE TestWidgetGroupBox
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

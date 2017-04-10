@@ -19,7 +19,7 @@
  *              Meng Tan
  */
 
-#define UNIT_TEST_MODULE TestWidgetComposite
+#define RED_TEST_MODULE TestWidgetComposite
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

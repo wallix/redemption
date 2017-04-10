@@ -18,7 +18,7 @@
   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 */
 
-#define UNIT_TEST_MODULE TestAuthentifierNew
+#define RED_TEST_MODULE TestAuthentifierNew
 #include "system/redemption_unit_tests.hpp"
 
 

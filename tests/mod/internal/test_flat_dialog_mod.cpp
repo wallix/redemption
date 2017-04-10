@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestFlatDialogMod
+#define RED_TEST_MODULE TestFlatDialogMod
 #include "system/redemption_unit_tests.hpp"
 
 

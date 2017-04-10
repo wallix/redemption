@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestDoRecorder
+#define RED_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT

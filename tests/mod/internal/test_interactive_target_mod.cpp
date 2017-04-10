@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestInteractiveTargetMod
+#define RED_TEST_MODULE TestInteractiveTargetMod
 #include "system/redemption_unit_tests.hpp"
 
 

@@ -20,7 +20,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestRdp
+#define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 #undef RECORD_PATH

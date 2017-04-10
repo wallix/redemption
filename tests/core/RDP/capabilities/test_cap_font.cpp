@@ -21,7 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestCapabilityFont
+#define RED_TEST_MODULE TestCapabilityFont
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

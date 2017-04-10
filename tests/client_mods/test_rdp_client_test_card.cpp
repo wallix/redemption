@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestRdpClientTestCard
+#define RED_TEST_MODULE TestRdpClientTestCard
 #include "system/redemption_unit_tests.hpp"
 
 

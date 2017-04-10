@@ -19,7 +19,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestArrayView
+#define RED_TEST_MODULE TestArrayView
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/array_view.hpp"

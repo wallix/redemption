@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestInFileTransport
+#define RED_TEST_MODULE TestInFileTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT

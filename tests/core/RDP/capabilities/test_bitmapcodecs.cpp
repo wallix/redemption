@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define UNIT_TEST_MODULE TestBitmapCodecs
+#define RED_TEST_MODULE TestBitmapCodecs
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

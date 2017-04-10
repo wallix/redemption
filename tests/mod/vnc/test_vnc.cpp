@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define UNIT_TEST_MODULE TestVNC
+#define RED_TEST_MODULE TestVNC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

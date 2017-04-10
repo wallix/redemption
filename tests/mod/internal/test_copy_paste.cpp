@@ -19,7 +19,7 @@
  *
  */
 
-#define UNIT_TEST_MODULE TestCopyPaste
+#define RED_TEST_MODULE TestCopyPaste
 #include "system/redemption_unit_tests.hpp"
 
 #include <string>

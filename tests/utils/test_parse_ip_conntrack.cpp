@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestParseIpContrack
+#define RED_TEST_MODULE TestParseIpContrack
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -23,7 +23,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestGdCmdConverter
+#define RED_TEST_MODULE TestGdCmdConverter
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -20,7 +20,7 @@
    Unit test to capture interface to video recording to flv or mp4frecv
 */
 
-#define UNIT_TEST_MODULE TestWrmCapture
+#define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
 

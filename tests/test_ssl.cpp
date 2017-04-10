@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestSsl
+#define RED_TEST_MODULE TestSsl
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

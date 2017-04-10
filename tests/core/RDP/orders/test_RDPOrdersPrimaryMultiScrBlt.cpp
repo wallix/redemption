@@ -21,7 +21,7 @@
     Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestOrderMultiScrBlt
+#define RED_TEST_MODULE TestOrderMultiScrBlt
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -20,7 +20,7 @@
    Unit test to detect memory leak in OCR module
 */
 
-#define UNIT_TEST_MODULE TestNewOCR
+#define RED_TEST_MODULE TestNewOCR
 #include "system/redemption_unit_tests.hpp"
 
 // #define LOGUNLL

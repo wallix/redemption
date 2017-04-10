@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestXXX
+#define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
 

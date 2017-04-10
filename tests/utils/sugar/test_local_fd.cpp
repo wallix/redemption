@@ -19,7 +19,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestLocalFd
+#define RED_TEST_MODULE TestLocalFd
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/local_fd.hpp"

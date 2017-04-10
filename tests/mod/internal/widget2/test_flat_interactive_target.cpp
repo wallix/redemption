@@ -20,7 +20,7 @@
  *
  */
 
-#define UNIT_TEST_MODULE TestFlatInteractiveTarget
+#define RED_TEST_MODULE TestFlatInteractiveTarget
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

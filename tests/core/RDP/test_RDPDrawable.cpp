@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestRDPDrawable
+#define RED_TEST_MODULE TestRDPDrawable
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

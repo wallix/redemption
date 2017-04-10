@@ -18,7 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestSplitter
+#define RED_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/splitter.hpp"

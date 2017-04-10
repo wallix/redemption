@@ -22,7 +22,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestEllipse
+#define RED_TEST_MODULE TestEllipse
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
