@@ -295,7 +295,7 @@ unsigned char *bin_to_base64(const unsigned char *source, int len) {
 
 /**
  * @brief deallocate a SSH key
- * @param[in] key ssh_key_struct *handle to free
+ * @param [in] pubkey ssh_key_struct *handle to free
  */
 void ssh_key_free (ssh_key_struct *pubkey){
     if(pubkey != nullptr){
@@ -363,7 +363,7 @@ const char *ssh_key_type_to_char(enum ssh_keytypes_e type) {
  *
  * @brief Import a public key from a ssh string.
  *
- * @param[in]  key_blob The key blob to import as specified in RFC 4253 section
+ * @param[in]  buffer The key blob to import as specified in RFC 4253 section
  *                      6.6 "Public Key Algorithms".
  *
  * @param[out] pkey     A pointer where the allocated key can be stored. You
@@ -602,7 +602,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
 /**
  * @brief Convert a public key to a base64 hased key.
  *
- * @param[in] key       The key to hash
+ * @param[in] pubkey       The key to hash
  *
  * @param[out] b64_key  A pointer to store the allocated base64 hashed key. You
  *                      need to free the buffer.

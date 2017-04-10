@@ -584,7 +584,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
-     * @param len[in] must be a multiple of AES128 block size.
+     * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
 //      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_encrypt_key");
@@ -646,7 +646,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
-     * @param len[in] must be a multiple of AES128 block size.
+     * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
 //      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_encrypt");
@@ -706,7 +706,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
-     * @param len[in] must be a multiple of AES128 block size.
+     * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
 //      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_encrypt");
