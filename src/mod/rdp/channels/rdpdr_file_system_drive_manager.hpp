@@ -867,33 +867,40 @@ public:
 
         const uint32_t DesiredAccess     = device_create_request.DesiredAccess();
         const uint32_t CreateDisposition = device_create_request.CreateDisposition();
-
-        const int last_error = [] (const char * path,
-                                   uint32_t DesiredAccess,
-                                   uint32_t CreateDisposition,
-                                   int drive_access_mode,
-                                   DIR *& out_dir) -> int {
-            if (((drive_access_mode != O_RDWR) && (drive_access_mode != O_RDONLY) &&
-                 smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) ||
-                ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY) &&
-                 smb2::write_access_is_required(DesiredAccess, /*strict_check = */false))) {
-                out_dir = nullptr;
-                return EACCES;
+        
+        const erref::NTSTATUS IoStatus = [&] () {
+            if (((drive_access_mode != O_RDWR) 
+                && (drive_access_mode != O_RDONLY) 
+                && smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) 
+            ||  ((drive_access_mode != O_RDWR) 
+                && (drive_access_mode != O_WRONLY) 
+                && smb2::write_access_is_required(DesiredAccess, /*strict_check = */false))) {
+                return erref::NTSTATUS::STATUS_ACCESS_DENIED;
             }
 
-            if ((::access(path, F_OK) != 0) &&
-                (CreateDisposition == smb2::FILE_CREATE)) {
+            if ((::access(full_path.c_str(), F_OK) != 0) 
+            && (CreateDisposition == smb2::FILE_CREATE)) {
                 if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
-                    out_dir = nullptr;
-                    return EACCES;
+                    return erref::NTSTATUS::STATUS_ACCESS_DENIED;
                 }
 
-                ::mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP);
+                ::mkdir(full_path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP);
             }
 
-            out_dir = ::opendir(path);
-            return ((out_dir != nullptr) ? 0 : errno);
-        } (full_path.c_str(), DesiredAccess, CreateDisposition, drive_access_mode, this->dir);
+            this->dir = ::opendir(full_path.c_str());
+            if (this->dir == nullptr){
+                switch (errno) {
+                case EACCES:
+                    return erref::NTSTATUS::STATUS_ACCESS_DENIED;
+                case ENOENT:
+                    return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
+                default:
+                    return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
+                break;
+                }
+            }
+            return erref::NTSTATUS::STATUS_SUCCESS;
+        } ();
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
@@ -901,22 +908,8 @@ public:
                 static_cast<void*>(this),
                 static_cast<void*>(this->dir),
                 (this->dir ? ::dirfd(this->dir) : -1),
-                (this->dir ? 0 : last_error));
+                (this->dir ? 0 : errno));
         }
-
-        const erref::NTSTATUS IoStatus = [] (const DIR * const dir, int last_error) -> erref::NTSTATUS {
-            if (dir) { return erref::NTSTATUS::STATUS_SUCCESS; }
-
-            switch (last_error) {
-                case ENOENT:
-                    return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
-
-                case EACCES:
-                    return erref::NTSTATUS::STATUS_ACCESS_DENIED;
-            }
-
-            return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
-        } (this->dir, last_error);
 
         StaticOutStream<65536> out_stream;
 
