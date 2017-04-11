@@ -183,12 +183,12 @@ public:
             if (this->horizontal) {
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                    "◀", this->fg_color, this->bg_color, this->focus_color,
+                    "◀", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                    "▶", this->fg_color, this->bg_color, this->focus_color,
+                    "▶", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 this->drawable.draw(
@@ -243,19 +243,19 @@ public:
                 else {
                     WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
                         false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                        "▤", this->fg_color, this->bg_color, this->focus_color,
+                        "▤", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                         Rect(), 0, (this->rail_style ? 0 : 1), this->font, 0, -1);
                 }
             }
             else {
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                    "▲", this->fg_color, this->bg_color, this->focus_color,
+                    "▲", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                     false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                    "▼", this->fg_color, this->bg_color, this->focus_color,
+                    "▼", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 this->drawable.draw(
@@ -310,7 +310,7 @@ public:
                 else {
                     WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
                         false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                        "▥", this->fg_color, this->bg_color, this->focus_color,
+                        "▥", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                         Rect(), 0, (this->rail_style ? 0 : 1), this->font, -1, 0);
                 }
             }
