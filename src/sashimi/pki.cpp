@@ -269,17 +269,15 @@ static void _bin_to_base64(unsigned char *dest, const unsigned char source[3],
  *
  * @returns the converted string
  */
-unsigned char *bin_to_base64(const unsigned char *source, int len) {
+std::vector<uint8_t> bin_to_base64(const unsigned char *source, int len);
 
-  unsigned char *ptr;
+std::vector<uint8_t> bin_to_base64(const unsigned char *source, int len) 
+{
   int flen = len + (3 - (len % 3)); /* round to upper 3 multiple */
   flen = (4 * flen) / 3 + 1;
 
-  unsigned char *base64 = reinterpret_cast<decltype(base64)>(malloc(flen));
-  if (base64 == nullptr) {
-    return nullptr;
-  }
-  ptr = base64;
+  std::vector<uint8_t> base64(flen);
+  unsigned char *ptr = &base64[0];
 
   while(len > 0){
     _bin_to_base64(ptr, source, len > 3 ? 3 : len);
@@ -619,13 +617,11 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
  *
  * @see free_char()
  */
-inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
+inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey, std::vector<uint8_t> & b64_key)
 {
     syslog(LOG_INFO, "%s", __FUNCTION__);
 
-    unsigned char *b64;
-
-    if (pubkey == nullptr || b64_key == nullptr) {
+    if (pubkey == nullptr) {
         return SSH_ERROR;
     }
 
@@ -693,28 +689,21 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
         return SSH_ERROR;
     }
 
-    b64 = bin_to_base64(&key_blob[0], key_blob.size());
-    if (b64 == nullptr) {
-        return SSH_ERROR;
-    }
-
-    *b64_key = reinterpret_cast<char*>(b64);
-
+    b64_key = std::move(bin_to_base64(&key_blob[0], key_blob.size()));
     return SSH_OK;
 }
 
 int ssh_pki_export_pubkey_base64_p(const ssh_key_struct *key, char *b64, int b64_len)
 {
-    int rc;
-    char *buf = nullptr;
-
-    rc = ssh_pki_export_pubkey_base64(key, &buf);
-    if (rc != SSH_OK)
+    std::vector<uint8_t> buf;
+    int rc = ssh_pki_export_pubkey_base64(key, buf);
+    if (rc != SSH_OK) {
         return SSH_ERROR;
-    if (b64_len < static_cast<int>(strlen(buf)))
+    }
+    if (static_cast<unsigned>(b64_len) < buf.size()){
         return SSH_ERROR;
-    strcpy(b64, buf);
-    free(buf);
+    }
+    memcpy(b64, &buf[0], buf.size());
     return SSH_OK;
 }
 
@@ -832,17 +821,9 @@ std::vector<uint8_t> ssh_pki_export_signature_blob(const ssh_key_struct *key, co
         case SSH_KEYTYPE_RSA1:
         {
             unsigned int slen;
-            unsigned char *sig1 = static_cast<unsigned char*>(malloc(RSA_size(key->rsa)));
-
-            RSA_sign(NID_sha1, hash, hlen, sig1, &slen, key->rsa);
-
-            std::vector<uint8_t> sig_blob(&sig1[0], &sig1[slen]);
-//            memcpy(&sig_blob[0], sig1, slen);
-            memset(sig1, 'd', slen);
-            free(sig1);
-            sig1 = nullptr;
-
-            sig->rsa_sig = std::move(sig_blob);
+            std::vector<uint8_t> sig1(RSA_size(key->rsa));
+            RSA_sign(NID_sha1, hash, hlen, &sig1[0], &slen, key->rsa);
+            sig->rsa_sig = std::move(sig1);
         }
         break;
         case SSH_KEYTYPE_ECDSA:
