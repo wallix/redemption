@@ -62,7 +62,7 @@ struct FontCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -78,12 +78,10 @@ struct FontCaps : public Capability {
         this->pad2octets = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Font caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Font caps::fontSupportFlags %u", this->fontSupportFlags);
         LOG(LOG_INFO, "Font caps::pad2octets %u", this->pad2octets);
     }
 };
-
-

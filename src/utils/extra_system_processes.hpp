@@ -49,8 +49,6 @@ public:
 
                 std::string name_string(process_begin, (process_separator ? process_separator - process_begin : ::strlen(process_begin)));
 
-                std::string pattern(process, (process_separator ? process_separator - process : ::strlen(process)));
-
                 this->processes.push_back(std::move(name_string));
 
                 if (!process_separator) {

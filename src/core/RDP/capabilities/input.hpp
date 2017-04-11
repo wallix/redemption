@@ -107,7 +107,7 @@ struct InputCaps : public Capability {
         memset(this->imeFileName, 0, 64);
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -132,7 +132,7 @@ struct InputCaps : public Capability {
         stream.in_utf16(this->imeFileName, 32);
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Input caps (%" PRIu16 " bytes)", msg, this->len);
         LOG(LOG_INFO, "Input caps::inputFlags 0x%" PRIX16, this->inputFlags);
@@ -149,4 +149,3 @@ struct InputCaps : public Capability {
         LOG(LOG_INFO, "Input caps::imeFileName %s", imeFileName_utf8);
     }
 };
-

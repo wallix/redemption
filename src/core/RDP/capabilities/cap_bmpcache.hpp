@@ -107,7 +107,7 @@ struct BmpCacheCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -153,7 +153,7 @@ struct BmpCacheCaps : public Capability {
         this->cache2MaximumCellSize = stream.in_uint16_le();
       }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s BitmapCache caps (%" PRIu16 " bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCache caps::pad1 %" PRIu32, this->pad1);
@@ -170,4 +170,3 @@ struct BmpCacheCaps : public Capability {
         LOG(LOG_INFO, "BitmapCache caps::cache2MaximumCellSize %" PRIu16, this->cache2MaximumCellSize);
     }
 };
-
