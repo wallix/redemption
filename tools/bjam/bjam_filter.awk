@@ -26,5 +26,6 @@
   else
   {
     print
+    fflush()
   }
 }
