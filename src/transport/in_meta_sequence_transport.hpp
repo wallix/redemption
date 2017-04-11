@@ -747,7 +747,6 @@ public:
     {
         ssize_t total_read = 0;
         while (1) {
-//            LOG(LOG_WARNING, "this->rl.cur = %s this->rl.eof = %s", this->rl.cur, this->rl.eof);
             char * pos = std::find(this->rl.cur, this->rl.eof, '\n');
             if (len < static_cast<size_t>(pos - this->rl.cur)) {
                 total_read += len;

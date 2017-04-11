@@ -135,7 +135,7 @@ struct CSNet {
 
     bool permissive = false;
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) /* TODO const*/
     {
         stream.out_uint16_le(this->userDataType);
         this->length = this->channelCount * 12 + 8;
@@ -189,7 +189,7 @@ struct CSNet {
         }
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s GCC User Data CS_NET (%u bytes)", msg, this->length);
         LOG(LOG_INFO, "cs_net::channelCount   = %u", this->channelCount);

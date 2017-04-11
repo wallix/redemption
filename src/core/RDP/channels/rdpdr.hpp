@@ -222,7 +222,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Shared Header:");
         LOG(LOG_INFO, "          * Component = 0x%04x (2 bytes): %s", this->component, get_Component_name(this->component));
         LOG(LOG_INFO, "          * Packet_id = 0x%04x (2 bytes): %s", this->packet_id, get_PacketId_name(this->packet_id));
@@ -393,7 +393,7 @@ struct CapabilityHeader {
     , Version(Version)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CapabilityType);
         stream.out_uint16_le(this->CapabilityLength);
         stream.out_uint32_le(this->Version);
@@ -405,7 +405,7 @@ struct CapabilityHeader {
         this->Version =  stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Capability Header:");
         LOG(LOG_INFO, "          * CapabilityType   = 0x%04x (2 bytes): %s", this->CapabilityType, get_CapabilityType_name(this->CapabilityType));
         LOG(LOG_INFO, "          * CapabilityLength = %d (2 bytes)", this->CapabilityLength);
@@ -468,7 +468,7 @@ struct ClientDriveDeviceListRemove {
 
     ClientDriveDeviceListRemove() = default;
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(DeviceCount);
         for (uint32_t i = 0; i < DeviceCount; i++) {
             stream.out_uint32_le(DeviceIds[i]);
@@ -500,7 +500,7 @@ struct ClientDriveDeviceListRemove {
         }
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Device List Remove:");
         LOG(LOG_INFO, "          * DeviceCount = %d (4 bytes)", this->DeviceCount);
         for (uint32_t i = 0; i < this->DeviceCount; i++) {
@@ -742,7 +742,7 @@ public:
         }
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Announce:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
@@ -931,7 +931,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
             strnlen(PreferredDosName, sizeof(this->PreferredDosName)-1));
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType);
         stream.out_uint32_le(this->DeviceId);
         stream.out_copy_bytes(this->PreferredDosName, 8);
@@ -997,7 +997,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         stream.in_copy_bytes(this->PrinterName, this->PrintNameLen);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Announce Printer Specific Data:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType, get_DeviceType_name(this->DeviceType));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId);
@@ -1244,7 +1244,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device I\\O Request:");
         LOG(LOG_INFO, "          * DeviceId      = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * FileId        = 0x%08x (4 bytes)", this->FileId_);
@@ -1477,7 +1477,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Create Request:");
         if (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE) {
             LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_));
@@ -1578,7 +1578,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Close Request:");
         LOG(LOG_INFO, "          * Padding - (32 bytes) NOT USED");
     }
@@ -1692,7 +1692,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Read Request:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length_);
         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
@@ -1783,7 +1783,7 @@ struct DeviceWriteRequest {
     , WriteData(WriteData)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
         stream.out_uint64_le(this->Offset);
         stream.out_clear_bytes(20);
@@ -1821,7 +1821,7 @@ struct DeviceWriteRequest {
         this->WriteData = stream.get_current();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Write Request:");
         LOG(LOG_INFO, "          * Length    = %d (4 bytes)", int(this->Length));
         LOG(LOG_INFO, "          * Offset    = 0x%" PRIx64 " (8 bytes)", this->Offset);
@@ -1978,7 +1978,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Control Request:");
         LOG(LOG_INFO, "          * OutputBufferLength = %d (4 bytes)", int(this->OutputBufferLength));
         LOG(LOG_INFO, "          * InputBufferLength  = %d (4 bytes)", int(this->input_buffer.sz));
@@ -2042,7 +2042,7 @@ struct ClientDriveControlResponse {
       : OutputBufferLength(OutputBufferLength)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
     }
 
@@ -2059,7 +2059,7 @@ struct ClientDriveControlResponse {
         this->OutputBufferLength = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Control Response:");
         LOG(LOG_INFO, "          * OutputBufferLength = %u (4 bytes)", this->OutputBufferLength);
     }
@@ -2172,7 +2172,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device I\\O Response:");
         LOG(LOG_INFO, "          * DeviceId     = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
@@ -2348,7 +2348,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Create Response:");
         LOG(LOG_INFO, "          * FileId      = 0x%08x (4 bytes)", this->FileId_);
         LOG(LOG_INFO, "          * Information = 0x%02x (1 byte) optional", this->Information);
@@ -2434,7 +2434,7 @@ struct DeviceReadResponse {
       : Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(Length);
     }
 
@@ -2463,7 +2463,7 @@ struct DeviceReadResponse {
         //this->ReadData = std::string(reinterpret_cast<char *>(data), Length/2);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Read Response:");
         LOG(LOG_INFO, "          * Length   = %u (4 bytes)", this->Length);
     }
@@ -2516,7 +2516,7 @@ struct DeviceWriteResponse {
     : Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
         stream.out_clear_bytes(1);
     }
@@ -2535,7 +2535,7 @@ struct DeviceWriteResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Device Write Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
@@ -2626,7 +2626,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Device Announce Response:");
         LOG(LOG_INFO, "          * DeviceId   = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * ResultCode = 0x%08x (4 bytes): %s", this->ResultCode_, erref::get_NTStatus(this->ResultCode_));
@@ -2725,7 +2725,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Announce Request:");
         LOG(LOG_INFO, "          * VersionMajor = 0x%04X (2 bytes) ", this->VersionMajor_);
         LOG(LOG_INFO, "          * VersionMinor = 0x%04X (2 bytes) ", this->VersionMinor_);
@@ -2830,7 +2830,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Announce Reply:");
         LOG(LOG_INFO, "          * VersionMajor = 0x%04x (2 bytes)", this->VersionMajor);
         LOG(LOG_INFO, "          * VersionMinor = 0x%04x (2 bytes)", this->VersionMinor);
@@ -3012,7 +3012,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Name Request:");
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
@@ -3323,7 +3323,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     General Capability Set:");
         LOG(LOG_INFO, "          * osType               = 0x%08x (4 bytes)", this->osType);
         LOG(LOG_INFO, "          * osVersion            = 0x%08x (4 bytes)", this->osVersion);
@@ -3379,7 +3379,7 @@ struct ClientDeviceListAnnounceRequest {
     ClientDeviceListAnnounceRequest(uint32_t DeviceCount) : DeviceCount(DeviceCount)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceCount);
     }
 
@@ -3397,7 +3397,7 @@ struct ClientDeviceListAnnounceRequest {
         this->DeviceCount = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Device List Announce Request:");
         LOG(LOG_INFO, "          * DeviceCount = %d (4 bytes)", this->DeviceCount);
     }
@@ -3606,7 +3606,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Query Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_buffer.sz);
@@ -3856,7 +3856,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Query Volume Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * Length             = %zu (4 bytes)", this->query_volume_buffer.sz);
@@ -3907,7 +3907,7 @@ struct ClientDriveQueryVolumeInformationResponse {
       : Length(Length)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
     }
 
@@ -3925,7 +3925,7 @@ struct ClientDriveQueryVolumeInformationResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Query Volume Information Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
     }
@@ -4115,7 +4115,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Set Information Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
@@ -4257,7 +4257,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Rename Information:");
         LOG(LOG_INFO, "          * ReplaceIfExists = %d (1 byte)", this->replace_if_exists_);
         LOG(LOG_INFO, "          * RootDirectory   = %02x (1 byte)", this->RootDirectory_);
@@ -4484,7 +4484,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
@@ -4537,7 +4537,7 @@ struct ClientDriveQueryDirectoryResponse {
       : Length(Length)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
     }
 
@@ -4555,7 +4555,7 @@ struct ClientDriveQueryDirectoryResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Query Directory Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
     }
@@ -4643,7 +4643,7 @@ struct ClientDriveQueryInformationResponse {
       : Length(Length)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
     }
 
@@ -4661,7 +4661,7 @@ struct ClientDriveQueryInformationResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Query Information Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
@@ -4699,7 +4699,7 @@ struct ClientDriveSetVolumeInformationResponse {
     ClientDriveSetVolumeInformationResponse(uint32_t Length): Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
     }
 
@@ -4717,7 +4717,7 @@ struct ClientDriveSetVolumeInformationResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Set Volume Information Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(Length));
     }
@@ -4784,7 +4784,7 @@ struct ServerDriveSetVolumeInformationRequest {
     , Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass);
         stream.out_uint32_le(this->Length);
         stream.out_clear_bytes(24);
@@ -4806,7 +4806,7 @@ struct ServerDriveSetVolumeInformationRequest {
         stream.in_skip_bytes(24);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Serve rDrive Set Volume InformationRequest:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes)", this->FsInformationClass);
         LOG(LOG_INFO, "          * Length             = %d (4 bytes)", int(this->Length));
@@ -4863,7 +4863,7 @@ struct ClientDriveSetInformationResponse {
       :  Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
         stream.out_clear_bytes(1);
     }
@@ -4882,7 +4882,7 @@ struct ClientDriveSetInformationResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Set Information Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
@@ -4972,7 +4972,7 @@ struct ServerDriveLockControlRequest {
       , NumLocks(NumLocks)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Operation);
         stream.out_uint8(this->F << 7);
         stream.out_clear_bytes(3);
@@ -4998,7 +4998,7 @@ struct ServerDriveLockControlRequest {
         stream.in_skip_bytes(20);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Lock Control Request:");
         LOG(LOG_INFO, "          * Operation = 0x%08x (4 bytes)", int(this->Operation));
         LOG(LOG_INFO, "          * F         = 0x%01x (1 bit)", int(this->F));
@@ -5037,7 +5037,7 @@ struct ClientDriveLockControlResponse {
 
     ClientDriveLockControlResponse() = default;
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_clear_bytes(5);
     }
 
@@ -5056,7 +5056,7 @@ struct ClientDriveLockControlResponse {
         stream.in_skip_bytes(5);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Lock Control Response:");
         LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
 
@@ -5101,7 +5101,7 @@ struct RDP_Lock_Info {
       , Offset(Offset)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint64_le(this->Length);
         stream.out_uint64_le(this->Offset);
     }
@@ -5121,7 +5121,7 @@ struct RDP_Lock_Info {
         this->Offset = stream.in_uint64_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     RDP_Lock_Info:");
         LOG(LOG_INFO, "          * Length = 0x%" PRIx64 " (8 bytes)", this->Length);
         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset);
@@ -5173,7 +5173,7 @@ struct ServerDriveNotifyChangeDirectoryRequest {
       , CompletionFilter(CompletionFilter)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint8(this->WatchTree);
         stream.out_uint32_le(this->CompletionFilter);
     }
@@ -5193,7 +5193,7 @@ struct ServerDriveNotifyChangeDirectoryRequest {
         this->CompletionFilter = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Drive Notify Change Directory Request:");
         LOG(LOG_INFO, "          * WatchTree        = 0x%02x (1 byte)", this->WatchTree);
         LOG(LOG_INFO, "          * CompletionFilter = 0x%08x (4 bytes)", this->CompletionFilter);
@@ -5323,7 +5323,7 @@ struct ClientDriveNotifyChangeDirectoryResponse {
       : Length(Length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
     }
 
@@ -5341,7 +5341,7 @@ struct ClientDriveNotifyChangeDirectoryResponse {
         this->Length = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Drive Notify Change Directory Response:");
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }

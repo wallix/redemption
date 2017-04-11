@@ -713,6 +713,7 @@ public:
     bool break_privplay_client;
     uint64_t movie_elapsed_client;
     uint64_t begin_to_elapse;
+    uint64_t last_balise_to_elapse;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -770,6 +771,7 @@ public:
         , break_privplay_client(false)
         , movie_elapsed_client(0)
         , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
+        , last_balise_to_elapse(0)
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -801,6 +803,10 @@ public:
 
     void set_pause_client(timeval & time) {
         this->start_synctime_now = {this->start_synctime_now.tv_sec + time.tv_sec, this->start_synctime_now.tv_usec + time.tv_usec};
+    }
+
+    void set_last_balise(uint64_t time) {
+        this->last_balise_to_elapse += time;
     }
 
     /* order count set this->stream.p to the beginning of the next order.
@@ -1720,7 +1726,7 @@ private:
 
         bool res(false);
 
-        while (this->begin_to_elapse >= this->movie_elapsed_client) {
+        while (this->begin_to_elapse >= this->movie_elapsed_client && this->begin_to_elapse >= this->last_balise_to_elapse) {
             if (this->next_order()) {
                 if (bool(this->verbose & Verbose::play)) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"

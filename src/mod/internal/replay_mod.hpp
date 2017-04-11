@@ -123,7 +123,7 @@ public:
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
-        ReplayMod( FrontAPI & front
+    ReplayMod( FrontAPI & front
              , const char * replay_path
              , const char * movie
              , uint16_t width
@@ -224,6 +224,14 @@ public:
         this->reader.set_pause_client(time);
     }
 
+    time_t get_real_time_movie_begin() {
+        return this->in_trans.meta_line.start_time;
+    }
+
+    void set_last_balise(uint64_t time) {
+        this->reader.set_last_balise(time);
+    }
+
     time_t get_movie_time_length() {
         time_t start = this->in_trans.meta_line.start_time;
 
@@ -253,8 +261,9 @@ public:
         }
         char * end_chars_end = end_chars;
         time_t end = strtoll(end_chars, &end_chars_end, 10);
+        LOG(LOG_INFO, "start = %d end=%d", int(start), int(end));
 
-        return end - start;
+        return (end - start);
     }
 
     void refresh(Rect /*rect*/) override {}

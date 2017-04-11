@@ -142,7 +142,7 @@ struct NtlmAvPair {
         }
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->AvId);
         stream.out_uint16_le(this->AvLen);
         stream.out_copy_bytes(this->Value.buf, this->Value.sz);
@@ -158,7 +158,7 @@ struct NtlmAvPair {
     //     stream.in_skip_bytes(this->AvLen);
     // }
 
-    void print() {
+    void log() const {
         LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
         hexdump8_c(this->Value.buf, this->Value.sz);
     }
@@ -197,7 +197,7 @@ struct NtlmAvPairList final {
     //    return res;
     //}
 
-    size_t length() {
+    size_t length() const {
         size_t res = 0;
         for (int i = 0; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
@@ -207,7 +207,7 @@ struct NtlmAvPairList final {
         return res;
     }
 
-    size_t packet_length() {
+    size_t packet_length() const {
        size_t res = 0;
        for (int i = 0; i < AV_ID_MAX; i++) {
            if (this->list[i]) {
@@ -220,7 +220,7 @@ struct NtlmAvPairList final {
        return res;
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         for (int i = 1; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
                 this->list[i]->emit(stream);
@@ -244,12 +244,12 @@ struct NtlmAvPairList final {
         }
     }
 
-    void print() {
+    void log() const {
         LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
         for (int i = 0; i < AV_ID_MAX; i++) {
             if (this->list[i]) {
-                this->list[i]->print();
+                this->list[i]->log();
             }
         }
 

@@ -236,12 +236,6 @@ class RDPMemBlt {
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect clip) const {
-        char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        printf("%s\n", buffer);
-    }
-
     void move(int offset_x, int offset_y) {
         this->rect = this->rect.offset(offset_x, offset_y);
     }

@@ -93,7 +93,7 @@ struct SCNet {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
         stream.out_uint16_le(this->userDataType);
@@ -146,7 +146,7 @@ struct SCNet {
         }
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
