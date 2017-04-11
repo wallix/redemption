@@ -86,7 +86,7 @@ struct sftp_dir_struct {
     sftp_dir_struct()
         : sftp(nullptr)
         , name(nullptr)
-        , handle(0)
+        , handle{}
         , buffer(nullptr)
         , count(0)
         , eof(0)
@@ -133,12 +133,12 @@ struct sftp_client_message_struct {
         , filename(nullptr) /* can be "path" */
         , flags(0)
         , attr(nullptr)
-        , handle(0)
+        , handle{}
         , offset(0)
         , len(0)
         , attr_num(0)
         , attrbuf(nullptr) /* used by sftp_reply_attrs */
-        , data(0) /* can be newpath of rename() */
+        , data{} /* can be newpath of rename() */
         , complete_message(nullptr) /* complete message in case of retransmission*/
         , str_data(nullptr) /* cstring version of data */
     {
@@ -220,10 +220,10 @@ struct sftp_attributes_struct {
         , mtime64(0)
         , mtime(0)
         , mtime_nseconds(0)
-        , acl(0)
+        , acl{}
         , extended_count(0)
-        , extended_type(0)
-        , extended_data(0)
+        , extended_type{}
+        , extended_data{}
     {}
 };
 
@@ -983,7 +983,7 @@ struct sftp_file_struct {
         : sftp(nullptr)
         , name(nullptr)
         , offset(0)
-        , handle(0)
+        , handle{}
         , eof(0)
         , nonblocking(0)
     {

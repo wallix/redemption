@@ -2156,7 +2156,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     ctx->front_session->next_crypto->server_kex.methods[SSH_KEX] = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
 
 //        ctx->front_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
-    ctx->front_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = strdup(hostkeys);
+    ctx->front_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = hostkeys;
 
     ctx->front_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
     ctx->front_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";

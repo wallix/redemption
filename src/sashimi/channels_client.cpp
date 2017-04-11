@@ -4844,7 +4844,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 
             /* public key */
             {
-                SSHString pubkey_blob(0);
+                SSHString pubkey_blob;
 
                 switch (pubkey->type) {
                     case SSH_KEYTYPE_DSS:
@@ -5191,7 +5191,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 }
 
                 const ssh_key_struct * pubkey = client_session->agent_state->pubkey;
-                SSHString pubkey_blob(0);
+                SSHString pubkey_blob;
 
                 switch (pubkey->type) {
                     case SSH_KEYTYPE_DSS:

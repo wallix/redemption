@@ -463,7 +463,7 @@ struct ssh_kex_struct {
 
     ssh_kex_struct()
         : cookie{}
-        , methods{0,0,0,0,0,0,0,0,0,0}
+        , methods{"","","","","","","","","",""}
     {
     }
 };
@@ -1128,7 +1128,7 @@ struct ssh_crypto_struct {
               EC_POINT_clear_free(pubkey);
             return -1;
           }
-          EC_POINT_oct2point(group, pubkey, reinterpret_cast<const uint8_t *>(&ecdh_pubkey[0]), ecdh_pubkey.size(), ctx);
+          EC_POINT_oct2point(group, pubkey, &ecdh_pubkey[0], ecdh_pubkey.size(), ctx);
           int len = (EC_GROUP_get_degree(group) + 7) / 8;
           // TOOD: Check actual size necessary, Elliptic curve are supposed to used smaller keys than
           // other encryption schemes, but if it force dynamic memory allocation purpose is defeated
@@ -1238,7 +1238,7 @@ struct ssh_crypto_struct {
         /* kex sent by server, client, and mutually elected methods */
         , server_kex{}
         , client_kex{}
-        , kex_methods{0,0,0,0,0,0,0,0,0,0}
+        , kex_methods{"","","","","","","","","",""}
         , kex_type(SSH_KEX_DH_GROUP1_SHA1)
         , mac_type(SSH_MAC_SHA1) /* Mac operations to use for key gen */
     {

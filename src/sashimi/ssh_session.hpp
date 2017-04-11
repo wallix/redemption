@@ -143,7 +143,7 @@ struct ssh_session_struct {
     , connected(0)
     // session flags (SSH_SESSION_FLAG_*)
     , flags(SSH_SESSION_FLAG_BLOCKING)
-    , banner(0) // that's the issue banner from the server
+    , banner{} // that's the issue banner from the server
     , discon_msg(nullptr) // disconnect message from the remote host
     , in_buffer(new ssh_buffer_struct)
 
@@ -4201,7 +4201,7 @@ struct SshServerSession : public ssh_session_struct
             digest->out_length_prefixed_cstr(pubkey->type_c());
 
             /* Add the publickey as blob */
-            SSHString pubkey_blob(0);
+            SSHString pubkey_blob;
 
             switch (pubkey->type) {
                 case SSH_KEYTYPE_DSS:

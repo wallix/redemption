@@ -889,8 +889,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
         {
             /* 40 is the dual signature blob len. */
             if (sig_blob.size() != 40) {
-                LOG(LOG_INFO, "Signature has wrong size: %lu",
-                            static_cast<unsigned long>(sig_blob.size()));
+                LOG(LOG_INFO, "Signature has wrong size: %lu", sig_blob.size());
                 ssh_signature_free(sig);
                 return nullptr;
             }
