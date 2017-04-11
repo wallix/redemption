@@ -20,7 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define UNIT_TEST_MODULE TestCS_CLUSTER
+#define RED_TEST_MODULE TestCS_CLUSTER
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

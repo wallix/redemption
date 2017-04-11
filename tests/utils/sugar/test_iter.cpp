@@ -18,7 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestIter
+#define RED_TEST_MODULE TestIter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/iter.hpp"

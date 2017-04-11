@@ -19,7 +19,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestRDPDRChannel
+#define RED_TEST_MODULE TestRDPDRChannel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

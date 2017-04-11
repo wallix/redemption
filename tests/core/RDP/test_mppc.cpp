@@ -22,7 +22,7 @@
    Unit test for MPPC compression
 */
 
-#define UNIT_TEST_MODULE TestMPPC
+#define RED_TEST_MODULE TestMPPC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

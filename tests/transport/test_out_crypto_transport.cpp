@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestOutCryptoTransport
+#define RED_TEST_MODULE TestOutCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
@@ -61,8 +61,6 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
     }
-
-    uint8_t expected_hash[MD_HASH::DIGEST_LENGTH+1] = "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5";
 
     RED_CHECK_MEM_AC(
         qhash,

@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestTestTransport
+#define RED_TEST_MODULE TestTestTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -18,7 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestAuthorizationChannels
+#define RED_TEST_MODULE TestAuthorizationChannels
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

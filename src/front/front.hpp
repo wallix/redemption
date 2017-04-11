@@ -659,17 +659,6 @@ private:
     bool mem3blt_support;
     int clientRequestedProtocols;
 
-    GeneralCaps             client_general_caps;
-    BitmapCaps              client_bitmap_caps;
-    OrderCaps               client_order_caps;
-    BmpCacheCaps            client_bmpcache_caps;
-    OffScreenCacheCaps      client_offscreencache_caps;
-    BmpCache2Caps           client_bmpcache2_caps;
-    GlyphCacheCaps          client_glyphcache_caps;
-    RailCaps                client_rail_caps;
-    WindowListCaps          client_window_list_caps;
-    bool                    use_bitmapcache_rev2;
-
     std::string server_capabilities_filename;
 
     Transport * persistent_key_list_transport;
@@ -768,7 +757,6 @@ public:
     , tls_client_active(true)
     , mem3blt_support(mem3blt_support)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , use_bitmapcache_rev2(false)
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
@@ -1341,7 +1329,7 @@ private:
         }
 
         this->orders.initialize(
-            this->client_order_caps
+            this->client_info.order_caps
           , this->client_info
           , this->trans
           , this->userid
@@ -2857,68 +2845,6 @@ private:
         );
     }
 
-    bool retrieve_client_capability_set(Capability & caps) override
-    {
-#ifdef __clang__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess" // TODO What Oo ?
-# endif
-        switch (caps.capabilityType) {
-            case CAPSTYPE_GENERAL:
-                ::memcpy(&caps, &this->client_general_caps, sizeof(this->client_general_caps));
-            break;
-
-            case CAPSTYPE_BITMAP:
-                ::memcpy(&caps, &this->client_bitmap_caps, sizeof(this->client_bitmap_caps));
-            break;
-
-            case CAPSTYPE_ORDER:
-                ::memcpy(&caps, &this->client_order_caps, sizeof(this->client_order_caps));
-            break;
-
-            case CAPSTYPE_BITMAPCACHE:
-                if (this->use_bitmapcache_rev2) {
-                    return false;
-                }
-                ::memcpy(&caps, &this->client_bmpcache_caps, sizeof(this->client_bmpcache_caps));
-            break;
-
-            case CAPSTYPE_OFFSCREENCACHE:
-                ::memcpy(&caps, &this->client_offscreencache_caps, sizeof(this->client_offscreencache_caps));
-            break;
-
-            case CAPSTYPE_BITMAPCACHE_REV2:
-                if (!this->use_bitmapcache_rev2) {
-                    return false;
-                }
-                ::memcpy(&caps, &this->client_bmpcache2_caps, sizeof(this->client_bmpcache2_caps));
-            break;
-
-            case CAPSTYPE_GLYPHCACHE:
-                ::memcpy(&caps, &this->client_glyphcache_caps, sizeof(this->client_glyphcache_caps));
-            break;
-
-            case CAPSTYPE_RAIL:
-                ::memcpy(&caps, &this->client_rail_caps, sizeof(this->client_rail_caps));
-            break;
-
-            case CAPSTYPE_WINDOW:
-                ::memcpy(&caps, &this->client_window_list_caps, sizeof(this->client_window_list_caps));
-            break;
-
-            case CAPSETTYPE_MULTIFRAGMENTUPDATE:
-            case CAPSETTYPE_LARGE_POINTER:
-                REDASSERT(false);
-                return false;
-
-            default: break;
-        }
-#ifdef __clang__
-    #pragma GCC diagnostic pop
-# endif
-        return true;
-    }
-
     void session_probe_started(bool started) override {
         this->session_probe_started_ = started;
 
@@ -3261,61 +3187,61 @@ private:
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
-                    this->client_general_caps.recv(stream, capset_length);
+                    this->client_info.general_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_general_caps.log("Receiving from client");
+                        this->client_info.general_caps.log("Receiving from client");
                     }
                     this->client_info.use_compact_packets =
-                        (this->client_general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
+                        (this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
                         1 : 0;
 
                     this->server_fastpath_update_support =
                         (   this->fastpath_support
-                         && ((this->client_general_caps.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
+                         && ((this->client_info.general_caps.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
                         );
                 }
                 break;
             case CAPSTYPE_BITMAP: {
-                    this->client_bitmap_caps.recv(stream, capset_length);
+                    this->client_info.bitmap_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_bitmap_caps.log("Receiving from client");
+                        this->client_info.bitmap_caps.log("Receiving from client");
                     }
 /*
                     this->client_info.bpp    =
-                          (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
-                        ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
+                          (this->client_info.bitmap_caps.preferredBitsPerPixel >= 24)
+                        ? 24 : this->client_info.bitmap_caps.preferredBitsPerPixel;
 */
                     // Fixed bug in rdesktop
                     // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
                     if (!this->client_info.width || !this->client_info.height)
                     {
-                        this->client_info.width  = this->client_bitmap_caps.desktopWidth;
-                        this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                        this->client_info.width  = this->client_info.bitmap_caps.desktopWidth;
+                        this->client_info.height = this->client_info.bitmap_caps.desktopHeight;
                     }
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
-                    this->client_order_caps.recv(stream, capset_length);
+                    this->client_info.order_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_order_caps.log("Receiving from client");
+                        this->client_info.order_caps.log("Receiving from client");
                     }
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
-                    this->client_bmpcache_caps.recv(stream, capset_length);
+                    this->client_info.bmp_cache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_bmpcache_caps.log("Receiving from client");
+                        this->client_info.bmp_cache_caps.log("Receiving from client");
                     }
                     this->client_info.number_of_cache      = 3;
-                    this->client_info.cache1_entries       = this->client_bmpcache_caps.cache0Entries;
+                    this->client_info.cache1_entries       = this->client_info.bmp_cache_caps.cache0Entries;
                     this->client_info.cache1_persistent    = false;
-                    this->client_info.cache1_size          = this->client_bmpcache_caps.cache0MaximumCellSize;
-                    this->client_info.cache2_entries       = this->client_bmpcache_caps.cache1Entries;
+                    this->client_info.cache1_size          = this->client_info.bmp_cache_caps.cache0MaximumCellSize;
+                    this->client_info.cache2_entries       = this->client_info.bmp_cache_caps.cache1Entries;
                     this->client_info.cache2_persistent    = false;
-                    this->client_info.cache2_size          = this->client_bmpcache_caps.cache1MaximumCellSize;
-                    this->client_info.cache3_entries       = this->client_bmpcache_caps.cache2Entries;
+                    this->client_info.cache2_size          = this->client_info.bmp_cache_caps.cache1MaximumCellSize;
+                    this->client_info.cache3_entries       = this->client_info.bmp_cache_caps.cache2Entries;
                     this->client_info.cache3_persistent    = false;
-                    this->client_info.cache3_size          = this->client_bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.cache3_size          = this->client_info.bmp_cache_caps.cache2MaximumCellSize;
                     this->client_info.cache4_entries       = 0;
                     this->client_info.cache5_entries       = 0;
                     this->client_info.cache_flags          = 0;
@@ -3383,13 +3309,13 @@ private:
                     if (bool(this->verbose)) {
                         LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
-                    this->client_glyphcache_caps.recv(stream, capset_length);
+                    this->client_info.glyph_cache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_glyphcache_caps.log("Receiving from client");
+                        this->client_info.glyph_cache_caps.log("Receiving from client");
                     }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
-                            this->client_glyphcache_caps.GlyphCache[i].CacheEntries;
+                            this->client_info.glyph_cache_caps.GlyphCache[i].CacheEntries;
                     }
                 }
                 break;
@@ -3397,9 +3323,9 @@ private:
                 if (bool(this->verbose)) {
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
                 }
-                this->client_offscreencache_caps.recv(stream, capset_length);
+                this->client_info.off_screen_cache_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_offscreencache_caps.log("Receiving from client");
+                    this->client_info.off_screen_cache_caps.log("Receiving from client");
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
@@ -3408,57 +3334,57 @@ private:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
-                    this->use_bitmapcache_rev2 = true;
+                    this->client_info.use_bmp_cache_2 = true;
 
-                    this->client_bmpcache2_caps.recv(stream, capset_length);
+                    this->client_info.bmp_cache_2_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_bmpcache2_caps.log("Receiving from client");
+                        this->client_info.bmp_cache_2_caps.log("Receiving from client");
                     }
 
                     // TODO We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2
-                    this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
+                    this->client_info.number_of_cache = this->client_info.bmp_cache_2_caps.numCellCaches;
                     int Bpp = nbbytes(this->client_info.bpp);
-                    if (this->client_bmpcache2_caps.numCellCaches > 0) {
-                        this->client_info.cache1_entries    = (this->client_bmpcache2_caps.bitmapCache0CellInfo & 0x7fffffff);
-                        this->client_info.cache1_persistent = (this->client_bmpcache2_caps.bitmapCache0CellInfo & 0x80000000);
+                    if (this->client_info.bmp_cache_2_caps.numCellCaches > 0) {
+                        this->client_info.cache1_entries    = (this->client_info.bmp_cache_2_caps.bitmapCache0CellInfo & 0x7fffffff);
+                        this->client_info.cache1_persistent = (this->client_info.bmp_cache_2_caps.bitmapCache0CellInfo & 0x80000000);
                         this->client_info.cache1_size       = 256 * Bpp;
                     }
                     else {
                         this->client_info.cache1_entries = 0;
                     }
-                    if (this->client_bmpcache2_caps.numCellCaches > 1) {
-                        this->client_info.cache2_entries    = (this->client_bmpcache2_caps.bitmapCache1CellInfo & 0x7fffffff);
-                        this->client_info.cache2_persistent = (this->client_bmpcache2_caps.bitmapCache1CellInfo & 0x80000000);
+                    if (this->client_info.bmp_cache_2_caps.numCellCaches > 1) {
+                        this->client_info.cache2_entries    = (this->client_info.bmp_cache_2_caps.bitmapCache1CellInfo & 0x7fffffff);
+                        this->client_info.cache2_persistent = (this->client_info.bmp_cache_2_caps.bitmapCache1CellInfo & 0x80000000);
                         this->client_info.cache2_size       = 1024 * Bpp;
                     }
                     else {
                         this->client_info.cache2_entries = 0;
                     }
-                    if (this->client_bmpcache2_caps.numCellCaches > 2) {
-                        this->client_info.cache3_entries    = (this->client_bmpcache2_caps.bitmapCache2CellInfo & 0x7fffffff);
-                        this->client_info.cache3_persistent = (this->client_bmpcache2_caps.bitmapCache2CellInfo & 0x80000000);
+                    if (this->client_info.bmp_cache_2_caps.numCellCaches > 2) {
+                        this->client_info.cache3_entries    = (this->client_info.bmp_cache_2_caps.bitmapCache2CellInfo & 0x7fffffff);
+                        this->client_info.cache3_persistent = (this->client_info.bmp_cache_2_caps.bitmapCache2CellInfo & 0x80000000);
                         this->client_info.cache3_size       = 4096 * Bpp;
                     }
                     else {
                         this->client_info.cache3_entries = 0;
                     }
-                    if (this->client_bmpcache2_caps.numCellCaches > 3) {
-                        this->client_info.cache4_entries    = (this->client_bmpcache2_caps.bitmapCache3CellInfo & 0x7fffffff);
-                        this->client_info.cache4_persistent = (this->client_bmpcache2_caps.bitmapCache3CellInfo & 0x80000000);
+                    if (this->client_info.bmp_cache_2_caps.numCellCaches > 3) {
+                        this->client_info.cache4_entries    = (this->client_info.bmp_cache_2_caps.bitmapCache3CellInfo & 0x7fffffff);
+                        this->client_info.cache4_persistent = (this->client_info.bmp_cache_2_caps.bitmapCache3CellInfo & 0x80000000);
                         this->client_info.cache4_size       = 6144 * Bpp;
                     }
                     else {
                         this->client_info.cache4_entries = 0;
                     }
-                    if (this->client_bmpcache2_caps.numCellCaches > 4) {
-                        this->client_info.cache5_entries    = (this->client_bmpcache2_caps.bitmapCache4CellInfo & 0x7fffffff);
-                        this->client_info.cache5_persistent = (this->client_bmpcache2_caps.bitmapCache4CellInfo & 0x80000000);
+                    if (this->client_info.bmp_cache_2_caps.numCellCaches > 4) {
+                        this->client_info.cache5_entries    = (this->client_info.bmp_cache_2_caps.bitmapCache4CellInfo & 0x7fffffff);
+                        this->client_info.cache5_persistent = (this->client_info.bmp_cache_2_caps.bitmapCache4CellInfo & 0x80000000);
                         this->client_info.cache5_size       = 8192 * Bpp;
                     }
                     else {
                         this->client_info.cache5_entries = 0;
                     }
-                    this->client_info.cache_flags          = this->client_bmpcache2_caps.cacheFlags;
+                    this->client_info.cache_flags          = this->client_info.bmp_cache_2_caps.cacheFlags;
                     this->client_info.bitmap_cache_version = 2;
                 }
                 break;
@@ -3478,15 +3404,15 @@ private:
                 }
                 break;
             case CAPSTYPE_RAIL: /* 23 */
-                this->client_rail_caps.recv(stream, capset_length);
+                this->client_info.rail_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_rail_caps.log("Receiving from client");
+                    this->client_info.rail_caps.log("Receiving from client");
                 }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
-                this->client_window_list_caps.recv(stream, capset_length);
+                this->client_info.window_list_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_window_list_caps.log("Receiving from client");
+                    this->client_info.window_list_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
@@ -4478,8 +4404,7 @@ public:
         using gdi::Depth;
 
         switch (color_ctx.depth()){
-            // TODO color_ctx.palette()
-            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth8():  color = decode_color8_opaquerect()(color, *color_ctx.palette()); break;
             case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
             case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
             case Depth::depth24(): break;
@@ -4522,9 +4447,9 @@ public:
                     const uint16_t ypix = y * fc.width * 3;
 
                     if (fc_bit_mask & *fc_data) {
-                        this->raw_data[xpix + ypix    ] = color_back.blue();
+                        this->raw_data[xpix + ypix    ] = color_back.red();
                         this->raw_data[xpix + ypix + 1] = color_back.green();
-                        this->raw_data[xpix + ypix + 2] = color_back.red();
+                        this->raw_data[xpix + ypix + 2] = color_back.blue();
                     }
                     fc_bit_mask >>= 1;
                 }
@@ -4537,7 +4462,7 @@ public:
 protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
 
-        if (this->client_glyphcache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
+        if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
             const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color);
             const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color);
@@ -4868,14 +4793,6 @@ public:
 
         this->palette_sent = false;
         this->send_palette();
-    }
-
-    uint8_t get_order_cap(int idx) const override {
-        return this->client_order_caps.orderSupport[idx];
-    }
-
-    uint16_t get_order_caps_ex_flags() const override {
-        return this->client_order_caps.orderSupportExFlags;
     }
 
 private:

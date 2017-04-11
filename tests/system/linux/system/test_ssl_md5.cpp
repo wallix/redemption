@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestMd5
+#define RED_TEST_MODULE TestMd5
 
 #include "system/ssl_md5.hpp"
 #include "system/ssl_md4.hpp"

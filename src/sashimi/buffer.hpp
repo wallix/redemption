@@ -389,8 +389,8 @@ struct ssh_buffer_struct {
     }
 
     void out_sshstring(const SSHString & string) {
-        this->out_uint32_be(string.size);
-        this->out_blob(reinterpret_cast<const uint8_t*>(string.data.get()), string.size);
+        this->out_uint32_be(string.size());
+        this->out_blob(reinterpret_cast<const uint8_t*>(&string[0]), string.size());
     }
 
     void out_blob(const char * blob, uint32_t len) {
@@ -415,13 +415,18 @@ struct ssh_buffer_struct {
         this->out_blob(reinterpret_cast<const uint8_t*>(blob), len);
     }
 
-
-    char * in_strdup_cstr() {
+    SSHString in_strdup_cstr() {
         uint32_t hostlen = this->in_uint32_be();
-        char * newstr = new char[hostlen+1];
-        this->buffer_get_data(newstr, hostlen);
-        newstr[hostlen] = 0;
-        return newstr;
+//        char * newstr = new char[hostlen+1];
+//        memcpy(newstr, this->data+this->pos, hostlen);
+        SSHString str(reinterpret_cast<char *>(&this->data[this->pos]), hostlen);
+        this->pos+=hostlen;
+//        return str;
+//    }
+
+//        this->buffer_get_data(newstr, hostlen);
+//        newstr[hostlen] = 0;
+        return str;
     }
 
      // for output should be out_ready() (len of data ready to send) instead

@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define UNIT_TEST_MODULE TestUnderLyingCast
+#define RED_TEST_MODULE TestUnderLyingCast
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/underlying_cast.hpp"

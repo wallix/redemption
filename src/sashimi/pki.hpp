@@ -110,14 +110,14 @@ struct ssh_signature_struct {
     enum ssh_keytypes_e sig_type;
     int ecdsa_nid;
     DSA_SIG *dsa_sig;
-    SSHString rsa_sig;
+    std::vector<uint8_t> rsa_sig;
     ECDSA_SIG *ecdsa_sig;
 
     ssh_signature_struct()
         : sig_type(SSH_KEYTYPE_UNKNOWN)
         , ecdsa_nid(0)
         , dsa_sig(nullptr)
-        , rsa_sig(0)
+        , rsa_sig{}
         , ecdsa_sig(nullptr)
     {
     }
@@ -157,7 +157,7 @@ ssh_key_struct *ssh_key_dup(const ssh_key_struct *key);
 /* SSH Signature Functions */
 void ssh_signature_free(ssh_signature_struct * sign);
 
-int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
+int ssh_pki_signature_verify_blob(const std::vector<uint8_t> & sig_blob,
                                   const ssh_key_struct *key,
                                   unsigned char *digest,
                                   size_t dlen,
@@ -167,7 +167,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
 int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey);
 
 /* SSH Signing Functions */
-SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigned char *hash, size_t hlen);
+std::vector<uint8_t> ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigned char *hash, size_t hlen);
 
 /* SSH Key Functions */
 

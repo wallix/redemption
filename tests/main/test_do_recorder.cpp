@@ -19,11 +19,11 @@
 
 */
 
-#define UNIT_TEST_MODULE TestDoRecorder
+#define RED_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
-//#define LOGNULL
+// #define LOGPRINT
+#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/do_recorder.hpp"

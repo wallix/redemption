@@ -21,7 +21,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestColors
+#define RED_TEST_MODULE TestColors
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/colors.hpp"

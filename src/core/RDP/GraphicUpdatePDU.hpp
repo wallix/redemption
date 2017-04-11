@@ -209,7 +209,6 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
 
             case SERVER_UPDATE_POINTER_NEW:
-LOG(LOG_INFO, "Send Fast-Path New Pointer Update");
                 updateCode = FastPath::UpdateType::POINTER;
                 break;
 

@@ -21,12 +21,12 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define UNIT_TEST_MODULE TestRdp
+#define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 //#include "transport/socket_transport.hpp"
@@ -146,7 +146,12 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+
     snprintf(info.hostname,sizeof(info.hostname),"test");
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
+
     int verbose = 511;
 
     FakeFront front(info, verbose);

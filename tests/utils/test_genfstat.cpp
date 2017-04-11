@@ -24,7 +24,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestGenFstat
+#define RED_TEST_MODULE TestGenFstat
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

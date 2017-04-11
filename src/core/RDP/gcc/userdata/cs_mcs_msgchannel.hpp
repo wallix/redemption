@@ -64,7 +64,7 @@ struct CSMCSMsgChannel {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
@@ -90,7 +90,7 @@ struct CSMCSMsgChannel {
         this->flags = stream.in_uint32_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_MCS_MSGCHANNEL (%u bytes)", msg, this->length);

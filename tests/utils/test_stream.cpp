@@ -22,7 +22,7 @@
    Using lib boost functions, some tests need to be added
 */
 
-#define UNIT_TEST_MODULE TestStream
+#define RED_TEST_MODULE TestStream
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

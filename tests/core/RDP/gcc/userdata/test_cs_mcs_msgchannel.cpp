@@ -20,7 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define UNIT_TEST_MODULE TestCS_MCS_MSGCHANNEL
+#define RED_TEST_MODULE TestCS_MCS_MSGCHANNEL
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

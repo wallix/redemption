@@ -745,6 +745,18 @@ protected:
     LargePointerCaps        client_large_pointer_caps;
     MultiFragmentUpdateCaps client_multi_fragment_update_caps;
 
+    GeneralCaps const        client_general_caps;
+    BitmapCaps const         client_bitmap_caps;
+    OrderCaps const          client_order_caps;
+    BmpCacheCaps const       client_bmp_cache_caps;
+    BmpCache2Caps const      client_bmp_cache_2_caps;
+    OffScreenCacheCaps const client_off_screen_cache_caps;
+    GlyphCacheCaps const     client_glyph_cache_caps;
+    RailCaps const           client_rail_caps;
+    WindowListCaps const     client_window_list_caps;
+
+    bool client_use_bmp_cache_2 = false;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -892,6 +904,16 @@ public:
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
+        , client_general_caps(info.general_caps)
+        , client_bitmap_caps(info.bitmap_caps)
+        , client_order_caps(info.order_caps)
+        , client_bmp_cache_caps(info.bmp_cache_caps)
+        , client_bmp_cache_2_caps(info.bmp_cache_2_caps)
+        , client_off_screen_cache_caps(info.off_screen_cache_caps)
+        , client_glyph_cache_caps(info.glyph_cache_caps)
+        , client_rail_caps(info.rail_caps)
+        , client_window_list_caps(info.window_list_caps)
+        , client_use_bmp_cache_2(info.use_bmp_cache_2)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -918,10 +940,8 @@ public:
         }
 
         if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
-            GeneralCaps general_caps;
-            this->front.retrieve_client_capability_set(general_caps);
             this->bogus_linux_cursor =
-                ((general_caps.os_major == OSMAJORTYPE_UNIX) ?
+                ((this->client_general_caps.os_major == OSMAJORTYPE_UNIX) ?
                  BogusLinuxCursor::enable : BogusLinuxCursor::disable);
         }
 
@@ -3423,7 +3443,6 @@ public:
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-            this->front.recv_disconnect_provider_ultimatum();
 
             this->end_session_reason.clear();
             this->end_session_message.clear();
@@ -4145,7 +4164,7 @@ public:
                     : 0
                     ;
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(general_caps);
+                    general_caps = this->client_general_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     general_caps.log("Sending to server");
@@ -4162,7 +4181,7 @@ public:
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(bitmap_caps);
+                    bitmap_caps = this->client_bitmap_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     bitmap_caps.log("Sending to server");
@@ -4239,19 +4258,19 @@ public:
                 };
 
                 for (auto idx : idxs){
-                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
+                    order_caps.orderSupport[idx] &= this->client_order_caps.orderSupport[idx];
                 }
 
                 if (bool(this->verbose & RDPVerbose::basic_trace) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
 
-                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
+                order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(order_caps);
+                    order_caps = this->client_order_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     order_caps.log("Sending to server");
@@ -4276,9 +4295,12 @@ public:
                 bool use_bitmapcache_rev2 = false;
 
                 if (this->enable_transparent_mode) {
-                    if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
-                        this->front.retrieve_client_capability_set(bmpcache2_caps);
-                        use_bitmapcache_rev2 = true;
+                    use_bitmapcache_rev2 = this->client_use_bmp_cache_2;
+                    if (use_bitmapcache_rev2) {
+                        bmpcache2_caps = this->client_bmp_cache_2_caps;
+                    }
+                    else {
+                        bmpcache_caps = this->client_bmp_cache_caps;
                     }
                 }
                 else {
@@ -4373,7 +4395,7 @@ public:
 
                 GlyphCacheCaps glyphcache_caps;
                 if (this->enable_glyph_cache) {
-                    this->front.retrieve_client_capability_set(glyphcache_caps);
+                    glyphcache_caps = this->client_glyph_cache_caps;
 
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
                     glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
@@ -4384,20 +4406,17 @@ public:
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
                 if (this->remote_program) {
-                    RailCaps rail_caps;
-                    this->front.retrieve_client_capability_set(rail_caps);
+                    RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
-                    WindowListCaps window_list_caps;
-                    this->front.retrieve_client_capability_set(window_list_caps);
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                        window_list_caps.log("Sending to server");
+                        this->client_window_list_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emit_capability_set(window_list_caps);
+                    confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
                 }
 
                 if (this->large_pointer_support &&

@@ -672,7 +672,31 @@ private:
                         msg += "@";
                     }
                     msg += this->mm.ini.template get<cfg::globals::target_device>();
-                    this->mm.osd_message(msg, false);
+                    const uint32_t enddate = this->mm.ini.template get<cfg::context::end_date_cnx>();
+                    if (enddate) {
+                        const auto now = time(nullptr);
+                        const auto elapsed_time = enddate - now;
+                        // only if "reasonable" time
+                        if (elapsed_time < 60*60*24*366L) {
+                            msg += "  [";
+                            const auto minutes = elapsed_time / 60;
+                            const auto seconds = elapsed_time - minutes * 60;
+                            const Translator tr(language(this->mm.ini));
+                            if (minutes) {
+                                msg += std::to_string(minutes);
+                                msg += ' ';
+                                msg += tr(trkeys::minute);
+                                msg += (minutes > 1) ? "s " : " ";
+                            }
+                            msg += std::to_string(seconds);
+                            msg += ' ';
+                            msg += tr(trkeys::second);
+                            msg += (seconds > 1) ? "s " : " ";
+                            msg += tr(trkeys::before_closing);
+                            msg += "]";
+                        }
+                    }
+                    this->mm.osd_message(std::move(msg), false);
                     this->target_info_is_shown = true;
                 }
             }
@@ -747,7 +771,8 @@ public:
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front, ini.get<cfg::debug::mod_internal>() & 1)
+        , client_execute(front, this->front.client_info.window_list_caps,
+                         ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         this->no_mod.get_event().reset();

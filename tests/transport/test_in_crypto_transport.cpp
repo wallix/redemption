@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestInCryptoTransport
+#define RED_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT

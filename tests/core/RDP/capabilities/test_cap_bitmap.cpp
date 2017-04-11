@@ -21,7 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestCapabilityBitmap
+#define RED_TEST_MODULE TestCapabilityBitmap
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

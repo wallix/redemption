@@ -18,9 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestStrings
+#define RED_TEST_MODULE TestStrings
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include <chrono>
 
 
-BOOST_AUTO_TEST_CASE(TestIniAssign)
+RED_AUTO_TEST_CASE(TestIniAssign)
 {
     Inifile ini;
 
@@ -54,21 +52,21 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
         std::string const c_s = "defef";
         {
             using type = cfg::context::message;
-            ini.set<type>(cs); BOOST_CHECK_EQUAL(ini.get<type>(), cs);
-            ini.set<type>(c_cs); BOOST_CHECK_EQUAL(ini.get<type>(), c_cs);
-            ini.set<type>(pcs); BOOST_CHECK_EQUAL(ini.get<type>(), pcs);
-            ini.set<type>(pc_cs); BOOST_CHECK_EQUAL(ini.get<type>(), pc_cs);
-            ini.set<type>(s); BOOST_CHECK_EQUAL(ini.get<type>(), s);
-            ini.set<type>(c_s); BOOST_CHECK_EQUAL(ini.get<type>(), c_s);
+            ini.set<type>(cs); RED_CHECK_EQUAL(ini.get<type>(), cs);
+            ini.set<type>(c_cs); RED_CHECK_EQUAL(ini.get<type>(), c_cs);
+            ini.set<type>(pcs); RED_CHECK_EQUAL(ini.get<type>(), pcs);
+            ini.set<type>(pc_cs); RED_CHECK_EQUAL(ini.get<type>(), pc_cs);
+            ini.set<type>(s); RED_CHECK_EQUAL(ini.get<type>(), s);
+            ini.set<type>(c_s); RED_CHECK_EQUAL(ini.get<type>(), c_s);
         }
         {
             using type = cfg::globals::certificate_password;
-            ini.set<type>(cs); BOOST_CHECK_EQUAL(ini.get<type>(), cs);
-            ini.set<type>(c_cs); BOOST_CHECK_EQUAL(ini.get<type>(), c_cs);
-            ini.set<type>(pcs); BOOST_CHECK_EQUAL(ini.get<type>(), pcs);
-            ini.set<type>(pc_cs); BOOST_CHECK_EQUAL(ini.get<type>(), pc_cs);
-            ini.set<type>(s); BOOST_CHECK_EQUAL(ini.get<type>(), s);
-            ini.set<type>(c_s); BOOST_CHECK_EQUAL(ini.get<type>(), c_s);
+            ini.set<type>(cs); RED_CHECK_EQUAL(ini.get<type>(), cs);
+            ini.set<type>(c_cs); RED_CHECK_EQUAL(ini.get<type>(), c_cs);
+            ini.set<type>(pcs); RED_CHECK_EQUAL(ini.get<type>(), pcs);
+            ini.set<type>(pc_cs); RED_CHECK_EQUAL(ini.get<type>(), pc_cs);
+            ini.set<type>(s); RED_CHECK_EQUAL(ini.get<type>(), s);
+            ini.set<type>(c_s); RED_CHECK_EQUAL(ini.get<type>(), c_s);
         }
         {
             using type = cfg::mod_rdp::auth_channel;
@@ -76,12 +74,12 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
             auto first1 = begin(val) + 3;
             auto first2 = begin(val) + 5;
             auto all_null = [&](auto first) { return std::all_of(first, end(val), [](char c) { return !c; }); };
-            ini.set<type>(cs); BOOST_CHECK_EQUAL(val, cs); BOOST_CHECK(all_null(first1));
-            ini.set<type>(c_cs); BOOST_CHECK_EQUAL(val, c_cs); BOOST_CHECK(all_null(first2));
-            ini.set<type>(pcs); BOOST_CHECK_EQUAL(val, pcs); BOOST_CHECK(all_null(first1));
-            ini.set<type>(pc_cs); BOOST_CHECK_EQUAL(val, pc_cs); BOOST_CHECK(all_null(first2));
-            ini.set<type>(s); BOOST_CHECK_EQUAL(val, s); BOOST_CHECK(all_null(first1));
-            ini.set<type>(c_s); BOOST_CHECK_EQUAL(val, c_s); BOOST_CHECK(all_null(first2));
+            ini.set<type>(cs); RED_CHECK_EQUAL(val, cs); RED_CHECK(all_null(first1));
+            ini.set<type>(c_cs); RED_CHECK_EQUAL(val, c_cs); RED_CHECK(all_null(first2));
+            ini.set<type>(pcs); RED_CHECK_EQUAL(val, pcs); RED_CHECK(all_null(first1));
+            ini.set<type>(pc_cs); RED_CHECK_EQUAL(val, pc_cs); RED_CHECK(all_null(first2));
+            ini.set<type>(s); RED_CHECK_EQUAL(val, s); RED_CHECK(all_null(first1));
+            ini.set<type>(c_s); RED_CHECK_EQUAL(val, c_s); RED_CHECK(all_null(first2));
         }
     }
 
@@ -320,7 +318,6 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::hash_path>(cpath);
     ini.set<cfg::video::hash_path>(spath);
-    ini.set<cfg::video::inactivity_pause>(1);
     ini.set<cfg::video::inactivity_timeout>(std::chrono::seconds{1});
     ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::png_limit>(1);

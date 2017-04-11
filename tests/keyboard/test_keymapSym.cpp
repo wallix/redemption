@@ -23,7 +23,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestKeymapSym
+#define RED_TEST_MODULE TestKeymapSym
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT

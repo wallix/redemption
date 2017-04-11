@@ -1305,22 +1305,18 @@ class Sesman():
             if not deconnection_time:
                 Logger().error("No timeframe available, Timeframe has not been checked !")
                 _status = False
-            if (deconnection_time == u"-"
-                or deconnection_time[0:4] >= u"2034"):
-                deconnection_time = u"2034-12-31 23:59:59"
+            if _status and deconnection_time == u"-":
                 self.infinite_connection = True
 
             now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-            if (deconnection_time == u'-'
-                or now < deconnection_time):
+            if _status and not self.infinite_connection and now < deconnection_time:
                 # deconnection time to epoch
                 tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                 Logger().info(u"timeclose='%s'" % int(mktime(tt)))
                 kv[u'timeclose'] = int(mktime(tt))
-                if not self.infinite_connection:
-                    _status, _error = self.interactive_display_message(
-                            {u'message': TR(u'session_closed_at %s') % deconnection_time}
-                            )
+                _status, _error = self.interactive_display_message(
+                        {u'message': TR(u'session_closed_at %s') % deconnection_time}
+                        )
 
         module = kv.get(u'proto_dest')
         if not module in [ u'RDP', u'VNC', u'INTERNAL' ]:

@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestRect
+#define RED_TEST_MODULE TestRect
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

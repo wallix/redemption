@@ -1,8 +1,9 @@
 REDEMPTION_CONFIG_SPECS_PATH ?= ./configs_specs ;
 REDEMPTION_CONFIG_PATH ?= . ;
-REDEMPTION_ROOT_PATH ?= ../../ ;
+REDEMPTION_ROOT_PATH ?= ../.. ;
 REDEMPTION_SRC_PATH ?= $(REDEMPTION_ROOT_PATH)/src ;
 SYSTEM_TYPE ?= linux ;
+SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 
 include ../../jam/cxxflags.jam ;
 include ../../jam/defines.jam ;
@@ -13,7 +14,7 @@ project configs
     <include>$(REDEMPTION_CONFIG_PATH)/include/autogen
     <include>$(REDEMPTION_CONFIG_SPECS_PATH)
     <include>$(REDEMPTION_SRC_PATH)
-    <include>$(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE)
+    <include>$(SYSTEM_SRC_PATH)
 
     <conditional>@defines
 
@@ -79,19 +80,16 @@ alias generate_descs :
 alias generate : generate_types generate_descs ;
 
 
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-
-import testing ;
-
-constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
+include ../../jam/testing-coverage.jam ;
 
 constant TEST_DEPENDENCIES :
-    $(LIB_TEST_DEPENDENCY)
+    $(UNIT_TEST_DEPENDENCIES)
+    <library>libunit_test
+    <cxxflags>-frtti
     <implicit-dependency>generate_cpp_configs
     <implicit-dependency>generate_python_spec
     <implicit-dependency>generate_enum
     <include>redemption_src
-    <cxxflags>-frtti
     <define>CFG_PATH='\"$(REDEMPTION_ROOT_PATH)/etc/rdpproxy/\"'
 ;
 

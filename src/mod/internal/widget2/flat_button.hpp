@@ -117,7 +117,7 @@ public:
             this->drawable.begin_update();
 
             this->draw(rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus,
-                this->buffer, this->fg_color, this->bg_color, this->focus_color,
+                this->buffer, this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
                 this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
 
             this->drawable.end_update();
@@ -127,6 +127,7 @@ public:
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      bool logo, bool has_focus, char const* text,
                      uint32_t fgcolor, uint32_t bgcolor, uint32_t focuscolor,
+                     gdi::ColorCtx color_ctx,
                      Rect label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext) {
         uint32_t fg_color = fgcolor;
         uint32_t bg_color = bgcolor;
@@ -147,16 +148,16 @@ public:
             bg_color = has_focus ? focuscolor : bgcolor;
         }
         // background
-        drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, gdi::ColorCtx::depth24());
+        drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, color_ctx);
 
         if (state & 1)  {
             Rect temp_rect = label_rect.offset(1, 1);
             temp_rect.cx--;
             temp_rect.cy--;
-            WidgetLabel::draw(clip, temp_rect, drawable, text, fg_color, bg_color, font, xtext, ytext);
+            WidgetLabel::draw(clip, temp_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
         }
         else {
-            WidgetLabel::draw(clip, label_rect, drawable, text, fg_color, bg_color, font, xtext, ytext);
+            WidgetLabel::draw(clip, label_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
         }
 
         if (logo)
@@ -167,19 +168,19 @@ public:
             //top
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y, rect.cx - border_width, border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), fg_color), rect, color_ctx);
             //left
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y + border_width, border_width, rect.cy - border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), fg_color), rect, color_ctx);
             //right
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x + rect.cx - border_width, rect.y, border_width, rect.cy
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), fg_color), rect, color_ctx);
             //bottom
             drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   rect.x, rect.y + rect.cy - border_width, rect.cx, border_width
-                  )), fg_color), rect, gdi::ColorCtx::depth24());
+                  )), fg_color), rect, color_ctx);
         }
     }
 

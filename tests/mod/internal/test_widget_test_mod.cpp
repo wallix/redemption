@@ -18,11 +18,13 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestWidgetTestMod
+#define RED_TEST_MODULE TestWidgetTestMod
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
+//#define LOGPRINT
 
+#include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
@@ -39,7 +41,8 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Font font;
 

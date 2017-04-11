@@ -18,7 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestKerberos
+#define RED_TEST_MODULE TestKerberos
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

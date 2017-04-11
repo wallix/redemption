@@ -18,7 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define UNIT_TEST_MODULE TestSplitter
+#define RED_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/numerics/safe_conversions.hpp"

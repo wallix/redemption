@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestNtlmMessageNegotiate
+#define RED_TEST_MODULE TestNtlmMessageNegotiate
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     // hexdump_c(NegoMsg.DomainName.Buffer.get_data(),
     //           NegoMsg.Workstation.Buffer.size());
 
-    NegoMsg.version.print();
+    // NegoMsg.version.log();
 
     // // hexdump_c(to_send.get_data(), to_send.size());
     // BStream outMsg;

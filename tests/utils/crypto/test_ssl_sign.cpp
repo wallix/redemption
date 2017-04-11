@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define UNIT_TEST_MODULE TestSign
+#define RED_TEST_MODULE TestSign
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/crypto/ssl_sign.hpp"

@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestRemotePrograms
+#define RED_TEST_MODULE TestRemotePrograms
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

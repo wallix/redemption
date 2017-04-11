@@ -20,7 +20,7 @@
    Unit test to capture interface to video recording to flv or mp4frecv
 */
 
-#define UNIT_TEST_MODULE TestWrmCapture
+#define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -578,12 +578,19 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
     TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
 }
 
+//static int stat0(const char *restrict path, struct stat *restrict buf)
+
 struct TestFstat : Fstat
 {
-    int stat(const char * /*filename*/, struct stat & stat) override
+    static int stat0(const char * /* path */, struct stat * buf)
     {
-        stat = {};
+        memset(buf, 0, sizeof(struct stat));
         return 0;
+    }
+
+    int stat(const char * filename, struct stat & st) override
+    {
+        return this->stat0(filename, &st);
     }
 };
 

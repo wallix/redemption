@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define UNIT_TEST_MODULE TestAuthAPI
+#define RED_TEST_MODULE TestAuthAPI
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
