@@ -520,7 +520,7 @@ public:
         }
 
         for (const Rect & rect : region.rects) {
-            this->rdp_input_invalidate(rect/*.offset(new_rect.x - old_rect.x, new_rect.y - old_rect.y)*/);
+            this->rdp_input_invalidate(rect);
         }
 
         if (this->hscroll_added) {

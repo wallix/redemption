@@ -1381,19 +1381,27 @@ public:
                 try {
                     const char * const name = "RDP Target";
 
-                    Rect adjusted_client_execute_rect =
-                        this->client_execute.adjust_rect(get_widget_rect(
-                                client_info.width,
-                                client_info.height,
-                                this->front.client_info.cs_monitor
-                            ));
+                    Rect adjusted_client_execute_rect;
 
-                    if (this->front.client_info.remote_program &&
-                        !mod_rdp_params.remote_program) {
+                    const bool host_mod_in_widget =
+                        (this->front.client_info.remote_program &&
+                         !mod_rdp_params.remote_program);
+
+                    if (host_mod_in_widget) {
+                        adjusted_client_execute_rect =
+                            this->client_execute.adjust_rect(get_widget_rect(
+                                    client_info.width,
+                                    client_info.height,
+                                    this->front.client_info.cs_monitor
+                                ));
+
                         client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
                         client_info.height = adjusted_client_execute_rect.cy;
 
                         ::memset(&client_info.cs_monitor, 0, sizeof(client_info.cs_monitor));
+                    }
+                    else {
+                        this->client_execute.reset(false);
                     }
 
                     ModWithSocket<mod_rdp>* new_mod =
@@ -1417,8 +1425,7 @@ public:
 
                     std::unique_ptr<mod_api> managed_mod(new_mod);
 
-                    if (this->front.client_info.remote_program &&
-                        !mod_rdp_params.remote_program) {
+                    if (host_mod_in_widget) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
                         std::string target_info = this->ini.get<cfg::context::target_str>().c_str();

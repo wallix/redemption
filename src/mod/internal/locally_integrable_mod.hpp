@@ -67,7 +67,7 @@ struct LocallyIntegrableMod : public InternalMod {
     , first_click_down_event_handler(*this) {}
 
     ~LocallyIntegrableMod() override {
-        this->client_execute.reset();
+        this->client_execute.reset(true);
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
