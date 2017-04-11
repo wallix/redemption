@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderColCache
+#define RED_TEST_MODULE TestOrderColCache
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestColCache)
+RED_AUTO_TEST_CASE(TestColCache)
 {
     using namespace RDP;
 
@@ -125,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+        RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(in_stream);
         RDPColCache cmd(0, newcmd.palette);
         cmd.receive(in_stream, header);

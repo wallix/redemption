@@ -171,6 +171,8 @@ class Sesman():
         self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
+        self.shared[u'recording_started'] = u'False'
+
         self.internal_target = False
         self.check_session_parameters = False
 
@@ -244,6 +246,8 @@ class Sesman():
             u'duration': u'',
             u'showform': False,
             u'formflag': 0,
+
+            u'recording_started' : False,
             })
         self.engine.reset_proxy_rights()
 
@@ -1301,21 +1305,18 @@ class Sesman():
             if not deconnection_time:
                 Logger().error("No timeframe available, Timeframe has not been checked !")
                 _status = False
-            if (deconnection_time == u"-"
-                or deconnection_time[0:4] >= u"2034"):
-                deconnection_time = u"2034-12-31 23:59:59"
+            if _status and deconnection_time == u"-":
                 self.infinite_connection = True
 
             now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-            if (deconnection_time == u'-'
-                or now < deconnection_time):
+            if _status and not self.infinite_connection and now < deconnection_time:
                 # deconnection time to epoch
                 tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                Logger().info(u"timeclose='%s'" % int(mktime(tt)))
                 kv[u'timeclose'] = int(mktime(tt))
-                if not self.infinite_connection:
-                    _status, _error = self.interactive_display_message(
-                            {u'message': TR(u'session_closed_at %s') % deconnection_time}
-                            )
+                _status, _error = self.interactive_display_message(
+                        {u'message': TR(u'session_closed_at %s') % deconnection_time}
+                        )
 
         module = kv.get(u'proto_dest')
         if not module in [ u'RDP', u'VNC', u'INTERNAL' ]:
@@ -1326,6 +1327,8 @@ class Sesman():
         proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
         kv[u'mode_console'] = u"allow"
 
+        self.shared[u'recording_started'] = u'False'
+
         self.reporting_reason  = None
         self.reporting_target  = None
         self.reporting_message = None
@@ -1335,6 +1338,8 @@ class Sesman():
 
         if _status:
             for physical_target in self.engine.get_effective_target(selected_target):
+                kv[u'recording_started'] = False
+
                 physical_info = self.engine.get_physical_target_info(physical_target)
                 if not _status:
                     physical_target = None
@@ -1463,15 +1468,15 @@ class Sesman():
                             None
                             )
 
-                    if not trace_written:
-                        # write mwrm path to rdptrc (allow real time display)
-                        trace_written = True
-                        _status, _error = self.engine.write_trace(self.full_path)
-                        if not _status:
-                            _error = TR("Trace writer failed for %s") % self.full_path
-                            Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
-                            self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                            break
+                    # if not trace_written:
+                    #     # write mwrm path to rdptrc (allow real time display)
+                    #     trace_written = True
+                    #     _status, _error = self.engine.write_trace(self.full_path)
+                    #     if not _status:
+                    #         _error = TR("Trace writer failed for %s") % self.full_path
+                    #         Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                    #         self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                    #         break
 
                     update_args = { "is_application": bool(application),
                                     "target_host": self._physical_target_host }
@@ -1533,6 +1538,17 @@ class Sesman():
                                 self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data();
+
+                                if self.shared.get(u'recording_started') == u'True':
+                                    if not trace_written:
+                                        # write mwrm path to rdptrc (allow real time display)
+                                        trace_written = True
+                                        Logger().info(u"Call write trace")
+                                        _status, _error = self.engine.write_trace(self.full_path)
+                                        if not _status:
+                                            _error = TR("Trace writer failed for %s") % self.full_path
+                                            Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                            self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
@@ -1763,7 +1779,7 @@ class Sesman():
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
                 u'session_probe_use_smart_launcher' : 'use_smart_launcher',
-                u'enable_session_probe_launch_mask' : 'enable_launch_mask',
+                u'session_probe_enable_launch_mask' : 'enable_launch_mask',
                 u'session_probe_on_launch_failure' : 'on_launch_failure',
                 u'session_probe_launch_timeout' : 'launch_timeout',
                 u'session_probe_launch_fallback_timeout' : 'launch_fallback_timeout',
@@ -1774,8 +1790,9 @@ class Sesman():
                 u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
                 u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
                 u'session_probe_idle_session_limit' : 'idle_session_limit',
-                u'outbound_connection_blocking_rules' : 'outbound_connection_blocking_rules',
-                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules'
+                u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
+                u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
+                u'session_probe_extra_system_processes' : 'extra_system_processes'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

@@ -196,7 +196,19 @@ constexpr bool operator != (BGRColor_ const & lhs, BGRColor_ const & rhs) { retu
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, BGRColor_ const & c)
-{ return out << c.to_u32(); }
+{
+    char const * thex = "0123456789ABCDEF";
+    char s[]{
+        thex[(c.to_u32() >> 20) & 0xf],
+        thex[(c.to_u32() >> 16) & 0xf],
+        thex[(c.to_u32() >> 12) & 0xf],
+        thex[(c.to_u32() >> 8) & 0xf],
+        thex[(c.to_u32() >> 4) & 0xf],
+        thex[(c.to_u32() >> 0) & 0xf],
+        '\0'
+    };
+    return out << s;
+}
 
 constexpr uint32_t log_value(BGRColor_ const & c) noexcept { return c.to_u32(); }
 
@@ -239,7 +251,7 @@ constexpr bool operator != (RDPColor const & lhs, RDPColor const & rhs)
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPColor const & c)
-{ return out << c.as_bgr().to_u32(); }
+{ return out << c.as_bgr(); }
 
 constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.as_bgr().to_u32(); }
 

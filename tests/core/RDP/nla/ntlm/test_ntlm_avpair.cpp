@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlmAvPair
+#define RED_TEST_MODULE TestNtlmAvPair
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,29 +28,29 @@
 
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAvPair)
+RED_AUTO_TEST_CASE(TestAvPair)
 {
     NtlmAvPairList listAvPair;
 
-    BOOST_CHECK_EQUAL(listAvPair.length(), 1);
-    BOOST_CHECK_EQUAL(listAvPair.packet_length(), 4);
+    RED_CHECK_EQUAL(listAvPair.length(), 1);
+    RED_CHECK_EQUAL(listAvPair.packet_length(), 4);
 
     const uint8_t tartempion[] = "NomDeDomaine";
 
     listAvPair.add(MsvAvNbDomainName, tartempion, sizeof(tartempion));
 
-    BOOST_CHECK_EQUAL(listAvPair.length(), 2);
-    BOOST_CHECK_EQUAL(listAvPair.packet_length(), 21);
+    RED_CHECK_EQUAL(listAvPair.length(), 2);
+    RED_CHECK_EQUAL(listAvPair.packet_length(), 21);
 
     StaticOutStream<65535> stream;
 
     listAvPair.emit(stream);
-    BOOST_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
-    listAvPair.print();
+    RED_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
+    //listAvPair.log();
 }
 
 
-BOOST_AUTO_TEST_CASE(TestAvPairRecv)
+RED_AUTO_TEST_CASE(TestAvPairRecv)
 {
     const uint8_t TargetInfo[] = {
         0x02, 0x00, 0x08, 0x00, 0x57, 0x00, 0x49, 0x00,
@@ -68,5 +66,5 @@ BOOST_AUTO_TEST_CASE(TestAvPairRecv)
 
     InStream in_stream(TargetInfo);
     avpairlist.recv(in_stream);
-    avpairlist.print();
+    //avpairlist.log();
 }

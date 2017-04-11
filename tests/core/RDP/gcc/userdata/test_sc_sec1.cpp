@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSC_SEC1
+#define RED_TEST_MODULE TestSC_SEC1
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/sc_sec1.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
 {
     const char indata[] =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -42,20 +40,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
     sc_sec1.log("Server Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
     const char indata[] =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -65,20 +63,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
     sc_sec1.log("Server Received");
 }
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 {
     const char indata[] =
     // SC_SECURITY tag=0c02 length=1410
@@ -177,29 +175,29 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
-    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
-    BOOST_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
 //    hexdump_c(sc_sec1.serverRandom, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_EQUAL(0, memcmp(
                         "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
                         "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
-    BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(true, sc_sec1.temporary);
 
     sc_sec1.log("Server Received");
 
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 {
     const char indata[] =
         // SC_SECURITY tag=0c02 length=236
@@ -224,24 +222,24 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
-    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
-    BOOST_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
-    BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
-    BOOST_CHECK_EQUAL(184, sc_sec1.serverCertLen);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(184, sc_sec1.serverCertLen);
 //    hexdump_c(sc_sec1.serverRandom, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_EQUAL(0, memcmp(
                     "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
                     "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
-    BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
-    BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(false, sc_sec1.temporary);
+    RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
     sc_sec1.log("Server Received");
 }

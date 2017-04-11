@@ -18,15 +18,13 @@
    Author(s): Christophe Grosjean
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityBmpCache2
+#define RED_TEST_MODULE TestCapabilityBmpCache2
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "core/RDP/capabilities/bmpcache2.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityBmpCache2)
+RED_AUTO_TEST_CASE(TestCapabilityBmpCache2)
 {
     BmpCache2Caps cap;
 

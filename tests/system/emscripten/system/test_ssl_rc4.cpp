@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestRc4
+#define RED_TEST_MODULE TestRc4
 
 #define LOGNULL
 

@@ -80,7 +80,7 @@ struct CSMultiTransport {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
@@ -106,7 +106,7 @@ struct CSMultiTransport {
         this->flags = stream.in_uint32_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_MULTITRANSPORT (%u bytes)", msg, this->length);

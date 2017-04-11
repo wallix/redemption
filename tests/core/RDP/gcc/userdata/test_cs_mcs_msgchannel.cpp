@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCS_MCS_MSGCHANNEL
+#define RED_TEST_MODULE TestCS_MCS_MSGCHANNEL
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp"
 
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
 {
     const char indata[] =
         "\x06\xc0"         // CS_MCS_MSGCHANNEL
@@ -45,13 +43,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     InStream stream(buf);
     cs_mcs_msgchannel.recv(stream);
-    BOOST_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
-    BOOST_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
-    BOOST_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
+    RED_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
+    RED_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
+    RED_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
 
     cs_mcs_msgchannel.log("Client Received");
 }

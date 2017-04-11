@@ -256,7 +256,7 @@ void config_spec_definition(Writer && W)
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."
         }, cpp::name{"session_probe_use_clipboard_based_launcher"}, set(true), r);
-        W.member(H, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
+        W.member(H, type_<bool>(), "session_probe_enable_launch_mask", set(true), r);
         W.member(H, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", set(SessionProbeOnLaunchFailure::retry_without_session_probe), r);
         W.member(H, type_<std::chrono::milliseconds>(), "session_probe_launch_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
@@ -372,7 +372,6 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::path>(), "record_tmp_path", set(CPP_MACRO(RECORD_TMP_PATH)));
         W.member(A, type_<types::path>(), "record_path", set(CPP_MACRO(RECORD_PATH)));
         W.sep();
-        W.member(type_<bool>(), "inactivity_pause", set(false));
         W.member(type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
         W.sep();
 
@@ -546,15 +545,17 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
-        W.member(type_<std::string>(), "outbound_connection_monitoring_rules", sesman::name{"outbound_connection_blocking_rules"}, r);
-        W.sep();
-        W.member(type_<std::string>(), "process_monitoring_rules", sesman::name{"session_probe_process_monitoring_rules"}, r);
+        W.member(type_<std::string>(), "session_probe_outbound_connection_monitoring_rules", r);
+        W.member(type_<std::string>(), "session_probe_process_monitoring_rules", r);
+        W.member(type_<std::string>(), "session_probe_extra_system_processes", r);
         W.sep();
         W.member(type_<std::string>(), "manager_disconnect_reason");
         W.member(type_<std::string>(), "disconnect_reason", r);
         W.member(type_<bool>(), "disconnect_reason_ack", set(false), w);
         W.sep();
         W.member(type_<std::string>(), "ip_target");
+        W.sep();
+        W.member(type_<bool>(), "recording_started", set(false), w);
     });
 
     W.section("", [&]

@@ -21,16 +21,14 @@
     Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderMultiPatBlt
+#define RED_TEST_MODULE TestOrderMultiPatBlt
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMultiPatBlt)
+RED_AUTO_TEST_CASE(TestMultiPatBlt)
 {
 
 }

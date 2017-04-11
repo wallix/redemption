@@ -94,24 +94,24 @@ public:
             this->drawable.begin_update();
 
             this->draw(rect_intersect, this->get_rect(), this->drawable, this->buffer,
-                this->fg_color, this->bg_color, this->font, this->x_text, this->y_text);
+                this->fg_color, this->bg_color, gdi::ColorCtx::depth24(), this->font, this->x_text, this->y_text);
 
             this->drawable.end_update();
         }
     }
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
-                     char const* text, BGRColor_ fgcolor, BGRColor_ bgcolor,
+                     char const* text, RDPColor fgcolor, RDPColor bgcolor, gdi::ColorCtx color_ctx,
                      Font const & font, int xtext, int ytext) {
-        drawable.draw(RDPOpaqueRect(rect, RDPColor(bgcolor)), clip, gdi::ColorCtx::depth24());
+        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, color_ctx);
         gdi::server_draw_text(drawable,
                               font,
                               xtext + rect.x,
                               ytext + rect.y,
                               text,
-                              RDPColor(fgcolor),
-                              RDPColor(bgcolor),
-                              gdi::ColorCtx::depth24(),
+                              fgcolor,
+                              bgcolor,
+                              color_ctx,
                               rect.intersect(clip)
                               );
     }

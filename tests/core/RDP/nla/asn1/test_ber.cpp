@@ -18,68 +18,66 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBER
+#define RED_TEST_MODULE TestBER
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/nla/asn1/ber.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBERInteger)
+RED_AUTO_TEST_CASE(TestBERInteger)
 {
     StaticOutStream<2048> s;
     int res;
     uint32_t value;
 
     res = BER::write_integer(s, 114178754);
-    BOOST_CHECK_EQUAL(res, 6);
+    RED_CHECK_EQUAL(res, 6);
 
 
     InStream in_s(s.get_data(), s.get_offset());
     res = BER::read_integer(in_s, value);
-    BOOST_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(res, true);
 
-    BOOST_CHECK_EQUAL(value, 114178754);
+    RED_CHECK_EQUAL(value, 114178754);
 
     s.rewind();
 
     res = BER::write_integer(s, 1);
-    BOOST_CHECK_EQUAL(res, 3);
+    RED_CHECK_EQUAL(res, 3);
 
     in_s = InStream(s.get_data(), s.get_offset());
     res = BER::read_integer(in_s, value);
-    BOOST_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(res, true);
 
-    BOOST_CHECK_EQUAL(value, 1);
+    RED_CHECK_EQUAL(value, 1);
 
     s.rewind();
 
     res = BER::write_integer(s, 52165);
-    BOOST_CHECK_EQUAL(res, 5);
+    RED_CHECK_EQUAL(res, 5);
 
     in_s = InStream(s.get_data(), s.get_offset());
     res = BER::read_integer(in_s, value);
-    BOOST_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(res, true);
 
-    BOOST_CHECK_EQUAL(value, 52165);
+    RED_CHECK_EQUAL(value, 52165);
 
     s.rewind();
 
     res = BER::write_integer(s, 0x0FFF);
-    BOOST_CHECK_EQUAL(res, 4);
+    RED_CHECK_EQUAL(res, 4);
 
     in_s = InStream(s.get_data(), s.get_offset());
     res = BER::read_integer(in_s, value);
-    BOOST_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(res, true);
 
-    BOOST_CHECK_EQUAL(value, 0x0FFF);
+    RED_CHECK_EQUAL(value, 0x0FFF);
 
     s.rewind();
 }
 
-//BOOST_AUTO_TEST_CASE(TestBERBool)
+//RED_AUTO_TEST_CASE(TestBERBool)
 //{
 //    BStream s(2048);
 //    int res;
@@ -89,8 +87,8 @@ BOOST_AUTO_TEST_CASE(TestBERInteger)
 //    s.mark_end();
 //    s.rewind();
 //    res = BER::read_bool(s, value);
-//    BOOST_CHECK_EQUAL(res, true);
-//    BOOST_CHECK_EQUAL(value, true);
+//    RED_CHECK_EQUAL(res, true);
+//    RED_CHECK_EQUAL(value, true);
 //
 //    s.rewind();
 //
@@ -98,14 +96,14 @@ BOOST_AUTO_TEST_CASE(TestBERInteger)
 //    s.mark_end();
 //    s.rewind();
 //    res = BER::read_bool(s, value);
-//    BOOST_CHECK_EQUAL(res, true);
-//    BOOST_CHECK_EQUAL(value, false);
+//    RED_CHECK_EQUAL(res, true);
+//    RED_CHECK_EQUAL(value, false);
 //
 //    s.rewind();
 //
 //}
 
-BOOST_AUTO_TEST_CASE(TestBEROctetString)
+RED_AUTO_TEST_CASE(TestBEROctetString)
 {
     StaticOutStream<2048> s;
     int res;
@@ -116,14 +114,14 @@ BOOST_AUTO_TEST_CASE(TestBEROctetString)
     BER::write_octet_string(s, oct_str, 7);
     InStream in_s(s.get_data(), s.get_offset());
     res = BER::read_octet_string_tag(in_s, value);
-    BOOST_CHECK_EQUAL(res, true);
-    BOOST_CHECK_EQUAL(value, 7);
+    RED_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(value, 7);
 
     s.rewind();
 }
 
 
-BOOST_AUTO_TEST_CASE(TestBERContextual)
+RED_AUTO_TEST_CASE(TestBERContextual)
 {
     StaticOutStream<2048> s;
     int res;
@@ -133,8 +131,8 @@ BOOST_AUTO_TEST_CASE(TestBERContextual)
     BER::write_contextual_tag(s, tag, 3, true);
     InStream in_s(s.get_data(), s.get_offset());
     res = BER::read_contextual_tag(in_s, tag, value, true);
-    BOOST_CHECK_EQUAL(res, true);
-    BOOST_CHECK_EQUAL(value, 3);
+    RED_CHECK_EQUAL(res, true);
+    RED_CHECK_EQUAL(value, 3);
 
     s.rewind();
 }

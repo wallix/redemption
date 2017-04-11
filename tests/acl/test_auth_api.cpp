@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestAuthAPI
+#define RED_TEST_MODULE TestAuthAPI
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,10 +29,10 @@
 
 #include "acl/auth_api.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAuthAPI1)
+RED_AUTO_TEST_CASE(TestAuthAPI1)
 {
     LOG(LOG_INFO, "Test not yet implemented");
-    BOOST_CHECK(true);
+    RED_CHECK(true);
 
     NullAuthentifier nullAuth;
 

@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMPPC40
+#define RED_TEST_MODULE TestMPPC40
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
@@ -28,18 +26,18 @@
 
 #include "core/RDP/mppc_40.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRDP40BlukCompression4)
+RED_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 {
     #include "../../fixtures/test_mppc_4.hpp"
 
     rdp_mppc_40_enc mppc_enc;
 
 
-    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     RDP_40_HIST_BUF_LEN);
-    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  RDP_40_HIST_BUF_LEN + 64);
-    BOOST_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_40_enc::hash_table_manager::get_table_size());
-    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 204);
-    BOOST_CHECK_EQUAL(sizeof(compressed_data),   18);
+    RED_CHECK_EQUAL(sizeof(historyBuffer),     RDP_40_HIST_BUF_LEN);
+    RED_CHECK_EQUAL(sizeof(outputBufferPlus),  RDP_40_HIST_BUF_LEN + 64);
+    RED_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_40_enc::hash_table_manager::get_table_size());
+    RED_CHECK_EQUAL(sizeof(uncompressed_data), 204);
+    RED_CHECK_EQUAL(sizeof(compressed_data),   18);
 
 
     memcpy(mppc_enc.historyBuffer,           historyBuffer,    RDP_40_HIST_BUF_LEN);
@@ -59,21 +57,21 @@ BOOST_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 
     int flags = PACKET_COMPRESSED;
 
-    BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
-    BOOST_CHECK_EQUAL(18,    datalen);
-    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc.outputBuffer
+    RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
+    RED_CHECK_EQUAL(18,    datalen);
+    RED_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc.outputBuffer
                                    , mppc_enc.bytes_in_opb));
 }
 
-BOOST_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
+RED_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 {
     #include "../../fixtures/test_mppc_6.hpp"
 
     rdp_mppc_40_dec mppc_dec;
 
 
-    BOOST_CHECK_EQUAL(sizeof(compressed_data),   2241);
-    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 4312);
+    RED_CHECK_EQUAL(sizeof(compressed_data),   2241);
+    RED_CHECK_EQUAL(sizeof(uncompressed_data), 4312);
 
 
     memcpy(mppc_dec.history_buf, historyBuffer, RDP_40_HIST_BUF_LEN);
@@ -87,6 +85,6 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 
     mppc_dec.decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
 
-    BOOST_CHECK_EQUAL(4312, rlen);
-    BOOST_CHECK_EQUAL(0,   memcmp(uncompressed_data, rdata, rlen));
+    RED_CHECK_EQUAL(4312, rlen);
+    RED_CHECK_EQUAL(0,   memcmp(uncompressed_data, rdata, rlen));
 }

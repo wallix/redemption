@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGCC
+#define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
@@ -29,7 +27,7 @@
 #include "core/RDP/clipboard.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
+RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 {
     {
         //  emit_fileList
@@ -51,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 12);
         std::string const expected(reinterpret_cast<const char *>(file_list_data), 12);
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
     }
 
 
@@ -102,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         RDPECLIP::FormatDataResponsePDU_FileList fdr_recv;
         fdr_recv.recv(in_stream_fileList_to_recv);
 
-        BOOST_CHECK_EQUAL(fdr_recv.cItems, cItems);
+        RED_CHECK_EQUAL(fdr_recv.cItems, cItems);
     }
 
 
@@ -134,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         std::string expected(reinterpret_cast<const char *>(metafilepic_out_data), 132);
 
-        BOOST_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_EQUAL(expected, out_data);
 
     }
 
@@ -220,60 +218,60 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
         fdr.recv(stream);
 
-        BOOST_CHECK_EQUAL(fdr.mappingMode, RDPECLIP::MM_ANISOTROPIC);
-        BOOST_CHECK_EQUAL(fdr.xExt, width * ARBITRARY_SCALE);
-        BOOST_CHECK_EQUAL(fdr.yExt, height * ARBITRARY_SCALE);
+        RED_CHECK_EQUAL(fdr.mappingMode, RDPECLIP::MM_ANISOTROPIC);
+        RED_CHECK_EQUAL(fdr.xExt, width * ARBITRARY_SCALE);
+        RED_CHECK_EQUAL(fdr.yExt, height * ARBITRARY_SCALE);
 
         MFF::MetaHeader & metaHeader = fdr.metaHeader;
-        BOOST_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
-        BOOST_CHECK_EQUAL(metaHeader.headerSize, 9);
-        BOOST_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
-        BOOST_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
-        BOOST_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
-        BOOST_CHECK_EQUAL(metaHeader.maxRecord, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        BOOST_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
+        RED_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
+        RED_CHECK_EQUAL(metaHeader.headerSize, 9);
+        RED_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
+        RED_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
+        RED_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
+        RED_CHECK_EQUAL(metaHeader.maxRecord, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+        RED_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
 
         MFF::MetaSetWindowExt & metaSetWindowExt = fdr.metaSetWindowExt;
-        BOOST_CHECK_EQUAL(metaSetWindowExt.height, negative_height16);
-        BOOST_CHECK_EQUAL(metaSetWindowExt.width, width);
+        RED_CHECK_EQUAL(metaSetWindowExt.height, negative_height16);
+        RED_CHECK_EQUAL(metaSetWindowExt.width, width);
 
         MFF::MetaSetWindowOrg & metaSetWindowOrg = fdr.metaSetWindowOrg;
-        BOOST_CHECK_EQUAL(metaSetWindowOrg.yOrg, 0);
-        BOOST_CHECK_EQUAL(metaSetWindowOrg.xOrg, 0);
+        RED_CHECK_EQUAL(metaSetWindowOrg.yOrg, 0);
+        RED_CHECK_EQUAL(metaSetWindowOrg.xOrg, 0);
 
         MFF::MetaSetMapMod & metaSetMapMod = fdr.metaSetMapMod;
-        BOOST_CHECK_EQUAL(metaSetMapMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
+        RED_CHECK_EQUAL(metaSetMapMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
 
         MFF::DibStretchBLT & dibStretchBLT = fdr.dibStretchBLT;
-        BOOST_CHECK_EQUAL(dibStretchBLT.recordSize, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        BOOST_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
-        BOOST_CHECK_EQUAL(dibStretchBLT.rasterOperation, RDPECLIP::SRCCOPY);
-        BOOST_CHECK_EQUAL(dibStretchBLT.srcHeight, height);
-        BOOST_CHECK_EQUAL(dibStretchBLT.srcWidth, width);
-        BOOST_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
-        BOOST_CHECK_EQUAL(dibStretchBLT.destWidth, width);
-        BOOST_CHECK_EQUAL(dibStretchBLT.yDest, 0);
-        BOOST_CHECK_EQUAL(dibStretchBLT.xDest, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.recordSize, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+        RED_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
+        RED_CHECK_EQUAL(dibStretchBLT.rasterOperation, RDPECLIP::SRCCOPY);
+        RED_CHECK_EQUAL(dibStretchBLT.srcHeight, height);
+        RED_CHECK_EQUAL(dibStretchBLT.srcWidth, width);
+        RED_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
+        RED_CHECK_EQUAL(dibStretchBLT.destWidth, width);
+        RED_CHECK_EQUAL(dibStretchBLT.yDest, 0);
+        RED_CHECK_EQUAL(dibStretchBLT.xDest, 0);
 
         MFF::DibStretchBLT::BitmapInfoHeader & bitmapInfoHeader = dibStretchBLT.bitmapInfoHeader;
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.headerSize, 40);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.height, negative_height32);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.width, width);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.planes, 0x0001);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.bitCount, bpp);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.compression, 0);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.imageSize, data_lenght);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.xPelsPerMeter, 0);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.yPelsPerMeter, 0);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.colorUsed, 0);
-        BOOST_CHECK_EQUAL(bitmapInfoHeader.colorImportant, 0);
+        RED_CHECK_EQUAL(bitmapInfoHeader.headerSize, 40);
+        RED_CHECK_EQUAL(bitmapInfoHeader.height, negative_height32);
+        RED_CHECK_EQUAL(bitmapInfoHeader.width, width);
+        RED_CHECK_EQUAL(bitmapInfoHeader.planes, 0x0001);
+        RED_CHECK_EQUAL(bitmapInfoHeader.bitCount, bpp);
+        RED_CHECK_EQUAL(bitmapInfoHeader.compression, 0);
+        RED_CHECK_EQUAL(bitmapInfoHeader.imageSize, data_lenght);
+        RED_CHECK_EQUAL(bitmapInfoHeader.xPelsPerMeter, 0);
+        RED_CHECK_EQUAL(bitmapInfoHeader.yPelsPerMeter, 0);
+        RED_CHECK_EQUAL(bitmapInfoHeader.colorUsed, 0);
+        RED_CHECK_EQUAL(bitmapInfoHeader.colorImportant, 0);
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
+RED_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
 {
    const char metafilepic_in_data[] =
        // header
@@ -345,15 +343,15 @@ BOOST_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
    RDPECLIP::MetaFilePicDescriptor mfpd;
    mfpd.receive(in_stream_metaFilePic);
 
-   BOOST_CHECK_EQUAL(mfpd.recordSize, 48246);
-   BOOST_CHECK_EQUAL(mfpd.height    , 73);
-   BOOST_CHECK_EQUAL(mfpd.width     , 220);
-   BOOST_CHECK_EQUAL(mfpd.bpp       , 24);
-   BOOST_CHECK_EQUAL(mfpd.imageSize , 48180);
+   RED_CHECK_EQUAL(mfpd.recordSize, 48246);
+   RED_CHECK_EQUAL(mfpd.height    , 73);
+   RED_CHECK_EQUAL(mfpd.width     , 220);
+   RED_CHECK_EQUAL(mfpd.bpp       , 24);
+   RED_CHECK_EQUAL(mfpd.imageSize , 48180);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestFileDescriptor)
+RED_AUTO_TEST_CASE(TestFileDescriptor)
 {
     const char in_data[] =
             "\x64\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // d@..............
@@ -402,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TestFileDescriptor)
 
     //file_descriptor.log(LOG_INFO);
 
-    BOOST_CHECK_EQUAL(sizeof(in_data) - 1, file_descriptor.size());
+    RED_CHECK_EQUAL(sizeof(in_data) - 1, file_descriptor.size());
 
     char out_data[sizeof(in_data)];
 
@@ -412,13 +410,13 @@ BOOST_AUTO_TEST_CASE(TestFileDescriptor)
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump(out_stream.get_data(), out_stream.get_offset());
 
-    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
 
 
-BOOST_AUTO_TEST_CASE(TestFormatListPDU) {
+RED_AUTO_TEST_CASE(TestFormatListPDU) {
 
     // inData
     uint32_t IDs[] = {48026, 48025, RDPECLIP::CF_UNICODETEXT, RDPECLIP::CF_TEXT, RDPECLIP::CF_METAFILEPICT};
@@ -442,12 +440,12 @@ BOOST_AUTO_TEST_CASE(TestFormatListPDU) {
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
 
-    BOOST_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(expected, out_data);
 }
 
 
 
-BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
+RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     { // FILECONTENTS_RANGE emit TEST
     // inData
@@ -468,7 +466,7 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
 
-    BOOST_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(expected, out_data);
     }
 
 
@@ -487,10 +485,10 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.recv(stream);
 
-    BOOST_CHECK_EQUAL(fileContentsRequest.streamID, ID);
-    BOOST_CHECK_EQUAL(fileContentsRequest.flag, flag);
-    BOOST_CHECK_EQUAL(fileContentsRequest.lindex, index);
-    BOOST_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+    RED_CHECK_EQUAL(fileContentsRequest.streamID, ID);
+    RED_CHECK_EQUAL(fileContentsRequest.flag, flag);
+    RED_CHECK_EQUAL(fileContentsRequest.lindex, index);
+    RED_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
 
     }
 
@@ -514,7 +512,7 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
 
-    BOOST_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(expected, out_data);
     }
 
 
@@ -533,10 +531,10 @@ BOOST_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.recv(stream);
 
-    BOOST_CHECK_EQUAL(fileContentsRequest.streamID, ID);
-    BOOST_CHECK_EQUAL(fileContentsRequest.flag, flag);
-    BOOST_CHECK_EQUAL(fileContentsRequest.lindex, index);
-    BOOST_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+    RED_CHECK_EQUAL(fileContentsRequest.streamID, ID);
+    RED_CHECK_EQUAL(fileContentsRequest.flag, flag);
+    RED_CHECK_EQUAL(fileContentsRequest.lindex, index);
+    RED_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
 
     }
 }

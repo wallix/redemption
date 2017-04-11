@@ -18,16 +18,14 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestKerberos
+#define RED_TEST_MODULE TestKerberos
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/nla/kerberos/kerberos.hpp"
 
-BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
+RED_AUTO_TEST_CASE(TestAcquireCredentials)
 {
     Kerberos_SecurityFunctionTable table;
     SEC_STATUS status;
@@ -39,37 +37,37 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
-    // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
+    // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
                                             &id, nullptr, nullptr,
                                             &credentials, &expiration);
 
 
-    BOOST_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);
+    RED_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);
     // CREDENTIALS * creds = (CREDENTIALS*)credentials.SecureHandleGetLowerPointer();
-    // BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
+    // RED_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
     //                     creds->identity.User.get_data(),
     //                     creds->identity.User.size()));
-    // BOOST_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
+    // RED_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
     //                     creds->identity.Domain.get_data(),
     //                     creds->identity.Domain.size()));
-    // BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
+    // RED_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
     //                     creds->identity.Password.get_data(),
     //                     creds->identity.Password.size()));
     status = table.FreeCredentialsHandle(&credentials);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
 }
 
 
-BOOST_AUTO_TEST_CASE(TestKerberos)
+RED_AUTO_TEST_CASE(TestKerberos)
 {
     Kerberos_SecurityFunctionTable table;
     SecPkgInfo packageInfo;
     SEC_STATUS status;
     status = table.QuerySecurityPackageInfo(KERBEROS_PACKAGE_NAME, &packageInfo);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
     KERBEROSContext krb_ctx;
 }

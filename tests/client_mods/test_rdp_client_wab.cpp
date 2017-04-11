@@ -21,9 +21,7 @@
     Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientWab
+#define RED_TEST_MODULE TestRdpClientWab
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -42,7 +40,7 @@
 // Uncomment the code block below to generate testing data.
 
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
 
@@ -55,6 +53,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.height                = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
@@ -120,10 +121,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     time_t now = 1450864840;
 
@@ -137,6 +138,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         mod.draw_event(time(nullptr), front);
     }
 
-    CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
+    RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
 }

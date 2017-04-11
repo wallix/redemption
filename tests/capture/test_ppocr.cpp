@@ -20,9 +20,7 @@
    Unit test to detect memory leak in OCR module
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNewOCR
+#define RED_TEST_MODULE TestNewOCR
 #include "system/redemption_unit_tests.hpp"
 
 // #define LOGUNLL
@@ -52,7 +50,7 @@ namespace {
     auto & ocr_constants = rdp_ppocr::get_ocr_constants(CFG_PATH "/ppocr.latin-cyrillic");
 }
 
-BOOST_AUTO_TEST_CASE(TestPPOCR1)
+RED_AUTO_TEST_CASE(TestPPOCR1)
 {
     Drawable drawable(800, 600);
 
@@ -69,11 +67,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "Gestionnaire de serveur"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -82,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/w7mediacentercapture.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        BOOST_CHECK_EQUAL(out_titles.size(), 0);
+        RED_CHECK_EQUAL(out_titles.size(), 0);
     }
 
     {
@@ -93,11 +91,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
             "licences TSGestionnaire de licences TS",
             "Gestionnaire de licences TSGestionnaire de licences TS"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 1);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 1);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -109,11 +107,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "plop fi test fififid zjhufh .txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -125,11 +123,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "Gestionnaire de licences TS"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -142,11 +140,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
             "Gestionnaire de serveur",
             "Gestionna. ? de : .en? s TS"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -159,11 +157,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
             "ff fff ffff f fa fz fe fr ft fy fu fi fo fp fq fs fd fg fh fj fk fl fm fw fx fc fv fb fn f, f;"
             " f% fè fé f& f# fà f@ ffi p.txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -175,11 +173,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "ff fff ffff ? ? ? pp ff p fff p ffff p ? p ? p ? p.txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -191,11 +189,11 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "af rt rf th jk kk ok oo lo LM .txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -207,17 +205,17 @@ BOOST_AUTO_TEST_CASE(TestPPOCR1)
         auto expected = make_array(
             "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(Test2008R2)
+RED_AUTO_TEST_CASE(Test2008R2)
 {
     Drawable drawable(653, 244);
 
@@ -234,15 +232,15 @@ BOOST_AUTO_TEST_CASE(Test2008R2)
         auto expected = make_array(
             "Server Manager"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCR2)
+RED_AUTO_TEST_CASE(TestNewOCR2)
 {
     Drawable drawable(800, 600);
 
@@ -254,7 +252,7 @@ BOOST_AUTO_TEST_CASE(TestNewOCR2)
 
     {
         extractor.extract_titles(drawable, out_titles);
-        BOOST_CHECK_EQUAL(out_titles.size(), 0);
+        RED_CHECK_EQUAL(out_titles.size(), 0);
     }
 
     {
@@ -264,11 +262,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCR2)
         auto expected = make_array(
             "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -282,17 +280,17 @@ BOOST_AUTO_TEST_CASE(TestNewOCR2)
         auto expected = make_array(
             ":es"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCR3)
+RED_AUTO_TEST_CASE(TestNewOCR3)
 {
     Drawable drawable(800, 600);
 
@@ -309,17 +307,17 @@ BOOST_AUTO_TEST_CASE(TestNewOCR3)
         auto expected = make_array(
             "toto"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCR4)
+RED_AUTO_TEST_CASE(TestNewOCR4)
 {
     Drawable drawable(800, 600);
 
@@ -336,11 +334,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
         auto expected = make_array(
             "É.txt - Bloc-notes"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -353,17 +351,17 @@ BOOST_AUTO_TEST_CASE(TestNewOCR4)
         auto expected = make_array(
             "Poste de travail"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCRWin2012)
+RED_AUTO_TEST_CASE(TestNewOCRWin2012)
 {
     Drawable drawable(1446, 927);
 
@@ -380,11 +378,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012)
         auto expected = make_array(
             "Hyper-V Manager"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -396,17 +394,17 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012)
         auto expected = make_array(
             "wab_hv-12"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
+RED_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
 {
     Drawable drawable(1023, 768);
 
@@ -423,17 +421,17 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
         auto expected = make_array(
             "Bibliothèques"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
+RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
 {
     Drawable drawable(2880, 900);
 
@@ -450,11 +448,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         auto expected = make_array(
                 "Gestionnaire de serveur"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -466,11 +464,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         auto expected = make_array(
                 "Gestionnaire des tàches"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -482,18 +480,18 @@ BOOST_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         auto expected = make_array(
                 "Panneau de configuration"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOCRBug)
+RED_AUTO_TEST_CASE(TestOCRBug)
 {
     Drawable drawable(1364, 768);
 
@@ -510,16 +508,16 @@ BOOST_AUTO_TEST_CASE(TestOCRBug)
         auto expected = make_array(
             "Computer"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestNewOCRRussian)
+RED_AUTO_TEST_CASE(TestNewOCRRussian)
 {
     Drawable drawable(816, 639);
 
@@ -536,11 +534,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCRRussian)
         auto expected = make_array(
             "Устройства и принтеры"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }
@@ -552,11 +550,11 @@ BOOST_AUTO_TEST_CASE(TestNewOCRRussian)
         auto expected = make_array(
             "Устройства и принтеры"
         );
-        BOOST_CHECK_EQUAL(out_titles.size(), expected.size());
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
-        BOOST_CHECK_EQUAL(idx_best, 0);
-        BOOST_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 
         out_titles.clear();
     }

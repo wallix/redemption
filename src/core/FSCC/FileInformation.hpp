@@ -428,7 +428,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
         return 64;   /* ObjectId(16) + BirthVolumeId(16) + */
     }                /* BirthObjectId(16) + DomainId(16)*/
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
         stream.out_copy_bytes(this->BirthVolumeId, GUID_SIZE);
         stream.out_copy_bytes(this->BirthObjectId, GUID_SIZE);
@@ -453,7 +453,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
         stream.in_copy_bytes(this->DomainId, GUID_SIZE);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Object Buffer Type1:");
         LOG(LOG_INFO, "          * ObjectId       (16 bytes):");
         hexdump_c(this->ObjectId,  GUID_SIZE);
@@ -517,7 +517,7 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
         return 64;   /* ObjectId(16) + ExtendedInfo(48)*/
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->ObjectId, GUID_SIZE);
         stream.out_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
     }
@@ -537,7 +537,7 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
         stream.in_copy_bytes(this->ExtendedInfo, this->ExtendedInfo_SIZE);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Object Buffer Type2:");
         LOG(LOG_INFO, "          * ObjectId     (16 bytes):");
         hexdump_c(this->ObjectId,  GUID_SIZE);
@@ -591,7 +591,6 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
 //
 // DataBuffer (variable): The content of this buffer is opaque to the file system. On receipt, its content MUST be preserved and properly returned to the caller.
 
-
 struct ReparseGUIDDataBuffer {
 
   uint32_t ReparseTag = 0;
@@ -616,7 +615,7 @@ struct ReparseGUIDDataBuffer {
         return 22;   /* ReparseTag(4) + ReparseDataLength(2) + */
     }                /* ReparseGuid(16)*/
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->ReparseTag);
         stream.out_uint16_le(this->ReparseDataLength);
         stream.out_clear_bytes(2);
@@ -645,7 +644,7 @@ struct ReparseGUIDDataBuffer {
         this->DataBuffer = std::string(reinterpret_cast<char *>(data), this->ReparseDataLength);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Reparse GUID Data Buffer:");
         LOG(LOG_INFO, "          * ReparseTag        = 0x%08x (4 bytes)", this->ReparseTag);
         LOG(LOG_INFO, "          * ReparseDataLength = %d (4 bytes)", int(this->ReparseDataLength));
@@ -721,7 +720,7 @@ struct FileAllocationInformation {
     : AllocationSize(AllocationSize)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint64_le(this->AllocationSize);
     }
 
@@ -729,11 +728,13 @@ struct FileAllocationInformation {
         this->AllocationSize = stream.in_uint64_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Allocation Information:");
         LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
     }
 };
+
+
 
 
 // [MS-FSCC] - 2.4.6 FileAttributeTagInformation
@@ -831,7 +832,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
         LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
@@ -1009,7 +1010,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Basic Information:");
         LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
         LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
@@ -1346,15 +1347,13 @@ public:
         return size + size_of_unicode_data;
     }
 
-    std::string FileName() {
+    std::string FileName() const {
         uint8_t FileName_utf8_string[500];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
             reinterpret_cast<const uint8_t*>(this->file_name.data()), this->file_name.length() / 2, FileName_utf8_string,
             sizeof(FileName_utf8_string));
 
-        const std::string str(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
-
-        return str;
+        return std::string(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
     }
 
 private:
@@ -1379,7 +1378,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Both Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
@@ -1591,18 +1590,16 @@ public:
 
     inline uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
-    std::string FileName() {
+    std::string FileName() const {
         uint8_t FileName_utf8_string[500];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
             reinterpret_cast<const uint8_t*>(this->File_Name.data()), this->File_Name.length() / 2, FileName_utf8_string,
             sizeof(FileName_utf8_string));
 
-        const std::string str(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
-
-        return str;
+        return std::string(reinterpret_cast<char*>(FileName_utf8_string), length_of_FileName_utf8_string);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
@@ -1664,7 +1661,7 @@ struct FileDispositionInformation {
       : DeletePending(DeletePending)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint8(this->DeletePending);
     }
 
@@ -1686,7 +1683,7 @@ struct FileDispositionInformation {
         return 1;  // DeletePending(1)
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Disposition Information:");
         LOG(LOG_INFO, "          * DeletePending = 0x%02x (1 byte)", this->DeletePending);
     }
@@ -1752,7 +1749,7 @@ struct FileEndOfFileInformation {
       : EndOfFile(EndOfFile)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint64_le(this->EndOfFile);
     }
 
@@ -1760,7 +1757,7 @@ struct FileEndOfFileInformation {
         this->EndOfFile = stream.in_uint64_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File EndOfFile Information:");
         LOG(LOG_INFO, "          * EndOfFile = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
     }
@@ -1807,7 +1804,7 @@ struct FileFsLabelInformation {
       : VolumeLabel(VolumeLabel)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->VolumeLabel.size());
         stream.out_copy_bytes(this->VolumeLabel.data(), this->VolumeLabel.size());
     }
@@ -1817,7 +1814,7 @@ struct FileFsLabelInformation {
         this->VolumeLabel = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Label Information:");
         LOG(LOG_INFO, "          * VolumeLabelLength = %zu (4 bytes)", this->VolumeLabel.size());
         LOG(LOG_INFO, "          * VolumeLabel       = \"%s\" (%zu byte(s))", this->VolumeLabel, this->VolumeLabel.size());
@@ -2119,7 +2116,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Full Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
@@ -2313,7 +2310,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Directory Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * FileIndex       = 0x%08x (4 bytes)", this->FileIndex);
@@ -2417,7 +2414,7 @@ struct FileRenameInformation {
       , FileName(FileName)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint8(this->ReplaceIfExists);
         stream.out_clear_bytes(7);
         stream.out_uint64_le(this->RootDirectory);
@@ -2433,7 +2430,7 @@ struct FileRenameInformation {
         this->FileName = std::string(reinterpret_cast<const char *>(stream.get_current()), size);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Rename Information:");
         LOG(LOG_INFO, "          * ReplaceIfExists = %02x (1 byte)", this->ReplaceIfExists);
         LOG(LOG_INFO, "          * Padding - (7 byte) NOT USED");
@@ -2582,7 +2579,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Standard Information:");
         LOG(LOG_INFO, "          * AllocationSize = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
@@ -2908,7 +2905,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Attribute Information:");
         LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
@@ -3058,7 +3055,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Full Size Information:");
         LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
         LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
@@ -3192,7 +3189,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Size Information:");
         LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
         LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
@@ -3390,7 +3387,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Volume Information:");
         LOG(LOG_INFO, "          * VolumeCreationTime = 0x%" PRIx64 " (8 bytes)", this->VolumeCreationTime);
         LOG(LOG_INFO, "          * VolumeSerialNumber = 0x%08x (4 bytes)", this->VolumeSerialNumber);
@@ -3593,7 +3590,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Fs Device Information:");
         LOG(LOG_INFO, "          * DeviceType      = 0x%08x (4 bytes): %s", this->DeviceType, this->get_DeviceType_name(this->DeviceType));
         LOG(LOG_INFO, "          * Characteristics = 0x%08x (4 bytes)", this->Characteristics);
@@ -3761,7 +3758,7 @@ struct FileNotifyInformation {
       , FileName(FileName)
       {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->Action);
         stream.out_uint32_le(this->FileName.size());
@@ -3777,7 +3774,7 @@ struct FileNotifyInformation {
         this->FileName = std::string(reinterpret_cast<const char *>(data), size);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     File Notify Information:");
         LOG(LOG_INFO, "          * NextEntryOffset = 0x%08x (4 bytes)", this->NextEntryOffset);
         LOG(LOG_INFO, "          * Action          = 0x%08x (4 bytes): %s", this->Action, get_Action_name(this->Action));

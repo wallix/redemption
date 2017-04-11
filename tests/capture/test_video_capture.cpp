@@ -20,14 +20,12 @@
    Unit test to capture interface to video recording to flv or mp4
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWrmCapture
+#define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -50,10 +48,10 @@
 #include "capture/video_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse);
-
-void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse)
-{
+inline void simple_movie(
+    timeval now, unsigned duration, RDPDrawable & drawable,
+    gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse
+) {
     Rect screen(0, 0, drawable.width(), drawable.height());
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(screen, BLUE), screen, color_cxt);
@@ -79,9 +77,30 @@ void simple_movie(timeval now, unsigned duration, RDPDrawable & drawable, gdi::C
         if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
         if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
     }
+    // last frame (video.encoding_video_frame())
+    usec += 40000LL;
+    now.tv_sec  = usec / 1000000LL;
+    now.tv_usec = (usec % 1000000LL);
+    int cursor_x = mouse?r.x + 10:0;
+    int cursor_y = mouse?r.y + 10:0;
+    capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
 }
 
-BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
+#define CHECK_FILESIZE_AND_CLEAN(filename, size) { \
+    size_t fsize = filesize(filename);             \
+    RED_CHECK_EQUAL(size, fsize);                \
+    ::unlink(filename);                            \
+}
+
+#define CHECK_FILESIZE_AND_CLEAN2(filename, size1, size2) { \
+    size_t fsize = filesize(filename);                      \
+    if (fsize != size2){                                    \
+        RED_CHECK_EQUAL(size1, fsize);                    \
+    }                                                       \
+    ::unlink(filename);                                     \
+}
+
+RED_AUTO_TEST_CASE(TestSequencedVideoCapture)
 {
     {
         struct notified_on_video_change : public NotifyNextVideo
@@ -105,31 +124,21 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCapture)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-    } fileinfo[] = {
-        {"./opaquerect_videocapture-000000.png", 3099},
-        {"./opaquerect_videocapture-000000.flv", 40677},
-        {"./opaquerect_videocapture-000001.png", 3104},
-        {"./opaquerect_videocapture-000001.flv", 40011},
-        {"./opaquerect_videocapture-000002.png", 3107},
-        {"./opaquerect_videocapture-000002.flv", 41172},
-        {"./opaquerect_videocapture-000003.png", 3099},
-        {"./opaquerect_videocapture-000003.flv", 40610},
-        {"./opaquerect_videocapture-000004.png", 3098},
-        {"./opaquerect_videocapture-000004.flv", 40173},
-        {"./opaquerect_videocapture-000005.png", 3098},
-        {"./opaquerect_videocapture-000005.flv", 13539},
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, fsize);
-        ::unlink(x.filename);
-    }
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000000.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000000.flv", 59101);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000001.png", 3104);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000001.flv", 57209);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000002.png", 3107);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000002.flv", 58613);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000003.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000003.flv", 58182);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000004.png", 3098);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000004.flv", 57363);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000005.png", 3098);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture-000005.flv", 18489);
 }
 
-BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
+RED_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
 {
     {
         struct notified_on_video_change : public NotifyNextVideo
@@ -153,34 +162,21 @@ BOOST_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-        size_t alternativesize;
-    } fileinfo[] = {
-        {"./opaquerect_videocapture-000000.png", 3099, 3099},
-        {"./opaquerect_videocapture-000000.mp4", 12999, 12985},
-        {"./opaquerect_videocapture-000001.png", 3104, 3104},
-        {"./opaquerect_videocapture-000001.mp4", 11726, 11712},
-        {"./opaquerect_videocapture-000002.png", 3107, 3107},
-        {"./opaquerect_videocapture-000002.mp4", 10798, 10784},
-        {"./opaquerect_videocapture-000003.png", 3099, 3099},
-        {"./opaquerect_videocapture-000003.mp4", 11329, 11315},
-        {"./opaquerect_videocapture-000004.png", 3098, 3098},
-        {"./opaquerect_videocapture-000004.mp4", 12331, 12317},
-        {"./opaquerect_videocapture-000005.png", 3098, 3098},
-        {"./opaquerect_videocapture-000005.mp4", 262, 0},
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        if (fsize != x.size && fsize != x.alternativesize){
-            BOOST_CHECK_EQUAL(x.size, fsize);
-        }
-        ::unlink(x.filename);
-    }
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000000.png", 3099, 3099);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000000.mp4", 25039, 12985);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000001.png", 3104, 3104);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000001.mp4", 24682, 11712);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000002.png", 3107, 3107);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000002.mp4", 24771, 10784);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000003.png", 3099, 3099);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000003.mp4", 24295, 11315);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000004.png", 3098, 3098);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000004.mp4", 23983, 12317);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000005.png", 3098, 3098);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_videocapture-000005.mp4", 262, 262);
 }
 
-BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
+RED_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
@@ -204,23 +200,13 @@ BOOST_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
         simple_movie(now, 1000, drawable, video_capture, false, true);
     }
 
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-    } fileinfo[] = {
-        {"./opaquerect_videocapture_one_chunk_xxx-000000.png", 3099},
-        {"./opaquerect_videocapture_one_chunk_xxx-000000.flv", 645722},
-        {"./opaquerect_videocapture_one_chunk_xxx-000001.png", static_cast<long unsigned>(-1)},
-        {"./opaquerect_videocapture_one_chunk_xxx-000001.flv", static_cast<long unsigned>(-1)},
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, fsize);
-        ::unlink(x.filename);
-    }
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture_one_chunk_xxx-000000.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture_one_chunk_xxx-000000.flv", 1187492);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture_one_chunk_xxx-000001.png", -1);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_videocapture_one_chunk_xxx-000001.flv", -1);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -231,13 +217,11 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
-    const char * filename = "./opaquerect_fullvideocapture_timestamp1.flv";
-    BOOST_CHECK_EQUAL(164693, filesize(filename));
-    ::unlink(filename);
 
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp1.flv", 307997);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -248,13 +232,10 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, false);
     }
-    const char * filename = "./opaquerect_fullvideocapture_timestamp_mouse0.flv";
-    BOOST_CHECK_EQUAL(158699, filesize(filename));
-    ::unlink(filename);
-
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp_mouse0.flv", 297960);
 }
 
-BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
+RED_AUTO_TEST_CASE(TestFullVideoCaptureX264)
 {
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
@@ -265,17 +246,10 @@ BOOST_AUTO_TEST_CASE(TestFullVideoCaptureX264)
             0 /* groupid */, false /* no_timestamp */, drawable, flv_params);
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
-    const char * filename = "./opaquerect_fullvideocapture_timestamp2.mp4";
-    size_t fsize = filesize(filename);
-     // size actually depends on the codec version and at least two slightltly different ones exists for h264
-    if (fsize != 54190 && fsize != 54176){
-        BOOST_CHECK_EQUAL(54190, filesize(filename));
-    }
-    ::unlink(filename);
-
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp2.mp4", 118756);
 }
 
-BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
+RED_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
@@ -299,42 +273,32 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-    } fileinfo[] = {
-        {"./opaquerect_seqvideocapture-000000.png", 3099},
-        {"./opaquerect_seqvideocapture-000000.flv", 29439},
-        {"./opaquerect_seqvideocapture-000001.png", 3099},
-        {"./opaquerect_seqvideocapture-000001.flv", 30726},
-        {"./opaquerect_seqvideocapture-000002.png", 3104},
-        {"./opaquerect_seqvideocapture-000002.flv", 29119},
-        {"./opaquerect_seqvideocapture-000003.png", 3101},
-        {"./opaquerect_seqvideocapture-000003.flv", 29108},
-        {"./opaquerect_seqvideocapture-000004.png", 3107},
-        {"./opaquerect_seqvideocapture-000004.flv", 29088},
-        {"./opaquerect_seqvideocapture-000005.png", 3101},
-        {"./opaquerect_seqvideocapture-000005.flv", 30560},
-        {"./opaquerect_seqvideocapture-000006.png", 3099},
-        {"./opaquerect_seqvideocapture-000006.flv", 29076},
-        {"./opaquerect_seqvideocapture-000007.png", 3101},
-        {"./opaquerect_seqvideocapture-000007.flv", 30125},
-        {"./opaquerect_seqvideocapture-000008.png", 3098},
-        {"./opaquerect_seqvideocapture-000008.flv", 28966},
-        {"./opaquerect_seqvideocapture-000009.png", 3098},
-        {"./opaquerect_seqvideocapture-000009.flv", 29309},
-        {"./opaquerect_seqvideocapture-000010.png", 3098},
-        {"./opaquerect_seqvideocapture-000010.flv", 13539}
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        BOOST_CHECK_EQUAL(x.size, fsize);
-        ::unlink(x.filename);
-    }
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000000.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000000.flv", 29091);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000001.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000001.flv", 30202);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000002.png", 3104);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000002.flv", 28658);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000003.png", 3101);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000003.flv", 28743);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000004.png", 3107);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000004.flv", 28716);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000005.png", 3101);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000005.flv", 30089);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000006.png", 3099);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000006.flv", 28726);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000007.png", 3101);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000007.flv", 29648);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000008.png", 3098);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000008.flv", 28608);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000009.png", 3098);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000009.flv", 28947);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000010.png", 3098);
+    CHECK_FILESIZE_AND_CLEAN("./opaquerect_seqvideocapture-000010.flv", 18489);
 }
 
 
-BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
+RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
 {
     struct notified_on_video_change : public NotifyNextVideo
     {
@@ -357,41 +321,27 @@ BOOST_AUTO_TEST_CASE(SequencedVideoCaptureX264)
             std::chrono::microseconds{1000000}, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-        // size actually depends on the codec version and at least two slightltly different ones exists for h264
-        size_t alternativesize;
-    } fileinfo[] = {
-        {"./opaquerect_seqvideocapture_timestamp2-000000.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000000.mp4", 7323, 7309},
-        {"./opaquerect_seqvideocapture_timestamp2-000001.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000001.mp4", 6889, 6875},
-        {"./opaquerect_seqvideocapture_timestamp2-000002.png", 3104, 3104},
-        {"./opaquerect_seqvideocapture_timestamp2-000002.mp4", 6629, 6615},
-        {"./opaquerect_seqvideocapture_timestamp2-000003.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000003.mp4", 6385, 6371},
-        {"./opaquerect_seqvideocapture_timestamp2-000004.png", 3107, 3107},
-        {"./opaquerect_seqvideocapture_timestamp2-000004.mp4", 6013, 5999},
-        {"./opaquerect_seqvideocapture_timestamp2-000005.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000005.mp4", 6036, 6022},
-        {"./opaquerect_seqvideocapture_timestamp2-000006.png", 3099, 3099},
-        {"./opaquerect_seqvideocapture_timestamp2-000006.mp4", 6133, 6119},
-        {"./opaquerect_seqvideocapture_timestamp2-000007.png", 3101, 3101},
-        {"./opaquerect_seqvideocapture_timestamp2-000007.mp4", 6410, 6396},
-        {"./opaquerect_seqvideocapture_timestamp2-000008.png", 3098, 3098},
-        {"./opaquerect_seqvideocapture_timestamp2-000008.mp4", 6631, 6617},
-        {"./opaquerect_seqvideocapture_timestamp2-000009.png", 3098, 3098},
-        {"./opaquerect_seqvideocapture_timestamp2-000009.mp4", 6876, 6862},
-        {"./opaquerect_seqvideocapture_timestamp2-000010.png", 3098, 3098},
-        {"./opaquerect_seqvideocapture_timestamp2-000010.mp4", 262, 262}
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        if ((x.size != fsize) && (x.alternativesize != fsize)){
-            BOOST_CHECK_EQUAL(x.size, filesize(x.filename));
-        }
-        ::unlink(x.filename);
-    }
-}
 
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000000.png", 3099, 3099);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000000.mp4", 13265, 7309);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000001.png", 3099, 3099);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000001.mp4", 13054, 6875);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000002.png", 3104, 3104);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000002.mp4", 12976, 6615);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000003.png", 3101, 3101);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000003.mp4", 12862, 6371);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000004.png", 3107, 3107);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000004.mp4", 13003, 5999);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000005.png", 3101, 3101);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000005.mp4", 13036, 6022);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000006.png", 3099, 3099);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000006.mp4", 12855, 6119);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000007.png", 3101, 3101);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000007.mp4", 12719, 6396);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000008.png", 3098, 3098);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000008.mp4", 12679, 6617);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000009.png", 3098, 3098);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000009.mp4", 12557, 6862);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000010.png", 3098, 3098);
+    CHECK_FILESIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000010.mp4", 262, 262);
+}

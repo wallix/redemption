@@ -14,7 +14,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2013
+ *   Copyright (C) Wallix 2010-2017
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
@@ -94,7 +94,7 @@ public:
     {
         if (!this->hmac_key_loaded){
             if (!this->get_hmac_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+                LOG(LOG_ERR, "CryptoContext: undefined hmac_key callback");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
@@ -113,7 +113,6 @@ public:
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
     {
         if (this->old_encryption_scheme){
-            //LOG(LOG_INFO, "old encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
                 uint8_t tmp[SHA256_DIGEST_LENGTH];
@@ -128,12 +127,9 @@ public:
             }
         }
 
-        //LOG(LOG_INFO, "new encryption scheme derivator %.*s", static_cast<unsigned>(derivator_len), derivator);
         if (!this->master_key_loaded){
-            //LOG(LOG_INFO, "first call, loading master key");
-            assert(this->get_trace_key_cb);
-            if (!this->get_trace_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb is null");
+            if (this->get_trace_key_cb == nullptr) {
+                LOG(LOG_ERR, "CryptoContext: undefined trace_key callback");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
 
@@ -260,18 +256,9 @@ struct ocrypto {
     struct Result {
         const_bytes_array buf;
         std::size_t consumed;
-        int err_code; // no error = 0
-
-        static Result error(int err_code)
-        {
-            return Result{{}, 0, err_code};
-        }
     };
 
 private:
-    uint8_t result_buffer[32768] = {};
-
-    char           buf[CRYPTO_BUFFER_SIZE]; //
     EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
     SslHMAC_Sha256_Delayed hm;              // full hash context
     SslHMAC_Sha256_Delayed hm4k;             // quick hash context
@@ -279,6 +266,8 @@ private:
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
     uint8_t header_buf[40];
+    uint8_t result_buffer[32768] = {};
+    char           buf[CRYPTO_BUFFER_SIZE]; //
 
     CryptoContext & cctx;
     Random & rnd;
@@ -315,7 +304,6 @@ private:
         if (!this->pos) {
             return;
         }
-        
         // Compress
         // TODO: check this
         char compressed_buf[65536];
@@ -334,7 +322,6 @@ private:
 
         // Encrypt
         unsigned char ciphered_buf[4 + 65536];
-        //char ciphered_buf[ciphered_buf_sz];
         uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
         this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
                            compressed_buf_sz,
@@ -374,9 +361,12 @@ public:
     {
     }
 
+    ~ocrypto() {}
+    
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
         this->file_size = 0;
+        this->pos = 0;
         if (this->checksum) {
             this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
             this->hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
@@ -427,10 +417,10 @@ public:
                 }
                 this->file_size += 40;
             }
-            return {{this->header_buf, 40u}, 0u, 0};
+            return Result{{this->header_buf, 40u}, 0u};
         }
         else {
-            return Result{{this->header_buf, 0u}, 0u, 0};
+            return Result{{this->header_buf, 0u}, 0u};
         }
     }
 
@@ -465,12 +455,12 @@ public:
             }
         }
 
-        if (this->checksum && qhash && fhash) {
+        if (this->checksum) {
             this->hm.final(fhash);
             this->hm4k.final(qhash);
 
         }
-        return Result{{this->result_buffer, towrite}, 0u, 0};
+        return Result{{this->result_buffer, towrite}, 0u};
 
     }
 
@@ -486,7 +476,7 @@ public:
                 this->file_size += len;
             }
             
-            return Result{{data, len}, len, 0};
+            return Result{{data, len}, len};
         }
 
         size_t buflen = sizeof(this->result_buffer);
@@ -508,10 +498,8 @@ public:
         }
         // Update raw size counter
         this->raw_size += len;
-        return {{this->result_buffer, towrite}, len, 0};
+        return {{this->result_buffer, towrite}, len};
     }
-
-
 };
 
 

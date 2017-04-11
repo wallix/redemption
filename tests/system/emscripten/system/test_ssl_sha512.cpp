@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE TestSha512
+#define RED_TEST_MODULE TestSha512
 
 #define LOGNULL
 

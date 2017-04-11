@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
@@ -37,7 +35,7 @@
 // hexdump_d(data, sizeof(data), 8);
 
 
-BOOST_AUTO_TEST_CASE(TestReadServer)
+RED_AUTO_TEST_CASE(TestReadServer)
 {
 
 uint8_t data[] = {

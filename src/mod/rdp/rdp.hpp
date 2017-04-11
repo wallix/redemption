@@ -316,7 +316,7 @@ protected:
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
     const bool enable_session_probe;
-    const bool enable_session_probe_launch_mask;
+    const bool session_probe_enable_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -345,8 +345,9 @@ protected:
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string outbound_connection_monitoring_rules;
-    std::string process_monitoring_rules;
+    std::string session_probe_extra_system_processes;
+    std::string session_probe_outbound_connection_monitoring_rules;
+    std::string session_probe_process_monitoring_rules;
 
     size_t recv_bmp_update;
 
@@ -427,8 +428,6 @@ protected:
         std::deque<std::unique_ptr<AsynchronousTask>> & asynchronous_tasks;
 
         wait_obj & asynchronous_task_event;
-
-
 
         RDPVerbose verbose;
 
@@ -724,10 +723,39 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
+
+    class RemoteProgramSessionManagerEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        RemoteProgramSessionManagerEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_remote_program_session_manager_event(now, event, drawable);
+        }
+    } remote_program_session_manager_event_handler;
+
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
     StaticOutStream<65536> multifragment_update_data;
+
+    LargePointerCaps        client_large_pointer_caps;
+    MultiFragmentUpdateCaps client_multi_fragment_update_caps;
+
+    GeneralCaps const        client_general_caps;
+    BitmapCaps const         client_bitmap_caps;
+    OrderCaps const          client_order_caps;
+    BmpCacheCaps const       client_bmp_cache_caps;
+    BmpCache2Caps const      client_bmp_cache_2_caps;
+    OffScreenCacheCaps const client_off_screen_cache_caps;
+    GlyphCacheCaps const     client_glyph_cache_caps;
+    RailCaps const           client_rail_caps;
+    WindowListCaps const     client_window_list_caps;
+
+    bool client_use_bmp_cache_2 = false;
 
 public:
     using Verbose = RDPVerbose;
@@ -786,7 +814,7 @@ public:
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_session_probe(mod_rdp_params.enable_session_probe)
-        , enable_session_probe_launch_mask(mod_rdp_params.enable_session_probe_launch_mask)
+        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -812,8 +840,9 @@ public:
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
-        , outbound_connection_monitoring_rules(mod_rdp_params.outbound_connection_monitoring_rules)
-        , process_monitoring_rules(mod_rdp_params.process_monitoring_rules)
+        , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
+        , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
+        , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -870,8 +899,21 @@ public:
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
+        , remote_program_session_manager_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
+        , client_large_pointer_caps(info.large_pointer_caps)
+        , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
+        , client_general_caps(info.general_caps)
+        , client_bitmap_caps(info.bitmap_caps)
+        , client_order_caps(info.order_caps)
+        , client_bmp_cache_caps(info.bmp_cache_caps)
+        , client_bmp_cache_2_caps(info.bmp_cache_2_caps)
+        , client_off_screen_cache_caps(info.off_screen_cache_caps)
+        , client_glyph_cache_caps(info.glyph_cache_caps)
+        , client_rail_caps(info.rail_caps)
+        , client_window_list_caps(info.window_list_caps)
+        , client_use_bmp_cache_2(info.use_bmp_cache_2)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -898,10 +940,8 @@ public:
         }
 
         if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
-            GeneralCaps general_caps;
-            this->front.retrieve_client_capability_set(general_caps);
             this->bogus_linux_cursor =
-                ((general_caps.os_major == OSMAJORTYPE_UNIX) ?
+                ((this->client_general_caps.os_major == OSMAJORTYPE_UNIX) ?
                  BogusLinuxCursor::enable : BogusLinuxCursor::disable);
         }
 
@@ -1355,7 +1395,7 @@ public:
         if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
-                    front, *this, this->lang, this->font,
+                    front, *this, this->orders, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
                     mod_rdp_params.client_execute, this->verbose
@@ -1388,6 +1428,8 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
+
+        this->remote_programs_session_manager.reset();
     }
 
     int get_fd() const override { return this->nego.trans.get_fd(); }
@@ -1559,9 +1601,9 @@ protected:
         session_probe_virtual_channel_params.front_height                           =
             this->front_height;
 
-        session_probe_virtual_channel_params.session_probe_disconnected_application_limit =
+        session_probe_virtual_channel_params.session_probe_disconnected_application_limit       =
             this->session_probe_disconnected_application_limit;
-        session_probe_virtual_channel_params.session_probe_disconnected_session_limit =
+        session_probe_virtual_channel_params.session_probe_disconnected_session_limit           =
             this->session_probe_disconnected_session_limit;
         session_probe_virtual_channel_params.session_probe_idle_session_limit       =
             this->session_probe_idle_session_limit;
@@ -1571,11 +1613,14 @@ protected:
         session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_monitoring_rules   =
-            this->outbound_connection_monitoring_rules.c_str();
+        session_probe_virtual_channel_params.session_probe_extra_system_processes   =
+            this->session_probe_extra_system_processes.c_str();
 
-        session_probe_virtual_channel_params.process_monitoring_rules               =
-            this->process_monitoring_rules.c_str();
+        session_probe_virtual_channel_params.session_probe_outbound_connection_monitoring_rules =
+            this->session_probe_outbound_connection_monitoring_rules.c_str();
+
+        session_probe_virtual_channel_params.session_probe_process_monitoring_rules =
+            this->session_probe_process_monitoring_rules.c_str();
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;
@@ -1838,6 +1883,12 @@ private:
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
+    void process_remote_program_session_manager_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+        if (this->remote_programs_session_manager) {
+            this->remote_programs_session_manager->process_event();
+        }
+    }
+
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
@@ -1865,6 +1916,17 @@ public:
                 out_event_handlers.emplace_back(
                         event,
                         &this->session_probe_virtual_channel_event_handler,
+                        INVALID_SOCKET
+                );
+            }
+        }
+
+        if (this->remote_programs_session_manager) {
+            wait_obj* event = this->remote_programs_session_manager->get_event();
+            if (event) {
+                out_event_handlers.emplace_back(
+                        event,
+                        &this->remote_program_session_manager_event_handler,
                         INVALID_SOCKET
                 );
             }
@@ -3381,7 +3443,6 @@ public:
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-            this->front.recv_disconnect_provider_ultimatum();
 
             this->end_session_reason.clear();
             this->end_session_message.clear();
@@ -4103,7 +4164,7 @@ public:
                     : 0
                     ;
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(general_caps);
+                    general_caps = this->client_general_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     general_caps.log("Sending to server");
@@ -4120,7 +4181,7 @@ public:
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(bitmap_caps);
+                    bitmap_caps = this->client_bitmap_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     bitmap_caps.log("Sending to server");
@@ -4197,19 +4258,19 @@ public:
                 };
 
                 for (auto idx : idxs){
-                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
+                    order_caps.orderSupport[idx] &= this->client_order_caps.orderSupport[idx];
                 }
 
                 if (bool(this->verbose & RDPVerbose::basic_trace) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
 
-                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
+                order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
                 if (this->enable_transparent_mode) {
-                    this->front.retrieve_client_capability_set(order_caps);
+                    order_caps = this->client_order_caps;
                 }
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     order_caps.log("Sending to server");
@@ -4234,9 +4295,12 @@ public:
                 bool use_bitmapcache_rev2 = false;
 
                 if (this->enable_transparent_mode) {
-                    if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
-                        this->front.retrieve_client_capability_set(bmpcache2_caps);
-                        use_bitmapcache_rev2 = true;
+                    use_bitmapcache_rev2 = this->client_use_bmp_cache_2;
+                    if (use_bitmapcache_rev2) {
+                        bmpcache2_caps = this->client_bmp_cache_2_caps;
+                    }
+                    else {
+                        bmpcache_caps = this->client_bmp_cache_caps;
                     }
                 }
                 else {
@@ -4331,7 +4395,7 @@ public:
 
                 GlyphCacheCaps glyphcache_caps;
                 if (this->enable_glyph_cache) {
-                    this->front.retrieve_client_capability_set(glyphcache_caps);
+                    glyphcache_caps = this->client_glyph_cache_caps;
 
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
                     glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
@@ -4342,39 +4406,38 @@ public:
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
                 if (this->remote_program) {
-                    RailCaps rail_caps;
-                    this->front.retrieve_client_capability_set(rail_caps);
+                    RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
-                    WindowListCaps window_list_caps;
-                    this->front.retrieve_client_capability_set(window_list_caps);
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                        window_list_caps.log("Sending to server");
+                        this->client_window_list_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emit_capability_set(window_list_caps);
+                    confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
                 }
 
-                if (this->large_pointer_support) {
-                    LargePointerCaps largeptr_caps;
-                    this->front.retrieve_client_capability_set(largeptr_caps);
+                if (this->large_pointer_support &&
+                    this->client_large_pointer_caps.largePointerSupportFlags) {
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                        largeptr_caps.log("Sending to server");
+                        this->client_large_pointer_caps.log("Sending to server");
                     }
-                    confirm_active_pdu.emit_capability_set(largeptr_caps);
+                    confirm_active_pdu.emit_capability_set(this->client_large_pointer_caps);
 
-                    MultiFragmentUpdateCaps multifragupd_caps;
-                    if (this->front.retrieve_client_capability_set(multifragupd_caps)) {
-                        if (multifragupd_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
-                            multifragupd_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
+                    if (this->client_multi_fragment_update_caps.MaxRequestSize) {
+                        MultiFragmentUpdateCaps multi_fragment_update_caps;
+
+                        multi_fragment_update_caps = this->client_multi_fragment_update_caps;
+
+                        if (multi_fragment_update_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
+                            multi_fragment_update_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
                         }
                         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                            multifragupd_caps.log("Sending to server");
+                            multi_fragment_update_caps.log("Sending to server");
                         }
-                        confirm_active_pdu.emit_capability_set(multifragupd_caps);
+                        confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
                     }
                 }
 
@@ -5664,7 +5727,7 @@ public:
 
         if (this->enable_session_probe) {
             const bool disable_input_event     = true;
-            const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+            const bool disable_graphics_update = this->session_probe_enable_launch_mask;
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
@@ -5705,7 +5768,7 @@ public:
 
             if (this->enable_session_probe) {
                 const bool disable_input_event     = true;
-                const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+                const bool disable_graphics_update = this->session_probe_enable_launch_mask;
                 this->disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }
@@ -6085,10 +6148,14 @@ public:
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
                         uint8_t * end = data;
-                        this->persistent_key_list_transport->recv_new(end, 2/*pdu_size(2)*/);
+                        if (!this->persistent_key_list_transport->atomic_read(end, 2/*pdu_size(2)*/)){
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                        }
                         std::size_t pdu_size = Parse(data).in_uint16_le();
                         end = data;
-                        this->persistent_key_list_transport->recv_new(end, pdu_size);
+                        if (!this->persistent_key_list_transport->atomic_read(end, pdu_size)){
+                            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+                        }
 
                         pdu_data_stream.out_skip_bytes(pdu_size);
 

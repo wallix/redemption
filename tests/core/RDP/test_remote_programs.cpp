@@ -18,9 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRemotePrograms
+#define RED_TEST_MODULE TestRemotePrograms
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 #include "core/RDP/remote_programs.hpp"
 
 /*
-BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
+RED_AUTO_TEST_CASE(TestRAILPDUHeader)
 {
     uint8_t buf[128];
 
@@ -48,13 +46,13 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
     InStream in_stream(buf, out_stream.get_offset());
     RAILPDUHeader_Recv header_r(in_stream);
 
-    BOOST_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
-    BOOST_CHECK_EQUAL(header_r.orderLength(),
+    RED_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
+    RED_CHECK_EQUAL(header_r.orderLength(),
         sizeof(order_data) + 4 // orderType(2) + orderLength(2)
         );
 }
 
-BOOST_AUTO_TEST_CASE(TestHandshakePDU)
+RED_AUTO_TEST_CASE(TestHandshakePDU)
 {
     uint8_t buf[128];
 
@@ -64,10 +62,10 @@ BOOST_AUTO_TEST_CASE(TestHandshakePDU)
     InStream in_stream(buf, out_stream.get_offset());
     HandshakePDU_Recv handshake_pdu_r(in_stream);
 
-    BOOST_CHECK_EQUAL(handshake_pdu_r.buildNumber(), 0x01020304);
+    RED_CHECK_EQUAL(handshake_pdu_r.buildNumber(), 0x01020304);
 }
 
-BOOST_AUTO_TEST_CASE(ClientExecutePDU)
+RED_AUTO_TEST_CASE(ClientExecutePDU)
 {
     uint8_t buf[2048];
 
@@ -80,17 +78,17 @@ BOOST_AUTO_TEST_CASE(ClientExecutePDU)
     InStream in_stream(buf, out_stream.get_offset());
     ClientExecutePDU_Recv client_execute_pdu_r(in_stream);
 
-    BOOST_CHECK_EQUAL(client_execute_pdu_r.Flags(),
+    RED_CHECK_EQUAL(client_execute_pdu_r.Flags(),
         TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
-    BOOST_CHECK_EQUAL(client_execute_pdu_r.exe_or_file(),
+    RED_CHECK_EQUAL(client_execute_pdu_r.exe_or_file(),
         "%%SystemRoot%%\\system32\\notepad.exe");
-    BOOST_CHECK_EQUAL(client_execute_pdu_r.working_dir(),
+    RED_CHECK_EQUAL(client_execute_pdu_r.working_dir(),
         "%%HOMEDRIVE%%%%HOMEPATH%%");
-    BOOST_CHECK_EQUAL(client_execute_pdu_r.arguments(),
+    RED_CHECK_EQUAL(client_execute_pdu_r.arguments(),
         "");
 }
 
-BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
+RED_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 {
     uint8_t buf[128];
 
@@ -100,11 +98,11 @@ BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
     InStream in_stream(buf, out_stream.get_offset());
     ClientSystemParametersUpdatePDU_Recv client_system_parameters_update_pdu_r(in_stream);
 
-    BOOST_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
+    RED_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
 }
 */
 
-BOOST_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
+RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 {
     uint8_t buf[2048];
     OutStream out_stream(buf);
@@ -124,9 +122,9 @@ BOOST_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 
         high_contrast_system_information_structure.receive(in_stream);
 
-        BOOST_CHECK_EQUAL(high_contrast_system_information_structure.Flags(),
+        RED_CHECK_EQUAL(high_contrast_system_information_structure.Flags(),
             0x10101010);
-        BOOST_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
+        RED_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
             "ColorScheme");
     }
 }

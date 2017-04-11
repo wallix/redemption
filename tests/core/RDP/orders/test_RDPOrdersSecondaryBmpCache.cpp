@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderColCache
+#define RED_TEST_MODULE TestOrderColCache
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT
@@ -34,7 +32,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
+RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 {
     using namespace RDP;
 
@@ -76,11 +74,11 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         InStream in_stream(buf, out_stream.get_offset());
 
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+        RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(in_stream);
-        BOOST_CHECK_EQUAL(static_cast<uint16_t>(33 - 7), header.order_length); // length after type - 7
-        BOOST_CHECK_EQUAL(0x08u, header.flags);
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(TS_CACHE_BITMAP_UNCOMPRESSED), header.type);
+        RED_CHECK_EQUAL(static_cast<uint16_t>(33 - 7), header.order_length); // length after type - 7
+        RED_CHECK_EQUAL(0x08u, header.flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(TS_CACHE_BITMAP_UNCOMPRESSED), header.type);
 
         RDPBmpCache cmd;
 //        cmd.receive(in_stream, control, header);

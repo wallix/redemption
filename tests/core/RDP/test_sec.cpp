@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSec
+#define RED_TEST_MODULE TestSec
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/sec.hpp"
 
-BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
+RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {
 
     const char sec_pkt[] =
@@ -55,10 +53,10 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
     StaticOutStream<1024> stream;
     SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, sizeof(client_encrypted_key));
 
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt, stream.get_data(), length));
+    RED_CHECK_EQUAL(0, memcmp(sec_pkt, stream.get_data(), length));
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
+RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 {
     const char sec_pkt[] =
         "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
@@ -74,18 +72,18 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_new(end, length);
+    t.recv_atomic(end, length);
 
     InStream stream(buf, length);
     SEC::SecExchangePacket_Recv sec(stream);
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(SEC::SEC_EXCHANGE_PKT), sec.basicSecurityHeader);
-    BOOST_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
-    BOOST_CHECK_EQUAL(64, sec.payload.get_capacity());
+    RED_CHECK_EQUAL(static_cast<uint32_t>(SEC::SEC_EXCHANGE_PKT), sec.basicSecurityHeader);
+    RED_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
+    RED_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.get_capacity()));
+    RED_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.get_capacity()));
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
+RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 {
     const char sec_pkt[] =
         "\x48\x00\x00\x00\xf6\xc8\x5c\xd6\xe4\x2e\xd3\x88\x66\x93\x36\x57"
@@ -115,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_new(end, length);
+    t.recv_atomic(end, length);
 
     InStream stream(buf, length);
 
@@ -150,8 +148,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         /* 0120 */ "\x00\x00\x00\x00\xc4\xff\xff\xff\x01\x00\x00\x00\x07\x00\x00\x00" //................
         /* 0130 */ "\x00\x00\x64\x00\x00\x00"
         ;
-    BOOST_CHECK_EQUAL(sizeof(expected)-1, sec.payload.get_capacity());
-    BOOST_CHECK_EQUAL(0, memcmp(expected, sec.payload.get_data(), sizeof(expected)-1));
+    RED_CHECK_EQUAL(sizeof(expected)-1, sec.payload.get_capacity());
+    RED_CHECK_EQUAL(0, memcmp(expected, sec.payload.get_data(), sizeof(expected)-1));
 }
 
 
@@ -240,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 //// wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in bytes of the licensing packet (including the size of the preamble).
 
 
-////BOOST_AUTO_TEST_CASE(TestSend_SecLicensePacket)
+////RED_AUTO_TEST_CASE(TestSend_SecLicensePacket)
 ////{
 ////    const char sec_pkt[] =
 ////    "\x80\x00\x00\x00" // SEC::SEC_LICENSE_PKT
@@ -322,20 +320,20 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 ////    size_t datalen = sizeof(sec_pkt) - 1;
 ////    memcpy(stream.data, sec_pkt, datalen);
 ////    stream.end = stream.data + datalen;
-////    BOOST_CHECK_EQUAL(datalen, stream.size());
-////    BOOST_CHECK_EQUAL((uint32_t)322, stream.size());
+////    RED_CHECK_EQUAL(datalen, stream.size());
+////    RED_CHECK_EQUAL((uint32_t)322, stream.size());
 
 ////    CryptContext decrypt;
 ////    SEC::Sec_Recv sec(stream, decrypt, 0, 0);
-////    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_LICENSE_PKT, sec.flags);
-////    BOOST_CHECK_EQUAL((uint32_t)(datalen - 4), sec.payload.size());
-////    BOOST_CHECK_EQUAL((uint32_t)318, sec.payload.size());
-////    BOOST_CHECK_EQUAL(0, memcmp(sec.payload.data, sec_pkt + 4, 318));
+////    RED_CHECK_EQUAL((uint32_t)SEC::SEC_LICENSE_PKT, sec.flags);
+////    RED_CHECK_EQUAL((uint32_t)(datalen - 4), sec.payload.size());
+////    RED_CHECK_EQUAL((uint32_t)318, sec.payload.size());
+////    RED_CHECK_EQUAL(0, memcmp(sec.payload.data, sec_pkt + 4, 318));
 
 
 //////    size_t length = sizeof(sec_pkt);
 //////    SEC::SecLicenseRequest_Send sec(stream);
 
-//////    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt, stream.data, length));
+//////    RED_CHECK_EQUAL(0, memcmp(sec_pkt, stream.data, length));
 ////}
 

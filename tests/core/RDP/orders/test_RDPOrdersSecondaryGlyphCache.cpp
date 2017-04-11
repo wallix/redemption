@@ -21,9 +21,7 @@
     Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderGlyphCache
+#define RED_TEST_MODULE TestOrderGlyphCache
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include "utils/stream.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
-BOOST_AUTO_TEST_CASE(TestGlyphCache)
+RED_AUTO_TEST_CASE(TestGlyphCache)
 {
     uint8_t data[] = {
 /* 0000 */ 0x1b, 0x01,  // orderLength = 283
@@ -66,10 +64,10 @@ BOOST_AUTO_TEST_CASE(TestGlyphCache)
     RDPGlyphCache cmd;
     cmd.receive(in_stream, header);
 
-    BOOST_CHECK_EQUAL(283, header.order_length);
-    BOOST_CHECK_EQUAL(CG_GLYPH_UNICODE_PRESENT, header.flags);
-    BOOST_CHECK_EQUAL(RDP::TS_CACHE_GLYPH, header.type);
+    RED_CHECK_EQUAL(283, header.order_length);
+    RED_CHECK_EQUAL(CG_GLYPH_UNICODE_PRESENT, header.flags);
+    RED_CHECK_EQUAL(RDP::TS_CACHE_GLYPH, header.type);
 
-    BOOST_CHECK_EQUAL(7, cmd.cacheId);
-    BOOST_CHECK_EQUAL(14, cmd.cGlyphs);
+    RED_CHECK_EQUAL(7, cmd.cacheId);
+    RED_CHECK_EQUAL(14, cmd.cGlyphs);
 }

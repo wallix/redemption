@@ -18,10 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
-#define BOOST_TEST_MODULE TestArrayView
+#define RED_TEST_MODULE TestArrayView
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/array_view.hpp"
@@ -36,66 +34,66 @@ int test_ambiguous(array_view_const_u8) { return 3; }
 
 }
 
-BOOST_AUTO_TEST_CASE(TestArrayView)
+RED_AUTO_TEST_CASE(TestArrayView)
 {
     char a8[3] = {'x', 'y', 'z'};
     int8_t as8[3] = {-1, 0, 3};
     uint8_t au8[3] = {0, 1, 2};
 
-    BOOST_CHECK_EQUAL(test_ambiguous(a8), 1);
-    BOOST_CHECK_EQUAL(test_ambiguous(as8), 2);
-    BOOST_CHECK_EQUAL(test_ambiguous(au8), 3);
+    RED_CHECK_EQUAL(test_ambiguous(a8), 1);
+    RED_CHECK_EQUAL(test_ambiguous(as8), 2);
+    RED_CHECK_EQUAL(test_ambiguous(au8), 3);
 
-    BOOST_CHECK_EQUAL(make_array_view(a8).size(), 3);
+    RED_CHECK_EQUAL(make_array_view(a8).size(), 3);
 
     std::string s;
-    BOOST_CHECK_EQUAL(test_ambiguous(s), 1);
+    RED_CHECK_EQUAL(test_ambiguous(s), 1);
 
     s = "abc";
     array_view<const char> avc(s);
     // same size (as std::string)
-    BOOST_CHECK_EQUAL(avc.size(), s.size());
+    RED_CHECK_EQUAL(avc.size(), s.size());
     // same data (same memory address)
-    BOOST_CHECK_EQUAL(avc.data(), s.data());
+    RED_CHECK_EQUAL(avc.data(), s.data());
 
     auto av = make_array_view(s);
     // same type as s
-    BOOST_CHECK_EQUAL(test_ambiguous(av), 1);
+    RED_CHECK_EQUAL(test_ambiguous(av), 1);
     // same size (as std::string)
-    BOOST_CHECK_EQUAL(av.size(), s.size());
+    RED_CHECK_EQUAL(av.size(), s.size());
     // same data (same memory address)
-    BOOST_CHECK_EQUAL(av.data(), s.data());
-    BOOST_CHECK_EQUAL(av[0], s[0]);
-    BOOST_CHECK_EQUAL(av[1], s[1]);
-    BOOST_CHECK_EQUAL(av[2], s[2]);
+    RED_CHECK_EQUAL(av.data(), s.data());
+    RED_CHECK_EQUAL(av[0], s[0]);
+    RED_CHECK_EQUAL(av[1], s[1]);
+    RED_CHECK_EQUAL(av[2], s[2]);
     // array view provides begin() and end()
-    BOOST_CHECK_EQUAL(av.end() - av.begin(), 3);
+    RED_CHECK_EQUAL(av.end() - av.begin(), 3);
     // begin is an iterator to first char
-    BOOST_CHECK_EQUAL(*av.begin(), 'a');
+    RED_CHECK_EQUAL(*av.begin(), 'a');
     auto it = av.begin();
     it++;
-    BOOST_CHECK_EQUAL(*it, 'b');
+    RED_CHECK_EQUAL(*it, 'b');
 
     auto const av_p = make_array_view(&s[0], &s[3]);
-    BOOST_CHECK_EQUAL(static_cast<void const *>(av_p.data()), static_cast<void const *>(av.data()));
-    BOOST_CHECK_EQUAL(av_p.size(), av.size());
-    BOOST_CHECK_EQUAL(av_p[0], av[0]);
-    BOOST_CHECK_EQUAL(av_p[1], s[1]);
-    BOOST_CHECK_EQUAL(av_p[2], s[2]);
+    RED_CHECK_EQUAL(static_cast<void const *>(av_p.data()), static_cast<void const *>(av.data()));
+    RED_CHECK_EQUAL(av_p.size(), av.size());
+    RED_CHECK_EQUAL(av_p[0], av[0]);
+    RED_CHECK_EQUAL(av_p[1], s[1]);
+    RED_CHECK_EQUAL(av_p[2], s[2]);
     // array view provides begin() and end()
-    BOOST_CHECK_EQUAL(av_p.end() - av_p.begin(), 3);
+    RED_CHECK_EQUAL(av_p.end() - av_p.begin(), 3);
 
     // begin is an iterator to first char
-    BOOST_CHECK_EQUAL(*av_p.begin(), 'a');
+    RED_CHECK_EQUAL(*av_p.begin(), 'a');
     auto it2 = av_p.begin();
     it2++;
-    BOOST_CHECK_EQUAL(*it2, 'b');
+    RED_CHECK_EQUAL(*it2, 'b');
 
-    BOOST_CHECK_EQUAL(make_array_view("abc").size(), 4);
-    BOOST_CHECK_EQUAL(cstr_array_view("abc").size(), 3);
-    BOOST_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1);
+    RED_CHECK_EQUAL(make_array_view("abc").size(), 4);
+    RED_CHECK_EQUAL(cstr_array_view("abc").size(), 3);
+    RED_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1);
 
-    BOOST_CHECK(array_view_char{nullptr}.empty());
+    RED_CHECK(array_view_char{nullptr}.empty());
 
     {
     char ca8[3] = {'x', 'y', 'z'};
@@ -103,8 +101,8 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     char * right = &ca8[2];
     auto const avi = make_array_view(left, right);
 
-    BOOST_CHECK_EQUAL(avi.size(), 1);
-    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 1);
+    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
                       reinterpret_cast<const void*>(&ca8[1]));
     }
 
@@ -114,8 +112,8 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     const char * right = &ca8[2];
     auto const avi = make_array_view(left, right);
 
-    BOOST_CHECK_EQUAL(avi.size(), 1);
-    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 1);
+    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
                       reinterpret_cast<const void*>(&ca8[1]));
     }
 
@@ -124,8 +122,8 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     const char * left = &ca8[1];
     auto const avi = make_const_array_view(left, 2);
 
-    BOOST_CHECK_EQUAL(avi.size(), 2);
-    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 2);
+    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
                       reinterpret_cast<const void*>(&ca8[1]));
     }
 
@@ -135,8 +133,8 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     const char * right = &ca8[1];
     auto const avi = make_const_array_view(left, right);
 
-    BOOST_CHECK_EQUAL(avi.size(), 0);
-    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 0);
+    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
                       reinterpret_cast<const void*>(&ca8[1]));
     }
 
@@ -144,29 +142,29 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     const char ca8[] = {'x', 'y', 'z', 't'};
     auto const avi = make_const_array_view(ca8);
 
-    BOOST_CHECK_EQUAL(avi.size(), 4);
-    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 4);
+    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
                       reinterpret_cast<const void*>(&ca8[0]));
     }
 
     {
     auto const avi = cstr_array_view("0123456789");
-    BOOST_CHECK_EQUAL(avi.size(), 10);
-//    BOOST_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
+    RED_CHECK_EQUAL(avi.size(), 10);
+//    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
 //                      reinterpret_cast<const void*>(&ca8[0]));
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestSubArray)
+RED_AUTO_TEST_CASE(TestSubArray)
 {
     auto a = cstr_array_view("abcd");
-    BOOST_CHECK_EQUAL_RANGES(a.first(1), cstr_array_view("a"));
-    BOOST_CHECK_EQUAL_RANGES(a.first(3), cstr_array_view("abc"));
-    BOOST_CHECK_EQUAL_RANGES(a.last(1), cstr_array_view("d"));
-    BOOST_CHECK_EQUAL_RANGES(a.last(3), cstr_array_view("bcd"));
-    BOOST_CHECK_EQUAL_RANGES(a.subarray(3), cstr_array_view("d"));
-    BOOST_CHECK_EQUAL_RANGES(a.subarray(1), cstr_array_view("bcd"));
-    BOOST_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
+    RED_CHECK_EQUAL_RANGES(a.first(1), cstr_array_view("a"));
+    RED_CHECK_EQUAL_RANGES(a.first(3), cstr_array_view("abc"));
+    RED_CHECK_EQUAL_RANGES(a.last(1), cstr_array_view("d"));
+    RED_CHECK_EQUAL_RANGES(a.last(3), cstr_array_view("bcd"));
+    RED_CHECK_EQUAL_RANGES(a.subarray(3), cstr_array_view("d"));
+    RED_CHECK_EQUAL_RANGES(a.subarray(1), cstr_array_view("bcd"));
+    RED_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
 }
 
 template<class T>
@@ -182,11 +180,11 @@ bool check_call(T &&, char)
     return false;
 }
 
-BOOST_AUTO_TEST_CASE(TestCStrOnlyWorksForLiterals)
+RED_AUTO_TEST_CASE(TestCStrOnlyWorksForLiterals)
 {
     char cstr[5] = {'0', '1', '2', '\0', '5'};
-    BOOST_CHECK_EQUAL(check_call(cstr, 1), false);
-    BOOST_CHECK_EQUAL(check_call("abc", 1), true);
+    RED_CHECK_EQUAL(check_call(cstr, 1), false);
+    RED_CHECK_EQUAL(check_call("abc", 1), true);
     char const * p = nullptr;
-    BOOST_CHECK_EQUAL(check_call(p, 1), false);
+    RED_CHECK_EQUAL(check_call(p, 1), false);
 }

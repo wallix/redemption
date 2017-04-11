@@ -21,9 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 /*
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define RED_TEST_MODULE TestRdp
 #include <boost/test/auto_unit_test.hpp>
 */
 

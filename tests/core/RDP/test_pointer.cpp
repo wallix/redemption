@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -32,29 +30,29 @@
 
 #include "core/RDP/pointer.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDataSize)
+RED_AUTO_TEST_CASE(TestDataSize)
 {
     Pointer p;
 
-    BOOST_CHECK_EQUAL(p.data_size(), 32 * 32 * 3);
+    RED_CHECK_EQUAL(p.data_size(), 32 * 32 * 3);
 }
 
-BOOST_AUTO_TEST_CASE(TestDataSize1)
+RED_AUTO_TEST_CASE(TestDataSize1)
 {
     Pointer p;
 
     p.width  = 24;
     p.height = 24;
 
-    BOOST_CHECK_EQUAL(p.data_size(), 24 * 24 * 3);
+    RED_CHECK_EQUAL(p.data_size(), 24 * 24 * 3);
 }
 
-BOOST_AUTO_TEST_CASE(TestMaskSize)
+RED_AUTO_TEST_CASE(TestMaskSize)
 {
     Pointer p;
 
     p.width  = 7;
     p.height = 7;
 
-    BOOST_CHECK_EQUAL(p.mask_size(), 14);
+    RED_CHECK_EQUAL(p.mask_size(), 14);
 }

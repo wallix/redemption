@@ -132,7 +132,7 @@ constant EXE_DEPENDENCIES :
 
 constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
-    <library>libboost_unit_test
+    <library>libunit_test
     <include>$(REDEMPTION_TEST_PATH)
     <cxxflags>-frtti
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
@@ -142,7 +142,7 @@ constant OBJ_TEST_DEPENDENCIES :
 
 constant TEST_DEPENDENCIES :
     $(OBJ_TEST_DEPENDENCIES)
-    <define>REDEMPTION_DECL_LOG_TEST
+    $(UNIT_TEST_DEPENDENCIES)
 ;
 
 
@@ -557,7 +557,8 @@ test-canonical core/RDP/capabilities/window.hpp ;
 ## Transport tests
 ## @{
 # TODO test-canonical transport/detail/meta_writer.hpp ;
-test-canonical transport/count_transport.hpp ;
+test-canonical transport/out_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/in_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>png <library>snappy <library>dl <library>z ;
@@ -1184,7 +1185,7 @@ lib sashimi :
 unit-test test_buffer :
     $(REDEMPTION_TEST_PATH)/sashimi/test_buffer.cpp
     sashimi_error
-    libboost_unit_test
+    libunit_test
     :
     $(TEST_DEPENDENCIES)
     ;
@@ -1193,7 +1194,7 @@ unit-test test_crypto :
     $(REDEMPTION_TEST_PATH)/sashimi/test_crypto.cpp
     sashimi_error
     crypto
-    libboost_unit_test
+    libunit_test
     :
     $(TEST_DEPENDENCIES)
     ;

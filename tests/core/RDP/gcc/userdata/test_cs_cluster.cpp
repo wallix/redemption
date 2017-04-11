@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCS_CLUSTER
+#define RED_TEST_MODULE TestCS_CLUSTER
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -31,7 +29,7 @@
 #include "transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_cluster.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
+RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
 {
     const char indata[] =
         "\x04\xc0"         // CS_CLUSTER
@@ -47,14 +45,14 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_new(end, sz);
+    gt.recv_atomic(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
-    BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
-    BOOST_CHECK_EQUAL(12, cs_cluster.length);
-    BOOST_CHECK_EQUAL(13, cs_cluster.flags);
-    BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+    RED_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
+    RED_CHECK_EQUAL(12, cs_cluster.length);
+    RED_CHECK_EQUAL(13, cs_cluster.flags);
+    RED_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
 
     cs_cluster.log("Client Received");
 }

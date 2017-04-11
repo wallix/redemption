@@ -19,9 +19,7 @@
  *              Meng Tan
  */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetLabelGrid
+#define RED_TEST_MODULE TestWidgetLabelGrid
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -35,7 +33,7 @@
 
 #include "fake_draw.hpp"
 
-BOOST_AUTO_TEST_CASE(TraceLabelGrid)
+RED_AUTO_TEST_CASE(TraceLabelGrid)
 {
     TestDraw drawable(800, 600);
 
@@ -92,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
     //                "\x3f\xce\x8f\x0b\x25\x8b\xf7\x3b\xcf\x01")){
-    //     BOOST_CHECK_MESSAGE(false, message);
+    //     RED_CHECK_MESSAGE(false, message);
     // }
 
     wgrid.has_focus = true;
@@ -106,6 +104,6 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
     //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
-    //     BOOST_CHECK_MESSAGE(false, message);
+    //     RED_CHECK_MESSAGE(false, message);
     // }
 }

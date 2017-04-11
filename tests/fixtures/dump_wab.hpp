@@ -19,7 +19,7 @@ const char outdata[] =
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
 // ModRDPParams enable_session_probe=no |
-// ModRDPParams enable_session_probe_launch_mask=yes |
+// ModRDPParams session_probe_enable_launch_mask=yes |
 // ModRDPParams session_probe_use_clipboard_based_launcher=no |
 // ModRDPParams session_probe_launch_timeout=0 |
 // ModRDPParams session_probe_launch_fallback_timeout=0 |
@@ -2070,7 +2070,7 @@ const char outdata[] =
 // /* 0010 */ "\x02\x00\x01\x00\x00\x02\x44\x00\x02\x00\x00\x00\x00\x00\x00\x00" // |......D......... |
 // /* 0020 */ "\x05\x00\x00\x00\x01\x0f\x10\x00\x3f\x00\xc5\x00\x12\x00\x11\x0f" // |........?....... |
 // /* 0030 */ "\xff\xff\x01\xef\x01\x0e\x3f\x00\x01\x00\x12\x00\x01\x0b\xd5\x00" // |......?......... |
-// /* 0040 */ "\x3e\x00\x14\x00\x01\x0f\x0f\x00\x51\x00\xc7\x00\x01\x00"         //>.......Q..... |
+// /* 0040 */ "\x3e\x00\x14\x00\x01\x0f\x0f\x00\x51\x00\xc7\x00\x01\x00"         // |>.......Q..... |
 // Dump done on RDP Wab Target (4) 78 bytes |
 // LOOPING on PDUs: 68 |
 // PDUTYPE_DATAPDU |
@@ -2927,7 +2927,7 @@ const char indata[] =
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
 // ModRDPParams enable_session_probe=no |
-// ModRDPParams enable_session_probe_launch_mask=yes |
+// ModRDPParams session_probe_enable_launch_mask=yes |
 // ModRDPParams session_probe_use_clipboard_based_launcher=no |
 // ModRDPParams session_probe_launch_timeout=0 |
 // ModRDPParams session_probe_launch_fallback_timeout=0 |
@@ -4978,7 +4978,7 @@ const char indata[] =
 /* 0010 */ "\x02\x00\x01\x00\x00\x02\x44\x00\x02\x00\x00\x00\x00\x00\x00\x00" // |......D......... |
 /* 0020 */ "\x05\x00\x00\x00\x01\x0f\x10\x00\x3f\x00\xc5\x00\x12\x00\x11\x0f" // |........?....... |
 /* 0030 */ "\xff\xff\x01\xef\x01\x0e\x3f\x00\x01\x00\x12\x00\x01\x0b\xd5\x00" // |......?......... |
-/* 0040 */ "\x3e\x00\x14\x00\x01\x0f\x0f\x00\x51\x00\xc7\x00\x01\x00"         //>.......Q..... |
+/* 0040 */ "\x3e\x00\x14\x00\x01\x0f\x0f\x00\x51\x00\xc7\x00\x01\x00"         // |>.......Q..... |
 // Dump done on RDP Wab Target (4) 78 bytes |
 // LOOPING on PDUs: 68 |
 // PDUTYPE_DATAPDU |

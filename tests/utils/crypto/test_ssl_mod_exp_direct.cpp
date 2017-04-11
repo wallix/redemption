@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_TEST_MODULE mod_exp
+#define RED_TEST_MODULE mod_exp
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 

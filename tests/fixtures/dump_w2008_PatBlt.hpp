@@ -19,7 +19,7 @@ const char outdata[] =
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
 // ModRDPParams enable_session_probe=no |
-// ModRDPParams enable_session_probe_launch_mask=yes |
+// ModRDPParams session_probe_enable_launch_mask=yes |
 // ModRDPParams session_probe_use_clipboard_based_launcher=no |
 // ModRDPParams session_probe_launch_timeout=0 |
 // ModRDPParams session_probe_launch_fallback_timeout=0 |
@@ -723,7 +723,7 @@ const char outdata[] =
 // /* 0000 */ "\x02\xf0\x80\x68\x00\x01\x03\xeb\x70\x2a\x80\x02\x16\x00\x02\x03" // |...h....p*...... |
 // /* 0010 */ "\x26\x00\x3c\xfc\xdb\xd7\xb7\x1d\x0a\x00\x52\x91\xbc\x44\xa8\x3b" // |&.<.......R..D.; |
 // /* 0020 */ "\x1f\xaa\xf6\x76\x12\x00\x5a\xf0\x7c\xa9\x07\x79\x5e\xdf\xa2\xb6" // |...v..Z.|..y^... |
-// /* 0030 */ "\x3e\xcd\x94\x8c"                                                 //>... |
+// /* 0030 */ "\x3e\xcd\x94\x8c"                                                 // |>... |
 // Dump done on RDP W2008 Target (4) 52 bytes |
 // Rdp::Platform Challenge |
 // send data request |
@@ -12461,7 +12461,7 @@ const char indata[] =
 // ModRDPParams enable_new_pointer=no |
 // ModRDPParams enable_glyph_cache=no |
 // ModRDPParams enable_session_probe=no |
-// ModRDPParams enable_session_probe_launch_mask=yes |
+// ModRDPParams session_probe_enable_launch_mask=yes |
 // ModRDPParams session_probe_use_clipboard_based_launcher=no |
 // ModRDPParams session_probe_launch_timeout=0 |
 // ModRDPParams session_probe_launch_fallback_timeout=0 |
@@ -13165,7 +13165,7 @@ const char indata[] =
 /* 0000 */ "\x02\xf0\x80\x68\x00\x01\x03\xeb\x70\x2a\x80\x02\x16\x00\x02\x03" // |...h....p*...... |
 /* 0010 */ "\x26\x00\x3c\xfc\xdb\xd7\xb7\x1d\x0a\x00\x52\x91\xbc\x44\xa8\x3b" // |&.<.......R..D.; |
 /* 0020 */ "\x1f\xaa\xf6\x76\x12\x00\x5a\xf0\x7c\xa9\x07\x79\x5e\xdf\xa2\xb6" // |...v..Z.|..y^... |
-/* 0030 */ "\x3e\xcd\x94\x8c"                                                 //>... |
+/* 0030 */ "\x3e\xcd\x94\x8c"                                                 // |>... |
 // Dump done on RDP W2008 Target (4) 52 bytes |
 // Rdp::Platform Challenge |
 // send data request |

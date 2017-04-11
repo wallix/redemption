@@ -1,4 +1,7 @@
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+import property-set ;
+import feature ;
+import toolset ;
+
 lib openssl : : <name>ssl <link>shared ;
 
 lib krb5 : : <name>krb5 <link>shared ;

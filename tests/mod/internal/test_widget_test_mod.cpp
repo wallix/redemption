@@ -18,19 +18,19 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetTestMod
+#define RED_TEST_MODULE TestWidgetTestMod
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
+//#define LOGPRINT
 
+#include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestDialogMod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
@@ -41,7 +41,8 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front, 0);
+    WindowListCaps window_list_caps;
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Font font;
 
@@ -68,6 +69,6 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 /*
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
     LOG(LOG_INFO, "%s\n", res);
-    BOOST_CHECK(0 == strcmp("True", res));
+    RED_CHECK(0 == strcmp("True", res));
 */
 }

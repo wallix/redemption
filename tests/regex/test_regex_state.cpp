@@ -22,9 +22,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDfaRegexAutomate
+#define RED_TEST_MODULE TestDfaRegexAutomate
 #include "system/redemption_unit_tests.hpp"
 
 #include "regex/regex_state.hpp"
@@ -36,36 +34,36 @@ inline char_int multi_char(const char * c)
     return re::utf8_consumer(c).bumpc();
 }
 
-BOOST_AUTO_TEST_CASE(TestRegexCheck)
+RED_AUTO_TEST_CASE(TestRegexCheck)
 {
     re::utf8_consumer empty_cons("");
     {
         State st(RANGE, multi_char("Þ"), multi_char("Þ"));
-        BOOST_CHECK(st.check(multi_char("Þ"), empty_cons));
-        BOOST_CHECK( ! st.check('a', empty_cons));
+        RED_CHECK(st.check(multi_char("Þ"), empty_cons));
+        RED_CHECK( ! st.check('a', empty_cons));
     }
     {
         State st(RANGE, 0, -1u);
-        BOOST_CHECK(st.check(multi_char("Þ"), empty_cons));
-        BOOST_CHECK(st.check('a', empty_cons));
-        BOOST_CHECK(st.check('\1', empty_cons));
+        RED_CHECK(st.check(multi_char("Þ"), empty_cons));
+        RED_CHECK(st.check('a', empty_cons));
+        RED_CHECK(st.check('\1', empty_cons));
     }
     {
         State st(RANGE, 'e','g');
-        BOOST_CHECK(st.check('e', empty_cons));
-        BOOST_CHECK(st.check('f', empty_cons));
-        BOOST_CHECK(st.check('g', empty_cons));
-        BOOST_CHECK( ! st.check('d', empty_cons));
-        BOOST_CHECK( ! st.check('h', empty_cons));
+        RED_CHECK(st.check('e', empty_cons));
+        RED_CHECK(st.check('f', empty_cons));
+        RED_CHECK(st.check('g', empty_cons));
+        RED_CHECK( ! st.check('d', empty_cons));
+        RED_CHECK( ! st.check('h', empty_cons));
     }
     {
         State st(SEQUENCE);
         char_int seq[] = {'a','b','c',0};
         utf8_consumer consumer("abc");
         st.data.sequence.s = seq;
-        BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
+        RED_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
         consumer.str("abcd");
-        BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
+        RED_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
         st.data.sequence.s = nullptr;
     }
 }

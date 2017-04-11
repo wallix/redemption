@@ -21,10 +21,8 @@
    Using lib boost test functions
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCrypto
-#include <boost/test/auto_unit_test.hpp>
+#define RED_TEST_MODULE TestCrypto
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
 #include "utils/log.hpp"
@@ -32,10 +30,10 @@
 
 // test AES cipher
 
-BOOST_AUTO_TEST_CASE(TestBlowfishCipher)
+RED_AUTO_TEST_CASE(TestBlowfishCipher)
 {
     ssh_blowfish_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "blowfish-cbc"));
+    RED_CHECK(0 == strcmp(cipher.name, "blowfish-cbc"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -45,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestBlowfishCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -61,12 +59,12 @@ BOOST_AUTO_TEST_CASE(TestBlowfishCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_blowfish_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -80,14 +78,14 @@ BOOST_AUTO_TEST_CASE(TestBlowfishCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestAES128CtrCipher)
+RED_AUTO_TEST_CASE(TestAES128CtrCipher)
 {
     ssh_aes128_ctr_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes128-ctr"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes128-ctr"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -97,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestAES128CtrCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -113,12 +111,12 @@ BOOST_AUTO_TEST_CASE(TestAES128CtrCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes128_ctr_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -132,13 +130,13 @@ BOOST_AUTO_TEST_CASE(TestAES128CtrCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
-BOOST_AUTO_TEST_CASE(TestAES192CtrCipher)
+RED_AUTO_TEST_CASE(TestAES192CtrCipher)
 {
     ssh_aes192_ctr_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes192-ctr"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes192-ctr"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -148,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestAES192CtrCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -164,12 +162,12 @@ BOOST_AUTO_TEST_CASE(TestAES192CtrCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes192_ctr_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -183,13 +181,13 @@ BOOST_AUTO_TEST_CASE(TestAES192CtrCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
-BOOST_AUTO_TEST_CASE(TestAES256CtrCipher)
+RED_AUTO_TEST_CASE(TestAES256CtrCipher)
 {
     ssh_aes256_ctr_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes256-ctr"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes256-ctr"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -199,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestAES256CtrCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -215,12 +213,12 @@ BOOST_AUTO_TEST_CASE(TestAES256CtrCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes256_ctr_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -234,14 +232,14 @@ BOOST_AUTO_TEST_CASE(TestAES256CtrCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestAES128CbcCipher)
+RED_AUTO_TEST_CASE(TestAES128CbcCipher)
 {
     ssh_aes128_cbc_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes128-cbc"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes128-cbc"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -251,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TestAES128CbcCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -267,12 +265,12 @@ BOOST_AUTO_TEST_CASE(TestAES128CbcCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes128_cbc_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -286,13 +284,13 @@ BOOST_AUTO_TEST_CASE(TestAES128CbcCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
-BOOST_AUTO_TEST_CASE(TestAES192CbcCipher)
+RED_AUTO_TEST_CASE(TestAES192CbcCipher)
 {
     ssh_aes192_cbc_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes192-cbc"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes192-cbc"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -302,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TestAES192CbcCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -318,12 +316,12 @@ BOOST_AUTO_TEST_CASE(TestAES192CbcCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes192_cbc_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -337,13 +335,13 @@ BOOST_AUTO_TEST_CASE(TestAES192CbcCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
-BOOST_AUTO_TEST_CASE(TestAES256CbcCipher)
+RED_AUTO_TEST_CASE(TestAES256CbcCipher)
 {
     ssh_aes256_cbc_cipher_struct cipher;
-    BOOST_CHECK(0 == strcmp(cipher.name, "aes256-cbc"));
+    RED_CHECK(0 == strcmp(cipher.name, "aes256-cbc"));
     uint8_t encrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -353,7 +351,7 @@ BOOST_AUTO_TEST_CASE(TestAES256CbcCipher)
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     cipher.set_encrypt_key(encrypt_key, encrypt_IV);
-    
+
     uint8_t in[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -369,12 +367,12 @@ BOOST_AUTO_TEST_CASE(TestAES256CbcCipher)
     cipher.cbc_encrypt(in, out, 16);
     cipher.cbc_encrypt(in+16, out+16, 16);
 //    hexdump_d(out, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
+    RED_CHECK_EQUAL(0, memcmp(expected_out, out, 32));
 
     uint8_t back_to_in[32] = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    };   
+    };
     ssh_aes256_cbc_cipher_struct cipher2;
     uint8_t decrypt_key[32] = {
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -388,72 +386,72 @@ BOOST_AUTO_TEST_CASE(TestAES256CbcCipher)
     cipher2.cbc_decrypt(out, back_to_in, 16);
     cipher2.cbc_decrypt(out+16, back_to_in+16, 16);
 //    hexdump_d(back_to_in, 32);
-    BOOST_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
+    RED_CHECK_EQUAL(0, memcmp(in, back_to_in, 32));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestFindPreferredInAvailable)
+RED_AUTO_TEST_CASE(TestFindPreferredInAvailable)
 {
-    { 
+    {
         SSHString res = find_matching("a", "a", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("a", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("a", res.data.get(), res.size) == 0);
     }
-    
-    { 
+
+    {
         SSHString res = find_matching("a", "b", ',');
-        BOOST_CHECK_EQUAL(res.size, 0);
+        RED_CHECK_EQUAL(res.size, 0);
     }
 
-    { 
+    {
         SSHString res = find_matching("b,a", "b", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
     }
 
-    { 
+    {
         SSHString res = find_matching("a,b", "b", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
     }
 
-    { 
+    {
         SSHString res = find_matching("a,b,c", "b", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
     }
 
-    { 
+    {
         SSHString res = find_matching("a,b,c", "a,b", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("a", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("a", res.data.get(), res.size) == 0);
     }
-    { 
+    {
         SSHString res = find_matching("a,b,c", "b,a", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
     }
-    { 
+    {
         SSHString res = find_matching("a,b,c", "d,b,a", ',');
-        BOOST_CHECK_EQUAL(res.size, 1);
-        BOOST_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 1);
+        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
     }
-    { 
+    {
         SSHString res = find_matching("ab,abc,abcd", "abcde,abc,abcd", ',');
-        BOOST_CHECK_EQUAL(res.size, 3);
-        BOOST_CHECK(memcmp("abc", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size, 3);
+        RED_CHECK(memcmp("abc", res.data.get(), res.size) == 0);
     }
-    
+
 }
 
 
-BOOST_AUTO_TEST_CASE(TestFindTextInList)
+RED_AUTO_TEST_CASE(TestFindTextInList)
 {
-    BOOST_CHECK_EQUAL(0, find_key("titi", {{"abc", 1},{"bcde", 2}}, 0));
-    BOOST_CHECK_EQUAL(1, find_key("abc", {{"abc", 1},{"bcde", 2}}, 0));
-    BOOST_CHECK_EQUAL(2, find_key("bcde", {{"abc", 1},{"bcde", 2}}, 0));
-    BOOST_CHECK_EQUAL(1, find_key("abc", {{"abc", 1},{"bcde", 2}, {"abc", 3}}, 0));
-    BOOST_CHECK_EQUAL(3, find_key("abcd", {{"abc", 1},{"bcde", 2}, {"abcd", 3}}, 0));
+    RED_CHECK_EQUAL(0, find_key("titi", {{"abc", 1},{"bcde", 2}}, 0));
+    RED_CHECK_EQUAL(1, find_key("abc", {{"abc", 1},{"bcde", 2}}, 0));
+    RED_CHECK_EQUAL(2, find_key("bcde", {{"abc", 1},{"bcde", 2}}, 0));
+    RED_CHECK_EQUAL(1, find_key("abc", {{"abc", 1},{"bcde", 2}, {"abc", 3}}, 0));
+    RED_CHECK_EQUAL(3, find_key("abcd", {{"abc", 1},{"bcde", 2}, {"abcd", 3}}, 0));
 }
 
 //openssl ecparam -name secp256k1 -genkey -noout -out secp256k1-key.pem
@@ -531,7 +529,7 @@ struct SshPrivateKey {};
 
 struct SshPrivateDSAKey {
     DSA *dsa;
-    SshPrivateDSAKey(char * b64_key, size_t bsize) 
+    SshPrivateDSAKey(char * b64_key, size_t bsize)
     {
         struct BIO_deleter{
             BIO_deleter(){}
@@ -551,7 +549,7 @@ struct SshPrivateDSAKey {
 
 struct SshPrivateRSAKey {
     RSA *rsa;
-    SshPrivateRSAKey(char * b64_key, size_t bsize) 
+    SshPrivateRSAKey(char * b64_key, size_t bsize)
     {
         struct BIO_deleter{
             BIO_deleter(){}
@@ -571,7 +569,7 @@ struct SshPrivateRSAKey {
 
 
 
-BOOST_AUTO_TEST_CASE(CreateDSAKeyFromPem)
+RED_AUTO_TEST_CASE(CreateDSAKeyFromPem)
 {
        char b64_key[] = "-----BEGIN DSA PRIVATE KEY-----\n"
 "MIIGVgIBAAKCAgEAxajp7mCZbVtjqYpSbS5ZKLwTEu8gH33wRzxnB9tFIxNvfnQ5\n"

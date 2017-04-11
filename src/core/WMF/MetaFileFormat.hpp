@@ -462,7 +462,7 @@ enum : int {
           , numberOfMembers(0)                              // Not used
         {}
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             stream.out_uint16_le(this->type);
             stream.out_uint16_le(this->headerSize);
             stream.out_uint16_le(this->version);
@@ -486,7 +486,7 @@ enum : int {
             REDASSERT(this->numberOfMembers == 0);
         }
 
-        void log() {
+        void log() const {
             LOG(LOG_INFO, "     Meta Header:");
             LOG(LOG_INFO, "          * type            = 0x%04x (2 bytes)", this->type);
             LOG(LOG_INFO, "          * headerSize      = %d (2 bytes)", this->headerSize);
@@ -532,7 +532,7 @@ enum : int {
           , recordFunction(recordFunction)
         {}
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             stream.out_uint32_le(this->recordSize);
             stream.out_uint16_le(this->recordFunction);
         }
@@ -542,7 +542,7 @@ enum : int {
             this->recordFunction = stream.in_uint16_le();
         }
 
-        void log() {
+        void log() const {
             LOG(LOG_INFO, "     Record Header:");
             LOG(LOG_INFO, "          * recordSize     = %d (4 bytes)", this->recordSize);
             LOG(LOG_INFO, "          * recordFunction = 0x%04x (2 bytes): %s", this->recordFunction, MFF::get_RecordType_name(this->recordFunction));
@@ -586,7 +586,7 @@ enum : int {
           , mappingMode(mappingMode)
         {}
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             Record::emit(stream);
             stream.out_uint16_le(this->mappingMode);
         }
@@ -597,7 +597,7 @@ enum : int {
             this->mappingMode = stream.in_uint16_le();
         }
 
-        void log() {
+        void log() const {
             Record::log();
             LOG(LOG_INFO, "     Meta Set Map Mod:");
             LOG(LOG_INFO, "          * mappingMode = 0x%04x (2 bytes)", this->mappingMode);
@@ -649,7 +649,7 @@ enum : int {
           , width(width)
         {}
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             Record::emit(stream);
             stream.out_uint16_le(this->height);
             stream.out_uint16_le(this->width);
@@ -662,7 +662,7 @@ enum : int {
             this->width = stream.in_uint16_le();
         }
 
-        void log() {
+        void log() const {
             Record::log();
             LOG(LOG_INFO, "     Meta Set Window Ext:");
             LOG(LOG_INFO, "          * height = 0x%04x (2 bytes)", this->height);
@@ -714,7 +714,7 @@ enum : int {
           , xOrg(xOrg)
         {}
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             Record::emit(stream);
             stream.out_uint16_le(yOrg);
             stream.out_uint16_le(xOrg);
@@ -727,7 +727,7 @@ enum : int {
             this->xOrg = stream.in_uint16_le();
         }
 
-        void log() {
+        void log() const {
             Record::log();
             LOG(LOG_INFO, "     Meta Set Window Org:");
             LOG(LOG_INFO, "          * yOrg = %d (2 bytes)", this->yOrg);
@@ -921,7 +921,7 @@ enum : int {
               , imageSize(data_length)
             {}
 
-            void emit(OutStream & stream) {
+            void emit(OutStream & stream) const {
                 stream.out_uint32_le(this->headerSize);
                 stream.out_uint32_le(this->width);
                 stream.out_uint32_le(this->height);
@@ -950,7 +950,7 @@ enum : int {
                 this->colorImportant = stream.in_uint32_le();
             }
 
-            void log() {
+            void log() const {
                 LOG(LOG_INFO, "     Bitmap Info Header:");
                 LOG(LOG_INFO, "          * headerSize     = %d (4 bytes)", int(this->headerSize));
                 LOG(LOG_INFO, "          * width          = %d (4 bytes)", int(this->width));
@@ -1049,7 +1049,7 @@ enum : int {
             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
-        void emit(OutStream & stream) {
+        void emit(OutStream & stream) const {
             Record::emit(stream);
             stream.out_uint32_le(this->rasterOperation);
             stream.out_uint16_le(this->srcHeight);
@@ -1083,7 +1083,7 @@ enum : int {
             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
-        void log() {
+        void log() const {
             Record::log();
             LOG(LOG_INFO, "     Dib Stretch BLT:");
             LOG(LOG_INFO, "          * rasterOperation = 0x%08x (4 bytes)", this->rasterOperation);

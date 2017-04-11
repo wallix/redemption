@@ -20,14 +20,12 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapture
+#define RED_TEST_MODULE TestCapture
 #include "system/redemption_unit_tests.hpp"
 
 
-// #define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -50,9 +48,9 @@
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
 
-BOOST_AUTO_TEST_CASE(TestSplittedCapture)
+RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    BOOST_CHECK(true);
+    RED_CHECK(true);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
@@ -271,28 +269,28 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         const char * filename;
 
         filename = png_seq.get(0);
-        BOOST_CHECK_EQUAL(3098, ::filesize(filename));
+        RED_CHECK_EQUAL(3098, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(1);
-        BOOST_CHECK_EQUAL(3125, ::filesize(filename));
+        RED_CHECK_EQUAL(3125, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(2);
-        BOOST_CHECK_EQUAL(3140, ::filesize(filename));
+        RED_CHECK_EQUAL(3140, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(3);
-        BOOST_CHECK_EQUAL(3158, ::filesize(filename));
+        RED_CHECK_EQUAL(3158, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(4);
-        BOOST_CHECK_EQUAL(3172, ::filesize(filename));
+        RED_CHECK_EQUAL(3172, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(5);
-        BOOST_CHECK_EQUAL(3197, ::filesize(filename));
+        RED_CHECK_EQUAL(3197, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(6);
-        BOOST_CHECK_EQUAL(3223, ::filesize(filename));
+        RED_CHECK_EQUAL(3223, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(7);
-        BOOST_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_EQUAL(false, file_exist(filename));
     }
 
     struct CheckFiles {
@@ -309,13 +307,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
         if (x.altsize != fsize){
-            BOOST_CHECK_EQUAL(x.size, fsize);
+            RED_CHECK_EQUAL(x.size, fsize);
         }
         ::unlink(x.filename);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
+RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
@@ -498,7 +496,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * filename = "./capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
-    CHECK_SIG2(
+    RED_CHECK_SIG2(
         reinterpret_cast<const uint8_t*>(s.data()), s.size(),
         "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
     );
@@ -507,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
 
 
-BOOST_AUTO_TEST_CASE(TestPattern)
+RED_AUTO_TEST_CASE(TestPattern)
 {
     for (int i = 0; i < 2; ++i) {
         struct Auth : NullAuthentifier
@@ -526,23 +524,23 @@ BOOST_AUTO_TEST_CASE(TestPattern)
 
         checker(cstr_array_view("Gestionnaire"));
 
-        BOOST_CHECK(authentifier.reason.empty());
-        BOOST_CHECK(authentifier.message.empty());
+        RED_CHECK(authentifier.reason.empty());
+        RED_CHECK(authentifier.message.empty());
 
         checker(cstr_array_view("Gestionnaire de serveur"));
 
-        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
-        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de serveur");
+        RED_CHECK_EQUAL(authentifier.reason,  reason);
+        RED_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de serveur");
 
         checker(cstr_array_view("Gestionnaire de licences TS"));
 
-        BOOST_CHECK_EQUAL(authentifier.reason,  reason);
-        BOOST_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
+        RED_CHECK_EQUAL(authentifier.reason,  reason);
+        RED_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSessionMeta)
+RED_AUTO_TEST_CASE(TestSessionMeta)
 {
     char const out_data[] =
         "1970-01-01 01:16:40 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
@@ -590,7 +588,7 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSessionMeta2)
+RED_AUTO_TEST_CASE(TestSessionMeta2)
 {
     char const out_data[] =
         "1970-01-01 01:16:40 + Blah1\n"
@@ -627,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta2)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSessionMeta3)
+RED_AUTO_TEST_CASE(TestSessionMeta3)
 {
     char const out_data[] =
         "1970-01-01 01:16:40 - [Kbd]ABCD\n"
@@ -671,7 +669,7 @@ BOOST_AUTO_TEST_CASE(TestSessionMeta3)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSessionMeta4)
+RED_AUTO_TEST_CASE(TestSessionMeta4)
 {
     char const out_data[] =
         "1970-01-01 01:16:40 - [Kbd]ABCD\n"
@@ -925,7 +923,7 @@ const char expected_stripped_wrm[] =
            "\x11\x62\x32\x00\x00"
     ;
 
-BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
+RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 {
     // Timestamps are applied only when flushing
     struct timeval now;
@@ -1103,7 +1101,7 @@ const char expected_stripped_wrm2[] =
    ;
 
 
-BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
+RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 {
     // Same as above, show timestamps are applied only when flushing
     struct timeval now;
@@ -1140,7 +1138,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     consumer.sync();
 }
 
-BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
+RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
     // Same as above, show timestamps are applied only when flushing
     timeval now;
@@ -1158,12 +1156,12 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     int fd = ::creat(path, 0777);
     if (fd == -1){
         LOG(LOG_INFO, "open failed with error : %s on %s", strerror(errno), path);
-        BOOST_CHECK(false);
+        RED_CHECK(false);
         return;
     }
 
     OutFileTransport trans(fd);
-    BOOST_CHECK_EQUAL(0, 0);
+    RED_CHECK_EQUAL(0, 0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -1174,16 +1172,16 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
     GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
-    BOOST_CHECK_EQUAL(0, 0);
+    RED_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect, color_ctx);
     RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
     consumer.draw(cmd1, screen_rect, color_ctx);
     now.tv_sec++;
-    BOOST_CHECK_EQUAL(0, 0);
+    RED_CHECK_EQUAL(0, 0);
     consumer.timestamp(now);
     consumer.sync();
-    BOOST_CHECK_EQUAL(0, 0);
+    RED_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
     consumer.draw(cmd2, screen_rect, color_ctx);
@@ -1192,9 +1190,9 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     now.tv_sec+=6;
     consumer.timestamp(now);
     consumer.sync();
-    BOOST_CHECK_EQUAL(0, 0);
+    RED_CHECK_EQUAL(0, 0);
     trans.disconnect(); // close file before reading filesize
-    BOOST_CHECK_EQUAL(1588, filesize(filename));
+    RED_CHECK_EQUAL(1588, filesize(filename));
 
     char in_path[1024];
     len = strlen(filename);
@@ -1204,7 +1202,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     fd = ::open(in_path, O_RDONLY);
     if (fd == -1){
         LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
-        BOOST_CHECK(false);
+        RED_CHECK(false);
         return;
     }
     InFileTransport in_wrm_trans(fd);
@@ -1225,43 +1223,43 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     out_png_trans.next();
 
     // Green Rect
-    BOOST_CHECK_EQUAL(true, player.next_order());
+    RED_CHECK_EQUAL(true, player.next_order());
     player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 
     // Blue Rect
-    BOOST_CHECK_EQUAL(true, player.next_order());
+    RED_CHECK_EQUAL(true, player.next_order());
     player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 
     // Timestamp
-    BOOST_CHECK_EQUAL(true, player.next_order());
+    RED_CHECK_EQUAL(true, player.next_order());
     player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 
     // White Rect
-    BOOST_CHECK_EQUAL(true, player.next_order());
+    RED_CHECK_EQUAL(true, player.next_order());
     player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 
     // Red Rect
-    BOOST_CHECK_EQUAL(true, player.next_order());
+    RED_CHECK_EQUAL(true, player.next_order());
     player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 
-    BOOST_CHECK_EQUAL(false, player.next_order());
+    RED_CHECK_EQUAL(false, player.next_order());
     in_wrm_trans.disconnect();
 
     // clear PNG files
     size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
     for (int i = 0; i < 6 ; i++){
         const char * filename = out_png_trans.seqgen()->get(i);
-        BOOST_CHECK_EQUAL(sz[i], ::filesize(filename));
+        RED_CHECK_EQUAL(sz[i], ::filesize(filename));
         ::unlink(filename);
     }
    ::unlink("./testcap.wrm");
@@ -1308,7 +1306,7 @@ const char expected_Red_on_Blue_wrm[] =
 // -----------------------------------------------------
            ;
 
-BOOST_AUTO_TEST_CASE(TestSaveCache)
+RED_AUTO_TEST_CASE(TestSaveCache)
 {
     // Timestamps are applied only when flushing
     struct timeval now;
@@ -1352,7 +1350,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     consumer.sync();
 }
 
-BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
+RED_AUTO_TEST_CASE(TestReloadSaveCache)
 {
     GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
     timeval begin_capture;
@@ -1373,7 +1371,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     png_recorder.flush();
 
     const char * filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(298, ::filesize(filename));
+    RED_CHECK_EQUAL(298, ::filesize(filename));
     ::unlink(filename);
 }
 
@@ -1451,7 +1449,7 @@ const char expected_reset_rect_wrm[] =
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
            ;
 
-BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
+RED_AUTO_TEST_CASE(TestSaveOrderStates)
 {
     // Timestamps are applied only when flushing
     struct timeval now;
@@ -1486,7 +1484,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     consumer.sync();
 }
 
-BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
+RED_AUTO_TEST_CASE(TestReloadOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
     timeval begin_capture;
@@ -1506,7 +1504,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     }
     png_recorder.flush();
     const char * filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(341, ::filesize(filename));
+    RED_CHECK_EQUAL(341, ::filesize(filename));
     ::unlink(filename);
 }
 
@@ -1577,7 +1575,7 @@ const char expected_continuation_wrm[] =
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
            ;
 
-BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
+RED_AUTO_TEST_CASE(TestContinuationOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);
     timeval begin_capture;
@@ -1589,7 +1587,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
     const FilenameGenerator * seq = out_png_trans.seqgen();
-    BOOST_CHECK(seq);
+    RED_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1599,11 +1597,11 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     }
     png_recorder.flush();
     const char * filename = seq->get(0);
-    BOOST_CHECK_EQUAL(341, ::filesize(filename));
+    RED_CHECK_EQUAL(341, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestImageChunk)
+RED_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
@@ -1666,7 +1664,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     consumer.send_image_chunk();
 }
 
-BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
+RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 {
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
@@ -1740,10 +1738,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     consumer.sync();
 
     OutChunkedBufferingTransport<100> png_trans(trans);
-    BOOST_CHECK_NO_THROW(consumer.dump_png24(png_trans, true));
+    RED_CHECK_NO_THROW(consumer.dump_png24(png_trans, true));
 }
 
-BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
+RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 {
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
@@ -1830,7 +1828,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
+RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 {
     const char source_png[] =
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
@@ -1862,7 +1860,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
 
 
 
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
+RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
@@ -1928,12 +1926,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     png_recorder.flush();
     out_png_trans.disconnect();
     const char * filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
+RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
@@ -2004,17 +2002,17 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 
     png_recorder.flush();
     filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 
     second_png_recorder.flush();
     filename = second_out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
+RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
@@ -2079,14 +2077,14 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(1004u, static_cast<unsigned>(player.record_now.tv_sec));
+    RED_CHECK_EQUAL(1004u, static_cast<unsigned>(player.record_now.tv_sec));
 
     const char * filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(107, ::filesize(filename));
+    RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestKbdCapture)
+RED_AUTO_TEST_CASE(TestKbdCapture)
 {
     struct : auth_api {
         mutable std::string s;
@@ -2094,7 +2092,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             (void)duplicate_with_pid;
             (void)type;
-            BOOST_REQUIRE(extra);
+            RED_REQUIRE(extra);
             s += extra;
         }
 
@@ -2110,8 +2108,8 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL("data='a'", auth.s);
+        RED_CHECK_EQUAL(auth.s.size(), 8);
+        RED_CHECK_EQUAL("data='a'", auth.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -2122,7 +2120,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
         kbd_capture.flush();
 
         // prob is not enabled
-        BOOST_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(auth.s.size(), 0);
     }
 
     kbd_capture.enable_kbd_input_mask(false);
@@ -2131,23 +2129,23 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     {
         kbd_capture.kbd_input(time, 'a');
 
-        BOOST_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(auth.s.size(), 0);
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        BOOST_CHECK_EQUAL(auth.s.size(), 8);
-        BOOST_CHECK_EQUAL("data='a'", auth.s);
+        RED_CHECK_EQUAL(auth.s.size(), 8);
+        RED_CHECK_EQUAL("data='a'", auth.s);
         auth.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        BOOST_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(auth.s.size(), 0);
     }
 }
 
 
-BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
+RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
     struct : auth_api {
         mutable std::string s;
@@ -2174,8 +2172,8 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         }
     }
 
-    BOOST_CHECK_EQUAL(4, pattern_count);
-    BOOST_CHECK_EQUAL(
+    RED_CHECK_EQUAL(4, pattern_count);
+    RED_CHECK_EQUAL(
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
@@ -2185,7 +2183,7 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
+RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
     struct : auth_api {
         bool is_killed = 0;
@@ -2208,21 +2206,21 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
             ++pattern_count;
         }
     }
-    BOOST_CHECK_EQUAL(1, pattern_count);
-    BOOST_CHECK_EQUAL(auth.is_killed, true);
+    RED_CHECK_EQUAL(1, pattern_count);
+    RED_CHECK_EQUAL(auth.is_killed, true);
 }
 
 
 
 
-BOOST_AUTO_TEST_CASE(TestSample0WRM)
+RED_AUTO_TEST_CASE(TestSample0WRM)
 {
     const char * input_filename = FIXTURES_PATH "/sample0.wrm";
 
     int fd = ::open(input_filename, O_RDONLY);
     if (fd == -1){
         LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
-        BOOST_CHECK(false);
+        RED_CHECK(false);
         return;
     }
 
@@ -2281,11 +2279,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     bool requested_to_stop = false;
 
-    BOOST_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
+    RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
     player.play(requested_to_stop);
 
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
+    RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
     graphic_to_file.sync();
     const char * filename;
@@ -2294,21 +2292,21 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     out_wrm_trans.disconnect();
 
     filename = out_png_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(21280, ::filesize(filename));
+    RED_CHECK_EQUAL(21280, ::filesize(filename));
     ::unlink(filename);
 
     filename = out_wrm_trans.seqgen()->get(0);
-    BOOST_CHECK_EQUAL(490454, ::filesize(filename));
+    RED_CHECK_EQUAL(490454, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(1);
-    BOOST_CHECK_EQUAL(1008253, ::filesize(filename));
+    RED_CHECK_EQUAL(1008253, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(2);
-    BOOST_CHECK_EQUAL(195756, ::filesize(filename));
+    RED_CHECK_EQUAL(195756, ::filesize(filename));
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
+RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
     const char source_png[] =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2345,7 +2343,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     constexpr std::size_t sz_buf = 8;
     uint8_t buf[sz_buf];
     auto end = buf;
-    in_png_trans.recv_new(end, sz_buf); // skip first chunk header
+    in_png_trans.recv_atomic(end, sz_buf); // skip first chunk header
     InStream stream(buf);
 
 //    in_png_trans.recv(&stream.end, 107); // skip first chunk header
@@ -2370,7 +2368,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 #include "utils/fileutils.hpp"
 
-BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
+RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
     OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
     fnt.send("We write, ", 10);
@@ -2381,8 +2379,8 @@ BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     fnt.send(" ", 1);
     fnt.send("A new file.", 11);
 
-    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
-    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
+    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
+    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
 
     fnt.disconnect();
     unlink(fnt.seqgen()->get(0));

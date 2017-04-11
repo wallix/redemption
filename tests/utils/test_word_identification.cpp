@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWordIdentification
+#define RED_TEST_MODULE TestWordIdentification
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -33,35 +31,35 @@
 #include "utils/word_identification.hpp"
 
 
-BOOST_AUTO_TEST_CASE(Test_Word)
+RED_AUTO_TEST_CASE(Test_Word)
 {
-    BOOST_CHECK_EQUAL(0, in("cmd", {}));
+    RED_CHECK_EQUAL(0, in("cmd", {}));
 
     const char * options1[] = {"one"};
-    BOOST_CHECK_EQUAL(0, in("cmd", options1));
-    BOOST_CHECK_EQUAL(1, in("one", options1));
+    RED_CHECK_EQUAL(0, in("cmd", options1));
+    RED_CHECK_EQUAL(1, in("one", options1));
 
     const char * options3[] = {"one", "two", "three"};
-    BOOST_CHECK_EQUAL(0, in("cmd", options3));
-    BOOST_CHECK_EQUAL(0, in("cmd", {"one", "two", "three"}));
-    BOOST_CHECK_EQUAL(3, in("three", options3));
-    BOOST_CHECK_EQUAL(3, in("three", {"one", "two", "three"}));
+    RED_CHECK_EQUAL(0, in("cmd", options3));
+    RED_CHECK_EQUAL(0, in("cmd", {"one", "two", "three"}));
+    RED_CHECK_EQUAL(3, in("three", options3));
+    RED_CHECK_EQUAL(3, in("three", {"one", "two", "three"}));
     
     
 }
 
-//BOOST_AUTO_TEST_CASE(Test_end)
+//RED_AUTO_TEST_CASE(Test_end)
 //{
-//    BOOST_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {}));
+//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {}));
 
 //    const char * options1[] = {"one"};
-//    BOOST_CHECK_EQUAL(0, ends_with("./tools/verifier.py", options1));
-//    BOOST_CHECK_EQUAL(1, ends_with("./tools/verifier.py", {"verifier.py"}));
+//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", options1));
+//    RED_CHECK_EQUAL(1, ends_with("./tools/verifier.py", {"verifier.py"}));
 
 //    const char * options3[] = {"one", "two", "verifier.py"};
-//    BOOST_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
-//    BOOST_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {"one", "two", "three"}));
+//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
+//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {"one", "two", "three"}));
 
-//    BOOST_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
-//    BOOST_CHECK_EQUAL(3, ends_with("./tools/verifier.py", {"one", "two", "verifier.py"}));
+//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
+//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", {"one", "two", "verifier.py"}));
 //}

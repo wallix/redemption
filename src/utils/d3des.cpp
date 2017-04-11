@@ -81,7 +81,7 @@ static unsigned char pc2[48] = {
 /* Thanks to James Gillogly & Phil Karn! */
 void rfbDesKey(unsigned char *key, int edf)
 {
-    int i, j, l, m, n;
+    int j, l, m, n;
     unsigned char pc1m[56], pcr[56];
     unsigned long kn[32];
 
@@ -90,7 +90,7 @@ void rfbDesKey(unsigned char *key, int edf)
         m = l & 07;
         pc1m[j] = (key[l >> 3] & bytebit[m]) ? 1 : 0;
     }
-    for ( i = 0; i < 16; i++ ) {
+    for (int i = 0; i < 16; i++ ) {
         if ( edf == DE1 ) m = (15 - i) << 1;
         else m = i << 1;
         n = m + 1;
@@ -358,7 +358,7 @@ static unsigned long SP8[64] = {
 
 static void desfunc(unsigned long* block, unsigned long *keys)
 {
-    unsigned long fval, work, right, leftt;
+    unsigned long work, right, leftt;
 
     leftt = block[0];
     right = block[1];
@@ -383,6 +383,7 @@ static void desfunc(unsigned long* block, unsigned long *keys)
     for (int round = 0; round < 8; round++ ) {
         work  = (right << 28) | (right >> 4);
         work ^= *keys++;
+        unsigned long fval;
         fval  = SP7[ work		 & 0x3fL];
         fval |= SP5[(work >>  8) & 0x3fL];
         fval |= SP3[(work >> 16) & 0x3fL];

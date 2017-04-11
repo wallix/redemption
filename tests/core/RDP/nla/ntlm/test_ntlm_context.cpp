@@ -18,16 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlm_context
+#define RED_TEST_MODULE TestNtlm_context
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
 #include "check_sig.hpp"
 
-BOOST_AUTO_TEST_CASE(TestNtlmContext)
+RED_AUTO_TEST_CASE(TestNtlmContext)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -103,87 +101,73 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== LmChallengeResponse =====");
     // hexdump_c(LmChallengeResponse.get_data(), LmChallengeResponse.size());
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
-/* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"                                 //.l....0.
-,
-                             LmChallengeResponse.get_data(),
-                             LmChallengeResponse.size()),
-                      0);
+    RED_CHECK_MEM_C(
+        make_array_view(LmChallengeResponse.get_data(), LmChallengeResponse.size()),
+        /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
+        /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"                                 //.l....0.
+    );
     auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== NtChallengeResponse =====");
     // hexdump_c(NtChallengeResponse.get_data(), NtChallengeResponse.size());
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x54\x01\x2a\xc9\x4e\x20\x30\x7d\xed\x6a\xcf\xb8\x6b\xb0\x45\xc5" //T.*.N 0}.j..k.E.
-/* 0010 */ "\x01\x01\x00\x00\x00\x00\x00\x00\x67\x95\x0e\x5a\x4e\x56\x76\xd6" //........g..ZNVv.
-/* 0020 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d\x00\x00\x00\x00\x02\x00\x08\x00" //.l....0.........
-/* 0030 */ "\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00\x57\x00\x49\x00" //W.I.N.7.....W.I.
-/* 0040 */ "\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00" //N.7.....w.i.n.7.
-/* 0050 */ "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00" //....w.i.n.7.....
-/* 0060 */ "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00" //....l...........
-,
-                             NtChallengeResponse.get_data(),
-                             NtChallengeResponse.size()),
-                      0);
+
+    RED_CHECK_MEM_C(
+        make_array_view(NtChallengeResponse.get_data(), NtChallengeResponse.size()),
+        /* 0000 */ "\x54\x01\x2a\xc9\x4e\x20\x30\x7d\xed\x6a\xcf\xb8\x6b\xb0\x45\xc5" //T.*.N 0}.j..k.E.
+        /* 0010 */ "\x01\x01\x00\x00\x00\x00\x00\x00\x67\x95\x0e\x5a\x4e\x56\x76\xd6" //........g..ZNVv.
+        /* 0020 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d\x00\x00\x00\x00\x02\x00\x08\x00" //.l....0.........
+        /* 0030 */ "\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00\x57\x00\x49\x00" //W.I.N.7.....W.I.
+        /* 0040 */ "\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00" //N.7.....w.i.n.7.
+        /* 0050 */ "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00" //....w.i.n.7.....
+        /* 0060 */ "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00" //....l...........
+    );
 
     // LOG(LOG_INFO, "==== SessionBaseKey =====");
     // hexdump_c(context.SessionBaseKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c" //.v..Fw`.9zG.`..L
-,
-                             context.SessionBaseKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.SessionBaseKey,
+        /* 0000 */ "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c" //.v..Fw`.9zG.`..L
+    );
 
     context.ntlm_encrypt_random_session_key();
 
     // LOG(LOG_INFO, "==== EncryptedRandomSessionKey =====");
     // hexdump_c(context.EncryptedRandomSessionKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(// "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"
-/* 0000 */ "\x5a\xcb\x6c\xba\x58\x07\xb5\xd4\xf4\x61\x65\xfb\xb0\x9a\xe7\xc6" //Z.l.X....ae.....
-,
-                             context.EncryptedRandomSessionKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.EncryptedRandomSessionKey,
+        // "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"
+        /* 0000 */ "\x5a\xcb\x6c\xba\x58\x07\xb5\xd4\xf4\x61\x65\xfb\xb0\x9a\xe7\xc6" //Z.l.X....ae.....
+    );
 
     context.ntlm_generate_client_signing_key();
     // LOG(LOG_INFO, "==== ClientSigningKey =====");
     // hexdump_c(context.ClientSigningKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38" //..a[..lb..r.7$.8
-,
-                             context.ClientSigningKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.ClientSigningKey,
+        /* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38" //..a[..lb..r.7$.8
+    );
     context.ntlm_generate_client_sealing_key();
     // LOG(LOG_INFO, "==== ClientSealingKey =====");
     // hexdump_c(context.ClientSealingKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01" //.F....q.....T7D.
-,
-                             context.ClientSealingKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.ClientSealingKey,
+        /* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01" //.F....q.....T7D.
+    );
     context.ntlm_generate_server_signing_key();
     // LOG(LOG_INFO, "==== ServerSigningKey =====");
     // hexdump_c(context.ServerSigningKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a" //Vf.....p.6...g.Z
-,
-                             context.ServerSigningKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.ServerSigningKey,
+      /* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a" //Vf.....p.6...g.Z
+    );
     context.ntlm_generate_server_sealing_key();
     // LOG(LOG_INFO, "==== ServerSealingKey =====");
     // hexdump_c(context.ServerSealingKey, 16);
-    BOOST_CHECK_EQUAL(memcmp(
-/* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78" //.:?$.'..K.c-...x
-,
-                             context.ServerSealingKey,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(
+        context.ServerSealingKey,
+        /* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78" //.:?$.'..K.c-...x
+    );
 }
-BOOST_AUTO_TEST_CASE(TestNTOWFv2)
+RED_AUTO_TEST_CASE(TestNTOWFv2)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -206,14 +190,10 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
                     uuser, sizeof(uuser),
                     udomain, sizeof(udomain),
                     buff, sizeof(buff));
-    BOOST_CHECK_EQUAL(memcmp("\x0c\x86\x8a\x40\x3b\xfd\x7a\x93"
-                             "\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f",
-                             buff,
-                             16),
-                      0);
+    RED_CHECK_MEM_AC(buff, "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f");
 }
 
-BOOST_AUTO_TEST_CASE(TestSetters)
+RED_AUTO_TEST_CASE(TestSetters)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -225,20 +205,20 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 
     uint8_t spn[] = "Sustine et abstine";
 
-    BOOST_CHECK_EQUAL(context.Workstation.size(), 0);
+    RED_CHECK_EQUAL(context.Workstation.size(), 0);
     context.ntlm_SetContextWorkstation(work);
-    BOOST_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
-    BOOST_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
+    RED_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
+    RED_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
 
-    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
+    RED_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
     context.ntlm_SetContextServicePrincipalName(spn);
-    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
-    BOOST_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
+    RED_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
+    RED_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
 
 }
 
 
-BOOST_AUTO_TEST_CASE(TestOutputs)
+RED_AUTO_TEST_CASE(TestOutputs)
 {
     LOG(LOG_INFO, "SebBuffer size : %zu", sizeof(SecBuffer));
     LOG(LOG_INFO, "Array size : %zu", sizeof(Array));
@@ -301,7 +281,7 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestNtlmScenario)
+RED_AUTO_TEST_CASE(TestNtlmScenario)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -364,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     result = server_context.ntlm_check_nego();
-    BOOST_CHECK(result);
+    RED_CHECK(result);
     server_context.ntlm_generate_server_challenge();
     memcpy(server_context.ServerChallenge, server_context.CHALLENGE_MESSAGE.serverChallenge, 8);
     server_context.ntlm_generate_timestamp();
@@ -428,9 +408,9 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
     server_context.hash_password(password, sizeof(password), hash);
 
     result = server_context.ntlm_check_nt_response_from_authenticate(hash, 16);
-    BOOST_CHECK(result);
+    RED_CHECK(result);
     result = server_context.ntlm_check_lm_response_from_authenticate(hash, 16);
-    BOOST_CHECK(result);
+    RED_CHECK(result);
     // SERVER COMPUTE SHARED KEY WITH CLIENT
     server_context.ntlm_compute_session_base_key(hash, 16);
     server_context.ntlm_decrypt_exported_session_key();
@@ -444,48 +424,48 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
     // hexdump_c(server_context.SessionBaseKey, 16);
     // hexdump_c(client_context.SessionBaseKey, 16);
-    BOOST_CHECK(!memcmp(server_context.SessionBaseKey,
+    RED_CHECK(!memcmp(server_context.SessionBaseKey,
                         client_context.SessionBaseKey,
                         16));
 
     // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
     // hexdump_c(server_context.ExportedSessionKey, 16);
     // hexdump_c(client_context.ExportedSessionKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ExportedSessionKey,
+    RED_CHECK(!memcmp(server_context.ExportedSessionKey,
                         client_context.ExportedSessionKey,
                         16));
 
     // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
     // hexdump_c(server_context.ClientSigningKey, 16);
     // hexdump_c(client_context.ClientSigningKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ClientSigningKey,
+    RED_CHECK(!memcmp(server_context.ClientSigningKey,
                         client_context.ClientSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
     // hexdump_c(server_context.ClientSealingKey, 16);
     // hexdump_c(client_context.ClientSealingKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ClientSealingKey,
+    RED_CHECK(!memcmp(server_context.ClientSealingKey,
                         client_context.ClientSealingKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
     // hexdump_c(server_context.ServerSigningKey, 16);
     // hexdump_c(client_context.ServerSigningKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ServerSigningKey,
+    RED_CHECK(!memcmp(server_context.ServerSigningKey,
                         client_context.ServerSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
     // hexdump_c(server_context.ServerSealingKey, 16);
     // hexdump_c(client_context.ServerSealingKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ServerSealingKey,
+    RED_CHECK(!memcmp(server_context.ServerSealingKey,
                         client_context.ServerSealingKey,
                         16));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
+RED_AUTO_TEST_CASE(TestNtlmScenario2)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -598,49 +578,49 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
     // hexdump_c(server_context.SessionBaseKey, 16);
     // hexdump_c(client_context.SessionBaseKey, 16);
-    BOOST_CHECK(!memcmp(server_context.SessionBaseKey,
+    RED_CHECK(!memcmp(server_context.SessionBaseKey,
                         client_context.SessionBaseKey,
                         16));
 
     // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
     // hexdump_c(server_context.ExportedSessionKey, 16);
     // hexdump_c(client_context.ExportedSessionKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ExportedSessionKey,
+    RED_CHECK(!memcmp(server_context.ExportedSessionKey,
                         client_context.ExportedSessionKey,
                         16));
 
     // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
     // hexdump_c(server_context.ClientSigningKey, 16);
     // hexdump_c(client_context.ClientSigningKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ClientSigningKey,
+    RED_CHECK(!memcmp(server_context.ClientSigningKey,
                         client_context.ClientSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
     // hexdump_c(server_context.ClientSealingKey, 16);
     // hexdump_c(client_context.ClientSealingKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ClientSealingKey,
+    RED_CHECK(!memcmp(server_context.ClientSealingKey,
                         client_context.ClientSealingKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
     // hexdump_c(server_context.ServerSigningKey, 16);
     // hexdump_c(client_context.ServerSigningKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ServerSigningKey,
+    RED_CHECK(!memcmp(server_context.ServerSigningKey,
                         client_context.ServerSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
     // hexdump_c(server_context.ServerSealingKey, 16);
     // hexdump_c(client_context.ServerSealingKey, 16);
-    BOOST_CHECK(!memcmp(server_context.ServerSealingKey,
+    RED_CHECK(!memcmp(server_context.ServerSealingKey,
                         client_context.ServerSealingKey,
                         16));
 
     // LOG(LOG_INFO, "===== Message Integrity Check =====");
     // hexdump_c(client_context.MessageIntegrityCheck, 16);
     // hexdump_c(server_context.MessageIntegrityCheck, 16);
-    BOOST_CHECK(!memcmp(client_context.MessageIntegrityCheck,
+    RED_CHECK(!memcmp(client_context.MessageIntegrityCheck,
                         server_context.MessageIntegrityCheck,
                         16));
 
@@ -648,7 +628,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 
 
 
-BOOST_AUTO_TEST_CASE(TestWrittersReaders)
+RED_AUTO_TEST_CASE(TestWrittersReaders)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -663,25 +643,25 @@ BOOST_AUTO_TEST_CASE(TestWrittersReaders)
     SEC_STATUS status;
     SecBuffer nego;
     status = context_write.write_negotiate(&nego);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
     status = context_read.read_negotiate(&nego);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
 
 
     SecBuffer chal;
     status = context_write.write_challenge(&chal);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
     status = context_read.read_challenge(&chal);
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 
     SecBuffer auth;
     status = context_write.write_authenticate(&auth);
-    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
-    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
+    RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    RED_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
     status = context_read.read_authenticate(&auth);
-    BOOST_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
+    RED_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
 }

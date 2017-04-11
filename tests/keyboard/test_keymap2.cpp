@@ -23,9 +23,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestKeymap
+#define RED_TEST_MODULE TestKeymap
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 #include "utils/stream.hpp"
 #include "keyboard/keymap2.hpp"
 
-BOOST_AUTO_TEST_CASE(TestKeymap)
+RED_AUTO_TEST_CASE(TestKeymap)
 {
     Keymap2 keymap;
     const int layout = 0x040C;
@@ -42,38 +40,38 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     Keymap2::DecodedKeys decoded_keys;
     bool    ctrl_alt_delete;
 
-    BOOST_CHECK_EQUAL(false, keymap.is_shift_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
 
     uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     uint16_t keyCode = 54 ; // key is right shift
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
 
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    BOOST_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
+    RED_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
 
     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     keyCode = 16 ; // key is 'A'
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
 
-    BOOST_CHECK_EQUAL(1, decoded_keys.count);
-    BOOST_CHECK_EQUAL('A', decoded_keys.uchars[0]);
-    BOOST_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    BOOST_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
+    RED_CHECK_EQUAL(1, decoded_keys.count);
+    RED_CHECK_EQUAL('A', decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
+    RED_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
 
     uint32_t key = keymap.get_char();
-    BOOST_CHECK_EQUAL('A', key);
+    RED_CHECK_EQUAL('A', key);
 
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
     keyCode = 54 ; // key is right shift
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
 
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(false, keymap.is_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
 
     // shift was released, but not A (last char down goes 'a' for autorepeat)
 
@@ -85,30 +83,30 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     keyCode = 16 ; // key is 'A'
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('a', key);
+    RED_CHECK_EQUAL('a', key);
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
 
     // CAPSLOCK Up
     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
     decoded_keys = keymap.event(0xc000, 0x3A, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('A', key);
+    RED_CHECK_EQUAL('A', key);
 
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // A up
 
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('1', key);
+    RED_CHECK_EQUAL('1', key);
 
     // left shift down
     decoded_keys = keymap.event(0, 0x36, ctrl_alt_delete);
@@ -124,175 +122,175 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-    BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('a', key);
+    RED_CHECK_EQUAL('a', key);
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
 
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('&', key);
+    RED_CHECK_EQUAL('&', key);
     decoded_keys = keymap.event(0xc000, 0x02, ctrl_alt_delete);
 
     // left shift down
     decoded_keys = keymap.event(0, 54, ctrl_alt_delete);
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('1', key);
+    RED_CHECK_EQUAL('1', key);
 
     // left shift up
     decoded_keys = keymap.event(0xc000, 54, ctrl_alt_delete);
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('&', key);
+    RED_CHECK_EQUAL('&', key);
 
-    BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-    BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
 
 
     // Now I hit the 'A' key on french keyboard
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL('A', keymap.get_char());
+    RED_CHECK_EQUAL('A', keymap.get_char());
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
 
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL('1', keymap.get_char());
+    RED_CHECK_EQUAL('1', keymap.get_char());
     decoded_keys = keymap.event(0xc000, 0x02, ctrl_alt_delete);
 
     // left shift down
     decoded_keys = keymap.event(0, 54, ctrl_alt_delete);
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL('&', keymap.get_char());
+    RED_CHECK_EQUAL('&', keymap.get_char());
 
     // left shift up
     decoded_keys = keymap.event(0xc000, 54, ctrl_alt_delete);
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL('1', keymap.get_char());
+    RED_CHECK_EQUAL('1', keymap.get_char());
 
     // altgr down
     // RDP_INPUT_SCANCODE time=538966481 flags=0000 param1=001d param2=0000 -> CTRL
     // altgr down autorepeat
     // RDP_INPUT_SCANCODE time=538966481 flags=0100 param1=0038 param2=0000 -> ALT
     decoded_keys = keymap.event(0x0000, 0x1d, ctrl_alt_delete); // CTRL
-    BOOST_CHECK_EQUAL(true, keymap.is_ctrl_pressed());
+    RED_CHECK_EQUAL(true, keymap.is_ctrl_pressed());
     decoded_keys = keymap.event(0x0100, 0x38, ctrl_alt_delete); // ALT Right
-    BOOST_CHECK_EQUAL(true, keymap.is_right_alt_pressed());
+    RED_CHECK_EQUAL(true, keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0x0000, 0x04, ctrl_alt_delete); // Sharp
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL('#', keymap.get_char());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL('#', keymap.get_char());
 
     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-    BOOST_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-    BOOST_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
 
 
     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('/', key);
+    RED_CHECK_EQUAL('/', key);
 
     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-    BOOST_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-    BOOST_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
+    RED_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
 
     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
     key = keymap.get_char();
-    BOOST_CHECK_EQUAL('/', key);
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL('/', key);
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
 }
 
-BOOST_AUTO_TEST_CASE(TestDeadKeys)
+RED_AUTO_TEST_CASE(TestDeadKeys)
 {
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
 
     Keymap2::DecodedKeys decoded_keys;
     bool    ctrl_alt_delete;
 
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
 
     decoded_keys = keymap.event(0x0000, 0x12, ctrl_alt_delete); // 'e'
-    BOOST_CHECK_EQUAL(1, decoded_keys.count);
-    BOOST_CHECK_EQUAL(0xEA, decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL(1, decoded_keys.count);
+    RED_CHECK_EQUAL(0xEA, decoded_keys.uchars[0]);
     decoded_keys = keymap.event(0xC000, 0x12, ctrl_alt_delete); // 'e'
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
 
     // consecutive deadkey
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
-    BOOST_CHECK_EQUAL(2, decoded_keys.count);
-    BOOST_CHECK_EQUAL('^', decoded_keys.uchars[0]);
-    BOOST_CHECK_EQUAL('^', decoded_keys.uchars[1]);
+    RED_CHECK_EQUAL(2, decoded_keys.count);
+    RED_CHECK_EQUAL('^', decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL('^', decoded_keys.uchars[1]);
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
-    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(2, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+    RED_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
 
     // deadkey with non-comboable printed character
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
     decoded_keys = keymap.event(0x0000, 0x11, ctrl_alt_delete); // 'z'
-    BOOST_CHECK_EQUAL(2, decoded_keys.count);
-    BOOST_CHECK_EQUAL('^', decoded_keys.uchars[0]);
-    BOOST_CHECK_EQUAL('z', decoded_keys.uchars[1]);
+    RED_CHECK_EQUAL(2, decoded_keys.count);
+    RED_CHECK_EQUAL('^', decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL('z', decoded_keys.uchars[1]);
     decoded_keys = keymap.event(0xC000, 0x11, ctrl_alt_delete); // 'z'
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
-    BOOST_CHECK_EQUAL(0x7A, keymap.get_char()); // z
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(2, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+    RED_CHECK_EQUAL(0x7A, keymap.get_char()); // z
 
     // deadkey with special key
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
     decoded_keys = keymap.event(0x0000, 0x0F, ctrl_alt_delete); // TAB
     decoded_keys = keymap.event(0xC000, 0x0F, ctrl_alt_delete); // TAB
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(1, keymap.nb_kevent_available());
-    BOOST_CHECK_EQUAL(0x02, keymap.get_kevent()); // KEVENT_TAB
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(1, keymap.nb_kevent_available());
+    RED_CHECK_EQUAL(0x02, keymap.get_kevent()); // KEVENT_TAB
     // the deadkey is still pending
     decoded_keys = keymap.event(0x0000, 0x12, ctrl_alt_delete); // 'e'
     decoded_keys = keymap.event(0xC000, 0x12, ctrl_alt_delete); // 'e'
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
 
     // deadkey with Backspace deletes the deadkey
     decoded_keys = keymap.event(0x0000, 0x1A, ctrl_alt_delete); // '^' down dead key
     decoded_keys = keymap.event(0xC000, 0x1A, ctrl_alt_delete); // '^' up dead key
     decoded_keys = keymap.event(0x0000, 0x0E, ctrl_alt_delete); // BACKSPACE
     decoded_keys = keymap.event(0xC000, 0x0E, ctrl_alt_delete); // BACKSPACE
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0, keymap.nb_kevent_available());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, keymap.nb_kevent_available());
     decoded_keys = keymap.event(0x0000, 0x12, ctrl_alt_delete); // 'e'
     decoded_keys = keymap.event(0xC000, 0x12, ctrl_alt_delete); // 'e'
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL(0x65, keymap.get_char()); // e
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0x65, keymap.get_char()); // e
 
 
     // Autorepeat
@@ -429,7 +427,7 @@ BOOST_AUTO_TEST_CASE(TestDeadKeys)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
+RED_AUTO_TEST_CASE(TestKeymapBuffer)
 {
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -437,91 +435,91 @@ BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
     Keymap2::DecodedKeys decoded_keys;
     bool    ctrl_alt_delete;
 
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL('a', keymap.get_char());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL('a', keymap.get_char());
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
 
     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
     decoded_keys = keymap.event(0xc100, 0x35, ctrl_alt_delete); // '/' on keypad
 
-    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL('/', keymap.get_char());
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(1, keymap.nb_char_available());
+    RED_CHECK_EQUAL('/', keymap.get_char());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
 
     // saturating buffer
     for(size_t i = 0; i < 10 ; i++){
         decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-        BOOST_CHECK_EQUAL(i+1, keymap.nb_char_available());
+        RED_CHECK_EQUAL(i+1, keymap.nb_char_available());
         decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
     }
 
     // saturating buffer
     for(size_t i = 10; i < 20 ; i++){
         decoded_keys = keymap.event(0, 0x11, ctrl_alt_delete);
-        BOOST_CHECK_EQUAL(i+1, keymap.nb_char_available());
+        RED_CHECK_EQUAL(i+1, keymap.nb_char_available());
         decoded_keys = keymap.event(0xc000, 0x11, ctrl_alt_delete); // up
     }
 
     // buffer saturated
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(20, keymap.nb_char_available());
+    RED_CHECK_EQUAL(20, keymap.nb_char_available());
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // up
 
     // Reading back buffer
     for(size_t i = 0; i < 10 ; i++){
-        BOOST_CHECK_EQUAL('a', keymap.get_char());
-        BOOST_CHECK_EQUAL(19 - i, keymap.nb_char_available());
+        RED_CHECK_EQUAL('a', keymap.get_char());
+        RED_CHECK_EQUAL(19 - i, keymap.nb_char_available());
     }
 
     // Reading back buffer
     for(size_t i = 10; i < 20 ; i++){
-        BOOST_CHECK_EQUAL('z', keymap.get_char());
-        BOOST_CHECK_EQUAL(19 - i, keymap.nb_char_available());
+        RED_CHECK_EQUAL('z', keymap.get_char());
+        RED_CHECK_EQUAL(19 - i, keymap.nb_char_available());
     }
 
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
 
     // down arrow
     decoded_keys = keymap.event(0x0100, 0x50, ctrl_alt_delete);
-    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    RED_CHECK_EQUAL(0, keymap.nb_char_available());
     decoded_keys = keymap.event(0xc100, 0x50, ctrl_alt_delete);
 
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
 }
 
 
-BOOST_AUTO_TEST_CASE(TestKeyPad)
+RED_AUTO_TEST_CASE(TestKeyPad)
 {
     Keymap2 keymap;
     const int layout = 0x040C;
     keymap.init_layout(layout);
     // all lock keys are supposed to be inactive at this, point
-    BOOST_CHECK_EQUAL(0, keymap.key_flags);
+    RED_CHECK_EQUAL(0, keymap.key_flags);
 
     Keymap2::DecodedKeys decoded_keys;
     bool    ctrl_alt_delete;
 
     decoded_keys = keymap.event(0x0000, 0x45, ctrl_alt_delete); // activate numlock
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(2, keymap.key_flags);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(2, keymap.key_flags);
     decoded_keys = keymap.event(0x0000, 0x45, ctrl_alt_delete); // desactivate numlock
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
-    BOOST_CHECK_EQUAL(0, keymap.key_flags);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, keymap.key_flags);
 
     decoded_keys = keymap.event(0x0000, 0x45, ctrl_alt_delete); // activate numlock
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
     decoded_keys = keymap.event(0, 0x47, ctrl_alt_delete); // keypad '7' character
-    BOOST_CHECK_EQUAL(1, decoded_keys.count);
-    BOOST_CHECK_EQUAL('7', decoded_keys.uchars[0]);
-    BOOST_CHECK_EQUAL('7', keymap.get_char());
+    RED_CHECK_EQUAL(1, decoded_keys.count);
+    RED_CHECK_EQUAL('7', decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL('7', keymap.get_char());
 
     decoded_keys = keymap.event(0x0000, 0x45, ctrl_alt_delete); // desactivate numlock
-    BOOST_CHECK_EQUAL(0, decoded_keys.count);
+    RED_CHECK_EQUAL(0, decoded_keys.count);
     decoded_keys = keymap.event(0, 0x47, ctrl_alt_delete); // keypad home character
-    BOOST_CHECK_EQUAL(1, decoded_keys.count);
-    BOOST_CHECK_EQUAL(0x2196, decoded_keys.uchars[0]);
-    BOOST_CHECK_EQUAL(0, keymap.get_char());
+    RED_CHECK_EQUAL(1, decoded_keys.count);
+    RED_CHECK_EQUAL(0x2196, decoded_keys.uchars[0]);
+    RED_CHECK_EQUAL(0, keymap.get_char());
 }

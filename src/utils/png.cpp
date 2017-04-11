@@ -21,7 +21,6 @@
 #include "utils/png.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
-#include "transport/file_transport.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -177,14 +176,6 @@ void transport_dump_png24(
     detail::transport_dump_png24(trans, data, width, height, rowsize, bgr);
 }
 
-void file_transport_dump_png24(
-    FileTransport & trans, uint8_t const * data,
-    const size_t width, const size_t height, const size_t rowsize,
-    const bool bgr
-) {
-    detail::transport_dump_png24(trans, data, width, height, rowsize, bgr);
-}
-
 void dump_png24(
     std::FILE * fd, uint8_t const * data,
     const size_t width, const size_t height, const size_t rowsize,
@@ -229,7 +220,7 @@ void transport_read_png24(
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         // TODO catch exception ?
-        static_cast<Transport*>(png_ptr->io_ptr)->recv_new(data, length);
+        static_cast<Transport*>(png_ptr->io_ptr)->recv_atomic(data, length);
     };
 
     detail::PngReadStruct png;
@@ -267,7 +258,7 @@ void set_rows_from_image_chunk(
         , trans(trans)
         , in_stream(this->buf, this->chunk_size - 8)
         {
-            this->trans.recv_new(this->buf, this->in_stream.get_capacity());
+            this->trans.recv_atomic(this->buf, this->in_stream.get_capacity());
         }
     };
 
@@ -290,12 +281,12 @@ void set_rows_from_image_chunk(
                 const size_t header_sz = 8;
                 char header_buf[header_sz];
                 InStream header(header_buf);
-                chunk_trans.trans.recv_new(header_buf, header_sz);
+                chunk_trans.trans.recv_atomic(header_buf, header_sz);
                 chunk_trans.chunk_type = header.in_uint16_le();
                 chunk_trans.chunk_size = header.in_uint32_le();
                 chunk_trans.chunk_count = header.in_uint16_le();
                 chunk_trans.in_stream = InStream(chunk_trans.buf, chunk_trans.chunk_size - 8);
-                chunk_trans.trans.recv_new(chunk_trans.buf, chunk_trans.chunk_size - 8);
+                chunk_trans.trans.recv_atomic(chunk_trans.buf, chunk_trans.chunk_size - 8);
             }
             break;
             case WrmChunkType::LAST_IMAGE_CHUNK:

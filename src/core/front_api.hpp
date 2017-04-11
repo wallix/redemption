@@ -53,7 +53,8 @@ public:
     enum class ResizeResult {
         no_need = 0,
         done    = 1,
-        fail    = -1
+        fail    = -1,
+        instant_done = 2
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
 
@@ -76,10 +77,6 @@ protected:
 public:
     virtual wait_obj& get_event() { return this->event; }
 
-    // TODO RZ : Move these methods in OrderCaps class, give more generic access to front order caps?
-    virtual uint8_t get_order_cap(int idx) const { (void)idx; return 0xFF; }
-    virtual uint16_t get_order_caps_ex_flags() const { return 0xFFFF; }
-
     ////////////////////////////////
     // Used by transparent proxy.
 
@@ -87,7 +84,6 @@ public:
     virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
     { (void)channelId; (void)data; (void)size; }
     virtual void send_fastpath_data(InStream &) {}
-    virtual bool retrieve_client_capability_set(Capability &) { return true; }
 
     virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
@@ -104,8 +100,6 @@ public:
     // RemoteApp.
     virtual void send_savesessioninfo() {}
 
-    virtual void recv_disconnect_provider_ultimatum() {}
-
     virtual void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) {
         (void)auto_reconnect;
     }
@@ -113,4 +107,3 @@ public:
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
 };
-

@@ -142,7 +142,7 @@ struct TSRequest final {
         return length;
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         int length;
         int ts_request_length;
         int nego_tokens_length;
@@ -321,7 +321,7 @@ struct TSPasswordCreds {
     // }
 
 
-    int ber_sizeof() {
+    int ber_sizeof() const {
         int length = 0;
         // TO COMPLETE
         length += BER::sizeof_sequence_octet_string(domainName_length);
@@ -330,7 +330,7 @@ struct TSPasswordCreds {
         return length;
     }
 
-    int emit(OutStream & stream) {
+    int emit(OutStream & stream) const {
         int size = 0;
         int innerSize = this->ber_sizeof();
 
@@ -451,7 +451,7 @@ struct TSCspDataDetail {
 
     }
 
-    int ber_sizeof() {
+    int ber_sizeof() const {
         int length = 0;
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->keySpec));
         length += BER::sizeof_integer(this->keySpec);
@@ -466,7 +466,7 @@ struct TSCspDataDetail {
         return length;
     }
 
-    int emit(OutStream & stream) {
+    int emit(OutStream & stream) const {
         int length = 0;
         int size = 0;
         int innerSize = this->ber_sizeof();
@@ -649,7 +649,7 @@ struct TSSmartCardCreds {
                            cspName, cspName_length);
     }
 
-    int ber_sizeof() {
+    int ber_sizeof() const {
         int length = 0;
         length += CredSSP::sizeof_octet_string_seq(this->pin_length);
         length += BER::sizeof_contextual_tag(BER::sizeof_sequence(this->cspData.ber_sizeof()));
@@ -661,7 +661,7 @@ struct TSSmartCardCreds {
         return length;
     }
 
-    int emit(OutStream & stream) {
+    int emit(OutStream & stream) const {
         int size = 0;
         int length;
         int innerSize = this->ber_sizeof();
@@ -820,7 +820,7 @@ struct TSCredentials {
         this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
     }
 
-    int ber_sizeof() {
+    int ber_sizeof() const {
         int size = 0;
         size += BER::sizeof_integer(this->credType);
         size += BER::sizeof_contextual_tag(BER::sizeof_integer(this->credType));
@@ -832,7 +832,7 @@ struct TSCredentials {
         return size;
     }
 
-    int emit(OutStream & ts_credentials) {
+    int emit(OutStream & ts_credentials) const {
         // ts_credentials is the authInfo Stream field of TSRequest before it is sent
         // ts_credentials will not be encrypted and should be encrypted after calling emit
         int size = 0;

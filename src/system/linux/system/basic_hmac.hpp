@@ -77,6 +77,9 @@ public:
 
     void init(const uint8_t * const key, size_t key_size)
     {
+        if (this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }        
         HMAC_CTX_init(&this->hmac);
         int res = HMAC_Init_ex(&this->hmac, key, key_size, evp(), nullptr);
         if (res == 0) {
@@ -94,6 +97,9 @@ public:
 
     void update(const uint8_t * const data, size_t data_size)
     {
+        if (!this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }        
         int res = HMAC_Update(&this->hmac, data, data_size);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
@@ -102,11 +108,16 @@ public:
 
     void final(uint8_t (&out_data)[DigestLength])
     {
+        if (!this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }        
         unsigned int len = 0;
         int res = HMAC_Final(&this->hmac, out_data, &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
+        HMAC_CTX_cleanup(&this->hmac);
+        this->initialized = false;
     }
 };
 

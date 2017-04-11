@@ -31,6 +31,7 @@
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/cryptofile.hpp"
+#include "transport/out_crypto_transport.hpp"
 
 #include "gdi/capture_api.hpp"
 #include "capture/wrm_params.hpp"
@@ -82,7 +83,7 @@ public:
         this->filename_gen[0] = 0;
     }
 
-    const char * get(int count) const
+    const char * get(unsigned count) const
     {
         std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
                 , this->filename, count, this->extension);
@@ -90,8 +91,8 @@ public:
     }
 };
 
-///\return 0 if success, otherwise a negatif number
-static inline ssize_t raw_write(int fd, const void * data, size_t len)
+// return 0 if success, otherwise a negatif number
+inline void raw_write(int fd, const void * data, size_t len)
 {
     size_t remaining_len = len;
     size_t total_sent = 0;
@@ -102,63 +103,12 @@ static inline ssize_t raw_write(int fd, const void * data, size_t len)
             if (errno == EINTR){
                 continue;
             }
-            return -1;
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         remaining_len -= ret;
         total_sent += ret;
     }
-    return 0;
 }
-
-
-class iofdbuf
-{
-public:
-    int iofdbuf_fd;
-
-    explicit iofdbuf() noexcept
-    : iofdbuf_fd(-1)
-    {}
-
-    iofdbuf(iofdbuf const &) = delete ;
-    iofdbuf&operator=(iofdbuf const &) = delete ;
-
-    ~iofdbuf()
-    {
-        if (-1 != this->iofdbuf_fd) {
-            ::close(this->iofdbuf_fd);
-        }
-    }
-
-    int open(int fd)
-    {
-        if (-1 != this->iofdbuf_fd) {
-            ::close(this->iofdbuf_fd);
-        }
-        this->iofdbuf_fd = fd;
-        return fd;
-    }
-
-    int close()
-    {
-        if (-1 != this->iofdbuf_fd) {
-            const int ret = ::close(this->iofdbuf_fd);
-            this->iofdbuf_fd = -1;
-            return ret;
-        }
-        return 0;
-    }
-
-    bool is_open() const noexcept
-    {
-        return -1 != this->iofdbuf_fd;
-    }
-
-    ssize_t write(const void * data, size_t len) const
-    {
-        return raw_write(this->iofdbuf_fd, data, len);
-    }
-};
 
 struct MetaFilename
 {
@@ -173,45 +123,6 @@ struct MetaFilename
 };
 
 
-
-static inline ssize_t hash_buf_write(int hash_buf_file_fd, ocrypto & hash_buf_encrypt, const uint8_t * data, size_t len)
-{
-    const ocrypto::Result res = hash_buf_encrypt.write(data, len);
-//     if (res.buf.size() < 0) {
-//         return -1;
-//     }
-    if (raw_write(hash_buf_file_fd, res.buf.data(), res.buf.size()))
-    {
-        return -1;
-    }
-    return 0;
-}
-
-static inline int hash_buf_open(int & hash_buf_file_fd, ocrypto & hash_buf_encrypt, const char * filename, mode_t mode = 0600)
-{
-    if (-1 != hash_buf_file_fd) {
-        ::close(hash_buf_file_fd);
-        hash_buf_file_fd = -1;
-    }
-
-    hash_buf_file_fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-    int err = hash_buf_file_fd;
-
-    if (err < 0) {
-        return err;
-    }
-
-    size_t base_len = 0;
-    const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-    const ocrypto::Result ores = hash_buf_encrypt.open(base, base_len);
-    if (ores.err_code) {
-        return ores.err_code;
-    }
-    return raw_write(hash_buf_file_fd, ores.buf.data(), ores.buf.size());
-}
-
-
 struct MetaSeqBuf {
     CryptoContext & cctx;
     Random & rnd;
@@ -219,11 +130,8 @@ struct MetaSeqBuf {
 
     char current_filename_[1024];
     WrmFGen filegen_;
-    iofdbuf buf_;
     unsigned num_file_;
     int groupid_;
-
-    int meta_buf_fd;
 
     MetaFilename mf_;
     MetaFilename hf_;
@@ -232,44 +140,19 @@ struct MetaSeqBuf {
 
     bool with_checksum;
     bool with_encryption;
-    ocrypto meta_buf_encrypt;
-    ocrypto wrm_filter_encrypt;
+    OutCryptoTransport meta_buf_encrypt_transport;
+    OutCryptoTransport wrm_filter_encrypt_transport;
 
-
-//// Only for Checksum Management
-//    static constexpr size_t nosize = ~size_t{};
-//    static constexpr size_t quick_size = 4096;
-
-    ssize_t meta_buf_write(const uint8_t * data, size_t len)
-    {
-        const ocrypto::Result res = this->meta_buf_encrypt.write(data, len);
-        if (raw_write(this->meta_buf_fd, res.buf.data(), res.buf.size()))
-        {
-            return -1;
-        }
-        return res.buf.size();
-    }
-
-
-    int next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+    void next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         const char * filename = this->filegen_.get(this->num_file_);
-        LOG(LOG_INFO, "MetaSeqBufCrypto::next_meta_file:\"%s\" -> \"%s\".",
-            this->current_filename_, filename);
-        if (::rename(this->current_filename_, filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
-               , this->current_filename_, filename, errno, strerror(errno));
-            return -1;
-        }
         this->current_filename_[0] = 0;
 
         this->num_file_ ++;
 
         struct stat stat;
-        int err = ::stat(filename, &stat);
-        if (err){
-            LOG(LOG_INFO, "stat error for \"%s\"\n", filename);
-            return err;
+        if (fstat.stat(filename, stat)){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
 
         // 8Ko for a filename with expanded slash should be enough
@@ -333,48 +216,9 @@ struct MetaSeqBuf {
         }
         *p++ = '\n';
 
-        ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t *>(mes), p-mes);
-
-        if (res < 0) {
-            LOG(LOG_INFO, "meta buf write error for \"%s\"", filename);
-            return res < 0 ? res : 1;
-        }
-
+        this->meta_buf_encrypt_transport.send(mes, p-mes);
         this->start_sec_ = this->stop_sec_+1;
-        return 0;
     }
-
-
-    int meta_buf_close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {
-        const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
-        if (result.err_code) {
-            return -1;
-        }
-        if (raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size()))
-        {
-            return -1;
-        }
-
-        int res2 = 0;
-        if (-1 != this->meta_buf_fd) {
-            res2 = ::close(this->meta_buf_fd);
-            this->meta_buf_fd = -1;
-        }
-        return res2 < 0 ? res2 : 0;
-    }
-
-    int meta_buf_close()
-    {
-        unsigned char qhash[MD_HASH::DIGEST_LENGTH];
-        unsigned char fhash[MD_HASH::DIGEST_LENGTH];
-        return this->meta_buf_close(qhash, fhash);
-    }
-
-    bool meta_buf_is_open() const noexcept
-    { return -1 != this->meta_buf_fd; }
-
-
 
 public:
     explicit MetaSeqBuf(
@@ -395,200 +239,73 @@ public:
     , fstat(fstat)
     , current_filename_{}
     , filegen_(prefix, filename, extension)
-    , buf_()
     , num_file_(0)
     , groupid_(groupid)
-    , meta_buf_fd(-1)
     , mf_(prefix, filename)
     , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
     , with_encryption(with_encryption)
-    , meta_buf_encrypt(with_encryption, with_checksum, cctx, rnd)
-    , wrm_filter_encrypt(with_encryption, with_checksum, cctx, rnd)
+    , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
+    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
     {
+//        LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
+
     }
 
 
     ssize_t open(uint16_t width, uint16_t height)
     {
-        this->current_filename_[0] = 0;
-        // TODO: ouverture du fichier meta : est-ce qu'on ne devrait pas le laisser fermer
-        // et l'ouvrir et le refermer à chaque fois qu'on y ajoute une ligne ? (en O_APPEND)
-        // ça semble plus solide.
-        this->meta_buf_fd = ::open(this->mf_.filename, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IWUSR);
-        if (this->meta_buf_fd < 0) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-
-        size_t derivator_len = 0;
-        const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(this->mf_.filename, derivator_len));
-
-        const ocrypto::Result ores = this->meta_buf_encrypt.open(derivator, derivator_len);
-        if (ores.err_code) {
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, ores.err_code);
-        }
-        if (raw_write(this->meta_buf_fd, ores.buf.data(), ores.buf.size()) < 0){
-            LOG(LOG_ERR, "Failed to open meta file %s", this->mf_.filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-
+        this->meta_buf_encrypt_transport.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR);
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
         unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
-        const ssize_t res = this->meta_buf_write(reinterpret_cast<uint8_t*>(header1), len);
-        return res;
+        this->meta_buf_encrypt_transport.send(header1, len);
+        return 0;
     }
 
 
     ~MetaSeqBuf()
     {
         this->close();
-        // TODO check if temporary file is removed
     }
 
     ssize_t write(const uint8_t * data, size_t len)
     {
-        if (!this->buf_.is_open()) {
+        if (!this->wrm_filter_encrypt_transport.is_open()) {
             const char * filename = this->filegen_.get(this->num_file_);
-            snprintf(this->current_filename_, sizeof(this->current_filename_), "%sred-XXXXXX.tmp", filename);
-            const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
-            LOG(LOG_INFO, "New temporary file %s -> \n", this->current_filename_);
-            if (fd < 0) {
-                LOG(LOG_INFO, "mkostemps error\n");
-                return fd;
-            }
-            if (chmod(this->current_filename_
-                     , this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
-                    , this->current_filename_
-                    , this->groupid_ ? "u+r, g+r" : "u+r"
-                    , strerror(errno), errno);
-            }
-            const int res = this->buf_.open(fd);
-            if (res < 0) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::write() -> open failed for %s\n", this->current_filename_);
-                return res;
-            }
-
-            size_t base_len = 0;
-            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-            const ocrypto::Result ores = this->wrm_filter_encrypt.open(base, base_len);
-            if (ores.err_code) {
-                LOG(LOG_INFO, "MetaSeqBufCrypto::write() encrypt open failed");
-                return ores.err_code;
-            }
-            int err = this->buf_.write(ores.buf.data(), ores.buf.size());
-            if (err < 0){
-                LOG(LOG_INFO, "MetaSeqBufCrypto::write() write failed %s", strerror(errno));
-                return err;
-            }
-
+            this->wrm_filter_encrypt_transport.open(filename, this->groupid_);
         }
-        int res = -1;
-        const ocrypto::Result result = this->wrm_filter_encrypt.write(data, len);
-        res = this->buf_.write(result.buf.data(), result.buf.size());
-
-        return res;
+        this->wrm_filter_encrypt_transport.send(data, len);
+        return 0;
     }
-
-    const char * current_path() const
-    {
-        if (!this->current_filename_[0] && !this->num_file_) {
-            return nullptr;
-        }
-        return this->filegen_.get(this->num_file_ - 1);
-    }
-
 
     int next()
     {
-        if (this->buf_.is_open()) {
+        if (this->wrm_filter_encrypt_transport.is_open()) {
             uint8_t qhash[MD_HASH::DIGEST_LENGTH];
             uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
-            if (result.err_code) {
-                this->buf_.close();
-                LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
-                return -1;
-            }
-            ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
-            if (err < 0){
-                this->buf_.close();
-                LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
-                return -1;
-            }
-            const int res2 = this->buf_.close();
-            if (res2) {
-                LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
-                return res2;
-            }
-            return this->next_meta_file(qhash, fhash);
+            this->wrm_filter_encrypt_transport.close(qhash, fhash);
+            this->next_meta_file(qhash, fhash);
+            return 0;
         }
         return -1;
     }
 
     int close()
     {
-        if (this->buf_.is_open()) {
+        if (this->wrm_filter_encrypt_transport.is_open()) {
             uint8_t qhash[MD_HASH::DIGEST_LENGTH];
             uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            const ocrypto::Result result = this->wrm_filter_encrypt.close(qhash, fhash);
-            if (result.err_code) {
-                this->buf_.close();
-                LOG(LOG_INFO, "MetaSeqBuf::next() : encryption error\n");
-                return -1;
-            }
-            ssize_t err = this->buf_.write(result.buf.data(), result.buf.size());
-            if (err < 0){
-                this->buf_.close();
-                LOG(LOG_INFO, "MetaSeqBuf::next() : write error\n");
-                return -1;
-            }
-            const int res2 = this->buf_.close();
-            if (res2) {
-                LOG(LOG_INFO, "MetaSeqBuf::next() : close error\n");
-                return res2;
-            }
-            if (this->next_meta_file(qhash, fhash)){
-                return -1;
-            }
+            this->wrm_filter_encrypt_transport.close(qhash, fhash);
+            this->next_meta_file(qhash, fhash);
         }
 
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
         uint8_t fhash[MD_HASH::DIGEST_LENGTH];
 
-        if (!this->meta_buf_is_open()) {
-            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile not opened\n");
-            return 1;
-        }
-
-        const ocrypto::Result result = this->meta_buf_encrypt.close(qhash, fhash);
-        if (result.err_code) {
-            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-            return -1;
-        }
-        if (raw_write(this->meta_buf_fd, result.buf.data(), result.buf.size()))
-        {
-            LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-            return -1;
-        }
-
-        if (-1 != this->meta_buf_fd) {
-            if (::close(this->meta_buf_fd)){
-                this->meta_buf_fd = -1;
-                LOG(LOG_INFO, "MetaSeqBufCrypto::close() metafile close failed\n");
-                return -1;
-            }
-            this->meta_buf_fd = -1;
-        }
-
-        int hash_buf_file_fd = -1;
-        ocrypto hash_buf_encrypt(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+        this->meta_buf_encrypt_transport.close(qhash, fhash);
 
         char path[1024] = {};
         char basename[1024] = {};
@@ -601,21 +318,17 @@ public:
             basename, sizeof(basename),
             extension, sizeof(extension)
         );
-
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-        if (hash_buf_open(hash_buf_file_fd, hash_buf_encrypt, this->hf_.filename, S_IRUSR|S_IRGRP) < 0) {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
+//        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
 
+        OutCryptoTransport hash_buf_encrypt_transport(this->with_encryption, false, this->cctx, this->rnd);
+        hash_buf_encrypt_transport.open(this->hf_.filename, S_IRUSR|S_IRGRP);
         char header[] = "v2\n\n\n";
-        hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
+        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
 
         struct stat stat;
-        int err = ::stat(this->mf_.filename, &stat);
+        int err = fstat.stat(this->mf_.filename, stat);
         if (err) {
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                 this->hf_.filename, err);
@@ -675,31 +388,9 @@ public:
         }
         *p++ = '\n';
 
-        ssize_t res = hash_buf_write(hash_buf_file_fd, hash_buf_encrypt, reinterpret_cast<uint8_t*>(mes), p-mes);
-
-        if (res < 0) {
-            err = res < 0 ? res : 1;
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [res0 %d]\n", this->hf_.filename, int(res));
-            return 1;
-        }
-
-        const ocrypto::Result result2 = hash_buf_encrypt.close(qhash, fhash);
-        const int res2 = raw_write(hash_buf_file_fd, result2.buf.data(), result2.buf.size());
-        const int res3 = ::close(hash_buf_file_fd);
-        hash_buf_file_fd = -1;
-        if (result2.err_code) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [%d]\n",
-                    this->hf_.filename, result2.err_code);
-            return 1;
-        }
-        if (res2) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [res2 = %d]\n", this->hf_.filename, int(res2));
-            return 1;
-        }
-        if (res3) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [res3 = %d]\n", this->hf_.filename, int(res3));
-            return 1;
-        }
+        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(mes), p-mes);
+        // qhash and fhash for hash_buf_encrypt_transport won't be used
+        hash_buf_encrypt_transport.close(qhash, fhash);
         return 0;
     }
 
@@ -752,6 +443,10 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         }
     }
 
+    ~wrmcapture_OutMetaSequenceTransport()
+    {
+    }
+
     void timestamp(timeval now) override {
         this->buf.update_sec(now.tv_sec);
     }
@@ -784,21 +479,20 @@ private:
             this->status = false;
             if (errno == ENOSPC) {
                 char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.current_path());
+                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1u));
                 this->authentifier->report("FILESYSTEM_FULL", message);
                 errno = ENOSPC;
+                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception NO_ROOM");
                 throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
             }
             else {
+                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception WRITE_FAILED");
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
         this->last_quantum_sent += res;
     }
 };
-
-
-
 
 
 // TODO temporary
@@ -1858,6 +1552,9 @@ public:
     , kbd_input_mask_enabled{false}
     {}
 
+    ~WrmCaptureImpl()
+    {
+    }
     // shadow text
     bool kbd_input(const timeval& now, uint32_t uchar) override {
         return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled?'*':uchar);

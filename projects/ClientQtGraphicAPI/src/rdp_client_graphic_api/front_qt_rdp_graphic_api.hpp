@@ -114,11 +114,14 @@ public:
     TimeSystem           timeSystem;
     DummyAuthentifier    authentifier;
     bool                 is_spanning;
+    Fstat fstat;
 
 
     const std::string    MAIN_DIR;
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
+
+    std::string _movie_name;
 
 
     Front_Qt_API( RDPVerbose verbose)
@@ -165,7 +168,7 @@ public:
     virtual void dropScreen() = 0;
 
     virtual void replay(std::string const & movie_path) = 0;
-    virtual void load_replay_mod(std::string const & movie_name) = 0;
+    virtual void load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
 
@@ -174,8 +177,8 @@ public:
 
 
     virtual void options() {
-        LOG(LOG_WARNING, "No options window implemented yet.");
-    };
+        LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
+    }
 
     virtual mod_api * init_mod() = 0;
 
@@ -613,7 +616,12 @@ private Q_SLOTS:
                                                 this->_front->REPLAY_DIR.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
-        this->_front->replay(str_movie_path);
+        auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
+        std::string const movie_path = (last_delimiter_it == str_movie_path.rend())
+        ? str_movie_path
+        : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
+        this->_front->_movie_name = movie_path;
+        this->_front->replay(movie_path);
     }
 
     void connexionReleased() {
@@ -710,13 +718,30 @@ public:
     std::string    _movie_name;
 
     enum : int {
-        BUTTON_HEIGHT = 20
+        BUTTON_HEIGHT = 20,
+        READING_PANEL = 20,
+        READING_BAR_H = 12
     };
 
     uchar cursor_data[Pointer::DATA_SIZE*4];
     int cursorHotx;
     int cursorHoty;
     bool mouse_out;
+
+    timeval movie_time_start;
+    timeval movie_time_pause;
+    bool is_paused;
+    time_t movie_time;
+
+    QLabel movie_status;
+    QLabel movie_timer_label;
+
+    int begin;
+    QPixmap readding_bar;
+    time_t current_time_movie;
+
+
+
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
@@ -777,7 +802,7 @@ public:
         , _trans_cache_painter(this->_trans_cache)
         , _width(this->_front->info.width)
         , _height(this->_front->info.height)
-        , _match_pixmap(this->_width, this->_height)
+        , _match_pixmap(this->_width+2, this->_height+2)
         , _connexionLasted(false)
         , _timer_replay(this)
         , _screen_index(0)
@@ -786,6 +811,13 @@ public:
         , cursorHotx(0)
         , cursorHoty(0)
         , mouse_out(false)
+        , is_paused(false)
+        , movie_time(this->_front->replay_mod.get()->get_movie_time_length())
+        , movie_status( QString("  Stop"), this)
+        , movie_timer_label(QString("  0/")+QString(std::to_string(movie_time).c_str()), this)
+        , begin(0)
+        , readding_bar(this->_width - 150, READING_BAR_H)
+        , current_time_movie(0)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -795,36 +827,49 @@ public:
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
         } else {
-            this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT);
+            this->setFixedSize(this->_width+2, this->_height + BUTTON_HEIGHT+READING_PANEL);
         }
 
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+READING_PANEL+1),QSize(this->_width/3, BUTTON_HEIGHT));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)     , SIGNAL (pressed()),  this, SLOT (playPressed()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+READING_PANEL+1),QSize(this->_width/3, BUTTON_HEIGHT));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRefresh), SIGNAL (pressed()), this, SLOT (stopRelease()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), BUTTON_HEIGHT));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+READING_PANEL+1),QSize(this->_width-((this->_width/3)*2), BUTTON_HEIGHT));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
+        QRect rectMovieStatus(QPoint(0, this->_height+1),QSize(40, BUTTON_HEIGHT));
+        this->movie_status.setGeometry(rectMovieStatus);
+        this->movie_status.setFocusPolicy(Qt::NoFocus);
+
+        QRect rectMovieTimer(QPoint(this->_width-100, this->_height+1),QSize(100, BUTTON_HEIGHT));
+        this->movie_timer_label.setGeometry(rectMovieTimer);
+        this->movie_timer_label.setFocusPolicy(Qt::NoFocus);
+
+
+
+        this->barRepaint(this->_width-148, QColor(Qt::black));
+        //this->barRepaint(500, QColor(Qt::green));
+
         uint32_t centerW = 0;
         uint32_t centerH = 0;
         if (!this->_front->is_spanning) {
             QDesktopWidget* desktop = QApplication::desktop();
             centerW = (desktop->width()/2)  - (this->_width/2);
-            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT)/2);
+            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT+READING_PANEL)/2);
         }
         this->move(centerW, centerH);
 
@@ -832,6 +877,8 @@ public:
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
+
+
 
     Screen_Qt (Front_Qt_API * front, QPixmap * cache, QPixmap * trans_cache)
         : QWidget()
@@ -949,7 +996,22 @@ public:
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
         painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(0, 0, this->_width, this->_height));
+        painter.drawPixmap(QPoint(44, this->_height+4), this->readding_bar, QRect(0, 0, this->_width - 148, READING_BAR_H));
         painter.end();
+    }
+
+    void barRepaint(int len, QColor color) {
+        int bar_len = this->_width - 148;
+
+        double read_len_tmp = (len * bar_len) / this->movie_time;
+        int read_len = int(read_len_tmp);
+        if (read_len > bar_len) {
+            read_len = bar_len;
+        }
+        QPainter painter(&(this->readding_bar));
+        painter.fillRect(0, 0, read_len, READING_BAR_H, color);
+
+        this->repaint();
     }
 
     QPixmap * getCache() {
@@ -960,10 +1022,67 @@ public:
         this->_penColor = color;
     }
 
+    bool event(QEvent *event) {
+
+        if (this->_front->is_replaying) {
+            QHelpEvent *helpEvent = static_cast<QHelpEvent*>( event );
+            QRect bar_zone(44, this->_height+4, this->_width - 148, READING_BAR_H);
+            int x = helpEvent->pos().x();
+            int y = helpEvent->pos().y();
+            if (x > 44 && x < this->_width - 148  && y >  this->_height+2 && y < this->_height + 14) {
+                int bar_len = this->_width - 148;
+                int bar_pos = x - 44;
+                double read_len_tmp = (bar_pos * this->movie_time) / bar_len;
+                std::string str(std::to_string(int(read_len_tmp))+std::string(" seconds"));
+                this->setToolTip(str.c_str());
+            } else {
+                QToolTip::hideText();
+            }
+        }
+
+        return QWidget::event( event );
+    }
+
 
 private:
     void mousePressEvent(QMouseEvent *e) {
-        this->_front->mousePressEvent(e, 0);
+        int x = e->x();
+        int y = e->y();
+        if (this->_front->is_replaying) {
+            if (x > 44 && x < this->_width - 104  && y > this->_height+2 && y < this->_height + 14) {
+
+                this->_timer_replay.stop();
+
+                int bar_len = this->_width - 148;
+                int bar_click = x - 44;
+                double read_len_tmp = (bar_click * this->movie_time) / bar_len;
+                this->begin = int(read_len_tmp);
+
+                this->movie_time_pause = {0, 0};
+                this->current_time_movie = this->begin;
+                this->_running = true;
+                this->is_paused = false;
+
+                this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
+                this->barRepaint(this->_width-148, QColor(Qt::black));
+                this->barRepaint(this->current_time_movie, QColor(Qt::green));
+                this->movie_timer_label.setText(QString( std::to_string(this->begin).c_str()) +QString("/")+QString(std::to_string(movie_time).c_str()));
+
+                this->_buttonCtrlAltDel.setText("Pause");
+                this->movie_status.setText("  Play ");
+
+                this->slotRepaint();
+
+                //time_t started_rec(this->_front->replay_mod.get()->get_reader()->record_now.tv_sec);
+                this->_front->load_replay_mod(this->_movie_name, {this->begin, 0}, {0, 0});
+
+                this->movie_time_start = tvtime();
+
+                this->_timer_replay.start(1);
+            }
+        } else {
+            this->_front->mousePressEvent(e, 0);
+        }
     }
 
     void mouseReleaseEvent(QMouseEvent *e) {
@@ -997,27 +1116,65 @@ private:
 public Q_SLOTS:
     void playPressed() {
         if (this->_running) {
+            this->movie_time_pause = tvtime();
             this->_running = false;
+            this->is_paused = true;
             this->_buttonCtrlAltDel.setText("Play");
+            this->movie_status.setText("  Pause");
             this->_timer_replay.stop();
         } else {
+            this->begin = 0;
             this->_running = true;
+            if (this->is_paused) {
+                timeval pause_duration = tvtime();
+                pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
+                this->movie_time_start = {pause_duration.tv_sec + this->movie_time_start.tv_sec, pause_duration.tv_usec + this->movie_time_start.tv_usec};
+                this->_front->replay_mod.get()->set_pause(pause_duration);
+
+                this->is_paused = false;
+            } else {
+                this->barRepaint(this->_width-148, QColor(Qt::black));
+                this->movie_time_start = tvtime();
+            }
             this->_buttonCtrlAltDel.setText("Pause");
+            this->movie_status.setText("  Play ");
+
             this->_timer_replay.start(1);
         }
     }
 
     void playReplay() {
-        if (this->_front->replay_mod->play_qt()) {
+        struct timeval now = tvtime();
+        time_t movie_time_tmp = this->current_time_movie;
+        this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
+        if (this->current_time_movie > movie_time_tmp) {
+            this->barRepaint(this->current_time_movie, QColor(Qt::green));
+        }
+        this->movie_timer_label.setText(QString("  ") + QString(std::to_string(this->current_time_movie).c_str()) + QString("/") + QString(std::to_string(movie_time).c_str()));
+
+        if (!this->_front->replay_mod->get_break_privplay_client()) {
+            if (this->_front->replay_mod->play_client()) {
+                this->slotRepaint();
+            }
+        } else {
             this->slotRepaint();
         }
 
-        if (this->_front->replay_mod->get_break_privplay_qt()) {
+        if (this->current_time_movie >= this->movie_time) {
+            struct timeval now = tvtime();
+
+            this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
+
             this->_timer_replay.stop();
-            this->slotRepaint();
+            this->movie_timer_label.setText(QString("  ") + QString(std::to_string(this->current_time_movie).c_str()) + QString("/") + QString(std::to_string(movie_time).c_str()));
+            this->movie_time_start = {0, 0};
+            this->movie_time_pause = {0, 0};
+            this->current_time_movie = 0;
             this->_buttonCtrlAltDel.setText("Replay");
+            this->movie_status.setText("  Stop ");
             this->_running = false;
-            this->_front->load_replay_mod(this->_movie_name);
+            this->is_paused = false;
+            this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
         }
     }
 
@@ -1027,7 +1184,6 @@ public Q_SLOTS:
     }
 
     void slotRepaint() {
-
         QPainter match_painter(&(this->_match_pixmap));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
@@ -1048,9 +1204,17 @@ public Q_SLOTS:
 
     void stopRelease() {
         this->_buttonCtrlAltDel.setText("Replay");
+        this->movie_status.setText("  Stop ");
+        this->barRepaint(this->_width-148, QColor(Qt::black));
+        this->movie_time_start = {0, 0};
+        this->movie_time_pause = {0, 0};
+        this->current_time_movie = 0;
         this->_timer_replay.stop();
+        this->movie_timer_label.setText(QString( std::to_string(0).c_str()) +QString("/")+QString(std::to_string(movie_time).c_str()));
         this->_running = false;
-        this->_front->load_replay_mod(this->_movie_name);
+        this->is_paused = false;
+
+        this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
         this->slotRepaint();
     }
@@ -1063,7 +1227,6 @@ public Q_SLOTS:
         this->_front->setMainScreenOnTopRelease();
     }
 };
-
 
 
 
@@ -1171,18 +1334,29 @@ public:
         this->disconnect("");
     }
 
+    virtual void begin_update() override {
 
-    virtual void begin_update() override {}
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+           LOG(LOG_INFO, "--------- FRONT ------------------------");
+           LOG(LOG_INFO, "begin_update");
+           LOG(LOG_INFO, "========================================\n");
+        }
+        if (this->is_recording && !this->is_replaying) {
+            this->graph_capture->begin_update();
+            struct timeval time;
+            gettimeofday(&time, nullptr);
+            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+    }
 
     virtual void end_update() override {
-        //LOG(LOG_WARNING("update_view");
         this->screen->update_view();
 
-        //if (bool(this->verbose & RDPVerbose::graphics)) {
-        //    LOG(LOG_INFO, "--------- FRONT ------------------------");
-        //    LOG(LOG_INFO, "end_update");
-        //    LOG(LOG_INFO, "========================================\n");
-        //}
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+           LOG(LOG_INFO, "--------- FRONT ------------------------");
+           LOG(LOG_INFO, "end_update");
+           LOG(LOG_INFO, "========================================\n");
+        }
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->end_update();
             struct timeval time;
@@ -1208,6 +1382,12 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        if (width == 0 || height == 0) {
+            return ResizeResult::fail;
+        }
+
+        bool remake_screen = (this->info.width != width || this->info.height != height);
+
         this->mod_bpp = bpp;
         this->info.bpp = bpp;
         this->info.width = width;
@@ -1217,17 +1397,23 @@ public:
             this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
         }
 
-        if (this->screen) {
-            this->screen->disconnection();
-            this->dropScreen();
-            this->cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache->fill(Qt::transparent);
-            this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
-            this->screen->show();
+        if (remake_screen) {
+            if (this->screen) {
+                this->screen->disconnection();
+                this->dropScreen();
+                this->cache = new QPixmap(this->info.width, this->info.height);
+                this->trans_cache = new QPixmap(this->info.width, this->info.height);
+                this->trans_cache->fill(Qt::transparent);
+                if (this->is_replaying) {
+                    this->screen = new Screen_Qt(this, this->cache, this->_movie_name, this->trans_cache);
+                } else {
+                    this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                }
+                this->screen->show();
+            }
         }
 
-        return ResizeResult::no_need;
+        return ResizeResult::instant_done;
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
@@ -1277,7 +1463,7 @@ public:
         }
     }
 
-    void load_replay_mod(std::string const & movie_name) override {
+    void load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) override {
         try {
             this->replay_mod.reset(new ReplayMod( *this
                                                 , (this->REPLAY_DIR + "/").c_str()
@@ -1287,10 +1473,12 @@ public:
                                                 , this->_error
                                                 , this->_font
                                                 , true
-                                                , to_verbose_flags(0)
+                                                , begin_read
+                                                , end_read
+                                                , to_verbose_flags(0) //FileToGraphic::Verbose::play
                                                 ));
 
-            this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
+            this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
         } catch (const Error &) {
             LOG(LOG_WARNING, "new ReplayMod error %s", this->_error.c_str());
         }
@@ -2267,6 +2455,8 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        this->screen->update_view();
+
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(order);
             struct timeval time;
@@ -2402,11 +2592,21 @@ public:
         this->mod->rdp_input_invalidate(rect);
     }
 
-    virtual void CtrlAltDelPressed() override {
-        LOG(LOG_WARNING, "CtrlAltDel not implemented yet.");
+    void CtrlAltDelPressed() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    virtual void CtrlAltDelReleased() override {}
+    void CtrlAltDelReleased() {
+        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
+
+        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
+        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
+    }
 
     void disconnexionReleased() override{
         this->is_replaying = false;
@@ -2476,23 +2676,20 @@ public:
         if (movie_path_.empty()) {
             return;
         }
-        auto const last_delimiter_it = std::find(movie_path_.rbegin(), movie_path_.rend(), '/');
-        std::string const movie_path = (last_delimiter_it == movie_path_.rend())
-        ? movie_path_
-        : movie_path_.substr(movie_path_.size() - (last_delimiter_it - movie_path_.rbegin()));
 
         this->is_replaying = true;
         //this->setScreenDimension();
+        this->load_replay_mod(movie_path_, {0, 0}, {0, 0});
+        this->info.width = this->replay_mod->get_dim().w;
+        this->info.height = this->replay_mod->get_dim().h;
+//         LOG(LOG_WARNING, "w = %u,  h = %u", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
         this->cache_replay = new QPixmap(this->info.width, this->info.height);
         this->trans_cache = new QPixmap(this->info.width, this->info.height);
         this->trans_cache->fill(Qt::transparent);
-        this->screen = new Screen_Qt(this, this->cache_replay, movie_path, this->trans_cache);
-
+        this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
         this->connected = true;
         this->form->hide();
         this->screen->show();
-
-        this->load_replay_mod(movie_path);
     }
 
     virtual bool connect() {
@@ -2504,8 +2701,6 @@ public:
 
             this->is_replaying = false;
             this->connected = true;
-
-
 
             if (this->is_recording && !this->is_replaying) {
                 Inifile ini;
@@ -2520,7 +2715,7 @@ public:
                     ini.set<cfg::video::capture_groupid>(1);
                     ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
                     ini.set<cfg::video::record_path>(this->REPLAY_DIR);
-                    ini.set<cfg::video::hash_path>(this->REPLAY_DIR);
+                    ini.set<cfg::video::hash_path>(this->REPLAY_DIR+std::string("/signatures"));
                     time_t now;
                     time(&now);
                     std::string data(ctime(&now));
@@ -2549,14 +2744,14 @@ public:
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
-                Fstat fstat;
+
 
                 WrmParams wrmParams(
                     this->info.bpp
                     , TraceType::localfile
                     , cctx
                     , gen
-                    , fstat
+                    , this->fstat
                     , record_path.c_str()
                     , ini.get<cfg::video::hash_path>().c_str()
                     , movie_name.c_str()
@@ -2655,7 +2850,7 @@ public:
                 this->mod->draw_event(time(nullptr), *(this));
             } catch (const Error &) {
                 this->dropScreen();
-                const std::string errorMsg("Error: connexion to [" + this->target_IP +  "] is closed.");
+                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 

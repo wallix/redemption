@@ -18,9 +18,7 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlm
+#define RED_TEST_MODULE TestNtlm
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -28,7 +26,7 @@
 #include "check_sig.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
+RED_AUTO_TEST_CASE(TestAcquireCredentials)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -44,29 +42,30 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
-    // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
+    // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
                                             &id, nullptr, nullptr,
                                             &credentials, &expiration);
 
 
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
     CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
-    BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                        creds->identity.User.get_data(),
-                        creds->identity.User.size()));
-    BOOST_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                        creds->identity.Domain.get_data(),
-                        creds->identity.Domain.size()));
-    BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                        creds->identity.Password.get_data(),
-                        creds->identity.Password.size()));
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
+
     status = table.FreeCredentialsHandle(&credentials);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 }
 
-BOOST_AUTO_TEST_CASE(TestInitialize)
+RED_AUTO_TEST_CASE(TestInitialize)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
@@ -82,28 +81,28 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
-    // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
+    // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
 
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
                                             &id, nullptr, nullptr,
                                             &credentials, &expiration);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
     CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
-    BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                        creds->identity.User.get_data(),
-                        creds->identity.User.size()));
-    BOOST_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                        creds->identity.Domain.get_data(),
-                        creds->identity.Domain.size()));
-    BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                        creds->identity.Password.get_data(),
-                        creds->identity.Password.size()));
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
+    RED_CHECK_MEM_C(
+        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
     SecPkgInfo packageInfo;
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
     CtxtHandle client_context;
     SecBuffer input_buffer;
@@ -131,9 +130,9 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                                              &output_buffer_desc, // output buffer desc
                                              &expiration);
 
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
 
-    BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
+    RED_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
     // hexdump_c(output_buffer.Buffer.get_data(), 40);
 
     unsigned long fsContextReq = 0;
@@ -162,8 +161,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                                          SECURITY_NATIVE_DREP, &server_context,
                                          &input_buffer_desc, &expiration);
 
-    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
-    BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
+    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
     // hexdump_c(input_buffer.Buffer.get_data(), 120);
 
     output_buffer_desc.ulVersion = SECBUFFER_VERSION;
@@ -183,8 +182,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                                              &output_buffer_desc, // output buffer desc
                                              &expiration);
 
-    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
-    BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
+    RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    RED_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
     // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
 
@@ -203,8 +202,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
                                          SECURITY_NATIVE_DREP, &server_context,
                                          &input_buffer_desc, &expiration);
 
-    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
-    BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
+    RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
 
     // Check contexts
     NTLMContext * client = reinterpret_cast<NTLMContext*>(client_context.SecureHandleGetLowerPointer());
@@ -214,61 +213,61 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
     // hexdump_c(server->SessionBaseKey, 16);
     // hexdump_c(client->SessionBaseKey, 16);
-    BOOST_CHECK(!memcmp(server->SessionBaseKey,
+    RED_CHECK(!memcmp(server->SessionBaseKey,
                         client->SessionBaseKey,
                         16));
 
     // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
     // hexdump_c(server->ExportedSessionKey, 16);
     // hexdump_c(client->ExportedSessionKey, 16);
-    BOOST_CHECK(!memcmp(server->ExportedSessionKey,
+    RED_CHECK(!memcmp(server->ExportedSessionKey,
                         client->ExportedSessionKey,
                         16));
     // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
     // hexdump_c(server->ClientSigningKey, 16);
     // hexdump_c(client->ClientSigningKey, 16);
-    BOOST_CHECK(!memcmp(server->ClientSigningKey,
+    RED_CHECK(!memcmp(server->ClientSigningKey,
                         client->ClientSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
     // hexdump_c(server->ClientSealingKey, 16);
     // hexdump_c(client->ClientSealingKey, 16);
-    BOOST_CHECK(!memcmp(server->ClientSealingKey,
+    RED_CHECK(!memcmp(server->ClientSealingKey,
                         client->ClientSealingKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
     // hexdump_c(server->ServerSigningKey, 16);
     // hexdump_c(client->ServerSigningKey, 16);
-    BOOST_CHECK(!memcmp(server->ServerSigningKey,
+    RED_CHECK(!memcmp(server->ServerSigningKey,
                         client->ServerSigningKey,
                         16));
 
     // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
     // hexdump_c(server->ServerSealingKey, 16);
     // hexdump_c(client->ServerSealingKey, 16);
-    BOOST_CHECK(!memcmp(server->ServerSealingKey,
+    RED_CHECK(!memcmp(server->ServerSealingKey,
                         client->ServerSealingKey,
                         16));
 
     // LOG(LOG_INFO, "===== Message Integrity Check =====");
     // hexdump_c(client->MessageIntegrityCheck, 16);
     // hexdump_c(server->MessageIntegrityCheck, 16);
-    BOOST_CHECK(!memcmp(client->MessageIntegrityCheck,
+    RED_CHECK(!memcmp(client->MessageIntegrityCheck,
                         server->MessageIntegrityCheck,
                         16));
 
     SecPkgContext_Sizes ContextSizes;
     table.QueryContextAttributes(nullptr, SECPKG_ATTR_SIZES, &ContextSizes);
-    BOOST_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
-    BOOST_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
-    BOOST_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
-    BOOST_CHECK_EQUAL(ContextSizes.cbSecurityTrailer, 16);
+    RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
+    RED_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
+    RED_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
+    RED_CHECK_EQUAL(ContextSizes.cbSecurityTrailer, 16);
 
 
-    BOOST_CHECK_EQUAL(server->confidentiality, client->confidentiality);
-    BOOST_CHECK_EQUAL(server->confidentiality, true);
+    RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
+    RED_CHECK_EQUAL(server->confidentiality, true);
     server->confidentiality = false;
     client->confidentiality = false;
     // ENCRYPT
@@ -286,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
     status = table.EncryptMessage(&server_context, 0, &Message, 0);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 
     Result.copy(Buffers[0].Buffer.get_data(),
@@ -314,19 +313,19 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     Message.pBuffers = Buffers;
     status = table.DecryptMessage(&client_context, &Message, 0, &pfQOP);
 
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
     status = table.ImpersonateSecurityContext(&server_context);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
     status = table.RevertSecurityContext(&server_context);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
     // clear handles
     status = table.FreeContextBuffer(&server_context);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
     status = table.FreeContextBuffer(&client_context);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
     status = table.FreeCredentialsHandle(&credentials);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(status, SEC_E_OK);
 
 }

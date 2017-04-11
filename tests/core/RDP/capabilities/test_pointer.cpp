@@ -21,27 +21,25 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityPointer
+#define RED_TEST_MODULE TestCapabilityPointer
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/pointer.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
+RED_AUTO_TEST_CASE(TestCapabilityPointerEmit)
 {
     PointerCaps pointer_caps;
     pointer_caps.colorPointerFlag = 0;
     pointer_caps.colorPointerCacheSize = 1;
     pointer_caps.pointerCacheSize = 2;
 
-    BOOST_CHECK_EQUAL(pointer_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
-    BOOST_CHECK_EQUAL(pointer_caps.len, static_cast<uint16_t>(CAPLEN_POINTER));
-    BOOST_CHECK_EQUAL(pointer_caps.colorPointerFlag, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(pointer_caps.colorPointerCacheSize, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(pointer_caps.pointerCacheSize, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(pointer_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
+    RED_CHECK_EQUAL(pointer_caps.len, static_cast<uint16_t>(CAPLEN_POINTER));
+    RED_CHECK_EQUAL(pointer_caps.colorPointerFlag, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(pointer_caps.colorPointerCacheSize, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(pointer_caps.pointerCacheSize, static_cast<uint16_t>(2));
 
     StaticOutStream<1024> out_stream;
     pointer_caps.emit(out_stream);
@@ -50,14 +48,14 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
 
     PointerCaps pointer_caps2;
 
-    BOOST_CHECK_EQUAL(pointer_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
-    BOOST_CHECK_EQUAL(pointer_caps2.len, static_cast<uint16_t>(CAPLEN_POINTER));
+    RED_CHECK_EQUAL(pointer_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
+    RED_CHECK_EQUAL(pointer_caps2.len, static_cast<uint16_t>(CAPLEN_POINTER));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_POINTER), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_POINTER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_POINTER), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_POINTER), stream.in_uint16_le());
     pointer_caps2.recv(stream, CAPLEN_POINTER);
 
-    BOOST_CHECK_EQUAL(pointer_caps2.colorPointerFlag, static_cast<uint16_t>(0));
-    BOOST_CHECK_EQUAL(pointer_caps2.colorPointerCacheSize, static_cast<uint16_t>(1));
-    BOOST_CHECK_EQUAL(pointer_caps2.pointerCacheSize, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(pointer_caps2.colorPointerFlag, static_cast<uint16_t>(0));
+    RED_CHECK_EQUAL(pointer_caps2.colorPointerCacheSize, static_cast<uint16_t>(1));
+    RED_CHECK_EQUAL(pointer_caps2.pointerCacheSize, static_cast<uint16_t>(2));
 }

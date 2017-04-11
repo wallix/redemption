@@ -222,7 +222,7 @@ struct DrawGdiPlusCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
 //        LOG(LOG_INFO, "DrawGdiPlus caps emit not implemented");
         stream.out_uint16_le(this->capabilityType);
@@ -270,7 +270,7 @@ struct DrawGdiPlusCaps : public Capability {
         this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s DrawGdiPlus caps (%u bytes)", msg, this->len);
 

@@ -463,7 +463,7 @@ struct CSCore {
 
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
@@ -491,7 +491,7 @@ struct CSCore {
     }
 
     private:
-    void emit_optional(OutStream & stream)
+    void emit_optional(OutStream & stream) const
     {
         if (this->length < 134) { return; }
         stream.out_uint16_le(this->postBeta2ColorDepth);
@@ -516,7 +516,7 @@ struct CSCore {
     }
 
     public:
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_CORE (%u bytes)", msg, this->length);

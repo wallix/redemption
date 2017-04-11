@@ -21,16 +21,14 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityDrawGdiPlus
+#define RED_TEST_MODULE TestCapabilityDrawGdiPlus
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "core/RDP/capabilities/drawgdiplus.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
+RED_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
 {
     DrawGdiPlusCaps drawgdiplus_caps;
     drawgdiplus_caps.drawGDIPlusSupportLevel = 5;
@@ -52,26 +50,26 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheTotalSize = 256;
     drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheMaxSize = 128;
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.len, static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.drawGDIPlusSupportLevel, static_cast<uint32_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.GdipVersion, static_cast<uint32_t>(42));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.drawGdiplusCacheLevel, static_cast<uint32_t>(2));
+    RED_CHECK_EQUAL(drawgdiplus_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS));
+    RED_CHECK_EQUAL(drawgdiplus_caps.len, static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS));
+    RED_CHECK_EQUAL(drawgdiplus_caps.drawGDIPlusSupportLevel, static_cast<uint32_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps.GdipVersion, static_cast<uint32_t>(42));
+    RED_CHECK_EQUAL(drawgdiplus_caps.drawGdiplusCacheLevel, static_cast<uint32_t>(2));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipGraphicsCacheEntries, static_cast<uint16_t>(10));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipBrushCacheEntries, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipPenCacheEntries, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipImageCacheEntries, static_cast<uint16_t>(10));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipImageAttributesCacheEntries, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipGraphicsCacheEntries, static_cast<uint16_t>(10));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipBrushCacheEntries, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipPenCacheEntries, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipImageCacheEntries, static_cast<uint16_t>(10));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheEntries.GdipImageAttributesCacheEntries, static_cast<uint16_t>(2));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipGraphicsCacheChunkSize, static_cast<uint16_t>(512));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize, static_cast<uint16_t>(2048));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectPenCacheChunkSize, static_cast<uint16_t>(1024));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize, static_cast<uint16_t>(64));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipGraphicsCacheChunkSize, static_cast<uint16_t>(512));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize, static_cast<uint16_t>(2048));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectPenCacheChunkSize, static_cast<uint16_t>(1024));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize, static_cast<uint16_t>(64));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheChunkSize, static_cast<uint16_t>(4096));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheTotalSize, static_cast<uint16_t>(256));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheMaxSize, static_cast<uint16_t>(128));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheChunkSize, static_cast<uint16_t>(4096));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheTotalSize, static_cast<uint16_t>(256));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties.GdipObjectImageCacheMaxSize, static_cast<uint16_t>(128));
 
     StaticOutStream<1024> out_stream;
     drawgdiplus_caps.emit(out_stream);
@@ -80,29 +78,29 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
 
     DrawGdiPlusCaps drawgdiplus_caps2;
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.len, static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.len, static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS));
 
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS), stream.in_uint16_le());
-    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS), stream.in_uint16_le());
+    RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS), stream.in_uint16_le());
     drawgdiplus_caps2.recv(stream, CAPLEN_DRAWGDIPLUS);
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.drawGDIPlusSupportLevel, static_cast<uint32_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.GdipVersion, static_cast<uint32_t>(42));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.drawGdiplusCacheLevel, static_cast<uint32_t>(2));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.drawGDIPlusSupportLevel, static_cast<uint32_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.GdipVersion, static_cast<uint32_t>(42));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.drawGdiplusCacheLevel, static_cast<uint32_t>(2));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipGraphicsCacheEntries, static_cast<uint16_t>(10));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipBrushCacheEntries, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipPenCacheEntries, static_cast<uint16_t>(5));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipImageCacheEntries, static_cast<uint16_t>(10));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipImageAttributesCacheEntries, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipGraphicsCacheEntries, static_cast<uint16_t>(10));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipBrushCacheEntries, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipPenCacheEntries, static_cast<uint16_t>(5));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipImageCacheEntries, static_cast<uint16_t>(10));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheEntries.GdipImageAttributesCacheEntries, static_cast<uint16_t>(2));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheChunkSize.GdipGraphicsCacheChunkSize, static_cast<uint16_t>(512));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize, static_cast<uint16_t>(2048));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectPenCacheChunkSize, static_cast<uint16_t>(1024));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize, static_cast<uint16_t>(64));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPCacheChunkSize.GdipGraphicsCacheChunkSize, static_cast<uint16_t>(512));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize, static_cast<uint16_t>(2048));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectPenCacheChunkSize, static_cast<uint16_t>(1024));
+    RED_CHECK_EQUAL(drawgdiplus_caps.gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize, static_cast<uint16_t>(64));
 
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheChunkSize, static_cast<uint16_t>(4096));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheTotalSize, static_cast<uint16_t>(256));
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheMaxSize, static_cast<uint16_t>(128));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheChunkSize, static_cast<uint16_t>(4096));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheTotalSize, static_cast<uint16_t>(256));
+    RED_CHECK_EQUAL(drawgdiplus_caps2.gdiPImageCacheProperties.GdipObjectImageCacheMaxSize, static_cast<uint16_t>(128));
 }

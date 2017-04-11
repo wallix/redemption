@@ -22,9 +22,7 @@
    Using lib boost functions, some tests need to be added
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestStream
+#define RED_TEST_MODULE TestStream
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,47 +31,47 @@
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestStream_uint8)
+RED_AUTO_TEST_CASE(TestStream_uint8)
 {
     // test reading of 8 bits data from Stream signed or unsigned is working
 
     char buf[] = "\1\xFE\xFD\4\5";
     InStream s(buf, sizeof(buf)-1);
     // 5 characters are availables
-    BOOST_CHECK(s.in_check_rem(5));
+    RED_CHECK(s.in_check_rem(5));
     // but not 6...
-    BOOST_CHECK(!s.in_check_rem(6));
+    RED_CHECK(!s.in_check_rem(6));
 
     // we read one unsigned char, it is 1
-    BOOST_CHECK_EQUAL(1, s.in_uint8());
+    RED_CHECK_EQUAL(1, s.in_uint8());
     // now we have only 4 char left
-    BOOST_CHECK(s.in_check_rem(4));
-    BOOST_CHECK(!s.in_check_rem(5));
+    RED_CHECK(s.in_check_rem(4));
+    RED_CHECK(!s.in_check_rem(5));
 
     // we read one unsigned char, it is 0xFE (254)
-    BOOST_CHECK_EQUAL(254, s.in_uint8());
+    RED_CHECK_EQUAL(254, s.in_uint8());
     // now we have only 3 char left
-    BOOST_CHECK(s.in_check_rem(3));
-    BOOST_CHECK(!s.in_check_rem(4));
+    RED_CHECK(s.in_check_rem(3));
+    RED_CHECK(!s.in_check_rem(4));
 
     // we read one signed char, it is 0xFD (-3)
-    BOOST_CHECK_EQUAL(-3, s.in_sint8());
+    RED_CHECK_EQUAL(-3, s.in_sint8());
     // now we have only 3 char left
-    BOOST_CHECK(s.in_check_rem(2));
-    BOOST_CHECK(!s.in_check_rem(3));
+    RED_CHECK(s.in_check_rem(2));
+    RED_CHECK(!s.in_check_rem(3));
 
     // we peek a byte (as many time as we want it will always return the same byte)
-    BOOST_CHECK_EQUAL(4, s.peek_uint8());
-    BOOST_CHECK_EQUAL(4, s.peek_uint8());
-    BOOST_CHECK_EQUAL(4, s.peek_uint8());
+    RED_CHECK_EQUAL(4, s.peek_uint8());
+    RED_CHECK_EQUAL(4, s.peek_uint8());
+    RED_CHECK_EQUAL(4, s.peek_uint8());
 
-    BOOST_CHECK_EQUAL(4, s.in_sint8());
-    BOOST_CHECK_EQUAL(5, s.in_sint8());
+    RED_CHECK_EQUAL(4, s.in_sint8());
+    RED_CHECK_EQUAL(5, s.in_sint8());
     // now the buffer is empty
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_uint16)
+RED_AUTO_TEST_CASE(TestStream_uint16)
 {
     // test reading of 16 bits data from Stream signed or unsigned
     // with any endiannessis working. The way functions are written
@@ -85,26 +83,26 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
 
     uint8_t const * oldp = s.get_current();
     // 12 characters are availables
-    BOOST_CHECK(s.in_check_rem(12));
+    RED_CHECK(s.in_check_rem(12));
     // but not 13...
-    BOOST_CHECK(!s.in_check_rem(13));
+    RED_CHECK(!s.in_check_rem(13));
 
-    BOOST_CHECK_EQUAL(s.in_uint16_le(), 1);
-    BOOST_CHECK_EQUAL(oldp+2, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint16_le(), 1);
+    RED_CHECK_EQUAL(oldp+2, s.get_current());
 
-    BOOST_CHECK_EQUAL(s.in_sint16_le(), -2); // FFFE == -2
-    BOOST_CHECK_EQUAL(s.in_sint16_be(), -3); // FFFD == -3
+    RED_CHECK_EQUAL(s.in_sint16_le(), -2); // FFFE == -2
+    RED_CHECK_EQUAL(s.in_sint16_be(), -3); // FFFD == -3
 
-    BOOST_CHECK_EQUAL(s.in_uint16_be(), 0xFFFC);
-    BOOST_CHECK_EQUAL(s.in_uint16_le(), 0xFFFB);
+    RED_CHECK_EQUAL(s.in_uint16_be(), 0xFFFC);
+    RED_CHECK_EQUAL(s.in_uint16_le(), 0xFFFB);
 
-    BOOST_CHECK_EQUAL(s.in_sint16_be(), 1);
+    RED_CHECK_EQUAL(s.in_sint16_be(), 1);
 
     // empty is OK
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_uint32)
+RED_AUTO_TEST_CASE(TestStream_uint32)
 {
     // test reading of 32 bits unsigned data from Stream
     // with any endiannessis working. The way functions are written
@@ -116,18 +114,18 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
 
     uint8_t const * oldp = s.get_current();
 
-    BOOST_CHECK_EQUAL(s.in_uint32_le(), 1);
-    BOOST_CHECK_EQUAL(oldp+4, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint32_le(), 1);
+    RED_CHECK_EQUAL(oldp+4, s.get_current());
 
-    BOOST_CHECK_EQUAL(s.in_uint32_be(), 0xFFFFFFFE);
-    BOOST_CHECK_EQUAL(s.in_uint32_be(), 1);
-    BOOST_CHECK_EQUAL(s.in_uint32_le(), 0xFFFFFFFC);
+    RED_CHECK_EQUAL(s.in_uint32_be(), 0xFFFFFFFE);
+    RED_CHECK_EQUAL(s.in_uint32_be(), 1);
+    RED_CHECK_EQUAL(s.in_uint32_le(), 0xFFFFFFFC);
 
     // empty is OK
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_uint64)
+RED_AUTO_TEST_CASE(TestStream_uint64)
 {
     // test reading of 64 bits unsigned data from Stream
     // with any endiannessis working. The way functions are written
@@ -139,26 +137,26 @@ BOOST_AUTO_TEST_CASE(TestStream_uint64)
 
     uint8_t const * oldp = s.get_current();
 
-    BOOST_CHECK_EQUAL(s.in_uint64_le(), 1LL);
-    BOOST_CHECK_EQUAL(oldp+8, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint64_le(), 1LL);
+    RED_CHECK_EQUAL(oldp+8, s.get_current());
 
-    BOOST_CHECK_EQUAL(s.in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
-    BOOST_CHECK_EQUAL(s.in_uint64_be(), 1LL);
-    BOOST_CHECK_EQUAL(s.in_uint64_le(), 0xFFFFFFFFFFFFFFFCLL);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 1LL);
+    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFFFFFFFFFFFFFFCLL);
 
     // empty is OK
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 
     OutStream out(data);
     out.out_uint64_be(1LL);
     out.out_uint64_le(0xFFEECCLL);
     s.rewind();
-    BOOST_CHECK_EQUAL(s.in_uint64_be(), 1LL);
-    BOOST_CHECK_EQUAL(s.in_uint64_le(), 0xFFEECCLL);
-    BOOST_CHECK(s.get_current() == oldp + 16);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 1LL);
+    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFEECCLL);
+    RED_CHECK(s.get_current() == oldp + 16);
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
+RED_AUTO_TEST_CASE(TestStream_in_uint8p)
 {
     // test in buffer access to some block of data
     // in_uint8p returns a pointer to current beginning of buffer
@@ -169,17 +167,17 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
 
     uint8_t const * oldp = s.get_current();
 
-    BOOST_CHECK_EQUAL(s.in_uint8p(8), oldp);
-    BOOST_CHECK_EQUAL(oldp+8, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint8p(8), oldp);
+    RED_CHECK_EQUAL(oldp+8, s.get_current());
 
-    BOOST_CHECK_EQUAL(s.in_uint8p(8), oldp+8);
-    BOOST_CHECK_EQUAL(oldp+16, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint8p(8), oldp+8);
+    RED_CHECK_EQUAL(oldp+16, s.get_current());
 
     // empty is OK
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
+RED_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 {
     // test use of skip_bytes that skip a given number of bytes
 
@@ -189,16 +187,16 @@ BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
     uint8_t const * oldp = s.get_current();
 
     s.in_skip_bytes(10);
-    BOOST_CHECK_EQUAL(oldp+10, s.get_current());
-    BOOST_CHECK_EQUAL(s.in_uint8(), 0x0A);
+    RED_CHECK_EQUAL(oldp+10, s.get_current());
+    RED_CHECK_EQUAL(s.in_uint8(), 0x0A);
 
     s.in_skip_bytes(3);
 
     // empty is OK
-    BOOST_CHECK(!s.in_remain());
+    RED_CHECK(!s.in_remain());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
+RED_AUTO_TEST_CASE(TestStream_out_Stream)
 {
     // use output primitives to write to a Stream
 
@@ -212,32 +210,32 @@ BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
     s.out_uint32_le((1 << 24) + (2 << 16) + (3 << 8) + 4);
     s.out_uint32_be((5 << 24) + (6 << 16) + (7 << 8) + 8);
 
-    BOOST_CHECK_EQUAL(oldp+13, s.get_current());
-    BOOST_CHECK_EQUAL((s.get_data())[0], 10);
+    RED_CHECK_EQUAL(oldp+13, s.get_current());
+    RED_CHECK_EQUAL((s.get_data())[0], 10);
 
-    BOOST_CHECK_EQUAL((s.get_data())[1], 1);
-    BOOST_CHECK_EQUAL((s.get_data())[2], 2);
+    RED_CHECK_EQUAL((s.get_data())[1], 1);
+    RED_CHECK_EQUAL((s.get_data())[2], 2);
 
-    BOOST_CHECK_EQUAL((s.get_data())[3], 4);
-    BOOST_CHECK_EQUAL((s.get_data())[4], 3);
+    RED_CHECK_EQUAL((s.get_data())[3], 4);
+    RED_CHECK_EQUAL((s.get_data())[4], 3);
 
-    BOOST_CHECK_EQUAL((s.get_data())[5], 4);
-    BOOST_CHECK_EQUAL((s.get_data())[6], 3);
-    BOOST_CHECK_EQUAL((s.get_data())[7], 2);
-    BOOST_CHECK_EQUAL((s.get_data())[8], 1);
+    RED_CHECK_EQUAL((s.get_data())[5], 4);
+    RED_CHECK_EQUAL((s.get_data())[6], 3);
+    RED_CHECK_EQUAL((s.get_data())[7], 2);
+    RED_CHECK_EQUAL((s.get_data())[8], 1);
 
-    BOOST_CHECK_EQUAL((s.get_data())[9], 5);
-    BOOST_CHECK_EQUAL((s.get_data())[10], 6);
-    BOOST_CHECK_EQUAL((s.get_data())[11], 7);
-    BOOST_CHECK_EQUAL((s.get_data())[12], 8);
+    RED_CHECK_EQUAL((s.get_data())[9], 5);
+    RED_CHECK_EQUAL((s.get_data())[10], 6);
+    RED_CHECK_EQUAL((s.get_data())[11], 7);
+    RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    BOOST_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s.get_data(), 13));
+    RED_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s.get_data(), 13));
 
     // underflow because end is not yet moved at p
-    BOOST_CHECK(s.tailroom());
+    RED_CHECK(s.tailroom());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
+RED_AUTO_TEST_CASE(TestStream_in_unistr)
 {
     // test we can create a Stream object
     StaticOutStream<256> stream;
@@ -248,17 +246,17 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
     InStream in_stream(stream.get_data(), stream.get_offset());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    BOOST_CHECK_EQUAL(14, in_stream.get_offset());
-    BOOST_CHECK_EQUAL('r', result[0]);
-    BOOST_CHECK_EQUAL('e', result[1]);
-    BOOST_CHECK_EQUAL('s', result[2]);
-    BOOST_CHECK_EQUAL('u', result[3]);
-    BOOST_CHECK_EQUAL('l', result[4]);
-    BOOST_CHECK_EQUAL('t', result[5]);
-    BOOST_CHECK_EQUAL(0, result[6]);
+    RED_CHECK_EQUAL(14, in_stream.get_offset());
+    RED_CHECK_EQUAL('r', result[0]);
+    RED_CHECK_EQUAL('e', result[1]);
+    RED_CHECK_EQUAL('s', result[2]);
+    RED_CHECK_EQUAL('u', result[3]);
+    RED_CHECK_EQUAL('l', result[4]);
+    RED_CHECK_EQUAL('t', result[5]);
+    RED_CHECK_EQUAL(0, result[6]);
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
+RED_AUTO_TEST_CASE(TestStream_in_unistr_2)
 {
     // test we can create a Stream object
     StaticOutStream<256> stream;
@@ -269,31 +267,31 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     InStream in_stream(stream.get_data(), stream.get_offset());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    BOOST_CHECK_EQUAL(14, in_stream.get_offset());
-    BOOST_CHECK_EQUAL('r', result[0]);
-    BOOST_CHECK_EQUAL(0xC3, result[1]);
-    BOOST_CHECK_EQUAL(0xA9, result[2]);
-    BOOST_CHECK_EQUAL('s', result[3]);
-    BOOST_CHECK_EQUAL('u', result[4]);
-    BOOST_CHECK_EQUAL('l', result[5]);
-    BOOST_CHECK_EQUAL('t', result[6]);
-    BOOST_CHECK_EQUAL(0, result[7]);
+    RED_CHECK_EQUAL(14, in_stream.get_offset());
+    RED_CHECK_EQUAL('r', result[0]);
+    RED_CHECK_EQUAL(0xC3, result[1]);
+    RED_CHECK_EQUAL(0xA9, result[2]);
+    RED_CHECK_EQUAL('s', result[3]);
+    RED_CHECK_EQUAL('u', result[4]);
+    RED_CHECK_EQUAL('l', result[5]);
+    RED_CHECK_EQUAL('t', result[6]);
+    RED_CHECK_EQUAL(0, result[7]);
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
+RED_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
 {
     StaticOutStream<512> stream;
 
-    BOOST_CHECK_EQUAL(512,   stream.get_capacity());
+    RED_CHECK_EQUAL(512,   stream.get_capacity());
 
     stream.out_copy_bytes("0123456789", 10);
 
-    BOOST_CHECK_EQUAL(502,   stream.tailroom());
-    BOOST_CHECK_EQUAL(true,  stream.has_room(502));
-    BOOST_CHECK_EQUAL(false, stream.has_room(503));
+    RED_CHECK_EQUAL(502,   stream.tailroom());
+    RED_CHECK_EQUAL(true,  stream.has_room(502));
+    RED_CHECK_EQUAL(false, stream.has_room(503));
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_2BUE)
+RED_AUTO_TEST_CASE(TestStream_2BUE)
 {
     StaticOutStream<256> stream;
 
@@ -303,10 +301,10 @@ BOOST_AUTO_TEST_CASE(TestStream_2BUE)
 
     InStream in_stream(stream.get_data(), stream.get_offset());
 
-    BOOST_CHECK_EQUAL(0x1A1B, in_stream.in_2BUE());
+    RED_CHECK_EQUAL(0x1A1B, in_stream.in_2BUE());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_4BUE)
+RED_AUTO_TEST_CASE(TestStream_4BUE)
 {
     StaticOutStream<256> stream;
 
@@ -316,16 +314,16 @@ BOOST_AUTO_TEST_CASE(TestStream_4BUE)
 
     InStream in_stream(stream.get_data(), stream.get_offset());
 
-    BOOST_CHECK_EQUAL(0x001A1B1C, in_stream.in_4BUE());
+    RED_CHECK_EQUAL(0x001A1B1C, in_stream.in_4BUE());
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_sint32)
+RED_AUTO_TEST_CASE(TestStream_sint32)
 {
     const int32_t const_min_val = -2147483648;
 
     InStream ss_min_val(reinterpret_cast<const uint8_t *>(&const_min_val), sizeof(const_min_val));
 
-    BOOST_CHECK_EQUAL(const_min_val, ss_min_val.in_sint32_le());
+    RED_CHECK_EQUAL(const_min_val, ss_min_val.in_sint32_le());
 
 
     int32_t min_val = 0;
@@ -334,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     fs_min_val.out_sint32_le(const_min_val);
 
-    BOOST_CHECK_EQUAL(const_min_val, min_val);
+    RED_CHECK_EQUAL(const_min_val, min_val);
 
 
 
@@ -342,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     InStream ss_max_val(reinterpret_cast<const uint8_t *>(&const_max_val), sizeof(const_max_val));
 
-    BOOST_CHECK_EQUAL(const_max_val, ss_max_val.in_sint32_le());
+    RED_CHECK_EQUAL(const_max_val, ss_max_val.in_sint32_le());
 
 
     int32_t max_val = 0;
@@ -351,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     fs_max_val.out_sint32_le(const_max_val);
 
-    BOOST_CHECK_EQUAL(const_max_val, max_val);
+    RED_CHECK_EQUAL(const_max_val, max_val);
 
 
 
@@ -360,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     InStream ss_null_val(reinterpret_cast<const uint8_t *>(&const_null_val), sizeof(const_null_val));
 
-    BOOST_CHECK_EQUAL(const_null_val, ss_null_val.in_sint32_le());
+    RED_CHECK_EQUAL(const_null_val, ss_null_val.in_sint32_le());
 
 
     int32_t null_val = 0;
@@ -369,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     fs_null_val.out_sint32_le(const_null_val);
 
-    BOOST_CHECK_EQUAL(const_null_val, null_val);
+    RED_CHECK_EQUAL(const_null_val, null_val);
 
 
 
@@ -377,7 +375,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     InStream ss_negative_val(reinterpret_cast<const uint8_t *>(&const_negative_val), sizeof(const_negative_val));
 
-    BOOST_CHECK_EQUAL(const_negative_val, ss_negative_val.in_sint32_le());
+    RED_CHECK_EQUAL(const_negative_val, ss_negative_val.in_sint32_le());
 
 
     int32_t negative_val = 0;
@@ -386,7 +384,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     fs_negative_val.out_sint32_le(const_negative_val);
 
-    BOOST_CHECK_EQUAL(const_negative_val, negative_val);
+    RED_CHECK_EQUAL(const_negative_val, negative_val);
 
 
 
@@ -394,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     InStream ss_positive_val(reinterpret_cast<const uint8_t *>(&const_positive_val), sizeof(const_positive_val));
 
-    BOOST_CHECK_EQUAL(const_positive_val, ss_positive_val.in_sint32_le());
+    RED_CHECK_EQUAL(const_positive_val, ss_positive_val.in_sint32_le());
 
 
     int32_t positive_val = 0;
@@ -403,10 +401,10 @@ BOOST_AUTO_TEST_CASE(TestStream_sint32)
 
     fs_positive_val.out_sint32_le(const_positive_val);
 
-    BOOST_CHECK_EQUAL(const_positive_val, positive_val);
+    RED_CHECK_EQUAL(const_positive_val, positive_val);
 }
 
-BOOST_AUTO_TEST_CASE(TestOutSInt64Le)
+RED_AUTO_TEST_CASE(TestOutSInt64Le)
 {
     {
         const int64_t int64_test = -5000000000LLU;
@@ -416,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
     }
 
     {
@@ -427,7 +425,7 @@ BOOST_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
     }
 
     {
@@ -438,11 +436,11 @@ BOOST_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        BOOST_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestInSInt64Le)
+RED_AUTO_TEST_CASE(TestInSInt64Le)
 {
     {
         int64_t i64_original = -6000000000LLU;
@@ -451,7 +449,7 @@ BOOST_AUTO_TEST_CASE(TestInSInt64Le)
 
         InStream stream(data_test, sizeof(data_test));
 
-        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
     }
 
     {
@@ -461,7 +459,7 @@ BOOST_AUTO_TEST_CASE(TestInSInt64Le)
 
         InStream stream(data_test, sizeof(data_test));
 
-        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
     }
 
     {
@@ -471,6 +469,6 @@ BOOST_AUTO_TEST_CASE(TestInSInt64Le)
 
         InStream stream(data_test, sizeof(data_test));
 
-        BOOST_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
     }
 }

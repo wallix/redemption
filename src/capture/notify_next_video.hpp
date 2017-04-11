@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,27 +14,19 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Martin Potier
-
-   Unit test of Modules API
-
+   Copyright (C) Wallix 2017
+   Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_MODULE TestMod
-#include "system/redemption_unit_tests.hpp"
+#pragma once
 
-BOOST_AUTO_TEST_CASE(TestNullModule)
+#include "utils/sugar/noncopyable.hpp"
+
+class timeval;
+
+struct NotifyNextVideo : private noncopyable
 {
-
-// Null module receive every event and does nothing.
-// It allows session code to always have a receiving module active,
-// thus avoidind to test that some back_end is available.
-
-
-
-
-}
-
-#endif
+    enum class reason { sequenced, external };
+    virtual void notify_next_video(timeval const & now, reason) = 0;
+    virtual ~NotifyNextVideo() = default;
+};

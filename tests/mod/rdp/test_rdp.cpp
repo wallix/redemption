@@ -21,14 +21,12 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdp
+#define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 //#include "transport/socket_transport.hpp"
@@ -39,7 +37,7 @@
 #include "../../front/fake_front.hpp"
 
 /*
-BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
+RED_AUTO_TEST_CASE(TestModRDPXPServer)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -110,9 +108,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+        RED_CHECK(t.get_status());
+        RED_CHECK_EQUAL(mod->get_front_width(), 800);
+        RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -138,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
 
 
-BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
+RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -148,7 +146,12 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+
     snprintf(info.hostname,sizeof(info.hostname),"test");
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
+
     int verbose = 511;
 
     FakeFront front(info, verbose);
@@ -209,9 +212,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(front.info.width, 800);
-    BOOST_CHECK_EQUAL(front.info.height, 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -225,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 }
 
 /*
-BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
+RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -296,9 +299,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
 
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(mod->get_front_width(), 800);
+    RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -319,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //    front.dump_png("trace_w2003_");
 }
 
-BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
+RED_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -389,9 +392,9 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
 
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK(t.get_status());
+    RED_CHECK_EQUAL(mod->get_front_width(), 800);
+    RED_CHECK_EQUAL(mod->get_front_height(), 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

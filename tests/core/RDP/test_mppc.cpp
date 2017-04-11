@@ -22,9 +22,7 @@
    Unit test for MPPC compression
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMPPC
+#define RED_TEST_MODULE TestMPPC
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -32,7 +30,7 @@
 #include <sys/time.h>
 #include "core/RDP/mppc_unified_dec.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMPPC)
+RED_AUTO_TEST_CASE(TestMPPC)
 {
     // Load compressed_rd5 and decompressed_rd5
     #include "../../fixtures/test_mppc_TestMPPC.hpp"
@@ -53,9 +51,9 @@ BOOST_AUTO_TEST_CASE(TestMPPC)
         rdp_mppc_dec & rmppc = rmppc_d;
 
         /* uncompress data */
-        BOOST_CHECK_EQUAL(true, rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
+        RED_CHECK_EQUAL(true, rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
 
-        BOOST_CHECK_EQUAL(0, memcmp(decompressed_rd5, rdata, sizeof(decompressed_rd5)));
+        RED_CHECK_EQUAL(0, memcmp(decompressed_rd5, rdata, sizeof(decompressed_rd5)));
     }
 
     /* get end time */
@@ -66,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC)
     LOG(LOG_INFO, "test_mppc: decompressed data in %ld micro seconds", dur);
 }
 
-BOOST_AUTO_TEST_CASE(TestMPPC_enc)
+RED_AUTO_TEST_CASE(TestMPPC_enc)
 {
     // Load decompressed_rd5_data
     #include "../../fixtures/test_mppc_TestMPPC_enc.hpp"
@@ -97,10 +95,10 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     enc.compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-    BOOST_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    BOOST_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
-    BOOST_CHECK_EQUAL(data_len, rlen);
-    BOOST_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
+    RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
+    RED_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
+    RED_CHECK_EQUAL(data_len, rlen);
+    RED_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
 
     /* get end time */
     gettimeofday(&end_time, nullptr);
@@ -110,34 +108,34 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, dur / 1000000.0);
 }
 
-BOOST_AUTO_TEST_CASE(TestBitsSerializer)
+RED_AUTO_TEST_CASE(TestBitsSerializer)
 {
     uint8_t  outputBuffer[256] ={};
     uint8_t  bits_left = 8;
     uint16_t opb_index = 0;
 
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index, sizeof(outputBuffer));
-    BOOST_CHECK_EQUAL(6, bits_left);
-    BOOST_CHECK_EQUAL(0, opb_index);
-    BOOST_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
+    RED_CHECK_EQUAL(6, bits_left);
+    RED_CHECK_EQUAL(0, opb_index);
+    RED_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
 
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index, sizeof(outputBuffer));
-    BOOST_CHECK_EQUAL(4, bits_left);
-    BOOST_CHECK_EQUAL(0, opb_index);
-    BOOST_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
+    RED_CHECK_EQUAL(4, bits_left);
+    RED_CHECK_EQUAL(0, opb_index);
+    RED_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
 
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index, sizeof(outputBuffer));
-    BOOST_CHECK_EQUAL(2, bits_left);
-    BOOST_CHECK_EQUAL(0, opb_index);
-    BOOST_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
+    RED_CHECK_EQUAL(2, bits_left);
+    RED_CHECK_EQUAL(0, opb_index);
+    RED_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
 
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index, sizeof(outputBuffer));
-    BOOST_CHECK_EQUAL(8, bits_left);
-    BOOST_CHECK_EQUAL(1, opb_index);
-    BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
+    RED_CHECK_EQUAL(8, bits_left);
+    RED_CHECK_EQUAL(1, opb_index);
+    RED_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
 }
 
-BOOST_AUTO_TEST_CASE(TestHashTableManager)
+RED_AUTO_TEST_CASE(TestHashTableManager)
 {
     const unsigned int length_of_data_to_sign = 3;
     const unsigned int max_undo_element       = 8;
@@ -162,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     offset = 1;
     hash = hash_tab_mgr.sign(data + offset);
     hash_tab_mgr.update(hash, offset);
-    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+    RED_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
 
 
     // Test of insertion (implicit hash value).
@@ -170,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     offset = 1;
     hash = hash_tab_mgr.sign(data + offset);
     hash_tab_mgr.update_indirect(data, offset);
-    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+    RED_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
 
 
     // Test of undoing last changes.
@@ -178,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     offset = 1;
     hash = hash_tab_mgr.sign(data + offset);
     hash_tab_mgr.update_indirect(data, offset);
-    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+    RED_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
     hash_tab_mgr.clear_undo_history();
     hash_save   = hash;
     offset_save = offset;
@@ -186,15 +184,15 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     offset = 3;
     hash = hash_tab_mgr.sign(data + offset);
     hash_tab_mgr.update_indirect(data, offset);
-    BOOST_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
-    BOOST_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
-    BOOST_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
-    BOOST_CHECK_EQUAL(offset_save, hash_tab_mgr.get_offset(hash_save));
+    RED_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
+    RED_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
+    RED_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
+    RED_CHECK_EQUAL(offset_save, hash_tab_mgr.get_offset(hash_save));
 
 
     // Test of undoing last changes (out of undo buffer).
     hash_tab_mgr.reset();
     for (int i = 0; i < 10; i++)
         hash_tab_mgr.update_indirect(data + i, offset);
-    BOOST_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
+    RED_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
 }

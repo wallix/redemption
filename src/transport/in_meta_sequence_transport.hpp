@@ -747,6 +747,7 @@ public:
     {
         ssize_t total_read = 0;
         while (1) {
+//            LOG(LOG_WARNING, "this->rl.cur = %s this->rl.eof = %s", this->rl.cur, this->rl.eof);
             char * pos = std::find(this->rl.cur, this->rl.eof, '\n');
             if (len < static_cast<size_t>(pos - this->rl.cur)) {
                 total_read += len;
@@ -765,6 +766,7 @@ public:
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
             // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED");
                 return -ERR_TRANSPORT_READ_FAILED;
             }
             if (ret == 0) {
@@ -970,7 +972,6 @@ public:
 
         auto pline = line + (this->buf_sread_filename(std::begin(meta_line.filename), std::end(meta_line.filename), line) - line);
 
-        LOG(LOG_INFO, "meta_line.filename=%s", meta_line.filename);
 
         int err = 0;
         auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
@@ -1167,21 +1168,7 @@ public:
         return true;
     }
 
-//     void do_recv(uint8_t ** pbuffer, size_t len) override {
-//         const ssize_t res = this->buf_read(*pbuffer, len);
-//         if (res < 0){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_READ_FAILED, res);
-//         }
-//         *pbuffer += res;
-//         this->last_quantum_received += res;
-//         if (static_cast<size_t>(res) != len){
-//             this->status = false;
-//             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-//         }
-//     }
-
-    void do_recv_new(uint8_t * buffer, size_t len) override {
+    bool do_atomic_read(uint8_t * buffer, size_t len) override {
 
         const ssize_t res = this->buf_read(buffer, len);
         if (res < 0){
@@ -1191,8 +1178,13 @@ public:
 
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
+            if (res == 0){
+                return false;
+            }
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
+        return true;
     }
+
 };

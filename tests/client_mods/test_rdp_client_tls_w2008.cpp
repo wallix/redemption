@@ -21,9 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientTLSW2008
+#define RED_TEST_MODULE TestRdpClientTLSW2008
 
 
 #include "system/redemption_unit_tests.hpp"
@@ -44,7 +42,7 @@
 #include "../front/fake_front.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
 
@@ -58,6 +56,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG
                                  | PERF_DISABLE_MENUANIMATIONS;
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
@@ -129,10 +130,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO,
             "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
@@ -145,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //front.dump_png("trace_w2008_tls_");
 }
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket2)
+RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     int verbose = 256;
 
@@ -158,6 +159,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     info.height                = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+
+    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupportExFlags = 0xFFFF;
 
     //SSL_library_init();
 
@@ -223,10 +227,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.get_status());
+    RED_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(front.info.width, 1024);
-    BOOST_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.width, 1024);
+    RED_CHECK_EQUAL(front.info.height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

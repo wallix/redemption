@@ -552,12 +552,12 @@ public:
         r.add(e);
     }
 
-    const Bitmap & get(uint8_t id, uint16_t idx) {
+    const Bitmap & get(uint8_t id, uint16_t idx) const {
         if ((id & IN_WAIT_LIST) || (id == MAXIMUM_NUMBER_OF_CACHES)) {
             REDASSERT((this->owner != Mod_rdp) && this->waiting_list_bitmap.is_valid());
             return this->waiting_list_bitmap;
         }
-        Cache<cache_element> & r = this->caches[id];
+        Cache<cache_element> const & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             REDASSERT(this->owner != Front);
             // Last bitmap cache entry is used by waiting list.
@@ -697,7 +697,7 @@ public:
             //    LOG(LOG_INFO, "cache_id    = %u;", id_real);
             //    LOG(LOG_INFO, "cache_index = %u;", cache_index_32);
             //    LOG(LOG_INFO,
-            //        "BOOST_CHECK_EQUAL(((FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
+            //        "RED_CHECK_EQUAL(((FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
             //            "bmp_cache.cache_bitmap(*bmp_%d));",
             //        this->finding_counter - 1);
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
@@ -785,7 +785,7 @@ public:
         //    LOG(LOG_INFO, "cache_id    = %u;", id);
         //    LOG(LOG_INFO, "cache_index = %u;", oldest_cidx);
         //    LOG(LOG_INFO,
-        //        "BOOST_CHECK_EQUAL(((ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
+        //        "RED_CHECK_EQUAL(((ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
         //            "bmp_cache.cache_bitmap(bmp_%d));",
         //        this->finding_counter - 1);
         //    LOG(LOG_INFO, "}");

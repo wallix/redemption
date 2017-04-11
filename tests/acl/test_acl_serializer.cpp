@@ -20,9 +20,7 @@
    Unit tests for Acl Serializer
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestAclSerializer
+#define RED_TEST_MODULE TestAclSerializer
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -36,24 +34,24 @@
 // - Send given fields from config
 // - Recover fields from network and update Config
 
-BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
+RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
     LogTransport trans;
     AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
     ini.set<cfg::context::forcemodule>(true);
-    BOOST_CHECK_NO_THROW(acl.send_acl_data());
+    RED_CHECK_NO_THROW(acl.send_acl_data());
 
     // try exception
     CheckTransport transexcpt("", 0);
     AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
-    BOOST_CHECK(!ini.get<cfg::context::authenticated>());
-    BOOST_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
+    RED_CHECK(!ini.get<cfg::context::authenticated>());
+    RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
 
-BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
+RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
     StaticOutStream<1024> stream;
@@ -69,12 +67,12 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
-    BOOST_CHECK(ini.get<cfg::context::session_id>().empty());
-    BOOST_CHECK(!ini.is_asked<cfg::globals::auth_user>());
+    RED_CHECK(ini.get<cfg::context::session_id>().empty());
+    RED_CHECK(!ini.is_asked<cfg::globals::auth_user>());
 
-    BOOST_CHECK_NO_THROW(acl.incoming());
-    BOOST_CHECK(ini.is_asked<cfg::globals::auth_user>());
-    BOOST_CHECK(!ini.get<cfg::context::session_id>().empty());
+    RED_CHECK_NO_THROW(acl.incoming());
+    RED_CHECK(ini.is_asked<cfg::globals::auth_user>());
+    RED_CHECK(!ini.get<cfg::context::session_id>().empty());
 
     // CASE EXCEPTION
     // try exception
@@ -89,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     big_stream.out_skip_bytes(k64 - big_stream.get_offset());
 
-    BOOST_CHECK_EQUAL(big_stream.get_offset(), k64);
+    RED_CHECK_EQUAL(big_stream.get_offset(), k64);
 
     while(big_stream.tailroom() > k64 + 1) {
         big_stream.out_uint16_be(1);
@@ -103,10 +101,10 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
-    CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
+    RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
-BOOST_AUTO_TEST_CASE(TestAclSerializerIncoming)
+RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -121,20 +119,20 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerIncoming)
     GeneratorTransport trans(s.data(), s.size());
     AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
 
-    BOOST_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
-    BOOST_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
+    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
     ini.ask<cfg::context::opt_bpp>();
     ini.set_acl<cfg::context::reporting>("didier");
 
     acl.incoming();
 
-    BOOST_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
-    BOOST_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
+    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
 
-BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
+RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -158,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     big_stream.out_skip_bytes(sz_string - subsz);
     big_stream.out_string("\n");
 
-    BOOST_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
+    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
     CheckTransport trans(u.get(), big_stream.get_offset());
 
@@ -166,16 +164,16 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
-    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::rejected>().size(), sz_string);
-    BOOST_REQUIRE_EQUAL(ini.changed_field_size(), 1);
+    RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>().size(), sz_string);
+    RED_REQUIRE_EQUAL(ini.changed_field_size(), 1);
 
     acl.send_acl_data();
 
-    BOOST_CHECK_EQUAL(trans.get_total_sent(), big_stream.get_offset());
+    RED_CHECK_EQUAL(trans.get_total_sent(), big_stream.get_offset());
 }
 
 
-BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
+RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -199,16 +197,16 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     big_stream.out_skip_bytes(sz_string - subsz);
     big_stream.out_string("\n");
 
-    BOOST_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
+    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
     GeneratorTransport trans(u.get(), big_stream.get_offset());
 
     AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
 
     std::string result(sz_string, 'a');
-    BOOST_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
+    RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
 
     acl.incoming();
 
-    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
+    RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
 }

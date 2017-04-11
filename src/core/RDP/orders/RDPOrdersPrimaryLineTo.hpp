@@ -189,12 +189,6 @@ class RDPLineTo {
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect clip) const {
-        char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        printf("%s", buffer);
-    }
-
     void move(int offset_x, int offset_y) {
         this->startx += offset_x;
         this->starty += offset_y;

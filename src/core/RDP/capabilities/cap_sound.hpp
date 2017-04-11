@@ -65,7 +65,7 @@ struct SoundCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
@@ -80,7 +80,7 @@ struct SoundCaps : public Capability {
         this->pad2octetsA = stream.in_uint16_le();
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s SoundCaps caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SoundCaps caps::soundFlags %u", this->soundFlags);

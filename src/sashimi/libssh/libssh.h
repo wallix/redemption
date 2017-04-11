@@ -147,10 +147,10 @@ typedef int (*ssh_event_callback)(socket_t fd, int revents, void *userdata);
  * @brief SSH global request callback. All global request will go through this
  * callback.
  * @param session Current session handler
- * @param type 
- * @param want_reply 
- * @param bind_address
- * @param bind_port
+ * @param type type of global request
+ * @param want_reply does it need a replay from other end ?
+ * @param bind_address target address
+ * @param bind_port target port
  * @param userdata Userdata to be passed to the callback function.
  */
 typedef void (*ssh_global_request_callback) (struct ssh_session_struct * session,
@@ -223,7 +223,6 @@ typedef int (*ssh_auth_gssapi_mic_callback) (const char *user, const char *princ
 
 /**
  * @brief SSH authentication callback.
- * @param session Current session handler
  * @param user User that wants to authenticate
  * @param pubkey public key used for authentication
  * @param signature_state SSH_PUBLICKEY_STATE_NONE if the key is not signed (simple public key probe),

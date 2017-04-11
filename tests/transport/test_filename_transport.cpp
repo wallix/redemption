@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -31,7 +29,7 @@
 #include "transport/in_filename_transport.hpp"
 #include "transport/out_filename_transport.hpp"
 
-BOOST_AUTO_TEST_CASE(TestFilename)
+RED_AUTO_TEST_CASE(TestFilename)
 {
     const char * const filename = "/tmp/inoufiletest.txt";
 
@@ -63,22 +61,22 @@ BOOST_AUTO_TEST_CASE(TestFilename)
         int fd = ::open(filename, O_RDONLY);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
-            BOOST_CHECK(false);
+            RED_CHECK(false);
         }
 
         InFilenameTransport in(&cctx, fd, base, base_len);
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        in.recv_new(*p, 5);
-        BOOST_CHECK_EQUAL(sp-s, 5);
-        BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
+        in.recv_atomic(*p, 5);
+        RED_CHECK_EQUAL(sp-s, 5);
+        RED_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            in.recv_new(*p, 1);
+            in.recv_atomic(*p, 1);
 // Behavior changed, first return 0, then exception
-//            BOOST_CHECK(false);
+//            RED_CHECK(false);
         }
         catch (Error & e) {
         }
@@ -87,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestFilename)
     ::unlink(filename);
 }
 
-BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
+RED_AUTO_TEST_CASE(TestFilenameCrypto)
 {
     OpenSSL_add_all_digests();
 
@@ -120,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
         int fd = ::open(filename, O_RDONLY);
         if (fd < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
-            BOOST_CHECK(false);
+            RED_CHECK(false);
         }
 
         InFilenameTransport in(&cctx, fd, base, base_len);
@@ -128,15 +126,15 @@ BOOST_AUTO_TEST_CASE(TestFilenameCrypto)
         char * sp = s;
         char ** p = &sp;
         in.recv(*p, 5);
-        BOOST_CHECK_EQUAL(sp-s, 5);
-        BOOST_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
+        RED_CHECK_EQUAL(sp-s, 5);
+        RED_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            in.recv_new(*p, 1);
+            in.recv_atomic(*p, 1);
 // BEhavior changed. IS it OK ?
-            BOOST_CHECK_EQUAL(sp-s, 0);
-//            BOOST_CHECK(false);
+            RED_CHECK_EQUAL(sp-s, 0);
+//            RED_CHECK(false);
         }
         catch (Error & e) {
         }

@@ -20,9 +20,7 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSC_NET
+#define RED_TEST_MODULE TestSC_NET
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -30,7 +28,7 @@
 
 #include "core/RDP/gcc/userdata/sc_net.hpp"
 
-BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
+RED_AUTO_TEST_CASE(Test_gcc_sc_net)
 {
     const char expected[] =
         "\x03\x0c\x10\x00" // TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
@@ -51,20 +49,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(out_stream);
-    BOOST_CHECK_EQUAL(16, out_stream.get_offset());
-    BOOST_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_EQUAL(16, out_stream.get_offset());
+    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
 
     GCC::UserData::SCNet sc_net2;
 
     const bool bogus_sc_net_size = false;
     InStream in_stream(buf);
-    BOOST_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
-    BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-    BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
-    BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
-    BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
-    BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
-    BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    RED_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
+    RED_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
+    RED_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
+    RED_CHECK_EQUAL(3, sc_net2.channelCount);
+    RED_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
+    RED_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
+    RED_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
 
     sc_net2.log("Server Received");
 }

@@ -18,15 +18,13 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestDiffieHellman
+#define RED_TEST_MODULE TestDiffieHellman
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 #include "utils/diffiehellman.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDiffieHellman)
+RED_AUTO_TEST_CASE(TestDiffieHellman)
 {
     {
         uint64_t generator = 2534321354;
@@ -38,11 +36,11 @@ BOOST_AUTO_TEST_CASE(TestDiffieHellman)
         uint64_t n = 1643213;
 
         uint64_t res = dh.xpowymodn(x, y, n);
-        BOOST_CHECK_EQUAL(res, 154659);
+        RED_CHECK_EQUAL(res, 154659);
         uint8_t buffer[8] = {};
         dh.uint64_to_uint8p(res, buffer);
         uint64_t test = dh.uint8p_to_uint64(buffer);
-        BOOST_CHECK_EQUAL(res, test);
+        RED_CHECK_EQUAL(res, test);
     }
     {
         uint64_t gen = 32431233;
@@ -53,6 +51,6 @@ BOOST_AUTO_TEST_CASE(TestDiffieHellman)
         uint64_t pub_bob = dh_bob.createInterKey();
         uint64_t key_alice = dh_alice.createEncryptionKey(pub_bob);
         uint64_t key_bob = dh_bob.createEncryptionKey(pub_alice);
-        BOOST_CHECK_EQUAL(key_alice, key_bob);
+        RED_CHECK_EQUAL(key_alice, key_bob);
     }
 }

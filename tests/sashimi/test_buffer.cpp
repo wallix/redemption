@@ -21,27 +21,25 @@
    Using lib boost test functions
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBuffer
-#include <boost/test/auto_unit_test.hpp>
+#define RED_TEST_MODULE TestBuffer
+#include "system/redemption_unit_tests.hpp"
 
 //#include "string.hpp"
 #include "sashimi/libssh/libssh.h"
 
 #include "sashimi/buffer.hpp"
 
-BOOST_AUTO_TEST_CASE(TestInputArrayOneBlock)
+RED_AUTO_TEST_CASE(TestInputArrayOneBlock)
 {
     ssh_buffer_struct buf;
     buf.out_blob("012345678910", 13);
     char result[13] = {};
     char expected[13] = "012345678910";
     buf.buffer_get_data(result, 13);
-    BOOST_CHECK(0 == memcmp(result, expected, 13));
+    RED_CHECK(0 == memcmp(result, expected, 13));
 }
 
-BOOST_AUTO_TEST_CASE(TestInputArrayTwo)
+RED_AUTO_TEST_CASE(TestInputArrayTwo)
 {
     ssh_buffer_struct buf;
     buf.out_blob("0123", 4);
@@ -50,16 +48,16 @@ BOOST_AUTO_TEST_CASE(TestInputArrayTwo)
     char result[7] = {};
     char expected[8] = "0123456"; // we will ignore final 0
     buf.buffer_get_data(result, 7);
-    BOOST_CHECK(0 == memcmp(result, expected, 7));
+    RED_CHECK(0 == memcmp(result, expected, 7));
 
     char result1[6] = {};
     char expected1[6] = "78910";
     buf.buffer_get_data(result1, 6);
-    BOOST_CHECK(0 == memcmp(result1, expected1, 6));
+    RED_CHECK(0 == memcmp(result1, expected1, 6));
 
 }
 
-BOOST_AUTO_TEST_CASE(TestInputArrayU64)
+RED_AUTO_TEST_CASE(TestInputArrayU64)
 {
     ssh_buffer_struct buf;
 
@@ -69,17 +67,17 @@ BOOST_AUTO_TEST_CASE(TestInputArrayU64)
     buf.out_uint64_le(0x0123456789ABCDEF);
 
     uint64_t result2 = buf.in_uint64_be();
-    BOOST_CHECK_EQUAL(0x0123456789ABCDEF, result2);
-    
+    RED_CHECK_EQUAL(0x0123456789ABCDEF, result2);
+
     uint64_t result1 = buf.in_uint64_le();
-    BOOST_CHECK_EQUAL(0x0123456789ABCDEF, result1);
+    RED_CHECK_EQUAL(0x0123456789ABCDEF, result1);
 
     uint64_t result = buf.in_uint64_le();
-    BOOST_CHECK_EQUAL(0x0123456789ABCDEF, result);
-    
+    RED_CHECK_EQUAL(0x0123456789ABCDEF, result);
+
 }
 
-BOOST_AUTO_TEST_CASE(TestSSHString1)
+RED_AUTO_TEST_CASE(TestSSHString1)
 {
     ssh_buffer_struct buf;
     SSHString tmp(10);

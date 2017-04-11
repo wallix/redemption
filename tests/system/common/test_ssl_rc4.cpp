@@ -18,13 +18,11 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
 
 #include "system/redemption_unit_tests.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSslRc4)
+RED_AUTO_TEST_CASE(TestSslRc4)
 {
     uint8_t key[] = "A key nobody knows";
 
@@ -168,21 +166,18 @@ BOOST_AUTO_TEST_CASE(TestSslRc4)
         /* 01f0 */ 0xca, 0x4c, 0xeb, 0x28, 0x2e, 0x55, 0xe9, 0xa3,  // .L.(.U..
         /* 01f8 */ 0xac, 0x2f, 0x14, 0x6b, 0xd1, 0xc1, 0x43, 0xe1,  // ./.k..C.
     };
-    BOOST_CHECK_EQUAL(memcmp(encrypted_data,
-                             expected_data,
-                             sizeof(encrypted_data)),
-                      0);
+    RED_CHECK_MEM(
+        make_array_view(encrypted_data),
+        make_array_view(expected_data)
+    );
 
     uint8_t decrypted_data[512];
     rc.set_key(key, sizeof(key));
     rc.crypt(512, encrypted_data, decrypted_data);
     // hexdump96_c(decrypted_data, sizeof(decrypted_data));
 
-    BOOST_CHECK_EQUAL(memcmp(decrypted_data,
-                             data,
-                             sizeof(data)),
-                      0);
-
-
+    RED_CHECK_MEM(
+        make_array_view(decrypted_data),
+        make_array_view(data)
+    );
 }
-

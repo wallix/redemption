@@ -20,9 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE GraphicsOSD
+#define RED_TEST_MODULE GraphicsOSD
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -42,7 +40,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "utils/fileutils.hpp"
 
-BOOST_AUTO_TEST_CASE(TestModOSD)
+RED_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
@@ -151,8 +149,8 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
     trans.disconnect();
 
-    BOOST_CHECK_EQUAL(5021, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(5047, ::filesize(trans.seqgen()->get(1)));
+    RED_CHECK_EQUAL(5021, ::filesize(trans.seqgen()->get(0)));
+    RED_CHECK_EQUAL(5047, ::filesize(trans.seqgen()->get(1)));
     ::unlink(trans.seqgen()->get(0));
     ::unlink(trans.seqgen()->get(1));
 }

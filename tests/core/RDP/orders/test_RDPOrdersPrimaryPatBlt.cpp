@@ -21,9 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderPatBlt
+#define RED_TEST_MODULE TestOrderPatBlt
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGPRINT
@@ -33,7 +31,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestPatBlt)
+RED_AUTO_TEST_CASE(TestPatBlt)
 {
     using namespace RDP;
 
@@ -89,10 +87,10 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
 
@@ -141,10 +139,10 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
 
@@ -192,10 +190,10 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(PATBLT), common_cmd.order);
 
         RDPPatBlt cmd(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush(0, 0, 3, 0xDD));
 

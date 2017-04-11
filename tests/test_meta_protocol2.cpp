@@ -1,6 +1,4 @@
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestVerifier
+#define RED_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -105,7 +103,7 @@ struct log_policy : buffering2_policy_base
     }
 };
 
-BOOST_AUTO_TEST_CASE(proto_test)
+RED_AUTO_TEST_CASE(proto_test)
 {
     struct {
         uint8_t a = 1;
@@ -156,10 +154,10 @@ void test_old() {
     StaticOutStream<128> hstream;
     SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
     X224::DT_TPDU_Send(hstream, out_stream.get_offset());
-    BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
-    BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
+    RED_REQUIRE_EQUAL(4, out_stream.get_offset());
+    RED_REQUIRE_EQUAL(7, hstream.get_offset());
     auto p = out_stream.get_data() - hstream.get_offset();
-    BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
+    RED_REQUIRE_EQUAL(11, out_stream.get_current() - p);
     memcpy(p, hstream.get_data(), hstream.get_offset());
     out_stream = OutStream(p, out_stream.get_current() - p);
     out_stream.out_skip_bytes(out_stream.get_capacity());
@@ -189,7 +187,7 @@ inline bool check_range(const_bytes_array p, const_bytes_array mem, char * messa
     {                                            \
         char message[1024*64];                   \
         if (!check_range(p, mem, message)) {     \
-            BOOST_CHECK_MESSAGE(false, message); \
+            RED_CHECK_MESSAGE(false, message); \
         }                                        \
     }
 
@@ -208,7 +206,7 @@ void test_new()
 
     struct Policy : log_policy {
         void send(iovec_array iovs) const {
-            BOOST_CHECK_EQUAL(iovs.size(), 1);
+            RED_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
                 cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
@@ -223,7 +221,7 @@ void test_new()
 
     bool used = false;
     proto::apply(Buffering2<Policy>{used}, packet1, packet2);
-    BOOST_CHECK(used);
+    RED_CHECK(used);
 
 
     struct Policy2 : log_policy {
@@ -240,7 +238,7 @@ void test_new()
     uint8_t buf[1024];
     used = false;
     proto::apply(Buffering3<Policy2>{{used}, {buf}}, packet1, packet2);
-    BOOST_CHECK(used);
+    RED_CHECK(used);
 }
 
 void other_test()

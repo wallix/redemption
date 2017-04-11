@@ -19,9 +19,7 @@
 */
 
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRDPDRChannel
+#define RED_TEST_MODULE TestRDPDRChannel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -93,7 +91,7 @@ public:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
+RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -156,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
     auto test = [&]{
         while (true) {
             auto * end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -179,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
             uint8_t * chunk_data = virtual_channel_data;
 
             end = virtual_channel_data;
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -196,16 +194,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -268,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -291,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -308,16 +306,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -380,7 +378,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -403,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -420,16 +418,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
+RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -492,7 +490,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -515,7 +513,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -532,16 +530,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
+RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -604,7 +602,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -627,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -644,16 +642,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
+RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -716,7 +714,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -741,7 +739,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -758,16 +756,16 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
-BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
+RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 {
     ClientInfo info;
     info.keylayout             = 0x04C;
@@ -823,7 +821,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_new(end,
+            t.recv_atomic(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -848,7 +846,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
             memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
 
             end = virtual_channel_data;
-            t.recv_new(end, chunk_data_length);
+            t.recv_atomic(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -865,11 +863,11 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == bool(out_asynchronous_task));
+                RED_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
         }
     };
-    CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
 }

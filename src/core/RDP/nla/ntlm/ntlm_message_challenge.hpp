@@ -201,7 +201,7 @@ struct NTLMChallengeMessage {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         this->TargetInfo.buffer.reset();
         this->AvPairList.emit(this->TargetInfo.buffer.ostream);
         this->TargetInfo.buffer.mark_end();

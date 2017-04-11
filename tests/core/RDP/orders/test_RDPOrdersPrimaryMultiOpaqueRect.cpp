@@ -21,9 +21,7 @@
     Using lib boost functions for testing
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderMultiOpaqueRect
+#define RED_TEST_MODULE TestOrderMultiOpaqueRect
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
@@ -33,7 +31,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
+RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 {
     using namespace RDP;
 
@@ -66,8 +64,8 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         multiopaquerect.emit(out_stream, newcommon, state_common, state_multiopaquerect);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), newcommon.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), newcommon.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
             CHANGE | STANDARD,
@@ -91,13 +89,13 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
-        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x1BF), header.fields);
-        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), common_cmd.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        RED_CHECK_EQUAL(static_cast<uint32_t>(0x1BF), header.fields);
+        RED_CHECK_EQUAL(static_cast<uint8_t>(MULTIOPAQUERECT), common_cmd.order);
+        RED_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPMultiOpaqueRect cmd = state_multiopaquerect;
         cmd.receive(in_stream, header);

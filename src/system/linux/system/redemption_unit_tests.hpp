@@ -1,122 +1,170 @@
 #pragma once
 
+#define BOOST_TEST_MODULE RED_TEST_MODULE
+
 #include <boost/test/auto_unit_test.hpp>
 
-// fixed link error (API changed)
-#ifdef __clang__
-namespace boost { namespace unit_test { namespace ut_detail {
-    std::string normalize_test_case_name(const_string name) {
-        return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
-    }
-}}}
-#endif
+// // fixed link error (API changed)
+// #ifdef __clang__
+// namespace boost { namespace unit_test { namespace ut_detail {
+//     std::string normalize_test_case_name(const_string name) {
+//         return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
+//     }
+// } } }
+// #endif
 
 #ifdef IN_IDE_PARSER
+
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
-# define CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
-# define BOOST_CHECK_NO_THROW(stmt) do { stmt; } while (0)
-# define BOOST_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
-# define BOOST_CHECK_EXCEPTION(stmt, exception, predicate) do {\
+# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
+# define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
+# define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
+# define RED_CHECK_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define BOOST_CHECK_EQUAL(a, b) (a) == (b)
-# define BOOST_CHECK_NE(a, b) (a) != (b)
-# define BOOST_CHECK_LT(a, b) (a) < (b)
-# define BOOST_CHECK_LE(a, b) (a) <= (b)
-# define BOOST_CHECK_GT(a, b) (a) > (b)
-# define BOOST_CHECK_GE(a, b) (a) >= (b)
-# define BOOST_CHECK(a) (a)
-# define BOOST_CHECK_MESSAGE(a, iostream_expr) (a), ""
-# define BOOST_CHECK_EQUAL_RANGES(a, b) (a) != (b)
+# define RED_CHECK_EQUAL(a, b) (a) == (b)
+# define RED_CHECK_EQ(a, b) (a) == (b)
+# define RED_CHECK_NE(a, b) (a) != (b)
+# define RED_CHECK_LT(a, b) (a) < (b)
+# define RED_CHECK_LE(a, b) (a) <= (b)
+# define RED_CHECK_GT(a, b) (a) > (b)
+# define RED_CHECK_GE(a, b) (a) >= (b)
+# define RED_CHECK(a) (a)
+# define RED_CHECK_MESSAGE(a, iostream_expr) (a), ""
+# define RED_CHECK_EQUAL_COLLECTIONS(a, b) (a) == (b)
 
-# define BOOST_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
-# define BOOST_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
-# define BOOST_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
+# define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
+# define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
+# define RED_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define BOOST_REQUIRE_EQUAL(a, b) (a) == (b)
-# define BOOST_REQUIRE_NE(a, b) (a) != (b)
-# define BOOST_REQUIRE_LT(a, b) (a) < (b)
-# define BOOST_REQUIRE_LE(a, b) (a) <= (b)
-# define BOOST_REQUIRE_GT(a, b) (a) > (b)
-# define BOOST_REQUIRE_GE(a, b) (a) >= (b)
-# define BOOST_REQUIRE(a) (a)
-# define BOOST_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
-# define BOOST_REQUIRE_EQUAL_RANGES(a, b) (a) != (b)
+# define RED_REQUIRE_EQUAL(a, b) (a) == (b)
+# define RED_REQUIRE_EQ(a, b) (a) == (b)
+# define RED_REQUIRE_NE(a, b) (a) != (b)
+# define RED_REQUIRE_LT(a, b) (a) < (b)
+# define RED_REQUIRE_LE(a, b) (a) <= (b)
+# define RED_REQUIRE_GT(a, b) (a) > (b)
+# define RED_REQUIRE_GE(a, b) (a) >= (b)
+# define RED_REQUIRE(a) (a)
+# define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
+# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) (a) == (b)
+
 #else
-# define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)  \
-    BOOST_CHECK_EXCEPTION(                      \
-        stmt, Error,                            \
-        [&](Error const & e) {                  \
-            if (e.id == ErrId) {                \
-                BOOST_CHECK_EQUAL(e.id, ErrId); \
-                return true;                    \
-            }                                   \
-            return false;                       \
-        }                                       \
+
+# define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
+# define RED_CHECK_THROW BOOST_CHECK_THROW
+# define RED_CHECK_EXCEPTION BOOST_CHECK_EXCEPTION
+# define RED_CHECK_EQUAL BOOST_CHECK_EQUAL
+# define RED_CHECK_EQ BOOST_CHECK_EQ
+# define RED_CHECK_NE BOOST_CHECK_NE
+# define RED_CHECK_LT BOOST_CHECK_LT
+# define RED_CHECK_LE BOOST_CHECK_LE
+# define RED_CHECK_GT BOOST_CHECK_GT
+# define RED_CHECK_GE BOOST_CHECK_GE
+# define RED_CHECK BOOST_CHECK
+# define RED_CHECK_MESSAGE BOOST_CHECK_MESSAGE
+# define RED_CHECK_EQUAL_COLLECTIONS BOOST_CHECK_EQUAL_COLLECTIONS
+
+
+# define RED_REQUIRE_NO_THROW BOOST_REQUIRE_NO_THROW
+# define RED_REQUIRE_THROW BOOST_REQUIRE_THROW
+# define RED_REQUIRE_EXCEPTION BOOST_REQUIRE_EXCEPTION
+# define RED_REQUIRE_EQUAL BOOST_REQUIRE_EQUAL
+# define RED_REQUIRE_EQ BOOST_REQUIRE_EQ
+# define RED_REQUIRE_NE BOOST_REQUIRE_NE
+# define RED_REQUIRE_LT BOOST_REQUIRE_LT
+# define RED_REQUIRE_LE BOOST_REQUIRE_LE
+# define RED_REQUIRE_GT BOOST_REQUIRE_GT
+# define RED_REQUIRE_GE BOOST_REQUIRE_GE
+# define RED_REQUIRE BOOST_REQUIRE
+# define RED_REQUIRE_MESSAGE BOOST_REQUIRE_MESSAGE
+# define RED_REQUIRE_EQUAL_COLLECTIONS BOOST_REQUIRE_EQUAL_COLLECTIONS
+
+
+# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, ErrId) \
+    RED_CHECK_EXCEPTION(                           \
+        stmt, Error,                               \
+        [&](Error const & e) {                     \
+            if (e.id == ErrId) {                   \
+                RED_CHECK_EQUAL(e.id, ErrId);      \
+                return true;                       \
+            }                                      \
+            return false;                          \
+        }                                          \
     )
-# define BOOST_CHECK_EQUAL_RANGES(a_, b_)                 \
-    do {                                                  \
-        auto const & A__CHECK_RANGES = a_;                \
-        auto const & B__CHECK_RANGES = b_;                \
-        using std::begin;                                 \
-        using std::end;                                   \
-        BOOST_CHECK_EQUAL_COLLECTIONS(                    \
-            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
-            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
-        );                                                \
-    } while (0)
-# define BOOST_REQUIRE_EQUAL_RANGES(a_, b_)               \
-    do {                                                  \
-        auto const & A__CHECK_RANGES = a_;                \
-        auto const & B__CHECK_RANGES = b_;                \
-        using std::begin;                                 \
-        using std::end;                                   \
-        BOOST_REQUIRE_EQUAL_COLLECTIONS(                  \
-            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
-            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
-        );                                                \
-    } while (0)
+
 #endif
 
-#include <cstdio>
-//#include <exception>
-#include "core/error.hpp"
+# define RED_CHECK_EQUAL_RANGES(a_, b_)                   \
+    do {                                                  \
+        auto const & A__CHECK_RANGES = a_;                \
+        auto const & B__CHECK_RANGES = b_;                \
+        using std::begin;                                 \
+        using std::end;                                   \
+        RED_CHECK_EQUAL_COLLECTIONS(                      \
+            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
+            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
+        );                                                \
+    } while (0)
 
-#include <boost/test/unit_test_monitor.hpp>
+# define RED_REQUIRE_EQUAL_RANGES(a_, b_)                 \
+    do {                                                  \
+        auto const & A__CHECK_RANGES = a_;                \
+        auto const & B__CHECK_RANGES = b_;                \
+        using std::begin;                                 \
+        using std::end;                                   \
+        RED_REQUIRE_EQUAL_COLLECTIONS(                    \
+            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
+            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
+        );                                                \
+    } while (0)
 
-#include "cxx/diagnostic.hpp"
+
+#include "cxx/cxx.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
 namespace redemption_unit_test__
 {
-//   static std::terminate_handler old_terminate_handler = std::set_terminate([](){
-//     if (!std::uncaught_exception()) {
-//       try {
-//         throw;
-//       }
-//       catch (Error const & e) {
-//         std::printf("Exception Error: %s", e.errmsg());
-//         old_terminate_handler();
-//       }
-//       catch (...) {
-//         old_terminate_handler();
-//       }
-//     }
-//     old_terminate_handler();
-//   });
-
-    struct register_exception {
-        register_exception() {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
-            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::string s = "Exception of type 'Error': "; s += e.errmsg();
-                throw std::runtime_error{std::move(s)};
-            });
-            REDEMPTION_DIAGNOSTIC_POP
-        }
+    struct xformat
+    {
+        const_bytes_array sig;
     };
-    static register_exception Init;
+
+    inline std::ostream & operator<<(std::ostream & out, xformat const & x)
+    {
+        out << "Expected data: ";
+        char const * hex_table = "0123456789abcdef";
+        for (unsigned c : x.sig) {
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        }
+        return out;
+    }
 }
+
+#define RED_CHECK_MEM(mem, memref)                      \
+    do {                                                \
+        const_bytes_array mem__ {mem};                  \
+        const_bytes_array memref__ {memref};            \
+        RED_CHECK_EQUAL(mem__.size(), memref__.size()); \
+        if (mem__.size() == memref__.size()) {          \
+            RED_CHECK_MESSAGE(                          \
+                !memcmp(                                \
+                    mem__.data(), memref__.data(),      \
+                    mem__.size()                        \
+                ),                                      \
+                redemption_unit_test__::xformat{mem__}  \
+            );                                          \
+        }                                               \
+    } while (0)
+
+#ifdef IN_IDE_PARSER
+# define RED_CHECK_MEM_C(mem, memref) void(mem), void("" memref)
+# define RED_CHECK_MEM_AC(mem, memref) void(mem), void("" memref)
+# define RED_CHECK_MEM_AA(mem, memref) void(mem), void(memref)
+#else
+# define RED_CHECK_MEM_C(mem, memref) RED_CHECK_MEM(mem, cstr_array_view("" memref))
+# define RED_CHECK_MEM_AC(mem, memref) RED_CHECK_MEM(make_array_view(mem), cstr_array_view("" memref))
+# define RED_CHECK_MEM_AA(mem, memref) RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
+# endif
 
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER
@@ -125,3 +173,5 @@ namespace redemption_unit_test__
     BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) { BOOST_CHECK(true); } \
     BOOST_FIXTURE_TEST_CASE(test_name, BOOST_AUTO_TEST_CASE_FIXTURE)
 #endif
+
+#define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE

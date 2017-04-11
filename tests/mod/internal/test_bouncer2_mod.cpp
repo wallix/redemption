@@ -19,9 +19,7 @@
 
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBouncer2Mod
+#define RED_TEST_MODULE TestBouncer2Mod
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -31,7 +29,7 @@
 #include "mod/internal/bouncer2_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-BOOST_AUTO_TEST_CASE(TestBouncer2Mod)
+RED_AUTO_TEST_CASE(TestBouncer2Mod)
 {
     ClientInfo info;
     info.keylayout = 0x040C;
