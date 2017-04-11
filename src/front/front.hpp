@@ -497,7 +497,6 @@ private:
             void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
             {
                 constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
-                std::cerr << int(color_ctx.depth().to_bpp()) << " -> " << int(Enc::bpp) << "\n";
                 Cmd const & new_cmd = (depth == color_ctx.depth())
                     ? cmd
                     : [&cmd, &color_ctx]() {

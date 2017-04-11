@@ -367,7 +367,6 @@ static inline void server_draw_text(
 
         const Rect bk(x, y, total_width + 1, total_height + 1);
 
-        std::cerr << "fg: " << fgcolor << "  bg: " << bgcolor << "  deph:" << color_ctx.depth().id() << "\n";
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
             0x03,               // fl_accel
