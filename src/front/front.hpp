@@ -4444,9 +4444,9 @@ public:
                     const uint16_t ypix = y * fc.width * 3;
 
                     if (fc_bit_mask & *fc_data) {
-                        this->raw_data[xpix + ypix    ] = color_back.blue();
+                        this->raw_data[xpix + ypix    ] = color_back.red();
                         this->raw_data[xpix + ypix + 1] = color_back.green();
-                        this->raw_data[xpix + ypix + 2] = color_back.red();
+                        this->raw_data[xpix + ypix + 2] = color_back.blue();
                     }
                     fc_bit_mask >>= 1;
                 }
