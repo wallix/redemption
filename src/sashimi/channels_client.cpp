@@ -6126,7 +6126,6 @@ const char *ssh_userauth_kbdint_getprompt_client(SshClientSession * client_sessi
 int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channel channel)
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
-    int err = SSH_ERROR;
 
     if(channel == nullptr) {
         return SSH_ERROR;
@@ -6145,7 +6144,6 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
     }
 
     /* wait until channel is opened by server */
-    err = SSH_OK;
     while(1) {
         // Waiting for input
         dopoll(client_session->ctx, (client_session->flags & SSH_SESSION_FLAG_BLOCKING)
@@ -6156,18 +6154,14 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
             return SSH_ERROR;
         }
         if (channel->state == ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING) {
-            err = SSH_AGAIN;
-            if (!(client_session->flags&SSH_SESSION_FLAG_BLOCKING)){ break; }
+            if (!(client_session->flags & SSH_SESSION_FLAG_BLOCKING)){
+                return SSH_AGAIN;
+            }
             continue;
         }
-        err = SSH_OK;
         break;
     }
-
-    if(channel->state == ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN){
-        err=SSH_OK;
-    }
-    return err;
+    return SSH_OK;
 }
 
 
@@ -6304,16 +6298,14 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
 
 int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel channel){
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
-    int err = SSH_ERROR;
-
     if(channel == nullptr) {
-        return err;
+        return SSH_ERROR;
     }
 
     client_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_EOF);
     client_session->out_buffer->out_uint32_be(channel->remote_channel);
 
-    err = client_session->packet_send();
+    (void)client_session->packet_send();
     syslog(LOG_INFO,
             "Sent a EOF on client channel (%d:%d)",
             channel->local_channel,
@@ -6324,7 +6316,7 @@ int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel c
         return SSH_ERROR;
     }
 
-    err = SSH_OK;
+    int err = SSH_OK;
     while(1){
         if (client_session->out_buffer->in_remain() == 0){
             break;
