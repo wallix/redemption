@@ -22,7 +22,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestPng
+#define RED_TEST_MODULE TestPng
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

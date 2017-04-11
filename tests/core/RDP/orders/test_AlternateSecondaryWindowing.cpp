@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestOrderAlternateSecondaryWindowing
+#define RED_TEST_MODULE TestOrderAlternateSecondaryWindowing
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

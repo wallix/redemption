@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestBitmapCache
+#define RED_TEST_MODULE TestBitmapCache
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

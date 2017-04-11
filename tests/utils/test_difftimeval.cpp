@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestDiffTimeval
+#define RED_TEST_MODULE TestDiffTimeval
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/difftimeval.hpp"

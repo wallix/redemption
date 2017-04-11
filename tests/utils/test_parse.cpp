@@ -21,7 +21,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestParse
+#define RED_TEST_MODULE TestParse
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/parse.hpp"

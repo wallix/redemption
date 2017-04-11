@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestCalls
+#define RED_TEST_MODULE TestCalls
 
 #define LOGNULL
 

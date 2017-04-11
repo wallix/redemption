@@ -21,7 +21,7 @@
     Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestOrderPolyline
+#define RED_TEST_MODULE TestOrderPolyline
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

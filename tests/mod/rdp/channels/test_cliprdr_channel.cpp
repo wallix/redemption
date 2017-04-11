@@ -19,7 +19,7 @@
 */
 
 
-#define UNIT_TEST_MODULE TestCLIPRDRChannel
+#define RED_TEST_MODULE TestCLIPRDRChannel
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#define UNIT_TEST_MODULE TestStrUtils
+#define RED_TEST_MODULE TestStrUtils
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

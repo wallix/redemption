@@ -110,12 +110,6 @@ public:
         this->str(buffer, 1024);
         LOG(level, "%s", buffer);
     }
-
-    void print() const {
-        char buffer[1024];
-        this->str(buffer, 1024);
-        printf("%s", buffer);
-    }
 };  // class FrameMarker
 
 }   // namespace RDP

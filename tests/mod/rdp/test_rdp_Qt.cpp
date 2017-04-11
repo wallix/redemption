@@ -21,7 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define UNIT_TEST_MODULE TestRDPQt
+#define RED_TEST_MODULE TestRDPQt
 #include "system/redemption_unit_tests.hpp"
 #include <unistd.h>
 

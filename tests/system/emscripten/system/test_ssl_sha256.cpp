@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestSha256
+#define RED_TEST_MODULE TestSha256
 
 #define LOGNULL
 

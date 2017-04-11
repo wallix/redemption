@@ -289,7 +289,7 @@ public:
         , dataLen_(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(this->dataLen_);
@@ -308,7 +308,7 @@ public:
         this->dataLen_  = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     CliprdrHeader:");
         LOG(LOG_INFO, "          * MsgType  = 0x%x (%s)", this->msgType_, get_msgType_name(this->msgType_));
         LOG(LOG_INFO, "          * MsgFlags = 0x%x (%s)", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
@@ -379,7 +379,7 @@ public:
         , cCapabilitiesSets(cCapabilitiesSets)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
 
         stream.out_uint16_le(cCapabilitiesSets);
@@ -402,7 +402,7 @@ public:
         stream.in_skip_bytes(2);    // pad1(2)
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Clipboard Capabilities PDU:");
         LOG(LOG_INFO, "          * cCapabilitiesSets = %d (2 bytes)", this->cCapabilitiesSets);
@@ -581,7 +581,7 @@ public:
         this->generalFlags_ = generalFlags;
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->capabilitySetType);
         stream.out_uint16_le(this->lengthCapability);
         stream.out_uint32_le(this->version_);
@@ -649,7 +649,7 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     General Capability Set:");
         LOG(LOG_INFO, "          * capabilitySetType = 0x%04x (2 bytes): CB_CAPSTYPE_GENERAL", this->capabilitySetType);
         LOG(LOG_INFO, "          * lengthCapability  = 0x%04x (2 bytes)", this->lengthCapability);
@@ -685,7 +685,7 @@ struct ServerMonitorReadyPDU
     ServerMonitorReadyPDU() : header(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         this->header.emit(stream);
     }
@@ -695,7 +695,7 @@ struct ServerMonitorReadyPDU
         this->header.recv(stream);
     }
 
-    void log() {
+    void log() const {
         this->header.log();
     }
 
@@ -747,7 +747,7 @@ struct ClientTemporaryDirectoryPDU
     : header(CB_TEMP_DIRECTORY, 0, 520),
     temp_dir(temp_dir) {}
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         this->header.emit(stream);
 
@@ -785,7 +785,7 @@ struct ClientTemporaryDirectoryPDU
         stream.in_skip_bytes(520);       // wszTempDir(520)
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Client Temporary Directory PDU:");
         LOG(LOG_INFO, "          * wszTempDir = \"%s\"", this->temp_dir.c_str());
@@ -860,7 +860,7 @@ struct FormatListPDU
         , contains_data_in_unicodetext_format(false)
         {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
         this->header.emit(stream);
 
@@ -869,12 +869,12 @@ struct FormatListPDU
         stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
     }
 
-    void log() {
+    void log() const {
         this->header.log();
 
     }
 
-    void emit_ex(OutStream & stream, bool unicodetext) {
+    void emit_ex(OutStream & stream, bool unicodetext) /* TODO const*/ {
         this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
         this->header.emit(stream);
 
@@ -883,7 +883,7 @@ struct FormatListPDU
         stream.out_clear_bytes(32); // formatName(32)
     }
 
-    void emit_long(OutStream & stream, bool unicodetext) {
+    void emit_long(OutStream & stream, bool unicodetext) /* TODO const*/ {
         this->header.dataLen_ = 6; /* formatId(4) + formatName(2) */
         this->header.emit(stream);
 
@@ -892,7 +892,7 @@ struct FormatListPDU
         stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
     }
 
-    void emit_2(OutStream & stream, bool unicodetext, bool use_long_format_names) {
+    void emit_2(OutStream & stream, bool unicodetext, bool use_long_format_names) /* TODO const*/ {
         if (use_long_format_names) {
             this->emit_long(stream, unicodetext);
         }
@@ -901,7 +901,7 @@ struct FormatListPDU
         }
     }
 
-    void emit_empty(OutStream & stream) {
+    void emit_empty(OutStream & stream) /* TODO const*/ {
         this->header.dataLen_ = 0;
         this->header.emit(stream);
     }
@@ -1048,7 +1048,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
         : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
             this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
         }
@@ -1067,7 +1067,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
         }
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format List PDU Long Name:");
         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
@@ -1087,7 +1087,7 @@ struct FormatListPDU_ShortName : public FormatListPDU {
         : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) /* TODO const*/ {
         if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
             this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
         }
@@ -1104,7 +1104,7 @@ struct FormatListPDU_ShortName : public FormatListPDU {
         }
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format List PDU Short Name:");
         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
@@ -1146,7 +1146,7 @@ struct FormatListResponsePDU
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
     }
 
@@ -1155,7 +1155,7 @@ struct FormatListResponsePDU
         this->header.recv(stream);
     }
 
-    void log() {
+    void log() const {
         this->header.log();
 
     }
@@ -1203,7 +1203,7 @@ struct FormatDataRequestPDU
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
 
         stream.out_uint32_le(this->requestedFormatId);
@@ -1222,7 +1222,7 @@ struct FormatDataRequestPDU
         this->requestedFormatId = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format Data Request PDU:");
         LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes)", this->requestedFormatId);
@@ -1331,7 +1331,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
     : header( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
         stream.out_uint32_le(this->lindex);
@@ -1355,7 +1355,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
         this->sizeRequested += stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Request PDU:");
         LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
@@ -1413,7 +1413,7 @@ struct FileContentsResponse
     , size(0)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
     }
 
@@ -1429,7 +1429,7 @@ struct FileContentsResponse_Size : FileContentsResponse {
     : FileContentsResponse(streamID, size, 16)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
         stream.out_uint64_le(this->size);
@@ -1442,7 +1442,7 @@ struct FileContentsResponse_Size : FileContentsResponse {
         this->size = stream.in_uint64_le();
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Response Size:");
         LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
@@ -1463,7 +1463,7 @@ struct FileContentsResponse_Range : FileContentsResponse {
     : FileContentsResponse(streamID, size, size+4)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
     }
@@ -1473,7 +1473,7 @@ struct FileContentsResponse_Range : FileContentsResponse {
         this->streamID = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Response Range:");
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
@@ -1889,7 +1889,7 @@ struct FormatDataResponsePDU
         this->header.recv(stream);
     }
 
-    void log() {
+    void log() const {
         this->header.log();
 
     }
@@ -1998,7 +1998,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
         }
     };
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Packed Metafile Payload:");
         LOG(LOG_INFO, "          * mappingMode = 0x%08x (4 bytes)", this->mappingMode);
@@ -2039,7 +2039,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
       , dibStretchBLT(data_length, height, width, depth, SRCCOPY)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
 
         // 2.2.5.2.1 Packed Metafile Payload
@@ -2138,7 +2138,7 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
       : FormatDataResponsePDU(length)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
     }
 
@@ -2146,7 +2146,7 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
         this->header.recv(stream);
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format Data Response Text PDU:");
     }
@@ -2178,7 +2178,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     int cItems;
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format Data Response File List PDU:");
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
@@ -2194,7 +2194,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
       , cItems(cItems)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
         stream.out_uint32_le(this->cItems);
     }
@@ -2337,7 +2337,7 @@ struct LockClipboardDataPDU
     , streamDataID(streamDataID)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
@@ -2347,7 +2347,7 @@ struct LockClipboardDataPDU
         streamDataID = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Lock Clipboard Data PDU:");
         LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
@@ -2390,7 +2390,7 @@ struct UnlockClipboardDataPDU
     , streamDataID(streamDataID)
     {}
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
@@ -2402,7 +2402,7 @@ struct UnlockClipboardDataPDU
         streamDataID = stream.in_uint32_le();
     }
 
-    void log()
+    void log() const
     {
         this->header.log();
         LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");

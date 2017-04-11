@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean
 */
 
-#define UNIT_TEST_MODULE TestSocketTransport
+#define RED_TEST_MODULE TestSocketTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

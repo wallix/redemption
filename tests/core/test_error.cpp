@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define UNIT_TEST_MODULE TestError
+#define RED_TEST_MODULE TestError
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/error.hpp"

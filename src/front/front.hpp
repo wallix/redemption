@@ -4404,8 +4404,7 @@ public:
         using gdi::Depth;
 
         switch (color_ctx.depth()){
-            // TODO color_ctx.palette()
-            case Depth::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depth::depth8():  color = decode_color8_opaquerect()(color, *color_ctx.palette()); break;
             case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
             case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
             case Depth::depth24(): break;
@@ -4448,9 +4447,9 @@ public:
                     const uint16_t ypix = y * fc.width * 3;
 
                     if (fc_bit_mask & *fc_data) {
-                        this->raw_data[xpix + ypix    ] = color_back.blue();
+                        this->raw_data[xpix + ypix    ] = color_back.red();
                         this->raw_data[xpix + ypix + 1] = color_back.green();
-                        this->raw_data[xpix + ypix + 2] = color_back.red();
+                        this->raw_data[xpix + ypix + 2] = color_back.blue();
                     }
                     fc_bit_mask >>= 1;
                 }

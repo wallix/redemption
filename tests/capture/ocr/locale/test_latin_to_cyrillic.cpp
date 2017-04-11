@@ -20,7 +20,7 @@
    Unit test of Verifier module
 */
 
-#define UNIT_TEST_MODULE TestVerifier
+#define RED_TEST_MODULE TestVerifier
 #include "system/redemption_unit_tests.hpp"
 
 #include "capture/ocr/classification.hh"

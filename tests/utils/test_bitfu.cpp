@@ -21,7 +21,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestBitFu
+#define RED_TEST_MODULE TestBitFu
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/bitfu.hpp"

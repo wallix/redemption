@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestSha512
+#define RED_TEST_MODULE TestSha512
 
 #include "utils/crypto/ssl_sha512_direct.hpp"
 

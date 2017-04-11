@@ -22,7 +22,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestDfaRegexAutomate
+#define RED_TEST_MODULE TestDfaRegexAutomate
 #include "system/redemption_unit_tests.hpp"
 
 #include "regex/regex_state.hpp"

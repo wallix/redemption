@@ -21,7 +21,7 @@
    Unit test for bitmap class, compression performance
 */
 
-#define UNIT_TEST_MODULE TestBitmapPerf
+#define RED_TEST_MODULE TestBitmapPerf
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

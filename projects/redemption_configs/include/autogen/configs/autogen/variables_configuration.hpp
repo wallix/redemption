@@ -1762,16 +1762,6 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value = RECORD_PATH;
         };
-        // type: bool
-        struct inactivity_pause {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
-            static constexpr char const * section() { return "video"; }
-            static constexpr char const * name() { return "inactivity_pause"; }
-            using type = bool;
-            using mapped_type = type;
-            type value{0};
-        };
         // type: std::chrono::seconds
         struct inactivity_timeout {
             static constexpr bool is_readable() { return 0; }
@@ -3351,7 +3341,6 @@ struct video
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path
-, cfg::video::inactivity_pause
 , cfg::video::inactivity_timeout
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log

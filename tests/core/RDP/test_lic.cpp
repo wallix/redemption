@@ -20,7 +20,7 @@
    RDP Licence Layer Unit Tests
 */
 
-#define UNIT_TEST_MODULE TestLic
+#define RED_TEST_MODULE TestLic
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

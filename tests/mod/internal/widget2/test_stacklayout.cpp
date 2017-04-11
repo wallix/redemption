@@ -18,7 +18,7 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
-#define UNIT_TEST_MODULE TestStacklayout
+#define RED_TEST_MODULE TestStacklayout
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

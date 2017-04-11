@@ -21,7 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define UNIT_TEST_MODULE TestFastPath
+#define RED_TEST_MODULE TestFastPath
 
 #include "system/redemption_unit_tests.hpp"
 

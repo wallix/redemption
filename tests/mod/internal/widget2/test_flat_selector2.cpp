@@ -19,7 +19,7 @@
  *              Meng Tan
  */
 
-#define UNIT_TEST_MODULE TestWidgetSelectorFlat2
+#define RED_TEST_MODULE TestWidgetSelectorFlat2
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

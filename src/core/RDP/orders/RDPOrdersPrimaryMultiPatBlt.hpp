@@ -422,17 +422,9 @@ public:
         LOG(level, "%s", buffer);
     }
 
-    void print(const Rect clip) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
-        buffer[sizeof(buffer) - 1] = 0;
-        printf("%s\n", buffer);
-    }
-
     void move(int offset_x, int offset_y) {
         this->rect = this->rect.offset(offset_x, offset_y);
     }
 };  // class RDPMultiPatBlt
 
 }   // namespace RDP
-

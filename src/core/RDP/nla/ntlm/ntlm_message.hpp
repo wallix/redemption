@@ -228,7 +228,7 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         if (this->ignore_version) {
             return;
         }
@@ -248,7 +248,7 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = stream.in_uint8();
     }
 
-    void print() {
+    void log() const {
         LOG(LOG_INFO, "VERSION = {");
         LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
         LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
@@ -492,7 +492,7 @@ struct NtlmNegotiateFlags {
     {
     }
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
     }
 
@@ -500,7 +500,7 @@ struct NtlmNegotiateFlags {
         this->flags = stream.in_uint32_le();
     }
 
-    void print()
+    void log() const
     {
         int i;
         const char* str;
@@ -516,7 +516,6 @@ struct NtlmNegotiateFlags {
 
         LOG(LOG_INFO, "}");
     }
-
 };
 
 struct NtlmField {
@@ -560,6 +559,10 @@ struct NtlmField {
             return this->ostream.get_data();
         }
 
+        uint8_t const * get_data() const {
+            return this->ostream.get_data();
+        }
+
         std::size_t size() const {
             return this->in_sz;
         }
@@ -583,7 +586,7 @@ struct NtlmField {
 
     ~NtlmField() {}
 
-    unsigned int emit(OutStream & stream, unsigned int currentOffset) {
+    unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
         this->len = this->buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
@@ -618,7 +621,7 @@ struct NtlmField {
         }
     }
 
-    void write_payload(OutStream & stream) {
+    void write_payload(OutStream & stream) const {
         if (this->len > 0) {
             stream.out_copy_bytes(this->buffer.get_data(), this->len);
         }

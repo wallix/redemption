@@ -2,7 +2,6 @@ import property-set ;
 import feature ;
 import toolset ;
 
-lib libboost_unit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <link>shared <cxxflags>-frtti ;
 lib openssl : : <name>ssl <link>shared ;
 
 lib krb5 : : <name>krb5 <link>shared ;

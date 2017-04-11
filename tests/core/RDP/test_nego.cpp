@@ -19,7 +19,7 @@
 
 */
 
-#define UNIT_TEST_MODULE TestNego
+#define RED_TEST_MODULE TestNego
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

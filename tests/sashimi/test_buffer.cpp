@@ -21,7 +21,7 @@
    Using lib boost test functions
 */
 
-#define UNIT_TEST_MODULE TestBuffer
+#define RED_TEST_MODULE TestBuffer
 #include "system/redemption_unit_tests.hpp"
 
 //#include "string.hpp"

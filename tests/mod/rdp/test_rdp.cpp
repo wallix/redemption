@@ -21,12 +21,12 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define UNIT_TEST_MODULE TestRdp
+#define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 //#include "transport/socket_transport.hpp"

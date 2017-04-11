@@ -18,7 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define UNIT_TEST_MODULE TestSnappyCompressionTransport
+#define RED_TEST_MODULE TestSnappyCompressionTransport
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL

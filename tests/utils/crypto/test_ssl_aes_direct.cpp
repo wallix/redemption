@@ -1,4 +1,4 @@
-#define UNIT_TEST_MODULE TestAes
+#define RED_TEST_MODULE TestAes
 
 #define LOGNULL
 

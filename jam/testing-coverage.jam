@@ -146,3 +146,11 @@ constant GCOV :
     <variant>coverage:<library>gcov
 ;
 constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
+
+lib libunit_test : $(SYSTEM_SRC_PATH)/system/test_framework.cpp : <link>shared <cxxflags>-frtti ;
+
+constant UNIT_TEST_DEPENDENCIES :
+    <define>BOOST_AUTO_TEST_MAIN
+    <define>BOOST_TEST_DYN_LINK
+    <define>REDEMPTION_DECL_LOG_TEST
+;

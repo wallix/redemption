@@ -172,7 +172,7 @@ struct SCCore {
     {
     }
 
-    void emit(OutStream & stream)
+    void emit(OutStream & stream) const
     {
         if (this->length != 8
         && this->length != 12
@@ -225,7 +225,7 @@ struct SCCore {
         }
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data SC_CORE (%u bytes)", msg, this->length);
