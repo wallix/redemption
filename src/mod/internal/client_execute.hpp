@@ -424,8 +424,8 @@ public:
                                       this->title_bar_rect.x + 1,
                                       this->title_bar_rect.y + 3,
                                       this->window_title.c_str(),
-                                      WHITE,
                                       BLACK,
+                                      WHITE,
                                       depth,
                                       r
                                       );
@@ -443,8 +443,8 @@ public:
                                       this->minimize_box_rect.x + 12,
                                       this->minimize_box_rect.y + 3,
                                       "−",
-                                      WHITE,
                                       BLACK,
+                                      WHITE,
                                       depth,
                                       r
                                       );
@@ -464,8 +464,8 @@ public:
                                       this->close_box_rect.x + 13,
                                       this->close_box_rect.y + 3,
                                       "x",
-                                      WHITE,
                                       BLACK,
+                                      WHITE,
                                       depth,
                                       r
                                       );
@@ -541,7 +541,7 @@ public:
                                               this->minimize_box_rect.x + 12,
                                               this->minimize_box_rect.y + 3,
                                               "−",
-                                              WHITE,
+                                              BLACK,
                                               BGRColor_(0xCBCACA),
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
@@ -570,7 +570,7 @@ public:
                                               this->close_box_rect.x + 13,
                                               this->close_box_rect.y + 3,
                                               "x",
-                                              BLACK,
+                                              WHITE,
                                               BGRColor_(0x2311E8),
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
@@ -913,7 +913,7 @@ public:
                                               this->minimize_box_rect.x + 12,
                                               this->minimize_box_rect.y + 3,
                                               "−",
-                                              WHITE,
+                                              BLACK,
                                               BGRColor_(0xCBCACA),
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
@@ -933,8 +933,8 @@ public:
                                               this->minimize_box_rect.x + 12,
                                               this->minimize_box_rect.y + 3,
                                               "−",
-                                              WHITE,
                                               BLACK,
+                                              WHITE,
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
                                               );
@@ -960,7 +960,7 @@ public:
                                               this->close_box_rect.x + 13,
                                               this->close_box_rect.y + 3,
                                               "x",
-                                              BLACK,
+                                              WHITE,
                                               BGRColor_(0x2311E8),
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
@@ -980,8 +980,8 @@ public:
                                               this->close_box_rect.x + 13,
                                               this->close_box_rect.y + 3,
                                               "x",
-                                              WHITE,
                                               BLACK,
+                                              WHITE,
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
                                               );
@@ -1040,8 +1040,8 @@ public:
                                               this->minimize_box_rect.x + 12,
                                               this->minimize_box_rect.y + 3,
                                               "−",
-                                              WHITE,
                                               BLACK,
+                                              WHITE,
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
                                               );
@@ -1128,8 +1128,8 @@ public:
                                               this->close_box_rect.x + 13,
                                               this->close_box_rect.y + 3,
                                               "x",
-                                              WHITE,
                                               BLACK,
+                                              WHITE,
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
                                               );
