@@ -96,7 +96,25 @@ public:
 
 };
 
+     void show_video_real_time() {
 
+
+        struct timeval now = tvtime();
+        time_t movie_time_tmp = this->current_time_movie;
+        this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
+
+        if (this->current_time_movie > movie_time_tmp) {
+            time_t real_time_record = this->_front->replay_mod.get()->get_real_time_movie_begin() + this->current_time_movie;
+            std::string data(ctime(&real_time_record));
+            //std::string data_cut(data.c_str(), data.size()-1);
+            QString movie_real_time = QString(" Video Time: ") + QString(data.c_str());
+            this->movie_timer_label.setText(movie_real_time);
+
+            this->barRepaint(this->current_time_movie, QColor(Qt::green));
+        }
+
+        //this->movie_timer_label.setText(QString("  0/")+QString(std::to_string(int(movie_time)).c_str()));
+    }
 
 ///////////////////////////////
 // APPLICATION
