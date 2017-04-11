@@ -409,7 +409,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 const char * supported_ssh_crypt_c_s = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
                 SSHString tmp = find_matching(supported_ssh_crypt_c_s, v, ',');
-                if (tmp.size == 0){
+                if (tmp.size() == 0){
                     ssh_set_error(error, SSH_REQUEST_DENIED,
                         "Setting method: no algorithm for method \"%s\" (%s)\n",
                         "encryption client->server", v);
@@ -432,7 +432,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 const char * supported_ssh_crypt_s_c = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
                 SSHString tmp = find_matching(supported_ssh_crypt_s_c, v, ',');
-                if (tmp.size == 0){
+                if (tmp.size() == 0){
                     ssh_set_error(error, SSH_REQUEST_DENIED,
                         "Setting method: no algorithm for method \"%s\" (%s)\n",
                         "encryption server->client", v);
@@ -454,7 +454,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 const char * supported_ssh_kex =       "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
 
                 SSHString tmp = find_matching(supported_ssh_kex, v, ',');
-                if (tmp.size == 0){
+                if (tmp.size() == 0){
                     ssh_set_error(error, SSH_REQUEST_DENIED,
                         "Setting method: no algorithm for method \"%s\" (%s)\n",
                         "kex algos", v);
@@ -476,7 +476,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 const char * supported_ssh_hostkeys = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
 
                 SSHString tmp = find_matching(supported_ssh_hostkeys, v, ',');
-                if (tmp.size == 0){
+                if (tmp.size() == 0){
                     ssh_set_error(error, SSH_REQUEST_DENIED,
                         "Setting method: no algorithm for method \"%s\" (%s)\n",
                         "server host key algo", v);
@@ -498,7 +498,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 if (strcasecmp(static_cast<const char*>(value),"yes")==0){
                     const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_c_s, "zlib@openssh.com,zlib", ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo client->server",
@@ -510,7 +510,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
                     const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_c_s, "none", ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo client->server",
@@ -522,7 +522,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 } else {
                     const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_c_s, v, ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo client->server", v);
@@ -544,7 +544,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 if (strcasecmp(static_cast<const char*>(value),"yes")==0){
                     const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_s_c, "zlib@openssh.com,zlib", ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo server->client",
@@ -556,7 +556,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
                     const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_s_c, "none", ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo server->client",
@@ -568,7 +568,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 } else {
                     const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
                     SSHString tmp = find_matching(supported_ssh_comp_s_c, v, ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "compression algo server->client", v);
@@ -825,7 +825,7 @@ inline int options_set_cipher_c_s(options_struct & opts, const void *value, erro
         const char * supported_ssh_crypt_c_s = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
         SSHString tmp = find_matching(supported_ssh_crypt_c_s, v, ',');
-        if (tmp.size == 0){
+        if (tmp.size() == 0){
             ssh_set_error(error, SSH_REQUEST_DENIED,
                 "Setting method: no algorithm for method \"%s\" (%s)\n",
                 "encryption client->server", v);
@@ -850,7 +850,7 @@ inline int options_set_cipher_s_c(options_struct & opts, const void *value, erro
         const char * supported_ssh_crypt_s_c = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
         SSHString tmp = find_matching(supported_ssh_crypt_s_c, v, ',');
-        if (tmp.size == 0){
+        if (tmp.size() == 0){
             ssh_set_error(error, SSH_REQUEST_DENIED,
                 "Setting method: no algorithm for method \"%s\" (%s)\n",
                 "encryption server->client", v);
@@ -874,7 +874,7 @@ inline int options_set_keyexchange(options_struct & opts, const void *value, err
         const char * supported_ssh_kex =       "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
 
         SSHString tmp = find_matching(supported_ssh_kex, v, ',');
-        if (tmp.size == 0){
+        if (tmp.size() == 0){
             ssh_set_error(error, SSH_REQUEST_DENIED,
                 "Setting method: no algorithm for method \"%s\" (%s)\n",
                 "kex algos", v);
@@ -900,7 +900,7 @@ inline int options_set_hostkeys(options_struct & opts, const void *value, error_
         const char * supported_ssh_hostkeys = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
 
         SSHString tmp = find_matching(supported_ssh_hostkeys, v, ',');
-        if (tmp.size == 0){
+        if (tmp.size() == 0){
             ssh_set_error(error, SSH_REQUEST_DENIED,
                 "Setting method: no algorithm for method \"%s\" (%s)\n",
                 "server host key algo", v);
@@ -925,7 +925,7 @@ inline int options_set_compression_c_s(options_struct & opts, const void *value,
         if (strcasecmp(static_cast<const char*>(value),"yes")==0){
             const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_c_s, "zlib@openssh.com,zlib", ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo client->server",
@@ -937,7 +937,7 @@ inline int options_set_compression_c_s(options_struct & opts, const void *value,
         } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
             const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_c_s, "none", ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo client->server",
@@ -949,7 +949,7 @@ inline int options_set_compression_c_s(options_struct & opts, const void *value,
         } else {
             const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_c_s, v, ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo client->server", v);
@@ -975,7 +975,7 @@ inline int options_set_compression_s_c(options_struct & opts, const void *value,
         if (strcasecmp(static_cast<const char*>(value),"yes")==0){
             const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_s_c, "zlib@openssh.com,zlib", ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo server->client",
@@ -987,7 +987,7 @@ inline int options_set_compression_s_c(options_struct & opts, const void *value,
         } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
             const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_s_c, "none", ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo server->client",
@@ -999,7 +999,7 @@ inline int options_set_compression_s_c(options_struct & opts, const void *value,
         } else {
             const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
             SSHString tmp = find_matching(supported_ssh_comp_s_c, v, ',');
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "compression algo server->client", v);

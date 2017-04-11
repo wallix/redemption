@@ -1314,11 +1314,9 @@ sftp_packet_struct* sftp_packet_read(sftp_session_struct* sftp)
     packet->payload = new ssh_buffer_struct;
     // TODO: check memory allocation
 
-    syslog(LOG_WARNING, "A +++");
     r = 0;
     while (r < 4) {
         int res = ssh_channel_read_stdout(sftp->session, sftp->channel, buffer, 4-r);
-        syslog(LOG_WARNING, "B +++ res = %d", res);
         if (res < 0) {
             delete packet->payload;
             delete packet;
@@ -1694,8 +1692,8 @@ static sftp_status_message_struct* parse_status_msg(sftp_message_struct* msg)
             return nullptr;
         }
     }
-    status->error = SSHString(error_len);
-    msg->payload->buffer_get_data(status->error.data.get(), error_len);
+    status->error.resize(error_len);
+    msg->payload->buffer_get_data(&status->error[0], error_len);
 
     if (sizeof(uint32_t) > msg->payload->in_remain()){
         if(msg->sftp->version >=3){
@@ -1742,8 +1740,9 @@ static sftp_file_struct* parse_handle_msg(sftp_message_struct* msg)
         // ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
 
-    SSHString tmp_handle(tmp_handle_len);
-    msg->payload->buffer_get_data(tmp_handle.data.get(),tmp_handle_len);
+    SSHString tmp_handle;
+    tmp_handle.resize(tmp_handle_len);
+    msg->payload->buffer_get_data(&tmp_handle[0],tmp_handle_len);
 
     file->handle = std::move(tmp_handle);
 
@@ -1822,7 +1821,7 @@ sftp_dir_struct* sftp_opendir(sftp_session_struct* sftp, const char *path)
               return nullptr;
             }
             dir->handle = std::move(file->handle);
-            memcpy(dir->handle.data.get(), file->handle.data.get(), file->handle.size);
+            memcpy(&dir->handle[0], &file->handle[0], file->handle.size());
 
             delete file;
         }
@@ -1946,8 +1945,8 @@ static sftp_attributes_struct* sftp_parse_attr_4(sftp_session_struct* sftp, ssh_
             if (acl_length > buf->in_remain()){
                 break;
             }
-            attr->acl = SSHString(acl_length);
-            buf->buffer_get_data(attr->acl.data.get(), acl_length);
+            attr->acl.resize(acl_length);
+            buf->buffer_get_data(&attr->acl[0], acl_length);
         }
 
         if (attr->flags & SSH_FILEXFER_ATTR_EXTENDED) {
@@ -1961,8 +1960,8 @@ static sftp_attributes_struct* sftp_parse_attr_4(sftp_session_struct* sftp, ssh_
                 if (extended_type_len > buf->in_remain()){
                     break;
                 }
-                attr->extended_type = SSHString(extended_type_len);
-                buf->buffer_get_data(attr->extended_type.data.get(), extended_type_len);
+                attr->extended_type.resize(extended_type_len);
+                buf->buffer_get_data(&attr->extended_type[0], extended_type_len);
 
                 if (sizeof(uint32_t) > buf->in_remain()){
                     break;
@@ -1971,8 +1970,8 @@ static sftp_attributes_struct* sftp_parse_attr_4(sftp_session_struct* sftp, ssh_
                 if (extended_data_len > buf->in_remain()){
                     break;
                 }
-                attr->extended_data = SSHString(extended_data_len);
-                buf->buffer_get_data(attr->extended_data.data.get(), extended_data_len);
+                attr->extended_data.resize(extended_data_len);
+                buf->buffer_get_data(&attr->extended_data[0], extended_data_len);
 
                 attr->extended_count--;
             }
@@ -2169,8 +2168,8 @@ static sftp_attributes_struct* sftp_parse_attr_3(sftp_session_struct* sftp, ssh_
             if (extended_type_len > buf->in_remain()){
                 break;
             }
-            attr->extended_type = SSHString(extended_type_len);
-            buf->buffer_get_data(attr->extended_type.data.get(), extended_type_len);
+            attr->extended_type.resize(extended_type_len);
+            buf->buffer_get_data(&attr->extended_type[0], extended_type_len);
 
             if (sizeof(uint32_t) > buf->in_remain()){
                 break;
@@ -2179,8 +2178,8 @@ static sftp_attributes_struct* sftp_parse_attr_3(sftp_session_struct* sftp, ssh_
             if (extended_data_len > buf->in_remain()){
                 break;
             }
-            attr->extended_data = SSHString(extended_data_len);
-            buf->buffer_get_data(attr->extended_data.data.get(), extended_data_len);
+            attr->extended_data.resize(extended_data_len);
+            buf->buffer_get_data(&attr->extended_data[0], extended_data_len);
 
             attr->extended_count--;
         }
@@ -2285,8 +2284,8 @@ sftp_attributes_struct* sftp_readdir(sftp_session_struct* sftp, sftp_dir_struct*
         id = sftp_get_new_id(sftp);
         payload->out_uint32_be(id);
 
-        payload->out_uint32_be(dir->handle.size);
-        payload->out_blob(dir->handle.data.get(), dir->handle.size);
+        payload->out_uint32_be(dir->handle.size());
+        payload->out_blob(&dir->handle[0], dir->handle.size());
 
         if (sftp_packet_write(sftp, SSH_FXP_READDIR, payload) < 0) {
             delete payload;
@@ -2400,8 +2399,8 @@ static int sftp_handle_close(sftp_session_struct* sftp, const SSHString & handle
     id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(handle.size);
-    buffer->out_blob(handle.data.get(), handle.size);
+    buffer->out_uint32_be(handle.size());
+    buffer->out_blob(&handle[0], handle.size());
 
     if (sftp_packet_write(sftp, SSH_FXP_CLOSE ,buffer) < 0) {
         delete buffer;
@@ -2600,21 +2599,22 @@ ssize_t sftp_write(sftp_file_struct* file, const void *buf, size_t count)
     ssh_buffer_struct* buffer = new ssh_buffer_struct;
     // TODO: check memory allocation
 
-    SSHString datastring(static_cast<uint32_t>(count));
-    memcpy(datastring.data.get(), buf, count);
+    SSHString datastring;
+    datastring.resize(static_cast<uint32_t>(count));
+    memcpy(&datastring[0], buf, count);
 
     uint32_t id = sftp_get_new_id(file->sftp);
 
     // TODO: See error support
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(file->handle.size);
-    buffer->out_blob(file->handle.data.get(), file->handle.size);
+    buffer->out_uint32_be(file->handle.size());
+    buffer->out_blob(&file->handle[0], file->handle.size());
 
     buffer->out_uint64_be(file->offset);
 
-    buffer->out_uint32_be(datastring.size);
-    buffer->out_blob(datastring.data.get(), datastring.size);
+    buffer->out_uint32_be(datastring.size());
+    buffer->out_blob(&datastring[0], datastring.size());
 
     int packetlen = buffer->in_remain();
     int len = sftp_packet_write(file->sftp, SSH_FXP_WRITE, buffer);
@@ -3173,18 +3173,18 @@ int sftp_symlink(sftp_session_struct* sftp, const char *target, const char *dest
   buffer->out_uint32_le(id);
   if (sftp->session->openssh) {
     /* TODO check for version number if they ever fix it. */
-    buffer->out_uint32_be(target_s.size);
-    buffer->out_blob(target_s.data.get(), target_s.size);
-    buffer->out_uint32_be(dest_s.size);
-    buffer->out_blob(dest_s.data.get(), dest_s.size);
+    buffer->out_uint32_be(target_s.size());
+    buffer->out_blob(&target_s[0], target_s.size());
+    buffer->out_uint32_be(dest_s.size());
+    buffer->out_blob(&dest_s[0], dest_s.size());
 
   }
   else {
     /* TODO check for version number if they ever fix it. */
-    buffer->out_uint32_be(dest_s.size);
-    buffer->out_blob(dest_s.data.get(), dest_s.size);
-    buffer->out_uint32_be(target_s.size);
-    buffer->out_blob(target_s.data.get(), target_s.size);
+    buffer->out_uint32_be(dest_s.size());
+    buffer->out_blob(&dest_s[0], dest_s.size());
+    buffer->out_uint32_be(target_s.size());
+    buffer->out_blob(&target_s[0], target_s.size());
   }
 
   if (sftp_packet_write(sftp, SSH_FXP_SYMLINK, buffer) < 0) {
@@ -3270,8 +3270,8 @@ char *sftp_readlink(sftp_session_struct* sftp, const char *path)
     uint32_t id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(path_s.size);
-    buffer->out_blob(path_s.data.get(), path_s.size);
+    buffer->out_uint32_be(path_s.size());
+    buffer->out_blob(&path_s[0], path_s.size());
 
     if (sftp_packet_write(sftp, SSH_FXP_READLINK, buffer) < 0) {
         delete buffer;
@@ -3301,16 +3301,17 @@ char *sftp_readlink(sftp_session_struct* sftp, const char *path)
     if (link_s_len > msg->payload->in_remain()) {
         // ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    SSHString link_s(link_s_len);
-    msg->payload->buffer_get_data(link_s.data.get(),link_s_len);
+    SSHString link_s;
+    link_s.resize(link_s_len);
+    msg->payload->buffer_get_data(&link_s[0],link_s_len);
 
         if (msg != nullptr) {
             delete msg->payload;
             delete msg;
         }
-    lnk =  new char[link_s.size + 1];
-    memcpy(lnk, link_s.data.get(), link_s.size);
-    lnk[link_s.size] = 0;
+    lnk =  new char[link_s.size() + 1];
+    memcpy(lnk, &link_s[0], link_s.size());
+    lnk[link_s.size()] = 0;
     return lnk;
   }
   case SSH_FXP_STATUS:
@@ -3371,11 +3372,11 @@ sftp_statvfs_struct* sftp_statvfs(sftp_session_struct* sftp, const char *path)
     uint32_t id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(ext.size);
-    buffer->out_blob(ext.data.get(), ext.size);
+    buffer->out_uint32_be(ext.size());
+    buffer->out_blob(&ext[0], ext.size());
 
-    buffer->out_uint32_be(pathstr.size);
-    buffer->out_blob(pathstr.data.get(), pathstr.size);
+    buffer->out_uint32_be(pathstr.size());
+    buffer->out_blob(&pathstr[0], pathstr.size());
 
     if (sftp_packet_write(sftp, SSH_FXP_EXTENDED, buffer) < 0) {
         delete buffer;
@@ -3471,8 +3472,8 @@ sftp_statvfs_struct* sftp_fstatvfs(sftp_file_struct* file) {
     buffer->out_uint32_be(strlen("fstatvfs@openssh.com"));
     buffer->out_blob("fstatvfs@openssh.com", strlen("fstatvfs@openssh.com"));
 
-    buffer->out_uint32_be(file->handle.size);
-    buffer->out_blob(file->handle.data.get(), file->handle.size);
+    buffer->out_uint32_be(file->handle.size());
+    buffer->out_blob(&file->handle[0], file->handle.size());
 
     if (sftp_packet_write(sftp, SSH_FXP_EXTENDED, buffer) < 0) {
         delete buffer;
@@ -3580,8 +3581,8 @@ char *sftp_canonicalize_path(sftp_session_struct* sftp, const char *path)
     uint32_t id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(pathstr.size);
-    buffer->out_blob(pathstr.data.get(), pathstr.size);
+    buffer->out_uint32_be(pathstr.size());
+    buffer->out_blob(&pathstr[0], pathstr.size());
 
     if (sftp_packet_write(sftp, SSH_FXP_REALPATH, buffer) < 0) {
         delete buffer;
@@ -3611,17 +3612,18 @@ char *sftp_canonicalize_path(sftp_session_struct* sftp, const char *path)
         if (name_len > msg->payload->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString name(name_len);
-        msg->payload->buffer_get_data(name.data.get(),name_len);
+        SSHString name;
+        name.resize(name_len);
+        msg->payload->buffer_get_data(&name[0],name_len);
 
         if (msg != nullptr) {
             delete msg->payload;
             delete msg;
         }
 
-        cname =  new char[name.size + 1];
-        memcpy(cname, name.data.get(), name.size);
-        cname[name.size] = 0;
+        cname =  new char[name.size() + 1];
+        memcpy(cname, &name[0], name.size());
+        cname[name.size()] = 0;
         return cname;
     }
     case SSH_FXP_STATUS:
@@ -3667,8 +3669,8 @@ static sftp_attributes_struct* sftp_xstat(sftp_session_struct* sftp, const char 
     uint32_t id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
-    buffer->out_uint32_be(pathstr.size);
-    buffer->out_blob(pathstr.data.get(), pathstr.size);
+    buffer->out_uint32_be(pathstr.size());
+    buffer->out_blob(&pathstr[0], pathstr.size());
 
     if (sftp_packet_write(sftp, param, buffer) < 0) {
         delete buffer;
@@ -3744,8 +3746,8 @@ sftp_attributes_struct* sftp_fstat(sftp_file_struct* file) {
   id = sftp_get_new_id(file->sftp);
   buffer->out_uint32_le(id);
 
-  buffer->out_uint32_be(file->handle.size);
-  buffer->out_blob(file->handle.data.get(), file->handle.size);
+  buffer->out_uint32_be(file->handle.size());
+  buffer->out_blob(&file->handle[0], file->handle.size());
 
   if (sftp_packet_write(file->sftp, SSH_FXP_FSTAT, buffer) < 0) {
     delete buffer;
@@ -3843,8 +3845,9 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
     if (tmp_len > payload->in_remain()) {
         // ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    SSHString tmp(tmp_len);
-    payload->buffer_get_data(tmp.data.get(),tmp_len);
+    SSHString tmp;
+    tmp.resize(tmp_len);
+    payload->buffer_get_data(&tmp[0],tmp_len);
 
     switch(msg->type) {
     case SSH_FXP_CLOSE:
@@ -3869,8 +3872,9 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
         if (tmp_data_len > payload->in_remain()) {
           // ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString tmp_data(tmp_data_len);
-        payload->buffer_get_data(tmp_data.data.get(),tmp_data_len);
+        SSHString tmp_data;
+        tmp_data.resize(tmp_data_len);
+        payload->buffer_get_data(&tmp_data[0],tmp_data_len);
 
         msg->data = std::move(tmp_data);
     }
@@ -3881,17 +3885,17 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
     case SSH_FXP_READLINK:
     case SSH_FXP_REALPATH:
     {
-        msg->filename = new char[tmp.size + 1];
-        memcpy(msg->filename, tmp.data.get(), tmp.size);
-        msg->filename[tmp.size] = 0;
+        msg->filename = new char[tmp.size() + 1];
+        memcpy(msg->filename, &tmp[0], tmp.size());
+        msg->filename[tmp.size()] = 0;
     }
     break;
     case SSH_FXP_RENAME:
     case SSH_FXP_SYMLINK:
     {
-        msg->filename =  new char[tmp.size + 1];
-        memcpy(msg->filename, tmp.data.get(), tmp.size);
-        msg->filename[tmp.size] = 0;
+        msg->filename =  new char[tmp.size() + 1];
+        memcpy(msg->filename, &tmp[0], tmp.size());
+        msg->filename[tmp.size()] = 0;
 
         if (sizeof(uint32_t) > payload->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -3900,17 +3904,18 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
         if (tmp_data_len > payload->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString tmp_data(tmp_data_len);
-        payload->buffer_get_data(tmp_data.data.get(),tmp_data_len);
+        SSHString tmp_data;
+        tmp_data.resize(tmp_data_len);
+        payload->buffer_get_data(&tmp_data[0],tmp_data_len);
         msg->data = std::move(tmp_data);
     }
     break;
     case SSH_FXP_MKDIR:
     case SSH_FXP_SETSTAT:
     {
-        msg->filename =  new char[tmp.size + 1];
-        memcpy(msg->filename, tmp.data.get(), tmp.size);
-        msg->filename[tmp.size] = 0;
+        msg->filename =  new char[tmp.size() + 1];
+        memcpy(msg->filename, &tmp[0], tmp.size());
+        msg->filename[tmp.size()] = 0;
         msg->attr = sftp_parse_attr(sftp, payload, 0);
     }
     break;
@@ -3923,9 +3928,9 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
     case SSH_FXP_LSTAT:
     case SSH_FXP_STAT:
     {
-        msg->filename =  new char[tmp.size + 1];
-        memcpy(msg->filename, tmp.data.get(), tmp.size);
-        msg->filename[tmp.size] = 0;
+        msg->filename =  new char[tmp.size() + 1];
+        memcpy(msg->filename, &tmp[0], tmp.size());
+        msg->filename[tmp.size()] = 0;
         if(sftp->version > 3) {
             msg->flags = payload->in_uint32_be();
         }
@@ -3933,9 +3938,9 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
     break;
     case SSH_FXP_OPEN:
     {
-        msg->filename =  new char[tmp.size + 1];
-        memcpy(msg->filename, tmp.data.get(), tmp.size);
-        msg->filename[tmp.size] = 0;
+        msg->filename =  new char[tmp.size() + 1];
+        memcpy(msg->filename, &tmp[0], tmp.size());
+        msg->filename[tmp.size()] = 0;
 
         msg->flags = payload->in_uint32_be();
         msg->attr = sftp_parse_attr(sftp, payload, 0);
@@ -3981,9 +3986,9 @@ void sftp_client_message_set_filename(sftp_client_message_struct* msg, const cha
 
 const char *sftp_client_message_get_data(sftp_client_message_struct* msg){
 	if (msg->str_data == nullptr){
-    msg->str_data =  new char[msg->data.size + 1];
-    memcpy(msg->str_data, msg->data.data.get(), msg->data.size);
-    msg->str_data[msg->data.size] = 0;
+    msg->str_data =  new char[msg->data.size() + 1];
+    memcpy(msg->str_data, &msg->data[0], msg->data.size());
+    msg->str_data[msg->data.size()] = 0;
 	}
 	return msg->str_data;
 }
@@ -4062,8 +4067,8 @@ int sftp_reply_handle(sftp_client_message_struct* msg, const SSHString & handle)
   }
 
   out->out_uint32_le(msg->id);
-  msg->attrbuf->out_uint32_be(handle.size);
-  msg->attrbuf->out_blob(handle.data.get(), handle.size);
+  msg->attrbuf->out_uint32_be(handle.size());
+  msg->attrbuf->out_blob(&handle[0], handle.size());
 
   if (sftp_packet_write(msg->sftp, SSH_FXP_HANDLE, out) < 0) {
     delete out;

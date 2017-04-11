@@ -1102,16 +1102,17 @@ struct ssh_crypto_struct {
 
     struct ecdh {
         EC_KEY *privkey;
-        SSHString client_pubkey;
-        SSHString server_pubkey;
+        std::vector<uint8_t> client_pubkey;
+        std::vector<uint8_t> server_pubkey;
 
         ecdh()
             : privkey{}
-            , client_pubkey(0)
-            , server_pubkey(0)
-        {}
+            , client_pubkey{}
+            , server_pubkey{}
+        {
+        }
 
-        int build_k(BIGNUM * (& k), const SSHString & ecdh_pubkey) {
+        int build_k(BIGNUM * (& k), const std::vector<uint8_t> & ecdh_pubkey) {
           k = BN_new();
           if (k == nullptr) {
             return -1;
@@ -1127,7 +1128,7 @@ struct ssh_crypto_struct {
               EC_POINT_clear_free(pubkey);
             return -1;
           }
-          EC_POINT_oct2point(group, pubkey, reinterpret_cast<const uint8_t *>(ecdh_pubkey.c_str()), ecdh_pubkey.size(), ctx);
+          EC_POINT_oct2point(group, pubkey, reinterpret_cast<const uint8_t *>(&ecdh_pubkey[0]), ecdh_pubkey.size(), ctx);
           int len = (EC_GROUP_get_degree(group) + 7) / 8;
           // TOOD: Check actual size necessary, Elliptic curve are supposed to used smaller keys than
           // other encryption schemes, but if it force dynamic memory allocation purpose is defeated
@@ -1179,7 +1180,7 @@ struct ssh_crypto_struct {
         }
     } curve_25519;
 
-    SSHString dh_server_signature; /* information used by dh_handshake. */
+    std::vector<uint8_t> dh_server_signature; /* information used by dh_handshake. */
     size_t digest_len; /* len of all the fields below */
      /* Secret hash is same as session id until re-kex */
     uint8_t secret_hash[SHA256_DIGEST_LENGTH]; // max of SHA_DIGEST_LENGTH and SHA256_DIGEST_LENGTH
@@ -1191,7 +1192,7 @@ struct ssh_crypto_struct {
     unsigned char *decryptMAC;
     unsigned char hmacbuf[SslSha1::DIGEST_LENGTH];
     struct ssh_cipher_struct *in_cipher, *out_cipher; /* the cipher structures/objects */
-    SSHString server_pubkey;
+    std::vector<uint8_t> server_pubkey;
     const char *server_pubkey_type;
     int do_compress_out; /* idem */
     int do_compress_in; /* don't set them, set the option instead */
@@ -1226,7 +1227,7 @@ struct ssh_crypto_struct {
         , hmacbuf{}
         , in_cipher(nullptr)
         , out_cipher(nullptr) /* the cipher structures/objects */
-        , server_pubkey(0)
+        , server_pubkey{}
         , server_pubkey_type(nullptr)
         , do_compress_out(0) /* idem */
         , do_compress_in(0) /* don't set them, set the option instead */

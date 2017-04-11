@@ -385,8 +385,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         syslog(LOG_INFO, "%s error 2", __FUNCTION__);
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    SSHString name(str_len);
-    buffer.buffer_get_data(name.data.get(), str_len);
+    SSHString name;
+    name.resize(str_len);
+    buffer.buffer_get_data(&name[0], str_len);
 
     std::initializer_list<std::pair<const char *, enum ssh_keytypes_e>> l = {
          {"rsa1", SSH_KEYTYPE_RSA1},
@@ -404,7 +405,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
 
     enum ssh_keytypes_e type = SSH_KEYTYPE_UNKNOWN;
     for(auto &p:l){
-        if (strcmp(p.first, name.cstr()) == 0){
+        if (strcmp(p.first, name.c_str()) == 0){
             type = p.second;
             break;
         }
@@ -424,8 +425,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (e_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString e(e_len);
-        buffer.buffer_get_data(e.data.get(),e_len);
+        std::vector<uint8_t> e;
+        e.resize(e_len);
+        buffer.buffer_get_data(&e[0],e_len);
 
         if (sizeof(uint32_t) > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -434,8 +436,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (n_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString n(n_len);
-        buffer.buffer_get_data(n.data.get(),n_len);
+        std::vector<uint8_t> n;
+        n.resize(n_len);
+        buffer.buffer_get_data(&n[0],n_len);
 
         (*pkey)->rsa = RSA_new();
         if ((*pkey)->rsa == nullptr) {
@@ -444,8 +447,8 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        (*pkey)->rsa->e = BN_bin2bn(e.data.get(), e.size, nullptr);
-        (*pkey)->rsa->n = BN_bin2bn(n.data.get(), n.size, nullptr);
+        (*pkey)->rsa->e = BN_bin2bn(&e[0], e.size(), nullptr);
+        (*pkey)->rsa->n = BN_bin2bn(&n[0], n.size(), nullptr);
         if ((*pkey)->rsa->e == nullptr || (*pkey)->rsa->n == nullptr) {
             RSA_free((*pkey)->rsa);
             syslog(LOG_INFO, "%s RSA err", __FUNCTION__);
@@ -466,8 +469,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (p_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString p(p_len);
-        buffer.buffer_get_data(p.data.get(),p_len);
+        std::vector<uint8_t> p;
+        p.resize(p_len);
+        buffer.buffer_get_data(&p[0],p_len);
 
         if (sizeof(uint32_t) > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -476,8 +480,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (q_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString q(q_len);
-        buffer.buffer_get_data(q.data.get(),q_len);
+        std::vector<uint8_t> q;
+        q.resize(q_len);
+        buffer.buffer_get_data(&q[0],q_len);
 
         if (sizeof(uint32_t) > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -486,8 +491,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (g_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString g(g_len);
-        buffer.buffer_get_data(g.data.get(),g_len);
+        std::vector<uint8_t> g;
+        g.resize(g_len);
+        buffer.buffer_get_data(&g[0],g_len);
 
         if (sizeof(uint32_t) > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -496,8 +502,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (pubkey_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString pubkey(pubkey_len);
-        buffer.buffer_get_data(pubkey.data.get(),pubkey_len);
+        std::vector<uint8_t> pubkey;
+        pubkey.resize(pubkey_len);
+        buffer.buffer_get_data(&pubkey[0],pubkey_len);
 
         (*pkey)->dsa = DSA_new();
         if ((*pkey)->dsa == nullptr) {
@@ -506,10 +513,10 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        (*pkey)->dsa->p = BN_bin2bn(p.data.get(), p.size, nullptr);
-        (*pkey)->dsa->q = BN_bin2bn(q.data.get(), q.size, nullptr);
-        (*pkey)->dsa->g = BN_bin2bn(g.data.get(), g.size, nullptr);
-        (*pkey)->dsa->pub_key = BN_bin2bn(pubkey.data.get(), pubkey.size, nullptr);
+        (*pkey)->dsa->p = BN_bin2bn(&p[0], p.size(), nullptr);
+        (*pkey)->dsa->q = BN_bin2bn(&q[0], q.size(), nullptr);
+        (*pkey)->dsa->g = BN_bin2bn(&g[0], g.size(), nullptr);
+        (*pkey)->dsa->pub_key = BN_bin2bn(&pubkey[0], pubkey.size(), nullptr);
         if ((*pkey)->dsa->p == nullptr || (*pkey)->dsa->q == nullptr
          || (*pkey)->dsa->g == nullptr || (*pkey)->dsa->pub_key == nullptr) {
             DSA_free((*pkey)->dsa);
@@ -550,8 +557,9 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         if (e_len > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString e(e_len);
-        buffer.buffer_get_data(e.data.get(),e_len);
+        std::vector<uint8_t> e;
+        e.resize(e_len);
+        buffer.buffer_get_data(&e[0],e.size());
 
         (*pkey)->ecdsa_nid = nid;
         (*pkey)->ecdsa = EC_KEY_new_by_curve_name((*pkey)->ecdsa_nid);
@@ -568,7 +576,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        int ok = EC_POINT_oct2point(g, p, e.data.get(), e.size, nullptr);
+        int ok = EC_POINT_oct2point(g, p, &e[0], e.size(), nullptr);
         if (!ok) {
             EC_POINT_free(p);
             syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);
@@ -621,7 +629,7 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
         return SSH_ERROR;
     }
 
-    SSHString key_blob(0);
+    std::vector<uint8_t> key_blob;
     switch (pubkey->type) {
         case SSH_KEYTYPE_DSS:
         {
@@ -632,8 +640,8 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
             buffer.out_bignum(pubkey->dsa->q); // q
             buffer.out_bignum(pubkey->dsa->g); // g
             buffer.out_bignum(pubkey->dsa->pub_key); // n
-            key_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-            memcpy(key_blob.data.get(), buffer.get_pos_ptr(), key_blob.size);
+            key_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+            memcpy(&key_blob[0], buffer.get_pos_ptr(), key_blob.size());
         }
         break;
         case SSH_KEYTYPE_RSA:
@@ -644,8 +652,8 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
             syslog(LOG_INFO, "%s SSH_KEYTYPE_RSA", __FUNCTION__);
             buffer.out_bignum(pubkey->rsa->e); // e
             buffer.out_bignum(pubkey->rsa->n); // n
-            key_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-            memcpy(key_blob.data.get(), buffer.get_pos_ptr(), key_blob.size);
+            key_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+            memcpy(&key_blob[0], buffer.get_pos_ptr(), key_blob.size());
         }
         break;
         case SSH_KEYTYPE_ECDSA:
@@ -668,15 +676,16 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
                 return SSH_ERROR;
             }
 
-            SSHString e(static_cast<uint32_t>(len_ec));
-            if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
+            std::vector<uint8_t> e;
+            e.resize(static_cast<uint32_t>(len_ec));
+            if (e.size() != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
                 return SSH_ERROR;
             }
 
-            buffer.out_uint32_be(e.size);
-            buffer.out_blob(e.data.get(), e.size);
-            key_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-            memcpy(key_blob.data.get(), buffer.get_pos_ptr(), key_blob.size);
+            buffer.out_uint32_be(e.size());
+            buffer.out_blob(&e[0], e.size());
+            key_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+            memcpy(&key_blob[0], buffer.get_pos_ptr(), key_blob.size());
         }
         break;
         case SSH_KEYTYPE_UNKNOWN:
@@ -684,7 +693,7 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b6
         return SSH_ERROR;
     }
 
-    b64 = bin_to_base64(key_blob.data.get(), key_blob.size);
+    b64 = bin_to_base64(&key_blob[0], key_blob.size());
     if (b64 == nullptr) {
         return SSH_ERROR;
     }
@@ -711,42 +720,45 @@ int ssh_pki_export_pubkey_base64_p(const ssh_key_struct *key, char *b64, int b64
 
 
 
-inline SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
+inline std::vector<uint8_t> pki_signature_to_blob(const ssh_signature_struct * sig)
 {
     switch(sig->sig_type) {
         case SSH_KEYTYPE_DSS:
         {
-            SSHString sig_blob(40);
+            std::vector<uint8_t> sig_blob;
+            sig_blob.resize(40);
 
             unsigned int len3 = BN_num_bytes(sig->dsa_sig->r);
             unsigned int bits3 = BN_num_bits(sig->dsa_sig->r);
             /* If the first bit is set we have a negative number, padding needed */
             int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(sig->dsa_sig->r, bits3 - 1))?1:0;
-            SSHString r(len3 + pad3);
+            std::vector<uint8_t> r;
+            r.resize(len3 + pad3);
             /* We have a negative number henceforth we need a leading zero */
-            r.data[0] = 0;
-            BN_bn2bin(sig->dsa_sig->r, r.data.get() + pad3);
+            r[0] = 0;
+            BN_bn2bin(sig->dsa_sig->r, &r[pad3]);
 
             // TODO: check that, suspicious
-            int r_offset_in  = (r.size > 20) ? (r.size - 20) : 0;
-            int r_offset_out = (r.size < 20) ? (20 - r.size) : 0;
+            int r_offset_in  = (r.size() > 20) ? (r.size() - 20) : 0;
+            int r_offset_out = (r.size() < 20) ? (20 - r.size()) : 0;
 
-            memcpy(sig_blob.data.get() + r_offset_out, r.data.get() + r_offset_in, r.size - r_offset_in);
+            memcpy(&sig_blob[r_offset_out], &r[r_offset_in], r.size() - r_offset_in);
 
             unsigned int len4 = BN_num_bytes(sig->dsa_sig->s);
             unsigned int bits4 = BN_num_bits(sig->dsa_sig->s);
             /* If the first bit is set we have a negative number, padding needed */
             int pad4 = ((bits4 % 8) == 0 && BN_is_bit_set(sig->dsa_sig->s, bits4 - 1))?1:0;
-            SSHString s(len4 + pad4);
+            std::vector<uint8_t> s;
+            s.resize(len4 + pad4);
             /* if pad we have a negative number henceforth we need a leading zero */
-            s.data[0] = 0;
-            BN_bn2bin(sig->dsa_sig->s, s.data.get() + pad4);
+            s[0] = 0;
+            BN_bn2bin(sig->dsa_sig->s, &s[pad4]);
 
             // TODO: check that, suspicious
-            int s_offset_in  = (s.size > 20) ? (s.size - 20) : 0;
-            int s_offset_out = (s.size < 20) ? (20 - s.size) : 0;
+            int s_offset_in  = (s.size() > 20) ? (s.size() - 20) : 0;
+            int s_offset_out = (s.size() < 20) ? (20 - s.size()) : 0;
 
-            memcpy(sig_blob.data.get() + 20 + s_offset_out, s.data.get() + s_offset_in, s.size - s_offset_in);
+            memcpy(&sig_blob[20 + s_offset_out], &s[s_offset_in], s.size() - s_offset_in);
 
             return sig_blob;
         }
@@ -755,8 +767,9 @@ inline SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
         {
             // TODO: check that, very suspicious, why don't we compute sig_blob like for dsa or ecdsa ?
             // copy signature blob
-            SSHString sig_blob(sig->rsa_sig.size);
-            memcpy(sig_blob.data.get(), sig->rsa_sig.data.get(), sig->rsa_sig.size);
+            std::vector<uint8_t> sig_blob;
+            sig_blob.resize(sig->rsa_sig.size());
+            memcpy(&sig_blob[0], &sig->rsa_sig[0], sig->rsa_sig.size());
             return sig_blob;
         }
         case SSH_KEYTYPE_ECDSA:
@@ -767,39 +780,42 @@ inline SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
             unsigned int bits3 = BN_num_bits(sig->ecdsa_sig->r);
             /* If the first bit is set we have a negative number, padding needed */
             int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(sig->ecdsa_sig->r, bits3 - 1))?1:0;
-            SSHString r(len3 + pad3);
+            std::vector<uint8_t> r;
+            r.resize(len3 + pad3);
             /* if pad we have a negative number henceforth we need a leading zero */
-            r.data[0] = 0;
-            BN_bn2bin(sig->ecdsa_sig->r, r.data.get() + pad3);
+            r[0] = 0;
+            BN_bn2bin(sig->ecdsa_sig->r, &r[pad3]);
 
-            b.out_uint32_be(r.size);
-            b.out_blob(r.data.get(), r.size);
+            b.out_uint32_be(r.size());
+            b.out_blob(&r[0], r.size());
 
             unsigned int len4 = BN_num_bytes(sig->ecdsa_sig->s);
             unsigned int bits4 = BN_num_bits(sig->ecdsa_sig->s);
             /* If the first bit is set we have a negative number, padding needed */
             int pad4 = ((bits4 % 8) == 0 && BN_is_bit_set(sig->ecdsa_sig->s, bits4 - 1))?1:0;
-            SSHString s(len4 + pad4);
+            std::vector<uint8_t> s;
+            s.resize(len4 + pad4);
             /* if pad we have a negative number henceforth we need a leading zero */
-            s.data[0] = 0;
-            BN_bn2bin(sig->ecdsa_sig->s, s.data.get() + pad4);
+            s[0] = 0;
+            BN_bn2bin(sig->ecdsa_sig->s, &s[pad4]);
 
-            b.out_uint32_be(s.size);
-            b.out_blob(s.data.get(), s.size);
+            b.out_uint32_be(s.size());
+            b.out_blob(&s[0], s.size());
 
-            SSHString sig_blob(static_cast<uint32_t>(b.in_remain()));
-            memcpy(sig_blob.data.get(), b.get_pos_ptr(), b.in_remain());
+            std::vector<uint8_t> sig_blob;
+            sig_blob.resize(static_cast<uint32_t>(b.in_remain()));
+            memcpy(&sig_blob[0], b.get_pos_ptr(), b.in_remain());
 
             return sig_blob;
         }
         case SSH_KEYTYPE_UNKNOWN:
             LOG(LOG_INFO, "Unknown signature key type: %s", sig->type_c());
-            return SSHString(0);
+            return std::vector<uint8_t>{};
     }
-    return SSHString(0);
+    return std::vector<uint8_t>{};
 }
 
-SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigned char *hash, size_t hlen)
+std::vector<uint8_t> ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigned char *hash, size_t hlen)
 {
     ssh_signature_struct * sig = new ssh_signature_struct;
     sig->sig_type = key->type;
@@ -809,7 +825,7 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
             sig->dsa_sig = DSA_do_sign(hash, hlen, key->dsa);
             if (sig->dsa_sig == nullptr) {
                 ssh_signature_free(sig);
-                return SSHString(0);
+                return std::vector<uint8_t>();
             }
             break;
         case SSH_KEYTYPE_RSA:
@@ -820,8 +836,8 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
 
             RSA_sign(NID_sha1, hash, hlen, sig1, &slen, key->rsa);
 
-            SSHString sig_blob(sig1, slen);
-//            memcpy(sig_blob.data.get(), sig1, slen);
+            std::vector<uint8_t> sig_blob(&sig1[0], &sig1[slen]);
+//            memcpy(&sig_blob[0], sig1, slen);
             memset(sig1, 'd', slen);
             free(sig1);
             sig1 = nullptr;
@@ -833,12 +849,12 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
             sig->ecdsa_sig = ECDSA_do_sign(hash, hlen, key->ecdsa);
             if (sig->ecdsa_sig == nullptr) {
                 ssh_signature_free(sig);
-                return SSHString(0);
+                return std::vector<uint8_t>();
             }
             break;
         case SSH_KEYTYPE_UNKNOWN:
             ssh_signature_free(sig);
-            return SSHString(0);
+            return std::vector<uint8_t>();
     }
 
     ssh_buffer_struct* buf = new ssh_buffer_struct;
@@ -846,16 +862,16 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
     const char * type_c = sig->type_c();
     SSHString str(type_c);
 
-    buf->out_uint32_be(str.size);
-    buf->out_blob(str.data.get(), str.size);
+    buf->out_uint32_be(str.size());
+    buf->out_blob(&str[0], str.size());
 
-    SSHString str2 = pki_signature_to_blob(sig);
+    std::vector<uint8_t> str2 = pki_signature_to_blob(sig);
 
-    buf->out_uint32_be(str2.size);
-    buf->out_blob(str2.data.get(), str2.size);
+    buf->out_uint32_be(str2.size());
+    buf->out_blob(&str2[0], str2.size());
 
-    SSHString sig_blob(static_cast<uint32_t>(buf->in_remain()));
-    memcpy(sig_blob.data.get(), buf->get_pos_ptr(), buf->in_remain());
+    std::vector<uint8_t> sig_blob(static_cast<uint32_t>(buf->in_remain()));
+    memcpy(&sig_blob[0], buf->get_pos_ptr(), buf->in_remain());
 
     delete buf;
     delete sig;
@@ -872,9 +888,9 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
         case SSH_KEYTYPE_DSS:
         {
             /* 40 is the dual signature blob len. */
-            if (sig_blob.size != 40) {
+            if (sig_blob.size() != 40) {
                 LOG(LOG_INFO, "Signature has wrong size: %lu",
-                            static_cast<unsigned long>(sig_blob.size));
+                            static_cast<unsigned long>(sig_blob.size()));
                 ssh_signature_free(sig);
                 return nullptr;
             }
@@ -885,19 +901,20 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 return nullptr;
             }
 
-            SSHString r(20);
-            memcpy(r.data.get(), sig_blob.data.get(), 20);
+            std::vector<uint8_t> r;
+            r.resize(20);
+            memcpy(&r[0], &sig_blob[0], 20);
 
-            sig->dsa_sig->r = BN_bin2bn(r.data.get(), r.size, nullptr);
+            sig->dsa_sig->r = BN_bin2bn(&r[0], r.size(), nullptr);
             if (sig->dsa_sig->r == nullptr) {
                 ssh_signature_free(sig);
                 return nullptr;
             }
 
-            SSHString s(20);
-            memcpy(s.data.get(), sig_blob.data.get() + 20, 20);
+            std::vector<uint8_t> s(20);
+            memcpy(&s[0], &sig_blob[20], 20);
 
-            sig->dsa_sig->s = BN_bin2bn(s.data.get(), s.size, nullptr);
+            sig->dsa_sig->s = BN_bin2bn(&s[0], s.size(), nullptr);
             if (sig->dsa_sig->s == nullptr) {
                 ssh_signature_free(sig);
                 return nullptr;
@@ -910,33 +927,32 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             uint32_t pad_len = 0;
             size_t rsalen = RSA_size(pubkey->rsa);
 
-            if (sig_blob.size > rsalen) {
-                LOG(LOG_INFO, "Signature is too big: %u > %lu", sig_blob.size, rsalen);
+            if (sig_blob.size() > rsalen) {
+                LOG(LOG_INFO, "Signature is too big: %lu > %lu", sig_blob.size(), rsalen);
                 ssh_signature_free(sig);
             }
 
             #ifdef DEBUG_CRYPTO
-                LOG(LOG_INFO, "RSA signature len: %lu", static_cast<unsigned char>(sig_blob.size));
-                ssh_print_hexa("RSA signature", sig_blob.data, sig_blob.size);
+                LOG(LOG_INFO, "RSA signature len: %lu", static_cast<unsigned char>(sig_blob.size()));
+                ssh_print_hexa("RSA signature", &sig_blob[0], sig_blob.size());
             #endif
 
-            if (sig_blob.size == rsalen) {
-                    sig->rsa_sig = SSHString(sig_blob.size);
-                    memcpy(sig->rsa_sig.data.get(), sig_blob.data.get(), sig_blob.size);
+            if (sig_blob.size() == rsalen) {
+                    sig->rsa_sig.resize(sig_blob.size());
+                    memcpy(&sig->rsa_sig[0], &sig_blob[0], sig_blob.size());
             }
             else {
                 /* pad the blob to the expected rsalen size */
-                LOG(LOG_INFO, "RSA signature len %u < %lu", sig_blob.size, rsalen);
+                LOG(LOG_INFO, "RSA signature len %lu < %lu", sig_blob.size(), rsalen);
 
-                pad_len = rsalen - sig_blob.size;
+                pad_len = rsalen - sig_blob.size();
 
-                SSHString sig_blob_padded(static_cast<uint32_t>(rsalen));
+                std::vector<uint8_t> sig_blob_padded(static_cast<uint32_t>(rsalen));
 
                 /* front-pad the buffer with zeroes */
-                memset(sig_blob_padded.data.get(), 0, pad_len);
+                memset(&sig_blob_padded[0], 0, pad_len);
                 /* fill the rest with the actual signature blob */
-                memcpy(sig_blob_padded.data.get() + pad_len, sig_blob.data.get(), sig_blob.size);
-
+                memcpy(&sig_blob_padded[pad_len], &sig_blob[0], sig_blob.size());
                 sig->rsa_sig = std::move(sig_blob_padded);
             }
         }
@@ -957,7 +973,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                     return nullptr;
                 }
 
-                b->out_blob(sig_blob.data.get(), sig_blob.size);
+                b->out_blob(&sig_blob[0], sig_blob.size());
 
                 if (sizeof(uint32_t) > b->in_remain()){
                     delete b;
@@ -1033,14 +1049,14 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
 }
 
 
-int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
+int ssh_pki_signature_verify_blob(const std::vector<uint8_t> & sig_blob,
                                   const ssh_key_struct *key,
                                   unsigned char *digest,
                                   size_t dlen,
                                   struct error_struct & error)
 {
     ssh_buffer_struct* buf = new ssh_buffer_struct;
-    buf->out_blob(sig_blob.data.get(), sig_blob.size);
+    buf->out_blob(&sig_blob[0], sig_blob.size());
 
     if (sizeof(uint32_t) > buf->in_remain()) {
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -1049,8 +1065,9 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
     if (str_len > buf->in_remain()) {
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    SSHString str(str_len);
-    buf->buffer_get_data(str.data.get(),str_len);
+    SSHString str;
+    str.resize(str_len);
+    buf->buffer_get_data(&str[0], str_len);
 
     std::initializer_list<std::pair<const char *, enum ssh_keytypes_e>> l = {
          {"rsa1", SSH_KEYTYPE_RSA1},
@@ -1068,7 +1085,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
 
     enum ssh_keytypes_e type = SSH_KEYTYPE_UNKNOWN;
     for(auto &p:l){
-        if (strcmp(p.first, str.cstr()) == 0){
+        if (strcmp(p.first, str.c_str()) == 0){
             type = p.second;
             break;
         }
@@ -1081,8 +1098,9 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
     if (tmp_len > buf->in_remain()) {
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    SSHString tmp(tmp_len);
-    buf->buffer_get_data(tmp.data.get(),tmp_len);
+    SSHString tmp;
+    tmp.resize(tmp_len);
+    buf->buffer_get_data(&tmp[0],tmp_len);
 
     ssh_signature_struct * sig = pki_signature_from_blob(key, std::move(tmp), type);
     delete buf;
@@ -1181,8 +1199,8 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
         int rc = RSA_verify(NID_sha1,
                         hash,
                         SHA_DIGEST_LENGTH,
-                        sig->rsa_sig.data.get(),
-                        sig->rsa_sig.size,
+                        &sig->rsa_sig[0],
+                        sig->rsa_sig.size(),
                         key->rsa);
         if (rc <= 0) {
             ssh_set_error(error,
