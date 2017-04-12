@@ -120,6 +120,9 @@ public:
 
     virtual bool is_up_and_running() { return false; }
 
+    // support auto-reconnection
+    virtual bool is_auto_reconnectable() { return false; }
+
     virtual void disconnect(time_t now) { (void)now; }
 
     virtual void display_osd_message(std::string const &) {}

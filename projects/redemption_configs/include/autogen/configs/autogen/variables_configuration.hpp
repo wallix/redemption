@@ -3152,6 +3152,26 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{0};
         };
+        // type: bool
+        struct perform_automatic_reconnection {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "perform_automatic_reconnection"; }
+            using type = bool;
+            using mapped_type = type;
+            type value{0};
+        };
+        // type: std::array<unsigned char, 28>
+        struct server_auto_reconnect_packet {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "server_auto_reconnect_packet"; }
+            using type = std::array<unsigned char, 28>;
+            using mapped_type = type;
+            type value{};
+        };
     };
 
     // type: Theme
@@ -3469,6 +3489,8 @@ struct context
 , cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
 , cfg::context::recording_started
+, cfg::context::perform_automatic_reconnection
+, cfg::context::server_auto_reconnect_packet
 { static constexpr bool is_section = true; };
 
 }

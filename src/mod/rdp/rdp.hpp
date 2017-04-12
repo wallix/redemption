@@ -757,6 +757,12 @@ protected:
 
     bool client_use_bmp_cache_2 = false;
 
+    std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
+
+    bool is_server_auto_reconnec_packet_received = false;
+
+    uint8_t client_random[SEC_RANDOM_SIZE] = { 0 };
+
 public:
     using Verbose = RDPVerbose;
 
@@ -914,6 +920,7 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
+        , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -2617,17 +2624,17 @@ public:
                                 #endif
                             }
 
-                            uint8_t client_random[SEC_RANDOM_SIZE];
-                            memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
-
                             /* Generate a client random, and determine encryption keys */
-                            this->gen.random(client_random, SEC_RANDOM_SIZE);
+                            this->gen.random(this->client_random, SEC_RANDOM_SIZE);
+                            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                                LOG(LOG_INFO, "mod_rdp: Generate client random");
+                            }
 
                             ssllib ssl;
 
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
-//                                        hexdump(client_random, SEC_RANDOM_SIZE);
+//                                        hexdump(this->client_random, SEC_RANDOM_SIZE);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
 //                                            static_cast<unsigned>(SEC_RANDOM_SIZE));
 
@@ -2644,7 +2651,7 @@ public:
                             ssl.rsa_encrypt(
                                 this->client_crypt_random,
                                 SEC_RANDOM_SIZE,
-                                client_random,
+                                this->client_random,
                                 this->server_public_key_len,
                                 modulus,
                                 SEC_EXPONENT_SIZE,
@@ -2655,7 +2662,7 @@ public:
 //                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
 //                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
-                            SEC::KeyBlock key_block(client_random, serverRandom);
+                            SEC::KeyBlock key_block(this->client_random, serverRandom);
                             memcpy(encrypt.sign_key, key_block.blob0, 16);
                             if (sc_sec1.encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
@@ -5795,6 +5802,14 @@ public:
                 auto_reconnect.log(LOG_INFO);
 
                 this->front.send_auto_reconnect_packet(auto_reconnect);
+
+                OutStream stream(
+                    this->server_auto_reconnect_packet_ref.data(),
+                    this->server_auto_reconnect_packet_ref.size());
+
+                auto_reconnect.emit(stream);
+
+                this->is_server_auto_reconnec_packet_received = true;
             }
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
@@ -7186,7 +7201,52 @@ private:
                              );
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
 
-        if (this->cbAutoReconnectCookie) {
+        InStream in_s(this->server_auto_reconnect_packet_ref.data(),
+            this->server_auto_reconnect_packet_ref.size());
+        RDP::ServerAutoReconnectPacket_Recv server_auto_reconnect_packet(in_s);
+
+        if (server_auto_reconnect_packet.cbLen) {
+            if (bool(this->verbose & RDPVerbose::basic_trace)){
+                LOG(LOG_INFO, "Use Server Auto-Reconnect Packet");
+                LOG(LOG_INFO, "Server Reconnect Random");
+                hexdump(server_auto_reconnect_packet.ArcRandomBits,
+                    sizeof(server_auto_reconnect_packet.ArcRandomBits));
+            }
+
+            OutStream out_s(infoPacket.extendedInfoPacket.autoReconnectCookie,
+                sizeof(infoPacket.extendedInfoPacket.autoReconnectCookie));
+
+            uint8_t digest[SslMd5::DIGEST_LENGTH] = { 0 };
+
+            SslHMAC_Md5 hmac_md5(server_auto_reconnect_packet.ArcRandomBits,
+                sizeof(server_auto_reconnect_packet.ArcRandomBits));
+            if (!this->nego.tls && !this->nego.nla) {
+                if (bool(this->verbose & RDPVerbose::basic_trace)){
+                    LOG(LOG_INFO, "Use client random");
+                }
+                hmac_md5.update(this->client_random, sizeof(this->client_random));
+            }
+            else {
+                if (bool(this->verbose & RDPVerbose::basic_trace)){
+                    LOG(LOG_INFO, "Use NULL client random");
+                }
+                uint8_t tmp_client_random[32] = { 0 };
+                hmac_md5.update(tmp_client_random, sizeof(tmp_client_random));
+            }
+            hmac_md5.final(digest);
+
+            infoPacket.extendedInfoPacket.cbAutoReconnectLen = 0x1C;
+
+            out_s.out_uint32_le(0x1C);  // cbLen(4)
+            out_s.out_uint32_le(1);     // Version(4)
+            out_s.out_uint32_le(server_auto_reconnect_packet.LogonId);  // LogonId(4)
+            out_s.out_copy_bytes(digest, sizeof(digest));
+            if (bool(this->verbose & RDPVerbose::basic_trace)){
+                LOG(LOG_INFO, "Client Security Verifier");
+                hexdump(digest, sizeof(digest));
+            }
+        }
+        else if (this->cbAutoReconnectCookie) {
             infoPacket.extendedInfoPacket.cbAutoReconnectLen =
                 this->cbAutoReconnectCookie;
             ::memcpy(infoPacket.extendedInfoPacket.autoReconnectCookie, this->autoReconnectCookie,
@@ -7490,4 +7550,8 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
+
+    bool is_auto_reconnectable() override {
+        return this->is_server_auto_reconnec_packet_received;
+    }
 };

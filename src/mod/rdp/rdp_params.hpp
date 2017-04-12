@@ -159,6 +159,8 @@ struct ModRDPParams {
 
     bool large_pointer_support = true;
 
+    std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -169,6 +171,7 @@ struct ModRDPParams {
                 , int key_flags
                 , Font const & font
                 , Theme const & theme
+                , std::array<uint8_t, 28>& server_auto_reconnect_packet_ref
                 , RDPVerbose verbose
                 )
         : target_user(target_user)
@@ -178,6 +181,7 @@ struct ModRDPParams {
         , key_flags(key_flags)
         , font(font)
         , theme(theme)
+        , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , verbose(verbose)
     {}
 

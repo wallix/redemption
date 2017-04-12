@@ -556,6 +556,9 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "ip_target");
         W.sep();
         W.member(type_<bool>(), "recording_started", set(false), w);
+        W.sep();
+        W.member(type_<bool>(), "perform_automatic_reconnection", set(false));
+        W.member(type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
     });
 
     W.section("", [&]
