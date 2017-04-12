@@ -133,6 +133,7 @@ int main(int argc, char** argv){
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
+                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                , to_verbose_flags(0)
                                );
 

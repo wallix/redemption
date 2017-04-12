@@ -114,6 +114,16 @@ private:
             {
                 this->managed_mod->get_event_handlers(out_event_handlers);
             }
+
+            if (this->host.disconnection_reconnection_required &&
+                this->managed_mod &&
+                this->managed_mod->is_auto_reconnectable()) {
+                out_event_handlers.emplace_back(
+                        &this->host.disconnection_reconnection_event,
+                        &this->host.disconnection_reconnection_event_handler,
+                        INVALID_SOCKET
+                    );
+            }
         }
 
         bool is_up_and_running() override
@@ -204,6 +214,13 @@ private:
         }
     } module_holder;
 
+    class DisconnectionReconnectionEventHandler : public EventHandler::CB {
+    public:
+        void operator()(time_t/* now*/, wait_obj*/* event*/, gdi::GraphicApi&/* drawable*/) override {
+            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+        }
+    } disconnection_reconnection_event_handler;
+
     CompositeArray composite_array;
 
     gdi::GraphicApi* drawable_ptr = nullptr;
@@ -228,6 +245,10 @@ private:
     GCC::UserData::CSMonitor monitor_one;
 
     Pointer current_pointer;
+
+    bool disconnection_reconnection_required = false;   // Window resize
+
+    wait_obj disconnection_reconnection_event;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
@@ -480,6 +501,16 @@ public:
     }
 
     void set_wh(uint16_t w, uint16_t h) override {
+        {
+            const uint16_t cx = this->cx();
+            const uint16_t cy = this->cy();
+            if (cx && cy && ((cx != w) || (cy != h))) {
+                this->disconnection_reconnection_required = true;
+
+                this->disconnection_reconnection_event.set(1000000);
+            }
+        }
+
         Rect old_mod_visible_rect = this->mod_visible_rect;
         Rect old_rect             = this->get_rect();
 

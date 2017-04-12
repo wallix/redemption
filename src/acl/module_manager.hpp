@@ -814,6 +814,17 @@ public:
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         this->connected = false;
         if (this->last_module) this->front.must_be_stop_capture();
+
+        auto final = finally([this]() {
+            this->ini.set<cfg::context::perform_automatic_reconnection>(false);
+        });
+        if (!this->ini.get<cfg::context::perform_automatic_reconnection>()) {
+            std::array<uint8_t, 28>& server_auto_reconnect_packet_ref =
+                this->ini.get_ref<cfg::context::server_auto_reconnect_packet>();
+
+            server_auto_reconnect_packet_ref.fill(0);
+        }
+
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -1250,6 +1261,7 @@ public:
                                            , this->front.keymap.key_flags
                                            , this->ini.get<cfg::font>()
                                            , this->ini.get<cfg::theme>()
+                                           , this->ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
