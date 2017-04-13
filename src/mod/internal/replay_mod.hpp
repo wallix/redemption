@@ -74,6 +74,8 @@ class ReplayMod : public InternalMod
     bool end_of_data;
     bool wait_for_escape;
 
+    time_t balise_time_frame;
+
 public:
     using Verbose = FileToGraphic::Verbose;
 
@@ -97,6 +99,7 @@ public:
     , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
+    , balise_time_frame(0)
     {
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
@@ -133,6 +136,7 @@ public:
              , bool wait_for_escape
              , timeval & begin_read
              , timeval & end_read
+             , time_t balise_time_frame
              , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
@@ -141,6 +145,7 @@ public:
     , reader(this->in_trans, begin_read, end_read, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
+    , balise_time_frame(balise_time_frame)
     {
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
@@ -150,7 +155,7 @@ public:
             break;
         case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::done:
-            // resizing done
+            // resizing done;
             this->front_width  = this->reader.info_width;
             this->front_height = this->reader.info_height;
 
@@ -165,6 +170,8 @@ public:
         }
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+        time_t begin_file_read = begin_read.tv_sec+this->in_trans.meta_line.start_time - this->balise_time_frame;
+        this->in_trans.set_begin_time(begin_file_read);
     }
 
     void add_consumer(

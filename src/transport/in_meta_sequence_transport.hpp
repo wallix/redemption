@@ -466,6 +466,8 @@ class InMetaSequenceTransport : public Transport
         }
     } cfb;
 
+    time_t       begin_time;
+
     class buf_meta_t {
         CryptoContext * cctx;
         int file_fd;
@@ -984,7 +986,20 @@ public:
         if (read_start_stop_time) {
             err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+
+            if (meta_line.stop_time < this->begin_time) {
+                ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+                if (len < 0) {
+                    return -len;
+                }
+                line[len] = 0;
+
+                return buf_read_meta_file_v2_impl<true>(has_checksum, meta_line);
+
+            }
         }
+
+
 
         // TODO Why do this with lambda ? Is it so important to avoid typing 3 lines of code two times ?
         if (has_checksum){
@@ -1072,6 +1087,7 @@ public:
         const char * extension,
         int encryption)
     : cfb(cctx, encryption)
+    , begin_time(0)
     , buf_meta(cctx, encryption)
     , meta_header_version(1)
     , meta_header_has_checksum(false)
@@ -1126,6 +1142,10 @@ public:
     ~InMetaSequenceTransport(){
         this->cfb.file_close();
         this->buf_meta.file_close();
+    }
+
+    void set_begin_time(time_t begin_time) {
+        this->begin_time = begin_time;
     }
 
 

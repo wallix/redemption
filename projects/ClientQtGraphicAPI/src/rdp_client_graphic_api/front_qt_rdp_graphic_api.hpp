@@ -82,6 +82,44 @@ public:
 
 
 
+class ProgressBarWindow : public QWidget {
+
+Q_OBJECT
+
+public:
+    QProgressBar load_bar;
+
+    ProgressBarWindow(int maxVal)
+        : QWidget()
+        , load_bar(this)
+    {
+        this->setAttribute(Qt::WA_DeleteOnClose);
+
+        QRect rect(QPoint(0,0),QSize(600, 50));
+        this->load_bar.setGeometry(rect);
+        this->load_bar.setRange(0, maxVal);
+
+        uint32_t centerW = 0;
+        uint32_t centerH = 0;
+        QDesktopWidget* desktop = QApplication::desktop();
+        centerW = (desktop->width()/2)  - 300;
+        centerH = (desktop->height()/2) - 25;
+        this->move(centerW, centerH);
+
+        this->show();
+    }
+
+    void setValue(int val) {
+        this->load_bar.setValue(val);
+        if (val >= this->load_bar.maximum()) {
+            this->close();
+        }
+    }
+
+};
+
+
+
 class Front_Qt_API : public FrontAPI
 {
 
@@ -108,6 +146,7 @@ public:
     QImage::Format       imageFormatRGB;
     QImage::Format       imageFormatARGB;
     Qt_ScanCode_KeyMap   qtRDPKeymap;
+    ProgressBarWindow  * bar;
     QPixmap            * cache;
     QPixmap            * cache_replay;
     SocketTransport    * socket;
@@ -138,6 +177,7 @@ public:
     , is_recording(false)
     , is_replaying(false)
     , qtRDPKeymap()
+    , bar(nullptr)
     , cache(nullptr)
     , cache_replay(nullptr)
     , socket(nullptr)
@@ -690,6 +730,8 @@ private Q_SLOTS:
 };
 
 
+
+
 class Screen_Qt : public QWidget
 {
 
@@ -868,10 +910,7 @@ public:
 
 
     void pre_load_movie() {
-//         QProgressBar load_bar = new QProgressBar(this);
-//         QWidget * load_bar = new QWidget();
-//         load_bar->setFixedSize(400, 20);
-//         load_bar->show();
+
         uint64_t movie_length = unsigned(this->movie_time);
         uint64_t endin_frame = 0;
         int i = 0;
@@ -882,7 +921,11 @@ public:
             this->balises[i] = new QPixmap(*(this->_cache));
             endin_frame += BALISED_FRAME;
             i++;
+            if (this->_front->bar) {
+                this->_front->bar->setValue(endin_frame);
+            }
         }
+
         this->_front->load_replay_mod(this->_movie_name, {this->begin, 0}, {0, 0});
     }
 
@@ -1575,6 +1618,7 @@ public:
                                                 , true
                                                 , begin_read
                                                 , end_read
+                                                , Screen_Qt::BALISED_FRAME
                                                 , to_verbose_flags(0) //FileToGraphic::Verbose::play
                                                 ));
 
@@ -2259,7 +2303,6 @@ public:
                     const size_t rowsize(srcBitmap.bytesPerLine());
                     std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(rowsize);
 
-
                     for (size_t k = 1 ; k < drect.cy; k++) {
 
                         const uchar * srcData = srcBitmap.constScanLine(k);
@@ -2790,6 +2833,8 @@ public:
         this->connected = true;
         this->form->hide();
         this->screen->show();
+
+        this->bar = new ProgressBarWindow(this->screen->movie_time);
 
         this->screen->pre_load_movie();
     }
