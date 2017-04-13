@@ -19,30 +19,35 @@
 
 */
 
-extern "C" {
-//    REDEMPTION_LIB_EXPORT
-//    void * redcryptofile_open_writer(int encryption, int checksum, char * path,
-//            get_hmac_key_prototype * hmac_fn,
-//            get_trace_key_prototype * trace_fn);
-//            
-//    REDEMPTION_LIB_EXPORT
-//    int redcryptofile_open_reader(char * path,
-//            get_hmac_key_prototype * hmac_fn,
-//            get_trace_key_prototype * trace_fn);
-//            
-//    REDEMPTION_LIB_EXPORT
-//    int redcryptofile_write(void * handle, uint8_t * buffer, size_t len);
+#include "cxx/cxx.hpp"
+#include "capture/cryptofile.hpp"
 
-//    REDEMPTION_LIB_EXPORT
-//    int redcryptofile_read(void * handle, uint8_t * buffer, size_t len);
+extern "C"
+{
+    class RedCryptoHandle;
 
-//    REDEMPTION_LIB_EXPORT
-//    int redcryptofile_read_qhash(void * handle, char * qhashhex);
+    REDEMPTION_LIB_EXPORT
+    RedCryptoHandle * redcryptofile_open_writer(int with_encryption, int with_checksum, char const * path,
+        get_hmac_key_prototype * hmac_fn,
+        get_trace_key_prototype * trace_fn);
 
-//    REDEMPTION_LIB_EXPORT
-//    int redcryptofile_read_fhash(void * handle, char * qhashhex);
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_open_reader(char * path,
+        get_hmac_key_prototype * hmac_fn,
+        get_trace_key_prototype * trace_fn);
 
-//    REDEMPTION_LIB_EXPORT
-//    redcryptofile_close_writer(void * handle, char * qhashhex, char * fhashhex);            
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_write(RedCryptoHandle * handle, uint8_t const * buffer, size_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_read(RedCryptoHandle * handle, uint8_t * buffer, size_t len);
+
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_read_qhash(RedCryptoHandle * handle, char * qhashhex);
+
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_read_fhash(RedCryptoHandle * handle, char * qhashhex);
+
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_close_writer(RedCryptoHandle * handle, char * qhashhex, char * fhashhex);
 }
-

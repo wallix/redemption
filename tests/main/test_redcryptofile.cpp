@@ -61,12 +61,19 @@ extern "C" {
 
 RED_AUTO_TEST_CASE(TestRedCryptofileWriter)
 {
-//    int encryption = 0; // int used as boolean 0 false, true otherwise
-//    int checksum = 0;   // int used as boolean 0 false, true otherwise
-//    
-//    void * handle = redcryptofile_open_writer(encryption, checksum, "./encrypted.txt", trace_fn, hmac_fn);
-//    BOOST_CHECK(handle != nullptr);
-//    int res1 = redcryptofile_write(handle, buffer, len);
-//    BOOST_CHECK_EQUAL(res, len);
-//    int res2 = redcryptofile_close_writer(handle, qhashhex, fhashhex);
+    OpenSSL_add_all_digests();
+    int with_encryption = 0; // int used as boolean 0 false, true otherwise
+    int with_checksum = 0;   // int used as boolean 0 false, true otherwise
+
+    uint8_t qhashhex[MD_HASH::DIGEST_LENGTH * 2]{};
+    uint8_t fhashhex[MD_HASH::DIGEST_LENGTH * 2]{};
+
+    const char * finalname = "./encrypted.txt";
+
+    RedCryptoHandle * handle = redcryptofile_open_writer(with_encryption, with_checksum, finalname, trace_fn, hmac_fn);
+    RED_CHECK_NE(handle, nullptr);
+    RED_CHECK_EQ(redcryptofile_write(handle, "We write, ", 10), 10);
+    RED_CHECK_EQ(redcryptofile_write(handle, "and again, ", 11), 11);
+    RED_CHECK_EQ(redcryptofile_write(handle, "and so on.", 10), 10);
+    RED_CHECK_EQ(redcryptofile_close_writer(handle, qhashhex, fhashhex), 0);
 }
