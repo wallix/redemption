@@ -116,8 +116,10 @@ public:
         if (!rect_intersect.isempty()) {
             this->drawable.begin_update();
 
-            this->draw(rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus,
-                this->buffer, this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+            this->draw(
+                rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus, this->buffer,
+                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                 this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
 
             this->drawable.end_update();

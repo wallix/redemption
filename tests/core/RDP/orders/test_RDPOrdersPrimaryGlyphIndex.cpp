@@ -46,8 +46,8 @@ RED_AUTO_TEST_CASE(TestGlyphIndex)
         const uint8_t brush_extra[] = {1,2,3,4,5,6,7};
         const uint8_t greeting[] = { 'H','e','l','l','o',',',' ','W','o','r','l','d' };
         RDPGlyphIndex newcmd(1, 0x20, 1, 4,
-                             RDPColor{0x112233},
-                             RDPColor{0x445566},
+                             encode_color24()(BGRColor_{0x112233}),
+                             encode_color24()(BGRColor_{0x445566}),
                              Rect(1,2,40,60),
                              Rect(3,4,50,70),
                              RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
@@ -103,8 +103,8 @@ RED_AUTO_TEST_CASE(TestGlyphIndex)
         check<RDPGlyphIndex>(common_cmd, cmd,
             RDPOrderCommon(GLYPHINDEX, Rect(5, 0, 800, 600)),
             RDPGlyphIndex(1, 0x20, 1, 4,
-                          RDPColor{0x112233},
-                          RDPColor{0x445566},
+                          encode_color24()(BGRColor_{0x112233}),
+                          encode_color24()(BGRColor_{0x445566}),
                           Rect(1,2,40,60),
                           Rect(3,4,50,70),
                           RDPBrush(3, 4, 0x03, 0xDD, brush_extra),
@@ -136,8 +136,8 @@ RED_AUTO_TEST_CASE(TestGlyphIndex2)
 
 
         RDPGlyphIndex  newcmd( 7, 3, 0, 1
-                             , RDPColor{0x00ffff}
-                             , RDPColor{0x00092d}
+                             , encode_color24()(BGRColor_{0x00ffff})
+                             , encode_color24()(BGRColor_{0x00092d})
                              , Rect(308, 155, 174, 14)
                              , Rect(0, 0, 1, 1)
                              , RDPBrush(0, 0, 0, 0, nullbrush_extra)
@@ -193,8 +193,8 @@ RED_AUTO_TEST_CASE(TestGlyphIndex2)
         check<RDPGlyphIndex>( common_cmd, cmd
                             , RDPOrderCommon(GLYPHINDEX, Rect(0, 0, 1024, 768))
                             , RDPGlyphIndex( 7, 3, 0, 1
-                                           , RDPColor{0x00ffff}
-                                           , RDPColor{0x00092d}
+                                           , encode_color24()(BGRColor_{0x00ffff})
+                                           , encode_color24()(BGRColor_{0x00092d})
                                            , Rect(308, 155, 174, 14)
                                            , Rect(0, 0, 1, 1)
                                            , RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra)

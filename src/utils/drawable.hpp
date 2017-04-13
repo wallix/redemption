@@ -290,7 +290,7 @@ struct DrawableTraitColor24
         return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
     }
 
-    struct toColor8
+    struct fromColor8
     {
         const BGRPalette & palette;
 
@@ -300,27 +300,27 @@ struct DrawableTraitColor24
         }
     };
 
-    struct toColor15
+    struct fromColor15
     {
         color_t operator()(const uint8_t * p) const
         {
-            const RDPColor c = RDPColor::from((p[0] << 8) + p[1]);
-            const BGRColor_ bgr = decode_color15/*_opaquerect*/()(c);
+            const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color15()(c);
             return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
-    struct toColor16
+    struct fromColor16
     {
         color_t operator()(const uint8_t * p) const
         {
-            const RDPColor c = RDPColor::from((p[0] << 8) + p[1]);
-            const BGRColor_ bgr = decode_color16/*_opaquerect*/()(c);
+            const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color16()(c);
             return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
-    struct toColor24
+    struct fromColor24
     {
         color_t operator()(const uint8_t * p) const
         {
@@ -488,13 +488,13 @@ public:
         else {
             switch (bmp_bpp) {
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor8{bmp.palette()}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor15{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor15{}, c...); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor16{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor16{}, c...); break;
                 case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor24{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor24{}, c...); break;
                 default: ;
             }
         }

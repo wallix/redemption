@@ -162,7 +162,7 @@ public:
 
         uint16_t x = this->x();
         Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
-        this->drawable.draw(RDPOpaqueRect(rectRow, RDPColor(bg_color)), clip, gdi::ColorCtx::depth24());
+        this->drawable.draw(RDPOpaqueRect(rectRow, encode_color24()(bg_color)), clip, gdi::ColorCtx::depth24());
 
         x += this->border;
         y += this->border;

@@ -156,6 +156,11 @@ constexpr bool operator >= (Depth const & depth1, Depth const & depth2) {
 
 struct ColorCtx
 {
+    ColorCtx(Depth depth, BGRPalette const & palette)
+    : depth_(depth)
+    , palette_(&palette)
+    {}
+
     ColorCtx(Depth depth, BGRPalette const * palette)
     : depth_(depth)
     , palette_(palette)
@@ -187,10 +192,23 @@ private:
 };
 
 
+inline RDPColor color_encode(const BGRColor_ color, Depth depth)
+{
+    switch (depth){
+        case Depth::depth8(): return encode_color8()(color);
+        case Depth::depth15(): return encode_color15()(color);
+        case Depth::depth16(): return encode_color16()(color);
+        case Depth::depth24(): return encode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return RDPColor{};
+}
+
+
 inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette)
 {
-    using gdi::Depth;
-
     switch (depth){
         case Depth::depth8(): return decode_color8()(color, palette);
         case Depth::depth15(): return decode_color15()(color);

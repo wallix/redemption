@@ -122,6 +122,10 @@ public:
     , color{}
     {}
 
+    RDPEllipseSC(const Rect r, RDPColor c)
+    : RDPEllipseSC(r, c, 0x0D, 0x01)
+    {}
+
     RDPEllipseSC(const Rect r, RDPColor c, uint8_t rop, uint8_t fill)
     : el(r)
     , bRop2(rop)

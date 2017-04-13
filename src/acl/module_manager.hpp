@@ -508,7 +508,7 @@ private:
             InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
             // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
-            RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
+            RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, encode_color24()(BLACK) /* NOTE WHITE and BLACK should be special color*/, 4, in_deltaPoints);
             drawable.draw(polyline_box, this->clip, color_ctx);
 
             gdi::server_draw_text(

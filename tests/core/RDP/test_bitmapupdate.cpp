@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 
     RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth16();
-    gd.draw(RDPOpaqueRect(screen_rect, RDPColor(color_encode(0x2F2F2F, 16))), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color16()(BGRColor_(0x2F2F2F))), screen_rect, color_cxt);
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................

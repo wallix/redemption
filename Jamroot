@@ -593,7 +593,7 @@ test-canonical utils/confdescriptor.hpp ;
 test-canonical utils/d3des.hpp ;
 test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
-test-canonical utils/drawable.hpp : <library>bitmap <library>crypto ;
+test-canonical utils/drawable.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/ellipse.hpp ;
 test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
@@ -855,7 +855,7 @@ test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue 
 
 ## Bitmap
 ## @{
-test-canonical utils/bitmap.hpp : <library>bitmap <library>crypto ;
+test-canonical utils/bitmap.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/bitmap_from_file.hpp : <library>bitmap ;
 test-canonical utils/bitmap_data_allocator.hpp ;
 

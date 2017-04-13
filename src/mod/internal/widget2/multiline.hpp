@@ -128,7 +128,7 @@ public:
             this->drawable.begin_update();
 
             int dy = this->y() + this->y_text;
-            this->drawable.draw(RDPOpaqueRect(rect_intersect, RDPColor(this->bg_color)), this->get_rect(), gdi::ColorCtx::depth24());
+            this->drawable.draw(RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)), this->get_rect(), gdi::ColorCtx::depth24());
             for (line_t * line = this->lines; line->str; ++line) {
                 dy += this->y_text;
                 gdi::server_draw_text(this->drawable
@@ -136,8 +136,8 @@ public:
                                      , this->x_text + this->x()
                                      , dy
                                      , line->str
-                                     , RDPColor(this->fg_color)
-                                     , RDPColor(this->bg_color)
+                                     , encode_color24()(this->fg_color)
+                                     , encode_color24()(this->bg_color)
                                      , gdi::ColorCtx::depth24()
                                      , rect_intersect.intersect(
                                                 Rect(this->x(),

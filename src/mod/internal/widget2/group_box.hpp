@@ -82,29 +82,29 @@ public:
 
             // Top Line and Label
             auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
-            this->drawable.draw(RDPOpaqueRect(rect1, RDPColor(this->fg_color)), rect_intersect, color_ctx);
+            this->drawable.draw(RDPOpaqueRect(rect1, encode_color24()(this->fg_color)), rect_intersect, color_ctx);
             gdi::server_draw_text(this->drawable, this->font
                                , this->x() + text_indentation
                                , this->y()
                                , this->buffer
-                               , BGRColor_(this->fg_color)
-                               , BGRColor_(this->bg_color)
+                               , encode_color24()(this->fg_color)
+                               , encode_color24()(this->bg_color)
                                , color_ctx
                                , rect_intersect
                                );
             auto rect2 = Rect(px + wlabel + 4, y, gcx + 1 - wlabel - 4, 1);
-            this->drawable.draw(RDPOpaqueRect(rect2, RDPColor(this->fg_color)), rect_intersect, color_ctx);
+            this->drawable.draw(RDPOpaqueRect(rect2, encode_color24()(this->fg_color)), rect_intersect, color_ctx);
             // Bottom line
             auto rect3 = Rect(px, y + gcy, gcx + 1, 1);
-            this->drawable.draw(RDPOpaqueRect(rect3, RDPColor(this->fg_color)), rect_intersect, color_ctx);
+            this->drawable.draw(RDPOpaqueRect(rect3, encode_color24()(this->fg_color)), rect_intersect, color_ctx);
 
             // Left border
             auto rect4 = Rect(px, y + 1, 1, gcy - 1);
-            this->drawable.draw(RDPOpaqueRect(rect4, RDPColor(this->fg_color)), rect_intersect, color_ctx);
+            this->drawable.draw(RDPOpaqueRect(rect4, encode_color24()(this->fg_color)), rect_intersect, color_ctx);
 
             // Right Border
             auto rect5 = Rect(px + gcx, y, 1, gcy);
-            this->drawable.draw(RDPOpaqueRect(rect5, RDPColor(this->fg_color)), rect_intersect, color_ctx);
+            this->drawable.draw(RDPOpaqueRect(rect5, encode_color24()(this->fg_color)), rect_intersect, color_ctx);
 
 
             WidgetParent::invalidate_children(rect_intersect);

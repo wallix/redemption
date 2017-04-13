@@ -218,19 +218,19 @@ public:
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y(), this->cx() - 1, 1
-        )), RDPColor(color)), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + 1, 1, this->cy() - 2
-        )), RDPColor(color)), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), RDPColor(color)), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + this->cy() - 1, this->cx(), 1
-        )), RDPColor(color)), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
     }
 
     virtual Rect get_cursor_rect() const
@@ -249,7 +249,7 @@ public:
     void draw_cursor(const Rect clip)
     {
         if (!clip.isempty()) {
-            this->drawable.draw(RDPOpaqueRect(clip, RDPColor(this->cursor_color)), clip, gdi::ColorCtx::depth24());
+            this->drawable.draw(RDPOpaqueRect(clip, encode_color24()(this->cursor_color)), clip, gdi::ColorCtx::depth24());
         }
     }
 

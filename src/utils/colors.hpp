@@ -101,12 +101,13 @@ private:
                 for (int rindex = 0; rindex < 8; rindex++) {
                     this->palette[(rindex << 5) | (gindex << 2) | bindex] =
                     trans(
-                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                    | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                    | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                        // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                      | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                        // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                      | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))
+                    );
                 }
             }
         }
@@ -163,7 +164,7 @@ enum NamedBGRColor {
 };
 
 
-struct RGBColor_;
+struct BGRasRGBColor_;
 
 struct BGRColor_
 {
@@ -171,7 +172,7 @@ struct BGRColor_
     : color_(color)
     {}
 
-    constexpr BGRColor_(RGBColor_ const & color) noexcept;
+    constexpr BGRColor_(BGRasRGBColor_ const & color) noexcept;
 
     constexpr explicit BGRColor_(uint32_t color = 0) noexcept
     : color_(color/* & 0xFFFFFF*/)
@@ -191,13 +192,13 @@ private:
     uint32_t color_;
 };
 
-struct RGBColor_
+struct BGRasRGBColor_
 {
-    constexpr RGBColor_(NamedBGRColor color) noexcept
+    constexpr BGRasRGBColor_(NamedBGRColor color) noexcept
     : color_(color)
     {}
 
-    constexpr RGBColor_(BGRColor_ color) noexcept
+    constexpr BGRasRGBColor_(BGRColor_ color) noexcept
     : color_(color)
     {}
 
@@ -209,7 +210,7 @@ private:
     BGRColor_ color_;
 };
 
-constexpr BGRColor_::BGRColor_(RGBColor_ const & color) noexcept
+constexpr BGRColor_::BGRColor_(BGRasRGBColor_ const & color) noexcept
 : BGRColor_(color.blue(), color.green(), color.red())
 {}
 
@@ -241,16 +242,8 @@ struct RDPColor
     : color_(0)
     {}
 
-    constexpr RDPColor(NamedBGRColor color) noexcept
-    : color_(color)
-    {}
-
-    constexpr RDPColor(BGRColor_ color) noexcept
-    : color_(color.to_u32())
-    {}
-
     constexpr BGRColor_ as_bgr() const noexcept { return BGRColor_(this->color_); }
-    constexpr RGBColor_ as_rgb() const noexcept { return RGBColor_(this->as_bgr()); }
+    constexpr BGRasRGBColor_ as_rgb() const noexcept { return BGRasRGBColor_(this->as_bgr()); }
 
     constexpr static RDPColor from(uint32_t c) noexcept
     { return RDPColor(nullptr, c); }
@@ -358,12 +351,9 @@ struct decode_color16 {
     constexpr BGRColor_ operator()(RDPColor c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return BGRColor_(
-            ((c.as_bgr().to_u32() & 0x1F) << 3),
-            (((c.as_bgr().to_u32() >> 5) & 0x3F) << 2),
-            (((c.as_bgr().to_u32() >> 11) & 0x1F) << 3)
-//             ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r6 r7 r8
-//             ((c.as_bgr().to_u32() >> 3) & 0xfc) | ((c.as_bgr().to_u32() >>  9) & 0x3), // g1 g2 g3 g4 g5 g6 g1 g2
-//             ((c.as_bgr().to_u32() >> 8) & 0xf8) | ((c.as_bgr().to_u32() >> 13) & 0x7)  // b1 b2 b3 b4 b5 b1 b2 b3
+            ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r6 r7 r8
+            ((c.as_bgr().to_u32() >> 3) & 0xfc) | ((c.as_bgr().to_u32() >>  9) & 0x3), // g1 g2 g3 g4 g5 g6 g1 g2
+            ((c.as_bgr().to_u32() >> 8) & 0xf8) | ((c.as_bgr().to_u32() >> 13) & 0x7)  // b1 b2 b3 b4 b5 b1 b2 b3
         );
     }
 };
@@ -430,12 +420,12 @@ struct encode_color8 {
 
     constexpr encode_color8() noexcept {}
 
-    constexpr RDPColor operator()(BGRColor_ c) const noexcept {
+    constexpr RDPColor operator()(BGRasRGBColor_ c) const noexcept {
         // bbbgggrr
         return RDPColor::from(
-            ((c.to_u32() >> 6 ) & 0xE0)
-          | ((c.to_u32() >> 11) & 0x1C)
-          | ((c.to_u32() >> 16) & 0x03)
+            ((BGRColor_(c).to_u32() >> 16) & 0xE0)
+          | ((BGRColor_(c).to_u32() >> 11) & 0x1C)
+          | ((BGRColor_(c).to_u32() >> 6 ) & 0x03)
         );
     }
 };
@@ -446,7 +436,7 @@ struct encode_color15 {
     constexpr encode_color15() noexcept {}
 
     // bgr555
-    RDPColor operator()(RGBColor_ c) const noexcept {
+    RDPColor operator()(BGRasRGBColor_ c) const noexcept {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return RDPColor::from(
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
@@ -465,7 +455,7 @@ struct encode_color16 {
     constexpr encode_color16() noexcept {}
 
     // bgr565
-    RDPColor operator()(RGBColor_ c) const noexcept {
+    RDPColor operator()(BGRasRGBColor_ c) const noexcept {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return RDPColor::from(
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
@@ -484,7 +474,7 @@ struct encode_color24 {
     constexpr encode_color24() noexcept {}
 
     RDPColor operator()(BGRColor_ c) const noexcept {
-        return RDPColor(c);
+        return RDPColor::from(c.to_u32());
     }
 };
 

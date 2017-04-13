@@ -1395,7 +1395,7 @@ public:
         if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
-                    front, *this, this->orders, this->lang, this->font,
+                    front, *this, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
                     mod_rdp_params.client_execute, this->verbose
