@@ -155,6 +155,8 @@ obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+obj redcryptofile.o : $(REDEMPTION_SRC_PATH)/main/redcryptofile.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+
 obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
 obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
@@ -201,6 +203,25 @@ exe rdpproxy
 #         <link>static
         $(EXE_DEPENDENCIES)
     ;
+
+# Maybe merge with libredrec ?
+#lib libredcryptofile
+#    :
+#        redcryptofile.o
+#        $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
+
+#        openssl
+#        crypto
+#        z
+#        dl
+
+#        snappy
+#    :
+#        <link>shared
+#        <linkflags>-Wl,-Bsymbolic
+#        $(LIB_DEPENDENCIES)
+#    ;
+
 
 lib libredrec
     :
@@ -590,7 +611,7 @@ test-canonical utils/bitmap_shrink.hpp : <library>bitmap  <library>crypto <libra
 test-canonical utils/cfgloader.hpp ;
 test-canonical utils/colors.hpp ;
 test-canonical utils/confdescriptor.hpp ;
-test-canonical utils/d3des.hpp ;
+test-canonical utils/d3des.hpp : <library>d3des.o ;
 test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
 test-canonical utils/drawable.hpp : <library>bitmap <library>crypto ;
@@ -1076,7 +1097,6 @@ test-canonical front/front.hpp
     <library>d3des.o
     <library>krb5
     <library>gssglue
-    <library>d3des.o
     <library>dl
     <library>crypto
     <library>ocr

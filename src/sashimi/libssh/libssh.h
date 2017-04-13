@@ -390,7 +390,6 @@ int ssh_get_key_params(ssh_session_struct * session, ssh_key_struct **privkey);
 
 /* in base64.c */
 struct ssh_buffer_struct * base64_to_bin(const char *source);
-unsigned char *bin_to_base64(const unsigned char *source, int len);
 
 // SSH-TRANS constants
 enum {

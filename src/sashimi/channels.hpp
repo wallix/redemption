@@ -488,20 +488,22 @@ struct ssh_agent_struct {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         // TODO: add boundary checks
         uint32_t blob_len = this->ident->in_uint32_be();
-        SSHString blob(blob_len);
-        this->ident->buffer_get_data(blob.data.get(), blob_len);
+        std::vector<uint8_t> blob;
+        blob.resize(blob_len);
+        this->ident->buffer_get_data(&blob[0], blob.size());
         uint32_t tmp_len = this->ident->in_uint32_be();
-        SSHString tmp(tmp_len);
-        this->ident->buffer_get_data(tmp.data.get(),tmp_len);
+        std::vector<uint8_t> tmp;
+        tmp.resize(tmp_len);
+        this->ident->buffer_get_data(&tmp[0],tmp.size());
 
-        *comment = static_cast<char*>(malloc(tmp.size + 1));
-        memcpy(*comment, tmp.data.get(), tmp.size);
-        (*comment)[tmp.size] = 0;
+        *comment = static_cast<char*>(malloc(tmp.size() + 1));
+        memcpy(*comment, &tmp[0], tmp.size());
+        (*comment)[tmp.size()] = 0;
 
         /* get key from blob */
         struct ssh_key_struct *key;
         ssh_buffer_struct buffer;
-        buffer.out_blob(blob.data.get(), blob.size);
+        buffer.out_blob(&blob[0], blob.size());
 
         if (SSH_ERROR == ssh_pki_import_pubkey_blob(buffer, &key)){
             return nullptr;

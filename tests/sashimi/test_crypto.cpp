@@ -394,52 +394,52 @@ RED_AUTO_TEST_CASE(TestFindPreferredInAvailable)
 {
     {
         SSHString res = find_matching("a", "a", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("a", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("a", &res[0], res.size()) == 0);
     }
 
     {
         SSHString res = find_matching("a", "b", ',');
-        RED_CHECK_EQUAL(res.size, 0);
+        RED_CHECK_EQUAL(res.size(), 0);
     }
 
     {
         SSHString res = find_matching("b,a", "b", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("b", &res[0], res.size()) == 0);
     }
 
     {
         SSHString res = find_matching("a,b", "b", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("b", &res[0], res.size()) == 0);
     }
 
     {
         SSHString res = find_matching("a,b,c", "b", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("b", &res[0], res.size()) == 0);
     }
 
     {
         SSHString res = find_matching("a,b,c", "a,b", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("a", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("a", &res[0], res.size()) == 0);
     }
     {
         SSHString res = find_matching("a,b,c", "b,a", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("b", &res[0], res.size()) == 0);
     }
     {
         SSHString res = find_matching("a,b,c", "d,b,a", ',');
-        RED_CHECK_EQUAL(res.size, 1);
-        RED_CHECK(memcmp("b", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 1);
+        RED_CHECK(memcmp("b", &res[0], res.size()) == 0);
     }
     {
         SSHString res = find_matching("ab,abc,abcd", "abcde,abc,abcd", ',');
-        RED_CHECK_EQUAL(res.size, 3);
-        RED_CHECK(memcmp("abc", res.data.get(), res.size) == 0);
+        RED_CHECK_EQUAL(res.size(), 3);
+        RED_CHECK(memcmp("abc", &res[0], res.size()) == 0);
     }
 
 }

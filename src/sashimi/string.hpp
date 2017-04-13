@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <memory>
 
 enum {
@@ -32,58 +34,60 @@ enum {
 
 #include <memory.h>
 
-struct SSHString
-{
-    uint32_t size;
-    std::unique_ptr<uint8_t[]> data;
+using SSHString = std::string;
 
-    SSHString(uint32_t size) 
-        : size(size)
-        , data(new uint8_t[size+1])
-    {
-    }  
+//struct SSHString
+//{
+//    uint32_t size;
+//    std::unique_ptr<uint8_t[]> data;
 
-    SSHString(int size) 
-        : size(static_cast<uint32_t>(size))
-        , data(new uint8_t[this->size+1])
-    {
-    }  
+//    SSHString(uint32_t size) 
+//        : size(size)
+//        , data(new uint8_t[size+1])
+//    {
+//    }  
 
-    SSHString(const char * str) 
-        : size(strlen(str))
-        , data([](const char * str, uint32_t size){
-            uint8_t * tmp = new uint8_t[size+1];
-            memcpy(tmp, str, size);
-            return tmp;
-        }(str, this->size))
-    {
-    }  
+//    SSHString(int size) 
+//        : size(static_cast<uint32_t>(size))
+//        , data(new uint8_t[this->size+1])
+//    {
+//    }  
 
-    SSHString(const char * str, int size) 
-        : size(size)
-        , data([](const char * str, uint32_t size){
-            uint8_t * tmp = new uint8_t[size+1];
-            memcpy(tmp, str, size);
-            return tmp;
-        }(str, size))
-    {
-    }  
+////    SSHString(const char * str) 
+////        : size(strlen(str))
+////        , data([](const char * str, uint32_t size){
+////            uint8_t * tmp = new uint8_t[size+1];
+////            memcpy(tmp, str, size);
+////            return tmp;
+////        }(str, this->size))
+////    {
+////    }  
 
-    SSHString(const uint8_t * str, int size) 
-        : size(size)
-        , data([](const char * str, uint32_t size){
-            uint8_t * tmp = new uint8_t[size+1];
-            memcpy(tmp, str, size);
-            return tmp;
-        }(reinterpret_cast<const char *>(str), size))
-    {
-    }  
+//    SSHString(const uint8_t * str, int size) 
+//        : size(size)
+//        , data([](const char * str, uint32_t size){
+//            uint8_t * tmp = new uint8_t[size+1];
+//            memcpy(tmp, str, size);
+//            return tmp;
+//        }(reinterpret_cast<const char *>(str), size))
+//    {
+//    }  
 
-    char * cstr() const
-    {
-        this->data.get()[this->size] = 0;
-        return reinterpret_cast<char *>(this->data.get());
-    }
+//    SSHString(const char * str, int size) 
+//        : size(size)
+//        , data([](const char * str, uint32_t size){
+//            uint8_t * tmp = new uint8_t[size+1];
+//            memcpy(tmp, str, size);
+//            return tmp;
+//        }(reinterpret_cast<const char *>(str), size))
+//    {
+//    }  
 
-};
+//    char * cstr() const
+//    {
+//        this->data.get()[this->size] = 0;
+//        return reinterpret_cast<char *>(this->data.get());
+//    }
+
+//};
 

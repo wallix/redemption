@@ -268,6 +268,7 @@ int main(int argc, char * argv[]) {
                                        , front.keymap.key_flags
                                        , ini.get<cfg::font>()
                                        , ini.get<cfg::theme>()
+                                       , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                        , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
                                        );
             //mod_rdp_params.enable_tls                          = true;

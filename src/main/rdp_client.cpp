@@ -504,6 +504,7 @@ int main(int argc, char** argv)
                                , /*front.keymap.key_flags*/ 0
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
+                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                , to_verbose_flags(verbose));
 
     if (verbose > 128) {

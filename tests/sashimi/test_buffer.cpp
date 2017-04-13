@@ -80,10 +80,11 @@ RED_AUTO_TEST_CASE(TestInputArrayU64)
 RED_AUTO_TEST_CASE(TestSSHString1)
 {
     ssh_buffer_struct buf;
-    SSHString tmp(10);
-    memcpy(tmp.data.get(), "ABCDEFGHI", 10);
-    buf.out_uint32_be(tmp.size);
-    buf.out_blob(tmp.data.get(), tmp.size);
+    SSHString tmp;
+    tmp.resize(10);
+    memcpy(&tmp[0], "ABCDEFGHI", 10);
+    buf.out_uint32_be(tmp.size());
+    buf.out_blob(&tmp[0], tmp.size());
 }
 
 /** @} */

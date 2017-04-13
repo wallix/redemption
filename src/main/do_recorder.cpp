@@ -1735,7 +1735,7 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0};
-    FlvParams flv_params = {};
+    FlvParams flv_params;
 
     // flv output options
     bool full_video; // create full video
