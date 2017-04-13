@@ -84,19 +84,19 @@ struct ThemeHolder final : public ConfigurationHolder
     {
         if (0 == strcmp(context, "global")) {
             if (0 == strcmp(key, "bgcolor")){
-                this->theme.global.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.global.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "fgcolor")){
-                this->theme.global.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.global.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "separator_color")){
-                this->theme.global.separator_color = BGRColor_(color_from_cstr(value));
+                this->theme.global.separator_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "focus_color")){
-                this->theme.global.focus_color = BGRColor_(color_from_cstr(value));
+                this->theme.global.focus_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "error_color")){
-                this->theme.global.error_color = BGRColor_(color_from_cstr(value));
+                this->theme.global.error_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "logo")){
                 this->theme.global.logo = Parse(reinterpret_cast<const uint8_t *>(value)).bool_from_cstr();
@@ -104,56 +104,56 @@ struct ThemeHolder final : public ConfigurationHolder
         }
         else if (0 == strcmp(context, "edit")) {
             if (0 == strcmp(key, "bgcolor")) {
-                this->theme.edit.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.edit.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "fgcolor")) {
-                this->theme.edit.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.edit.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "focus_color")) {
-                this->theme.edit.focus_color = BGRColor_(color_from_cstr(value));
+                this->theme.edit.focus_color = color_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "tooltip")) {
             if (0 == strcmp(key, "bgcolor")) {
-                this->theme.tooltip.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.tooltip.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "fgcolor")) {
-                this->theme.tooltip.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.tooltip.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "border_color")) {
-                this->theme.tooltip.border_color = BGRColor_(color_from_cstr(value));
+                this->theme.tooltip.border_color = color_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "selector")) {
             if (0 == strcmp(key, "line1_fgcolor")) {
-                this->theme.selector_line1.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_line1.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "line1_bgcolor")) {
-                this->theme.selector_line1.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_line1.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "line2_fgcolor")) {
-                this->theme.selector_line2.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_line2.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "line2_bgcolor")) {
-                this->theme.selector_line2.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_line2.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "selected_bgcolor")) {
-                this->theme.selector_selected.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_selected.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "selected_fgcolor")) {
-                this->theme.selector_selected.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_selected.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "focus_bgcolor")) {
-                this->theme.selector_focus.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_focus.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "focus_fgcolor")) {
-                this->theme.selector_focus.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_focus.fgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "label_bgcolor")) {
-                this->theme.selector_label.bgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_label.bgcolor = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "label_fgcolor")) {
-                this->theme.selector_label.fgcolor = BGRColor_(color_from_cstr(value));
+                this->theme.selector_label.fgcolor = color_from_cstr(value);
             }
         }
     }

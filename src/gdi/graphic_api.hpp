@@ -1,4 +1,4 @@
-#include <iostream>/*
+/*
 *   This program is free software; you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
 *   the Free Software Foundation; either version 2 of the License, or
@@ -30,6 +30,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/colors.hpp"
 
 
 struct BGRPalette;
@@ -184,6 +185,28 @@ private:
     Depth depth_;
     BGRPalette const * palette_;
 };
+
+
+inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette)
+{
+    using gdi::Depth;
+
+    switch (depth){
+        case Depth::depth8(): return decode_color8()(color, palette);
+        case Depth::depth15(): return decode_color15()(color);
+        case Depth::depth16(): return decode_color16()(color);
+        case Depth::depth24(): return decode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return BGRColor_{0, 0, 0};
+}
+
+inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx)
+{
+    return color_decode(color, color_ctx.depth(), *color_ctx.palette());
+}
 
 
 struct GraphicApi : private noncopyable

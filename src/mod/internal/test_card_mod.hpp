@@ -102,35 +102,35 @@ public:
 
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->front.draw(
-            RDPLineTo(1, 200, 1198, 200, 145, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 200, 1198, 200, 145, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 200, 145, 200, 1198, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 200, 145, 200, 1198, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 201, 1198, 200, 145, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 201, 1198, 200, 145, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 200, 145, 201, 1198, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 200, 145, 201, 1198, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(200, 145, 1, 110), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 1198, 200, 145, 200, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 1198, 200, 145, 200, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 145, 200, 1198, 200, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 145, 200, 1198, 200, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 1198, 201, 145, 200, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 1198, 201, 145, 200, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(145, 200, 110, 1), color_ctx);
 
         this->front.draw(
-            RDPLineTo(1, 145, 200, 1198, 201, RDPColor{}, 13, RDPPen(0, 1, RDPColor{0x0000FF})),
+            RDPLineTo(1, 145, 200, 1198, 201, RDPColor{}, 13, RDPPen(0, 1, RED)),
             Rect(145, 200, 110, 1), color_ctx);
 
         gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, color_ctx, clip);

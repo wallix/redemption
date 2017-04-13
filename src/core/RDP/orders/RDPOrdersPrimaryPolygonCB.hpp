@@ -222,8 +222,8 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , fillMode(0x00)
-    , backColor(0x00000000)
-    , foreColor(0x00000000)
+    , backColor{}
+    , foreColor{}
     , brush(RDPBrush())
     , NumDeltaEntries(0) {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));

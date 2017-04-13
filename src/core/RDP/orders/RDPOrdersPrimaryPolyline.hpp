@@ -202,7 +202,7 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , BrushCacheEntry(0x0000)
-    , PenColor(0x00000000)
+    , PenColor{}
     , NumDeltaEntries(0) {
         ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
     }

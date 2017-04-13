@@ -4394,21 +4394,6 @@ protected:
     }
 
 public:
-    BGRColor_ u32rgb_to_color(gdi::ColorCtx color_ctx, RDPColor color) const {
-        using gdi::Depth;
-
-        switch (color_ctx.depth()){
-            // TODO color_ctx.palette()
-            case Depth::depth8():  return decode_color8()(color, *color_ctx.palette()); break;
-            case Depth::depth15(): return decode_color15()(color); break;
-            case Depth::depth16(): return decode_color16()(color); break;
-            case Depth::depth24(): return decode_color24()(color); break;
-            case Depth::unspecified(): default: REDASSERT(false);
-        }
-
-        return BGRColor_{};
-    }
-
     struct GlyphTo24Bitmap
     {
         // TODO BGRArray<256>
@@ -4456,12 +4441,12 @@ public:
 
 
 protected:
-    void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
-
+    void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
+    {
         if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const BGRColor_ color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color.as_bgr());
-            const BGRColor_ color_back = this->u32rgb_to_color(color_ctx, cmd.back_color.as_bgr());
+            const BGRColor_ color_fore = color_decode(cmd.fore_color, color_ctx);
+            const BGRColor_ color_back = color_decode(cmd.back_color, color_ctx);
 
             uint16_t draw_pos_ref = 0;
             InStream variable_bytes(cmd.data, cmd.data_len);
@@ -4609,8 +4594,8 @@ private:
         RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
         if (this->client_info.bpp != this->mod_bpp) {
-            const BGRColor_ back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor_ fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ fore_color24 = color_decode(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
             cmd2.back_color = color_encode(back_color24, this->client_info.bpp);
             cmd2.fore_color = color_encode(fore_color24, this->client_info.bpp);

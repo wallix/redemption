@@ -155,7 +155,7 @@ inline void receive_rdp_color(InStream & stream, RDPColor & color)
     uint8_t r = stream.in_uint8();
     uint8_t g = stream.in_uint8();
     uint8_t b = stream.in_uint8();
-    color = RDPColor(r | (g << 8) | (b << 16));
+    color = RDPColor(BGRColor_(b, g, r));
 }
 
 struct RDPPen {
@@ -165,7 +165,7 @@ struct RDPPen {
     RDPPen(uint8_t style, uint8_t width, RDPColor color)
         : style(style), width(width), color(color) {}
 
-    RDPPen() : style(0), width(0), color(0) {
+    RDPPen() : style(0), width(0), color{} {
     }
 
     bool operator==(const RDPPen &other) const {

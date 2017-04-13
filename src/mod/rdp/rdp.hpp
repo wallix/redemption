@@ -6743,7 +6743,7 @@ public:
                       uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
 
                 for (unsigned int i1 = 0; i1 < width; ++i1) {
-                    RDPColor px(in_uint32_from_nb_bytes_le(BPP, src));
+                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
                     src += BPP;
                     ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette).to_u32());
                     dest += 3;

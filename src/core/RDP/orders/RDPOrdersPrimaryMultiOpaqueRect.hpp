@@ -128,14 +128,14 @@ public:
     , nTopRect(0)
     , nWidth(0)
     , nHeight(0)
-    , _Color(0)
+    , _Color{}
     , nDeltaEntries(0)
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }
 
     RDPMultiOpaqueRect(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight,
-        uint32_t _Color, uint8_t nDeltaEntries,
+        RDPColor _Color, uint8_t nDeltaEntries,
         InStream & deltaEncodedRectangles)
     : nLeftRect(nLeftRect)
     , nTopRect(nTopRect)
@@ -193,15 +193,16 @@ public:
         header.control |= (is_1_byte(this->nLeftRect - oldcmd.nLeftRect) && is_1_byte(this->nTopRect - oldcmd.nTopRect) &&
             is_1_byte(this->nWidth - oldcmd.nWidth) && is_1_byte(this->nHeight - oldcmd.nHeight)) * RDP::DELTA;
 
+        uint32_t const diff_color = this->_Color.as_bgr().to_u32() ^ oldcmd._Color.as_bgr().to_u32();
         header.fields =
-                (this->nLeftRect               != oldcmd.nLeftRect              ) * 0x0001
-              | (this->nTopRect                != oldcmd.nTopRect               ) * 0x0002
-              | (this->nWidth                  != oldcmd.nWidth                 ) * 0x0004
-              | (this->nHeight                 != oldcmd.nHeight                ) * 0x0008
-              | (this->_Color.as_bgr().red()   != oldcmd._Color.as_bgr().red()  ) * 0x0010
-              | (this->_Color.as_bgr().green() != oldcmd._Color.as_bgr().green()) * 0x0020
-              | (this->_Color.as_bgr().blue()  != oldcmd._Color.as_bgr().blue() ) * 0x0040
-              | (this->nDeltaEntries           != oldcmd.nDeltaEntries          ) * 0x0080
+                (this->nLeftRect            != oldcmd.nLeftRect     ) * 0x0001
+              | (this->nTopRect             != oldcmd.nTopRect      ) * 0x0002
+              | (this->nWidth               != oldcmd.nWidth        ) * 0x0004
+              | (this->nHeight              != oldcmd.nHeight       ) * 0x0008
+              | ((diff_color & 0x0000FF)    != 0                    ) * 0x0010
+              | ((diff_color & 0x00FF00)    != 0                    ) * 0x0020
+              | ((diff_color & 0xFF0000)    != 0                    ) * 0x0040
+              | (this->nDeltaEntries        != oldcmd.nDeltaEntries ) * 0x0080
               | (
                  (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                  memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
@@ -296,7 +297,7 @@ public:
             b = stream.in_uint8();
         }
 
-        this->_Color = RDPColor(r | (g << 8) | (b << 16));
+        this->_Color = RDPColor(BGRColor_(b, g, r));
 
         if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();

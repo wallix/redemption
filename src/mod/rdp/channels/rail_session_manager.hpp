@@ -601,20 +601,20 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, RDPColor{0x000000});
+            RDPOpaqueRect order(this->protected_rect, RDPColor{BLACK});
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->orders.bpp));
+            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
             if (bool(this->verbose & RDPVerbose::rail)) {
                 order.log(LOG_INFO, rect);
             }
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         gdi::TextMetrics tm(this->font, TR(trkeys::starting_remoteapp, this->lang));
@@ -623,9 +623,9 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm.width) / 2,
                               this->protected_rect.y + (this->protected_rect.cy - tm.height) / 2,
                               TR(trkeys::starting_remoteapp, this->lang),
-                              color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                              color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                              gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -638,20 +638,20 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, RDPColor{0x000000});
+            RDPOpaqueRect order(this->protected_rect, RDPColor{BLACK});
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->orders.bpp));
+            RDPOpaqueRect order(rect, this->theme.global.bgcolor);
             if (bool(this->verbose & RDPVerbose::rail)) {
                 order.log(LOG_INFO, rect);
             }
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         const gdi::TextMetrics tm_msg(this->font, TR(trkeys::closing_remoteapp, this->lang));
@@ -672,9 +672,9 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm_msg.width) / 2,
                               ypos,
                               TR(trkeys::closing_remoteapp, this->lang),
-                              color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                              color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                              gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                              this->theme.global.fgcolor,
+                              this->theme.global.bgcolor,
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -691,10 +691,10 @@ private:
                                false,   // logo
                                true,    // has_focus
                                TR(trkeys::disconnect_now, this->lang),
-                               color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                               color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                               color_encode(this->theme.global.focus_color, this->orders.bpp),
-                               gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                               this->theme.global.fgcolor,
+                               this->theme.global.bgcolor,
+                               this->theme.global.focus_color,
+                               gdi::ColorCtx::depth24(),
                                Rect(),
                                state,
                                2,

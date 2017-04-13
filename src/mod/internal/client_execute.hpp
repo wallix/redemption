@@ -309,7 +309,7 @@ private:
 
 public:
     void draw_maximize_box(bool mouse_over, const Rect r) {
-        RDPColor const bg_color(mouse_over ? 0xCBCACA : 0xFFFFFF);
+        RDPColor const bg_color(BGRColor_(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
         auto const depth = gdi::ColorCtx::depth24();
 
@@ -326,7 +326,7 @@ public:
             rect.cy -= 7 * 2 + 2;
 
             {
-                RDPOpaqueRect order(rect, RDPColor{0x000000});
+                RDPOpaqueRect order(rect, BGRColor_{0x000000});
 
                 this->front_->draw(order, r, depth);
             }
@@ -347,7 +347,7 @@ public:
             rect.cy -= 7 * 2 + 2;
 
             {
-                RDPOpaqueRect order(rect, RDPColor{0x000000});
+                RDPOpaqueRect order(rect, BGRColor_{0x000000});
 
                 this->front_->draw(order, r, depth);
             }
@@ -369,7 +369,7 @@ public:
             rect.cy -= 7 * 2;
 
             {
-                RDPOpaqueRect order(rect, RDPColor{0x000000});
+                RDPOpaqueRect order(rect, BGRColor_{0x000000});
 
                 this->front_->draw(order, r, depth);
             }
@@ -394,7 +394,7 @@ public:
         if (!r.has_intersection(this->title_bar_rect)) return;
 
         {
-            RDPOpaqueRect order(this->title_bar_icon_rect, RDPColor{0xFFFFFF});
+            RDPOpaqueRect order(this->title_bar_icon_rect, BGRColor_{0xFFFFFF});
 
             this->front_->draw(order, r, gdi::ColorCtx::depth24());
 
@@ -414,7 +414,7 @@ public:
         }
 
         {
-            RDPOpaqueRect order(this->title_bar_rect, RDPColor{0xFFFFFF});
+            RDPOpaqueRect order(this->title_bar_rect, BGRColor_{0xFFFFFF});
 
             this->front_->draw(order, r, gdi::ColorCtx::depth24());
 
@@ -433,7 +433,7 @@ public:
         }
 
         {
-            RDPOpaqueRect order(this->minimize_box_rect, RDPColor{0xFFFFFF});
+            RDPOpaqueRect order(this->minimize_box_rect, BGRColor_{0xFFFFFF});
 
             this->front_->draw(order, r, gdi::ColorCtx::depth24());
 
@@ -454,7 +454,7 @@ public:
         this->draw_maximize_box(false, r);
 
         {
-            RDPOpaqueRect order(this->close_box_rect, RDPColor{0xFFFFFF});
+            RDPOpaqueRect order(this->close_box_rect, BGRColor_{0xFFFFFF});
 
             this->front_->draw(order, r, gdi::ColorCtx::depth24());
 
@@ -531,7 +531,7 @@ public:
                     this->window_rect_saved = this->window_rect;
                 }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
                 else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->minimize_box_rect, RDPColor{0xCBCACA});
+                    RDPOpaqueRect order(this->minimize_box_rect, BGRColor_{0xCBCACA});
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -560,7 +560,7 @@ public:
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
                 }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
                 else if (this->close_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->close_box_rect, RDPColor{0x2311E8});
+                    RDPOpaqueRect order(this->close_box_rect, BGRColor_{0x2311E8});
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
@@ -903,7 +903,7 @@ public:
             }
             else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
                 if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->minimize_box_rect, RDPColor{0xCBCACA});
+                    RDPOpaqueRect order(this->minimize_box_rect, BGRColor_{0xCBCACA});
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -923,7 +923,7 @@ public:
                     this->front_->sync();
                 }
                 else {
-                    RDPOpaqueRect order(this->minimize_box_rect, RDPColor{0xFFFFFF});
+                    RDPOpaqueRect order(this->minimize_box_rect, BGRColor_{0xFFFFFF});
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -950,7 +950,7 @@ public:
             }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
                 if (this->close_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->close_box_rect, RDPColor{0x2311E8});
+                    RDPOpaqueRect order(this->close_box_rect, BGRColor_{0x2311E8});
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
@@ -970,7 +970,7 @@ public:
                     this->front_->sync();
                 }
                 else {
-                    RDPOpaqueRect order(this->close_box_rect, RDPColor{0xFFFFFF});
+                    RDPOpaqueRect order(this->close_box_rect, BGRColor_{0xFFFFFF});
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
@@ -1030,7 +1030,7 @@ public:
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                 {
-                    RDPOpaqueRect order(this->minimize_box_rect, RDPColor{0xFFFFFF});
+                    RDPOpaqueRect order(this->minimize_box_rect, BGRColor_{0xFFFFFF});
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -1118,7 +1118,7 @@ public:
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                 {
-                    RDPOpaqueRect order(this->close_box_rect, RDPColor{0xFFFFFF});
+                    RDPOpaqueRect order(this->close_box_rect, BGRColor_{0xFFFFFF});
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 

@@ -192,7 +192,7 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , fillMode(0x00)
-    , BrushColor(0x00000000)
+    , BrushColor{}
     , NumDeltaEntries(0) {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
