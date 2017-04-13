@@ -1742,8 +1742,6 @@ private:
 public:
     void instant_play_client(uint64_t endin_frame) {
 
-        //LOG(LOG_INFO, "begin = %u time = %u end = %u", this->begin_to_elapse, this->movie_elapsed_client, endin_frame);
-
         while (endin_frame >= this->movie_elapsed_client) {
 
             if (this->next_order()) {
@@ -1752,10 +1750,6 @@ public:
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                     , unsigned(this->record_now.tv_sec), this->total_orders_count);
                 }
-
-//                 if (this->remaining_order_count > 0) {
-//                     res = true;
-//                 }
 
                 this->interpret_order();
 
@@ -1780,8 +1774,6 @@ private:
         uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
 
         bool res(false);
-
-        //LOG(LOG_INFO, "begin = %u time = %u elapsed = %u", this->begin_to_elapse, this->movie_elapsed_client, elapsed);
 
         if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {

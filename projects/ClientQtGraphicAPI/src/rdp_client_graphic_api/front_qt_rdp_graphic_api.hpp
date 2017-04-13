@@ -93,6 +93,7 @@ public:
         : QWidget()
         , load_bar(this)
     {
+        this->setWindowTitle("Loading Movie");
         this->setAttribute(Qt::WA_DeleteOnClose);
 
         QRect rect(QPoint(0,0),QSize(600, 50));
@@ -787,9 +788,6 @@ public:
 
     std::vector<QPixmap*> balises;
 
-    bool active_repaint;
-    int balise_id;
-
 
 
 
@@ -825,8 +823,6 @@ public:
         , readding_bar(this->reading_bar_len+12, READING_BAR_H)
         , current_time_movie(0)
         , real_time_record(this->_front->replay_mod.get()->get_real_time_movie_begin())
-        , active_repaint(true)
-        , balise_id(0)
     {
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -891,7 +887,7 @@ public:
 
         painter.fillPath(path, QColor(Qt::black));
         painter.drawPath(path);
-        this->repaint();
+        this->slotRepaint();
 
         uint32_t centerW = 0;
         uint32_t centerH = 0;
@@ -960,8 +956,6 @@ public:
         , readding_bar(this->reading_bar_len+12, READING_BAR_H)
         , current_time_movie(0)
         , real_time_record(0)
-        , active_repaint(true)
-        , balise_id(0)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1038,38 +1032,26 @@ public:
         }
     }
 
+    QString toQStringData(time_t time) {
+        int s = time;
+        int h = s/3600;
+        s = s % 3600;
+        int m = s/60;
+        s = s % 60;
+        QString date_str;
+        if (h) {
+            date_str += QString(std::to_string(h).c_str()) + QString("h ");
+        }
+        if (h || m) {
+            date_str += QString(std::to_string(m).c_str()) + QString("m ");
+        }
+        date_str += QString(std::to_string(s).c_str()) + QString("s ");
+
+        return date_str;
+    }
+
     void show_video_real_time_hms() {
-        int movie_time_s = this->movie_time;
-        int movie_time_h = movie_time_s/3600;
-        movie_time_s = movie_time_s % 3600;
-        int movie_time_m = movie_time_s/60;
-        movie_time_s = movie_time_s % 60;
-        QString movie_time_str;
-        if (movie_time_h) {
-            movie_time_str += QString(std::to_string(movie_time_h).c_str()) + QString("h ");
-        }
-        if (movie_time_h || movie_time_m) {
-            movie_time_str += QString(std::to_string(movie_time_m).c_str()) + QString("m ");
-        }
-        movie_time_str += QString(std::to_string(movie_time_s).c_str()) + QString("s ");
-
-
-        int current_time_movie_s = this->current_time_movie;
-        int current_time_movie_h = current_time_movie_s/3600;
-        current_time_movie_s = current_time_movie_s % 3600;
-        int current_time_movie_m = current_time_movie_s/60;
-        current_time_movie_s = current_time_movie_s % 60;
-        QString current_time_movie_str;
-        if (current_time_movie_h) {
-            current_time_movie_str += QString(std::to_string(current_time_movie_h).c_str()) + QString("h ");
-        }
-        if (current_time_movie_h || current_time_movie_m) {
-            current_time_movie_str += QString(std::to_string(current_time_movie_m).c_str()) + QString("m ");
-        }
-        current_time_movie_str += QString(std::to_string(current_time_movie_s).c_str()) + QString("s ");
-
-
-        this->video_timer_label.setText( current_time_movie_str + QString("/") + movie_time_str);
+        this->video_timer_label.setText( this->toQStringData(this->current_time_movie) + QString("/") + this->toQStringData(this->movie_time));
     }
 
     void set_mem_cursor(const uchar * data, int x, int y) {
@@ -1139,7 +1121,7 @@ public:
         painter.fillPath(path, color);
         painter.drawPath(path);
 
-        this->repaint();
+        this->slotRepaint();
     }
 
     QPixmap * getCache() {
@@ -1161,21 +1143,7 @@ public:
                 int bar_pos = x - 44;
                 double read_len_tmp = (bar_pos * this->movie_time) / bar_len;
 
-                int read_len_tmp_s = int(read_len_tmp);
-                int read_len_tmp_h = read_len_tmp_s/3600;
-                read_len_tmp_s = read_len_tmp_s % 3600;
-                int read_len_tmp_m = read_len_tmp_s/60;
-                read_len_tmp_s = read_len_tmp_s % 60;
-                QString read_len_tmp_str;
-                if (read_len_tmp_h) {
-                    read_len_tmp_str += QString(std::to_string(read_len_tmp_h).c_str()) + QString("h ");
-                }
-                if (read_len_tmp_h || read_len_tmp_m) {
-                    read_len_tmp_str += QString(std::to_string(read_len_tmp_m).c_str()) + QString("m ");
-                }
-                read_len_tmp_str += QString(std::to_string(read_len_tmp_s).c_str()) + QString("s ");
-                //std::string str(std::to_string(int(read_len_tmp))+std::string(" seconds"));
-                this->setToolTip(read_len_tmp_str);
+                this->setToolTip(this->toQStringData(int(read_len_tmp)));
             } else {
                 QToolTip::hideText();
             }
@@ -1301,8 +1269,6 @@ public Q_SLOTS:
             if (!this->_front->replay_mod->play_client()) {
                 this->slotRepaint();
             }
-        } else {
-            //this->slotRepaint();
         }
 
         if (this->current_time_movie >= this->movie_time) {
@@ -1353,7 +1319,8 @@ public Q_SLOTS:
         this->movie_time_pause = {0, 0};
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;
-        this->video_timer_label.setText( QString(std::to_string(int(this->current_time_movie)).c_str()) + QString("/") + QString(std::to_string(int(this->movie_time)).c_str()) );
+        this->show_video_real_time_hms();
+
         this->_running = false;
         this->is_paused = false;
 

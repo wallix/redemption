@@ -79,8 +79,6 @@ class ReplayMod : public InternalMod
 public:
     using Verbose = FileToGraphic::Verbose;
 
-private:
-
 
 public:
     ReplayMod( FrontAPI & front
