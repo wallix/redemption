@@ -203,6 +203,10 @@ public:
         this->screen.clear();
     }
 
+    void instant_play_client(uint64_t endin_frame) {
+            this->reader.instant_play_client(endin_frame);
+    }
+
     void rdp_input_invalidate(Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
@@ -224,12 +228,12 @@ public:
         this->reader.set_pause_client(time);
     }
 
-    time_t get_real_time_movie_begin() {
-        return this->in_trans.meta_line.start_time;
+    void set_wait_after_load_client(timeval & time) {
+        this->reader.set_wait_after_load_client(time);
     }
 
-    void set_last_balise(uint64_t time) {
-        this->reader.set_last_balise(time);
+    time_t get_real_time_movie_begin() {
+        return this->in_trans.meta_line.start_time;
     }
 
     time_t get_movie_time_length() {

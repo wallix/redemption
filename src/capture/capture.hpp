@@ -713,7 +713,8 @@ public:
     bool break_privplay_client;
     uint64_t movie_elapsed_client;
     uint64_t begin_to_elapse;
-    uint64_t last_balise_to_elapse;
+
+
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -771,7 +772,6 @@ public:
         , break_privplay_client(false)
         , movie_elapsed_client(0)
         , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
-        , last_balise_to_elapse(0)
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -805,8 +805,8 @@ public:
         this->start_synctime_now = {this->start_synctime_now.tv_sec + time.tv_sec, this->start_synctime_now.tv_usec + time.tv_usec};
     }
 
-    void set_last_balise(uint64_t time) {
-        this->last_balise_to_elapse += time;
+    void set_wait_after_load_client(timeval & time) {
+        this->start_synctime_now = {time.tv_sec, time.tv_usec};
     }
 
     /* order count set this->stream.p to the beginning of the next order.
@@ -875,6 +875,13 @@ public:
     void interpret_order()
     {
         this->total_orders_count++;
+
+//         if (this->begin_to_elapse <= this->movie_elapsed_client) {
+//             if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
+//                 return;
+//             }
+//         }
+
         switch (this->chunk_type)
         {
         case WrmChunkType::RDP_UPDATE_ORDERS:
@@ -902,7 +909,8 @@ public:
                             order.log(LOG_INFO);
                         }
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(order);
+                            if (this->begin_to_elapse < this->movie_elapsed_client)
+                                gd->draw(order);
                         }
                     }
                     break;
@@ -984,7 +992,8 @@ public:
                     }
 
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.destblt, clip);
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -994,6 +1003,7 @@ public:
                         this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
                         gd->draw(this->ssc.multidstblt, clip);
                     }
                     break;
@@ -1014,7 +1024,8 @@ public:
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multipatblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.multipatblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -1024,7 +1035,8 @@ public:
                         this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multiscrblt, clip);
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -1034,7 +1046,8 @@ public:
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.patblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.patblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -1044,7 +1057,8 @@ public:
                         this->ssc.scrblt.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.scrblt, clip);
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -1054,7 +1068,8 @@ public:
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.lineto, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.lineto, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::RECT:
@@ -1064,7 +1079,8 @@ public:
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.opaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.opaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::MEMBLT:
@@ -1081,7 +1097,8 @@ public:
                         }
                         else {
                             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.memblt, clip, bmp);
+                                if (this->begin_to_elapse <= this->movie_elapsed_client)
+                                    gd->draw(this->ssc.memblt, clip, bmp);
                             }
                         }
                     }
@@ -1112,7 +1129,8 @@ public:
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.polyline, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.polyline, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 case RDP::ELLIPSESC:
@@ -1122,7 +1140,8 @@ public:
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                            gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
                     }
                     break;
                 default:
@@ -1374,7 +1393,8 @@ public:
             }
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->draw(bitmap_data, bitmap);
+                if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    gd->draw(bitmap_data, bitmap);
             }
 
         }
@@ -1452,6 +1472,7 @@ public:
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
+
                 gd->set_pointer(cursor);
             }
         }
@@ -1694,7 +1715,7 @@ private:
         while (!requested_to_stop && this->next_order()) {
             if (bool(this->verbose & Verbose::play)) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-                   , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                   , unsigned(this->record_now.tv_sec), this->total_orders_count);
             }
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
@@ -1718,24 +1739,23 @@ private:
         }
     }
 
-    template<class CbUpdateProgress>
-    bool privplay_client(CbUpdateProgress update_progess) {
+public:
+    void instant_play_client(uint64_t endin_frame) {
 
-        struct timeval now     = tvtime();
-        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
+        //LOG(LOG_INFO, "begin = %u time = %u end = %u", this->begin_to_elapse, this->movie_elapsed_client, endin_frame);
 
-        bool res(false);
+        while (endin_frame >= this->movie_elapsed_client) {
 
-        while (this->begin_to_elapse >= this->movie_elapsed_client && this->begin_to_elapse >= this->last_balise_to_elapse) {
             if (this->next_order()) {
+
                 if (bool(this->verbose & Verbose::play)) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                    , unsigned(this->record_now.tv_sec), this->total_orders_count);
                 }
 
-                if (this->remaining_order_count > 0) {
-                    res = true;
-                }
+//                 if (this->remaining_order_count > 0) {
+//                     res = true;
+//                 }
 
                 this->interpret_order();
 
@@ -1749,12 +1769,25 @@ private:
                 break_privplay_client = true;
             }
         }
+    }
+
+
+private:
+    template<class CbUpdateProgress>
+    bool privplay_client(CbUpdateProgress update_progess) {
+
+        struct timeval now     = tvtime();
+        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
+
+        bool res(false);
+
+        //LOG(LOG_INFO, "begin = %u time = %u elapsed = %u", this->begin_to_elapse, this->movie_elapsed_client, elapsed);
 
         if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {
                 if (bool(this->verbose & Verbose::play)) {
                     LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
+                    , unsigned(this->record_now.tv_sec), this->total_orders_count);
                 }
 
                 if (this->remaining_order_count > 0) {
