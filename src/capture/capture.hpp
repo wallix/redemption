@@ -809,6 +809,11 @@ public:
         this->start_synctime_now = {time.tv_sec, time.tv_usec};
     }
 
+    void set_sync() {
+        timeval now = tvtime();
+        this->start_synctime_now = {now.tv_sec + this->begin_capture.tv_sec, now.tv_usec};
+    }
+
     /* order count set this->stream.p to the beginning of the next order.
      * Most of the times it means not changing it, except when it must read next chunk
      * when remaining order count is 0.
@@ -908,9 +913,10 @@ public:
                         if (bool(this->verbose & Verbose::rdp_orders)){
                             order.log(LOG_INFO);
                         }
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            if (this->begin_to_elapse < this->movie_elapsed_client)
+                        if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                            for (gdi::GraphicApi * gd : this->graphic_consumers){
                                 gd->draw(order);
+                            }
                         }
                     }
                     break;
@@ -980,8 +986,10 @@ public:
                 case RDP::GLYPHINDEX:
                     this->statistics.GlyphIndex++;
                     this->ssc.glyphindex.receive(this->stream, header);
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.glyphindex, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), this->gly_cache);
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(this->ssc.glyphindex, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), this->gly_cache);
+                        }
                     }
                     break;
                 case RDP::DESTBLT:
@@ -990,10 +998,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.destblt.log(LOG_INFO, clip);
                     }
-
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.destblt, clip);
+                        }
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -1002,9 +1010,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
-                        gd->draw(this->ssc.multidstblt, clip);
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(this->ssc.multidstblt, clip);
+                        }
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
@@ -1013,8 +1022,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multiopaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(this->ssc.multiopaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -1023,9 +1034,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.multipatblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -1034,9 +1046,11 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
                     for (gdi::GraphicApi * gd : this->graphic_consumers){
                         if (this->begin_to_elapse <= this->movie_elapsed_client)
                             gd->draw(this->ssc.multiscrblt, clip);
+                    }
                     }
                     break;
                 case RDP::PATBLT:
@@ -1045,9 +1059,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.patblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -1056,9 +1071,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.scrblt.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.scrblt, clip);
+                        }
                     }
                     break;
                 case RDP::LINE:
@@ -1067,9 +1083,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.lineto, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::RECT:
@@ -1078,9 +1095,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.opaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::MEMBLT:
@@ -1094,11 +1112,11 @@ public:
                         if (!bmp.is_valid()){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                             throw Error(ERR_WRM);
-                        }
-                        else {
-                            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                if (this->begin_to_elapse <= this->movie_elapsed_client)
+                        } else {
+                            if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                                for (gdi::GraphicApi * gd : this->graphic_consumers){
                                     gd->draw(this->ssc.memblt, clip, bmp);
+                                }
                             }
                         }
                     }
@@ -1116,8 +1134,10 @@ public:
                             throw Error(ERR_WRM);
                         }
                         else {
-                            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.mem3blt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), bmp);
+                            if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                    gd->draw(this->ssc.mem3blt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), bmp);
+                                }
                             }
                         }
                     }
@@ -1128,9 +1148,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.polyline, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 case RDP::ELLIPSESC:
@@ -1139,9 +1160,10 @@ public:
                     if (bool(this->verbose & Verbose::rdp_orders)){
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        if (this->begin_to_elapse <= this->movie_elapsed_client)
-                            gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette));
+                        }
                     }
                     break;
                 default:
@@ -1217,6 +1239,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    LOG(LOG_INFO, "1 start_synctime_now = %u", unsigned(this->start_synctime_now.tv_sec));
                     this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
@@ -1392,9 +1415,10 @@ public:
                 bitmap_data.log(LOG_INFO);
             }
 
-            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                if (this->begin_to_elapse <= this->movie_elapsed_client)
+            if (this->begin_to_elapse <= this->movie_elapsed_client) {
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(bitmap_data, bitmap);
+                }
             }
 
         }
@@ -1505,6 +1529,7 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
+                    LOG(LOG_INFO, "2 start_synctime_now = %u", unsigned(this->start_synctime_now.tv_sec));
                     this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
@@ -1775,6 +1800,7 @@ private:
 
         bool res(false);
 
+        //LOG(LOG_INFO, "begin = %u movie_elapsed_client = %u elapsed = %u", unsigned(this->begin_to_elapse), unsigned(this->movie_elapsed_client), elapsed);
         if (elapsed >= this->movie_elapsed_client) {
             if (this->next_order()) {
                 if (bool(this->verbose & Verbose::play)) {

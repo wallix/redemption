@@ -200,6 +200,10 @@ public:
         return this->reader.play_client();
     }
 
+    void set_sync() {
+        this->reader.set_sync();
+    }
+
     bool get_break_privplay_client() {
         return this->reader.break_privplay_client;
     }

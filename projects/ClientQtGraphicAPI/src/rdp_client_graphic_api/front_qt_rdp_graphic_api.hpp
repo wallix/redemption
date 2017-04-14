@@ -1253,6 +1253,7 @@ public Q_SLOTS:
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
+                this->_front->replay_mod.get()->set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -1275,7 +1276,7 @@ public Q_SLOTS:
 
             this->show_video_real_time();
             this->_timer_replay.stop();
-
+            this->begin = 0;
             this->movie_time_start = {0, 0};
             this->movie_time_pause = {0, 0};
             this->current_time_movie = 0;
@@ -1313,16 +1314,18 @@ public Q_SLOTS:
 
     void stopRelease() {
         this->_timer_replay.stop();
-        this->_buttonCtrlAltDel.setText("Replay");
-        this->movie_status.setText("  Stop ");
+
         this->movie_time_start = {0, 0};
         this->movie_time_pause = {0, 0};
+        this->begin = 0;
+        this->_running = false;
+        this->is_paused = false;
+
+        this->_buttonCtrlAltDel.setText("Replay");
+        this->movie_status.setText("  Stop ");
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
-
-        this->_running = false;
-        this->is_paused = false;
 
         this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
