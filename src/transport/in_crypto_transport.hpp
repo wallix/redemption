@@ -31,6 +31,9 @@
 #include "utils/parse.hpp"
 #include "capture/cryptofile.hpp"
 
+#include <memory>
+
+
 class InCryptoTransport : public Transport
 {
     int fd;

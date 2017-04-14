@@ -29,31 +29,34 @@
 #include "main/redcryptofile.hpp"
 
 extern "C" {
+    inline
     int hmac_fn(char * buffer)
     {
-        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
+        // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
         uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
-            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
-            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
-            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
-            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        memcpy(buffer, hmac_key, SslSha256::DIGEST_LENGTH);
+            0x86, 0x41, 0x05, 0x58, 0xc4, 0x95, 0xcc, 0x4e,
+            0x49, 0x21, 0x57, 0x87, 0x47, 0x74, 0x08, 0x8a,
+            0x33, 0xb0, 0x2a, 0xb8, 0x65, 0xcc, 0x38, 0x41,
+            0x20, 0xfe, 0xc2, 0xc9, 0xb8, 0x72, 0xc8, 0x2c,
+        };
+        memcpy(buffer, hmac_key, sizeof(hmac_key));
         return 0;
     }
 
+    inline
     int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
         (void)len;
         (void)oldscheme;
-        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
+        // 611FD4CDE595B7FDA65038FCD886514F597E8E9081F6F4489C7741510F530EE8
         uint8_t trace_key[SslSha256::DIGEST_LENGTH] = {
-            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
-            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
-            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
-            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
-         };
+            0x61, 0x1f, 0xd4, 0xcd, 0xe5, 0x95, 0xb7, 0xfd,
+            0xa6, 0x50, 0x38, 0xfc, 0xd8, 0x86, 0x51, 0x4f,
+            0x59, 0x7e, 0x8e, 0x90, 0x81, 0xf6, 0xf4, 0x48,
+            0x9c, 0x77, 0x41, 0x51, 0x0f, 0x53, 0x0e, 0xe8,
+        };
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
@@ -62,18 +65,24 @@ extern "C" {
 RED_AUTO_TEST_CASE(TestRedCryptofileWriter)
 {
     OpenSSL_add_all_digests();
-    int with_encryption = 0; // int used as boolean 0 false, true otherwise
-    int with_checksum = 0;   // int used as boolean 0 false, true otherwise
+    int with_encryption = 1; // int used as boolean 0 false, true otherwise
+    int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-    uint8_t qhashhex[MD_HASH::DIGEST_LENGTH * 2]{};
-    uint8_t fhashhex[MD_HASH::DIGEST_LENGTH * 2]{};
+    HashHexArray qhashhex {};
+    HashHexArray fhashhex {};
 
     const char * finalname = "./encrypted.txt";
 
-    RedCryptoHandle * handle = redcryptofile_open_writer(with_encryption, with_checksum, finalname, trace_fn, hmac_fn);
-    RED_CHECK_NE(handle, nullptr);
-    RED_CHECK_EQ(redcryptofile_write(handle, "We write, ", 10), 10);
-    RED_CHECK_EQ(redcryptofile_write(handle, "and again, ", 11), 11);
-    RED_CHECK_EQ(redcryptofile_write(handle, "and so on.", 10), 10);
+    RedCryptoWriterHandle * handle = redcryptofile_open_writer(
+        with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
+    RED_CHECK(handle != nullptr);
+    auto bytes = [](char const * p) { return reinterpret_cast<uint8_t const *>(p); };
+    RED_CHECK_EQ(redcryptofile_write(handle, bytes("We write, "), 10), 10);
+    RED_CHECK_EQ(redcryptofile_write(handle, bytes("and again, "), 11), 11);
+    RED_CHECK_EQ(redcryptofile_write(handle, bytes("and so on."), 10), 10);
     RED_CHECK_EQ(redcryptofile_close_writer(handle, qhashhex, fhashhex), 0);
+
+    RED_CHECK_EQ(qhashhex, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+
+    RED_CHECK_EQ(::unlink(finalname), 0);
 }
