@@ -27,13 +27,8 @@
 #include "transport/out_crypto_transport.hpp"
 #include <string.h>
 
-RED_AUTO_TEST_CASE(TestOutCryptoTransport)
+inline void init_keys(CryptoContext & cctx)
 {
-    LOG(LOG_INFO, "Running test TestOutCryptoTransport");
-    OpenSSL_add_all_digests();
-
-    LCGRandom rnd(0);
-    CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
         "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
@@ -46,6 +41,16 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
+}
+
+RED_AUTO_TEST_CASE(TestOutCryptoTransport)
+{
+    LOG(LOG_INFO, "Running test TestOutCryptoTransport");
+    OpenSSL_add_all_digests();
+
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
 
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
@@ -68,6 +73,47 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5"
     );
 
+    RED_CHECK_MEM_AA(fhash, qhash);
+
+    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    RED_CHECK(::unlink(finalname) == 0); // finalname exists
+}
+
+RED_AUTO_TEST_CASE(TestOutCryptoTransportBigFile)
+{
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+
+    const char * finalname = "./encrypted.txt";
+    char tmpname[256];
+    {
+        OutCryptoTransport ct(true, true, cctx, rnd);
+        ct.open(finalname, 0);
+        ::strcpy(tmpname, ct.get_tmp());
+        char buf[200000]{};
+        ct.send(buf, sizeof(buf));
+        ct.close(qhash, fhash);
+    }
+
+    RED_CHECK_MEM_AC(
+        qhash,
+        "\x39\xcd\x15\x84\x07\x35\x55\xf3\x9b\x45\xc7\xb2\xdd\x06\xa1\x0f"
+        "\xd0\x9d\x44\xdd\xcd\x40\x49\x74\x14\xec\x72\x59\xa9\x7b\x7f\x81"
+    );
+
+    RED_CHECK_MEM_AC(
+        fhash,
+        "\xc2\x55\x50\xf3\xcd\x56\xf3\xb9\x26\x37\x06\x9a\x3b\xb1\x26\xd6"
+        "\x84\xfd\x6c\xac\x15\xc1\x76\x92\x2f\x16\xc0\xe3\x19\xce\xd0\xe4"
+    );
+
+    RED_CHECK(fhash[0] != qhash[0]);
+
+
     RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
@@ -77,21 +123,9 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
     LOG(LOG_INFO, "Running test TestOutCryptoTransportAutoClose");
     LCGRandom rnd(0);
     CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-    ));
-    cctx.set_hmac_key(cstr_array_view(
-         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-    ));
+    init_keys(cctx);
     char tmpname[128];
     const char * finalname = "./encrypted.txt";
-    try
     {
         OutCryptoTransport ct(true, true, cctx, rnd);
         ct.open(finalname, 0);
@@ -100,9 +134,6 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
     }
-    catch (Error e){
-        LOG(LOG_INFO, "exception raised %d", e.id);
-    };
     // if there is no explicit close we can't get hash values
     // but the file is correctly closed and ressources freed
     RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
@@ -114,18 +145,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
     LOG(LOG_INFO, "Running test TestOutCryptoTransportMultipleFiles");
     LCGRandom rnd(0);
     CryptoContext cctx;
-    cctx.set_master_key(cstr_array_view(
-        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-    ));
-    cctx.set_hmac_key(cstr_array_view(
-         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-    ));
+    init_keys(cctx);
     char tmpname1[128];
     char tmpname2[128];
     const char * finalname1 = "./encrypted001.txt";

@@ -252,7 +252,8 @@ public:
     }
 };
 
-struct ocrypto {
+struct ocrypto
+{
     struct Result {
         const_bytes_array buf;
         std::size_t consumed;
@@ -273,7 +274,7 @@ private:
     Random & rnd;
     bool encryption;
     bool checksum;
-    
+
     /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
      * Return 0 on success, negative value on error
      */
@@ -339,17 +340,22 @@ private:
         ::memcpy(buffer, ciphered_buf, ciphered_buf_sz);
         towrite += ciphered_buf_sz;
 
-        if (this->checksum){
-            this->hm.update(&ciphered_buf[0], ciphered_buf_sz);
-            if (this->file_size < 4096) {
-                size_t remaining_size = 4096 - this->file_size;
-                this->hm4k.update(&ciphered_buf[0], remaining_size >= ciphered_buf_sz ? ciphered_buf_sz : remaining_size);
-            }
-            this->file_size += ciphered_buf_sz;
-        }
+        this->update_hmac(&ciphered_buf[0], ciphered_buf_sz);
 
         // Reset buffer
         this->pos = 0;
+    }
+
+    void update_hmac(uint8_t const * buf, size_t len)
+    {
+        if (this->checksum){
+            this->hm.update(buf, len);
+            if (this->file_size < 4096) {
+                size_t remaining_size = 4096 - this->file_size;
+                this->hm4k.update(buf, std::min(remaining_size, len));
+            }
+            this->file_size += len;
+        }
     }
 
 public:
@@ -361,8 +367,8 @@ public:
     {
     }
 
-    ~ocrypto() {}
-    
+    ~ocrypto() = default;
+
     Result open(const uint8_t * derivator, size_t derivator_len)
     {
         this->file_size = 0;
@@ -408,15 +414,7 @@ public:
             this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
             this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
             ::memcpy(this->header_buf + 8, iv, 32);
-
-            if (this->checksum){
-                this->hm.update(&this->header_buf[0], 40);
-                if (this->file_size < 4096) {
-                    size_t remaining_size = 4096 - this->file_size;
-                    this->hm4k.update(&this->header_buf[0], remaining_size >= 40 ? 40 : remaining_size);
-                }
-                this->file_size += 40;
-            }
+            this->update_hmac(&this->header_buf[0], 40);
             return Result{{this->header_buf, 40u}, 0u};
         }
         else {
@@ -445,14 +443,7 @@ public:
             ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
             towrite += 8;
 
-            if (this->checksum){
-                this->hm.update(tmp_buf, 8);
-                if (this->file_size < 4096) {
-                    size_t remaining_size = 4096 - this->file_size;
-                    this->hm4k.update(tmp_buf, remaining_size >= 8 ? 8 : remaining_size);
-                }
-                this->file_size += 8;
-            }
+            this->update_hmac(tmp_buf, 8);
         }
 
         if (this->checksum) {
@@ -467,15 +458,7 @@ public:
     ocrypto::Result write(const uint8_t * data, size_t len)
     {
         if (!this->encryption) {
-            if (this->checksum){
-                this->hm.update(data, len);
-                if (this->file_size < 4096) {
-                    size_t remaining_size = 4096 - this->file_size;
-                    this->hm4k.update(data, remaining_size >= len ? len : remaining_size);
-                }
-                this->file_size += len;
-            }
-            
+            this->update_hmac(data, len);
             return Result{{data, len}, len};
         }
 
