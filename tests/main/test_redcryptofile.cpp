@@ -83,7 +83,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         auto * handle = redcryptofile_open_writer(
             with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
-        RED_CHECK(handle != nullptr);
+        RED_CHECK_NE(handle, nullptr);
         RED_CHECK_EQ(redcryptofile_write(handle, bytes("We write, "), 10), 0);
         RED_CHECK_EQ(redcryptofile_write(handle, bytes("and again, "), 11), 0);
         RED_CHECK_EQ(redcryptofile_write(handle, bytes("and so on."), 10), 0);
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
     // Reader
     {
         auto * handle = redcryptofile_open_reader(finalname, &hmac_fn, &trace_fn);
-        RED_CHECK(handle != nullptr);
+        RED_CHECK_NE(handle, nullptr);
 
         uint8_t buf[12];
 
@@ -116,8 +116,8 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
 RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
-    RED_CHECK(redcryptofile_open_writer(1, 1, "/", &hmac_fn, &trace_fn) == nullptr);
-    RED_CHECK(redcryptofile_open_reader("/", &hmac_fn, &trace_fn) == nullptr);
+    RED_CHECK_EQ(redcryptofile_open_writer(1, 1, "/", &hmac_fn, &trace_fn), nullptr);
+    RED_CHECK_EQ(redcryptofile_open_reader("/", &hmac_fn, &trace_fn), nullptr);
 
     HashHexArray qhashhex {};
     HashHexArray fhashhex {};
