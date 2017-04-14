@@ -108,6 +108,8 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
         RED_CHECK_EQ(redcryptofile_read(handle, buf, 10), 0);
         RED_CHECK_MEM_C(bytes_array(buf, 10), "and so on.");
 
+        RED_CHECK_EQ(redcryptofile_read(handle, buf, 10), -2); // eof
+
         RED_CHECK_EQ(redcryptofile_close_reader(handle), 0);
     }
 
