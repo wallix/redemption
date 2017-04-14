@@ -204,6 +204,10 @@ public:
         this->reader.set_sync();
     }
 
+    unsigned get_wrm_version() {
+        return this->in_trans.get_wrm_version();
+    }
+
     bool get_break_privplay_client() {
         return this->reader.break_privplay_client;
     }
