@@ -98,10 +98,10 @@ public:
 struct RedCryptoReaderHandle
 {
     RedCryptoReaderHandle(
-        bool with_encryption,
+        InCryptoTransport::EncryptionMode encryption,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
     : cctxw(hmac_fn, trace_fn)
-    , in_crypto_transport(cctxw.cctx, with_encryption)
+    , in_crypto_transport(cctxw.cctx, encryption)
     {}
 
 private:
