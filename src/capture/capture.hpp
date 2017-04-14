@@ -1239,7 +1239,6 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
-                    LOG(LOG_INFO, "1 start_synctime_now = %u", unsigned(this->start_synctime_now.tv_sec));
                     this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
@@ -1529,7 +1528,6 @@ public:
                 if (this->real_time) {
                     this->start_record_now   = this->record_now;
                     this->start_synctime_now = tvtime();
-                    LOG(LOG_INFO, "2 start_synctime_now = %u", unsigned(this->start_synctime_now.tv_sec));
                     this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
                 }
                 this->timestamp_ok = true;
