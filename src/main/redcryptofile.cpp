@@ -129,14 +129,37 @@ RedCryptoWriterHandle * redcryptofile_open_writer(
     }
 }
 
+RedCryptoReaderHandle * redcryptofile_open_reader(
+    char const * path,
+    get_hmac_key_prototype* hmac_fn, get_trace_key_prototype* trace_fn)
+{
+    try {
+        auto handler = new (std::nothrow) RedCryptoReaderHandle(
+            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
+        );
+        std::unique_ptr<RedCryptoReaderHandle> u(handler);
+        handler->in_crypto_transport.open(path);
+        return u.release();
+    }
+    catch (...) {
+        return nullptr;
+    }
+}
+
 #define CHECK_HANDLE(handle) if (!handle) return -1
 #define CHECK_NOTHROW(exp) do { try { exp; } catch (...) { return -1; } } while (0)
 
-long redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
+int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
 {
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len));
-    return static_cast<long>(len);
+    return 0;
+}
+
+int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len)
+{
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(return handle->in_crypto_transport.atomic_read(buffer, len) ? 0 : -2);
 }
 
 using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
@@ -153,19 +176,24 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
     *phex = '\0';
 }
 
-long int redcryptofile_close_writer(RedCryptoWriterHandle* handle, HashHexArray qhashhex, HashHexArray fhashhex)
+int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex)
 {
     CHECK_HANDLE(handle);
-    int const ret = [&]{
-        HashArray qhash;
-        HashArray fhash;
-        CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
-        hash_to_hashhex(qhash, qhashhex);
-        hash_to_hashhex(fhash, fhashhex);
-        return 0;
-    }();
-    delete handle;
-    return ret;
+    std::unique_ptr<RedCryptoWriterHandle> u(handle);
+    HashArray qhash;
+    HashArray fhash;
+    CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
+    hash_to_hashhex(qhash, qhashhex);
+    hash_to_hashhex(fhash, fhashhex);
+    return 0;
+}
+
+int redcryptofile_close_reader(RedCryptoReaderHandle * handle)
+{
+    CHECK_HANDLE(handle);
+    std::unique_ptr<RedCryptoReaderHandle> u(handle);
+    CHECK_NOTHROW(handle->in_crypto_transport.close());
+    return 0;
 }
 
 }

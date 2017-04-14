@@ -35,16 +35,20 @@ extern "C"
         get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoReaderHandle * redcryptofile_open_reader(char * path,
+    RedCryptoReaderHandle * redcryptofile_open_reader(char const * path,
         get_hmac_key_prototype * hmac_fn,
         get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    long redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
+    int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
+
+    // -2: eof, -1: error, 0: sucess
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
-    long redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
+    int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
 
     REDEMPTION_LIB_EXPORT
-    long redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
+    int redcryptofile_close_reader(RedCryptoReaderHandle * handle);
 }
