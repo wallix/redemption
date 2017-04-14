@@ -1184,16 +1184,28 @@ private:
                 this->barRepaint(this->current_time_movie, QColor(Qt::green));
                 this->slotRepaint();
 
-                int last_balised = (this->begin/ BALISED_FRAME);
-                this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0});
-                this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
-                this->_front->replay_mod.get()->instant_play_client(this->begin*1000000);
-                this->slotRepaint();
+                switch (this->_front->replay_mod.get()->get_wrm_version()) {
+                    case 1:
+                        this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
+                        this->_front->replay_mod.get()->instant_play_client(this->begin*1000000);
+                        this->movie_time_start = tvtime();
+                        break;
 
-                this->movie_time_start = tvtime();
-                timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
-                timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
-                this->_front->replay_mod.get()->set_wait_after_load_client(wait_duration);
+                    case 2:
+                    {
+                        int last_balised = (this->begin/ BALISED_FRAME);
+                        this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0});
+                        this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
+                        this->_front->replay_mod.get()->instant_play_client(this->begin*1000000);
+                        this->slotRepaint();
+
+                        this->movie_time_start = tvtime();
+                        timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
+                        timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
+                        this->_front->replay_mod.get()->set_wait_after_load_client(wait_duration);
+                    }
+                        break;
+                }
 
                 this->_timer_replay.start(1);
             }
@@ -1253,6 +1265,7 @@ public Q_SLOTS:
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
+                this->_front->replay_mod.get()->set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -1275,7 +1288,7 @@ public Q_SLOTS:
 
             this->show_video_real_time();
             this->_timer_replay.stop();
-
+            this->begin = 0;
             this->movie_time_start = {0, 0};
             this->movie_time_pause = {0, 0};
             this->current_time_movie = 0;
@@ -1313,16 +1326,18 @@ public Q_SLOTS:
 
     void stopRelease() {
         this->_timer_replay.stop();
-        this->_buttonCtrlAltDel.setText("Replay");
-        this->movie_status.setText("  Stop ");
+
         this->movie_time_start = {0, 0};
         this->movie_time_pause = {0, 0};
+        this->begin = 0;
+        this->_running = false;
+        this->is_paused = false;
+
+        this->_buttonCtrlAltDel.setText("Replay");
+        this->movie_status.setText("  Stop ");
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
-
-        this->_running = false;
-        this->is_paused = false;
 
         this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
         this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
@@ -2801,9 +2816,10 @@ public:
         this->form->hide();
         this->screen->show();
 
-        this->bar = new ProgressBarWindow(this->screen->movie_time);
-
-        this->screen->pre_load_movie();
+        if (this->replay_mod.get()->get_wrm_version() == 2) {
+            this->bar = new ProgressBarWindow(this->screen->movie_time);
+            this->screen->pre_load_movie();
+        }
     }
 
     virtual bool connect() {

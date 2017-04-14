@@ -779,6 +779,10 @@ public:
         return total_read;
     }
 
+    unsigned get_wrm_version() {
+        return this->meta_header_version;
+    }
+
     int buf_reader_next_line()
     {
         char * pos;
@@ -987,7 +991,7 @@ public:
             err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
 
-            if (meta_line.stop_time < this->begin_time) {
+            if (meta_line.stop_time < this->begin_time && this->meta_header_version == 2) {
                 ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
                 if (len < 0) {
                     return -len;
