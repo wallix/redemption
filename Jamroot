@@ -205,22 +205,22 @@ exe rdpproxy
     ;
 
 # Maybe merge with libredrec ?
-#lib libredcryptofile
-#    :
-#        redcryptofile.o
-#        $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
+lib libredcryptofile
+   :
+       redcryptofile.o
+       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
 
-#        openssl
-#        crypto
-#        z
-#        dl
+       openssl
+       crypto
+       z
+       dl
 
-#        snappy
-#    :
-#        <link>shared
-#        <linkflags>-Wl,-Bsymbolic
-#        $(LIB_DEPENDENCIES)
-#    ;
+       snappy
+   :
+       <link>shared
+       <linkflags>-Wl,-Bsymbolic
+       $(LIB_DEPENDENCIES)
+   ;
 
 
 lib libredrec

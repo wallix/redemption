@@ -19,3 +19,9 @@
 
 */
 
+#include "main/redcryptofile.hpp"
+
+extern "C"
+{
+    
+}
