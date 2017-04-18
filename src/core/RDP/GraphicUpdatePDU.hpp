@@ -797,37 +797,28 @@ protected:
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
-                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
-                      uint8_t* pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
-
-                      uint8_t  xor_bit_generation_mask = 7;
-
-                      uint8_t xor_byte = 0;
+                const uint8_t * psource = cursor.data 
+                    + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
+                uint8_t xor_bit_mask_generation = 7;
+                uint8_t xor_byte = 0;
 
                 for (unsigned int w = 0; w < cursor.width; ++w) {
                     if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
-                        if (xor_bit_generation_mask) {
-                            xor_byte |= (1 << xor_bit_generation_mask);
-                        }
-                        else {
-                            xor_byte |= 1;
-                        }
+                        xor_byte |= (1 << xor_bit_mask_generation);
                     }
 
-                    if (xor_bit_generation_mask) {
-                        xor_bit_generation_mask--;
-                    }
-                    else {
-                        xor_bit_generation_mask = 7;
+                    if (!xor_bit_mask_generation) {
+                        xor_bit_mask_generation = 8;
                         *pdest = xor_byte;
                         xor_byte = 0;
                         pdest++;
                     }
+                    xor_bit_mask_generation--;
                     psource += 3;
                 }
-                if (xor_bit_generation_mask != 7) {
+                if (xor_bit_mask_generation != 7) {
                     *pdest = xor_byte;
-                    xor_byte = 0;
                 }
             }
 

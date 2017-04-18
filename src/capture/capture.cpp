@@ -817,7 +817,7 @@ public:
         if (this->enable_rt_display) {
             return this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
         }
-        return std::chrono::microseconds(interval - duration);
+        return std::chrono::microseconds(interval - duration % interval);
     }
 };
 
