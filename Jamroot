@@ -899,15 +899,15 @@ test-run test_bitmap_perf : test_bitmap_perf.cpp : : <library>bitmap <covflag>no
 
 ## utils/crypto
 ## @{
-test-canonical utils/crypto/ssl_aes_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_aes_direct.hpp : ;
 test-canonical utils/crypto/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_md4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_md5_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical utils/crypto/ssl_mod_exp_direct : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_rc4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha1_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha256_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha512_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md4_direct.hpp : ;
+test-canonical utils/crypto/ssl_md5_direct.hpp : ;
+# TODO test-canonical utils/crypto/ssl_mod_exp_direct : ;
+test-canonical utils/crypto/ssl_rc4_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha1_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha256_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha512_direct.hpp : ;
 test-canonical utils/crypto/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 ## @}
 
