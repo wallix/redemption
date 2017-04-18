@@ -166,12 +166,12 @@ using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
 
 inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept
 {
+    char const * t = "0123456789ABCDEF";
     static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
     auto phex = hashhex;
     for (uint8_t c : hash) {
-        char const * t = "0123456789ABCDEF";
-        *phex++ = t[int(c >> 4)];
-        *phex++ = t[int(c & 0xf)];
+        *phex++ = t[c >> 4];
+        *phex++ = t[c & 0xf];
     }
     *phex = '\0';
 }
