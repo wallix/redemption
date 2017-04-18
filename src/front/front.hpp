@@ -493,31 +493,6 @@ private:
                 this->graphics.draw(args...);
             }
 
-            template<class Cmd, class... Ts>
-            void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
-            {
-                constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
-                Cmd const & new_cmd = (depth == color_ctx.depth())
-                    ? cmd
-                    : [&cmd, &color_ctx]() {
-                        auto color_convertor = [&color_ctx](RDPColor c) {
-                            Enc enc;
-                            switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24()(c));
-                                case gdi::Depth::unspecified(): default: assert(!"unknown depth");
-                            }
-                            return RDPColor{};
-                        };
-                        Cmd new_cmd = cmd;
-                        gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);
-                        return new_cmd;
-                    }();
-                this->graphics.draw(new_cmd, clip, gdi::ColorCtx{depth, color_ctx.palette()}, args...);
-            }
-
             Graphics::PrivateGraphicsUpdatePDU & graphics;
 
         public:
