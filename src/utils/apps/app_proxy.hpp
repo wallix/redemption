@@ -152,33 +152,25 @@ inline int shutdown(const char * pid_file)
     // remove all other pid files
     DIR * d = opendir("/var/run/redemption");
     if (d){
-        size_t path_len = strlen("/var/run/redemption/");
-        size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
-        char * buffer = static_cast<char*>(malloc(file_len + path_len));
-        strcpy(buffer, "/var/run/redemption/");
-        size_t len = offsetof(dirent, d_name) + file_len;
-        dirent * entryp = static_cast<dirent *>(malloc(len));
-        dirent * result;
-        for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+        const std::string path("/var/run/redemption/");
+        for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;
             }
-            strcpy(buffer + path_len, entryp->d_name);
+            const std::string pidpath = path + std::string(entryp->d_name);
             struct stat st;
-            if (stat(buffer, &st) < 0){
+            if (stat(pidpath.c_str(), &st) < 0){
                 LOG(LOG_ERR, "Failed to read pid directory %s [%d: %s]",
-                    buffer, errno, strerror(errno));
+                    pidpath.c_str(), errno, strerror(errno));
                 continue;
             }
-            LOG(LOG_INFO, "removing old pid file %s", buffer);
-            if (unlink(buffer) < 0){
+            LOG(LOG_INFO, "removing old pid file %s", pidpath.c_str());
+            if (unlink(pidpath.c_str()) < 0){
                 LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
-                    buffer, errno, strerror(errno));
+                    pidpath.c_str(), errno, strerror(errno));
             }
         }
         closedir(d);
-        free(entryp);
-        free(buffer);
     }
     else {
         LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%d: %s]",
