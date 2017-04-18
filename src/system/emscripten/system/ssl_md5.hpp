@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Clement Moroldo
 */
 
+#pragma once
+
 #include "utils/crypto/ssl_md5_direct.hpp"
 
 using SslMd5 = SslMd5_direct;
