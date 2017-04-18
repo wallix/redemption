@@ -1046,25 +1046,17 @@ public:
                 this->full_path, this->pattern);
         }
 
-        long     name_max = pathconf(this->full_path.c_str(), _PC_NAME_MAX);
-        size_t   len      = offsetof(struct dirent, d_name) + name_max + 1;
-        auto     uptr     = std::make_unique<char[]>(len);
-        dirent * entry    = reinterpret_cast<dirent *>(uptr.get());
-        dirent * result   = nullptr;
-
-        do {
-            if (::readdir_r(this->dir, entry, &result) || !result) { break; }
-
-            // TODO this function is incompatiable with utf8
-            if (::FilePatternMatchA(result->d_name, this->pattern.c_str())) {
+        dirent * entry = nullptr;
+        while ((entry = ::readdir(this->dir))) {
+            // TODO this function is incompatible with utf8
+            if (::FilePatternMatchA(entry->d_name, this->pattern.c_str())) {
                 break;
             }
         }
-        while (true);
 
         StaticOutStream<65536> out_stream;
 
-        if (!result) {
+        if (!entry) {
             this->MakeClientDriveIoResponse(
                 out_stream,
                 device_io_request,
@@ -1077,10 +1069,10 @@ public:
         }
         else {
             std::string file_full_path = this->full_path;
-            if ((file_full_path.back() != '/') && (result->d_name[0] != '/')) {
+            if ((file_full_path.back() != '/') && (entry->d_name[0] != '/')) {
                 file_full_path += '/';
             }
-            file_full_path += result->d_name;
+            file_full_path += entry->d_name;
             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                 LOG(LOG_INFO,
                     "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
@@ -1110,7 +1102,7 @@ public:
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR),fscc::FILE_ATTRIBUTE_READONLY),
-                        result->d_name
+                        entry->d_name
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
@@ -1141,7 +1133,7 @@ public:
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR), fscc::FILE_ATTRIBUTE_READONLY),
-                        result->d_name
+                        entry->d_name
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
@@ -1164,7 +1156,7 @@ public:
                         erref::NTSTATUS::STATUS_SUCCESS,
                         verbose);
 
-                    const fscc::FileNamesInformation file_name_information(result->d_name);
+                    const fscc::FileNamesInformation file_name_information(entry->d_name);
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
                             "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
