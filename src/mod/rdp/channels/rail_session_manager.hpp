@@ -292,10 +292,10 @@ public:
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);
         const bool     window_is_new     = (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags());
 
-        if (window_is_new &&
-            (DialogBoxType::WAITING_SCREEN == this->dialog_box_type)) {
-
-            this->dialog_box_destroy();
+        if (window_is_new) {
+            if (DialogBoxType::WAITING_SCREEN == this->dialog_box_type) {
+                this->dialog_box_destroy();
+            }
 
             this->currently_without_window = false;
         }
@@ -799,9 +799,11 @@ public:
         if (this->currently_without_window) {
             REDASSERT(DialogBoxType::NONE == this->dialog_box_type);
 
-            this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+            if (this->currently_without_window) {
+                this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
 
-            this->waiting_screen_draw(0);
+                this->waiting_screen_draw(0);
+            }
         }
     }
 };  // class RemoteProgramsSessionManager

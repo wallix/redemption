@@ -74,10 +74,10 @@ class ReplayMod : public InternalMod
     bool end_of_data;
     bool wait_for_escape;
 
+    time_t balise_time_frame;
+
 public:
     using Verbose = FileToGraphic::Verbose;
-
-private:
 
 
 public:
@@ -97,6 +97,7 @@ public:
     , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
+    , balise_time_frame(0)
     {
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
@@ -123,7 +124,7 @@ public:
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
-        ReplayMod( FrontAPI & front
+    ReplayMod( FrontAPI & front
              , const char * replay_path
              , const char * movie
              , uint16_t width
@@ -133,6 +134,7 @@ public:
              , bool wait_for_escape
              , timeval & begin_read
              , timeval & end_read
+             , time_t balise_time_frame
              , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
@@ -141,6 +143,7 @@ public:
     , reader(this->in_trans, begin_read, end_read, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
+    , balise_time_frame(balise_time_frame)
     {
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
@@ -150,7 +153,7 @@ public:
             break;
         case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::done:
-            // resizing done
+            // resizing done;
             this->front_width  = this->reader.info_width;
             this->front_height = this->reader.info_height;
 
@@ -165,6 +168,8 @@ public:
         }
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+        time_t begin_file_read = begin_read.tv_sec+this->in_trans.meta_line.start_time - this->balise_time_frame;
+        this->in_trans.set_begin_time(begin_file_read);
     }
 
     void add_consumer(
@@ -195,12 +200,24 @@ public:
         return this->reader.play_client();
     }
 
+    void set_sync() {
+        this->reader.set_sync();
+    }
+
+    unsigned get_wrm_version() {
+        return this->in_trans.get_wrm_version();
+    }
+
     bool get_break_privplay_client() {
         return this->reader.break_privplay_client;
     }
 
     ~ReplayMod() override {
         this->screen.clear();
+    }
+
+    void instant_play_client(uint64_t endin_frame) {
+            this->reader.instant_play_client(endin_frame);
     }
 
     void rdp_input_invalidate(Rect /*rect*/) override {}
@@ -222,6 +239,14 @@ public:
 
     void set_pause(timeval & time) {
         this->reader.set_pause_client(time);
+    }
+
+    void set_wait_after_load_client(timeval & time) {
+        this->reader.set_wait_after_load_client(time);
+    }
+
+    time_t get_real_time_movie_begin() {
+        return this->in_trans.meta_line.start_time;
     }
 
     time_t get_movie_time_length() {
@@ -253,8 +278,9 @@ public:
         }
         char * end_chars_end = end_chars;
         time_t end = strtoll(end_chars, &end_chars_end, 10);
+        LOG(LOG_INFO, "start = %d end=%d", int(start), int(end));
 
-        return end - start;
+        return (end - start);
     }
 
     void refresh(Rect /*rect*/) override {}

@@ -143,7 +143,7 @@ struct ssh_session_struct {
     , connected(0)
     // session flags (SSH_SESSION_FLAG_*)
     , flags(SSH_SESSION_FLAG_BLOCKING)
-    , banner(0) // that's the issue banner from the server
+    , banner{} // that's the issue banner from the server
     , discon_msg(nullptr) // disconnect message from the remote host
     , in_buffer(new ssh_buffer_struct)
 
@@ -297,8 +297,8 @@ struct ssh_session_struct {
         buf.out_uint32_be(server_hash.in_remain());
         buf.out_blob(server_hash.get_pos_ptr(), server_hash.in_remain());
 
-        buf.out_uint32_be(this->next_crypto->server_pubkey.size);
-        buf.out_blob(this->next_crypto->server_pubkey.data.get(), this->next_crypto->server_pubkey.size);
+        buf.out_uint32_be(this->next_crypto->server_pubkey.size());
+        buf.out_blob(&this->next_crypto->server_pubkey[0], this->next_crypto->server_pubkey.size());
 
         switch(this->next_crypto->kex_type){
         case SSH_KEX_DH_GROUP1_SHA1:
@@ -308,13 +308,14 @@ struct ssh_session_struct {
                 unsigned int bits1 = BN_num_bits(this->next_crypto->e);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad1 = ((bits1 % 8) == 0 && BN_is_bit_set(this->next_crypto->e, bits1 - 1))?1:0;
-                SSHString num1(len1 + pad1);
+                std::vector<uint8_t> num1;
+                num1.resize(len1 + pad1);
                 /* We have a negative number henceforth we need a leading zero */
-                num1.data[0] = 0;
-                BN_bn2bin(this->next_crypto->e, num1.data.get() + pad1);
+                num1[0] = 0;
+                BN_bn2bin(this->next_crypto->e, &num1[pad1]);
 
-                buf.out_uint32_be(num1.size);
-                buf.out_blob(num1.data.get(), num1.size);
+                buf.out_uint32_be(num1.size());
+                buf.out_blob(&num1[0], num1.size());
             }
 
             {
@@ -322,13 +323,14 @@ struct ssh_session_struct {
                 unsigned int bits2 = BN_num_bits(this->next_crypto->f);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad2 = ((bits2 % 8) == 0 && BN_is_bit_set(this->next_crypto->f, bits2 - 1))?1:0;
-                SSHString num2(len2 + pad2);
+                std::vector<uint8_t> num2;
+                num2.resize(len2 + pad2);
                 /* We have a negative number henceforth we need a leading zero */
-                num2.data[0] = 0;
-                BN_bn2bin(this->next_crypto->f, num2.data.get() + pad2);
+                num2[0] = 0;
+                BN_bn2bin(this->next_crypto->f, &num2[pad2]);
 
-                buf.out_uint32_be(num2.size);
-                buf.out_blob(num2.data.get(), num2.size);
+                buf.out_uint32_be(num2.size());
+                buf.out_blob(&num2[0], num2.size());
             }
 
             {
@@ -336,13 +338,14 @@ struct ssh_session_struct {
                 unsigned int bits3 = BN_num_bits(this->next_crypto->k);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->k, bits3 - 1))?1:0;
-                SSHString num3(len3 + pad3);
+                std::vector<uint8_t> num3;
+                num3.resize(len3 + pad3);
                 /* We have a negative number henceforth we need a leading zero */
-                num3.data[0] = 0;
-                BN_bn2bin(this->next_crypto->k, num3.data.get() + pad3);
+                num3[0] = 0;
+                BN_bn2bin(this->next_crypto->k, &num3[pad3]);
 
-                buf.out_uint32_be(num3.size);
-                buf.out_blob(num3.data.get(), num3.size);
+                buf.out_uint32_be(num3.size());
+                buf.out_blob(&num3[0], num3.size());
             }
 
 //          hexa("hash buffer", buf.get_pos_ptr(), buf.in_remain());
@@ -362,13 +365,14 @@ struct ssh_session_struct {
                 unsigned int bits1 = BN_num_bits(this->next_crypto->e);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad1 = ((bits1 % 8) == 0 && BN_is_bit_set(this->next_crypto->e, bits1 - 1))?1:0;
-                SSHString num1(len1 + pad1);
+                std::vector<uint8_t> num1;
+                num1.resize(len1 + pad1);
                 /* We have a negative number henceforth we need a leading zero */
-                num1.data[0] = 0;
-                BN_bn2bin(this->next_crypto->e, num1.data.get() + pad1);
+                num1[0] = 0;
+                BN_bn2bin(this->next_crypto->e, &num1[pad1]);
 
-                buf.out_uint32_be(num1.size);
-                buf.out_blob(num1.data.get(), num1.size);
+                buf.out_uint32_be(num1.size());
+                buf.out_blob(&num1[0], num1.size());
             }
 
             {
@@ -376,13 +380,14 @@ struct ssh_session_struct {
                 unsigned int bits2 = BN_num_bits(this->next_crypto->f);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad2 = ((bits2 % 8) == 0 && BN_is_bit_set(this->next_crypto->f, bits2 - 1))?1:0;
-                SSHString num2(len2 + pad2);
+                std::vector<uint8_t> num2;
+                num2.resize(len2 + pad2);
                 /* We have a negative number henceforth we need a leading zero */
-                num2.data[0] = 0;
-                BN_bn2bin(this->next_crypto->f, num2.data.get() + pad2);
+                num2[0] = 0;
+                BN_bn2bin(this->next_crypto->f, &num2[pad2]);
 
-                buf.out_uint32_be(num2.size);
-                buf.out_blob(num2.data.get(), num2.size);
+                buf.out_uint32_be(num2.size());
+                buf.out_blob(&num2[0], num2.size());
             }
 
             {
@@ -390,13 +395,14 @@ struct ssh_session_struct {
                 unsigned int bits3 = BN_num_bits(this->next_crypto->k);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->k, bits3 - 1))?1:0;
-                SSHString num3(len3 + pad3);
+                std::vector<uint8_t> num3;
+                num3.resize(len3 + pad3);
                 /* We have a negative number henceforth we need a leading zero */
-                num3.data[0] = 0;
-                BN_bn2bin(this->next_crypto->k, num3.data.get() + pad3);
+                num3[0] = 0;
+                BN_bn2bin(this->next_crypto->k, &num3[pad3]);
 
-                buf.out_uint32_be(num3.size);
-                buf.out_blob(num3.data.get(), num3.size);
+                buf.out_uint32_be(num3.size());
+                buf.out_blob(&num3[0], num3.size());
             }
 
 //          hexa("hash buffer", buf.get_pos_ptr(), buf.in_remain());
@@ -411,26 +417,27 @@ struct ssh_session_struct {
         break;
         case SSH_KEX_ECDH_SHA2_NISTP256:
         { // ecdh.client_pubkey, k are included in hash
-            buf.out_uint32_be(this->next_crypto->ecdh.client_pubkey.size);
-            buf.out_blob(this->next_crypto->ecdh.client_pubkey.data.get(),
-                          this->next_crypto->ecdh.client_pubkey.size);
+            buf.out_uint32_be(this->next_crypto->ecdh.client_pubkey.size());
+            buf.out_blob(&this->next_crypto->ecdh.client_pubkey[0],
+                          this->next_crypto->ecdh.client_pubkey.size());
 
-            buf.out_uint32_be(this->next_crypto->ecdh.server_pubkey.size);
-            buf.out_blob(this->next_crypto->ecdh.server_pubkey.data.get(),
-                          this->next_crypto->ecdh.server_pubkey.size);
+            buf.out_uint32_be(this->next_crypto->ecdh.server_pubkey.size());
+            buf.out_blob(&this->next_crypto->ecdh.server_pubkey[0],
+                          this->next_crypto->ecdh.server_pubkey.size());
 
             {
                 unsigned int len3 = BN_num_bytes(this->next_crypto->k);
                 unsigned int bits3 = BN_num_bits(this->next_crypto->k);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->k, bits3 - 1))?1:0;
-                SSHString num3(len3 + pad3);
+                std::vector<uint8_t> num3;
+                num3.resize(len3 + pad3);
                 /* We have a negative number henceforth we need a leading zero */
-                num3.data[0] = 0;
-                BN_bn2bin(this->next_crypto->k, num3.data.get() + pad3);
+                num3[0] = 0;
+                BN_bn2bin(this->next_crypto->k, &num3[pad3]);
 
-                buf.out_uint32_be(num3.size);
-                buf.out_blob(num3.data.get(), num3.size);
+                buf.out_uint32_be(num3.size());
+                buf.out_blob(&num3[0], num3.size());
             }
 
 //          hexa("hash buffer", buf.get_pos_ptr(), buf.in_remain());
@@ -456,13 +463,14 @@ struct ssh_session_struct {
                 unsigned int bits3 = BN_num_bits(this->next_crypto->k);
                 /* If the first bit is set we have a negative number, padding needed */
                 int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->k, bits3 - 1))?1:0;
-                SSHString num3(len3 + pad3);
+                std::vector<uint8_t> num3;
+                num3.resize(len3 + pad3);
                 /* We have a negative number henceforth we need a leading zero */
-                num3.data[0] = 0;
-                BN_bn2bin(this->next_crypto->k, num3.data.get() + pad3);
+                num3[0] = 0;
+                BN_bn2bin(this->next_crypto->k, &num3[pad3]);
 
-                buf.out_uint32_be(num3.size);
-                buf.out_blob(num3.data.get(), num3.size);
+                buf.out_uint32_be(num3.size());
+                buf.out_blob(&num3[0], num3.size());
             }
 
 //          hexa("hash buffer", buf.get_pos_ptr(), buf.in_remain());
@@ -919,19 +927,19 @@ static inline char *ssh_gssapi_name_to_char(gss_name_t name){
 }
 
 
-static inline gss_OID ssh_gssapi_oid_from_string(const SSHString & oid_s){
+static inline gss_OID ssh_gssapi_oid_from_string(const std::vector<uint8_t> & oid_s){
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     gss_OID ret = static_cast<gss_OID_desc*>(malloc(sizeof (gss_OID_desc)));
-    if(oid_s.size > 256
-    || oid_s.size <= 2
-    || oid_s.data[0] != SSH_OID_TAG
-    || oid_s.data[1] != oid_s.size - 2){
+    if(oid_s.size() > 256
+    || oid_s.size() <= 2
+    || oid_s[0] != SSH_OID_TAG
+    || oid_s[1] != (int)oid_s.size() - 2){
         free(ret);
         return nullptr;
     }
-    ret->elements = malloc(oid_s.size - 2);
-    memcpy(ret->elements, oid_s.data.get()+2, oid_s.size-2);
-    ret->length = oid_s.size-2;
+    ret->elements = malloc(oid_s.size() - 2);
+    memcpy(ret->elements, &oid_s[2], oid_s.size()-2);
+    ret->length = oid_s.size()-2;
     return ret;
 }
 
@@ -2293,14 +2301,15 @@ struct SshServerSession : public ssh_session_struct
 
                 syslog(LOG_ERR, "SSH_SESSION_STATE_KEXINIT_RECEIVED: !!!!");
 
-                if (this->next_crypto->server_kex.methods[0].size == 0){
+                if (this->next_crypto->server_kex.methods[0].size() == 0){
 
                     syslog(LOG_ERR, "Initializing server_kex !!!! [F]");
 
                     char hostkeys[64] = {0};
                     size_t len = 0;
 
-                    this->next_crypto->server_kex.methods[SSH_KEX] = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
+                    const char * ssh_key_methods = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
+                    this->next_crypto->server_kex.methods[SSH_KEX] = SSHString(ssh_key_methods, strlen(ssh_key_methods));
 
                     memset(this->next_crypto->server_kex.cookie, 0, 16);
                     RAND_pseudo_bytes(this->next_crypto->server_kex.cookie, 16);
@@ -2339,7 +2348,7 @@ struct SshServerSession : public ssh_session_struct
                     const char * supported_hostkeys = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
 
                     SSHString tmp = find_matching(supported_hostkeys, hostkeys, ',');
-                    if (tmp.size == 0){
+                    if (tmp.size() == 0){
                         ssh_set_error(error, SSH_REQUEST_DENIED,
                             "Setting method: no algorithm for method \"%s\" (%s)\n",
                             "server host key algo", hostkeys);
@@ -2351,9 +2360,10 @@ struct SshServerSession : public ssh_session_struct
                     free(this->opts.wanted_methods[SSH_HOSTKEYS]);
                     this->opts.wanted_methods[SSH_HOSTKEYS] = strdup(hostkeys);
 
-                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS] = strdup(tmp.cstr());
+                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS] = tmp;
 
-                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
+                    const char * ssh_crypt_cs_methods = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
+                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = SSHString(ssh_crypt_cs_methods, strlen(ssh_crypt_cs_methods));
                     this->next_crypto->server_kex.methods[SSH_CRYPT_S_C] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
                     this->next_crypto->server_kex.methods[SSH_MAC_C_S] = "hmac-sha1";
                     this->next_crypto->server_kex.methods[SSH_MAC_S_C] = "hmac-sha1";
@@ -2386,16 +2396,16 @@ struct SshServerSession : public ssh_session_struct
                 }
 
                 this->next_crypto->kex_methods[SSH_KEX] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_KEX].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_KEX].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_KEX].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_KEX].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_KEX].size == 0){
+                if (this->next_crypto->kex_methods[SSH_KEX].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "kex algos",
-                        this->next_crypto->server_kex.methods[SSH_KEX].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_KEX].cstr());
+                        this->next_crypto->server_kex.methods[SSH_KEX].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_KEX].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
@@ -2403,146 +2413,146 @@ struct SshServerSession : public ssh_session_struct
 
                 // TODO: create a general purpose method to find a value in a string keyed dictionnary
                 // and use it there and whenever necessary
-                if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group1-sha1") == 0){
+                if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "diffie-hellman-group1-sha1") == 0){
                   this->next_crypto->kex_type = SSH_KEX_DH_GROUP1_SHA1;
                 }
-                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group14-sha1") == 0){
+                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "diffie-hellman-group14-sha1") == 0){
                   this->next_crypto->kex_type = SSH_KEX_DH_GROUP14_SHA1;
                 }
-                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "ecdh-sha2-nistp256") == 0){
+                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "ecdh-sha2-nistp256") == 0){
                   this->next_crypto->kex_type = SSH_KEX_ECDH_SHA2_NISTP256;
                 }
-                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "curve25519-sha256@libssh.org") == 0){
+                else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "curve25519-sha256@libssh.org") == 0){
                   this->next_crypto->kex_type = SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG;
                 }
 
                 this->next_crypto->kex_methods[SSH_HOSTKEYS] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str(),
                     ',');
 
                 syslog(LOG_ERR, "%s HOSTKEYS %s %s",
                     __FUNCTION__,
-                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
+                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str());
 
-                if (this->next_crypto->kex_methods[SSH_HOSTKEYS].size == 0){
+                if (this->next_crypto->kex_methods[SSH_HOSTKEYS].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "server host key algo",
-                        this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
+                        this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
 
                 this->next_crypto->kex_methods[SSH_CRYPT_C_S] = find_matching(
-                        this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr(),
+                        this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].c_str(),
                         ',');
 
-                if (this->next_crypto->kex_methods[SSH_CRYPT_C_S].size == 0){
+                if (this->next_crypto->kex_methods[SSH_CRYPT_C_S].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "encryption client->server",
-                        this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
+                        this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
                 this->next_crypto->kex_methods[SSH_CRYPT_S_C] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_CRYPT_S_C].size == 0){
+                if (this->next_crypto->kex_methods[SSH_CRYPT_S_C].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "encryption server->client",
-                        this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
+                        this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
 
                 this->next_crypto->kex_methods[SSH_MAC_C_S] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_MAC_C_S].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_MAC_C_S].size == 0){
+                if (this->next_crypto->kex_methods[SSH_MAC_C_S].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "mac algo client->server",
-                        this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
+                        this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_MAC_C_S].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
 
                 this->next_crypto->kex_methods[SSH_MAC_S_C] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_MAC_S_C].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_MAC_S_C].size == 0){
+                if (this->next_crypto->kex_methods[SSH_MAC_S_C].size() == 0){
                     ssh_set_error(this->error, SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "mac algo server->client",
-                        this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
+                        this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_MAC_S_C].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
                 this->next_crypto->kex_methods[SSH_COMP_C_S] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_COMP_C_S].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_COMP_C_S].size == 0){
+                if (this->next_crypto->kex_methods[SSH_COMP_C_S].size() == 0){
                     ssh_set_error(this->error,SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "compression algo client->server",
-                        this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
+                        this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_COMP_C_S].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
                 this->next_crypto->kex_methods[SSH_COMP_S_C] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_COMP_S_C].c_str(),
                     ',');
 
-                if (this->next_crypto->kex_methods[SSH_COMP_S_C].size == 0){
+                if (this->next_crypto->kex_methods[SSH_COMP_S_C].size() == 0){
                     ssh_set_error(this->error,SSH_FATAL,
                         "kex error : no match for method %s: server [%s], client [%s]",
                         "compression algo server->client",
-                        this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
-                        this->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
+                        this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str(),
+                        this->next_crypto->client_kex.methods[SSH_COMP_S_C].c_str());
                     this->socket->close();
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return;
                 }
                 this->next_crypto->kex_methods[SSH_LANG_C_S] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_LANG_C_S].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_LANG_C_S].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_LANG_C_S].c_str(),
                     ',');
 
                 this->next_crypto->kex_methods[SSH_LANG_S_C] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_LANG_S_C].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_LANG_S_C].c_str(),
                     ',');
 
                 this->next_crypto->out_cipher = cipher_new_by_name(this->next_crypto->kex_methods[SSH_CRYPT_S_C]);
                 this->next_crypto->in_cipher = cipher_new_by_name(this->next_crypto->kex_methods[SSH_CRYPT_C_S]);
 
-                const char * method_in = this->next_crypto->kex_methods[SSH_COMP_C_S].cstr();
+                const char * method_in = this->next_crypto->kex_methods[SSH_COMP_C_S].c_str();
                 if(strcmp(method_in,"zlib") == 0){
                     syslog(LOG_INFO,"enabling C->S compression");
                     this->next_crypto->do_compress_in=1;
@@ -2557,7 +2567,7 @@ struct SshServerSession : public ssh_session_struct
                     }
                 }
 
-                const char * method_out = this->next_crypto->kex_methods[SSH_COMP_S_C].cstr();
+                const char * method_out = this->next_crypto->kex_methods[SSH_COMP_S_C].c_str();
                 if(strcmp(method_out,"zlib") == 0){
                     syslog(LOG_INFO, "enabling S->C compression\n");
                     this->next_crypto->do_compress_out=1;
@@ -2586,10 +2596,10 @@ struct SshServerSession : public ssh_session_struct
                  {"ecdsa-sha2-nistp521", SSH_KEYTYPE_ECDSA},
                 };
 
-            syslog(LOG_INFO,"%s Finding hostkey type in = %s", __FUNCTION__, this->next_crypto->kex_methods[SSH_HOSTKEYS].cstr());
+            syslog(LOG_INFO,"%s Finding hostkey type in = %s", __FUNCTION__, this->next_crypto->kex_methods[SSH_HOSTKEYS].c_str());
                 this->server_negociated_hostkey = SSH_KEYTYPE_UNKNOWN;
                 for(auto &p:l){
-                    if (strcmp(p.first, this->next_crypto->kex_methods[SSH_HOSTKEYS].cstr()) == 0){
+                    if (strcmp(p.first, this->next_crypto->kex_methods[SSH_HOSTKEYS].c_str()) == 0){
                         syslog(LOG_INFO,"%s negociated hostkey = %s %d", __FUNCTION__, p.first, p.second);
                         this->server_negociated_hostkey = p.second;
                         break;
@@ -2742,9 +2752,9 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(this->server_dsa_key->dsa->g); // g
                     buffer.out_bignum(this->server_dsa_key->dsa->pub_key); // n
 
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
-                           buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
+                           buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_RSA:
@@ -2768,9 +2778,9 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(this->server_rsa_key->rsa->e); // e
                     buffer.out_bignum(this->server_rsa_key->rsa->n); // n
 
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
-                        buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
+                        buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_ECDSA:
@@ -2812,24 +2822,25 @@ struct SshServerSession : public ssh_session_struct
 
                     size_t len_ec = EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
                     if (len_ec == 0) {
-                        this->next_crypto->server_pubkey = SSHString(0);
+                        this->next_crypto->server_pubkey.resize(0);
                         ssh_set_error(this->error,  SSH_FATAL, "Could not create a session id");
                         return SSH_ERROR;
                     }
 
-                    SSHString e(static_cast<uint32_t>(len_ec));
-                    if (e.size != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
-                        this->next_crypto->server_pubkey = SSHString(0);
+                    std::vector<uint8_t> e;
+                    e.resize(static_cast<uint32_t>(len_ec));
+                    if (e.size() != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
+                        this->next_crypto->server_pubkey.resize(0);
                         ssh_set_error(this->error,  SSH_FATAL, "Could not create a session id");
                         return SSH_ERROR;
                     }
 
-                    buffer.out_uint32_be(e.size);
-                    buffer.out_blob(e.data.get(), e.size);
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
+                    buffer.out_uint32_be(e.size());
+                    buffer.out_blob(&e[0], e.size());
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
                            buffer.get_pos_ptr(),
-                           this->next_crypto->server_pubkey.size);
+                           this->next_crypto->server_pubkey.size());
                     delete pubkey;
                   }
                   break;
@@ -2886,31 +2897,32 @@ struct SshServerSession : public ssh_session_struct
                 sha1.update(crypto->secret_hash, crypto->digest_len);
                 sha1.final(hash);
 
-                SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
+                std::vector<uint8_t> sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
                 this->out_buffer->out_uint8(SSH_MSG_KEXDH_REPLY);
 
-                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size);
-                this->out_buffer->out_blob(this->next_crypto->server_pubkey.data.get(),
-                                              this->next_crypto->server_pubkey.size);
+                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size());
+                this->out_buffer->out_blob(&this->next_crypto->server_pubkey[0],
+                                              this->next_crypto->server_pubkey.size());
 
                 {
                     unsigned int len3 = BN_num_bytes(this->next_crypto->f);
                     unsigned int bits3 = BN_num_bits(this->next_crypto->f);
                     /* If the first bit is set we have a negative number, padding needed */
                     int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->f, bits3 - 1))?1:0;
-                    SSHString num3(len3 + pad3);
+                    std::vector<uint8_t> num3;
+                    num3.resize(len3 + pad3);
                     /* We have a negative number henceforth we need a leading zero */
-                    num3.data[0] = 0;
-                    BN_bn2bin(this->next_crypto->f, num3.data.get() + pad3);
+                    num3[0] = 0;
+                    BN_bn2bin(this->next_crypto->f, &num3[pad3]);
 
-                    this->out_buffer->out_uint32_be(num3.size);
-                    this->out_buffer->out_blob(num3.data.get(), num3.size);
+                    this->out_buffer->out_uint32_be(num3.size());
+                    this->out_buffer->out_blob(&num3[0], num3.size());
 
                 }
 
-                this->out_buffer->out_uint32_be(sig_blob.size);
-                this->out_buffer->out_blob(sig_blob.data.get(), sig_blob.size);
+                this->out_buffer->out_uint32_be(sig_blob.size());
+                this->out_buffer->out_blob(&sig_blob[0], sig_blob.size());
 
                 this->packet_send();
 
@@ -3018,8 +3030,8 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(this->server_dsa_key->dsa->q); // q
                     buffer.out_bignum(this->server_dsa_key->dsa->g); // g
                     buffer.out_bignum(this->server_dsa_key->dsa->pub_key); // n
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(), buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0], buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_RSA:
@@ -3042,8 +3054,8 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_length_prefixed_cstr("ssh-rsa");
                     buffer.out_bignum(this->server_rsa_key->rsa->e); // e
                     buffer.out_bignum(this->server_rsa_key->rsa->n); // n
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(), buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(buffer.in_remain());
+                    memcpy(&this->next_crypto->server_pubkey[0], buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_ECDSA:
@@ -3095,17 +3107,18 @@ struct SshServerSession : public ssh_session_struct
                         return SSH_ERROR;
                     }
 
-                    SSHString e(static_cast<uint32_t>(len_ec));
-                    if (e.size != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
+                    std::vector<uint8_t> e;
+                    e.resize(static_cast<uint32_t>(len_ec));
+                    if (e.size() != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
                         return SSH_ERROR;
                     }
 
-                    buffer.out_uint32_be(e.size);
-                    buffer.out_blob(e.data.get(), e.size);
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
+                    buffer.out_uint32_be(e.size());
+                    buffer.out_blob(&e[0], e.size());
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
                            buffer.get_pos_ptr(),
-                           this->next_crypto->server_pubkey.size);
+                           this->next_crypto->server_pubkey.size());
                     ssh_key_free(pubkey);
                   }
                   break;
@@ -3174,31 +3187,32 @@ struct SshServerSession : public ssh_session_struct
                 sha1.update(crypto->secret_hash, crypto->digest_len);
                 sha1.final(hash);
 
-                SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
+                std::vector<uint8_t> sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
                 this->out_buffer->out_uint8(SSH_MSG_KEXDH_REPLY);
 
-                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size);
-                this->out_buffer->out_blob(this->next_crypto->server_pubkey.data.get(),
-                                              this->next_crypto->server_pubkey.size);
+                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size());
+                this->out_buffer->out_blob(&this->next_crypto->server_pubkey[0],
+                                              this->next_crypto->server_pubkey.size());
 
                 {
                     unsigned int len3 = BN_num_bytes(this->next_crypto->f);
                     unsigned int bits3 = BN_num_bits(this->next_crypto->f);
                     /* If the first bit is set we have a negative number, padding needed */
                     int pad3 = ((bits3 % 8) == 0 && BN_is_bit_set(this->next_crypto->f, bits3 - 1))?1:0;
-                    SSHString num3(len3 + pad3);
+                    std::vector<uint8_t> num3;
+                    num3.resize(len3 + pad3);
                     /* We have a negative number henceforth we need a leading zero */
-                    num3.data[0] = 0;
-                    BN_bn2bin(this->next_crypto->f, num3.data.get() + pad3);
+                    num3[0] = 0;
+                    BN_bn2bin(this->next_crypto->f, &num3[pad3]);
 
-                    this->out_buffer->out_uint32_be(num3.size);
-                    this->out_buffer->out_blob(num3.data.get(), num3.size);
+                    this->out_buffer->out_uint32_be(num3.size());
+                    this->out_buffer->out_blob(&num3[0], num3.size());
                 }
 
 
-                this->out_buffer->out_uint32_be(sig_blob.size);
-                this->out_buffer->out_blob(sig_blob.data.get(), sig_blob.size);
+                this->out_buffer->out_uint32_be(sig_blob.size());
+                this->out_buffer->out_blob(&sig_blob[0], sig_blob.size());
 
                 this->packet_send();
 
@@ -3224,8 +3238,9 @@ struct SshServerSession : public ssh_session_struct
                 if (q_c_string_len > packet->in_remain()) {
                     // ERRRRRRRRRRRRRRRRRRRRRRRRRR
                 }
-                SSHString q_c_string(q_c_string_len);
-                packet->buffer_get_data(q_c_string.data.get(),q_c_string_len);
+                std::vector<uint8_t> q_c_string;
+                q_c_string.resize(q_c_string_len);
+                packet->buffer_get_data(&q_c_string[0],q_c_string_len);
 
                 this->next_crypto->ecdh.client_pubkey = std::move(q_c_string);
                 /* Build server's keypair */
@@ -3242,11 +3257,12 @@ struct SshServerSession : public ssh_session_struct
                                          nullptr,
                                          0,
                                          ctx);
-                SSHString q_s_string(len);
+                std::vector<uint8_t> q_s_string;
+                q_s_string.resize(len);
                 EC_POINT_point2oct(group,
                                    ecdh_pubkey,
                                    POINT_CONVERSION_UNCOMPRESSED,
-                                   q_s_string.data.get(),
+                                   &q_s_string[0],
                                    len,
                                    ctx);
                 BN_CTX_free(ctx);
@@ -3280,8 +3296,8 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(this->server_dsa_key->dsa->g); // g
                     buffer.out_bignum(this->server_dsa_key->dsa->pub_key); // n
 
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(), buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0], buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                 }
                 break;
                 case SSH_KEYTYPE_RSA:
@@ -3303,8 +3319,8 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_length_prefixed_cstr("ssh-rsa");
                     buffer.out_bignum(this->server_rsa_key->rsa->e); // e
                     buffer.out_bignum(this->server_rsa_key->rsa->n); // n
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(), buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0], buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                 }
                 break;
                 case SSH_KEYTYPE_ECDSA:
@@ -3351,17 +3367,18 @@ struct SshServerSession : public ssh_session_struct
                         return SSH_ERROR;
                     }
 
-                    SSHString e(static_cast<uint32_t>(len_ec));
-                    if (e.size != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
+                    std::vector<uint8_t> e;
+                    e.resize(static_cast<uint32_t>(len_ec));
+                    if (e.size() != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
                         return SSH_ERROR;
                     }
 
-                    buffer.out_uint32_be(e.size);
-                    buffer.out_blob(e.data.get(), e.size);
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
+                    buffer.out_uint32_be(e.size());
+                    buffer.out_blob(&e[0], e.size());
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
                            buffer.get_pos_ptr(),
-                           this->next_crypto->server_pubkey.size);
+                           this->next_crypto->server_pubkey.size());
 
                     ssh_key_free(pubkey);
                 }
@@ -3378,13 +3395,13 @@ struct SshServerSession : public ssh_session_struct
                 // TODO: check memory allocation
 
                 /* add host's public key */
-                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size);
-                this->out_buffer->out_blob(this->next_crypto->server_pubkey.data.get(),
-                                           this->next_crypto->server_pubkey.size);
+                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size());
+                this->out_buffer->out_blob(&this->next_crypto->server_pubkey[0],
+                                           this->next_crypto->server_pubkey.size());
                 /* add ecdh public key */
-                this->out_buffer->out_uint32_be(this->next_crypto->ecdh.server_pubkey.size);
+                this->out_buffer->out_uint32_be(this->next_crypto->ecdh.server_pubkey.size());
 
-                this->out_buffer->out_blob(this->next_crypto->ecdh.server_pubkey.data.get(), this->next_crypto->ecdh.server_pubkey.size);
+                this->out_buffer->out_blob(&this->next_crypto->ecdh.server_pubkey[0], this->next_crypto->ecdh.server_pubkey.size());
 
                 /* add signature blob */
                 // TODO: check memory allocation
@@ -3417,10 +3434,10 @@ struct SshServerSession : public ssh_session_struct
                 break;
                 }
 
-                SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
+                std::vector<uint8_t> sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
-                this->out_buffer->out_uint32_be(sig_blob.size);
-                this->out_buffer->out_blob(sig_blob.data.get(), sig_blob.size);
+                this->out_buffer->out_uint32_be(sig_blob.size());
+                this->out_buffer->out_blob(&sig_blob[0], sig_blob.size());
 
                 syslog(LOG_INFO, "SSH_MSG_KEXDH_REPLY sent");
                 this->packet_send();
@@ -3449,19 +3466,20 @@ struct SshServerSession : public ssh_session_struct
                 if (q_c_string_len > packet->in_remain()) {
                     // ERRRRRRRRRRRRRRRRRRRRRRRRRR
                 }
-                SSHString q_c_string(q_c_string_len);
-                packet->buffer_get_data(q_c_string.data.get(), q_c_string_len);
+                std::vector<uint8_t> q_c_string;
+                q_c_string.resize(q_c_string_len);
+                packet->buffer_get_data(&q_c_string[0], q_c_string_len);
 
-                if (q_c_string.size != CURVE25519_PUBKEY_SIZE){
+                if (q_c_string.size() != CURVE25519_PUBKEY_SIZE){
                     ssh_set_error(this->error, SSH_FATAL, "Incorrect size for server Curve25519 public key: %d",
-                            static_cast<int>(q_c_string.size));
+                            static_cast<int>(q_c_string.size()));
                     this->out_buffer->buffer_reinit();
                     syslog(LOG_INFO, "%s --- error", __FUNCTION__);
                     this->session_state = SSH_SESSION_STATE_ERROR;
                     return SSH_ERROR;
                 }
 
-                memcpy(this->next_crypto->curve_25519.client_pubkey, q_c_string.data.get(), CURVE25519_PUBKEY_SIZE);
+                memcpy(this->next_crypto->curve_25519.client_pubkey, &q_c_string[0], CURVE25519_PUBKEY_SIZE);
 
                 this->next_crypto->curve_25519.init(this->next_crypto->curve_25519.server_pubkey);
 
@@ -3493,10 +3511,10 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(this->server_dsa_key->dsa->q); // q
                     buffer.out_bignum(this->server_dsa_key->dsa->g); // g
                     buffer.out_bignum(this->server_dsa_key->dsa->pub_key); // n
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
                            buffer.get_pos_ptr(),
-                           this->next_crypto->server_pubkey.size);
+                           this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_RSA:
@@ -3525,8 +3543,8 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_length_prefixed_cstr("ssh-rsa");
                     buffer.out_bignum(this->server_rsa_key->rsa->e); // e
                     buffer.out_bignum(this->server_rsa_key->rsa->n); // n
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(), buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size);
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0], buffer.get_pos_ptr(), this->next_crypto->server_pubkey.size());
                   }
                   break;
                   case SSH_KEYTYPE_ECDSA:
@@ -3572,17 +3590,18 @@ struct SshServerSession : public ssh_session_struct
                         return SSH_ERROR;
                     }
 
-                    SSHString e(static_cast<uint32_t>(len_ec));
-                    if (e.size != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
+                    std::vector<uint8_t> e;
+                    e.resize(static_cast<uint32_t>(len_ec));
+                    if (e.size() != EC_POINT_point2oct(g, p1, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
                         return SSH_ERROR;
                     }
 
-                    buffer.out_uint32_be(e.size);
-                    buffer.out_blob(e.data.get(), e.size);
-                    this->next_crypto->server_pubkey = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(this->next_crypto->server_pubkey.data.get(),
+                    buffer.out_uint32_be(e.size());
+                    buffer.out_blob(&e[0], e.size());
+                    this->next_crypto->server_pubkey.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&this->next_crypto->server_pubkey[0],
                            buffer.get_pos_ptr(),
-                           this->next_crypto->server_pubkey.size);
+                           this->next_crypto->server_pubkey.size());
 
                     ssh_key_free(pubkey);
                   }
@@ -3610,9 +3629,9 @@ struct SshServerSession : public ssh_session_struct
                 }
 
                 /* add host's public key */
-                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size);
-                this->out_buffer->out_blob(this->next_crypto->server_pubkey.data.get(),
-                                           this->next_crypto->server_pubkey.size);
+                this->out_buffer->out_uint32_be(this->next_crypto->server_pubkey.size());
+                this->out_buffer->out_blob(&this->next_crypto->server_pubkey[0],
+                                           this->next_crypto->server_pubkey.size());
 
                 /* add ecdh public key */
                 this->out_buffer->out_uint32_be(CURVE25519_PUBKEY_SIZE);
@@ -3628,10 +3647,10 @@ struct SshServerSession : public ssh_session_struct
                 sha1.update(crypto->secret_hash, crypto->digest_len);
                 sha1.final(hash);
 
-                SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
+                std::vector<uint8_t> sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
-                this->out_buffer->out_uint32_be(sig_blob.size);
-                this->out_buffer->out_blob(sig_blob.data.get(), sig_blob.size);
+                this->out_buffer->out_uint32_be(sig_blob.size());
+                this->out_buffer->out_blob(&sig_blob[0], sig_blob.size());
 
                 syslog(LOG_INFO, "SSH_MSG_KEX_ECDH_REPLY sent");
                 this->packet_send();
@@ -3672,15 +3691,16 @@ struct SshServerSession : public ssh_session_struct
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_FAILURE msg");
             return SSH_PACKET_USED;
         }
-        SSHString auth(auth_len);
-        packet->buffer_get_data(auth.data.get(), auth_len);
+        std::vector<uint8_t> auth;
+        auth.resize(auth_len);
+        packet->buffer_get_data(&auth[0], auth_len);
 
 
         partial = packet->in_uint8();
 
-        auth_methods = new char [auth.size + 1];
-        memcpy(auth_methods, auth.data.get(), auth.size);
-        auth_methods[auth.size] = 0;
+        auth_methods = new char [auth.size() + 1];
+        memcpy(auth_methods, &auth[0], auth.size());
+        auth_methods[auth.size()] = 0;
 
         if (partial) {
             this->auth_state = SSH_AUTH_STATE_PARTIAL;
@@ -3759,10 +3779,8 @@ struct SshServerSession : public ssh_session_struct
         if (banner_len > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString banner(banner_len);
-        packet->buffer_get_data(banner.data.get(),banner_len);
-
-        this->banner = std::move(banner);
+        this->banner.resize(banner_len);
+        packet->buffer_get_data(&this->banner[0], banner_len);
         return SSH_PACKET_USED;
     }
 
@@ -3772,40 +3790,37 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
         int rc = SSH_PACKET_USED;
-        char * username = packet->in_strdup_cstr();
-        char * service = packet->in_strdup_cstr();
-        char * method = packet->in_strdup_cstr();
-        uint8_t method_code = get_request_auth_code(method);
+        SSHString username = packet->in_strdup_cstr();
+        SSHString service = packet->in_strdup_cstr();
+        SSHString method = packet->in_strdup_cstr();
+        uint8_t method_code = get_request_auth_code(&method[0]);
         switch (method_code)
         {
         case REQUEST_AUTH_NONE:
         {
-            this->handle_userauth_request_none_server(username);
+            this->handle_userauth_request_none_server(&username[0]);
         }
         break;
 
         case REQUEST_AUTH_PASSWORD:
         {
-            this->handle_userauth_request_password_server(username, packet);
+            this->handle_userauth_request_password_server(&username[0], packet);
         }
         break;
         case REQUEST_AUTH_KEYBOARD_INTERACTIVE:
-            this->handle_userauth_request_keyboard_interactive_server(username, packet);
+            this->handle_userauth_request_keyboard_interactive_server(&username[0], packet);
         break;
         case REQUEST_AUTH_PUBLICKEY:
-            this->handle_userauth_request_publickey_server(service, username, packet);
+            this->handle_userauth_request_publickey_server(&service[0], &username[0], packet);
         break;
         case REQUEST_AUTH_GSSAPI_WITH_MIC:
-            this->handle_userauth_gssapi_with_mic_server(username, packet);
+            this->handle_userauth_gssapi_with_mic_server(&username[0], packet);
         break;
         default:
             // TODO: we should probably reject authentication
-            syslog(LOG_INFO, "%s --- Unknown authentication method %s", __FUNCTION__, method);
+            syslog(LOG_INFO, "%s --- Unknown authentication method %s", __FUNCTION__, method.c_str());
         break;
         }
-        delete method;
-        delete service;
-        delete username;
         return rc;
     }
 
@@ -3956,10 +3971,10 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "Auth request for service %s, method %s for user '%s'",
             "ssh-connection", "password", username);
         packet->in_uint8(); /* skip one byte */
-        char * password = packet->in_strdup_cstr();
+        SSHString password = packet->in_strdup_cstr();
         int rc = this->server_callbacks->auth_password_server_cb(this,
-                                                   username,
-                                                   password,
+                                                   &username[0],
+                                                   &password[0],
                                                    this->server_callbacks->userdata);
         if (rc == SSH_AUTH_SUCCESS || rc == SSH_AUTH_PARTIAL) {
             if (rc == SSH_AUTH_PARTIAL){
@@ -3985,7 +4000,6 @@ struct SshServerSession : public ssh_session_struct
         else {
             this->ssh_auth_reply_denied_server(false);
         }
-        delete password;
     }
 
 
@@ -4064,9 +4078,9 @@ struct SshServerSession : public ssh_session_struct
         //   SSH_MSG_USERAUTH_INFO_REQUEST message and ignore (don't validate) the
         //   response.
 
-        char * lang = packet->in_strdup_cstr();
+        SSHString lang = packet->in_strdup_cstr();
         (void)lang;
-        char * submethods = packet->in_strdup_cstr();
+        SSHString submethods = packet->in_strdup_cstr();
         (void)submethods;
 
         // TODO: we should have two different callbacks instead of the
@@ -4114,8 +4128,6 @@ struct SshServerSession : public ssh_session_struct
         break;
         }
 
-        delete lang;
-        delete submethods;
         return;
     }
 
@@ -4126,12 +4138,10 @@ struct SshServerSession : public ssh_session_struct
 
         // SSH_REQUEST_AUTH SSH_AUTH_METHOD_PUBLICKEY
         uint8_t has_sign = packet->in_uint8();
-        char * algo = packet->in_strdup_cstr();
+        SSHString algo = packet->in_strdup_cstr();
 
         syslog(LOG_INFO, "Auth request for service %s, method %s for user '%s' has_sign=%u algo=%s",
-            service, "publickey", username, has_sign, algo);
-        delete algo;
-
+            service, "publickey", username, has_sign, &algo[0]);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -4140,13 +4150,14 @@ struct SshServerSession : public ssh_session_struct
         if (pubkey_blob_len > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
-        SSHString pubkey_blob(pubkey_blob_len);
-        packet->buffer_get_data(pubkey_blob.data.get(),pubkey_blob_len);
+        std::vector<uint8_t> pubkey_blob;
+        pubkey_blob.resize(pubkey_blob_len);
+        packet->buffer_get_data(&pubkey_blob[0], pubkey_blob_len);
 
         ssh_key_struct *pubkey;
 
         ssh_buffer_struct buffer;
-        buffer.out_blob(pubkey_blob.data.get(), pubkey_blob.size);
+        buffer.out_blob(&pubkey_blob[0], pubkey_blob.size());
         int rc = ssh_pki_import_pubkey_blob(buffer, &pubkey);
         if (rc < 0) { return; }
         int signature_state = SSH_PUBLICKEY_STATE_NONE;
@@ -4161,8 +4172,9 @@ struct SshServerSession : public ssh_session_struct
             if (sig_blob_len > packet->in_remain()) {
                 // ERRRRRRRRRRRRRRRRRRRRRRRRRR
             }
-            SSHString sig_blob(sig_blob_len);
-            packet->buffer_get_data(sig_blob.data.get(),sig_blob_len);
+            std::vector<uint8_t> sig_blob;
+            sig_blob.resize(sig_blob_len);
+            packet->buffer_get_data(&sig_blob[0],sig_blob_len);
 
             struct ssh_crypto_struct *crypto =
                 this->current_crypto ? this->current_crypto :
@@ -4171,10 +4183,11 @@ struct SshServerSession : public ssh_session_struct
             ssh_buffer_struct* digest = new ssh_buffer_struct;
 
             /* Add session id */
-            SSHString str(static_cast<uint32_t>(crypto->digest_len));
-            memcpy(str.data.get(), this->session_id, crypto->digest_len);
-            digest->out_uint32_be(str.size);
-            digest->out_blob(str.data.get(), str.size);
+            std::vector<uint8_t> str;
+            str.resize(static_cast<uint32_t>(crypto->digest_len));
+            memcpy(&str[0], this->session_id, crypto->digest_len);
+            digest->out_uint32_be(str.size());
+            digest->out_blob(&str[0], str.size());
 
             syslog(LOG_INFO, "%s building SSH_MSG_USERAUTH_REQUEST ---", __FUNCTION__);
 
@@ -4188,7 +4201,7 @@ struct SshServerSession : public ssh_session_struct
             digest->out_length_prefixed_cstr(pubkey->type_c());
 
             /* Add the publickey as blob */
-            SSHString pubkey_blob(0);
+            SSHString pubkey_blob;
 
             switch (pubkey->type) {
                 case SSH_KEYTYPE_DSS:
@@ -4200,8 +4213,9 @@ struct SshServerSession : public ssh_session_struct
                     buffer.out_bignum(pubkey->dsa->q); // q
                     buffer.out_bignum(pubkey->dsa->g); // g
                     buffer.out_bignum(pubkey->dsa->pub_key); // n
-                    pubkey_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(pubkey_blob.data.get(), buffer.get_pos_ptr(), pubkey_blob.size);
+                    std::vector<uint8_t> pubkey_blob;
+                    pubkey_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&pubkey_blob[0], buffer.get_pos_ptr(), pubkey_blob.size());
                 }
                 break;
                 case SSH_KEYTYPE_RSA:
@@ -4212,8 +4226,9 @@ struct SshServerSession : public ssh_session_struct
                     syslog(LOG_INFO, "%s SSH_KEYTYPE_RSA", __FUNCTION__);
                     buffer.out_bignum(pubkey->rsa->e); // e
                     buffer.out_bignum(pubkey->rsa->n); // n
-                    pubkey_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(pubkey_blob.data.get(), buffer.get_pos_ptr(), pubkey_blob.size);
+                    std::vector<uint8_t> pubkey_blob;
+                    pubkey_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&pubkey_blob[0], buffer.get_pos_ptr(), pubkey_blob.size());
                 }
                 break;
                 case SSH_KEYTYPE_ECDSA:
@@ -4236,15 +4251,17 @@ struct SshServerSession : public ssh_session_struct
                         return;
                     }
 
-                    SSHString e(static_cast<uint32_t>(len_ec));
-                    if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
+                    std::vector<uint8_t> e;
+                    e.resize(static_cast<uint32_t>(len_ec));
+                    if (e.size() != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, &e[0], e.size(), nullptr)){
                         return;
                     }
 
-                    buffer.out_uint32_be(e.size);
-                    buffer.out_blob(e.data.get(), e.size);
-                    pubkey_blob = SSHString(static_cast<uint32_t>(buffer.in_remain()));
-                    memcpy(pubkey_blob.data.get(), buffer.get_pos_ptr(), pubkey_blob.size);
+                    buffer.out_uint32_be(e.size());
+                    buffer.out_blob(&e[0], e.size());
+                    std::vector<uint8_t> pubkey_blob;
+                    pubkey_blob.resize(static_cast<uint32_t>(buffer.in_remain()));
+                    memcpy(&pubkey_blob[0], buffer.get_pos_ptr(), pubkey_blob.size());
                 }
                 break;
                 case SSH_KEYTYPE_UNKNOWN:
@@ -4252,8 +4269,8 @@ struct SshServerSession : public ssh_session_struct
             }
 
 
-            digest->out_uint32_be(pubkey_blob.size);
-            digest->out_blob(pubkey_blob.data.get(), pubkey_blob.size);
+            digest->out_uint32_be(pubkey_blob.size());
+            digest->out_blob(&pubkey_blob[0], pubkey_blob.size());
 
             // TODO: put error message in a result buffer to use here
             // instead of managing it inside signature_verify_blob
@@ -4293,10 +4310,10 @@ struct SshServerSession : public ssh_session_struct
 
                 SSHString algo(pubkey->type_c());
                 this->out_buffer->out_uint8(SSH_MSG_USERAUTH_PK_OK);
-                this->out_buffer->out_uint32_be(algo.size);
-                this->out_buffer->out_blob(algo.data.get(), algo.size);
-                this->out_buffer->out_uint32_be(pubkey_blob.size);
-                this->out_buffer->out_blob(pubkey_blob.data.get(), pubkey_blob.size);
+                this->out_buffer->out_uint32_be(algo.size());
+                this->out_buffer->out_blob(&algo[0], algo.size());
+                this->out_buffer->out_uint32_be(pubkey_blob.size());
+                this->out_buffer->out_blob(&pubkey_blob[0], pubkey_blob.size());
 
                 syslog(LOG_INFO, "%s send SSH_MSG_USERAUTH_PK_OK", __FUNCTION__);
 
@@ -4377,7 +4394,6 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "Auth request for service %s, method %s for user '%s'",
             "ssh-connection", "gss-api-with-mic", username);
         ;
-        int i;
         uint32_t n_oid = packet->in_uint32_be();
         if(n_oid > 100){
          ssh_set_error(this->error,  SSH_FATAL, "USERAUTH_REQUEST: gssapi-with-mic OID count too big (%d)",n_oid);
@@ -4385,26 +4401,19 @@ struct SshServerSession : public ssh_session_struct
         }
 
         syslog(LOG_INFO, "gssapi: %d OIDs", n_oid);
-        typedef SSHString * SSHString_pointer;
-        SSHString_pointer * oids = new SSHString_pointer[n_oid];
+        std::vector<SSHString> oids;
+        oids.resize(n_oid);
 
-        for (i=0;i<static_cast<int>(n_oid);++i){
+        for (auto & oid : oids ){
             uint32_t oid_len = packet->in_uint32_be();
-            SSHString * poid = new SSHString(oid_len);
-            packet->buffer_get_data(poid->data.get(), oid_len);
-
-            oids[i] = poid;
+            oid.resize(oid_len);
+            packet->buffer_get_data(&oid[0], oid_len);
         }
         this->ssh_gssapi_handle_userauth_server(username, n_oid, oids);
-
-        for(i=0;i<static_cast<int>(n_oid);++i){
-            delete oids[i];
-        }
-        delete [] oids;
         return;
     }
 
-    int ssh_gssapi_handle_userauth_server(const char *user, uint32_t n_oid, SSHString * oids[]){
+    int ssh_gssapi_handle_userauth_server(const char *user, uint32_t n_oid, std::vector<SSHString> oids){
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         char service_name[]="host";
         gss_buffer_desc name_buf;
@@ -4437,10 +4446,9 @@ struct SshServerSession : public ssh_session_struct
             delete[] hexa;
         }
 
-        for (i=0 ; i< n_oid ; ++i){
+        for (auto & oid_s : oids){
             syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", i, n_oid);
-            unsigned char *oid_s = oids[i]->data.get();
-            size_t len = oids[i]->size;
+            size_t len = oid_s.size();
             syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
             if(len < 2){
                 syslog(LOG_WARNING,"GSSAPI: received invalid OID 1");
@@ -4456,7 +4464,7 @@ struct SshServerSession : public ssh_session_struct
             }
             oid.elements = &oid_s[2];
             oid.length = len - 2;
-            gss_test_oid_set_member(&min_stat,&oid,supported,&present);
+            gss_test_oid_set_member(&min_stat, &oid, supported,&present);
             if(present){
                 gss_add_oid_set_member(&min_stat,&oid,&both_supported);
                 oid_count++;
@@ -4510,9 +4518,8 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "acquiring credentials %d, %d", maj_stat, min_stat);
 
         /* finding which OID from client we selected */
-        for (i=0 ; i< n_oid ; ++i){
-            unsigned char *oid_s = oids[i]->data.get();
-            size_t len = oids[i]->size;
+        for (auto & oid_s : oids){
+            size_t len = oid_s.size();
             if(len < 2){
                 syslog(LOG_WARNING,"GSSAPI: received invalid OID 1");
                 continue;
@@ -4543,8 +4550,8 @@ struct SshServerSession : public ssh_session_struct
         this->gssapi->state = SSH_GSSAPI_STATE_RCV_TOKEN;
 
         this->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_RESPONSE);
-        this->out_buffer->out_uint32_be(oids[i]->size);
-        this->out_buffer->out_blob(oids[i]->data.get(), oids[i]->size);
+        this->out_buffer->out_uint32_be(oids[i].size());
+        this->out_buffer->out_blob(&oids[i][0], oids[i].size());
         this->packet_send();
 
         return SSH_OK;
@@ -4601,8 +4608,9 @@ struct SshServerSession : public ssh_session_struct
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_INFO_REQUEST msg");
             return SSH_PACKET_USED;
         }
-        SSHString name(name_len);
-        packet->buffer_get_data(name.data.get(), name_len);
+        std::vector<uint8_t> name;
+        name.resize(name_len);
+        packet->buffer_get_data(&name[0], name_len);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_INFO_REQUEST msg");
@@ -4613,8 +4621,9 @@ struct SshServerSession : public ssh_session_struct
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_INFO_REQUEST msg");
             return SSH_PACKET_USED;
         }
-        SSHString instruction(instruction_len);
-        packet->buffer_get_data(instruction.data.get(), instruction_len);
+        std::vector<uint8_t> instruction;
+        instruction.resize(instruction_len);
+        packet->buffer_get_data(&instruction[0], instruction_len);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_INFO_REQUEST msg");
@@ -4625,8 +4634,9 @@ struct SshServerSession : public ssh_session_struct
             ssh_set_error(this->error,  SSH_FATAL, "Invalid USERAUTH_INFO_REQUEST msg");
             return SSH_PACKET_USED;
         }
-        SSHString tmp(tmp_len);
-        packet->buffer_get_data(tmp.data.get(), tmp_len);
+        std::vector<uint8_t> tmp;
+        tmp.resize(tmp_len);
+        packet->buffer_get_data(&tmp[0], tmp_len);
 
         uint32_t nprompts = packet->in_uint32_be();
 
@@ -4637,13 +4647,13 @@ struct SshServerSession : public ssh_session_struct
             ssh_kbdint_clean(this->kbdint);
         }
 
-        this->kbdint->name = new char [name.size + 1];
-        memcpy(this->kbdint->name, name.data.get(), name.size);
-        this->kbdint->name[name.size] = 0;
+        this->kbdint->name = new char [name.size() + 1];
+        memcpy(this->kbdint->name, &name[0], name.size());
+        this->kbdint->name[name.size()] = 0;
 
-        this->kbdint->instruction = new char[instruction.size + 1];
-        memcpy(this->kbdint->instruction, instruction.data.get(), instruction.size);
-        this->kbdint->instruction[instruction.size] = 0;
+        this->kbdint->instruction = new char[instruction.size() + 1];
+        memcpy(this->kbdint->instruction, &instruction[0], instruction.size());
+        this->kbdint->instruction[instruction.size()] = 0;
 
         syslog(LOG_DEBUG, "%d keyboard-interactive prompts", nprompts);
         if (nprompts > KBDINT_MAX_PROMPT) {
@@ -4683,15 +4693,16 @@ struct SshServerSession : public ssh_session_struct
 
                 return SSH_PACKET_USED;
             }
-            SSHString tmp2(tmp2_len);
-            packet->buffer_get_data(tmp2.data.get(), tmp2_len);
+            std::vector<uint8_t> tmp2;
+            tmp2.resize(tmp2_len);
+            packet->buffer_get_data(&tmp2[0], tmp2_len);
 
             this->kbdint->echo[i] = packet->in_uint8();
 
-            this->kbdint->prompts[i] = new char [tmp2.size + 1];
+            this->kbdint->prompts[i] = new char [tmp2.size() + 1];
             // TODO : check memory allocation
-            memcpy(this->kbdint->prompts[i], tmp2.data.get(), tmp2.size);
-            this->kbdint->prompts[i][tmp2.size] = 0;
+            memcpy(this->kbdint->prompts[i], &tmp2[0], tmp2.size());
+            this->kbdint->prompts[i][tmp2.size()] = 0;
 
         }
         this->auth_state=SSH_AUTH_STATE_INFO;
@@ -4722,8 +4733,9 @@ struct SshServerSession : public ssh_session_struct
             ssh_set_error(this->error,  SSH_FATAL, "parse error");
             return SSH_PACKET_USED;
         }
-        SSHString oid_s(oid_s_len);
-        packet->buffer_get_data(oid_s.data.get(),oid_s_len);
+        std::vector<uint8_t> oid_s;
+        oid_s.resize(oid_s_len);
+        packet->buffer_get_data(&oid_s[0],oid_s_len);
         this->gssapi->client.oid = ssh_gssapi_oid_from_string(oid_s);
 
         if (!this->gssapi->client.oid) {
@@ -4771,11 +4783,12 @@ struct SshServerSession : public ssh_session_struct
             syslog(LOG_INFO, "GSSAPI: sending token %s",hexa);
             delete[] hexa;
 
-            SSHString token(static_cast<uint32_t>(output_token.length));
-            memcpy(token.data.get(), output_token.value, output_token.length);
+            std::vector<uint8_t> token;
+            token.resize(static_cast<uint32_t>(output_token.length));
+            memcpy(&token[0], output_token.value, output_token.length);
             this->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_TOKEN);
-            this->out_buffer->out_uint32_be(token.size);
-            this->out_buffer->out_blob(token.data.get(), token.size);
+            this->out_buffer->out_uint32_be(token.size());
+            this->out_buffer->out_blob(&token[0], token.size());
             this->packet_send();
             this->auth_state = SSH_AUTH_STATE_GSSAPI_TOKEN;
         }
@@ -4822,7 +4835,7 @@ struct SshServerSession : public ssh_session_struct
         memset(this->kbdint->answers, 0, nanswers * sizeof(char *));
 
         for (i = 0; i < nanswers; i++) {
-            this->kbdint->answers[i] = packet->in_strdup_cstr();
+            this->kbdint->answers[i] = strdup(&packet->in_strdup_cstr()[0]);
         }
 
         int rc = this->server_callbacks->auth_interactive_server_cb(
@@ -5190,8 +5203,9 @@ struct SshServerSession : public ssh_session_struct
             }
             return SSH_PACKET_USED;
         }
-        SSHString mic_token(mic_token_len);
-        packet->buffer_get_data(mic_token.data.get(),mic_token_len);
+        std::vector<uint8_t> mic_token;
+        mic_token.resize(mic_token_len);
+        packet->buffer_get_data(&mic_token[0],mic_token_len);
 
 
         if (this->gssapi == nullptr
@@ -5216,8 +5230,8 @@ struct SshServerSession : public ssh_session_struct
         }
         mic_buf.length = mic_buffer->in_remain();
         mic_buf.value = mic_buffer->get_pos_ptr();
-        mic_token_buf.length = mic_token.size;
-        mic_token_buf.value = mic_token.data.get();
+        mic_token_buf.length = mic_token.size();
+        mic_token_buf.value = &mic_token[0];
 
         maj_stat = gss_verify_mic(&min_stat, this->gssapi->ctx, &mic_buf, &mic_token_buf, nullptr);
 
@@ -5286,11 +5300,12 @@ struct SshServerSession : public ssh_session_struct
     ssh_buffer_struct* ssh_gssapi_build_mic_server(ssh_buffer_struct * mic_buffer)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        SSHString str(static_cast<uint32_t>(this->current_crypto->digest_len));
-        memcpy(str.data.get(), this->session_id, this->current_crypto->digest_len);
+        std::vector<uint8_t> str;
+        str.resize(static_cast<uint32_t>(this->current_crypto->digest_len));
+        memcpy(&str[0], this->session_id, this->current_crypto->digest_len);
 
-        mic_buffer->out_uint32_be(str.size);
-        mic_buffer->out_blob(str.data.get(), str.size);
+        mic_buffer->out_uint32_be(str.size());
+        mic_buffer->out_blob(&str[0], str.size());
 
         mic_buffer->out_uint8(SSH_MSG_USERAUTH_REQUEST);
         mic_buffer->out_length_prefixed_cstr(this->gssapi->user);
@@ -5328,15 +5343,16 @@ struct SshServerSession : public ssh_session_struct
             this->gssapi=nullptr;
             return SSH_PACKET_USED;
         }
-        SSHString token(token_len);
-        packet->buffer_get_data(token.data.get(),token_len);
+        std::vector<uint8_t> token;
+        token.resize(token_len);
+        packet->buffer_get_data(&token[0],token_len);
 
         char *hexa = new char[token_len * 3 + 1];
         size_t q = 0;
         size_t j = 0;
         for (q = 0; q < token_len; q++) {
-            const uint8_t cl = token.data.get()[q] >> 4;
-            const uint8_t ch = token.data.get()[q] & 0x0F;
+            const uint8_t cl = token[q] >> 4;
+            const uint8_t ch = token[q] & 0x0F;
             hexa[j] = (ch < 10?'0':'a')+ch;
             hexa[j+1] = (cl < 10?'0':'a')+cl;
             hexa[j+2] = ':';
@@ -5346,8 +5362,8 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "GSSAPI Token : %s",hexa);
         delete[] hexa;
 
-        input_token.length = token.size;
-        input_token.value = token.data.get();
+        input_token.length = token.size();
+        input_token.value = &token[0];
 
         maj_stat = gss_accept_sec_context(&min_stat, &this->gssapi->ctx, this->gssapi->server_creds,
                 &input_token, input_bindings, &client_name, nullptr /*mech_oid*/, &output_token, &ret_flags,
@@ -5392,11 +5408,12 @@ struct SshServerSession : public ssh_session_struct
             syslog(LOG_INFO, "GSSAPI: sending token %s",hexa);
             delete[] hexa;
 
-            SSHString token2(static_cast<uint32_t>(output_token.length));
-            memcpy(token2.data.get(), output_token.value, output_token.length);
+            std::vector<uint8_t> token2;
+            token2.resize(static_cast<uint32_t>(output_token.length));
+            memcpy(&token2[0], output_token.value, output_token.length);
             this->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_TOKEN);
-            this->out_buffer->out_uint32_be(token2.size);
-            this->out_buffer->out_blob(token2.data.get(), token2.size);
+            this->out_buffer->out_uint32_be(token2.size());
+            this->out_buffer->out_blob(&token2[0], token2.size());
             this->packet_send();
         }
         if(maj_stat == GSS_S_COMPLETE){
@@ -5411,20 +5428,20 @@ struct SshServerSession : public ssh_session_struct
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         int rc = SSH_PACKET_USED;
 
-        char * request = packet->in_strdup_cstr();
+        SSHString request = packet->in_strdup_cstr();
         uint8_t want_reply = packet->in_uint8();
 
-        if (request && strcmp(request, "tcpip-forward") == 0) {
-            char * bind_address = packet->in_strdup_cstr();
+        if (strcmp(&request[0], "tcpip-forward") == 0) {
+            SSHString bind_address = packet->in_strdup_cstr();
             uint32_t bind_port = packet->in_uint32_be();
 
             syslog(LOG_INFO, "Received SSH_MSG_GLOBAL_REQUEST %s %d %s:%d",
                 "SSH_GLOBAL_REQUEST_TCPIP_FORWARD",
-                want_reply, bind_address, bind_port);
+                want_reply, &bind_address[0], bind_port);
             this->server_callbacks->global_request_server_cb(this,
                                             SSH_GLOBAL_REQUEST_TCPIP_FORWARD,
                                             want_reply,
-                                            bind_address,
+                                            &bind_address[0],
                                             bind_port,
                                             this->server_callbacks->userdata);
 
@@ -5444,18 +5461,17 @@ struct SshServerSession : public ssh_session_struct
                     syslog(LOG_INFO, "The client doesn't want to know the remote port!");
                 }
             }
-            delete bind_address;
-        } else if (request && strcmp(request, "cancel-tcpip-forward") == 0) {
-            char * bind_address = packet->in_strdup_cstr();
+        } else if (strcmp(&request[0], "cancel-tcpip-forward") == 0) {
+            SSHString bind_address = packet->in_strdup_cstr();
             uint32_t bind_port = packet->in_uint32_be();
 
             syslog(LOG_INFO, "Received SSH_MSG_GLOBAL_REQUEST %s %d %s:%d",
                 "SSH_GLOBAL_REQUEST_CANCEL_TCPIP_FORWARD",
-                want_reply, bind_address, bind_port);
+                want_reply, &bind_address[0], bind_port);
 
             this->server_callbacks->global_request_server_cb(this,
                 SSH_GLOBAL_REQUEST_CANCEL_TCPIP_FORWARD,
-                want_reply, bind_address, bind_port, this->server_callbacks->userdata);
+                want_reply, &bind_address[0], bind_port, this->server_callbacks->userdata);
             if (want_reply) {
                 this->out_buffer->out_uint8(SSH_MSG_REQUEST_SUCCESS);
                 this->packet_send();
@@ -5463,16 +5479,14 @@ struct SshServerSession : public ssh_session_struct
             else {
                 syslog(LOG_INFO, "No ack asked");
             }
-            delete bind_address;
         } else {
-            syslog(LOG_INFO, "UNKNOWN SSH_MSG_GLOBAL_REQUEST %s %d", request, want_reply);
+            syslog(LOG_INFO, "UNKNOWN SSH_MSG_GLOBAL_REQUEST %s %d", &request[0], want_reply);
             if (want_reply) {
                 this->out_buffer->out_uint8(SSH_MSG_REQUEST_FAILURE);
                 this->packet_send();
             }
             return SSH_PACKET_NOT_USED;
         }
-        delete request;
         return rc;
     }
 
@@ -5493,10 +5507,9 @@ struct SshServerSession : public ssh_session_struct
         uint32_t code = packet->in_uint32_be();
         // TODO: error should be read directly from stream
         // and should be filtered to avoid some attacks
-        char * tmp_error = packet->in_strdup_cstr();
+        SSHString tmp_error = packet->in_strdup_cstr();
         syslog(LOG_INFO, "Received SSH_MSG_DISCONNECT %d", code);
-        ssh_set_error(error,  SSH_FATAL, "Received SSH_MSG_DISCONNECT: %d (%s)", code, tmp_error);
-        delete [] tmp_error;
+        ssh_set_error(error,  SSH_FATAL, "Received SSH_MSG_DISCONNECT: %d (%s)", code, &tmp_error[0]);
         this->socket->close();
         this->session_state = SSH_SESSION_STATE_ERROR;
         /* TODO: handle a graceful disconnect */
@@ -5508,21 +5521,19 @@ struct SshServerSession : public ssh_session_struct
         (void)error;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         // SSH_REQUEST_SERVICE
-        char * service = packet->in_strdup_cstr();
-        syslog(LOG_INFO, "Received a SERVICE_REQUEST for service %s", service);
+        SSHString service = packet->in_strdup_cstr();
+        syslog(LOG_INFO, "Received a SERVICE_REQUEST for service %s", &service[0]);
         int rc = 0;
         if (this->server_callbacks->service_request_server_cb){
             rc = this->server_callbacks->service_request_server_cb(
-                    service,
+                    &service[0],
                     this->server_callbacks->userdata);
             if (rc != 0) {
                 ssh_disconnect_server(this);
             }
         }
 
-        this->ssh_send_service_accept_server(service);
-
-        delete service;
+        this->ssh_send_service_accept_server(&service[0]);
         return SSH_PACKET_USED;
     }
 
@@ -5596,7 +5607,7 @@ struct SshServerSession : public ssh_session_struct
         this->next_crypto->client_kex.methods[SSH_KEX] = packet->in_strdup_cstr();
         this->next_crypto->client_kex.methods[SSH_HOSTKEYS] = packet->in_strdup_cstr();
 
-        syslog(LOG_INFO,"Client hostkeys method : %s", this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
+        syslog(LOG_INFO,"Client hostkeys method : %s", this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str());
 
         this->next_crypto->client_kex.methods[SSH_CRYPT_C_S] = packet->in_strdup_cstr();
         this->next_crypto->client_kex.methods[SSH_CRYPT_S_C] = packet->in_strdup_cstr();
@@ -5612,7 +5623,7 @@ struct SshServerSession : public ssh_session_struct
         this->server_callbacks->connect_status_server_cb(this->server_callbacks->userdata, 0.6f);
 
 
-        if (this->next_crypto->server_kex.methods[0].size == 0){
+        if (this->next_crypto->server_kex.methods[0].size() == 0){
             syslog(LOG_INFO,"Initialising server methods");
 
             this->next_crypto->server_kex.methods[SSH_KEX] = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
@@ -5659,7 +5670,7 @@ struct SshServerSession : public ssh_session_struct
 
             SSHString tmp = find_matching(supported_hostkeys, hostkeys, ',');
 
-            if (tmp.size == 0){
+            if (tmp.size() == 0){
                 ssh_set_error(this->error, SSH_REQUEST_DENIED,
                     "Setting method: no algorithm for method \"%s\" (%s)\n",
                     "server host key algo", hostkeys);
@@ -5671,7 +5682,7 @@ struct SshServerSession : public ssh_session_struct
             free(this->opts.wanted_methods[SSH_HOSTKEYS]);
             this->opts.wanted_methods[SSH_HOSTKEYS] = strdup(hostkeys);
 
-            this->next_crypto->server_kex.methods[SSH_HOSTKEYS] = strdup(tmp.cstr());
+            this->next_crypto->server_kex.methods[SSH_HOSTKEYS] = strdup(tmp.c_str());
 
             this->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
             this->next_crypto->server_kex.methods[SSH_CRYPT_S_C] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
@@ -5683,25 +5694,25 @@ struct SshServerSession : public ssh_session_struct
             this->next_crypto->server_kex.methods[SSH_LANG_C_S] = "";
 
             syslog(LOG_INFO, "kex algos: %s",
-                this->next_crypto->server_kex.methods[SSH_KEX].cstr());
+                this->next_crypto->server_kex.methods[SSH_KEX].c_str());
             syslog(LOG_INFO, "server host key algo: %s",
-                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr());
+                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str());
             syslog(LOG_INFO, "encryption client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str());
             syslog(LOG_INFO, "encryption server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str());
             syslog(LOG_INFO, "mac algo client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str());
             syslog(LOG_INFO, "mac algo server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str());
             syslog(LOG_INFO, "compression algo client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str());
             syslog(LOG_INFO, "compression algo server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str());
             syslog(LOG_INFO, "languages client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_LANG_C_S].c_str());
             syslog(LOG_INFO, "languages server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_LANG_S_C].c_str());
 
 
 
@@ -5727,61 +5738,61 @@ struct SshServerSession : public ssh_session_struct
             syslog(LOG_INFO,"%s Server methods are already initialised", __FUNCTION__);
 
             syslog(LOG_INFO, "kex algos: %s",
-                this->next_crypto->server_kex.methods[SSH_KEX].cstr());
+                this->next_crypto->server_kex.methods[SSH_KEX].c_str());
             syslog(LOG_INFO, "server host key algo: %s",
-                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr());
+                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str());
             syslog(LOG_INFO, "encryption client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str());
             syslog(LOG_INFO, "encryption server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str());
             syslog(LOG_INFO, "mac algo client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str());
             syslog(LOG_INFO, "mac algo server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str());
             syslog(LOG_INFO, "compression algo client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str());
             syslog(LOG_INFO, "compression algo server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str());
             syslog(LOG_INFO, "languages client->server: %s",
-                this->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_LANG_C_S].c_str());
             syslog(LOG_INFO, "languages server->client: %s",
-                this->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_LANG_S_C].c_str());
         }
 
         if (this->session_state != SSH_SESSION_STATE_ERROR){
 
     //        syslog(LOG_INFO, "kex algos: %s",
-    //            this->next_crypto->client_kex.methods[SSH_KEX].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_KEX].c_str());
     //        syslog(LOG_INFO, "server host key algo: %s",
-    //            this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str());
     //        syslog(LOG_INFO, "encryption client->server: %s",
-    //            this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].c_str());
     //        syslog(LOG_INFO, "encryption server->client: %s",
-    //            this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].c_str());
     //        syslog(LOG_INFO, "mac algo client->server: %s",
-    //            this->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_MAC_C_S].c_str());
     //        syslog(LOG_INFO, "mac algo server->client: %s",
-    //            this->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_MAC_S_C].c_str());
     //        syslog(LOG_INFO, "compression algo client->server: %s",
-    //            this->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_COMP_C_S].c_str());
     //        syslog(LOG_INFO, "compression algo server->client: %s",
-    //            this->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_COMP_S_C].c_str());
     //        syslog(LOG_INFO, "languages client->server: %s",
-    //            this->next_crypto->client_kex.methods[SSH_LANG_C_S].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_LANG_C_S].c_str());
     //        syslog(LOG_INFO, "languages server->client: %s",
-    //            this->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr());
+    //            this->next_crypto->client_kex.methods[SSH_LANG_S_C].c_str());
 
             this->next_crypto->kex_methods[SSH_KEX] = find_matching(
-                this->next_crypto->server_kex.methods[SSH_KEX].cstr(),
-                this->next_crypto->client_kex.methods[SSH_KEX].cstr(),
+                this->next_crypto->server_kex.methods[SSH_KEX].c_str(),
+                this->next_crypto->client_kex.methods[SSH_KEX].c_str(),
                 ',');
 
-            if (this->next_crypto->kex_methods[SSH_KEX].size == 0){
+            if (this->next_crypto->kex_methods[SSH_KEX].size() == 0){
                 ssh_set_error(this->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
                     "kex algos",
-                    this->next_crypto->server_kex.methods[SSH_KEX].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_KEX].cstr());
+                    this->next_crypto->server_kex.methods[SSH_KEX].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_KEX].c_str());
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 return SSH_PACKET_USED;
@@ -5789,151 +5800,151 @@ struct SshServerSession : public ssh_session_struct
 
             // TODO: create a general purpose method to find a value in a string keyed dictionnary
             // and use it there and whenever necessary
-            if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group1-sha1") == 0){
+            if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "diffie-hellman-group1-sha1") == 0){
               this->next_crypto->kex_type = SSH_KEX_DH_GROUP1_SHA1;
             }
-            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group14-sha1") == 0)
+            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "diffie-hellman-group14-sha1") == 0)
             {
               this->next_crypto->kex_type = SSH_KEX_DH_GROUP14_SHA1;
             }
-            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "ecdh-sha2-nistp256") == 0){
+            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "ecdh-sha2-nistp256") == 0){
               this->next_crypto->kex_type = SSH_KEX_ECDH_SHA2_NISTP256;
             }
-            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].cstr(), "curve25519-sha256@libssh.org") == 0)
+            else if(strcmp(this->next_crypto->kex_methods[SSH_KEX].c_str(), "curve25519-sha256@libssh.org") == 0)
             {
               this->next_crypto->kex_type = SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG;
             }
 
             this->next_crypto->kex_methods[SSH_HOSTKEYS] = find_matching(
-                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr(),
+                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str(),
                 ',');
 
             syslog(LOG_INFO,"%s [A] Setting HOSKTEYS: server=%s client=%s -> methods=%s",
                 __FUNCTION__,
-                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr(),
-                this->next_crypto->kex_methods[SSH_HOSTKEYS].cstr()
+                this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str(),
+                this->next_crypto->kex_methods[SSH_HOSTKEYS].c_str()
             );
 
 
-            if (this->next_crypto->kex_methods[SSH_HOSTKEYS].size == 0){
+            if (this->next_crypto->kex_methods[SSH_HOSTKEYS].size() == 0){
                 ssh_set_error(this->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
                     "server host key algo",
-                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
+                    this->next_crypto->server_kex.methods[SSH_HOSTKEYS].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_HOSTKEYS].c_str());
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 return SSH_PACKET_USED;
             }
 
             this->next_crypto->kex_methods[SSH_CRYPT_C_S] = find_matching(
-                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr(),
+                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].c_str(),
                     ',');
 
-            if (this->next_crypto->kex_methods[SSH_CRYPT_C_S].size == 0){
+            if (this->next_crypto->kex_methods[SSH_CRYPT_C_S].size() == 0){
                 ssh_set_error(this->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
                     "encryption client->server",
-                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
-                    this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
+                    this->next_crypto->server_kex.methods[SSH_CRYPT_C_S].c_str(),
+                    this->next_crypto->client_kex.methods[SSH_CRYPT_C_S].c_str());
                 this->socket->close();
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 return SSH_PACKET_USED;
             }
             this->next_crypto->kex_methods[SSH_CRYPT_S_C] = find_matching(
-                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
-                this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr(),
+                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str(),
+                this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].c_str(),
                 ',');
 
-        if (this->next_crypto->kex_methods[SSH_CRYPT_S_C].size == 0){
+        if (this->next_crypto->kex_methods[SSH_CRYPT_S_C].size() == 0){
             ssh_set_error(this->error, SSH_FATAL,
                 "kex error : no match for method %s: server [%s], client [%s]",
                 "encryption server->client",
-                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
-                this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_CRYPT_S_C].c_str(),
+                this->next_crypto->client_kex.methods[SSH_CRYPT_S_C].c_str());
             this->socket->close();
             this->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
 
         this->next_crypto->kex_methods[SSH_MAC_C_S] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
-            this->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr(),
+            this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str(),
+            this->next_crypto->client_kex.methods[SSH_MAC_C_S].c_str(),
             ',');
 
-        if (this->next_crypto->kex_methods[SSH_MAC_C_S].size == 0){
+        if (this->next_crypto->kex_methods[SSH_MAC_C_S].size() == 0){
             ssh_set_error(this->error, SSH_FATAL,
                 "kex error : no match for method %s: server [%s], client [%s]",
                 "compression algo client->server",
-                this->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
-                this->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_C_S].c_str(),
+                this->next_crypto->client_kex.methods[SSH_MAC_C_S].c_str());
             this->socket->close();
             this->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
 
         this->next_crypto->kex_methods[SSH_MAC_S_C] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
-            this->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr(),
+            this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str(),
+            this->next_crypto->client_kex.methods[SSH_MAC_S_C].c_str(),
             ',');
 
-        if (this->next_crypto->kex_methods[SSH_MAC_S_C].size == 0){
+        if (this->next_crypto->kex_methods[SSH_MAC_S_C].size() == 0){
             ssh_set_error(this->error, SSH_FATAL,
                 "kex error : no match for method %s: server [%s], client [%s]",
                 "compression algo server->client",
-                this->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
-                this->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_MAC_S_C].c_str(),
+                this->next_crypto->client_kex.methods[SSH_MAC_S_C].c_str());
             this->socket->close();
             this->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
         this->next_crypto->kex_methods[SSH_COMP_C_S] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
-            this->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr(),
+            this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str(),
+            this->next_crypto->client_kex.methods[SSH_COMP_C_S].c_str(),
             ',');
 
-        if (this->next_crypto->kex_methods[SSH_COMP_C_S].size == 0){
+        if (this->next_crypto->kex_methods[SSH_COMP_C_S].size() == 0){
             ssh_set_error(this->error,SSH_FATAL,
                 "kex error : no match for method %s: server [%s], client [%s]",
                 "mac algo client->server",
-                this->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
-                this->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_C_S].c_str(),
+                this->next_crypto->client_kex.methods[SSH_COMP_C_S].c_str());
             this->socket->close();
             this->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
         this->next_crypto->kex_methods[SSH_COMP_S_C] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
-            this->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr(),
+            this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str(),
+            this->next_crypto->client_kex.methods[SSH_COMP_S_C].c_str(),
             ',');
 
-        if (this->next_crypto->kex_methods[SSH_COMP_S_C].size == 0){
+        if (this->next_crypto->kex_methods[SSH_COMP_S_C].size() == 0){
             ssh_set_error(this->error,SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
                 "mac algo server->client",
-                this->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
-                this->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
+                this->next_crypto->server_kex.methods[SSH_COMP_S_C].c_str(),
+                this->next_crypto->client_kex.methods[SSH_COMP_S_C].c_str());
             this->socket->close();
             this->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
         this->next_crypto->kex_methods[SSH_LANG_C_S] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr(),
-            this->next_crypto->client_kex.methods[SSH_LANG_C_S].cstr(),
+            this->next_crypto->server_kex.methods[SSH_LANG_C_S].c_str(),
+            this->next_crypto->client_kex.methods[SSH_LANG_C_S].c_str(),
             ',');
 
         this->next_crypto->kex_methods[SSH_LANG_S_C] = find_matching(
-            this->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr(),
-            this->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr(),
+            this->next_crypto->server_kex.methods[SSH_LANG_S_C].c_str(),
+            this->next_crypto->client_kex.methods[SSH_LANG_S_C].c_str(),
             ',');
 
 
             this->next_crypto->out_cipher = cipher_new_by_name(this->next_crypto->kex_methods[SSH_CRYPT_S_C]);
             this->next_crypto->in_cipher = cipher_new_by_name(this->next_crypto->kex_methods[SSH_CRYPT_C_S]);
 
-            const char * method_in = this->next_crypto->kex_methods[SSH_COMP_C_S].cstr();
+            const char * method_in = this->next_crypto->kex_methods[SSH_COMP_C_S].c_str();
             if(strcmp(method_in,"zlib") == 0){
                 syslog(LOG_INFO,"enabling C->S compression");
                 this->next_crypto->do_compress_in=1;
@@ -5948,7 +5959,7 @@ struct SshServerSession : public ssh_session_struct
                 }
             }
 
-            const char * method_out = this->next_crypto->kex_methods[SSH_COMP_S_C].cstr();
+            const char * method_out = this->next_crypto->kex_methods[SSH_COMP_S_C].c_str();
             if(strcmp(method_out,"zlib") == 0){
                 syslog(LOG_INFO, "enabling S->C compression\n");
                 this->next_crypto->do_compress_out=1;
@@ -5977,10 +5988,10 @@ struct SshServerSession : public ssh_session_struct
              {"ecdsa-sha2-nistp521", SSH_KEYTYPE_ECDSA},
             };
 
-            syslog(LOG_INFO,"%s Finding hostkey type in = %s", __FUNCTION__, this->next_crypto->kex_methods[SSH_HOSTKEYS].cstr());
+            syslog(LOG_INFO,"%s Finding hostkey type in = %s", __FUNCTION__, this->next_crypto->kex_methods[SSH_HOSTKEYS].c_str());
             this->server_negociated_hostkey = SSH_KEYTYPE_UNKNOWN;
             for(auto &p:l){
-                if (strcmp(p.first, this->next_crypto->kex_methods[SSH_HOSTKEYS].cstr()) == 0){
+                if (strcmp(p.first, this->next_crypto->kex_methods[SSH_HOSTKEYS].c_str()) == 0){
                     syslog(LOG_INFO,"%s negociated hostkey = %s %d", __FUNCTION__, p.first, p.second);
                     this->server_negociated_hostkey = p.second;
                     break;
@@ -5997,11 +6008,9 @@ struct SshServerSession : public ssh_session_struct
     int handle_channel_open_server(ssh_buffer_struct* packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * type_c = packet->in_strdup_cstr();
-        syslog(LOG_INFO, "%s --- channel type = %s", __FUNCTION__, type_c);
-        uint8_t channel_open_code = get_channel_open_request_code(type_c);
-        delete type_c;
-
+        SSHString type_c = packet->in_strdup_cstr();
+        syslog(LOG_INFO, "%s --- channel type = %s", __FUNCTION__, &type_c[0]);
+        uint8_t channel_open_code = get_channel_open_request_code(&type_c[0]);
         switch (channel_open_code) {
         case REQUEST_STRING_CHANNEL_OPEN_SESSION:
             syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_SESSION", __FUNCTION__);
@@ -6081,16 +6090,16 @@ struct SshServerSession : public ssh_session_struct
         uint32_t sender = packet->in_uint32_be();
         uint32_t window = packet->in_uint32_be();
         uint32_t packet_size = packet->in_uint32_be();
-        char * destination = packet->in_strdup_cstr();
+        SSHString destination = packet->in_strdup_cstr();
         uint32_t destination_port = packet->in_uint32_be();
-        char * originator = packet->in_strdup_cstr();
+        SSHString originator = packet->in_strdup_cstr();
         uint32_t originator_port = packet->in_uint32_be();
 
         // Why leave other side of callback create channel ?
         // We initialize all relevant channel informations here anyway
         ssh_channel channel = this->server_callbacks->channel_open_request_direct_tcpip_server_cb(
-                            destination, destination_port,
-                            originator, originator_port,
+                            &destination[0], destination_port,
+                            &originator[0], originator_port,
                             this->server_callbacks->userdata);
         if (channel != nullptr) {
             channel->local_channel = this->new_channel_id();
@@ -6115,9 +6124,6 @@ struct SshServerSession : public ssh_session_struct
             this->out_buffer->out_uint32_be(0); /* language too */
         }
         this->packet_send();
-
-        delete originator;
-        delete destination;
     }
 
     void handle_channel_open_forwarded_tcpip_request_server(ssh_buffer_struct * packet)
@@ -6128,15 +6134,15 @@ struct SshServerSession : public ssh_session_struct
         uint32_t sender = packet->in_uint32_be();
         uint32_t window = packet->in_uint32_be();
         uint32_t packet_size = packet->in_uint32_be();
-        char * destination = packet->in_strdup_cstr();
+        SSHString destination = packet->in_strdup_cstr();
         uint32_t destination_port = packet->in_uint32_be();
-        char * originator = packet->in_strdup_cstr();
+        SSHString originator = packet->in_strdup_cstr();
         uint32_t originator_port = packet->in_uint32_be();
         ssh_channel channel = this->server_callbacks->channel_open_request_forwarded_tcpip_function(
                         this,
-                        destination,
+                        &destination[0],
                         destination_port,
-                        originator,
+                        &originator[0],
                         originator_port,
                         this->server_callbacks->userdata);
         if (channel != nullptr) {
@@ -6162,9 +6168,6 @@ struct SshServerSession : public ssh_session_struct
             this->out_buffer->out_uint32_be(0); /* language too */
         }
         this->packet_send();
-
-        delete originator;
-        delete destination;
     }
 
 
@@ -6176,11 +6179,9 @@ struct SshServerSession : public ssh_session_struct
         /* uint32_t sender = */          (void)packet->in_uint32_be();
         /* uint32_t window = */          (void)packet->in_uint32_be();
         /* uint32_t packet_size = */     (void)packet->in_uint32_be();
-        char * originator =  packet->in_strdup_cstr();
+        SSHString originator =  packet->in_strdup_cstr();
         /* uint32_t originator_port = */ (void)packet->in_uint32_be();
         syslog(LOG_INFO, "No python callback to x11");
-
-        delete originator;
     }
 
 
@@ -6248,14 +6249,15 @@ struct SshServerSession : public ssh_session_struct
             channel->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN_DENIED;
             return SSH_PACKET_USED;
         }
-        SSHString error_s(error_s_len);
-        packet->buffer_get_data(error_s.data.get(),error_s_len);
+        SSHString error_s;
+        error_s.resize(error_s_len);
+        packet->buffer_get_data(&error_s[0],error_s_len);
 
         ssh_set_error(this->error,  SSH_REQUEST_DENIED,
                       "Channel opening failure: channel %u error (%lu) %*s",
                       channel->local_channel,
                       static_cast<long unsigned int>(ntohl(code)),
-                      error_s.size, error_s.data.get());
+                      (int)error_s.size(), &error_s[0]);
         channel->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN_DENIED;
         return SSH_PACKET_USED;
     }
@@ -6302,8 +6304,9 @@ struct SshServerSession : public ssh_session_struct
         if (str_len > packet->in_remain()) {
             return -1;
         }
-        SSHString str(str_len);
-        packet->buffer_get_data(str.data.get(), str_len);
+        std::vector<uint8_t> str;
+        str.resize(str_len);
+        packet->buffer_get_data(&str[0], str_len);
 
         // TODO: see that, we read full packet then drop what the local_window can't hold
         // as this looks really like a forbidden case we should probably close the connection
@@ -6315,7 +6318,7 @@ struct SshServerSession : public ssh_session_struct
                    channel->local_window);
         }
 
-        channel->stderr_buffer->out_blob(str.data.get(), str_len);
+        channel->stderr_buffer->out_blob(&str[0], str_len);
 
         if (str_len <= channel->local_window) {
             channel->local_window -= str_len;
@@ -6375,8 +6378,9 @@ struct SshServerSession : public ssh_session_struct
         if (str_len > packet->in_remain()) {
             return -1;
         }
-        SSHString str(str_len);
-        packet->buffer_get_data(str.data.get(), str_len);
+        std::vector<uint8_t> str;
+        str.resize(str_len);
+        packet->buffer_get_data(&str[0], str_len);
 
         // TODO: see that, we read full packet then drop what the local_window can't hold
         // as this looks really like a forbidden case we should probably close the connection
@@ -6388,7 +6392,7 @@ struct SshServerSession : public ssh_session_struct
                    channel->local_window);
         }
 
-        channel->stdout_buffer->out_blob(str.data.get(), str_len);
+        channel->stdout_buffer->out_blob(&str[0], str_len);
 
         if (str_len <= channel->local_window) {
             channel->local_window -= str_len;
@@ -6535,15 +6539,13 @@ struct SshServerSession : public ssh_session_struct
             return;
         }
 
-        const char * request = packet->in_strdup_cstr();
-        uint8_t request_code = get_request_code(request);
+        const SSHString request = packet->in_strdup_cstr();
+        uint8_t request_code = get_request_code(&request[0]);
         if (request_code == REQUEST_STRING_UNKNOWN){
           syslog(LOG_INFO, "%s --- Unknown channel request %s %s",
-            __FUNCTION__, request, channel->show());
+            __FUNCTION__, &request[0], channel->show());
           return;
         }
-        delete request;
-
         uint8_t want_reply = packet->in_uint8();
 
         switch (request_code){
@@ -6606,43 +6608,39 @@ struct SshServerSession : public ssh_session_struct
     void handle_signal_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * sig = packet->in_strdup_cstr();
+        SSHString sig = packet->in_strdup_cstr();
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s> for channel %s wr=%d",
-          "signal", sig, channel->show(), want_reply);
+          "signal", &sig[0], channel->show(), want_reply);
 
         if (channel->callbacks && channel->callbacks->channel_signal_function) {
             channel->callbacks->channel_signal_function(this,
                                                         channel,
-                                                        sig,
+                                                        &sig[0],
                                                         channel->callbacks->userdata);
         }
-        delete sig;
     }
 
 
     void handle_exit_signal_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * sig = packet->in_strdup_cstr();
+        SSHString sig = packet->in_strdup_cstr();
         uint8_t i = packet->in_uint8();
         const char *core = i?"(core dumped)":"";
-        char * errmsg = packet->in_strdup_cstr();
-        char * lang = packet->in_strdup_cstr();
+        SSHString errmsg = packet->in_strdup_cstr();
+        SSHString lang = packet->in_strdup_cstr();
 
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s %s %s %s> for channel %s wr=%d",
-          "exit-signal", sig, core, errmsg, lang, channel->show(), want_reply);
+          "exit-signal", &sig[0], core, &errmsg[0], &lang[0], channel->show(), want_reply);
 
         if (channel->callbacks && channel->callbacks->channel_exit_signal_function) {
             channel->callbacks->channel_exit_signal_function(this,
                                                              channel,
-                                                             sig, i, errmsg, lang,
+                                                             &sig[0], i, &errmsg[0], &lang[0],
                                                              channel->callbacks->userdata);
         }
-        delete lang;
-        delete errmsg;
-        delete sig;
     }
 
 
@@ -6695,23 +6693,23 @@ struct SshServerSession : public ssh_session_struct
     void handle_pty_req_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * TERM = packet->in_strdup_cstr();
+        SSHString TERM = packet->in_strdup_cstr();
         uint32_t width = packet->in_uint32_be();
         uint32_t height = packet->in_uint32_be();
         uint32_t pxwidth = packet->in_uint32_be();
         uint32_t pxheight = packet->in_uint32_be();
-        char * modes = packet->in_strdup_cstr();
+        SSHString modes = packet->in_strdup_cstr();
 
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s, %d, %d, %d, %d, %s> for channel %s wr=%d",
-          "pty-req", TERM, static_cast<int>(width), static_cast<int>(height),
-          static_cast<int>(pxwidth), static_cast<int>(pxheight), modes,
+          "pty-req", &TERM[0], static_cast<int>(width), static_cast<int>(height),
+          static_cast<int>(pxwidth), static_cast<int>(pxheight), &modes[0],
           channel->show(), want_reply);
 
         if (channel->callbacks && channel->callbacks->channel_pty_request_function){
             int rc = channel->callbacks->channel_pty_request_function(this,
                                                                       channel,
-                                                                      TERM,
+                                                                      &TERM[0],
                                                                       width,
                                                                       height,
                                                                       pxwidth,
@@ -6728,9 +6726,6 @@ struct SshServerSession : public ssh_session_struct
               syslog(LOG_INFO, "The client doesn't want to know if the request succeeded");
             }
         }
-
-        delete TERM;
-        delete modes;
     }
 
 
@@ -6763,18 +6758,18 @@ struct SshServerSession : public ssh_session_struct
     void handle_subsystem_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char *subsystem = packet->in_strdup_cstr();
+        SSHString subsystem = packet->in_strdup_cstr();
 
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s> for channel %s wr=%d",
-          "subsystem", subsystem, channel->show(), want_reply);
+          "subsystem", &subsystem[0], channel->show(), want_reply);
 
         // SSH_REQUEST_CHANNEL SSH_CHANNEL_REQUEST_SUBSYSTEM
         int rc = -1;
         if (channel->callbacks && channel->callbacks->channel_subsystem_request_function){
             rc = channel->callbacks->channel_subsystem_request_function(static_cast<ssh_session_struct*>(this),
                                                                         channel,
-                                                                        subsystem,
+                                                                        &subsystem[0],
                                                                         channel->callbacks->userdata);
         }
         if (want_reply) {
@@ -6786,7 +6781,6 @@ struct SshServerSession : public ssh_session_struct
         else {
             syslog(LOG_INFO, "The client doesn't want to know if the request succeeded");
         }
-        delete subsystem;
     }
 
 
@@ -6818,18 +6812,18 @@ struct SshServerSession : public ssh_session_struct
     void handle_exec_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * command = packet->in_strdup_cstr();
+        SSHString command = packet->in_strdup_cstr();
 
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s> for channel %s wr=%d",
-          "exec", command, channel->show(), want_reply);
+          "exec", &command[0], channel->show(), want_reply);
 
         // TODO: should we not send a reply whenever it is asked, even if we do not have any API callback ?
 
         if (channel->callbacks && channel->callbacks->channel_exec_request_function){
             int rc = channel->callbacks->channel_exec_request_function(this,
                                                                        channel,
-                                                                       command,
+                                                                       &command[0],
                                                                        channel->callbacks->userdata);
             if (want_reply) {
                 syslog(LOG_INFO, "Sending a channel_request success to channel %d",
@@ -6843,25 +6837,23 @@ struct SshServerSession : public ssh_session_struct
                 syslog(LOG_INFO, "The client doesn't want to know if the request succeeded");
             }
         }
-
-        delete command;
     }
 
     void handle_env_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
-        char * var_name = packet->in_strdup_cstr();
-        char * var_value = packet->in_strdup_cstr();
+        SSHString var_name = packet->in_strdup_cstr();
+        SSHString var_value = packet->in_strdup_cstr();
 
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <%s=%s> for channel %s wr=%d",
-          "env", var_name, var_value, channel->show(), want_reply);
+          "env", &var_name[0], &var_value[0], channel->show(), want_reply);
 
         if (channel->callbacks && channel->callbacks->channel_env_request_function){
             int rc = channel->callbacks->channel_env_request_function(this,
                                                                       channel,
-                                                                      var_name,
-                                                                      var_value,
+                                                                      &var_name[0],
+                                                                      &var_value[0],
                                                                       channel->callbacks->userdata);
             if (want_reply) {
                 syslog(LOG_INFO, "Sending a channel_request success to channel %d",
@@ -6875,9 +6867,6 @@ struct SshServerSession : public ssh_session_struct
                 syslog(LOG_INFO, "The client doesn't want to know if the request succeeded");
             }
         }
-
-        delete var_name;
-        delete var_value;
     }
 
 
@@ -6889,16 +6878,16 @@ struct SshServerSession : public ssh_session_struct
           "x11-req", channel->local_channel, channel->remote_channel, want_reply);
 
         uint8_t x11_single_connection = packet->in_uint8();
-        char * x11_auth_protocol = packet->in_strdup_cstr();
-        char * x11_auth_cookie = packet->in_strdup_cstr();
+        SSHString x11_auth_protocol = packet->in_strdup_cstr();
+        SSHString x11_auth_cookie = packet->in_strdup_cstr();
         // TODO: why no network order ?
         uint32_t x11_screen_number = packet->in_uint32_le();
         if (channel->callbacks && channel->callbacks->channel_x11_req_function){
             channel->callbacks->channel_x11_req_function(this,
                                                          channel,
                                                          x11_single_connection,
-                                                         x11_auth_protocol,
-                                                         x11_auth_cookie,
+                                                         &x11_auth_protocol[0],
+                                                         &x11_auth_cookie[0],
                                                          x11_screen_number,
                                                          channel->callbacks->userdata);
 
@@ -6916,8 +6905,6 @@ struct SshServerSession : public ssh_session_struct
             }
 
         }
-        delete x11_auth_protocol;
-        delete x11_auth_cookie;
     }
 
     //  [RFC4253] 11.4.  Reserved Messages

@@ -51,4 +51,5 @@
 #include <QtCore/QMimeData>
 #include <QtCore/QTimer>
 #include <QtGui/QToolTip>
+#include <QtGui/QProgressBar>
 

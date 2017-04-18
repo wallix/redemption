@@ -74,6 +74,7 @@ public:
     ClipBoard_Qt       * clipboard_qt;
     bool                 _monitorCountNegociated;
     LCGRandom            gen;
+    std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
 
 
     // Clipboard Channel Management members
@@ -115,7 +116,7 @@ public:
         std::vector<std::string> elem_in_path;
 
     } fileSystemData;
-    
+
 
     virtual void options() override {
         new DialogOptions_Qt(this, this->form);
@@ -335,6 +336,7 @@ public:
                                 , 2
                                 , ini.get<cfg::font>()
                                 , ini.get<cfg::theme>()
+                                , this->server_auto_reconnect_packet_ref
                                 , to_verbose_flags(0)
                                 );
 

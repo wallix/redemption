@@ -160,6 +160,10 @@ public:
     {
     }   // ClientExecute
 
+    ~ClientExecute() {
+        this->reset(false);
+    }
+
     Rect adjust_rect(Rect rect) {
         if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) {
             return rect;
@@ -1463,10 +1467,17 @@ public:
         this->front_width  = front_width;
         this->front_height = front_height;
 
-        if (!this->channel_) {
-            this->channel_ = this->front_->get_channel_list().get_by_name(channel_names::rail);
-            if (!this->channel_) return;
+        if (this->channel_) {
+            Rect rect =  this->window_rect;
+            rect.cy = TITLE_BAR_HEIGHT;
+
+            this->input_invalidate(rect);
+
+            return;
         }
+
+        this->channel_ = this->front_->get_channel_list().get_by_name(channel_names::rail);
+        if (!this->channel_) return;
 
         {
             StaticOutStream<256> out_s;
@@ -1566,10 +1577,16 @@ public:
     }   // ready
 
     explicit operator bool () const noexcept {
-        return this->channel_;
+        return this->channel_ && this->mod_;
     }   // bool
 
-    void reset() {
+    void reset(bool soft) {
+        if (soft) {
+            this->mod_ = nullptr;
+
+            return;
+        }
+
         if (!this->channel_) return;
 
         if (this->internal_module_window_created) {

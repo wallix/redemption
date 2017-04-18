@@ -31,8 +31,15 @@
 #include "utils/parse.hpp"
 #include "capture/cryptofile.hpp"
 
+#include <memory>
+
+
 class InCryptoTransport : public Transport
 {
+public:
+    enum class EncryptionMode { Auto, Encrypted, NotEncrypted };
+
+private:
     int fd;
     bool eof;
     size_t file_len;
@@ -47,11 +54,11 @@ class InCryptoTransport : public Transport
     EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-    int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
+    EncryptionMode encryption_mode;
     bool encrypted;
 
 public:
-    explicit InCryptoTransport(CryptoContext & cctx, int encryption) noexcept
+    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
         : fd(-1)
         , eof(true)
         , file_len(0)
@@ -62,7 +69,7 @@ public:
         , raw_size(0)
         , state(0)
         , MAX_CIPHERED_SIZE(0)
-        , encryption(encryption)
+        , encryption_mode(encryption_mode)
         , encrypted(false)
     {
     }
@@ -130,7 +137,7 @@ public:
                     // then our file is necessarilly not encrypted.
                     this->encrypted = false;
                     // encryption requested but no encryption
-                    if (this->encryption == 1){
+                    if (this->encryption_mode == EncryptionMode::Encrypted){
                         this->close();
                         throw Error(ERR_TRANSPORT_READ_FAILED);
                     }
@@ -150,7 +157,7 @@ public:
             avail += ret;
         }
 
-        if (this->encryption == 2){
+        if (this->encryption_mode == EncryptionMode::NotEncrypted){
             // copy what we have, it's not encrypted, don't care about magic
             this->raw_size = 40;
             this->clear_pos = 0;
@@ -177,7 +184,7 @@ public:
             if (magic != 0x4D464357) {
                 this->encrypted = false;
                 // encryption requested but no encryption
-                if (this->encryption == 1){
+                if (this->encryption_mode == EncryptionMode::Encrypted){
                     this->close();
                     throw Error(ERR_TRANSPORT_READ_FAILED);
                 }

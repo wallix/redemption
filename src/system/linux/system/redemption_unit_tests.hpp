@@ -118,6 +118,15 @@
         );                                                \
     } while (0)
 
+namespace std
+{
+    // this is a hack...
+    template<class Ch, class Tr>
+    std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, decltype(nullptr) const &)
+    {
+        return out << "nullptr";
+    }
+}
 
 #include "cxx/cxx.hpp"
 #include "utils/sugar/bytes_t.hpp"

@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 
     RED_CHECK_NO_THROW([&]{
         char buffer[40];
-        InCryptoTransport  ct(cctx, 0);
+        InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(finalname);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(true, ct.atomic_read(buffer, 30));
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 
     RED_CHECK_NO_THROW([&]{
         char buffer[40];
-        InCryptoTransport  ct(cctx, 0);
+        InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());

@@ -309,7 +309,12 @@ public:
                                     throw;
                                 }
                             }
-                            else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                            else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
+                                     (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)) {
+                                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+                                    this->ini.set<cfg::context::perform_automatic_reconnection>(true);
+                                }
+
                                 signal = BACK_EVENT_RETRY_CURRENT;
                                 mm.mod->get_event().reset();
                             }

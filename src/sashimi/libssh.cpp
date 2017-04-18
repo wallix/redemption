@@ -64,7 +64,7 @@ void ssh_free(ssh_session_struct * session)
  *         call back functions of the sessions or sockets will be called.
  *         This function should be called once within the programs main loop.
  *
- * @param  event        The ssh_event object to poll.
+ * @param  ctx          The polling context
  * @param  timeout      An upper limit on the time for which the poll will
  *                      block, in milliseconds. Specifying a negative value
  *                      means an infinite timeout. This parameter is passed to

@@ -39,7 +39,7 @@ enum {
 class ssllib
 {
     public:
-    static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
+    static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t const * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
         // TODO check out buffer size
         size_t out_len = 256;
