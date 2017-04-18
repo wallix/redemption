@@ -268,7 +268,8 @@ std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPCol
 constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.as_bgr().to_u32(); }
 
 
-inline BGRColor_ color_from_cstr(const char * str) {
+inline BGRColor_ color_from_cstr(const char * str)
+{
     BGRColor_ bgr;
 
     if (0 == strcasecmp("BLACK", str))                  { bgr = BLACK; }
@@ -317,23 +318,27 @@ inline BGRColor_ color_from_cstr(const char * str) {
 }
 
 
-struct decode_color8 {
+struct decode_color8
+{
     static constexpr const uint8_t bpp = 8;
 
     constexpr decode_color8() noexcept {}
 
-    BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept {
+    BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept
+    {
         // assert(c.as_bgr().to_u32() <= 255);
         return BGRColor_(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]);
     }
 };
 
-struct decode_color15 {
+struct decode_color15
+{
     static constexpr const uint8_t bpp = 15;
 
     constexpr decode_color15() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return BGRColor_(
             ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r1 r2 r3
@@ -343,12 +348,14 @@ struct decode_color15 {
     }
 };
 
-struct decode_color16 {
+struct decode_color16
+{
     static constexpr const uint8_t bpp = 16;
 
     constexpr decode_color16() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return BGRColor_(
             ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r6 r7 r8
@@ -358,12 +365,14 @@ struct decode_color16 {
     }
 };
 
-struct decode_color24 {
+struct decode_color24
+{
     static constexpr const uint8_t bpp = 24;
 
     constexpr decode_color24() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept {
+    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    {
         return c.as_bgr();
     }
 };
@@ -388,15 +397,15 @@ struct decode_color24 {
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-inline BGRColor_ color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette){
+inline BGRColor_ color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette) noexcept
+{
     switch (in_bpp){
         case 8:  return decode_color8()(c, palette);
         case 15: return decode_color15()(c);
         case 16: return decode_color16()(c);
         case 24:
         case 32: return decode_color24()(c);
-        default:
-            assert(!"unknown bpp");
+        default: assert(!"unknown bpp");
     }
     return BGRColor_{0};
 }
@@ -406,7 +415,8 @@ struct with_color8_palette
 {
     static constexpr const uint8_t bpp = Converter::bpp;
 
-    BGRColor_ operator()(RDPColor c) const noexcept {
+    BGRColor_ operator()(RDPColor c) const noexcept
+    {
         return Converter()(c, this->palette);
     }
 
@@ -415,7 +425,8 @@ struct with_color8_palette
 using decode_color8_with_palette = with_color8_palette<decode_color8>;
 
 
-struct encode_color8 {
+struct encode_color8
+{
     static constexpr const uint8_t bpp = 8;
 
     constexpr encode_color8() noexcept {}
@@ -430,13 +441,15 @@ struct encode_color8 {
     }
 };
 
-struct encode_color15 {
+struct encode_color15
+{
     static constexpr const uint8_t bpp = 15;
 
     constexpr encode_color15() noexcept {}
 
-    // bgr555
-    RDPColor operator()(BGRasRGBColor_ c) const noexcept {
+    // rgb555
+    RDPColor operator()(BGRasRGBColor_ c) const noexcept
+    {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return RDPColor::from(
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
@@ -449,13 +462,15 @@ struct encode_color15 {
     }
 };
 
-struct encode_color16 {
+struct encode_color16
+{
     static constexpr const uint8_t bpp = 16;
 
     constexpr encode_color16() noexcept {}
 
-    // bgr565
-    RDPColor operator()(BGRasRGBColor_ c) const noexcept {
+    // rgb565
+    RDPColor operator()(BGRasRGBColor_ c) const noexcept
+    {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return RDPColor::from(
             // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
@@ -468,17 +483,20 @@ struct encode_color16 {
     }
 };
 
-struct encode_color24 {
+struct encode_color24
+{
     static constexpr const uint8_t bpp = 24;
 
     constexpr encode_color24() noexcept {}
 
-    RDPColor operator()(BGRColor_ c) const noexcept {
+    RDPColor operator()(BGRColor_ c) const noexcept
+    {
         return RDPColor::from(c.to_u32());
     }
 };
 
-inline RDPColor color_encode(const BGRColor_ c, const uint8_t out_bpp){
+inline RDPColor color_encode(const BGRColor_ c, const uint8_t out_bpp) noexcept
+{
     switch (out_bpp){
         case 8:  return encode_color8()(c);
         case 15: return encode_color15()(c);
@@ -492,18 +510,6 @@ inline RDPColor color_encode(const BGRColor_ c, const uint8_t out_bpp){
     return RDPColor{};
 }
 
-struct color_convertor
-{
-    uint8_t enc_bpp;
-    uint8_t dec_bpp;
-
-    RDPColor operator()(RDPColor c) const noexcept {
-        auto d = color_decode(c, dec_bpp, BGRPalette::classic_332());
-        auto e = color_encode(d, enc_bpp);
-        return e;
-    }
-};
-
 
 namespace shortcut_encode
 {
@@ -511,14 +517,6 @@ namespace shortcut_encode
     using enc15 = encode_color15;
     using enc16 = encode_color16;
     using enc24 = encode_color24;
-}
-
-namespace shortcut_decode
-{
-    using dec8 = decode_color8;
-    using dec15 = decode_color15;
-    using dec16 = decode_color16;
-    using dec24 = decode_color24;
 }
 
 namespace shortcut_decode_with_palette

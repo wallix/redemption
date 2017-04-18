@@ -86,6 +86,7 @@ struct Depth
     static constexpr Depth depth24() { return {4}; }
 
     static constexpr Depth from_bpp(uint8_t bpp) {
+        // TODO assert ?
         return {
             bpp == 8  ? depth8() :
             bpp == 15 ? depth15() :
@@ -192,7 +193,7 @@ private:
 };
 
 
-inline RDPColor color_encode(const BGRColor_ color, Depth depth)
+inline RDPColor color_encode(const BGRColor_ color, Depth depth) noexcept
 {
     switch (depth){
         case Depth::depth8(): return encode_color8()(color);
@@ -207,7 +208,7 @@ inline RDPColor color_encode(const BGRColor_ color, Depth depth)
 }
 
 
-inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette)
+inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette) noexcept
 {
     switch (depth){
         case Depth::depth8(): return decode_color8()(color, palette);
@@ -221,7 +222,7 @@ inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalett
     return BGRColor_{0, 0, 0};
 }
 
-inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx)
+inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
 {
     return color_decode(color, color_ctx.depth(), *color_ctx.palette());
 }
