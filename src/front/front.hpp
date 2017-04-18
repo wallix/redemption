@@ -3618,43 +3618,6 @@ private:
         }
     }   // void send_savesessioninfo()
 
-    void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) override {
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_auto_reconnect_packet");
-        }
-
-        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-
-        // Payload
-        stream.get_data_stream().out_uint32_le(RDP::INFOTYPE_LOGON_EXTENDED_INFO);
-
-        RDP::LogonInfoExtended_Send sender(stream.get_data_stream(), RDP::LOGON_EX_AUTORECONNECTCOOKIE);
-
-        stream.get_data_stream().out_uint32_le(RDP::ServerAutoReconnectPacket::size());
-
-        auto_reconnect.emit(stream.get_data_stream());
-
-        stream.get_data_stream().out_clear_bytes(570);  // Pad(570)
-
-        const uint32_t log_condition = (128 | 1);
-        ::send_share_data_ex( this->trans
-                            , PDUTYPE2_SAVE_SESSION_INFO
-                            , false
-                            , this->mppc_enc
-                            , this->share_id
-                            , this->encryptionLevel
-                            , this->encrypt
-                            , this->userid
-                            , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
-                            );
-
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_auto_reconnect_packet done");
-        }
-    }
-
     void send_monitor_layout() {
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
             !this->client_info.cs_monitor.monitorCount ||

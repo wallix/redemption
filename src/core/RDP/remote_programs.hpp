@@ -3604,8 +3604,9 @@ public:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = this->LanguageProfileCLSID.str(buffer + length, size - length);
+        length += ((result < size - length) ? result : (size - length - 1));
         result = this->ProfileGUID.str(buffer + length, size - length);
-
+        length += ((result < size - length) ? result : (size - length - 1));
         result = ::snprintf(buffer + length, size - length,
             " KeyboardLayout=0x%X",
             this->KeyboardLayout);
