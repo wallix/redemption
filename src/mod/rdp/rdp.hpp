@@ -5801,8 +5801,6 @@ public:
                 auto_reconnect.receive(lif.payload);
                 auto_reconnect.log(LOG_INFO);
 
-                this->front.send_auto_reconnect_packet(auto_reconnect);
-
                 OutStream stream(
                     this->server_auto_reconnect_packet_ref.data(),
                     this->server_auto_reconnect_packet_ref.size());
