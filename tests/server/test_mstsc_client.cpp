@@ -33,7 +33,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
@@ -43,7 +43,7 @@
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
 
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //                           , ini.get<cfg::debug::front>(), 0);
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/trace_mstsc_client.hpp"
+    #include "fixtures/trace_mstsc_client.hpp"
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;

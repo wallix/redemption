@@ -33,7 +33,7 @@
 RED_AUTO_TEST_CASE(TestMPPC)
 {
     // Load compressed_rd5 and decompressed_rd5
-    #include "../../fixtures/test_mppc_TestMPPC.hpp"
+    #include "fixtures/test_mppc_TestMPPC.hpp"
 
     const uint8_t * rdata;
     uint32_t        rlen;
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestMPPC)
 RED_AUTO_TEST_CASE(TestMPPC_enc)
 {
     // Load decompressed_rd5_data
-    #include "../../fixtures/test_mppc_TestMPPC_enc.hpp"
+    #include "fixtures/test_mppc_TestMPPC_enc.hpp"
 
     const uint8_t * rdata;
     uint32_t        rlen;

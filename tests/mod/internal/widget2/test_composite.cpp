@@ -27,8 +27,8 @@
 
 #include "mod/internal/widget2/widget2_rect.hpp"
 #include "mod/internal/widget2/composite.hpp"
-#include "check_sig.hpp"
-#include "fake_draw.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 class WidgetCompositeRect : public WidgetComposite
 {

@@ -27,9 +27,9 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/nego.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
 
 RED_AUTO_TEST_CASE(TestNego)

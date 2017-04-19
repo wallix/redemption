@@ -25,7 +25,7 @@
 
 #include <memory>
 
-#include "../tests/lcg_random.hpp" // TODO
+#include "../tests/includes/test_only/lcg_random.hpp" // TODO
 
 extern "C"
 {

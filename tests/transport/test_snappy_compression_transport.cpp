@@ -25,7 +25,7 @@
 //#define LOGPRINT
 
 #include "transport/snappy_compression_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 {

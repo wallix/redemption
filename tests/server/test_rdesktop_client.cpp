@@ -37,13 +37,13 @@
 #include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "configs/config.hpp"
 #include "front/front.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //                           , ini.get<cfg::debug::front>(), 0);
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/trace_rdesktop_client.hpp"
+    #include "fixtures/trace_rdesktop_client.hpp"
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;

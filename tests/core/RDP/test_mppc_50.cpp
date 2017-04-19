@@ -27,7 +27,7 @@
 
 RED_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 {
-    #include "../../fixtures/test_mppc_2.hpp"
+    #include "fixtures/test_mppc_2.hpp"
 
     rdp_mppc_50_enc mppc_enc;
 
@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 
 RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 {
-    #include "../../fixtures/test_mppc_3.hpp"
+    #include "fixtures/test_mppc_3.hpp"
 
     rdp_mppc_50_enc mppc_enc;
 
@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 
 RED_AUTO_TEST_CASE(TestRDP50BlukDecompression5)
 {
-    #include "../../fixtures/test_mppc_5.hpp"
+    #include "fixtures/test_mppc_5.hpp"
 
     rdp_mppc_50_dec mppc_dec;
 

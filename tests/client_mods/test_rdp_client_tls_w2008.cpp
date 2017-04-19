@@ -35,13 +35,13 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
-#include "../front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //                     );
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/dump_TLSw2008.hpp"
+    #include "fixtures/dump_TLSw2008.hpp"
     TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 
@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     //                     , &error_message
     //                     );
 
-    #include "../fixtures/dump_TLSw2008_2.hpp"
+    #include "fixtures/dump_TLSw2008_2.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {

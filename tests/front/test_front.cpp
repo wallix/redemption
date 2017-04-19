@@ -40,7 +40,7 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "utils/fileutils.hpp"
@@ -52,7 +52,7 @@
 #include "core/listen.hpp"
 #include "core/session.hpp"
 
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
 
 namespace dump2008 {

@@ -30,16 +30,16 @@
 // Uncomment the code block below to generate testing data.
 // #define LOGPRINT
 
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 #include "configs/config.hpp"
 // Comment the code block below to generate testing data.
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
-#include "../front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
 
 
@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //                 );
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/dump_wab.hpp"
+    #include "fixtures/dump_wab.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {

@@ -26,12 +26,12 @@
 
 #include "mod/internal/widget2/radio_list.hpp"
 #include "mod/internal/widget2/screen.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(TraceWidgetRadioButton)
 {

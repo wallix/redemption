@@ -27,7 +27,7 @@
 #include "transport/out_crypto_transport.hpp"
 #include "transport/in_crypto_transport.hpp"
 #include <cstring>
-#include "lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {

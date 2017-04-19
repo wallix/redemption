@@ -29,7 +29,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestScrBlt)
 {

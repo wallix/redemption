@@ -25,7 +25,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/x224.hpp"
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)

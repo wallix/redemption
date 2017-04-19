@@ -28,7 +28,7 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
-#include "../../front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 
 // TODO "Need more tests, with or without device/login/password asking, "
 
