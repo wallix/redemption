@@ -330,7 +330,7 @@ void ssh_signature_free(ssh_signature_struct * sig)
             break;
     }
 
-    free(sig);
+    delete sig;
 }
 
 /**
