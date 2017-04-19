@@ -65,14 +65,14 @@ protected:
 
     // TODO: see why grid object need a difftimer ?
     struct difftimer {
-        uint64_t t;
+        std::chrono::microseconds t;
 
-        explicit difftimer(uint64_t start = 0)
-            : t(start)
+        explicit difftimer(std::chrono::microseconds start = std::chrono::microseconds::zero())
+        : t(start)
         {}
 
-        uint64_t tick() {
-            uint64_t ret = this->t;
+        std::chrono::microseconds tick() {
+            std::chrono::microseconds ret = this->t;
             this->t = ustime();
             return this->t - ret;
         }
@@ -332,7 +332,7 @@ public:
                         this->set_selection(row_index);
                     }
                     else {
-                        if (this->click_interval.tick() <= uint64_t(700000L)) {
+                        if (this->click_interval.tick() <= std::chrono::microseconds(700000L)) {
                             this->send_notify(NOTIFY_SUBMIT);
                             return;
                         }

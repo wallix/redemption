@@ -216,7 +216,7 @@ public:
         this->screen.clear();
     }
 
-    void instant_play_client(uint64_t endin_frame) {
+    void instant_play_client(std::chrono::microseconds endin_frame) {
             this->reader.instant_play_client(endin_frame);
     }
 

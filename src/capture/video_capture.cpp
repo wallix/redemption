@@ -668,7 +668,7 @@ std::chrono::microseconds SequencedVideoCaptureImpl::VideoSequencer::do_snapshot
 {
     assert(this->break_interval.count());
     auto const interval = difftimeval(now, this->start_break);
-    if (interval >= uint64_t(this->break_interval.count())) {
+    if (interval >= this->break_interval) {
         this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
         this->start_break = now;
     }

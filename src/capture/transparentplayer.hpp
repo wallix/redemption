@@ -129,18 +129,18 @@ public:
             }
 
             if (real_time && (chunk_type != CHUNK_TYPE_META)) {
-                timeval  now     = tvtime();
-                uint64_t elapsed = difftimeval(now, this->replay_now);
+                timeval  now                      = tvtime();
+                std::chrono::microseconds elapsed = difftimeval(now, this->replay_now);
 
                 this->replay_now = now;
 
-                uint64_t record_elapsed = difftimeval(this->record_now, last_record_now);
+                std::chrono::microseconds record_elapsed = difftimeval(this->record_now, last_record_now);
 
                 if (elapsed <= record_elapsed) {
-                    struct timespec wtime     = {
-                          static_cast<time_t>((record_elapsed - elapsed) / 1000000LL)
-                        , static_cast<time_t>(((record_elapsed - elapsed) % 1000000LL) * 1000)
-                        };
+                    auto const elapsed_time = record_elapsed - elapsed;
+                    auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time);
+                    auto const milli = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time - seconds);
+                    struct timespec wtime     = {time_t(seconds.count()), time_t(milli.count())};
                     struct timespec wtime_rem = { 0, 0 };
 
                     while ((nanosleep(&wtime, nullptr) == -1) && (errno == EINTR)) {

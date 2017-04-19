@@ -24,41 +24,52 @@
 
 #include "utils/difftimeval.hpp"
 
+namespace std
+{
+    // this is a hack...
+    template<class Ch, class Tr>
+    std::basic_ostream<Ch, Tr> &
+    operator<<(std::basic_ostream<Ch, Tr> & out, std::chrono::microseconds const & duration)
+    {
+        return out << duration.count();
+    }
+}
+
 RED_AUTO_TEST_CASE(TestUstime)
 {
-    uint64_t res = 0L;
+    std::chrono::microseconds res(0);
     timeval timev;
     timev.tv_sec = 0;
     timev.tv_usec = 0;
     res = ustime(timev);
-    RED_CHECK_EQUAL(res, 0L);
+    RED_CHECK_EQUAL(res, std::chrono::microseconds::zero());
 
     timev.tv_sec = 0;
     timev.tv_usec = 57321;
     res = ustime(timev);
-    RED_CHECK_EQUAL(res, 57321LL);
+    RED_CHECK_EQUAL(res, std::chrono::microseconds(57321LL));
 
 
     timev.tv_sec = 489435;
     timev.tv_usec = 0;
     res = ustime(timev);
-    RED_CHECK_EQUAL(res, 489435000000LL);
+    RED_CHECK_EQUAL(res, std::chrono::microseconds(489435000000LL));
 
     timev.tv_sec = 1520;
     timev.tv_usec = 254321;
 
     res = ustime(timev);
-    RED_CHECK_EQUAL(res,  1520254321LL);
+    RED_CHECK_EQUAL(res, std::chrono::microseconds(1520254321LL));
 
 }
 
 RED_AUTO_TEST_CASE(TestTvtimeustime)
 {
     timeval restv = tvtime();
-    uint64_t resus = ustime();
+    std::chrono::microseconds resus = ustime();
     RED_CHECK(restv.tv_usec > 0);
     RED_CHECK(restv.tv_sec > 0);
-    RED_CHECK(resus > 0);
+    RED_CHECK(resus.count() > 0);
 }
 
 // RED_AUTO_TEST_CASE(TestUsecToTimeval)

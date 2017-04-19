@@ -63,6 +63,11 @@ public:
         this->set_state = false;
     }
 
+    void set(std::chrono::microseconds idle_usec)
+    {
+        this->set(idle_usec.count());
+    }
+
     // Idle time in microsecond
     void set(uint64_t idle_usec = 0)
     {
@@ -73,6 +78,11 @@ public:
         // this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
         // this->trigger_time.tv_usec = sum_usec % 1000000;
         this->trigger_time = addusectimeval(idle_usec, now);
+    }
+
+    void update(std::chrono::microseconds idle_usec)
+    {
+        this->update(idle_usec.count());
     }
 
     // Idle time in microsecond

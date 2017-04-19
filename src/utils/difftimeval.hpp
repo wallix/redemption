@@ -24,7 +24,8 @@
 
 #include "timeval_ops.hpp"
 
-//#include "utils/log.hpp"
+#include <chrono>
+
 
 class TimeObj {
 public:
@@ -61,8 +62,10 @@ public:
     }
 };
 
-static inline uint64_t ustime(const timeval & now) {
-    return static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec);
+static inline std::chrono::microseconds ustime(const timeval & now) {
+    return std::chrono::microseconds(
+        static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec)
+    );
 }
 
 static inline timeval tvtime()
@@ -72,15 +75,15 @@ static inline timeval tvtime()
     return tv;
 }
 
-static inline uint64_t ustime() {
+static inline std::chrono::microseconds ustime() {
     return ustime(tvtime());
 }
 
 // As gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.
-static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
+static inline std::chrono::microseconds difftimeval(const timeval& endtime, const timeval& starttime)
 {
-    uint64_t d = ustime(endtime) - ustime(starttime);
-    return (d > 0x100000000LL)?0:d;
+    auto d = ustime(endtime) - ustime(starttime);
+    return (d > std::chrono::microseconds(0x100000000LL)) ? std::chrono::microseconds{} : d;
 }
 
 //static inline timeval usectotimeval(const uint64_t time) {

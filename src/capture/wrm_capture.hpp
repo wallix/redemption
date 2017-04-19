@@ -1459,13 +1459,13 @@ public:
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
         timeval start_native_capture;
-        uint64_t inter_frame_interval_native_capture;
+        std::chrono::microseconds inter_frame_interval_native_capture;
 
         timeval start_break_capture;
-        uint64_t inter_frame_interval_start_break_capture;
+        std::chrono::microseconds inter_frame_interval_start_break_capture;
 
         GraphicToFile & recorder;
-        uint64_t time_to_wait;
+        std::chrono::microseconds time_to_wait;
 
     public:
         NativeCaptureLocal(
@@ -1476,12 +1476,12 @@ public:
         )
         : start_native_capture(now)
         , inter_frame_interval_native_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
+            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval))
         , start_break_capture(now)
         , inter_frame_interval_start_break_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
+            std::chrono::duration_cast<std::chrono::microseconds>(break_interval))
         , recorder(recorder)
-        , time_to_wait(0)
+        , time_to_wait(std::chrono::microseconds::zero())
         {}
 
         ~NativeCaptureLocal() override {
