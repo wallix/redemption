@@ -25,7 +25,9 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
-#include <string.h>
+#include <cstring>
+
+#include "lcg_random.hpp"
 
 inline void init_keys(CryptoContext & cctx)
 {

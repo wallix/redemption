@@ -43,6 +43,7 @@
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
+#include "lcg_random.hpp"
 
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)

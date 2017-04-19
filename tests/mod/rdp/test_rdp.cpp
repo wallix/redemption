@@ -34,6 +34,8 @@
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
+#include "lcg_random.hpp"
+
 #include "../../front/fake_front.hpp"
 
 /*

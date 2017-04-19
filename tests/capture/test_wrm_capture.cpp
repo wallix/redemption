@@ -48,6 +48,8 @@
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 
+#include "lcg_random.hpp"
+
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, const char * path,
                         uint16_t width, uint16_t height,

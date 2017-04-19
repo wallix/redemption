@@ -26,6 +26,8 @@
 
 #include "transport/test_transport.hpp"
 
+#include "lcg_random.hpp"
+
 // RED_AUTO_TEST_CASE(TestNla)
 // {
 //     LogTransport logtrans;

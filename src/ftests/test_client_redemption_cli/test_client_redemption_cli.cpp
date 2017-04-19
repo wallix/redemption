@@ -22,7 +22,7 @@
 
 #include "test_client_redemption_cli.hpp"
 
-
+#include "../tests/lcg_random.hpp"
 
 
 

@@ -52,6 +52,9 @@
 #include "core/listen.hpp"
 #include "core/session.hpp"
 
+#include "lcg_random.hpp"
+
+
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
 }

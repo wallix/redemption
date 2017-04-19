@@ -31,6 +31,8 @@
 //#define LOGPRINT
 
 #include "utils/genrandom.hpp"
+#include "lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestGenRandom)
 {

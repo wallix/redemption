@@ -25,6 +25,8 @@
 #include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "check_sig.hpp"
 
+#include "lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestAcquireCredentials)
 {

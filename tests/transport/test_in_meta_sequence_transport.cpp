@@ -32,6 +32,8 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
+#include "lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
