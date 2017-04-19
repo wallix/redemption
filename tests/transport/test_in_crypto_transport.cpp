@@ -348,8 +348,12 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(10, ct.partial_read(buffer, 10));
-        RED_CHECK_EQUAL(sizeof(buffer)-10, ct.partial_read(&buffer[10], sizeof(buffer)-10));
+        RED_CHECK_EQUAL(20, ct.partial_read(buffer, 20));
+        RED_CHECK_EQUAL(100, ct.partial_read(&buffer[20], 100));
+        // At end of file partial_read should return what it can
+        RED_CHECK_EQUAL(sizeof(buffer)-120, ct.partial_read(&buffer[120], sizeof(buffer)));
+        
+        
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)), 
                          make_array_view(clearSample, sizeof(clearSample)));
