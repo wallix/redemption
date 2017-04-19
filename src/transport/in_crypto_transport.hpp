@@ -413,6 +413,7 @@ private:
                 if (res <= 0){
                     if (res == 0) {
                         this->eof = true;
+                        break;
                     }
                     if (errno == EINTR){
                         continue;
