@@ -82,43 +82,9 @@ public:
 
 
 
-class ProgressBarWindow : public QWidget {
 
-Q_OBJECT
 
-public:
-    QProgressBar load_bar;
-
-    ProgressBarWindow(int maxVal)
-        : QWidget()
-        , load_bar(this)
-    {
-        this->setWindowTitle("Loading Movie");
-        this->setAttribute(Qt::WA_DeleteOnClose);
-
-        QRect rect(QPoint(0,0),QSize(600, 50));
-        this->load_bar.setGeometry(rect);
-        this->load_bar.setRange(0, maxVal);
-
-        uint32_t centerW = 0;
-        uint32_t centerH = 0;
-        QDesktopWidget* desktop = QApplication::desktop();
-        centerW = (desktop->width()/2)  - 300;
-        centerH = (desktop->height()/2) - 25;
-        this->move(centerW, centerH);
-
-        this->show();
-    }
-
-    void setValue(int val) {
-        this->load_bar.setValue(val);
-        if (val >= this->load_bar.maximum()) {
-            this->close();
-        }
-    }
-
-};
-
+class ProgressBarWindow;
 
 
 class Front_Qt_API : public FrontAPI
@@ -225,6 +191,56 @@ public:
 
 };
 
+
+class ProgressBarWindow : public QWidget {
+
+Q_OBJECT
+
+public:
+    QProgressBar load_bar;
+    Front_Qt_API * front;
+
+    ProgressBarWindow(int maxVal, Front_Qt_API * front)
+        : QWidget()
+        , load_bar(this)
+        , front(front)
+    {
+        this->setWindowTitle("Loading Movie");
+        this->setAttribute(Qt::WA_DeleteOnClose);
+
+        QRect rect(QPoint(0,0),QSize(600, 50));
+        this->load_bar.setGeometry(rect);
+        this->load_bar.setRange(0, maxVal);
+
+        uint32_t centerW = 0;
+        uint32_t centerH = 0;
+        QDesktopWidget* desktop = QApplication::desktop();
+        centerW = (desktop->width()/2)  - 300;
+        centerH = (desktop->height()/2) - 25;
+        this->move(centerW, centerH);
+
+        this->show();
+    }
+
+    ~ProgressBarWindow() {}
+
+
+
+    void setValue(int val) {
+        this->load_bar.setValue(val);
+        if (val >= this->load_bar.maximum()) {
+            this->close();
+        }
+    }
+
+// public Q_SLOTS:
+
+//     bool close() {
+//         this->front->closeFromScreen();
+//         return QWidget::close();
+//     }
+
+};
 
 
 class Mod_Qt : public QObject
@@ -948,9 +964,9 @@ public:
         , mouse_out(false)
         , is_paused(false)
         , movie_time(0)
-        , movie_status( QString("  Stop"), this)
-        , movie_timer_label("unused", this)
-        , video_timer_label("unused", this)
+//         , movie_status( QString("  Stop"), this)
+//         , movie_timer_label("unused", this)
+//         , video_timer_label("unused", this)
         , begin(0)
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+12, READING_BAR_H)
@@ -2807,19 +2823,17 @@ public:
         this->load_replay_mod(movie_path_, {0, 0}, {0, 0});
         this->info.width = this->replay_mod->get_dim().w;
         this->info.height = this->replay_mod->get_dim().h;
-//         LOG(LOG_WARNING, "w = %u,  h = %u", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
         this->cache_replay = new QPixmap(this->info.width, this->info.height);
         this->trans_cache = new QPixmap(this->info.width, this->info.height);
         this->trans_cache->fill(Qt::transparent);
         this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
         this->connected = true;
         this->form->hide();
-        this->screen->show();
-
         if (this->replay_mod.get()->get_wrm_version() == 2) {
-            this->bar = new ProgressBarWindow(this->screen->movie_time);
+            this->bar = new ProgressBarWindow(this->screen->movie_time, this);
             this->screen->pre_load_movie();
         }
+        this->screen->show();
     }
 
     virtual bool connect() {
