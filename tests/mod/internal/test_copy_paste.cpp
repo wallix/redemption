@@ -26,13 +26,13 @@
 
 #define LOGNULL
 
-#include "widget2/fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 #include "core/font.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget2/edit.hpp"
 #include "mod/internal/widget2/screen.hpp"
-#include "../../front/fake_front.hpp"
-#include "check_sig.hpp"
+#include "test_only/front/fake_front.hpp"
+#include "test_only/check_sig.hpp"
 
 
 struct CopyPasteFront : FakeFront

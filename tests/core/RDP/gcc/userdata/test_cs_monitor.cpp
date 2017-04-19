@@ -26,7 +26,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 
 #define TS_MONITOR_PRIMARY 0x00000001

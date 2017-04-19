@@ -32,7 +32,6 @@
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_log.hpp"
-#include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
@@ -47,8 +46,6 @@ class RemoteProgramsSessionManager
 {
     FrontAPI & front;
     mod_api  & mod;
-
-    rdp_orders & orders;
 
     Translation::language_t lang;
 
@@ -115,13 +112,12 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, rdp_orders& orders, Translation::language_t lang,
+    RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  Font const & font, Theme const & theme, auth_api & authentifier,
                                  char const * session_probe_window_title,
                                  non_null_ptr<ClientExecute> client_execute, RDPVerbose verbose)
     : front(front)
     , mod(mod)
-    , orders(orders)
     , lang(lang)
     , font(font)
     , theme(theme)
@@ -601,20 +597,20 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, 0x000000);
+            RDPOpaqueRect order(this->protected_rect, encode_color24()(BLACK));
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->orders.bpp));
+            RDPOpaqueRect order(rect, encode_color24()(this->theme.global.bgcolor));
             if (bool(this->verbose & RDPVerbose::rail)) {
                 order.log(LOG_INFO, rect);
             }
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         gdi::TextMetrics tm(this->font, TR(trkeys::starting_remoteapp, this->lang));
@@ -623,9 +619,9 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm.width) / 2,
                               this->protected_rect.y + (this->protected_rect.cy - tm.height) / 2,
                               TR(trkeys::starting_remoteapp, this->lang),
-                              color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                              color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                              gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                              encode_color24()(this->theme.global.fgcolor),
+                              encode_color24()(this->theme.global.bgcolor),
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -638,20 +634,20 @@ private:
         this->drawable->begin_update();
 
         {
-            RDPOpaqueRect order(this->protected_rect, 0x000000);
+            RDPOpaqueRect order(this->protected_rect, encode_color24()(BLACK));
 
-            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, this->protected_rect, gdi::ColorCtx::depth24());
         }
 
         {
             Rect rect = this->protected_rect.shrink(1);
 
-            RDPOpaqueRect order(rect, color_encode(this->theme.global.bgcolor, this->orders.bpp));
+            RDPOpaqueRect order(rect, encode_color24()(this->theme.global.bgcolor));
             if (bool(this->verbose & RDPVerbose::rail)) {
                 order.log(LOG_INFO, rect);
             }
 
-            this->drawable->draw(order, rect, gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette));
+            this->drawable->draw(order, rect, gdi::ColorCtx::depth24());
         }
 
         const gdi::TextMetrics tm_msg(this->font, TR(trkeys::closing_remoteapp, this->lang));
@@ -672,9 +668,9 @@ private:
                               this->protected_rect.x + (this->protected_rect.cx - tm_msg.width) / 2,
                               ypos,
                               TR(trkeys::closing_remoteapp, this->lang),
-                              color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                              color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                              gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                              encode_color24()(this->theme.global.fgcolor),
+                              encode_color24()(this->theme.global.bgcolor),
+                              gdi::ColorCtx::depth24(),
                               this->protected_rect
                               );
 
@@ -691,10 +687,10 @@ private:
                                false,   // logo
                                true,    // has_focus
                                TR(trkeys::disconnect_now, this->lang),
-                               color_encode(this->theme.global.fgcolor, this->orders.bpp),
-                               color_encode(this->theme.global.bgcolor, this->orders.bpp),
-                               color_encode(this->theme.global.focus_color, this->orders.bpp),
-                               gdi::ColorCtx::from_bpp(this->orders.bpp, this->orders.global_palette),
+                               encode_color24()(this->theme.global.fgcolor),
+                               encode_color24()(this->theme.global.bgcolor),
+                               encode_color24()(this->theme.global.focus_color),
+                               gdi::ColorCtx::depth24(),
                                Rect(),
                                state,
                                2,

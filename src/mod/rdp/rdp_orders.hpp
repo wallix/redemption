@@ -110,13 +110,13 @@ public:
               , bool persist_bitmap_cache_on_disk, RDPVerbose verbose)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
-    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-    , opaquerect(Rect(), 0)
+    , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
+    , opaquerect(Rect(), RDPColor{})
     , scrblt(Rect(), 0, 0, 0)
     , destblt(Rect(), 0)
-    , patblt(Rect(), 0, 0, 0, RDPBrush())
-    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-    , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+    , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
+    , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
+    , glyph_index( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                  , reinterpret_cast<const uint8_t *>(""))
     , global_palette(nullptr)
     , bmp_cache(nullptr)
@@ -133,17 +133,17 @@ public:
     {
         this->common      = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
         this->memblt      = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
-        this->mem3blt     = RDPMem3Blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0);
-        this->opaquerect  = RDPOpaqueRect(Rect(), 0);
+        this->mem3blt     = RDPMem3Blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
+        this->opaquerect  = RDPOpaqueRect(Rect(), RDPColor{});
         this->scrblt      = RDPScrBlt(Rect(), 0, 0, 0);
         this->destblt     = RDPDestBlt(Rect(), 0);
         this->multidstblt     = RDPMultiDstBlt();
         this->multiopaquerect = RDPMultiOpaqueRect();
         this->multipatblt     = RDP::RDPMultiPatBlt();
         this->multiscrblt     = RDP::RDPMultiScrBlt();
-        this->patblt      = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
-        this->lineto      = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
-        this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
+        this->patblt      = RDPPatBlt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
+        this->lineto      = RDPLineTo(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}));
+        this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                          , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         this->polyline        = RDPPolyline();
     }

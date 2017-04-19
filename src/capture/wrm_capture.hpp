@@ -658,6 +658,9 @@ private:
     static void io_uint32_le(InStream & stream, uint32_t & value) { value = stream.in_uint32_le(); }
     static void io_uint32_le(OutStream & stream, uint32_t value) { stream.out_uint32_le(value); }
 
+    static void io_uint32_le(InStream & stream, RDPColor & value) { value = RDPColor::from(BGRColor_(stream.in_uint32_le()).to_u32()); }
+    static void io_uint32_le(OutStream & stream, RDPColor value) { stream.out_uint32_le(value.as_bgr().to_u32()); }
+
     static void io_color(InStream & stream, uint32_t & color) {
         uint8_t const red   = stream.in_uint8();
         uint8_t const green = stream.in_uint8();
@@ -668,6 +671,18 @@ private:
         stream.out_uint8(color);
         stream.out_uint8(color >> 8);
         stream.out_uint8(color >> 16);
+    }
+
+    static void io_color(InStream & stream, RDPColor & color) {
+        uint8_t const red   = stream.in_uint8();
+        uint8_t const green = stream.in_uint8();
+        uint8_t const blue  = stream.in_uint8();
+        color = RDPColor::from(BGRColor_(blue, green, red).to_u32());
+    }
+    static void io_color(OutStream & stream, RDPColor color) {
+        stream.out_uint8(color.as_bgr().red());
+        stream.out_uint8(color.as_bgr().green());
+        stream.out_uint8(color.as_bgr().blue());
     }
 
     static void io_copy_bytes(InStream & stream, uint8_t * buf, unsigned n) { stream.in_copy_bytes(buf, n); }
@@ -1113,8 +1128,7 @@ public:
 private:
     std::chrono::microseconds elapsed_time() const
     {
-        using us = std::chrono::microseconds;
-        return us(ustime(this->timer)) - us(ustime(this->last_sent_timer));
+        return ustime(this->timer) - ustime(this->last_sent_timer);
     }
 
 protected:
@@ -1444,13 +1458,13 @@ public:
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
         timeval start_native_capture;
-        uint64_t inter_frame_interval_native_capture;
+        std::chrono::microseconds inter_frame_interval_native_capture;
 
         timeval start_break_capture;
-        uint64_t inter_frame_interval_start_break_capture;
+        std::chrono::microseconds inter_frame_interval_start_break_capture;
 
         GraphicToFile & recorder;
-        uint64_t time_to_wait;
+        std::chrono::microseconds time_to_wait;
 
     public:
         NativeCaptureLocal(
@@ -1461,12 +1475,12 @@ public:
         )
         : start_native_capture(now)
         , inter_frame_interval_native_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval).count())
+            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval))
         , start_break_capture(now)
         , inter_frame_interval_start_break_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(break_interval).count())
+            std::chrono::duration_cast<std::chrono::microseconds>(break_interval))
         , recorder(recorder)
-        , time_to_wait(0)
+        , time_to_wait(std::chrono::microseconds::zero())
         {}
 
         ~NativeCaptureLocal() override {

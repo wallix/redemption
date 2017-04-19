@@ -25,12 +25,12 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "get_file_contents.hpp"
+#include "test_only/get_file_contents.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "../../../fixtures/test_rdpdr_drive_read_task.hpp"
+    #include "fixtures/test_rdpdr_drive_read_task.hpp"
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
     TestToServerSender test_to_server_sender(check_transport);
 
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "../../../fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
     LOG(LOG_INFO, "CHECK_EXCEPTION_ERROR_ID");
     CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
 

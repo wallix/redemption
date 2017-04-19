@@ -133,7 +133,7 @@ constant EXE_DEPENDENCIES :
 constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
     <library>libunit_test
-    <include>$(REDEMPTION_TEST_PATH)
+    <include>$(REDEMPTION_TEST_PATH)/includes
     <cxxflags>-frtti
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
@@ -586,7 +586,6 @@ test-canonical core/RDP/capabilities/window.hpp ;
 
 ## Transport tests
 ## @{
-# TODO test-canonical transport/detail/meta_writer.hpp ;
 test-canonical transport/out_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/in_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
@@ -596,7 +595,7 @@ test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
 test-canonical transport/test_transport.hpp ;
-# TODO mote to transport/
+# TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
@@ -623,7 +622,7 @@ test-canonical utils/confdescriptor.hpp ;
 test-canonical utils/d3des.hpp : <library>d3des.o ;
 test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
-test-canonical utils/drawable.hpp : <library>bitmap <library>crypto ;
+test-canonical utils/drawable.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/ellipse.hpp ;
 test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
@@ -635,14 +634,12 @@ test-canonical utils/netutils.hpp ;
 test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/parse.hpp ;
 test-canonical utils/parse_ip_conntrack.hpp ;
-#test-canonical utils/parser.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
 test-canonical utils/rect.hpp ;
 test-canonical utils/redirection_info.hpp ;
 test-canonical utils/region.hpp ;
-# TODO test-canonical utils/server_certificate.hpp ;
 test-canonical utils/stream.hpp ;
 test-canonical utils/theme.hpp   ;
 test-canonical utils/timeout.hpp ;
@@ -746,7 +743,13 @@ test-canonical core/RDP/nla/credssp.hpp : <library>crypto ;
 test-canonical core/RDP/nla/nla.hpp : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
 test-canonical core/RDP/nla/sspi.hpp ;
 
-#alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+alias test_ntlm_suite :
+    test_ntlm_message_negotiate
+    test_ntlm_avpair
+    test_ntlm_message_challenge
+    test_ntlm_message_authenticate
+    test_ntlm_context
+;
 
 test-canonical core/RDP/nla/kerberos/credentials.hpp : <library>krb5 ;
 test-canonical core/RDP/nla/kerberos/kerberos.hpp : <library>krb5 <library>gssglue ;
@@ -885,7 +888,7 @@ test-canonical mod/rdp/rdp.hpp : <library>bitmap <library>krb5 <library>gssglue 
 
 ## Bitmap
 ## @{
-test-canonical utils/bitmap.hpp : <library>bitmap <library>crypto ;
+test-canonical utils/bitmap.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/bitmap_from_file.hpp : <library>bitmap ;
 test-canonical utils/bitmap_data_allocator.hpp ;
 
@@ -896,15 +899,15 @@ test-run test_bitmap_perf : test_bitmap_perf.cpp : : <library>bitmap <covflag>no
 
 ## utils/crypto
 ## @{
-# test-canonical utils/crypto/ssl_mod_exp_direct : ;
-test-canonical utils/crypto/ssl_aes_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_aes_direct.hpp : ;
 test-canonical utils/crypto/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_md4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_md5_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_rc4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha1_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha256_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical utils/crypto/ssl_sha512_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md4_direct.hpp : ;
+test-canonical utils/crypto/ssl_md5_direct.hpp : ;
+# TODO test-canonical utils/crypto/ssl_mod_exp_direct : ;
+test-canonical utils/crypto/ssl_rc4_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha1_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha256_direct.hpp : ;
+test-canonical utils/crypto/ssl_sha512_direct.hpp : ;
 test-canonical utils/crypto/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 ## @}
 
@@ -1118,26 +1121,6 @@ test-canonical gdi/graphic_cmd_color.hpp ;
 test-canonical gdi/protected_graphics.hpp : <library>bitmap <library>png.o <library>crypto <library>z <library>snappy <library>dl ;
 
 
-#explicit test_show_data.o bitmap.o_data_allocator.o test_data_draw ; #
-
-#obj test_show_data.o : $(REDEMPTION_TEST_PATH)/mod/rdp/test_show_data.cpp
-#    : <cxxflags>-fPIC ;
-
-#exe test_show_data :
-#    bitmap.o_data_allocator.o
-#    test_show_data.o
-#    krb5
-#    openssl
-#    crypto
-#    gssglue
-#    #png
-#    d3des.o
-#    z
-#    dl
-#    : <cxxflags>-fPIC
-#    ;
-
-
 test-run test_meta_protocol2 : test_meta_protocol2.cpp : : <cxxflags>-std=c++14 <library>crypto <library>openssl ;
 explicit test_meta_protocol2 ;
 
@@ -1194,7 +1177,6 @@ lib sashimi :
     sashimi_sftp
     sashimi_libssh
     sashimi_error
-#    #openssl
     krb5
     gssapi_krb5
     crypto

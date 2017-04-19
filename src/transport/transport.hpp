@@ -200,7 +200,6 @@ private:
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
-
     virtual void do_send(const uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;

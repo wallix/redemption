@@ -56,7 +56,7 @@ public:
 
     Font const & font;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
     FlatDialog(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
@@ -215,7 +215,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

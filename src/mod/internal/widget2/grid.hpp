@@ -46,17 +46,17 @@ protected:
     uint16_t row_height[GRID_NB_ROWS_MAX];
 
 public:
-    const uint32_t bg_color_1;    // Odd
-    const uint32_t fg_color_1;
+    const BGRColor_ bg_color_1;    // Odd
+    const BGRColor_ fg_color_1;
 
-    const uint32_t bg_color_2;    // Even
-    const uint32_t fg_color_2;
+    const BGRColor_ bg_color_2;    // Even
+    const BGRColor_ fg_color_2;
 
-    const uint32_t bg_color_focus;
-    const uint32_t fg_color_focus;
+    const BGRColor_ bg_color_focus;
+    const BGRColor_ fg_color_focus;
 
-    const uint32_t bg_color_selection;
-    const uint32_t fg_color_selection;
+    const BGRColor_ bg_color_selection;
+    const BGRColor_ fg_color_selection;
 
     const uint16_t border;    // Width and height of cell's border.
 
@@ -65,14 +65,14 @@ protected:
 
     // TODO: see why grid object need a difftimer ?
     struct difftimer {
-        uint64_t t;
+        std::chrono::microseconds t;
 
-        explicit difftimer(uint64_t start = 0)
-            : t(start)
+        explicit difftimer(std::chrono::microseconds start = std::chrono::microseconds::zero())
+        : t(start)
         {}
 
-        uint64_t tick() {
-            uint64_t ret = this->t;
+        std::chrono::microseconds tick() {
+            std::chrono::microseconds ret = this->t;
             this->t = ustime();
             return this->t - ret;
         }
@@ -85,10 +85,10 @@ protected:
 public:
     WidgetGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
-               uint32_t bg_color_1, uint32_t fg_color_1,
-               uint32_t bg_color_2, uint32_t fg_color_2,
-               uint32_t bg_color_focus, uint32_t fg_color_focus,
-               uint32_t bg_color_selection, uint32_t fg_color_selection,
+               BGRColor_ bg_color_1, BGRColor_ fg_color_1,
+               BGRColor_ bg_color_2, BGRColor_ fg_color_2,
+               BGRColor_ bg_color_focus, BGRColor_ fg_color_focus,
+               BGRColor_ bg_color_selection, BGRColor_ fg_color_selection,
                uint16_t border = 0, int group_id = 0)
         : Widget2(drawable, parent, notifier, group_id)
         , widgets()
@@ -141,8 +141,8 @@ public:
     }
 
     void draw_row(uint16_t row_index, Rect const clip) {
-        uint32_t bg_color;
-        uint32_t fg_color;
+        BGRColor_ bg_color;
+        BGRColor_ fg_color;
 
         if (this->selection_y == row_index) {
             bg_color = (this->has_focus ? this->bg_color_focus : this->bg_color_selection);
@@ -162,7 +162,7 @@ public:
 
         uint16_t x = this->x();
         Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
-        this->drawable.draw(RDPOpaqueRect(rectRow, bg_color), clip, gdi::ColorCtx::depth24());
+        this->drawable.draw(RDPOpaqueRect(rectRow, encode_color24()(bg_color)), clip, gdi::ColorCtx::depth24());
 
         x += this->border;
         y += this->border;
@@ -332,7 +332,7 @@ public:
                         this->set_selection(row_index);
                     }
                     else {
-                        if (this->click_interval.tick() <= uint64_t(700000L)) {
+                        if (this->click_interval.tick() <= std::chrono::microseconds(700000L)) {
                             this->send_notify(NOTIFY_SUBMIT);
                             return;
                         }

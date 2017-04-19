@@ -51,7 +51,7 @@ public:
     bool hasform;
 
 private:
-    int bg_color;
+    BGRColor_ bg_color;
 
 public:
     FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -144,7 +144,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

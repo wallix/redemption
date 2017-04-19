@@ -114,7 +114,7 @@ log_array_02x_format(uint8_t const (&d)[n])
 }
 
 template<std::size_t n>
-char const * log_value(redemption_log_s<n> && x) { return x.data; }
+char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 
 #if ! defined(IN_IDE_PARSER) && REDEMPTION_HAS_INCLUDE(<boost/preprocessor/config/config.hpp>)
 # include <boost/preprocessor/config/config.hpp>
@@ -279,7 +279,7 @@ namespace
     void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
     #if !defined(LOGPRINT) && defined(LOGNULL)
-        compiler_aux_::unused_variables(priority, format, args...);
+        compiler_aux_::unused_variables(priority, format, (void(args), 1)...);
     #else
         int const pid = getpid();
         LOG__REDEMPTION__INTERNAL__IMPL(

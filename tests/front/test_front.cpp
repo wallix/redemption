@@ -40,7 +40,7 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "utils/fileutils.hpp"
@@ -51,6 +51,9 @@
 // Uncomment the code block below to generate testing data.
 #include "core/listen.hpp"
 #include "core/session.hpp"
+
+#include "test_only/lcg_random.hpp"
+
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -317,8 +320,6 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
     const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
                                 "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
 
-    std::unique_ptr<uint8_t[]> data;
-
     int16_t offset = 0;
     int16_t baseline = 2;
     uint16_t width = 16;
@@ -331,7 +332,7 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
         fc.data[i] = reinterpret_cast<uint8_t>(bits_data[i]);
     }
 
-    Front::GlyphTo24Bitmap g24b(fc, { 96,  31,   8}, {255, 255, 255});
+    Front::GlyphTo24Bitmap g24b(fc, BGRColor_{ 96,  31,   8}, BGRColor_{255, 255, 255});
 
     std::string const out_data(reinterpret_cast<char *>(g24b.raw_data), 256*3);
     std::string const expected(reinterpret_cast<const char *>(bytes_data), 256*3);

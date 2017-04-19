@@ -27,6 +27,7 @@
 
 #include "utils/stream.hpp"
 #include "utils/rect.hpp"
+#include "utils/colors.hpp"
 
 // MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
 // ====================================================================
@@ -141,14 +142,30 @@
 // val4 (1 byte): An 8-bit, unsigned integer containing the least
 // significant bits of the value represented by this structure.
 
+inline void emit_rdp_color(OutStream & stream, RDPColor color)
+{
+    BGRColor_ const bgr = color.as_bgr();
+    stream.out_uint8(bgr.red());
+    stream.out_uint8(bgr.green());
+    stream.out_uint8(bgr.blue());
+}
+
+inline void receive_rdp_color(InStream & stream, RDPColor & color)
+{
+    uint8_t r = stream.in_uint8();
+    uint8_t g = stream.in_uint8();
+    uint8_t b = stream.in_uint8();
+    color = RDPColor::from(BGRColor_(b, g, r).to_u32());
+}
+
 struct RDPPen {
     uint8_t style;
     uint8_t width;
-    uint32_t color;
-    RDPPen(uint8_t style, uint8_t width, uint32_t color)
+    RDPColor color;
+    RDPPen(uint8_t style, uint8_t width, RDPColor color)
         : style(style), width(width), color(color) {}
 
-    RDPPen() : style(0), width(0), color(0) {
+    RDPPen() : style(0), width(0), color{} {
     }
 
     bool operator==(const RDPPen &other) const {
@@ -765,9 +782,7 @@ class RDPPrimaryOrderHeader
             stream.out_sint8(pen.width);
          }
         if (this->fields & (base << 2)) {
-            stream.out_uint8(pen.color);
-            stream.out_uint8(pen.color >> 8);
-            stream.out_uint8(pen.color >> 16);
+            emit_rdp_color(stream, pen.color);
         }
     }
 
@@ -784,10 +799,7 @@ class RDPPrimaryOrderHeader
         }
 
         if (this->fields & (base << 2)) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            pen.color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, pen.color);
         }
     }
 

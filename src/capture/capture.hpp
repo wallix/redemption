@@ -83,6 +83,9 @@ private:
     static void io_uint32_le(InStream & stream, uint32_t & value) { value = stream.in_uint32_le(); }
     static void io_uint32_le(OutStream & stream, uint32_t value) { stream.out_uint32_le(value); }
 
+    static void io_uint32_le(InStream & stream, RDPColor & value) { value = RDPColor::from(BGRColor_(stream.in_uint32_le()).to_u32()); }
+    static void io_uint32_le(OutStream & stream, RDPColor value) { stream.out_uint32_le(value.as_bgr().to_u32()); }
+
     static void io_color(InStream & stream, uint32_t & color) {
         uint8_t const red   = stream.in_uint8();
         uint8_t const green = stream.in_uint8();
@@ -93,6 +96,18 @@ private:
         stream.out_uint8(color);
         stream.out_uint8(color >> 8);
         stream.out_uint8(color >> 16);
+    }
+
+    static void io_color(InStream & stream, RDPColor & color) {
+        uint8_t const red   = stream.in_uint8();
+        uint8_t const green = stream.in_uint8();
+        uint8_t const blue  = stream.in_uint8();
+        color = RDPColor::from(BGRColor_(blue, green, red).to_u32());
+    }
+    static void io_color(OutStream & stream, RDPColor color) {
+        stream.out_uint8(color.as_bgr().red());
+        stream.out_uint8(color.as_bgr().green());
+        stream.out_uint8(color.as_bgr().blue());
     }
 
     static void io_copy_bytes(InStream & stream, uint8_t * buf, unsigned n) { stream.in_copy_bytes(buf, n); }
@@ -711,8 +726,8 @@ public:
     } statistics;
 
     bool break_privplay_client;
-    uint64_t movie_elapsed_client;
-    uint64_t begin_to_elapse;
+    std::chrono::microseconds movie_elapsed_client;
+    std::chrono::microseconds begin_to_elapse;
 
 
 
@@ -770,8 +785,8 @@ public:
         , ignore_frame_in_timeval(false)
         , statistics()
         , break_privplay_client(false)
-        , movie_elapsed_client(0)
-        , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
+        , movie_elapsed_client{}
+        , begin_to_elapse(std::chrono::seconds(this->begin_capture.tv_sec))
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -1763,7 +1778,7 @@ private:
     }
 
 public:
-    void instant_play_client(uint64_t endin_frame) {
+    void instant_play_client(std::chrono::microseconds endin_frame) {
 
         while (endin_frame >= this->movie_elapsed_client) {
 
@@ -1793,8 +1808,8 @@ private:
     template<class CbUpdateProgress>
     bool privplay_client(CbUpdateProgress update_progess) {
 
-        struct timeval now     = tvtime();
-        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
+        struct timeval now                = tvtime();
+        std::chrono::microseconds elapsed = difftimeval(now, this->start_synctime_now) ;
 
         bool res(false);
 

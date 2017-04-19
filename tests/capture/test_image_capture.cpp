@@ -28,7 +28,7 @@
 // #define LOGPRINT
 
 #include "transport/out_file_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"

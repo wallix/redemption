@@ -1,8 +1,0 @@
-S_IRWXO
-    00007 others have read, write and execute permission
-S_IROTH
-    00004 others have read permission
-S_IWOTH
-    00002 others have write permission
-S_IXOTH
-

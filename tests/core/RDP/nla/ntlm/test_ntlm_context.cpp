@@ -23,7 +23,10 @@
 
 #define LOGNULL
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
+
+#include "test_only/lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestNtlmContext)
 {

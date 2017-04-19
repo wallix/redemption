@@ -1,0 +1,8 @@
+v2
+800 600
+nochecksum
+
+
+./tests/fixtures/sample0.wrm 1 2 3 4 5 6 7 8 1352304810 1352304870
+./tests/fixtures/sample1.wrm 9 8 10 11 12 13 14 15 1352304870 1352304930
+./tests/fixtures/sample2.wrm 16 17 18 19 20 21 22 23 1352304930 1352304990

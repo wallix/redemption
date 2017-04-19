@@ -28,7 +28,7 @@
 
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestColCache)
 {

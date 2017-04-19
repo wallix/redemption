@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Clement Moroldo
 */
 
+#pragma once
+
 #include "utils/crypto/ssl_md4_direct.hpp"
 
 using SslMd4 = SslMd4_direct;

@@ -49,53 +49,30 @@ RED_AUTO_TEST_CASE(TestModOSD)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, nullptr);
 
-    timeval now;
-    now.tv_sec = 1350998222;
-    now.tv_usec = 0;
-
     class ImageCaptureLocal
     {
         Transport & trans;
         const Drawable & drawable;
         timeval start_capture;
-        std::chrono::microseconds frame_interval;
 
     public:
-        ImageCaptureLocal (
-            const timeval & now, const Drawable & drawable, Transport & trans,
-            std::chrono::microseconds png_interval)
+        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , start_capture(now)
-        , frame_interval(png_interval)
         {}
 
-        std::chrono::microseconds do_snapshot(const timeval & now) {
-            using std::chrono::microseconds;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (this->logical_frame_ended()
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    const_cast<Drawable&>(this->drawable).trace_mouse();
-                    tm ptm;
-                    localtime_r(&now.tv_sec, &ptm);
-                    const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-                    this->flush();
-                    this->trans.next();
-                    const_cast<Drawable&>(this->drawable).clear_timestamp();
-                    this->start_capture = now;
-                    const_cast<Drawable&>(this->drawable).clear_mouse();
-
-                    return microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return microseconds(interval - duration);
+        std::chrono::microseconds do_snapshot(const timeval & now)
+        {
+            const_cast<Drawable&>(this->drawable).trace_mouse();
+            tm ptm;
+            localtime_r(&now.tv_sec, &ptm);
+            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->dump24();
+            this->trans.next();
+            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            this->start_capture = now;
+            const_cast<Drawable&>(this->drawable).clear_mouse();
+            return std::chrono::microseconds::zero();
         }
 
         void dump24() const {
@@ -104,23 +81,18 @@ RED_AUTO_TEST_CASE(TestModOSD)
                 this->drawable.width(), this->drawable.height(),
                 this->drawable.rowsize(), true);
         }
-
-    private:
-        bool logical_frame_ended() const {
-            return this->drawable.logical_frame_ended;
-        }
-
-        void flush() {
-            this->dump24();
-        }
     };
 
 
-    ImageCaptureLocal consumer(now, drawable.impl(), trans, {});
+    ImageCaptureLocal consumer(drawable.impl(), trans);
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect, color_cxt);
+    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
+
+    timeval now;
+    now.tv_sec = 1350998222;
+    now.tv_usec = 0;
     now.tv_sec++;
 
     {
@@ -142,7 +114,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
             void refresh_rects(array_view<Rect const>) override {}
         } osd(drawable, rect);
-        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);
+        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), encode_color24()(GREEN)), screen_rect, color_cxt);
         now.tv_sec++;
         consumer.do_snapshot(now);
     }

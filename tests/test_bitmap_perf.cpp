@@ -33,53 +33,43 @@
 
 #include <cinttypes>
 
-RED_AUTO_TEST_CASE(TestBitmapCompressPerformance)
+
+inline Bitmap compress_perf(Bitmap & bigbmp)
+{
+    auto sz = 2u*bigbmp.bmp_size();
+    auto uptr = std::make_unique<uint8_t[]>(sz);
+    OutStream out(uptr.get(), sz);
+
+    using std::chrono::microseconds;
+    microseconds usec = ustime();
+    microseconds cycles = rdtsc();
+    bigbmp.compress(24, out);
+    microseconds elapusec = ustime() - usec;
+    microseconds elapcyc = rdtsc() - cycles;
+    printf("initial_size = %zu, compressed size: %zu\n"
+        "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
+        bigbmp.bmp_size(), out.get_offset(),
+        elapusec.count(), elapcyc.count(), static_cast<double>(elapcyc.count()) / elapusec.count());
+
+    return Bitmap(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+}
+
+RED_AUTO_TEST_CASE(TestBitmapCompressPerformanceBMP)
 {
     {
-        RED_CHECK(true);
-        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.bmp");
-
-        RED_CHECK(true);
         // make it large enough to hold any image
-        auto sz = 2u*bigbmp.bmp_size();
-        auto uptr = std::make_unique<uint8_t[]>(sz);
-        OutStream out(uptr.get(), sz);
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.bmp");
         RED_CHECK(true);
-        {
-            uint64_t usec = ustime();
-            uint64_t cycles = rdtsc();
-            bigbmp.compress(24, out);
-            uint64_t elapusec = ustime() - usec;
-            uint64_t elapcyc = rdtsc() - cycles;
-            printf("initial_size = %zu, compressed size: %zu\n"
-                "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), out.get_offset(),
-                elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
-        }
-        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+        Bitmap bmp2 = compress_perf(bigbmp);
         RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
-        int bpp = 24;
-        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
-        auto sz = 2u*bigbmp.bmp_size();
-        auto uptr = std::make_unique<uint8_t[]>(sz);
-        OutStream out(uptr.get(), sz);
-        {
-            uint64_t usec = ustime();
-            uint64_t cycles = rdtsc();
-            bigbmp.compress(24, out);
-            uint64_t elapusec = ustime() - usec;
-            uint64_t elapcyc = rdtsc() - cycles;
-            printf("initial_size = %zu, compressed size: %zu\n"
-                "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), out.get_offset(),
-                elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
-        }
-        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.bmp");
+        RED_CHECK(true);
+        Bitmap bmp2 = compress_perf(bigbmp);
         RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
@@ -88,50 +78,19 @@ RED_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 RED_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 {
     {
-        RED_CHECK(true);
-        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.png");
-
-        RED_CHECK(true);
         // make it large enough to hold any image
-        auto sz = 2u*bigbmp.bmp_size();
-        auto uptr = std::make_unique<uint8_t[]>(sz);
-        OutStream out(uptr.get(), sz);
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.png");
         RED_CHECK(true);
-        {
-            uint64_t usec = ustime();
-            uint64_t cycles = rdtsc();
-            bigbmp.compress(24, out);
-            uint64_t elapusec = ustime() - usec;
-            uint64_t elapcyc = rdtsc() - cycles;
-            printf("initial_size = %zu, compressed size: %zu\n"
-                "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), out.get_offset(),
-                elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
-        }
-        Bitmap bmp2(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+        Bitmap bmp2 = compress_perf(bigbmp);
         RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }
 
     {
-        int bpp = 24;
-        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.png");
         // make it large enough to hold any image
-        auto sz = 2u*bigbmp.bmp_size();
-        auto uptr = std::make_unique<uint8_t[]>(sz);
-        OutStream out(uptr.get(), sz);
-        {
-            uint64_t usec = ustime();
-            uint64_t cycles = rdtsc();
-            bigbmp.compress(24, out);
-            uint64_t elapusec = ustime() - usec;
-            uint64_t elapcyc = rdtsc() - cycles;
-            printf("initial_size = %zu, compressed size: %zu\n"
-                "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
-                bigbmp.bmp_size(), out.get_offset(),
-                elapusec, elapcyc, static_cast<double>(elapcyc) / elapusec);
-        }
-        Bitmap bmp2(bpp, bpp, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.png");
+        RED_CHECK(true);
+        Bitmap bmp2 = compress_perf(bigbmp);
         RED_CHECK_EQUAL(bmp2.bmp_size(), bigbmp.bmp_size());
         RED_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size()));
     }

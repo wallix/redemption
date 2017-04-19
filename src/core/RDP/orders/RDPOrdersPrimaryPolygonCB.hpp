@@ -203,8 +203,8 @@ public:
     int16_t  yStart;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t backColor;
-    uint32_t foreColor;
+    RDPColor backColor;
+    RDPColor foreColor;
     RDPBrush brush;
     uint8_t  NumDeltaEntries;
 
@@ -222,15 +222,15 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , fillMode(0x00)
-    , backColor(0x00000000)
-    , foreColor(0x00000000)
+    , backColor{}
+    , foreColor{}
     , brush(RDPBrush())
     , NumDeltaEntries(0) {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 
     RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 uint32_t backColor, uint32_t foreColor, const RDPBrush & brush,
+                 RDPColor backColor, RDPColor foreColor, const RDPBrush & brush,
                  uint8_t NumDeltaEntries, InStream & deltaPoints)
         : xStart(xStart)
         , yStart(yStart)
@@ -315,14 +315,10 @@ public:
         if (header.fields & 0x0008) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->backColor);
-            stream.out_uint8(this->backColor >> 8);
-            stream.out_uint8(this->backColor >> 16);
+            emit_rdp_color(stream, this->backColor);
         }
         if (header.fields & 0x0020) {
-            stream.out_uint8(this->foreColor);
-            stream.out_uint8(this->foreColor >> 8);
-            stream.out_uint8(this->foreColor >> 16);
+            emit_rdp_color(stream, this->foreColor);
         }
 
         header.emit_brush(stream, 0x0040, this->brush, oldcmd.brush);
@@ -378,17 +374,11 @@ public:
         }
 
         if (header.fields & 0x0010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->backColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->backColor);
         }
 
         if (header.fields & 0x0020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->foreColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->foreColor);
         }
 
         header.receive_brush(stream, 0x0040, this->brush);
@@ -446,7 +436,7 @@ public:
                        "brush.style=%d brush.hatch=%d "
                        "NumDeltaEntries=%d DeltaEntries=(",
                        this->xStart, this->yStart, unsigned(this->bRop2), this->fillMode,
-                       this->backColor, this->foreColor,
+                       this->backColor.as_bgr().to_u32(), this->foreColor.as_bgr().to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch,
                        this->NumDeltaEntries);

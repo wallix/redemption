@@ -41,8 +41,8 @@ public:
     WidgetEditValid password_edit;
     WidgetImage     img;
 
-    int fgcolor;
-    int bgcolor;
+    BGRColor_ fgcolor;
+    BGRColor_ bgcolor;
 
     CompositeArray composite_array;
 
@@ -117,7 +117,7 @@ public:
         this->clear();
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bgcolor;
     }
 

@@ -58,7 +58,7 @@ public:
     WidgetImage        img;
 
 private:
-    int bg_color;
+    BGRColor_ bg_color;
 
     long prev_time;
 
@@ -283,7 +283,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

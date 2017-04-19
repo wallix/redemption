@@ -29,10 +29,10 @@
 class WidgetRect : public Widget2
 {
 public:
-    int color;
+    BGRColor_ color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, BGRColor_ color = BLACK)
     : Widget2(drawable, parent, notifier, group_id)
     , color(color)
     {
@@ -49,7 +49,7 @@ public:
             this->drawable.draw(
                 RDPOpaqueRect(
                     rect_intersect,
-                    this->color
+                    encode_color24()(this->color)
                 ),
                 rect_intersect,
                 gdi::ColorCtx::depth24()

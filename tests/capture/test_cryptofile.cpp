@@ -29,6 +29,9 @@
 #include "capture/cryptofile.hpp"
 #include "utils/parse.hpp"
 
+#include "test_only/lcg_random.hpp"
+
+
 class read_encrypted
 {
 public:

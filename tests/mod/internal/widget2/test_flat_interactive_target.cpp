@@ -32,9 +32,9 @@
 #include "utils/png.hpp"
 #include "system/ssl_calls.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 {

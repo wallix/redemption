@@ -26,7 +26,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_multitransport.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)

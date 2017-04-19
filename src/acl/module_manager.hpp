@@ -332,8 +332,8 @@ private:
 
         std::string osd_message;
         Rect clip;
-        uint32_t color;
-        uint32_t background_color;
+        RDPColor color;
+        RDPColor background_color;
         bool is_disable_by_input = false;
         bool bogus_refresh_rect_ex;
 
@@ -381,12 +381,8 @@ private:
             gdi::TextMetrics tm(this->mm.ini.get<cfg::font>(), this->osd_message.c_str());
             int w = tm.width + padw * 2;
             int h = tm.height + padh * 2;
-            this->color = BLACK;
-            this->background_color = LIGHT_YELLOW;
-            if (24 != this->mm.front.client_info.bpp) {
-                this->color = color_encode(color, this->mm.front.client_info.bpp);
-                this->background_color = color_encode(background_color, this->mm.front.client_info.bpp);
-            }
+            this->color = color_encode(BGRColor_(BLACK), this->mm.front.client_info.bpp);
+            this->background_color = color_encode(BGRColor_(LIGHT_YELLOW), this->mm.front.client_info.bpp);
 
             if (this->mm.front.client_info.remote_program &&
                 (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
@@ -512,7 +508,7 @@ private:
             InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
             // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
-            RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
+            RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, encode_color24()(BLACK) /* NOTE WHITE and BLACK should be special color*/, 4, in_deltaPoints);
             drawable.draw(polyline_box, this->clip, color_ctx);
 
             gdi::server_draw_text(

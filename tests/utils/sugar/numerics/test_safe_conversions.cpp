@@ -30,8 +30,10 @@ RED_AUTO_TEST_CASE(TestTrim)
     RED_CHECK_EQUAL(int(saturated_cast<signed char>(-1233412)), -128);
     RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(1233412)), 255);
     RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(-1233412)), 0);
+    RED_CHECK_EQUAL(saturated_cast<int>(-1233412), -1233412);
 
     RED_CHECK_EQUAL(checked_cast<char>(12), 12);
+    RED_CHECK_EQUAL(checked_cast<int>(12), 12);
 
     RED_CHECK_EQUAL(int(saturated_int<signed char>(122312)), 127);
     RED_CHECK_EQUAL(int(saturated_int<signed char>(122312) = -3213), -128);
@@ -61,6 +63,7 @@ RED_AUTO_TEST_CASE(TestTrim)
     is_safe_convertible<unsigned, signed char>{} = std::false_type{};
     is_safe_convertible<sE, signed char>{} = std::true_type{}; safe_cast<sE>(static_cast<signed char>(1));
     is_safe_convertible<uE, long>{} = std::true_type{}; safe_cast<long>(uE{});
+    is_safe_convertible<int, int>{} = std::true_type{}; safe_cast<int>(int{});
     is_safe_convertible<uE, signed char>{} = std::false_type{};
     is_safe_convertible<signed char, uE>{} = std::false_type{};
 }

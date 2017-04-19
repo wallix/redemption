@@ -61,7 +61,7 @@ private:
 
     bool labels_added = false;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -237,7 +237,7 @@ public:
         }
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

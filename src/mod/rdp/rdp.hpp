@@ -1402,7 +1402,7 @@ public:
         if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
-                    front, *this, this->orders, this->lang, this->font,
+                    front, *this, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
                     mod_rdp_params.client_execute, this->verbose
@@ -5801,8 +5801,6 @@ public:
                 auto_reconnect.receive(lif.payload);
                 auto_reconnect.log(LOG_INFO);
 
-                this->front.send_auto_reconnect_packet(auto_reconnect);
-
                 OutStream stream(
                     this->server_auto_reconnect_packet_ref.data(),
                     this->server_auto_reconnect_packet_ref.size());
@@ -6730,7 +6728,7 @@ public:
         case 4 :
         {
             for (unsigned i = 0; i < dlen ; i++) {
-                BGRColor px = indata[i];
+                const uint8_t px = indata[i];
                 // target cursor will receive 8 bits input at once
                 ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
                 ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
@@ -6758,9 +6756,9 @@ public:
                       uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
 
                 for (unsigned int i1 = 0; i1 < width; ++i1) {
-                    BGRColor px = in_uint32_from_nb_bytes_le(BPP, src);
+                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
                     src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette));
+                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette).to_u32());
                     dest += 3;
                 }
             }

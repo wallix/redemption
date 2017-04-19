@@ -142,8 +142,8 @@ class RDPMultiPatBlt {
 public:
     Rect       rect {}; //nLeftRect, nTopRect, nWidth, nHeight
     uint8_t    bRop {};
-    uint32_t   BackColor {};
-    uint32_t   ForeColor {};
+    RDPColor   BackColor {};
+    RDPColor   ForeColor {};
     RDPBrush   brush {}; // BrushOrgX , BrushOrgY , BrushStyle , BrushHatch , BrushExtra
     uint8_t    nDeltaEntries {};
 
@@ -157,7 +157,7 @@ public:
 
     RDPMultiPatBlt(RDPMultiPatBlt const &) = default;
 
-    RDPMultiPatBlt( const Rect _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
+    RDPMultiPatBlt( const Rect _rect, uint8_t bRop, RDPColor BackColor, RDPColor ForeColor, const RDPBrush & _brush
                   , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)
     : rect(_rect)
     , bRop(bRop)
@@ -251,14 +251,10 @@ public:
             stream.out_uint8(this->bRop);
         }
         if (header.fields & 0x0020) {
-            stream.out_uint8(this->BackColor);
-            stream.out_uint8(this->BackColor >> 8);
-            stream.out_uint8(this->BackColor >> 16);
+            emit_rdp_color(stream, this->BackColor);
         }
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->ForeColor);
-            stream.out_uint8(this->ForeColor >> 8);
-            stream.out_uint8(this->ForeColor >> 16);
+            emit_rdp_color(stream, this->ForeColor);
         }
 
         header.emit_brush(stream, 0x0080, this->brush, oldcmd.brush);
@@ -324,16 +320,10 @@ public:
             this->bRop = stream.in_uint8();
         }
         if (header.fields & 0x0020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->BackColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->BackColor);
         }
         if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->ForeColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->ForeColor);
         }
 
         header.receive_brush(stream, 0x0080, this->brush);
@@ -393,7 +383,7 @@ public:
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, unsigned(this->bRop)
-                      , this->BackColor, this->ForeColor
+                      , this->BackColor.as_bgr().to_u32(), this->ForeColor.as_bgr().to_u32()
                       , this->brush.org_x, this->brush.org_y
                       , unsigned(this->brush.style), unsigned(this->brush.hatch)
                       , unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1])

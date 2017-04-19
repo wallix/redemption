@@ -125,6 +125,7 @@
 #include "transport/transport.hpp"
 
 #include "gdi/graphic_api.hpp"
+#include "gdi/graphic_cmd_color.hpp"
 
 struct StateChunk {
     RDPOrderCommon          common;
@@ -150,18 +151,19 @@ struct StateChunk {
         , multiopaquerect()
         , multipatblt()
         , multiscrblt()
-        , patblt(Rect(), 0, 0, 0, RDPBrush())
+        , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
         , scrblt(Rect(), 0, 0, 0)
-        , opaquerect(Rect(), 0)
+        , opaquerect(Rect(), RDPColor{})
         , memblt(0, Rect(), 0, 0, 0, 0)
-        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+        , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
+        , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
+        , glyphindex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                     , reinterpret_cast<const uint8_t *>(""))
         , polyline()
         , ellipseSC()
         {}
 };
+
 
 struct RDPSerializer
 : public gdi::GraphicApi
@@ -237,7 +239,7 @@ public:
     // Internal state of orders
     , polygonSC()
     , polygonCB()
-    , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
+    , ellipseCB(Rect(), 0, 0, RDPColor{}, RDPColor{}, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
     , bitmap_count(0)
@@ -294,17 +296,50 @@ public:
         //LOG(LOG_INFO, "RDPSerializer::reserve_order done");
     }
 
-    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
-        this->reserve_order(23);
-        RDPOrderCommon newcommon(RDP::RECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.opaquerect);
-        this->ssc.common = newcommon;
-        this->ssc.opaquerect = cmd;
+private:
+    struct color_convertor
+    {
+        uint8_t depth_encoding;
+        gdi::ColorCtx color_ctx;
 
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
+        RDPColor operator()(RDPColor c) const noexcept
+        {
+            auto const d = color_decode(c, color_ctx);
+            auto const e = color_encode(d, depth_encoding);
+            return e;
         }
+    };
+
+    template<class Cmd, class F>
+    void reencode_cmd_color(Cmd & cmd, gdi::ColorCtx color_ctx, F f)
+    {
+        if (this->capture_bpp == color_ctx.depth().to_bpp()) {
+            f(cmd);
+        }
+        else {
+            auto new_cmd = cmd;
+            gdi::GraphicCmdColor::encode_cmd_color(
+                color_convertor{this->capture_bpp, color_ctx},
+                new_cmd
+            );
+            f(new_cmd);
+        };
+    }
+
+public:
+    void draw(RDPOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPOpaqueRect const & cmd){
+            this->reserve_order(23);
+            RDPOrderCommon newcommon(RDP::RECT, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.opaquerect);
+            this->ssc.common = newcommon;
+            this->ssc.opaquerect = cmd;
+
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
     }
 
@@ -341,26 +376,30 @@ public:
         }
     }
 
-    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(397 * 2);
-        RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
-        this->ssc.common          = newcommon;
-        this->ssc.multiopaquerect = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
-        }
+    void draw(RDPMultiOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPMultiOpaqueRect const & cmd){
+            this->reserve_order(397 * 2);
+            RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
+            this->ssc.common          = newcommon;
+            this->ssc.multiopaquerect = cmd;
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
     }
 
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(412 * 2);
-        RDPOrderCommon newcommon(RDP::MULTIPATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
-        this->ssc.common      = newcommon;
-        this->ssc.multipatblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
-        }
+    void draw(RDP::RDPMultiPatBlt const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDP::RDPMultiPatBlt const & cmd){
+            this->reserve_order(412 * 2);
+            RDPOrderCommon newcommon(RDP::MULTIPATBLT, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
+            this->ssc.common      = newcommon;
+            this->ssc.multipatblt = cmd;
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
@@ -374,15 +413,17 @@ public:
         }
     }
 
-    void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(29);
-        RDPOrderCommon newcommon(RDP::PATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
-        this->ssc.common = newcommon;
-        this->ssc.patblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
-        }
+    void draw(RDPPatBlt const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPPatBlt const & cmd){
+            this->reserve_order(29);
+            RDPOrderCommon newcommon(RDP::PATBLT, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
+            this->ssc.common = newcommon;
+            this->ssc.patblt = cmd;
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
     }
 
 protected:
@@ -468,22 +509,26 @@ public:
         this->draw_memblt(cmd, this->ssc.memblt, clip, oldbmp);
     }
 
-    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/, const Bitmap & oldbmp) override {
-        this->draw_memblt(cmd, this->ssc.mem3blt, clip, oldbmp);
+    void draw(RDPMem3Blt const & cmd_, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & oldbmp) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPMem3Blt const & cmd){
+            this->draw_memblt(cmd, this->ssc.mem3blt, clip, oldbmp);
+        });
     }
 
-    void draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(32);
-        RDPOrderCommon newcommon(RDP::LINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
-        this->ssc.common = newcommon;
-        this->ssc.lineto = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
-        }
+    void draw(RDPLineTo const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPLineTo const & cmd){
+            this->reserve_order(32);
+            RDPOrderCommon newcommon(RDP::LINE, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
+            this->ssc.common = newcommon;
+            this->ssc.lineto = cmd;
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
     }
 
-    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/, const GlyphCache & gly_cache) override {
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
@@ -496,6 +541,10 @@ public:
         };
 
         RDPGlyphIndex new_cmd = cmd;
+        gdi::GraphicCmdColor::encode_cmd_color(
+            color_convertor{this->capture_bpp, color_ctx},
+            new_cmd
+        );
         bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & SO_CHAR_INC_EQUAL_BM_BASE));
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
@@ -599,47 +648,57 @@ public:
         cmd.emit(this->stream_orders);
     }
 
-    void draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(256);
-        RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonSC);
-        this->ssc.common    = newcommon;
-        this->polygonSC = cmd;
+    void draw(RDPPolygonSC const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPPolygonSC const & cmd){
+            this->reserve_order(256);
+            RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonSC);
+            this->ssc.common    = newcommon;
+            this->polygonSC = cmd;
+        });
     }
 
-    void draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(256);
-        RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonCB);
-        this->ssc.common    = newcommon;
-        this->polygonCB = cmd;
+    void draw(RDPPolygonCB const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPPolygonCB const & cmd){
+            this->reserve_order(256);
+            RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonCB);
+            this->ssc.common    = newcommon;
+            this->polygonCB = cmd;
+        });
     }
 
-    void draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(256);
-        RDPOrderCommon newcommon(RDP::POLYLINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
-        this->ssc.common   = newcommon;
-        this->ssc.polyline = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
-            cmd.log(LOG_INFO, this->ssc.common.clip);
-        }
+    void draw(RDPPolyline const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPPolyline const & cmd){
+            this->reserve_order(256);
+            RDPOrderCommon newcommon(RDP::POLYLINE, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
+            this->ssc.common   = newcommon;
+            this->ssc.polyline = cmd;
+            if (bool(this->verbose & Verbose::primary_orders)) {
+                cmd.log(LOG_INFO, this->ssc.common.clip);
+            }
+        });
     }
 
-    void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(26);
-        RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.ellipseSC);
-        this->ssc.common = newcommon;
-        this->ssc.ellipseSC = cmd;
+    void draw(RDPEllipseSC const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPEllipseSC const & cmd){
+            this->reserve_order(26);
+            RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.ellipseSC);
+            this->ssc.common = newcommon;
+            this->ssc.ellipseSC = cmd;
+        });
     }
 
-    void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/) override {
-        this->reserve_order(54);
-        RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ellipseCB);
-        this->ssc.common = newcommon;
-        this->ellipseCB = cmd;
+    void draw(RDPEllipseCB const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->reencode_cmd_color(cmd_, color_ctx, [&](RDPEllipseCB const & cmd){
+            this->reserve_order(54);
+            RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
+            cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ellipseCB);
+            this->ssc.common = newcommon;
+            this->ellipseCB = cmd;
+        });
     }
 
     void draw(const RDP::FrameMarker & order) override {

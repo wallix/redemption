@@ -5,4 +5,4 @@
 using SslMd4 = SslMd4_direct;
 using SslHMAC_Md4 = SslHMAC_Md4_direct;
 
-#include "system/common/test_ssl_md4.cpp"
+#include "../../system/common/test_ssl_md4.cpp"

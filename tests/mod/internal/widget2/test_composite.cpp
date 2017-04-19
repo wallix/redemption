@@ -27,20 +27,20 @@
 
 #include "mod/internal/widget2/widget2_rect.hpp"
 #include "mod/internal/widget2/composite.hpp"
-#include "check_sig.hpp"
-#include "fake_draw.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 class WidgetCompositeRect : public WidgetComposite
 {
 public:
-    int color;
+    BGRColor_ color;
 
     WidgetCompositeRect(TestDraw & drawable)
     : WidgetComposite(drawable.gd, *this, nullptr)
     , color(0x27642F)
     {}
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->color;
     }
 };

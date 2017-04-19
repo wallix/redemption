@@ -29,14 +29,14 @@
 class RDPOpaqueRect {
     public:
     Rect rect;
-    uint32_t color;
+    RDPColor color;
 
     static uint8_t id(void)
     {
         return RDP::RECT;
     }
 
-    RDPOpaqueRect(const Rect r, int c) :
+    RDPOpaqueRect(const Rect r, RDPColor c) :
         rect(r), color(c)
         {}
 
@@ -86,7 +86,7 @@ class RDPOpaqueRect {
         // from Microsoft. Looks like an error in RDP specs.
         header.control |= dr.fully_relative() * DELTA;
 
-        uint32_t diff_color = this->color ^ oldcmd.color;
+        uint32_t const diff_color = this->color.as_bgr().to_u32() ^ oldcmd.color.as_bgr().to_u32();
 
 //        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
@@ -103,13 +103,13 @@ class RDPOpaqueRect {
         header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);
 
         if (header.fields & 0x10){
-            stream.out_uint8(this->color);
+            stream.out_uint8(this->color.as_bgr().red());
         }
         if (header.fields & 0x20){
-            stream.out_uint8(this->color >> 8);
+            stream.out_uint8(this->color.as_bgr().green());
         }
         if (header.fields & 0x40){
-            stream.out_uint8(this->color >> 16);
+            stream.out_uint8(this->color.as_bgr().blue());
         }
     }
 
@@ -119,9 +119,9 @@ class RDPOpaqueRect {
 
         header.receive_rect(stream, 0x01, this->rect);
 
-        uint8_t r = this->color;
-        uint8_t g = this->color >> 8;
-        uint8_t b = this->color >> 16;
+        uint8_t r = this->color.as_bgr().red();
+        uint8_t g = this->color.as_bgr().green();
+        uint8_t b = this->color.as_bgr().blue();
 
         if (header.fields & 0x10) {
             r = stream.in_uint8();
@@ -132,7 +132,7 @@ class RDPOpaqueRect {
         if (header.fields & 0x40) {
             b = stream.in_uint8();
         }
-        this->color = r|(g << 8)|(b<<16);
+        this->color = RDPColor::from(BGRColor_(b, g, r).to_u32());
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
@@ -142,7 +142,7 @@ class RDPOpaqueRect {
             buffer+lg,
             sz-lg,
             "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)",
-            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color);
+            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.as_bgr().to_u32());
         if (lg >= sz){
             return sz;
         }

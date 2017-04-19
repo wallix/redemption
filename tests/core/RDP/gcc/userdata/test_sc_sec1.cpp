@@ -27,7 +27,7 @@
 // #define LOGPRINT
 
 #include "utils/crypto/ssl_lib.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/sc_sec1.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)

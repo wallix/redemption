@@ -1571,7 +1571,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_frame_interval,
                             wrm_break_interval,
                             wrm_compression_algorithm,
-                            int(wrm_verbose)
+                            uint32_t(wrm_verbose) // TODO 
                         );
 
 const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();

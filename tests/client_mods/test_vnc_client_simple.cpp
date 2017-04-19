@@ -27,10 +27,10 @@
 
 #define LOGNULL
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/vnc/vnc.hpp"
-#include "front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)

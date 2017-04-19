@@ -100,10 +100,6 @@ public:
     // RemoteApp.
     virtual void send_savesessioninfo() {}
 
-    virtual void send_auto_reconnect_packet(RDP::ServerAutoReconnectPacket const & auto_reconnect) {
-        (void)auto_reconnect;
-    }
-
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
 };

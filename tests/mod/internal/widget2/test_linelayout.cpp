@@ -29,7 +29,7 @@
 #include "mod/internal/widget2/stacklayout.hpp"
 #include "mod/internal/widget2/label.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"

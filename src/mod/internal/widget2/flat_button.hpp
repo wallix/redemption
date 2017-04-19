@@ -43,9 +43,9 @@ private:
 public:
     int state;
     notify_event_t event;
-    int fg_color;
-    int bg_color;
-    int focus_color;
+    BGRColor_ fg_color;
+    BGRColor_ bg_color;
+    BGRColor_ focus_color;
     bool logo;
 
     Font const & font;
@@ -54,8 +54,8 @@ public:
 
     WidgetFlatButton(gdi::GraphicApi & drawable, Widget2& parent,
                      NotifyApi* notifier, const char * text,
-                     int group_id, int fgcolor, int bgcolor,
-                     int focuscolor, unsigned border_width, Font const & font, int xtext = 0, int ytext = 0,
+                     int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focuscolor,
+                     unsigned border_width, Font const & font, int xtext = 0, int ytext = 0,
                      bool logo = false/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, parent, notifier, group_id)
     , auto_resize_(false)
@@ -116,8 +116,10 @@ public:
         if (!rect_intersect.isempty()) {
             this->drawable.begin_update();
 
-            this->draw(rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus,
-                this->buffer, this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+            this->draw(
+                rect_intersect, this->get_rect(), this->drawable, this->logo, this->has_focus, this->buffer,
+                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                 this->label_rect, this->state, this->border_width, this->font, this->x_text, this->y_text);
 
             this->drawable.end_update();
@@ -126,12 +128,8 @@ public:
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      bool logo, bool has_focus, char const* text,
-                     uint32_t fgcolor, uint32_t bgcolor, uint32_t focuscolor,
-                     gdi::ColorCtx color_ctx,
+                     RDPColor fg_color, RDPColor bg_color, RDPColor focuscolor, gdi::ColorCtx color_ctx,
                      Rect label_rect, int state, unsigned border_width, Font const& font, int xtext, int ytext) {
-        uint32_t fg_color = fgcolor;
-        uint32_t bg_color = bgcolor;
-
         if (label_rect.isempty()) {
             label_rect = rect;
             label_rect.x  += (border_width + 1);
@@ -142,10 +140,10 @@ public:
 
         // Label color
         if (logo) {
-            fg_color = has_focus ? focuscolor : fgcolor;
+            fg_color = has_focus ? focuscolor : fg_color;
         }
         else {
-            bg_color = has_focus ? focuscolor : bgcolor;
+            bg_color = has_focus ? focuscolor : bg_color;
         }
         // background
         drawable.draw(RDPOpaqueRect(clip.intersect(rect), bg_color), rect, color_ctx);

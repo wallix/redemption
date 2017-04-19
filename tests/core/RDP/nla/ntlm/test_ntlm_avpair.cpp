@@ -26,7 +26,7 @@
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 
 RED_AUTO_TEST_CASE(TestAvPair)
 {

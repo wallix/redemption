@@ -30,6 +30,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/colors.hpp"
 
 
 struct BGRPalette;
@@ -84,15 +85,26 @@ struct Depth
     static constexpr Depth depth16() { return {3}; }
     static constexpr Depth depth24() { return {4}; }
 
-    static constexpr Depth from_bpp(uint8_t bpp) {
-        return {
-            bpp == 8  ? depth8() :
-            bpp == 15 ? depth15() :
-            bpp == 16 ? depth16() :
-            bpp == 24 ? depth24() :
-            bpp == 32 ? depth24() : // TODO useless ?
-            unspecified()
+    static /*c++14: constexpr*/ Depth from_bpp(uint8_t bpp)
+    {
+        struct depth_table {
+            Depth table[33] = {
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth8(),       unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  depth15(),
+                depth16(),      unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth24(),      unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth24(), // TODO useless ?
+            };
         };
+        auto const depth = bpp < sizeof(depth_table{}.table)/sizeof(depth_table{}.table[0])
+            ? depth_table{}.table[int(bpp)]
+            : unspecified();
+        assert(depth != unspecified());
+        return depth;
     }
 
     Depth() = default;
@@ -102,6 +114,7 @@ struct Depth
 
 private:
     struct bpp_table { uint8_t table[5] = {0, 8, 15, 16, 24}; };
+
 public:
     constexpr uint8_t to_bpp() const {
         return bpp_table{}.table[unsigned(this->depth_)];
@@ -155,6 +168,11 @@ constexpr bool operator >= (Depth const & depth1, Depth const & depth2) {
 
 struct ColorCtx
 {
+    ColorCtx(Depth depth, BGRPalette const & palette)
+    : depth_(depth)
+    , palette_(&palette)
+    {}
+
     ColorCtx(Depth depth, BGRPalette const * palette)
     : depth_(depth)
     , palette_(palette)
@@ -184,6 +202,41 @@ private:
     Depth depth_;
     BGRPalette const * palette_;
 };
+
+
+inline RDPColor color_encode(const BGRColor_ color, Depth depth) noexcept
+{
+    switch (depth){
+        case Depth::depth8(): return encode_color8()(color);
+        case Depth::depth15(): return encode_color15()(color);
+        case Depth::depth16(): return encode_color16()(color);
+        case Depth::depth24(): return encode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return RDPColor{};
+}
+
+
+inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette) noexcept
+{
+    switch (depth){
+        case Depth::depth8(): return decode_color8()(color, palette);
+        case Depth::depth15(): return decode_color15()(color);
+        case Depth::depth16(): return decode_color16()(color);
+        case Depth::depth24(): return decode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return BGRColor_{0, 0, 0};
+}
+
+inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
+{
+    return color_decode(color, color_ctx.depth(), *color_ctx.palette());
+}
 
 
 struct GraphicApi : private noncopyable
@@ -319,7 +372,7 @@ struct TextMetrics
 static inline void server_draw_text(
     GraphicApi & drawable, Font const & font,
     int16_t x, int16_t y, const char * text,
-    uint32_t fgcolor, uint32_t bgcolor,
+    RDPColor fgcolor, RDPColor bgcolor,
     ColorCtx color_ctx,
     Rect clip
 ) {

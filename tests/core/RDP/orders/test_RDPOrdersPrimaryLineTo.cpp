@@ -29,7 +29,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestLineTo)
 {
@@ -39,10 +39,10 @@ RED_AUTO_TEST_CASE(TestLineTo)
         StaticOutStream<1000> out_stream;
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
-        RDPLineTo state_lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
+        RDPLineTo state_lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}));
         RDPOrderCommon newcommon(LINE, Rect(10, 20, 30, 40));
 
-        RDPLineTo(1, 0, 10, 40, 60, 0x102030, 0xFF, RDPPen(0, 1, 0x112233)
+        RDPLineTo(1, 0, 10, 40, 60, encode_color24()(BGRColor_{0x102030}), 0xFF, RDPPen(0, 1, encode_color24()(BGRColor_{0x112233}))
                   ).emit(out_stream, newcommon, state_common, state_lineto);
 
 
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestLineTo)
 
         check<RDPLineTo>(common_cmd, cmd,
             RDPOrderCommon(LINE, Rect(10, 20, 30, 40)),
-            RDPLineTo(1, 0, 10, 40, 60, 0x102030, 0xFF, RDPPen(0, 1, 0x112233)),
+            RDPLineTo(1, 0, 10, 40, 60, encode_color24()(BGRColor_{0x102030}), 0xFF, RDPPen(0, 1, encode_color24()(BGRColor_{0x112233}))),
             "LineTo 1");
     }
 }

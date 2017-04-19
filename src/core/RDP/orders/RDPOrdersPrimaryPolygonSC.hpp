@@ -175,7 +175,7 @@ public:
     int16_t  yStart;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t BrushColor;
+    RDPColor BrushColor;
     uint8_t  NumDeltaEntries;
 
     struct DeltaPoint {
@@ -192,13 +192,13 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , fillMode(0x00)
-    , BrushColor(0x00000000)
+    , BrushColor{}
     , NumDeltaEntries(0) {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 
     RDPPolygonSC(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
-                 uint32_t BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
+                 RDPColor BrushColor, uint8_t NumDeltaEntries, InStream & deltaPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
         this->bRop2           = bRop2;
@@ -271,9 +271,7 @@ public:
         if (header.fields & 0x0008) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->BrushColor);
-            stream.out_uint8(this->BrushColor >> 8);
-            stream.out_uint8(this->BrushColor >> 16);
+            emit_rdp_color(stream, this->BrushColor);
         }
 
         if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
@@ -327,10 +325,7 @@ public:
         }
 
         if (header.fields & 0x0010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->BrushColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->BrushColor);
         }
 
         if (header.fields & 0x0020) {
@@ -383,7 +378,7 @@ public:
             "polygonsc(xStart=%d yStart=%d bRop2=0x%02X fillMode=%d BrushColor=%.6x "
                 "NumDeltaEntries=%d DeltaEntries=(",
             this->xStart, this->yStart, unsigned(this->bRop2),
-            this->fillMode, this->BrushColor, this->NumDeltaEntries);
+            this->fillMode, this->BrushColor.as_bgr().to_u32(), this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

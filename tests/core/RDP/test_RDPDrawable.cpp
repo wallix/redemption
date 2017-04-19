@@ -32,13 +32,13 @@
 #include "utils/drawable.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 #include "utils/png.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "transport/out_file_transport.hpp"
 #include "capture/capture.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
-    gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(BLACK)), screen_rect, color_cxt);
 
     GlyphCache gly_cache;
 
@@ -121,8 +121,8 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                   3,                            // flAccel
                                   0,                            // ulCharInc
                                   1,                            // fOpRedundant
-                                  0x000000,                     // BackColor
-                                  0xc8d0d4,                     // ForeColor
+                                  encode_color24()(BGRColor_(0x000000)),           // BackColor
+                                  encode_color24()(BGRColor_(0xc8d0d4)),           // ForeColor
                                   rect_bk,                      // Bk
                                   rect_op,                      // Op
                                   RDPBrush(),                   // Brush
@@ -145,8 +145,8 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                     3,                              // flAccel
                                     0,                              // ulCharInc
                                     1,                              // fOpRedundant
-                                    0x000000,                       // BackColor
-                                    0xc8d0d4,                       // ForeColor
+                                    encode_color24()(BGRColor_(0x000000)),             // BackColor
+                                    encode_color24()(BGRColor_(0xc8d0d4)),             // ForeColor
                                     rect_bk,                        // Bk
                                     rect_op,                        // Op
                                     RDPBrush(),                     // Brush
@@ -174,8 +174,8 @@ RED_AUTO_TEST_CASE(TestPolyline)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
-    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(WHITE)), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), encode_color24()(BLACK)), screen_rect, color_cxt);
 
     constexpr std::size_t array_size = 1024;
     uint8_t array[array_size];
@@ -204,7 +204,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
 
     InStream dp(array, deltaPoints.get_offset());
 
-    gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect, color_cxt);
+    gd.draw(RDPPolyline(158, 230, 0x06, 0, encode_color24()(WHITE), 7, dp), screen_rect, color_cxt);
 
     RED_CHECK_SIG(gd, "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b");
 
@@ -220,8 +220,8 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
-    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(WHITE)), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), encode_color24()(GREEN)), screen_rect, color_cxt);
 
     StaticOutStream<1024> deltaRectangles;
 
@@ -255,8 +255,8 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
     Rect screen_rect(0, 0, width, height);
     RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect, color_cxt);
-    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(WHITE)), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), encode_color24()(GREEN)), screen_rect, color_cxt);
 
     StaticOutStream<1024> deltaRectangles;
 
@@ -274,7 +274,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
     InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles_in), screen_rect, color_cxt);
+    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, encode_color24()(BLACK), 20, deltaRectangles_in), screen_rect, color_cxt);
 
     RED_CHECK_SIG(gd, "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8");
 
@@ -473,7 +473,7 @@ RED_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     RDPDrawable d(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     d.draw(cmd, screen_rect, color_cxt);
     TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
     dump_png24(d.impl(), trans, true);
@@ -485,7 +485,7 @@ RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
     dump_png24(drawable.impl(), trans, true);
 }
@@ -508,7 +508,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
     dump_png24(drawable.impl(), trans, true);
     trans.disconnect(); // close file before checking size
@@ -523,11 +523,11 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
     dump_png24(drawable.impl(), trans, true);
 
-    RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
+    RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), encode_color24()(BLUE));
     drawable.draw(cmd2, screen_rect, color_cxt);
     trans.next();
 
@@ -583,17 +583,10 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         Transport & trans;
         const Drawable & drawable;
 
-        timeval start_capture;
-        std::chrono::microseconds frame_interval;
-
     public:
-        ImageCaptureLocal (
-            const timeval & now, const Drawable & drawable, Transport & trans,
-            std::chrono::microseconds png_interval)
+        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , start_capture(now)
-        , frame_interval(png_interval)
         {
         }
 
@@ -604,34 +597,15 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             (void)y;
             (void)ignore_frame_in_timeval;
             using std::chrono::microseconds;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (   this->logical_frame_ended()
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    const_cast<Drawable&>(this->drawable).trace_mouse();
-                    tm ptm;
-                    localtime_r(&now.tv_sec, &ptm);
-                    const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-                    this->flush();
-                    this->trans.next();
-                    const_cast<Drawable&>(this->drawable).clear_timestamp();
-                    this->start_capture = now;
-                    const_cast<Drawable&>(this->drawable).clear_mouse();
-
-                    return microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return microseconds(interval - duration);
-        }
-
-        bool logical_frame_ended() const {
-            return this->drawable.logical_frame_ended;
+            const_cast<Drawable&>(this->drawable).trace_mouse();
+            tm ptm;
+            localtime_r(&now.tv_sec, &ptm);
+            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->flush();
+            this->trans.next();
+            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            const_cast<Drawable&>(this->drawable).clear_mouse();
+            return microseconds::zero();
         }
 
         void flush() {
@@ -639,11 +613,11 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         }
     };
 
-    ImageCaptureLocal consumer(now, drawable.impl(), trans, std::chrono::seconds{1});
+    ImageCaptureLocal consumer(drawable.impl(), trans);
 
     drawable.impl().dont_show_mouse_cursor = true;
 
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(cmd, screen_rect, color_cxt);
 
@@ -690,9 +664,9 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(RDPOpaqueRect(scr, RED), scr, color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr, color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr, color_cxt);
+    drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), encode_color24()(BLUE)), scr, color_cxt);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
     dump_png24(drawable.impl(), trans, true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(107, ::filesize(filename));
@@ -752,7 +726,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+    drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
 
 
     uint8_t source64x64[] = {
@@ -881,7 +855,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(RDPOpaqueRect(scr, GREEN), scr, color_cxt);
+    drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
 
     uint8_t source32x1[] =
 //MemBlt Primary Drawing Order (0x0D)

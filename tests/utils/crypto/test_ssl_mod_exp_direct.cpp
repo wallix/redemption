@@ -38,4 +38,4 @@ static inline size_t mod_exp(
     );
 }
 
-#include "system/common/test_ssl_mod_exp.cpp"
+#include "../../system/common/test_ssl_mod_exp.cpp"

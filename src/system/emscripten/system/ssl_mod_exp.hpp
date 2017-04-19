@@ -21,23 +21,18 @@
 
 #pragma once
 
-#include "system/big_integer.hpp"
+#include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-/**
- * \pre  \a out_len >= \a modulus_size
- * \return  the length of the big-endian number placed at out. ~size_t{} if error
- */
 static inline size_t mod_exp(
     uint8_t * out, size_t out_len,
     const uint8_t * inr, size_t in_len,
     const uint8_t * modulus, size_t modulus_size,
     const uint8_t * exponent, size_t exponent_size
 ) {
-    BigInteger mod(modulus, modulus_size);
-    BigInteger exp(exponent, exponent_size);
-    BigInteger x(inr, in_len);
-    BigInteger y = x.powAssignUnderMod(exp, mod);
-    // TODO bad format, base 10 -> base 256
-    return y.getNumber().copy(reinterpret_cast<char *>(out), out_len);
+    return mod_exp_direct(
+        out, out_len,
+        inr, in_len,
+        modulus, modulus_size,
+        exponent, exponent_size
+    );
 }
-
