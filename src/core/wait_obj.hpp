@@ -65,12 +65,6 @@ public:
 
     void set(std::chrono::microseconds idle_usec)
     {
-        this->set(idle_usec.count());
-    }
-
-    // Idle time in microsecond
-    void set(uint64_t idle_usec = 0)
-    {
         this->set_state = true;
         struct timeval now = tvtime();
 
@@ -80,15 +74,15 @@ public:
         this->trigger_time = addusectimeval(idle_usec, now);
     }
 
-    void update(std::chrono::microseconds idle_usec)
+    // Idle time in microsecond
+    void set(uint64_t idle_usec = 0)
     {
-        this->update(idle_usec.count());
+        this->set(std::chrono::microseconds(idle_usec));
     }
 
-    // Idle time in microsecond
-    void update(uint64_t idle_usec)
+    void update(std::chrono::microseconds idle_usec)
     {
-        if (!idle_usec) {
+        if (!idle_usec.count()) {
             return;
         }
         if (this->set_state) {
@@ -101,6 +95,12 @@ public:
         else {
             this->set(idle_usec);
         }
+    }
+
+    // Idle time in microsecond
+    void update(uint64_t idle_usec)
+    {
+        this->update(std::chrono::microseconds(idle_usec));
     }
 
     void wait_on_timeout(timeval & timeout) const

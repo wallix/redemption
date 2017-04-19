@@ -235,7 +235,7 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /
             }
             recorder.encoding_video_frame(previous_video_time / frame_interval);
             auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
-            this->start_video_capture = addusectimeval(elapsed.count(), this->start_video_capture);
+            this->start_video_capture = addusectimeval(elapsed, this->start_video_capture);
             previous_video_time += elapsed;
             count -= elapsed;
         }

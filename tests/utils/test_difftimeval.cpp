@@ -103,39 +103,39 @@ RED_AUTO_TEST_CASE(TestAddUsecTimeval)
     struct timeval init = { 0, 0 };
     timeval res;
 
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  0);
     RED_CHECK_EQUAL(res.tv_usec, 0);
 
 
     usec = 654322;
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  0);
     RED_CHECK_EQUAL(res.tv_usec, 654322);
 
     usec = 42737465L;
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  42);
     RED_CHECK_EQUAL(res.tv_usec, 737465);
 
     usec = 0;
     init.tv_sec =  78;
     init.tv_usec = 426891;
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  78);
     RED_CHECK_EQUAL(res.tv_usec, 426891);
 
     init.tv_sec =  78;
     init.tv_usec = 0;
     usec = 91234;
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  78);
     RED_CHECK_EQUAL(res.tv_usec, 91234);
 
     init.tv_sec =  815;
     init.tv_usec = 945862;
     usec = 457369421;
-    res = addusectimeval(usec, init);
+    res = addusectimeval(std::chrono::microseconds(usec), init);
     RED_CHECK_EQUAL(res.tv_sec,  1273);
     RED_CHECK_EQUAL(res.tv_usec, 315283);
 

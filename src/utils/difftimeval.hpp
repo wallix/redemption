@@ -86,7 +86,7 @@ static inline std::chrono::microseconds difftimeval(const timeval& endtime, cons
     return (d > std::chrono::microseconds(0x100000000LL)) ? std::chrono::microseconds{} : d;
 }
 
-//static inline timeval usectotimeval(const uint64_t time) {
+//static inline timeval usectotimeval(const std::chrono::microseconds time) {
 //    timeval res;
 //    res.tv_sec  = time / 1000000L;
 //    res.tv_usec = time - (res.tv_sec * 1000000L);
@@ -94,9 +94,9 @@ static inline std::chrono::microseconds difftimeval(const timeval& endtime, cons
 //    return res;
 //}
 
-static inline timeval addusectimeval(const uint64_t usec, const timeval & tv) {
+static inline timeval addusectimeval(const std::chrono::microseconds usec, const timeval & tv) {
     timeval res;
-    uint64_t sum_usec = tv.tv_usec + usec;
+    uint64_t sum_usec = tv.tv_usec + usec.count();
     res.tv_sec  = sum_usec / 1000000;
     res.tv_usec = sum_usec - (res.tv_sec * 1000000L);
     res.tv_sec += tv.tv_sec;
