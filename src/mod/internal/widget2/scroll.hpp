@@ -26,9 +26,9 @@
 class WidgetScrollBar : public Widget2 {
     bool horizontal;
 
-    int fg_color;
-    int bg_color;
-    int focus_color;
+    BGRColor_ fg_color;
+    BGRColor_ bg_color;
+    BGRColor_ focus_color;
 
     Font const & font;
 
@@ -64,7 +64,7 @@ class WidgetScrollBar : public Widget2 {
 public:
     WidgetScrollBar(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, bool horizontal,
-                    int group_id, int fgcolor, int bgcolor, int focuscolor,
+                    int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focuscolor,
                     Font const & font, bool rail_style, int maxvalue = 100)
     : Widget2(drawable, parent, notifier, group_id)
     , horizontal(horizontal)
@@ -182,135 +182,145 @@ public:
 
             if (this->horizontal) {
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                    "◀", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)), "◀",
+                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                    "▶", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)), "▶",
+                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 this->drawable.draw(
+                    RDPOpaqueRect(
+                        rect_intersect.intersect(this->scroll_bar_rect),
+                        encode_color24()(this->bg_color)
+                    ),
+                    this->get_rect(),
+                    gdi::ColorCtx::depth24()
+                );
+
+                if (!this->rail_style) {
+                    this->drawable.draw(
                         RDPOpaqueRect(
-                            rect_intersect.intersect(this->scroll_bar_rect),
-                            this->bg_color
+                            rect_intersect.intersect(
+                                Rect(
+                                    this->scroll_bar_rect.x,
+                                    this->scroll_bar_rect.y,
+                                    this->scroll_bar_rect.cx,
+                                    1)
+                            ),
+                            encode_color24()(this->fg_color)
                         ),
                         this->get_rect(),
                         gdi::ColorCtx::depth24()
                     );
 
-                if (!this->rail_style) {
                     this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(
-                                        Rect(this->scroll_bar_rect.x,
-                                                this->scroll_bar_rect.y,
-                                                this->scroll_bar_rect.cx,
-                                                1)
-                                    ),
-                                this->fg_color
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                Rect(
+                                    this->scroll_bar_rect.x,
+                                    this->scroll_bar_rect.y + this->cy() - 1,
+                                    this->scroll_bar_rect.cx,
+                                    1)
                             ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
-
-                    this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(
-                                        Rect(this->scroll_bar_rect.x,
-                                                this->scroll_bar_rect.y + this->cy() - 1,
-                                                this->scroll_bar_rect.cx,
-                                                1)
-                                    ),
-                                this->fg_color
-                            ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
+                            encode_color24()(this->fg_color)
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
                 }
 
                 if (this->rail_style) {
                     this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(this->cursor_button_rect),
-                                this->fg_color
-                            ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(this->cursor_button_rect),
+                            encode_color24()(this->fg_color)
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
                 }
                 else {
                     WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
-                        false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                        "▤", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                        false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▤",
+                        encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                        encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                         Rect(), 0, (this->rail_style ? 0 : 1), this->font, 0, -1);
                 }
             }
             else {
                 WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)),
-                    "▲", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                    false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)), "▲",
+                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)),
-                    "▼", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                    false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)), "▼",
+                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                     Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
                 this->drawable.draw(
+                    RDPOpaqueRect(
+                        rect_intersect.intersect(this->scroll_bar_rect),
+                        encode_color24()(this->bg_color)
+                    ),
+                    this->get_rect(),
+                    gdi::ColorCtx::depth24()
+                );
+
+                if (!this->rail_style) {
+                    this->drawable.draw(
                         RDPOpaqueRect(
-                            rect_intersect.intersect(this->scroll_bar_rect),
-                            this->bg_color
+                            rect_intersect.intersect(
+                                Rect(
+                                    this->scroll_bar_rect.x,
+                                    this->scroll_bar_rect.y,
+                                    1,
+                                    this->scroll_bar_rect.cy)
+                            ),
+                            encode_color24()(this->fg_color)
                         ),
                         this->get_rect(),
                         gdi::ColorCtx::depth24()
                     );
 
-                if (!this->rail_style) {
                     this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(
-                                        Rect(this->scroll_bar_rect.x,
-                                                this->scroll_bar_rect.y,
-                                                1,
-                                                this->scroll_bar_rect.cy)
-                                    ),
-                                this->fg_color
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(
+                                Rect(
+                                    this->scroll_bar_rect.x + this->cx() - 1,
+                                    this->scroll_bar_rect.y,
+                                    1,
+                                    this->scroll_bar_rect.cy)
                             ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
-
-                    this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(
-                                        Rect(this->scroll_bar_rect.x + this->cx() - 1,
-                                                this->scroll_bar_rect.y,
-                                                1,
-                                                this->scroll_bar_rect.cy)
-                                    ),
-                                this->fg_color
-                            ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
+                            encode_color24()(this->fg_color)
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
                 }
 
                 if (this->rail_style) {
                     this->drawable.draw(
-                            RDPOpaqueRect(
-                                rect_intersect.intersect(this->cursor_button_rect),
-                                this->fg_color
-                            ),
-                            this->get_rect(),
-                            gdi::ColorCtx::depth24()
-                        );
+                        RDPOpaqueRect(
+                            rect_intersect.intersect(this->cursor_button_rect),
+                            encode_color24()(this->fg_color)
+                        ),
+                        this->get_rect(),
+                        gdi::ColorCtx::depth24()
+                    );
                 }
                 else {
                     WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
-                        false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)),
-                        "▥", this->fg_color, this->bg_color, this->focus_color, gdi::ColorCtx::depth24(),
+                        false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▥",
+                        encode_color24()(this->fg_color), encode_color24()(this->bg_color),
+                        encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
                         Rect(), 0, (this->rail_style ? 0 : 1), this->font, -1, 0);
                 }
             }

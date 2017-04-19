@@ -31,12 +31,12 @@ class WidgetTooltip : public Widget2
     uint w_border;
     uint h_border;
     WidgetMultiLine desc;
-    int border_color;
+    BGRColor_ border_color;
 
 public:
     WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
-                  int fgcolor, int bgcolor, int border_color, Font const & font)
+                  BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ border_color, Font const & font)
         : Widget2(drawable, parent, notifier, 0)
         , w_border(10)
         , h_border(10)
@@ -75,7 +75,7 @@ public:
         if (!rect_intersect.isempty()) {
             this->drawable.begin_update();
 
-            this->drawable.draw(RDPOpaqueRect(this->get_rect(), desc.bg_color), rect_intersect, gdi::ColorCtx::depth24());
+            this->drawable.draw(RDPOpaqueRect(this->get_rect(), encode_color24()(this->desc.bg_color)), rect_intersect, gdi::ColorCtx::depth24());
             this->desc.rdp_input_invalidate(rect_intersect);
             this->draw_border(rect_intersect);
 
@@ -100,18 +100,18 @@ public:
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y(), this->cx() - 1, 1
-        )), this->border_color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + 1, 1, this->cy() - 2
-        )), this->border_color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), this->border_color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
-        )), this->border_color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
     }
 };

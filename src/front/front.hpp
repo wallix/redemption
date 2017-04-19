@@ -367,18 +367,6 @@ private:
 
     struct GraphicsPointer
     {
-        Graphics * p = nullptr;
-        bool is_initialized = false;
-        gdi::GraphicApi * gd = nullptr;
-        std::unique_ptr<gdi::GraphicApi> gd_converted;
-
-        ~GraphicsPointer() {
-            if (this->is_initialized) {
-                this->p->~Graphics();
-            }
-            ::operator delete(this->p);
-        }
-
         void initialize(
             OrderCaps & client_order_caps
           , ClientInfo const & client_info
@@ -393,165 +381,88 @@ private:
           , rdp_mppc_enc * mppc_enc
           , Verbose verbose
         ) {
-            this->gd_converted.reset();
-            this->gd = nullptr;
-
-            if (this->p) {
+            if (this->is_initialized) {
                 this->is_initialized = false;
-                this->p->~Graphics();
-            }
-            else {
-                this->p = static_cast<decltype(this->p)>(::operator new(sizeof(decltype(*this->p))));
+                this->u.graphics.~Graphics();
             }
 
-            new (this->p) Graphics(
+            new (&this->u.graphics) Graphics(
                 client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
                 ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
             );
             this->is_initialized = true;
         }
 
-        void clear_bmp_cache_persister() {
-            delete this->p->bmp_cache_persister;
-            this->p->bmp_cache_persister = nullptr;
+        void clear_bmp_cache_persister()
+        {
+            delete this->get_graphics().bmp_cache_persister;
+            this->get_graphics().bmp_cache_persister = nullptr;
         }
 
-        bool has_bmp_cache_persister() const {
-            return this->p && this->p->bmp_cache_persister;
+        bool has_bmp_cache_persister() const
+        {
+            return this->is_initialized && this->get_graphics().bmp_cache_persister;
         }
 
         BmpCachePersister * bmp_cache_persister() const
-        { return this->p->bmp_cache_persister; }
+        {
+            return this->get_graphics().bmp_cache_persister;
+        }
 
-        uint8_t bpp() const { return this->p->bmp_cache.bpp; }
+        uint8_t bpp() const
+        {
+            return this->get_bmp_cache().bpp;
+        }
+
+        BmpCache const & get_bmp_cache() const
+        {
+            return this->get_graphics().bmp_cache;
+        }
 
         int add_brush(uint8_t* brush_item_data, int& cache_idx)
-        { return this->p->brush_cache.add_brush(brush_item_data, cache_idx); }
+        {
+            return this->get_graphics().brush_cache.add_brush(brush_item_data, cache_idx);
+        }
 
         brush_item const & brush_at(int cache_idx) const
-        { return this->p->brush_cache.brush_items[cache_idx]; }
+        {
+            return this->get_graphics().brush_cache.brush_items[cache_idx];
+        }
 
         Graphics::PrivateGraphicsUpdatePDU & graphics_update_pdu()
-        { return this->p->graphics_update_pdu; }
-
-        gdi::GraphicApi & get_graphics_api() {
-            if (this->gd) {
-                return *this->gd;
-            }
-            return this->graphics_update_pdu();
+        {
+            return this->get_graphics().graphics_update_pdu;
         }
 
-        template<class Enc>
-        struct GraphicConverter : gdi::GraphicApi
+        ~GraphicsPointer()
         {
-            void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
-            void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-            void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-            void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-            void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-            void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-            void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-            void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-            void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
-            void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-
-            void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
-            void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
-
-            void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
-            void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
-
-            void set_pointer(Pointer    const & pointer) override { this->graphics.set_pointer(pointer); }
-            void set_palette(BGRPalette const & palette) override { this->graphics.set_palette(palette); }
-
-            void sync() override { this->graphics.sync(); }
-
-            void set_row(std::size_t rownum, const uint8_t * data) override { this->graphics.set_row(rownum, data); }
-
-            void begin_update() override { this->graphics.begin_update(); }
-            void end_update() override { this->graphics.end_update(); }
-
-        private:
-            template<class... Ts>
-            void draw_impl(Ts const & ... args)
-            {
-                this->graphics.draw(args...);
+            if (this->is_initialized) {
+                this->u.graphics.~Graphics();
             }
-
-            template<class Cmd, class... Ts>
-            void draw_impl(Cmd const & cmd, Rect clip, gdi::ColorCtx color_ctx, Ts const & ... args)
-            {
-                constexpr auto depth = gdi::Depth::from_bpp(Enc::bpp);
-                Cmd const & new_cmd = (depth == color_ctx.depth())
-                    ? cmd
-                    : [&cmd, &color_ctx]() {
-                        auto color_convertor = [&color_ctx](BGRColor c) {
-                            Enc enc;
-                            switch (color_ctx.depth()) {
-                                case gdi::Depth::depth8() : return enc(decode_color8_opaquerect()(c, *color_ctx.palette()));
-                                case gdi::Depth::depth15(): return enc(decode_color15_opaquerect()(c));
-                                case gdi::Depth::depth16(): return enc(decode_color16_opaquerect()(c));
-                                case gdi::Depth::depth24(): return enc(decode_color24_opaquerect()(c));
-                                case gdi::Depth::unspecified(): default: assert(!"unknown depth");
-                            }
-                            return RGBColor{};
-                        };
-                        Cmd new_cmd = cmd;
-                        gdi::GraphicCmdColor::encode_cmd_color(color_convertor, new_cmd);
-                        return new_cmd;
-                    }();
-                this->graphics.draw(new_cmd, clip, gdi::ColorCtx{depth, color_ctx.palette()}, args...);
-            }
-
-            Graphics::PrivateGraphicsUpdatePDU & graphics;
-
-        public:
-            GraphicConverter(Graphics::PrivateGraphicsUpdatePDU & graphics)
-            : graphics(graphics)
-            {}
-        };
-
-        template<class Enc>
-        void build_graphics(Enc const & /*enc*/)
-        {
-            using Drawable = GraphicConverter<Enc>;
-            this->gd_converted = std::make_unique<Drawable>(this->graphics_update_pdu());
-            this->gd = this->gd_converted.get();
         }
 
-        gdi::GraphicApi & initialize_drawable(uint8_t client_bpp)
+    private:
+        Graphics & get_graphics()
         {
             assert(this->is_initialized);
-
-            this->gd_converted.reset();
-
-            switch (client_bpp) {
-                case 8 : this->build_graphics(encode_color8 {}); break;
-                case 15: this->build_graphics(encode_color15{}); break;
-                case 16: this->build_graphics(encode_color16{}); break;
-                case 24:
-                case 32: this->build_graphics(encode_color24{}); break;
-            }
-
-            assert(this->gd);
-
-            return *this->gd;
+            return this->u.graphics;
         }
+
+        Graphics const & get_graphics() const
+        {
+            assert(this->is_initialized);
+            return this->u.graphics;
+        }
+
+        union U
+        {
+            Graphics graphics;
+            char dummy;
+
+            U() : dummy() {}
+            ~U() {}
+        } u;
+        bool is_initialized = false;
     } orders;
 
     struct write_x224_dt_tpdu_fn
@@ -1154,7 +1065,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.get_graphics_api());
+            this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
         this->update_keyboard_input_mask_state();
@@ -1178,7 +1089,7 @@ public:
 
             this->capture_state = CAPTURE_STATE_STOPED;
 
-            this->set_gd(this->orders.get_graphics_api());
+            this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
         return false;
@@ -1259,7 +1170,7 @@ public:
             OutFileTransport oft(fd);
 
             BmpCachePersister::save_all_to_disk(
-                this->orders.p->bmp_cache, oft,
+                this->orders.get_bmp_cache(), oft,
                 convert_verbose_flags(this->verbose)
             );
 
@@ -4110,7 +4021,7 @@ private:
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
 
-                this->set_gd(this->orders.initialize_drawable(this->client_info.bpp));
+                this->set_gd(this->orders.graphics_update_pdu());
 
                 this->up_and_running = 1;
                 this->timeout.cancel_timeout();
@@ -4357,38 +4268,19 @@ protected:
     }
 
 public:
-    using Color = Drawable::Color;
-
-    Color u32_to_color(uint32_t color) const {
-        return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
-    }
-
-    Color u32rgb_to_color(gdi::ColorCtx color_ctx, BGRColor color) const {
-        using gdi::Depth;
-
-        switch (color_ctx.depth()){
-            case Depth::depth8():  color = decode_color8_opaquerect()(color, *color_ctx.palette()); break;
-            case Depth::depth15(): color = decode_color15_opaquerect()(color); break;
-            case Depth::depth16(): color = decode_color16_opaquerect()(color); break;
-            case Depth::depth24(): break;
-            case Depth::unspecified(): default: REDASSERT(false);
-        }
-
-        return this->u32_to_color(color);
-    }
-
-    typedef struct GlyphTo24Bitmap {
-
+    struct GlyphTo24Bitmap
+    {
+        // TODO BGRArray<256>
         uint8_t raw_data[256*3];
 
         GlyphTo24Bitmap( FontChar const & fc
-                     , const Color color_fore
-                     , const Color color_back) {
+                     , const BGRColor_ color_fore
+                     , const BGRColor_ color_back) {
 
             for (int i = 0; i < 256*3; i += 3) {
-                this->raw_data[i  ] = color_fore.red();
+                this->raw_data[i  ] = color_fore.blue();
                 this->raw_data[i+1] = color_fore.green();
-                this->raw_data[i+2] = color_fore.blue();
+                this->raw_data[i+2] = color_fore.red();
             }
 
             int height_bitmap = fc.height;
@@ -4410,25 +4302,25 @@ public:
                     const uint16_t ypix = y * fc.width * 3;
 
                     if (fc_bit_mask & *fc_data) {
-                        this->raw_data[xpix + ypix    ] = color_back.red();
+                        this->raw_data[xpix + ypix    ] = color_back.blue();
                         this->raw_data[xpix + ypix + 1] = color_back.green();
-                        this->raw_data[xpix + ypix + 2] = color_back.blue();
+                        this->raw_data[xpix + ypix + 2] = color_back.red();
                     }
                     fc_bit_mask >>= 1;
                 }
                 fc_data++;
             }
         }
-    } GlyphTo24Bitmap;
+    };
 
 
 protected:
-    void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) {
-
+    void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
+    {
         if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const Color color_fore = this->u32rgb_to_color(color_ctx, cmd.fore_color);
-            const Color color_back = this->u32rgb_to_color(color_ctx, cmd.back_color);
+            const BGRColor_ color_fore = color_decode(cmd.fore_color, color_ctx);
+            const BGRColor_ color_back = color_decode(cmd.back_color, color_ctx);
 
             uint16_t draw_pos_ref = 0;
             InStream variable_bytes(cmd.data, cmd.data_len);
@@ -4576,11 +4468,11 @@ private:
         RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
         if (this->client_info.bpp != this->mod_bpp) {
-            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor_ fore_color24 = color_decode(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
-            cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
-            cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+            cmd2.back_color = color_encode(back_color24, this->client_info.bpp);
+            cmd2.fore_color = color_encode(fore_color24, this->client_info.bpp);
         }
 
         // this may change the brush add send it to to remote cache

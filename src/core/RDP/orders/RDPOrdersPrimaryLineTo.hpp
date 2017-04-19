@@ -47,7 +47,7 @@ class RDPLineTo {
     int16_t starty;
     int16_t endx;
     int16_t endy;
-    uint32_t back_color;
+    RDPColor back_color;
     uint8_t rop2;
     RDPPen pen;
 
@@ -58,7 +58,7 @@ class RDPLineTo {
 
     RDPLineTo(uint8_t back_mode,
               int16_t startx, int16_t starty, int16_t endx, int16_t endy,
-              uint32_t back_color,
+              RDPColor back_color,
               uint8_t rop2,
               const RDPPen & pen) :
         back_mode(back_mode),
@@ -127,9 +127,7 @@ class RDPLineTo {
         header.emit_coord(stream, 0x10, this->endy,   oldcmd.endy);
 
         if (header.fields & 0x20) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x40) { stream.out_uint8(this->rop2); }
         header.emit_pen(stream, 0x80, this->pen, oldcmd.pen);
@@ -149,10 +147,7 @@ class RDPLineTo {
         header.receive_coord(stream, 0x010, this->endy);
 
         if (header.fields & 0x020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x040) {
@@ -177,10 +172,10 @@ class RDPLineTo {
             unsigned(this->back_mode),
             this->startx, this->starty, this->endx, this->endy,
             this->rop2,
-            this->back_color,
+            this->back_color.as_bgr().to_u32(),
             this->pen.style,
             this->pen.width,
-            this->pen.color
+            this->pen.color.as_bgr().to_u32()
             );
         if (lg >= sz){
             return sz;

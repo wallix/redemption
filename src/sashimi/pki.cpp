@@ -271,7 +271,7 @@ static void _bin_to_base64(unsigned char *dest, const unsigned char source[3],
  */
 std::vector<uint8_t> bin_to_base64(const unsigned char *source, int len);
 
-std::vector<uint8_t> bin_to_base64(const unsigned char *source, int len) 
+std::vector<uint8_t> bin_to_base64(const unsigned char *source, int len)
 {
   int flen = len + (3 - (len % 3)); /* round to upper 3 multiple */
   flen = (4 * flen) / 3 + 1;
@@ -330,7 +330,7 @@ void ssh_signature_free(ssh_signature_struct * sig)
             break;
     }
 
-    free(sig);
+    delete sig;
 }
 
 /**
@@ -689,7 +689,7 @@ inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey, std::vecto
         return SSH_ERROR;
     }
 
-    b64_key = std::move(bin_to_base64(&key_blob[0], key_blob.size()));
+    b64_key = bin_to_base64(&key_blob[0], key_blob.size());
     return SSH_OK;
 }
 

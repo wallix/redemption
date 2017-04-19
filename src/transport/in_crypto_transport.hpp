@@ -52,6 +52,7 @@ private:
     uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
     EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
+    // TODO: state to remove ? Seems to duplicate eof flag
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
     EncryptionMode encryption_mode;
@@ -93,6 +94,17 @@ public:
         this->open(pathname);
 
     }
+
+    int partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_partial_read(buffer, len);
+    }
+
+    int partial_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    {
+        return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
+    }
+
 
     void open(const char * pathname)
     {
@@ -297,11 +309,14 @@ private:
         }
     }
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override
+    int do_partial_read(uint8_t * buffer, size_t len)
     {
+        if (this->eof){
+            return 0;
+        }
         if (this->encrypted){
             if (this->state & CF_EOF) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+                return 0;
             }
 
             unsigned int remaining_size = len;
@@ -357,7 +372,7 @@ private:
                     if (!this->raw_size) { // end of file reached
                         break;
                     }
-                }
+                } // raw_size
                 // Check how much we can copy
                 unsigned int copiable_size = std::min(this->raw_size - this->clear_pos, remaining_size);
                 // Copy buffer to caller
@@ -372,15 +387,9 @@ private:
                 if (this->raw_size == this->clear_pos) {
                     this->raw_size = 0;
                 }
-            }
-            if (remaining_size > 0){
-                if (remaining_size == len){
-                    this->eof = true;
-                    return false;
-                }
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-            return true;
+                // TODO: for partial_read we could avoid looping on remaining size
+            } // while (remaining_size)
+            return len - remaining_size;
         }
         else {
             if (this->raw_size - this->clear_pos > len){
@@ -390,7 +399,7 @@ private:
                 if (this->file_len <= this->current_len) {
                     this->eof = true;
                 }
-                return true;
+                return len;
             }
             unsigned int remaining_len = len;
             if (this->raw_size - this->clear_pos > 0){
@@ -403,6 +412,7 @@ private:
                 ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
                 if (res <= 0){
                     if (res == 0) {
+                        this->eof = true;
                         break;
                     }
                     if (errno == EINTR){
@@ -413,20 +423,25 @@ private:
                 }
                 remaining_len -= res;
             };
-            if (remaining_len == len){
-                this->eof = true;
-                return false;
-            }
-            if (remaining_len > 0){
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
+            
             this->current_len += len;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
             }
             this->last_quantum_received += len;
+            return len - remaining_len;
         }
-        return true;
+        return -1;
+    }
+
+
+    bool do_atomic_read(uint8_t * buffer, size_t len) override
+    {
+        int res = do_partial_read(buffer, len);
+        if ((res != 0) && (res != len)) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+        }
+        return res == len;
     }
 
 };

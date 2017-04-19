@@ -170,8 +170,8 @@ class RDPMem3Blt {
     uint8_t     rop;
     uint16_t    srcx;
     uint16_t    srcy;
-    uint32_t    back_color;
-    uint32_t    fore_color;
+    RDPColor    back_color;
+    RDPColor    fore_color;
     RDPBrush    brush;
     uint16_t    cache_idx;
 
@@ -184,8 +184,8 @@ class RDPMem3Blt {
               , uint8_t rop
               , uint16_t srcx
               , uint16_t srcy
-              , uint32_t back_color
-              , uint32_t fore_color
+              , RDPColor back_color
+              , RDPColor fore_color
               , const RDPBrush & brush
               , uint16_t cache_idx)
     : cache_id(cache_id)
@@ -296,14 +296,10 @@ class RDPMem3Blt {
         header.emit_src(stream, 0x0040, this->srcx, this->srcy, oldcmd.srcx, oldcmd.srcy);
 
         if (header.fields & 0x0100) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0200) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
 
         header.emit_brush(stream, 0x0400, this->brush, oldcmd.brush);
@@ -329,17 +325,11 @@ class RDPMem3Blt {
         header.receive_src(stream, 0x0040, this->srcx, this->srcy);
 
         if (header.fields & 0x0100) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x0200) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->fore_color);
         }
 
         header.receive_brush(stream, 0x0400, this->brush);
@@ -363,8 +353,8 @@ class RDPMem3Blt {
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
             unsigned(this->rop),
             this->srcx, this->srcy,
-            this->back_color,
-            this->fore_color,
+            this->back_color.as_bgr().to_u32(),
+            this->fore_color.as_bgr().to_u32(),
             this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch,
             unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1]),
             unsigned(this->brush.extra[2]), unsigned(this->brush.extra[3]),

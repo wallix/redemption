@@ -357,18 +357,18 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
         break;
     case 16:
         initializer_data([&stream](uint8_t * d, unsigned /*x*/){
-            BGRColor c = decode_color16()(stream.in_uint16_le());
-            d[0] = c >> 16;
-            d[1] = (c >> 8) & 0xf;
-            d[2] = c & 0xf;
+            BGRColor_ c = decode_color16()(RDPColor::from(stream.in_uint16_le()));
+            d[0] = c.blue();
+            d[1] = c.green();
+            d[2] = c.red();
         });
         break;
     case 8:
         initializer_data([&stream, &palette1](uint8_t * d, unsigned /*x*/){
-            BGRColor c = decode_color8()(stream.in_uint8(), palette1);
-            d[0] = c >> 16;
-            d[1] = (c >> 8) & 0xf;
-            d[2] = c & 0xf;
+            BGRColor_ c = decode_color8()(RDPColor::from(stream.in_uint8()), palette1);
+            d[0] = c.blue();
+            d[1] = c.green();
+            d[2] = c.red();
         });
         break;
     case 4:
@@ -382,10 +382,10 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             else {
                 idx_palette = k & 0xf;
             }
-            BGRColor c = palette1[idx_palette];
-            d[0] = c >> 16;
-            d[1] = (c >> 8) & 0xf;
-            d[2] = c & 0xf;
+            BGRColor_ c = BGRColor_(palette1[idx_palette]);
+            d[0] = c.blue();
+            d[1] = c.green();
+            d[2] = c.red();
         });
         break;
     }

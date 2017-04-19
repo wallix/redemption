@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect, color_cxt);
+    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
     now.tv_sec++;
 
     {
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
             void refresh_rects(array_view<Rect const>) override {}
         } osd(drawable, rect);
-        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect, color_cxt);
+        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), encode_color24()(GREEN)), screen_rect, color_cxt);
         now.tv_sec++;
         consumer.do_snapshot(now);
     }

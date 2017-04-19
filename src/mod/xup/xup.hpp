@@ -71,7 +71,7 @@ enum {
     int bpp;
     Transport & t;
     int rop;
-    int fgcolor;
+    BGRColor_ fgcolor;
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
     RDPPen pen;
@@ -246,10 +246,10 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         drawable.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         drawable.draw(RDPPatBlt(r, this->rop, color_encode(BLACK, this->bpp), color_encode(WHITE, this->bpp),
                             RDPBrush(r.x, r.y, 3, 0xaa,
                             reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
-                            ), r, gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
+                         ), r, gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;
                     case 4:
@@ -299,7 +299,7 @@ enum {
                     break;
                     case 12: /* server_set_fgcolor */
                     {
-                        this->fgcolor = stream.in_uint32_le();
+                        this->fgcolor = BGRColor_(stream.in_uint32_le()); // TODO RGB or BGR ?
                     }
                     break;
                     case 14:
@@ -319,9 +319,9 @@ enum {
                         int y1 = stream.in_sint16_le();
                         int x2 = stream.in_sint16_le();
                         int y2 = stream.in_sint16_le();
-                        const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
-                                               this->rop,
-                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
+                        const RDPLineTo lineto(
+                            1, x1, y1, x2, y2, color_encode(WHITE, this->bpp), this->rop,
+                            RDPPen(this->pen.style, this->pen.width, encode_color24()(this->fgcolor)));
                         drawable.draw(lineto, Rect(0,0,1,1), gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;

@@ -41,9 +41,9 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int focus_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ focus_color = WINBLUE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -83,9 +83,9 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int focus_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ focus_color = WINBLUE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -125,9 +125,9 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int focus_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ focus_color = WINBLUE;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
@@ -167,9 +167,9 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int focus_color = WINBLUE;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ focus_color = WINBLUE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;

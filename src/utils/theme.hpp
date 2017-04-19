@@ -28,52 +28,51 @@
 #include <string>
 
 
-struct Theme final
+struct Theme
 {
     struct {
-        int bgcolor = DARK_BLUE_BIS;
-        int fgcolor = WHITE;
-        int separator_color = LIGHT_BLUE;
-        int focus_color = WINBLUE;
-        int error_color = YELLOW;
+        BGRColor_ bgcolor = DARK_BLUE_BIS;
+        BGRColor_ fgcolor = WHITE;
+        BGRColor_ separator_color = LIGHT_BLUE;
+        BGRColor_ focus_color = WINBLUE;
+        BGRColor_ error_color = YELLOW;
         bool logo = false;
         std::string logo_path;
-    } global {}; // fixes gcc-4.9 -Wuninitialized warning
+    } global {}; // note: fixes -Wmissing-field-initializers on gcc-4.9
 
     struct {
-        int bgcolor = WHITE;
-        int fgcolor = BLACK;
-        int focus_color = WINBLUE;
+        BGRColor_ bgcolor = WHITE;
+        BGRColor_ fgcolor = BLACK;
+        BGRColor_ focus_color = WINBLUE;
     } edit;
 
     struct {
-        int fgcolor = BLACK;
-        int bgcolor = LIGHT_YELLOW;
-        int border_color = BLACK;
+        BGRColor_ fgcolor = BLACK;
+        BGRColor_ bgcolor = LIGHT_YELLOW;
+        BGRColor_ border_color = BLACK;
     } tooltip;
 
     struct {
-        int bgcolor = PALE_BLUE;
-        int fgcolor = BLACK;
+        BGRColor_ bgcolor = PALE_BLUE;
+        BGRColor_ fgcolor = BLACK;
     } selector_line1;
     struct {
-        int bgcolor = LIGHT_BLUE;
-        int fgcolor = BLACK;
+        BGRColor_ bgcolor = LIGHT_BLUE;
+        BGRColor_ fgcolor = BLACK;
     } selector_line2;
     struct {
-        int bgcolor = MEDIUM_BLUE;
-        int fgcolor = WHITE;
+        BGRColor_ bgcolor = MEDIUM_BLUE;
+        BGRColor_ fgcolor = WHITE;
     } selector_selected;
     struct {
-        int bgcolor = WINBLUE;
-        int fgcolor = WHITE;
+        BGRColor_ bgcolor = WINBLUE;
+        BGRColor_ fgcolor = WHITE;
     } selector_focus;
     struct {
-        int bgcolor = MEDIUM_BLUE;
-        int fgcolor = WHITE;
+        BGRColor_ bgcolor = MEDIUM_BLUE;
+        BGRColor_ fgcolor = WHITE;
     } selector_label;
 };
-
 
 struct ThemeHolder final : public ConfigurationHolder
 {

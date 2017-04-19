@@ -49,7 +49,8 @@ class LanguageButton : public WidgetFlatButton
             Theme const & theme
         )
         : WidgetFlatButton(drawable, *this, this, nullptr, -1,
-                           theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font, 7, 7)
+                           theme.global.fgcolor, theme.global.bgcolor,
+                           theme.global.focus_color, 2, font, 7, 7)
         , front(front)
         , parent(parent)
     {

@@ -33,85 +33,86 @@ RED_AUTO_TEST_CASE(TestColorFromFile)
     // test we can read from a file (and not only from a stream)
     Theme colors;
 
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.global.separator_color);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.global.focus_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),  colors.global.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.global.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_BLUE),     colors.global.separator_color);
+    RED_CHECK_EQUAL((WINBLUE),        colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.edit.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.edit.fgcolor);
 
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_YELLOW),   colors.tooltip.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.border_color);
+    RED_CHECK_EQUAL((LIGHT_YELLOW),   colors.tooltip.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.tooltip.fgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.tooltip.border_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(PALE_BLUE),      colors.selector_line1.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.selector_line2.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_selected.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_selected.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.selector_focus.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_label.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
+    RED_CHECK_EQUAL((PALE_BLUE),      colors.selector_line1.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.selector_line1.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_BLUE),     colors.selector_line2.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.selector_line2.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),    colors.selector_selected.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_selected.fgcolor);
+    RED_CHECK_EQUAL((WINBLUE),        colors.selector_focus.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_focus.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),    colors.selector_label.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_label.fgcolor);
 
 
-    ThemeHolder theme_holder(colors);
+    ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, FIXTURES_PATH "/rdpcolor.ini");
 
-    RED_CHECK_EQUAL(0xdc8115,                         colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
-    RED_CHECK_EQUAL(0xc46a00,                         colors.global.separator_color);
-    RED_CHECK_EQUAL(0x9d1c22,                         colors.global.focus_color);
+    RED_CHECK_EQUAL(BGRColor_(0xdc8115),  colors.global.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.global.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0xc46a00),  colors.global.separator_color);
+    RED_CHECK_EQUAL(BGRColor_(0x9d1c22),  colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.edit.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.edit.fgcolor);
 
-    RED_CHECK_EQUAL(static_cast<int>(PALE_BLUE),      colors.tooltip.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE),      colors.tooltip.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(DARK_GREEN),     colors.tooltip.border_color);
+    RED_CHECK_EQUAL((PALE_BLUE),          colors.tooltip.bgcolor);
+    RED_CHECK_EQUAL((DARK_BLUE),          colors.tooltip.fgcolor);
+    RED_CHECK_EQUAL((DARK_GREEN),         colors.tooltip.border_color);
 
-    RED_CHECK_EQUAL(0xffd59a,                         colors.selector_line1.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    RED_CHECK_EQUAL(0xffbf64,                         colors.selector_line2.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    RED_CHECK_EQUAL(0xb72d30,                         colors.selector_selected.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_selected.fgcolor);
-    RED_CHECK_EQUAL(0x9d1c22,                         colors.selector_focus.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    RED_CHECK_EQUAL(0xb72d30,                         colors.selector_label.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0xffd59a),  colors.selector_line1.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line1.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0xffbf64),  colors.selector_line2.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line2.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0xb72d30),  colors.selector_selected.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_selected.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0x9d1c22),  colors.selector_focus.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_focus.fgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0xb72d30),  colors.selector_label.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
 }
-RED_AUTO_TEST_CASE(TestConfigDefault)
+
+BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
     Theme          colors;
-    ThemeHolder theme_holder(colors);
+    ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, oss);
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.global.separator_color);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),  colors.global.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.global.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_BLUE),     colors.global.separator_color);
+    RED_CHECK_EQUAL((WINBLUE),        colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_YELLOW),   colors.tooltip.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.border_color);
+    RED_CHECK_EQUAL((WHITE),          colors.edit.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.edit.fgcolor);
 
-    RED_CHECK_EQUAL(static_cast<int>(PALE_BLUE),      colors.selector_line1.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.selector_line2.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_selected.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_selected.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.selector_focus.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_label.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_YELLOW),   colors.tooltip.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.tooltip.fgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.tooltip.border_color);
 
+    RED_CHECK_EQUAL((PALE_BLUE),      colors.selector_line1.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.selector_line1.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_BLUE),     colors.selector_line2.bgcolor);
+    RED_CHECK_EQUAL((BLACK),          colors.selector_line2.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),    colors.selector_selected.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_selected.fgcolor);
+    RED_CHECK_EQUAL((WINBLUE),        colors.selector_focus.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_focus.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),    colors.selector_label.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.selector_label.fgcolor);
 }
 
 RED_AUTO_TEST_CASE(TestConfigPartial)
@@ -129,61 +130,61 @@ RED_AUTO_TEST_CASE(TestConfigPartial)
                             "\n"
                             );
     Theme          colors;
-    ThemeHolder theme_holder(colors);
+
+    ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, oss);
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
-    RED_CHECK_EQUAL(0x125456,                         colors.global.focus_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
+    RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
+    RED_CHECK_EQUAL((RED),                colors.global.separator_color);
+    RED_CHECK_EQUAL(BGRColor_(0x125456),  colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.edit.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.edit.fgcolor);
 
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_YELLOW),   colors.tooltip.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.border_color);
+    RED_CHECK_EQUAL((LIGHT_YELLOW),       colors.tooltip.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.tooltip.fgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.tooltip.border_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(PALE_BLUE),      colors.selector_line1.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(GREEN),          colors.selector_line2.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_selected.bgcolor);
-    RED_CHECK_EQUAL(0x005eab,                         colors.selector_selected.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.selector_focus.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_label.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
-
+    RED_CHECK_EQUAL((PALE_BLUE),          colors.selector_line1.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line1.fgcolor);
+    RED_CHECK_EQUAL((GREEN),              colors.selector_line2.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line2.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_selected.bgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0x005eab),  colors.selector_selected.fgcolor);
+    RED_CHECK_EQUAL((WINBLUE),            colors.selector_focus.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_focus.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_label.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
 }
 
 RED_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
-    ThemeHolder theme_holder(colors);
+
+    ThemeHolder    theme_holder(colors);
     ConfigurationLoader cfg_loader(theme_holder, CFG_PATH "/themes/test_theme/theme.ini");
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
-    RED_CHECK_EQUAL(0x125456,                         colors.global.focus_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
+    RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
+    RED_CHECK_EQUAL((RED),                colors.global.separator_color);
+    RED_CHECK_EQUAL(BGRColor_(0x125456),  colors.global.focus_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.edit.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.edit.fgcolor);
 
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_YELLOW),   colors.tooltip.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.tooltip.border_color);
+    RED_CHECK_EQUAL((LIGHT_YELLOW),       colors.tooltip.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.tooltip.fgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.tooltip.border_color);
 
-    RED_CHECK_EQUAL(static_cast<int>(PALE_BLUE),      colors.selector_line1.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(GREEN),          colors.selector_line2.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_selected.bgcolor);
-    RED_CHECK_EQUAL(0x005eab,                         colors.selector_selected.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.selector_focus.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_label.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
-
+    RED_CHECK_EQUAL((PALE_BLUE),          colors.selector_line1.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line1.fgcolor);
+    RED_CHECK_EQUAL((GREEN),              colors.selector_line2.bgcolor);
+    RED_CHECK_EQUAL((BLACK),              colors.selector_line2.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_selected.bgcolor);
+    RED_CHECK_EQUAL(BGRColor_(0x005eab),  colors.selector_selected.fgcolor);
+    RED_CHECK_EQUAL((WINBLUE),            colors.selector_focus.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_focus.fgcolor);
+    RED_CHECK_EQUAL((MEDIUM_BLUE),        colors.selector_label.bgcolor);
+    RED_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
 }
 
 RED_AUTO_TEST_CASE(TestConfigPartialIni)
@@ -191,17 +192,17 @@ RED_AUTO_TEST_CASE(TestConfigPartialIni)
     Inifile ini;
     Theme const & colors = ini.get<cfg::theme>();
 
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(LIGHT_BLUE),     colors.global.separator_color);
-    RED_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.global.focus_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),  colors.global.bgcolor);
+    RED_CHECK_EQUAL((WHITE),          colors.global.fgcolor);
+    RED_CHECK_EQUAL((LIGHT_BLUE),     colors.global.separator_color);
+    RED_CHECK_EQUAL((WINBLUE),        colors.global.focus_color);
 
     ini.set<cfg::internal_mod::theme>("test_theme");
 
-    RED_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
-    RED_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
-    RED_CHECK_EQUAL(0x125456,                         colors.global.focus_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
+    RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
+    RED_CHECK_EQUAL((RED),                colors.global.separator_color);
+    RED_CHECK_EQUAL(BGRColor_(0x125456),  colors.global.focus_color);
 
     RED_CHECK_EQUAL(true,                             colors.global.logo);
     RED_CHECK_EQUAL(CFG_PATH "/themes/test_theme/logo.png", colors.global.logo_path);

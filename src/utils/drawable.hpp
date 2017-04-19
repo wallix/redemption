@@ -230,15 +230,15 @@ struct DrawableTraitColor24
     static const size_t Bpp = 3;
 
     class color_t {
-        uint8_t r;
-        uint8_t g;
         uint8_t b;
+        uint8_t g;
+        uint8_t r;
 
     public:
-        constexpr color_t(uint8_t r_, uint8_t g_, uint8_t b_) noexcept
-        : r(r_)
+        constexpr color_t(uint8_t b_, uint8_t g_, uint8_t r_) noexcept
+        : b(b_)
         , g(g_)
-        , b(b_)
+        , r(r_)
         {}
 
         constexpr uint8_t red() const noexcept
@@ -251,32 +251,32 @@ struct DrawableTraitColor24
         { return b; }
 
         constexpr color_t operator~() const noexcept
-        { return {uint8_t(~r), uint8_t(~g), uint8_t(~b)}; }
+        { return {uint8_t(~b), uint8_t(~g), uint8_t(~r)}; }
     };
 
     static uint8_t * assign(uint8_t * dest, color_t color)
     {
-        *dest++ = color.red();
-        *dest++ = color.green();
         *dest++ = color.blue();
+        *dest++ = color.green();
+        *dest++ = color.red();
         return dest;
     }
 
     template<class BinaryOp>
     static uint8_t * assign(uint8_t * dest, color_t color, BinaryOp op)
     {
-        *dest = op(*dest, color.red());   ++dest;
-        *dest = op(*dest, color.green()); ++dest;
         *dest = op(*dest, color.blue());  ++dest;
+        *dest = op(*dest, color.green()); ++dest;
+        *dest = op(*dest, color.red());   ++dest;
         return dest;
     }
 
     template<class BinaryOp>
     static uint8_t * assign(uint8_t * dest, color_t color, color_t color2, BinaryOp op)
     {
-        *dest = op(*dest, color.red(),   color2.red());   ++dest;
-        *dest = op(*dest, color.green(), color2.green()); ++dest;
         *dest = op(*dest, color.blue(),  color2.blue());  ++dest;
+        *dest = op(*dest, color.green(), color2.green()); ++dest;
+        *dest = op(*dest, color.red(),   color2.red());   ++dest;
         return dest;
     }
 
@@ -290,7 +290,7 @@ struct DrawableTraitColor24
         return {uint8_t(color >> 16), uint8_t(color >> 8), uint8_t(color)};
     }
 
-    struct toColor8
+    struct fromColor8
     {
         const BGRPalette & palette;
 
@@ -300,33 +300,27 @@ struct DrawableTraitColor24
         }
     };
 
-    struct toColor15
+    struct fromColor15
     {
         color_t operator()(const uint8_t * p) const
         {
-            const BGRColor c = (p[1] << 8) + p[0];
-            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
-            const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
-            const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
-            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(b), uint8_t(g), uint8_t(r)};
+            const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color15()(c);
+            return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
-    struct toColor16
+    struct fromColor16
     {
         color_t operator()(const uint8_t * p) const
         {
-            const BGRColor c = (p[1] << 8) + p[0];
-            // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
-            const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
-            const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
-            const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-            return {uint8_t(b), uint8_t(g), uint8_t(r)};
+            const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
+            const BGRColor_ bgr = decode_color16()(c);
+            return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
 
-    struct toColor24
+    struct fromColor24
     {
         color_t operator()(const uint8_t * p) const
         {
@@ -494,13 +488,13 @@ public:
         else {
             switch (bmp_bpp) {
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor8{bmp.palette()}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor15{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor15{}, c...); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor16{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor16{}, c...); break;
                 case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::toColor24{}, c...); break;
+                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor24{}, c...); break;
                 default: ;
             }
         }
@@ -913,9 +907,9 @@ private:
     {
         const uint8_t * e = dest + n;
         while (dest != e) {
-            *dest = op(*dest, *src, c.red());   ++dest; ++src;
-            *dest = op(*dest, *src, c.green()); ++dest; ++src;
             *dest = op(*dest, *src, c.blue());  ++dest; ++src;
+            *dest = op(*dest, *src, c.green()); ++dest; ++src;
+            *dest = op(*dest, *src, c.red());   ++dest; ++src;
         }
     }
 

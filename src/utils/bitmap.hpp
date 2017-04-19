@@ -2043,13 +2043,13 @@ public:
         if (out_bpp != bmp.bpp()) {
             this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
 
-            auto buf2col_1B = [ ](uint8_t const * p) -> BGRColor { return p[0]; };
-            auto buf2col_2B = [=](uint8_t const * p) -> BGRColor { return buf2col_1B(p) | (p[1] << 8); };
-            auto buf2col_3B = [=](uint8_t const * p) -> BGRColor { return buf2col_2B(p) | (p[2] << 16); };
+            auto buf2col_1B = [ ](uint8_t const * p) { return RDPColor::from(p[0]); };
+            auto buf2col_2B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8)); };
+            auto buf2col_3B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
 
-            auto col2buf_1B = [ ](BGRColor c, uint8_t * p) { p[0] = c; };
-            auto col2buf_2B = [=](BGRColor c, uint8_t * p) { col2buf_1B(c, p); p[1] = c >> 8; };
-            auto col2buf_3B = [=](BGRColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c >> 16; };
+            auto col2buf_1B = [ ](RDPColor c, uint8_t * p) {                   p[0] = c.as_bgr().red(); };
+            auto col2buf_2B = [=](RDPColor c, uint8_t * p) { col2buf_1B(c, p); p[1] = c.as_bgr().green(); };
+            auto col2buf_3B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); };
 
             using namespace shortcut_encode;
             using namespace shortcut_decode_with_palette;
@@ -2094,15 +2094,15 @@ private:
 
         for (size_t y = 0; y < bmp.cy() ; y++) {
             for (size_t x = 0; x < bmp.cx() ; x++) {
-                BGRColor pixel = buf_to_color(src);
+                BGRColor_ pixel = dec(buf_to_color(src));
 
-                pixel = dec(pixel);
-                if (Enc::bpp != 24){
-                    pixel = RGBtoBGR(pixel);
+                constexpr bool enc_15_16 = Enc::bpp == 15 || Enc::bpp == 16;
+                constexpr bool dec_15_16 = Dec::bpp == 15 || Dec::bpp == 16;
+                if (enc_15_16 ^ dec_15_16) {
+                    pixel = BGRColor_(RGBtoBGR(pixel.to_u32()));
                 }
-                pixel = enc(pixel);
 
-                color_to_buf(pixel, dest);
+                color_to_buf(enc(pixel), dest);
                 dest += Bpp;
                 src += src_nbbytes;
             }

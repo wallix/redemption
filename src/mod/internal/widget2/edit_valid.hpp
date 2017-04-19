@@ -38,12 +38,12 @@ public:
 
     bool use_label_;
 
-    int border_none_color;
+    BGRColor_ border_none_color;
 
     WidgetEditValid(gdi::GraphicApi & drawable,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
-                    int group_id, int fgcolor, int bgcolor,
-                    int focus_color, int border_none_color, Font const & font,
+                    int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor,
+                    BGRColor_ focus_color, BGRColor_ border_none_color, Font const & font,
                     const char * title, bool use_title, std::size_t edit_position = -1,
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
@@ -146,7 +146,7 @@ public:
             }
             else {
                 this->drawable.draw(
-                    RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), this->button.fg_color),
+                    RDPOpaqueRect(rect_intersect.intersect(this->button.get_rect()), encode_color24()(this->button.fg_color)),
                     rect_intersect, gdi::ColorCtx::depth24()
                 );
                 this->draw_border(rect_intersect, this->border_none_color);
@@ -156,24 +156,24 @@ public:
         }
     }
 
-    void draw_border(const Rect clip, int color)
+    void draw_border(const Rect clip, BGRColor_ color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y(), this->cx() - 1, 1
-        )), color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + 1, 1, this->cy() - /*2*/1
-        )), color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->x(), this->y() + this->cy() - 1, this->cx(), 1
-        )), color), clip, gdi::ColorCtx::depth24());
+        )), encode_color24()(color)), clip, gdi::ColorCtx::depth24());
     }
 
     void focus(int reason) override {

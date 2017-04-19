@@ -185,7 +185,7 @@ public:
     int16_t  yStart;
     uint8_t  bRop2;
     uint16_t BrushCacheEntry;
-    uint32_t PenColor;
+    RDPColor PenColor;
     uint8_t  NumDeltaEntries;
 
     struct DeltaEncodedPoint {
@@ -202,12 +202,12 @@ public:
     , yStart(0)
     , bRop2(0x0)
     , BrushCacheEntry(0x0000)
-    , PenColor(0x00000000)
+    , PenColor{}
     , NumDeltaEntries(0) {
         ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
     }
 
-    RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
+    RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, RDPColor PenColor,
         uint8_t NumDeltaEntries, InStream & deltaEncodedPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
@@ -279,9 +279,7 @@ public:
         if (header.fields & 0x0008) { stream.out_uint16_le(this->BrushCacheEntry); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->PenColor);
-            stream.out_uint8(this->PenColor >> 8);
-            stream.out_uint8(this->PenColor >> 16);
+            emit_rdp_color(stream, this->PenColor);
         }
 
         if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
@@ -336,10 +334,7 @@ public:
         }
 
         if (header.fields & 0x0010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->PenColor = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->PenColor);
         }
 
         if (header.fields & 0x0020) {
@@ -392,7 +387,7 @@ public:
             "Polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
                 "NumDeltaEntries=%d CodedDeltaList=(",
             this->xStart, this->yStart, unsigned(this->bRop2),
-            this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
+            this->BrushCacheEntry, this->PenColor.as_bgr().to_u32(), this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");

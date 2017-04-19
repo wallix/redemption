@@ -25,7 +25,7 @@
 #define LOGPRINT
 #include "utils/log.hpp"
 //#include "core/front_api.hpp"
-#include "core/vnc_front.hpp"
+#include "front/client_front.hpp"
 #include "core/client_info.hpp"
 #include "core/session.hpp"
 #include "transport/socket_transport.hpp"
@@ -58,7 +58,7 @@ namespace po = program_options;
 */
 
 
-void run_mod(mod_api & mod, VncFront & front, SocketTransport * st_mod);
+void run_mod(mod_api & mod, ClientFront & front, SocketTransport * st_mod);
 
 int main(int argc, char** argv)
 {
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     SocketTransport sock_trans( "VNC Target", vnc_sck, target_device.c_str(), target_port, to_verbose_flags(verbose), nullptr);
     // sock_trans.connect();
 
-    VncFront front(false, false, info, verbose);
+    ClientFront front(false, false, info, verbose);
 
  //   VncFront front(sock_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
       , authentifier       // acl
       , verbose);
     mod.get_event().set();
-    
+
     run_mod(mod, front, &sock_trans);
 
     return 0;
@@ -168,8 +168,7 @@ int main(int argc, char** argv)
 
 
 
-
-void run_mod(mod_api &mod, VncFront &front, SocketTransport *st_mod) {
+inline void run_mod(mod_api &mod, ClientFront &front, SocketTransport *st_mod) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
 

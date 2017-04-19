@@ -42,7 +42,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
 
-    // -2: eof, -1: error, 0: sucess
+    // -1: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
     int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
 

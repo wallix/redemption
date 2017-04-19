@@ -114,19 +114,19 @@ public:
     Ellipse el;
     uint8_t  bRop2;
     uint8_t  fillMode;
-    uint32_t color;
+    RDPColor color;
 
     RDPEllipseSC()
     : bRop2(0x0)
     , fillMode(0x0)
-    , color(0x000000)
+    , color{}
     {}
 
-    RDPEllipseSC(const Rect r, int c)
+    RDPEllipseSC(const Rect r, RDPColor c)
     : RDPEllipseSC(r, c, 0x0D, 0x01)
     {}
 
-    RDPEllipseSC(const Rect r, int c, uint8_t rop, uint8_t fill)
+    RDPEllipseSC(const Rect r, RDPColor c, uint8_t rop, uint8_t fill)
     : el(r)
     , bRop2(rop)
     , fillMode(fill)
@@ -182,9 +182,7 @@ public:
         if (header.fields & 0x0020) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->color);
-            stream.out_uint8(this->color >> 8);
-            stream.out_uint8(this->color >> 16);
+            emit_rdp_color(stream, this->color);
         }
 
         // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
@@ -211,10 +209,7 @@ public:
             this->fillMode  = stream.in_uint8();
         }
         if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->color);
         }
     }
 
@@ -225,7 +220,7 @@ public:
             "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
             "fillMode=%d Color=%.6x)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       unsigned(this->bRop2), this->fillMode, this->color);
+                       unsigned(this->bRop2), this->fillMode, this->color.as_bgr().to_u32());
         if (lg >= sz) {
             return sz;
         }

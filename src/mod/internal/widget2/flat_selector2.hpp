@@ -70,7 +70,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
-    int bg_color;
+    BGRColor_ bg_color;
 
     Font const & font;
 
@@ -296,7 +296,7 @@ public:
         this->rearrange();
     }
 
-    int get_bg_color() const override {
+    BGRColor_ get_bg_color() const override {
         return this->bg_color;
     }
 

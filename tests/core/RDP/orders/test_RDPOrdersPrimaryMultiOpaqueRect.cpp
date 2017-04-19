@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPMultiOpaqueRect state_multiopaquerect;
-        state_multiopaquerect._Color=0x00D699;
+        state_multiopaquerect._Color = encode_color24()(BGRColor_(0x00D699));
         RDPOrderCommon newcommon(MULTIOPAQUERECT, Rect(0, 0, 1024, 768));
 
         StaticOutStream<1024> deltaRectangles;
@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         InStream in_deltaRectangles(deltaRectangles.get_data(), deltaRectangles.get_offset());
 
-        RDPMultiOpaqueRect multiopaquerect(316, 378, 200, 200, 0x00000000, 20, in_deltaRectangles);
+        RDPMultiOpaqueRect multiopaquerect(316, 378, 200, 200, encode_color24()(BLACK), 20, in_deltaRectangles);
 
 
         multiopaquerect.emit(out_stream, newcommon, state_common, state_multiopaquerect);
@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
         check<RDPMultiOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(MULTIOPAQUERECT, Rect(0, 0, 0, 0)),
-            RDPMultiOpaqueRect(316, 378, 200, 200, 0x000000, 20, in_deltaRectangles),
+            RDPMultiOpaqueRect(316, 378, 200, 200, encode_color24()(BLACK), 20, in_deltaRectangles),
             "MultiOpaqueRect 2");
     }
 }

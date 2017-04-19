@@ -42,15 +42,15 @@ public:
     int y_text;
     int cy_text;
     bool auto_resize;
-    int bg_color;
-    int fg_color;
+    BGRColor_ bg_color;
+    BGRColor_ fg_color;
     Font const & font;
 
 public:
     WidgetMultiLine(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     int group_id,
-                    int fgcolor, int bgcolor, Font const & font,
+                    BGRColor_ fgcolor, BGRColor_ bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0)
     : Widget2(drawable, parent, notifier, group_id)
     , x_text(xtext)
@@ -128,7 +128,7 @@ public:
             this->drawable.begin_update();
 
             int dy = this->y() + this->y_text;
-            this->drawable.draw(RDPOpaqueRect(rect_intersect, this->bg_color), this->get_rect(), gdi::ColorCtx::depth24());
+            this->drawable.draw(RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)), this->get_rect(), gdi::ColorCtx::depth24());
             for (line_t * line = this->lines; line->str; ++line) {
                 dy += this->y_text;
                 gdi::server_draw_text(this->drawable
@@ -136,8 +136,8 @@ public:
                                      , this->x_text + this->x()
                                      , dy
                                      , line->str
-                                     , this->fg_color
-                                     , this->bg_color
+                                     , encode_color24()(this->fg_color)
+                                     , encode_color24()(this->bg_color)
                                      , gdi::ColorCtx::depth24()
                                      , rect_intersect.intersect(
                                                 Rect(this->x(),

@@ -30,6 +30,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/colors.hpp"
 
 
 struct BGRPalette;
@@ -85,6 +86,7 @@ struct Depth
     static constexpr Depth depth24() { return {4}; }
 
     static constexpr Depth from_bpp(uint8_t bpp) {
+        // TODO assert ?
         return {
             bpp == 8  ? depth8() :
             bpp == 15 ? depth15() :
@@ -155,6 +157,11 @@ constexpr bool operator >= (Depth const & depth1, Depth const & depth2) {
 
 struct ColorCtx
 {
+    ColorCtx(Depth depth, BGRPalette const & palette)
+    : depth_(depth)
+    , palette_(&palette)
+    {}
+
     ColorCtx(Depth depth, BGRPalette const * palette)
     : depth_(depth)
     , palette_(palette)
@@ -184,6 +191,41 @@ private:
     Depth depth_;
     BGRPalette const * palette_;
 };
+
+
+inline RDPColor color_encode(const BGRColor_ color, Depth depth) noexcept
+{
+    switch (depth){
+        case Depth::depth8(): return encode_color8()(color);
+        case Depth::depth15(): return encode_color15()(color);
+        case Depth::depth16(): return encode_color16()(color);
+        case Depth::depth24(): return encode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return RDPColor{};
+}
+
+
+inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette) noexcept
+{
+    switch (depth){
+        case Depth::depth8(): return decode_color8()(color, palette);
+        case Depth::depth15(): return decode_color15()(color);
+        case Depth::depth16(): return decode_color16()(color);
+        case Depth::depth24(): return decode_color24()(color);
+        case Depth::unspecified(): default:;
+    }
+
+    REDASSERT(false);
+    return BGRColor_{0, 0, 0};
+}
+
+inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
+{
+    return color_decode(color, color_ctx.depth(), *color_ctx.palette());
+}
 
 
 struct GraphicApi : private noncopyable
@@ -319,7 +361,7 @@ struct TextMetrics
 static inline void server_draw_text(
     GraphicApi & drawable, Font const & font,
     int16_t x, int16_t y, const char * text,
-    uint32_t fgcolor, uint32_t bgcolor,
+    RDPColor fgcolor, RDPColor bgcolor,
     ColorCtx color_ctx,
     Rect clip
 ) {

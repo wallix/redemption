@@ -43,8 +43,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLACK;
-    int bg_color = WHITE;
+    BGRColor_ fg_color = BLACK;
+    BGRColor_ bg_color = WHITE;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -83,8 +83,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = BLACK;
-    int bg_color = WHITE;
+    BGRColor_ fg_color = BLACK;
+    BGRColor_ bg_color = WHITE;
     int id = 0;
     int16_t x = 50;
     int16_t y = 100;
@@ -157,9 +157,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int bbg_color = GREEN;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ bbg_color = GREEN;
     int id = 0;
 
     parent.tab_flag = Widget2::NORMAL_TAB;
@@ -234,9 +234,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int bbg_color = GREEN;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ bbg_color = GREEN;
     int id = 0;
 
     parent.tab_flag = Widget2::NORMAL_TAB;
@@ -335,9 +335,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int fg_color = RED;
-    int bg_color = YELLOW;
-    int bbg_color = GREEN;
+    BGRColor_ fg_color = RED;
+    BGRColor_ bg_color = YELLOW;
+    BGRColor_ bbg_color = GREEN;
     int id = 0;
 
     parent.tab_flag = Widget2::NORMAL_TAB;

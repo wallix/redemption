@@ -140,8 +140,8 @@ public:
     Ellipse el;
     uint8_t  brop2;
     uint8_t  fill_mode;
-    uint32_t back_color;
-    uint32_t fore_color;
+    RDPColor back_color;
+    RDPColor fore_color;
     RDPBrush brush;
 
     static uint8_t id(void)
@@ -150,7 +150,7 @@ public:
     }
 
     RDPEllipseCB(const Rect rect, uint8_t rop, uint8_t fill,
-                 uint32_t back_color, uint32_t fore_color,
+                 RDPColor back_color, RDPColor fore_color,
                  const RDPBrush & brush) :
         el(rect),
         brop2(rop),
@@ -221,14 +221,10 @@ public:
         if (header.fields & 0x0020) { stream.out_uint8(this->fill_mode); }
 
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0080) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
         header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
@@ -254,16 +250,10 @@ public:
             this->fill_mode  = stream.in_uint8();
         }
         if (header.fields & 0x0040) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x0080) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->fore_color);
         }
 
         header.receive_brush(stream, 0x0100, this->brush);
@@ -278,7 +268,7 @@ public:
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       unsigned(this->brop2), this->fill_mode, this->back_color, this->fore_color,
+                       unsigned(this->brop2), this->fill_mode, this->back_color.as_bgr().to_u32(), this->fore_color.as_bgr().to_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch);
         if (lg >= sz) {

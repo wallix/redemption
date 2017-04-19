@@ -34,16 +34,17 @@
 
 RED_AUTO_TEST_CASE(TestGdCmdConverter)
 {
-    encode_color16 enc;
+    encode_color15 enc;
     decode_color16 dec;
-    BGRColor raw_color = 0x8ba93c;
-    BGRColor color16 = enc(raw_color);
+    BGRColor_ raw_color(0x8ba93c);
+    RDPColor color16 = enc(raw_color);
     RDPOpaqueRect opaque_rect({}, color16);
 
-    RED_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
-    RED_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);
+    RED_CHECK_EQ(gdi::GraphicCmdColor::is_encodable_cmd_color(opaque_rect).value, true);
+    RED_CHECK_EQ(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPMemBlt{0, {}, 0, 0, 0, 0}).value, false);
 
-    RED_CHECK_NE(opaque_rect.color, dec(color16));
-    gdi::GraphicCmdColor::encode_cmd_color(dec, opaque_rect);
-    RED_CHECK_EQUAL(opaque_rect.color, dec(color16));
+    auto c = enc(dec(color16));
+    RED_CHECK_NE(opaque_rect.color, c);
+    gdi::GraphicCmdColor::encode_cmd_color([=](RDPColor c){ return enc(dec(c)); }, opaque_rect);
+    RED_CHECK_EQ(opaque_rect.color, c);
 }

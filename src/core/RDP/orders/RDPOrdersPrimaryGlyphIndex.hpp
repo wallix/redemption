@@ -282,8 +282,8 @@ public:
     int16_t  ui_charinc;
     int16_t  f_op_redundant;
 
-    uint32_t back_color;
-    uint32_t fore_color;
+    RDPColor back_color;
+    RDPColor fore_color;
 
     Rect     bk;
     Rect     op;
@@ -301,7 +301,7 @@ public:
     }
 
     RDPGlyphIndex( uint8_t cache_id, uint8_t fl_accel, uint8_t ui_charinc
-                 , uint8_t f_op_redundant, uint32_t back_color, uint32_t fore_color
+                 , uint8_t f_op_redundant, RDPColor back_color, RDPColor fore_color
                  , const Rect bk, const Rect op, const RDPBrush & brush
                  , int16_t glyph_x, int16_t glyph_y
                  , uint8_t data_len, const uint8_t * data)
@@ -427,14 +427,10 @@ public:
         if (header.fields & 0x008) { stream.out_uint8(this->f_op_redundant); }
 
         if (header.fields & 0x010) {
-            stream.out_uint8(this->back_color);
-            stream.out_uint8(this->back_color >> 8);
-            stream.out_uint8(this->back_color >> 16);
+            emit_rdp_color(stream, this->back_color);
         }
         if (header.fields & 0x020) {
-            stream.out_uint8(this->fore_color);
-            stream.out_uint8(this->fore_color >> 8);
-            stream.out_uint8(this->fore_color >> 16);
+            emit_rdp_color(stream, this->fore_color);
         }
 
         if (header.fields & 0x0040) { stream.out_uint16_le(this->bk.x); }
@@ -465,17 +461,11 @@ public:
         if (header.fields & 0x008) { this->f_op_redundant = stream.in_uint8(); }
 
         if (header.fields & 0x010) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->back_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->back_color);
         }
 
         if (header.fields & 0x020) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->fore_color = r + (g << 8) + (b << 16);
+            receive_rdp_color(stream, this->fore_color);
         }
 
         int16_t bk_left   = this->bk.x;
@@ -534,8 +524,8 @@ public:
                       , this->fl_accel
                       , this->ui_charinc
                       , this->f_op_redundant
-                      , this->back_color
-                      , this->fore_color
+                      , this->back_color.as_bgr().to_u32()
+                      , this->fore_color.as_bgr().to_u32()
                       , this->bk.x, this->bk.y, this->bk.cx, this->bk.cy
                       , this->op.x, this->op.y, this->op.cx, this->op.cy
                       , this->brush.org_x, this->brush.org_y, this->brush.style, this->brush.hatch
