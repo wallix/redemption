@@ -38,7 +38,7 @@ struct Theme
         BGRColor_ error_color = YELLOW;
         bool logo = false;
         std::string logo_path;
-    } global;
+    } global {}; // note: fixes -Wmissing-field-initializers on gcc-4.9
 
     struct {
         BGRColor_ bgcolor = WHITE;

@@ -489,7 +489,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     bool ignore_frame_in_timeval = true;
 
-    capture.draw(RDPOpaqueRect(scr, RDPColor(encode_color16()(BLUE))), scr, color_cxt);
+    capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
     now.tv_sec++;
     capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
