@@ -512,7 +512,7 @@ std::chrono::microseconds SequencedVideoCaptureImpl::FirstImage::do_snapshot(
 {
     std::chrono::microseconds ret;
 
-    auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
+    auto const duration = difftimeval(now, this->first_image_start_capture);
     auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
     if (duration >= interval) {
         auto video_interval = first_image_impl.video_sequencer.get_interval();

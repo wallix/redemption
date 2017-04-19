@@ -1128,8 +1128,7 @@ public:
 private:
     std::chrono::microseconds elapsed_time() const
     {
-        using us = std::chrono::microseconds;
-        return us(ustime(this->timer)) - us(ustime(this->last_sent_timer));
+        return ustime(this->timer) - ustime(this->last_sent_timer);
     }
 
 protected:

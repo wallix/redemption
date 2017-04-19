@@ -26,6 +26,7 @@
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 class TransparentPlayer {
 private:
@@ -140,7 +141,10 @@ public:
                     auto const elapsed_time = record_elapsed - elapsed;
                     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time);
                     auto const milli = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time - seconds);
-                    struct timespec wtime     = {time_t(seconds.count()), time_t(milli.count())};
+                    struct timespec wtime = {
+                        safe_cast<time_t>(seconds.count()),
+                        safe_cast<time_t>(milli.count())
+                    };
                     struct timespec wtime_rem = { 0, 0 };
 
                     while ((nanosleep(&wtime, nullptr) == -1) && (errno == EINTR)) {
