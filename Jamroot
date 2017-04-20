@@ -594,7 +594,6 @@ test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <libra
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
-test-canonical transport/test_transport.hpp ;
 # TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
