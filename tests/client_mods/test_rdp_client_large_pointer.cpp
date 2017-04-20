@@ -35,11 +35,13 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#include "../front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+
+#include "test_only/front/fake_front.hpp"
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {
@@ -82,7 +84,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //                     );
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/dump_large_pointer_disabled.hpp"
+    #include "fixtures/dump_large_pointer_disabled.hpp"
     TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 
@@ -194,7 +196,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //                     );
 
     // Comment the code block below to generate testing data.
-    #include "../fixtures/dump_large_pointer_enabled.hpp"
+    #include "fixtures/dump_large_pointer_enabled.hpp"
     TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 

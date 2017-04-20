@@ -32,13 +32,13 @@
 #include "utils/drawable.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 #include "utils/png.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "transport/out_file_transport.hpp"
 #include "capture/capture.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -583,17 +583,10 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         Transport & trans;
         const Drawable & drawable;
 
-        timeval start_capture;
-        std::chrono::microseconds frame_interval;
-
     public:
-        ImageCaptureLocal (
-            const timeval & now, const Drawable & drawable, Transport & trans,
-            std::chrono::microseconds png_interval)
+        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , start_capture(now)
-        , frame_interval(png_interval)
         {
         }
 
@@ -604,34 +597,15 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             (void)y;
             (void)ignore_frame_in_timeval;
             using std::chrono::microseconds;
-            uint64_t const duration = difftimeval(now, this->start_capture);
-            uint64_t const interval = this->frame_interval.count();
-            if (duration >= interval) {
-                if (   this->logical_frame_ended()
-                    // Force snapshot if diff_time_val >= 1.5 x frame_interval.
-                    || (duration >= interval * 3 / 2)) {
-                    const_cast<Drawable&>(this->drawable).trace_mouse();
-                    tm ptm;
-                    localtime_r(&now.tv_sec, &ptm);
-                    const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-                    this->flush();
-                    this->trans.next();
-                    const_cast<Drawable&>(this->drawable).clear_timestamp();
-                    this->start_capture = now;
-                    const_cast<Drawable&>(this->drawable).clear_mouse();
-
-                    return microseconds(interval ? interval - duration % interval : 0u);
-                }
-                else {
-                    // Wait 0.3 x frame_interval.
-                    return this->frame_interval / 3;
-                }
-            }
-            return microseconds(interval - duration);
-        }
-
-        bool logical_frame_ended() const {
-            return this->drawable.logical_frame_ended;
+            const_cast<Drawable&>(this->drawable).trace_mouse();
+            tm ptm;
+            localtime_r(&now.tv_sec, &ptm);
+            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->flush();
+            this->trans.next();
+            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            const_cast<Drawable&>(this->drawable).clear_mouse();
+            return microseconds::zero();
         }
 
         void flush() {
@@ -639,7 +613,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         }
     };
 
-    ImageCaptureLocal consumer(now, drawable.impl(), trans, std::chrono::seconds{1});
+    ImageCaptureLocal consumer(drawable.impl(), trans);
 
     drawable.impl().dont_show_mouse_cursor = true;
 

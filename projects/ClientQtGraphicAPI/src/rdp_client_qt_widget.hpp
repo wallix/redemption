@@ -175,6 +175,18 @@ public:
     } _cb_buffers;
 
 
+    int current_user_profil;
+    struct UserProfil {
+        int id;
+        std::string name;
+
+        UserProfil(int id, const char * name)
+          : id(id)
+          , name(name) {}
+    };
+
+    std::vector<UserProfil> userProfils;
+
 
     Front_RDP_Qt_API( RDPVerbose verbose)
     : FrontQtRDPGraphicAPI(verbose)
@@ -206,11 +218,13 @@ public:
     , clipbrdFormatsList()
     , _cb_filesList()
     , _cb_buffers()
+    , current_user_profil(0)
     {
         this->_to_client_sender._front = this;
     }
 
-    virtual bool setClientInfo() = 0;
+    virtual void setClientInfo() = 0;
+    virtual void setDefaultConfig() = 0;
     virtual void writeClientInfo() = 0;
 
     // CHANNELS
@@ -258,7 +272,8 @@ public:
     QPushButton          _buttonSharePath;
 
     QComboBox            _languageComboBox;
-    QComboBox            fpsComboBox;
+    QComboBox            profilComboBox;
+    QLineEdit            profilLineEdit;
     QComboBox            _monitorCountComboBox;
     QComboBox            _captureSnapFreqComboBox;
 
@@ -272,7 +287,7 @@ public:
     QLabel               _labelPerf;
     QLabel               _labelSpan;
     QLabel               _labelLanguage;
-    QLabel               _labelFps;
+    QLabel               _labelProfil;
     QLabel               _labelScreen;
     QLabel               _labelRecording;
     QLabel               _labelTls;
@@ -315,7 +330,8 @@ public:
         , _sharePath(this->_front->SHARE_DIR.c_str(), this)
         , _buttonSharePath("Select a Directory", this)
         , _languageComboBox(this)
-        , fpsComboBox(this)
+        , profilComboBox(this)
+        , profilLineEdit("", this)
         , _monitorCountComboBox(this)
         , _captureSnapFreqComboBox(this)
         , _layoutView(nullptr)
@@ -324,9 +340,9 @@ public:
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
-        , _labelSpan("Span screen(s) :", this)
+        , _labelSpan("Span screen :", this)
         , _labelLanguage("Keyboard Language :", this)
-        , _labelFps("Refresh per second :", this)
+        , _labelProfil("Options Profil:", this)
         , _labelScreen("Screen :", this)
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
@@ -357,84 +373,19 @@ public:
         this->_tabs = new QTabWidget(this);
 
 
-        // View tab
-        const QString strView("View");
-        this->_layoutView = new QFormLayout(this->_viewTab);
-
-
-        //this->_bppComboBox.addItem("32", 32);
-        this->_bppComboBox.addItem("24", 24);
-        this->_bppComboBox.addItem("16", 16);
-        this->_bppComboBox.addItem("15", 15);
-        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
-        if ( indexBpp != -1 ) {
-            this->_bppComboBox.setCurrentIndex(indexBpp);
-        }
-        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
-
-
-        this->_resolutionComboBox.addItem( "640 * 480", 640);
-        this->_resolutionComboBox.addItem( "800 * 600", 800);
-        this->_resolutionComboBox.addItem("1024 * 768", 1024);
-        this->_resolutionComboBox.addItem("1600 * 900", 1600);
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->info.width);
-        if ( indexResolution != -1 ) {
-            this->_resolutionComboBox.setCurrentIndex(indexResolution);
-        }
-        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
-
-        this->fpsComboBox.addItem("20", 20);
-        this->fpsComboBox.addItem("30", 30);
-        this->fpsComboBox.addItem("40", 40);
-        this->fpsComboBox.addItem("50", 50);
-        this->fpsComboBox.addItem("60", 60);
-        int indexFps = this->fpsComboBox.findData(this->_front->fps);
-        if ( indexFps != -1 ) {
-            this->fpsComboBox.setCurrentIndex(indexFps);
-        }
-        this->fpsComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelFps), &(this->fpsComboBox));
-
-        this->_spanCheckBox.setCheckState(Qt::Unchecked);
-        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
-        if (this->_front->is_spanning) {
-             this->_spanCheckBox.setCheckState(Qt::Checked);
-        }
-        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
-
-        for (int i = 1; i <= Front_RDP_Qt_API::MAX_MONITOR_COUNT; i++) {
-            this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
-        }
-        int indexMonitorCount = this->_monitorCountComboBox.findData(this->_front->info.cs_monitor.monitorCount);
-        if ( indexFps != -1 ) {
-            this->_monitorCountComboBox.setCurrentIndex(indexMonitorCount);
-        }
-        this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
-        this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
-
-
-        if (this->_front->info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
-            this->_perfCheckBox.setCheckState(Qt::Checked);
-        }
-        this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
-
-
-        this->_viewTab->setLayout(this->_layoutView);
-
-        this->_tabs->addTab(this->_viewTab, strView);
-
-
 
         // Connection config
-        const QString strConnection("Connection");
+        const QString strConnection("General");
         this->_layoutConnection = new QFormLayout(this->_connectionTab);
 
-        if (this->_front->is_recording) {
-            this->_recordingCB.setCheckState(Qt::Checked);
+        this->profilComboBox.setLineEdit(&(this->profilLineEdit));
+        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+            this->profilComboBox.addItem(this->_front->userProfils[i].name.c_str(), this->_front->userProfils[i].id);
         }
+        this->profilComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutConnection->addRow(&(this->_labelProfil), &(this->profilComboBox));
+        this->QObject::connect(&(this->profilComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(changeProfil(int)));
+
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
 
@@ -443,27 +394,52 @@ public:
         this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
         this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
         this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
-        int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->delta_time);
-        if ( indexCaptureFreq != -1 ) {
-            this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
-        }
         this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
         this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
 
-        if (this->_front->modRDPParamsData.enable_tls) {
-            this->_tlsBox.setCheckState(Qt::Checked);
-        }
+        this->_tlsBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
 
-
-        if (this->_front->modRDPParamsData.enable_nla) {
-            this->_nlaBox.setCheckState(Qt::Checked);
-        }
+        this->_nlaBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
 
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
+
+
+
+        // VIEW TAB
+        const QString strView("View");
+        this->_layoutView = new QFormLayout(this->_viewTab);
+
+        this->_bppComboBox.addItem("24", 24);
+        this->_bppComboBox.addItem("16", 16);
+        this->_bppComboBox.addItem("15", 15);
+        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+
+        this->_resolutionComboBox.addItem( "640 * 480", 640);
+        this->_resolutionComboBox.addItem( "800 * 600", 800);
+        this->_resolutionComboBox.addItem("1024 * 768", 1024);
+        this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+
+        this->_spanCheckBox.setCheckState(Qt::Unchecked);
+        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
+        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
+
+        for (int i = 1; i <= Front_RDP_Qt_API::MAX_MONITOR_COUNT; i++) {
+            this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
+        }
+        this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
+        this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
+        this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
+
+        this->_viewTab->setLayout(this->_layoutView);
+        this->_tabs->addTab(this->_viewTab, strView);
 
 
 
@@ -472,15 +448,9 @@ public:
         this->_layoutServices = new QFormLayout(this->_servicesTab);
 
         this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
-        if (this->_front->enable_shared_clipboard) {
-            this->_clipboardCheckBox.setCheckState(Qt::Checked);
-        }
         this->_layoutServices->addRow(&(this->_labelClipboard), &(this->_clipboardCheckBox));
 
         this->_shareCheckBox.setCheckState(Qt::Unchecked);
-        if (this->_front->enable_shared_virtual_disk) {
-            this->_shareCheckBox.setCheckState(Qt::Checked);
-        }
         this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
         this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
 
@@ -505,10 +475,6 @@ public:
 
         for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
-        }
-        int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
-        if ( indexLanguage != -1 ) {
-            this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutKeyboard->addRow(new QLabel("", this));
@@ -605,7 +571,11 @@ public:
         this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
 
 
+
         this->setLayout(this->_layout);
+
+
+        this->setConfigValues();
 
         QDesktopWidget* desktop = QApplication::desktop();
         int centerW = (desktop->width()/2)  - (this->_width/2);
@@ -619,6 +589,72 @@ public:
 
 
 private:
+    void setConfigValues() {
+        this->profilComboBox.setCurrentIndex(this->_front->current_user_profil);
+
+        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
+        if ( indexBpp != -1 ) {
+            this->_bppComboBox.setCurrentIndex(indexBpp);
+        }
+
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->info.width);
+        if ( indexResolution != -1 ) {
+            this->_resolutionComboBox.setCurrentIndex(indexResolution);
+        }
+
+        this->_monitorCountComboBox.setCurrentIndex(this->_front->info.cs_monitor.monitorCount-1);
+
+        if (this->_front->is_spanning) {
+            this->_spanCheckBox.setCheckState(Qt::Checked);
+        } else {
+            this->_spanCheckBox.setCheckState(Qt::Unchecked);
+        }
+
+        if (this->_front->info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
+            this->_perfCheckBox.setCheckState(Qt::Checked);
+        }
+
+        int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
+        if ( indexLanguage != -1 ) {
+            this->_languageComboBox.setCurrentIndex(indexLanguage);
+        }
+
+        int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->delta_time);
+        if ( indexCaptureFreq != -1 ) {
+            this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
+        }
+
+        if (this->_front->is_recording) {
+            this->_recordingCB.setCheckState(Qt::Checked);
+        } else {
+            this->_recordingCB.setCheckState(Qt::Unchecked);
+        }
+
+        if (this->_front->modRDPParamsData.enable_tls) {
+            this->_tlsBox.setCheckState(Qt::Checked);
+        } else {
+            this->_tlsBox.setCheckState(Qt::Unchecked);
+        }
+
+        if (this->_front->modRDPParamsData.enable_nla) {
+            this->_nlaBox.setCheckState(Qt::Checked);
+        } else {
+            this->_nlaBox.setCheckState(Qt::Unchecked);
+        }
+
+        if (this->_front->enable_shared_clipboard) {
+            this->_clipboardCheckBox.setCheckState(Qt::Checked);
+        } else {
+            this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
+        }
+
+        if (this->_front->enable_shared_virtual_disk) {
+            this->_shareCheckBox.setCheckState(Qt::Checked);
+        } else {
+            this->_shareCheckBox.setCheckState(Qt::Unchecked);
+        }
+    }
+
     void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
         int row(this->_tableKeySetting->rowCount() - 1);
 
@@ -654,6 +690,12 @@ private:
 
 
 public Q_SLOTS:
+    void changeProfil(int index) {
+        this->_front->current_user_profil = index;
+        this->_front->setClientInfo();
+        this->setConfigValues();
+    }
+
     void setEnableSharePath(int value) {
         this->_sharePath.setEnabled(value);
         this->_buttonSharePath.setEnabled(value);
@@ -672,6 +714,28 @@ public Q_SLOTS:
     void savePressed() {}
 
     void saveReleased() {
+//         if ( this->profilComboBox.findData(this->profilComboBox.currentText().toInt()) != -1 ) {
+//             this->_front->current_user_profil = this->profilComboBox.currentText().toInt();
+//         } else {
+//             this->_front->userProfils.push_back({int(this->_front->userProfils.size()-1), this->profilComboBox.currentText().toStdString().c_str()});
+//             this->_front->current_user_profil = this->_front->userProfils.size()-1;
+//         }
+        bool new_profil = true;
+        std::string text_profil = this->profilComboBox.currentText().toStdString();
+        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+            if (this->_front->userProfils[i].name == text_profil) {
+                new_profil = false;
+            }
+        }
+
+        if (new_profil) {
+
+            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+            this->_front->current_user_profil = this->_front->userProfils.size()-1;
+        } else {
+             this->_front->current_user_profil = this->profilComboBox.currentIndex();
+        }
+
         this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
         this->_front->imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->info.bpp, false);
         this->_front->imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->info.bpp, true);
@@ -680,7 +744,6 @@ public Q_SLOTS:
         int pos(resolution.find(delimiter));
         this->_front->info.width  = std::stoi(resolution.substr(0, pos));
         this->_front->info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-        this->_front->fps = this->fpsComboBox.currentText().toInt();
         if (this->_perfCheckBox.isChecked()) {
             this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         } else {

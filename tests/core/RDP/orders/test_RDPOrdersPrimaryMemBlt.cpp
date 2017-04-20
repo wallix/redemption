@@ -29,7 +29,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestMemBlt)
 {

@@ -36,17 +36,19 @@
 #include "utils/drawable.hpp"
 
 #include "transport/transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
 
-#include "check_sig.hpp"
-#include "get_file_contents.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/get_file_contents.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "capture/capture.hpp"
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
+
+#include "test_only/lcg_random.hpp"
 
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, const char * path,

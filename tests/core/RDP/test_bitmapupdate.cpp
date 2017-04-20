@@ -26,8 +26,8 @@
 //#define LOGPRINT
 
 #include "core/RDP/bitmapupdate.hpp"
-#include "check_sig.hpp"
-#include "dump_png.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/dump_png.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
 

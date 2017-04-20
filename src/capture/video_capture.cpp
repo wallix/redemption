@@ -235,7 +235,7 @@ VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /
             }
             recorder.encoding_video_frame(previous_video_time / frame_interval);
             auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
-            this->start_video_capture = addusectimeval(elapsed.count(), this->start_video_capture);
+            this->start_video_capture = addusectimeval(elapsed, this->start_video_capture);
             previous_video_time += elapsed;
             count -= elapsed;
         }
@@ -512,7 +512,7 @@ std::chrono::microseconds SequencedVideoCaptureImpl::FirstImage::do_snapshot(
 {
     std::chrono::microseconds ret;
 
-    auto const duration = std::chrono::microseconds(difftimeval(now, this->first_image_start_capture));
+    auto const duration = difftimeval(now, this->first_image_start_capture);
     auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
     if (duration >= interval) {
         auto video_interval = first_image_impl.video_sequencer.get_interval();
@@ -668,7 +668,7 @@ std::chrono::microseconds SequencedVideoCaptureImpl::VideoSequencer::do_snapshot
 {
     assert(this->break_interval.count());
     auto const interval = difftimeval(now, this->start_break);
-    if (interval >= uint64_t(this->break_interval.count())) {
+    if (interval >= this->break_interval) {
         this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
         this->start_break = now;
     }

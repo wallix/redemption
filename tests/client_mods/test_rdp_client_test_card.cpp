@@ -33,7 +33,7 @@
 #include "core/font.hpp"
 #include "mod/internal/test_card_mod.hpp"
 
-#include "../front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 
 RED_AUTO_TEST_CASE(TestShowTestCard)
 {

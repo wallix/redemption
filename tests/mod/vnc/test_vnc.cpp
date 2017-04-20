@@ -25,7 +25,7 @@
 
 #include "core/font.hpp"
 #include "mod/vnc/vnc.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 RED_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {

@@ -27,7 +27,10 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/nego.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
+
+#include "test_only/lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestNego)
 {
@@ -121,7 +124,7 @@ RED_AUTO_TEST_CASE(TestNego)
         null_server_notifier,
         "/tmp/certif"
         );
-        
+
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
 

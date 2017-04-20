@@ -726,8 +726,8 @@ public:
     } statistics;
 
     bool break_privplay_client;
-    uint64_t movie_elapsed_client;
-    uint64_t begin_to_elapse;
+    std::chrono::microseconds movie_elapsed_client;
+    std::chrono::microseconds begin_to_elapse;
 
 
 
@@ -785,8 +785,8 @@ public:
         , ignore_frame_in_timeval(false)
         , statistics()
         , break_privplay_client(false)
-        , movie_elapsed_client(0)
-        , begin_to_elapse(this->begin_capture.tv_sec * 1000000)
+        , movie_elapsed_client{}
+        , begin_to_elapse(std::chrono::seconds(this->begin_capture.tv_sec))
         , verbose(verbose)
     {
         while (this->next_order()){
@@ -1778,7 +1778,7 @@ private:
     }
 
 public:
-    void instant_play_client(uint64_t endin_frame) {
+    void instant_play_client(std::chrono::microseconds endin_frame) {
 
         while (endin_frame >= this->movie_elapsed_client) {
 
@@ -1808,8 +1808,8 @@ private:
     template<class CbUpdateProgress>
     bool privplay_client(CbUpdateProgress update_progess) {
 
-        struct timeval now     = tvtime();
-        uint64_t       elapsed = difftimeval(now, this->start_synctime_now) ;
+        struct timeval now                = tvtime();
+        std::chrono::microseconds elapsed = difftimeval(now, this->start_synctime_now) ;
 
         bool res(false);
 

@@ -36,17 +36,20 @@
 #include "utils/stream.hpp"
 
 #include "transport/transport.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/flv_params_from_ini.hpp"
-#include "check_sig.hpp"
-#include "get_file_contents.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/get_file_contents.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
+
+#include "test_only/lcg_random.hpp"
+
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
