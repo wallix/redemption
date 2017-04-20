@@ -99,12 +99,13 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
-        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
-
         //LOG(LOG_INFO, "device_flags=0x%X", device_flags);
+        bool event_consumed = false;
 
         if (this->client_execute.input_mouse(device_flags, x, y)) {
             this->screen.current_over = nullptr;
+
+            event_consumed = true;
         }
 
         switch (this->dc_state) {
@@ -159,6 +160,10 @@ struct LocallyIntegrableMod : public InternalMod {
 
                 this->cancel_double_click_detection();
             break;
+        }
+
+        if (!event_consumed) {
+            InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
