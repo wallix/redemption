@@ -449,6 +449,11 @@ void config_spec_definition(Writer && W)
             cpp::name{"key1"}, set(default_key));
     });
 
+    W.section("remote_program", [&]
+    {
+        W.member(ini_and_gui, sesman_read, type_<bool>(), "allow_resize_hosted_desktop", set(false));
+    });
+
     W.section("debug", [&]
     {
         W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "x224");

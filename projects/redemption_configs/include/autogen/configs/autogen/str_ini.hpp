@@ -666,6 +666,10 @@
 "#_hidden\n"
 "#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\n\n"
 
+"[remote_program]\n\n"
+
+"#allow_resize_hosted_desktop = 0\n\n"
+
 "[debug]\n\n"
 
 "#_advanced\n"
