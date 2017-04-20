@@ -15,7 +15,7 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Meng Tan
+  Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 
   Protocol layer for communication with ACL
   Updating context dictionnary from incoming acl traffic
@@ -35,6 +35,7 @@
 #include "transport/transport.hpp"
 #include "utils/translation.hpp"
 #include "utils/get_printable_password.hpp"
+#include "transport/out_crypto_transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "module_manager.hpp"
 
@@ -194,8 +195,10 @@ public:
 
 private:
     Transport & auth_trans;
-
     char session_id[256];
+    CryptoContext cctx;
+    Random & rnd;
+    OutCryptoTransport ct;
 
 public:
     std::string session_type;
@@ -217,14 +220,16 @@ public:
     };
 
 public:
-    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, Verbose verbose)
+    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, CryptoContext cctx, Random & rnd, Verbose verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
+        , cctx(cctx)
+        , rnd(rnd)
+        , ct(ini.get<cfg::crypto::session_log_with_encryption>(), ini.get<cfg::crypto::session_log_with_checksum>(), cctx, rnd)
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
         , inactivity(ini.get<cfg::globals::session_timeout>(), acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
-
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -283,33 +288,40 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra)
-    {
+    void log4(bool duplicate_with_pid, const char * type, const char * extra) { 
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
 
         /* Log to file */
         const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
-
         if (log_redir) {
-            std::string const & filename = this->ini.get<cfg::session_log::log_path>();
-            std::ofstream log_file(filename, std::ios::app);
 
-            if(!log_file.is_open()) {
-                LOG(LOG_INFO, "auth::Bad SIEM log file creation");
-            }
-            else {
-                std::time_t t = std::time(nullptr);
-                char mbstr[100];
-                if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
-                    log_file << mbstr;
+            if(!ct.is_open()) {
+                char tmpname[128];
+                try {
+                    std::string const & filename = this->ini.get<cfg::session_log::log_path>();
+                    ct.open(filename.c_str(), 0);
+                    ::strcpy(tmpname, ct.get_tmp());
                 }
-
-                log_file << "type=\"" << type << "\" " ;
-                log_file << (extra ? extra : "") << std::endl;
-                log_file.close();
+                catch (Error e) {
+                    LOG(LOG_INFO, "exception raised %d", e.id);
+                };
             }
+            
+            std::time_t t = std::time(nullptr);
+            char mbstr[100];
+            if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
+                ct.send(mbstr, strlen(mbstr));
+            }
+
+            ct.send("type=\"", 7);
+            ct.send(type, strlen(type));
+            if(extra) {
+                ct.send(" ", 1);
+                ct.send(extra, strlen(extra));
+            }
+            ct.send("\n", 2);
         }
 
         /* Log to syslog */

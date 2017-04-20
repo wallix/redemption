@@ -26,8 +26,25 @@
 //#define LOGPRINT
 
 //#include "acl/module_manager.hpp"
+  #include "../includes/test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "acl/authentifier.hpp"
+
+inline void init_keys(CryptoContext & cctx)
+{
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+}
 
 class CountTransport
 : public Transport
@@ -113,8 +130,12 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     ;
 
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
@@ -233,8 +254,12 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     ;
 
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
@@ -398,9 +423,13 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "keepalive\n!True\n"
     ;
 
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+    
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
-    AclSerializer acl_serial(ini, 10010, acl_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
