@@ -125,13 +125,13 @@ namespace spec
     using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
 
     enum class attr {
-        none,
-        hex      = 1 << 0,
-        hidden   = 1 << 1,
-        visible  = 1 << 2,
-        advanced = 1 << 3,
-        iptables = 1 << 4,
-        password = 1 << 5,
+        no_ini_no_gui   = 1 << 0,
+        ini_and_gui     = 1 << 1,
+        hidden_in_gui   = 1 << 2,
+        hex_in_gui      = 1 << 3,
+        advanced_in_gui = 1 << 4,
+        iptables_in_gui = 1 << 5,
+        password_in_gui = 1 << 6,
     };
 
     constexpr attr operator | (attr x, attr y) {

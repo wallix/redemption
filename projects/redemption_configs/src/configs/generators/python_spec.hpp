@@ -84,11 +84,11 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
             this->inherit().write_type_info(type);
             this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
 
-            if (bool(attr & spec::attr::iptables)) this->out() << "\"#_iptables\\n\"\n";
-            if (bool(attr & spec::attr::advanced)) this->out() << "\"#_advanced\\n\"\n";
-            if (bool(attr & spec::attr::hidden))   this->out() << "\"#_hidden\\n\"\n";
-            if (bool(attr & spec::attr::hex))      this->out() << "\"#_hex\\n\"\n";
-            if (bool(attr & spec::attr::password)) this->out() << "\"#_password\\n\"\n";
+            if (bool(attr & spec::attr::iptables_in_gui)) this->out() << "\"#_iptables\\n\"\n";
+            if (bool(attr & spec::attr::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
+            if (bool(attr & spec::attr::hidden_in_gui))   this->out() << "\"#_hidden\\n\"\n";
+            if (bool(attr & spec::attr::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
+            if (bool(attr & spec::attr::password_in_gui)) this->out() << "\"#_password\\n\"\n";
 
             this->out() << "\"" << member_name << " = ";
             this->inherit().write_type(type, get_default(type, infos));
