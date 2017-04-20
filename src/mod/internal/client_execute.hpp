@@ -85,6 +85,7 @@ class ClientExecute : public windowing_api
     Rect close_box_rect;
     Rect minimize_box_rect;
     Rect maximize_box_rect;
+    Rect resize_hosted_desktop_box_rect;
 
     Rect north;
     Rect north_west_north;
@@ -114,6 +115,7 @@ class ClientExecute : public windowing_api
         MOUSE_BUTTON_PRESSED_NORTHEAST,
 
         MOUSE_BUTTON_PRESSED_TITLEBAR,
+        MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
         MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
         MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
         MOUSE_BUTTON_PRESSED_CLOSEBOX,
@@ -147,6 +149,9 @@ class ClientExecute : public windowing_api
     std::string window_title;
 
     bool const window_level_supported_ex;
+
+    bool allow_resize_hosted_desktop_    = false;
+    bool enable_resizing_hosted_desktop_ = false;
 
     bool verbose;
 
@@ -223,6 +228,10 @@ public:
 
 private:
     void update_rects() {
+        if ((this->window_rect.cx - 2) % 4) {
+            this->window_rect.cx -= ((this->window_rect.cx - 2) % 4);
+        }
+
         this->title_bar_rect = this->window_rect;
         this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
         this->title_bar_rect.x++;
@@ -232,6 +241,12 @@ private:
 
         this->title_bar_icon_rect    = this->title_bar_rect;
         this->title_bar_icon_rect.cx = 3 + 16 + 2;
+
+        if (this->allow_resize_hosted_desktop_) {
+            this->resize_hosted_desktop_box_rect     = this->title_bar_rect;
+            this->resize_hosted_desktop_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 4;
+            this->resize_hosted_desktop_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
+        }
 
         this->minimize_box_rect     = this->title_bar_rect;
         this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
@@ -245,7 +260,7 @@ private:
         this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
         this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
-        this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 3;
+        this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * (3 + (this->allow_resize_hosted_desktop_ ? 1 : 0));
 
         this->title_bar_rect.x  += 3 + 16 + 2;
         this->title_bar_rect.cx -= 3 + 16 + 2;
@@ -312,6 +327,111 @@ private:
     }   // update_rects
 
 public:
+    void draw_resize_hosted_desktop_box(bool mouse_over, const Rect r) {
+        RDPColor const bg_color = encode_color24()(BGRColor_(mouse_over ? 0xCBCACA : 0xFFFFFF));
+
+        auto const depth = gdi::ColorCtx::depth24();
+
+        RDPOpaqueRect order(this->resize_hosted_desktop_box_rect, bg_color);
+
+        this->front_->draw(order, r, depth);
+
+        if (this->enable_resizing_hosted_desktop_) {
+            Rect rect = this->resize_hosted_desktop_box_rect;
+
+            rect.x  += 22;
+            rect.y  += 8;
+            rect.cx  = 2;
+            rect.cy  = 7;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  -= 4;
+            rect.y  += 2;
+            rect.cx  = 4;
+            rect.cy  = 3;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  -= 2;
+            rect.y  -= 3;
+            rect.cx  = 2;
+            rect.cy  = 9;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  -= 4;
+            rect.y  += 4;
+            rect.cx  = 4;
+            rect.cy  = 1;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+        }
+        else {
+            Rect rect = this->resize_hosted_desktop_box_rect;
+
+            rect.x  += 15;
+            rect.y  += 6;
+            rect.cx  = 7;
+            rect.cy  = 2;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  += 2;
+            rect.y  += 2;
+            rect.cx  = 3;
+            rect.cy  = 4;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  -= 3;
+            rect.y  += 4;
+            rect.cx  = 9;
+            rect.cy  = 2;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+
+            rect.x  += 4;
+            rect.y  += 2;
+            rect.cx  = 1;
+            rect.cy  = 4;
+
+            {
+                RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+                this->front_->draw(order, r, depth);
+            }
+        }
+    }   // draw_resize_hosted_desktop_box
+
     void draw_maximize_box(bool mouse_over, const Rect r) {
         RDPColor const bg_color = encode_color24()(BGRColor_(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
@@ -436,6 +556,10 @@ public:
             }
         }
 
+        if (this->allow_resize_hosted_desktop_) {
+            this->draw_resize_hosted_desktop_box(false, r);
+        }
+
         {
             RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(WHITE));
 
@@ -534,6 +658,14 @@ public:
 
                     this->window_rect_saved = this->window_rect;
                 }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
+                else if (this->allow_resize_hosted_desktop_ &&
+                         this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {
+                    this->draw_resize_hosted_desktop_box(true, this->resize_hosted_desktop_box_rect);
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
+                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
                 else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
 
@@ -905,6 +1037,14 @@ public:
                     this->update_widget();
                 }   // if (this->full_window_drag_enabled)
             }
+            else if (this->allow_resize_hosted_desktop_ &&
+                     (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
+                this->draw_resize_hosted_desktop_box(
+                    this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos),
+                    this->resize_hosted_desktop_box_rect);
+
+                this->front_->sync();
+            }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
                 if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
@@ -1030,7 +1170,21 @@ public:
             }   // else if (!this->maximized)
         }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
         else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags) {
-            if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
+            if (this->allow_resize_hosted_desktop_ &&
+                (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
+
+                this->enable_resizing_hosted_desktop_ = (!this->enable_resizing_hosted_desktop_);
+
+                this->draw_resize_hosted_desktop_box(false, this->resize_hosted_desktop_box_rect);
+
+                this->front_->sync();
+
+                if (this->enable_resizing_hosted_desktop_) {
+                    this->update_widget();
+                }
+            }   // else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button)
+            else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                 {
@@ -1460,19 +1614,25 @@ public:
     }   // maximize_restore_window
 
 public:
-    void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
+    void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop) {
+        //LOG(LOG_INFO, "ClientExecute::ready");
         this->mod_  = &mod;
         this->font_ = &font;
 
         this->front_width  = front_width;
         this->front_height = front_height;
 
+        this->allow_resize_hosted_desktop_    = allow_resize_hosted_desktop;
+        this->enable_resizing_hosted_desktop_ = true;
+
+        this->update_rects();
+
+        Rect rect =  this->window_rect;
+        rect.cy = TITLE_BAR_HEIGHT;
+
+        this->input_invalidate(rect);
+
         if (this->channel_) {
-            Rect rect =  this->window_rect;
-            rect.cy = TITLE_BAR_HEIGHT;
-
-            this->input_invalidate(rect);
-
             return;
         }
 
@@ -2836,5 +2996,21 @@ private:
         this->mod_->refresh(this->window_rect);
 
         this->window_rect_old = this->window_rect;
+    }
+
+public:
+    bool is_resizing_hosted_desktop_enabled() {
+        if (this->allow_resize_hosted_desktop_ &&
+            this->enable_resizing_hosted_desktop_) {
+            return true;
+        }
+
+        return false;
+    }
+
+    void enable_resizing_hosted_desktop(bool enable) {
+        if (this->allow_resize_hosted_desktop_) {
+            this->enable_resizing_hosted_desktop_ = enable;
+        }
     }
 };  // class ClientExecute

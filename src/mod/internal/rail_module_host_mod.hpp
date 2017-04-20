@@ -30,9 +30,10 @@
 #include "configs/config_access.hpp"
 
 using RailModuleHostModVariables = vcfg::variables<
-    vcfg::var<cfg::translation::language,   vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                    vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                   vcfg::accessmode::get>
+    vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                         vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                                        vcfg::accessmode::get>,
+    vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>
 >;
 
 class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi {
@@ -53,6 +54,19 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi {
         }
     } managed_mod_event_handler;
 
+    wait_obj disconnection_reconnection_event;
+
+    bool disconnection_reconnection_required = false;   // Window resize
+
+    class DisconnectionReconnectionEventHandler : public EventHandler::CB {
+    public:
+        void operator()(time_t/* now*/, wait_obj*/* event*/, gdi::GraphicApi&/* drawable*/) override {
+            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+        }
+    } disconnection_reconnection_event_handler;
+
+    ClientExecute& client_execute;
+
 public:
     RailModuleHostMod(
         RailModuleHostModVariables vars,
@@ -69,6 +83,7 @@ public:
                        cs_monitor, width, height)
     , vars(vars)
     , managed_mod_event_handler(*this)
+    , client_execute(client_execute)
     {
         this->screen.add_widget(&this->rail_module_host);
 
@@ -157,6 +172,15 @@ public:
                 mod.get_fd()
             );
 
+        if (this->disconnection_reconnection_required &&
+            mod.is_auto_reconnectable()) {
+            out_event_handlers.emplace_back(
+                    &this->disconnection_reconnection_event,
+                    &this->disconnection_reconnection_event_handler,
+                    INVALID_SOCKET
+                );
+        }
+
         LocallyIntegrableMod::get_event_handlers(out_event_handlers);
     }
 
@@ -170,7 +194,16 @@ public:
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override
     {
+        Dimension dim = this->get_dim();
+
         this->rail_module_host.move_size_widget(left, top, width, height);
+
+        if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
+            this->client_execute.is_resizing_hosted_desktop_enabled()) {
+            this->disconnection_reconnection_required = true;
+
+            this->disconnection_reconnection_event.set(1000000);
+        }
     }
 
     Dimension get_dim() const override
@@ -178,5 +211,9 @@ public:
         const mod_api& mod = this->rail_module_host.get_managed_mod();
 
         return mod.get_dim();
+    }
+
+    bool is_resizing_hosted_desktop_allowed() const override {
+        return vars.get<cfg::remote_program::allow_resize_hosted_desktop>();
     }
 };

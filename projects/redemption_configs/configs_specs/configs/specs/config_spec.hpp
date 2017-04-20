@@ -421,6 +421,11 @@ void config_spec_definition(Writer && W)
             cpp::name{"key1"}, set(default_key), r);
     });
 
+    W.section("remote_program", [&]
+    {
+        W.member(V, type_<bool>(), "allow_resize_hosted_desktop", set(false), r);
+    });
+
     W.section("debug", [&]
     {
         W.member(A, type_<types::u32>(), "x224");
@@ -559,6 +564,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<bool>(), "perform_automatic_reconnection", set(false));
         W.member(type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
+//        W.sep();
+//        W.member(type_<bool>(), "rail_enable_resizing_hosted_desktop", set(false), r);
     });
 
     W.section("", [&]

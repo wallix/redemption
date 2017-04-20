@@ -56,6 +56,8 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     } first_click_down_event_handler;
 
+    const bool rail_enabled;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
@@ -64,7 +66,8 @@ struct LocallyIntegrableMod : public InternalMod {
     , client_execute(client_execute)
     , front_width(front_width)
     , front_height(front_height)
-    , first_click_down_event_handler(*this) {}
+    , first_click_down_event_handler(*this)
+    , rail_enabled(front.get_channel_list().get_by_name(channel_names::rail) != nullptr) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset(true);
@@ -186,8 +189,9 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void draw_event(time_t, gdi::GraphicApi &) override {
-        if (!this->client_execute && this->event.waked_up_by_time) {
-            this->client_execute.ready(*this, this->front_width, this->front_height, this->font());
+        if (rail_enabled && (false == static_cast<bool>(this->client_execute)) && this->event.waked_up_by_time) {
+            this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
+                this->is_resizing_hosted_desktop_allowed());
         }
     }
 
@@ -206,4 +210,6 @@ private:
 
         this->dc_state = DCSTATE_WAIT;
     }
+
+    virtual bool is_resizing_hosted_desktop_allowed() const { return false; }
 };
