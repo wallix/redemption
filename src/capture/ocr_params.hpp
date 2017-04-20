@@ -30,7 +30,8 @@ struct OcrParams
 {
     OcrVersion ocr_version;
     ocr::locale::LocaleId ocr_locale;
-    bool ocr_on_title_bar_only;
+    bool on_title_bar_only;
     unsigned int max_unrecog_char_rate;
-    std::chrono::microseconds usec_ocr_interval;
+    std::chrono::microseconds interval;
+    uint32_t verbosity;
 };

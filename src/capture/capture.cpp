@@ -1194,19 +1194,19 @@ public:
 
     TitleCaptureImpl(
         const timeval & now,
-        auth_api * authentifier,
         RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed)
     : ocr_title_extractor_builder(
-        drawable.impl(), authentifier != nullptr,
+        drawable.impl(),
+        ocr_params.verbosity,
         ocr_params.ocr_version,
         ocr_params.ocr_locale,
-        ocr_params.ocr_on_title_bar_only,
+        ocr_params.on_title_bar_only,
         ocr_params.max_unrecog_char_rate)
     , title_extractor(this->ocr_title_extractor_builder.get_title_extractor())
     , last_ocr(now)
-    , usec_ocr_interval(ocr_params.usec_ocr_interval)
+    , usec_ocr_interval(ocr_params.interval)
     , notify_title_changed(notify_title_changed)
     {
     }
@@ -1390,8 +1390,7 @@ Capture::Capture(
         if (capture_ocr) {
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj.reset(new TitleCaptureImpl(
-                    now, authentifier, *this->gd_drawable,
-                    ocr_params,
+                    now, *this->gd_drawable, ocr_params,
                     this->notifier_title_changed
                 ));
             }
