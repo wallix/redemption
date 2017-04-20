@@ -29,9 +29,9 @@
 #include "mod/internal/widget2/flat_dialog.hpp"
 #include "mod/internal/widget2/screen.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatDialog)
 {

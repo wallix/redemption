@@ -30,7 +30,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/client_info.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 {

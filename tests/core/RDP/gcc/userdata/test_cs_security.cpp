@@ -26,7 +26,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_security.hpp"
 
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes

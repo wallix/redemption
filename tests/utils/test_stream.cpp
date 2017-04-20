@@ -29,7 +29,7 @@
 //#define LOGPRINT
 
 #include "utils/stream.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 RED_AUTO_TEST_CASE(TestStream_uint8)
 {

@@ -24,7 +24,9 @@
 #define LOGNULL
 #include "core/RDP/nla/nla.hpp"
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
+
+#include "test_only/lcg_random.hpp"
 
 // RED_AUTO_TEST_CASE(TestNla)
 // {

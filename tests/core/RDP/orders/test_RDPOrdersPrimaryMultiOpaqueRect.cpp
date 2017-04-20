@@ -29,7 +29,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 {

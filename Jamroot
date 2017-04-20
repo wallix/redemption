@@ -133,7 +133,7 @@ constant EXE_DEPENDENCIES :
 constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
     <library>libunit_test
-    <include>$(REDEMPTION_TEST_PATH)
+    <include>$(REDEMPTION_TEST_PATH)/includes
     <cxxflags>-frtti
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'

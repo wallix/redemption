@@ -180,8 +180,8 @@ private:
     const bool is_socket_transport;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
-    uint64_t clipboard_last_client_data_timestamp     = 0;
     int      clipboard_requested_format_id            = 0;
+    std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
 
     ClipboardEncodingType clipboard_server_encoding_type;
 
@@ -2308,7 +2308,8 @@ private:
                                              | CHANNELS::CHANNEL_FLAG_LAST
                                            );
 
-                const uint64_t MINIMUM_TIMEVAL = 250000LL;
+                using std::chrono::microseconds;
+                constexpr microseconds MINIMUM_TIMEVAL(250000LL);
 
                 if (this->enable_clipboard_up
                 && (format_list_pdu.contains_data_in_text_format
@@ -2324,8 +2325,8 @@ private:
                              RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
                     }
 
-                    const uint64_t usnow = ustime();
-                    const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
+                    const microseconds usnow = ustime();
+                    const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                     //LOG(LOG_INFO,
                     //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                     //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);

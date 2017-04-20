@@ -27,9 +27,9 @@
 #include "core/font.hpp"
 #include "mod/internal/widget2/number_edit.hpp"
 #include "mod/internal/widget2/screen.hpp"
-#include "check_sig.hpp"
+#include "test_only/check_sig.hpp"
 
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 {

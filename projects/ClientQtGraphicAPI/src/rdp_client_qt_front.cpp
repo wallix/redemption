@@ -147,23 +147,25 @@ public:
         return hex32;
     }
 
-    bool setClientInfo() override {
-
-        // default config
-        this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->info.console_session = 0;
-        this->info.brush_cache_code = 0;
-        this->info.bpp = 24;
-        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-        if (this->info.bpp ==  32) {
-            this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
+    void setUserProfil() {
+        std::ifstream ifichier(this->USER_CONF_DIR);
+        if(ifichier) {
+            std::string ligne;
+            std::string delimiter = " ";
+            std::getline(ifichier, ligne);
+            auto pos(ligne.find(delimiter));
+            std::string tag  = ligne.substr(0, pos);
+            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+            if (tag.compare(std::string("current_user_profil_id")) == 0) {
+                this->current_user_profil = std::stoi(info);
+            }
         }
-        this->info.width  = 800;
-        this->info.height = 600;
-        this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        this->fps = 30;
-        this->info.cs_monitor.monitorCount = 1;
-        //this->info.encryptionLevel = 1;
+    }
+
+    void setClientInfo() override {
+
+        this->userProfils.clear();
+        this->userProfils.push_back({0, "Default"});
 
         // file config
         std::ifstream ifichier(this->USER_CONF_DIR);
@@ -171,117 +173,229 @@ public:
             // get config from conf file
             std::string ligne;
             std::string delimiter = " ";
+            int read_id(-1);
 
             while(std::getline(ifichier, ligne)) {
                 auto pos(ligne.find(delimiter));
                 std::string tag  = ligne.substr(0, pos);
                 std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-                if (tag.compare(std::string("keylayout")) == 0) {
-                    this->info.keylayout = std::stoi(info);
+                if (tag.compare(std::string("id")) == 0) {
+                    read_id = std::stoi(info);
                 } else
-                if (tag.compare(std::string("console_session")) == 0) {
-                    this->info.console_session = std::stoi(info);
-                } else
-                if (tag.compare(std::string("brush_cache_code")) == 0) {
-                    this->info.brush_cache_code = std::stoi(info);
-                } else
-                if (tag.compare(std::string("bpp")) == 0) {
-                    this->info.bpp = std::stoi(info);
-                } else
-                if (tag.compare(std::string("width")) == 0) {
-                    this->info.width      = std::stoi(info);
-                } else
-                if (tag.compare(std::string("height")) == 0) {
-                    this->info.height     = std::stoi(info);
-                } else
-                if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
-                    this->info.rdp5_performanceflags = std::stoi(info);
-                } else
-                if (tag.compare(std::string("fps")) == 0) {
-                    this->fps = std::stoi(info);
-                } else
-                if (tag.compare(std::string("monitorCount")) == 0) {
-                    this->info.cs_monitor.monitorCount = std::stoi(info);
-                    this->_monitorCount                 = std::stoi(info);
-                } else
-                if (tag.compare(std::string("span")) == 0) {
-                    if (std::stoi(info)) {
-                        this->is_spanning = true;
+                if (tag.compare(std::string("name")) == 0) {
+                    if (read_id) {
+                        this->userProfils.push_back({read_id, info.c_str()});
                     }
                 } else
-                if (tag.compare(std::string("record")) == 0) {
-                    if (std::stoi(info)) {
-                        this->is_recording = true;
+                if (this->current_user_profil == read_id) {
+
+                    if (tag.compare(std::string("keylayout")) == 0) {
+                        this->info.keylayout = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("console_session")) == 0) {
+                        this->info.console_session = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("brush_cache_code")) == 0) {
+                        this->info.brush_cache_code = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("bpp")) == 0) {
+                        this->info.bpp = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("width")) == 0) {
+                        this->info.width      = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("height")) == 0) {
+                        this->info.height     = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
+                        this->info.rdp5_performanceflags = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("fps")) == 0) {
+                        this->fps = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("monitorCount")) == 0) {
+                        this->info.cs_monitor.monitorCount = std::stoi(info);
+                        this->_monitorCount                 = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("span")) == 0) {
+                        if (std::stoi(info)) {
+                            this->is_spanning = true;
+                        } else {
+                            this->is_spanning = false;
+                        }
+                    } else
+                    if (tag.compare(std::string("record")) == 0) {
+                        if (std::stoi(info)) {
+                            this->is_recording = true;
+                        } else {
+                            this->is_recording = false;
+                        }
+                    } else
+                    if (tag.compare(std::string("tls")) == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_tls = true;
+                        } else { this->modRDPParamsData.enable_tls = false; }
+                    } else
+                    if (tag.compare(std::string("nla")) == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_nla = true;
+                        } else { this->modRDPParamsData.enable_nla = false; }
+                    } else
+                    if (tag.compare(std::string("delta_time")) == 0) {
+                        if (std::stoi(info)) {
+                            this->delta_time = std::stoi(info);
+                        }
+                    } else
+                    if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
+                        if (std::stoi(info)) {
+                            this->enable_shared_clipboard = true;
+                        }
+                    } else
+                    if (tag.compare(std::string("enable_shared_virtual_disk")) == 0) {
+                        if (std::stoi(info)) {
+                            this->enable_shared_virtual_disk = true;
+                        }
+                    } else
+                    if (tag.compare(std::string("SHARE_DIR")) == 0) {
+                        this->SHARE_DIR                 = info;
+                        read_id = -1;
                     }
-                } else
-                if (tag.compare(std::string("tls")) == 0) {
-                    if (std::stoi(info)) {
-                        this->modRDPParamsData.enable_tls = true;
-                    } else { this->modRDPParamsData.enable_tls = false; }
-                } else
-                if (tag.compare(std::string("nla")) == 0) {
-                    if (std::stoi(info)) {
-                        this->modRDPParamsData.enable_nla = true;
-                    } else { this->modRDPParamsData.enable_nla = false; }
-                } else
-                if (tag.compare(std::string("delta_time")) == 0) {
-                    if (std::stoi(info)) {
-                        this->delta_time = std::stoi(info);
-                    }
-                }else
-                if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
-                    if (std::stoi(info)) {
-                        this->enable_shared_clipboard = true;
-                    }
-                }else
-                if (tag.compare(std::string("enable_shared_virtual_disk")) == 0) {
-                    if (std::stoi(info)) {
-                        this->enable_shared_virtual_disk = true;
-                    }
-                } else
-                if (tag.compare(std::string("SHARE_DIR")) == 0) {
-                    this->SHARE_DIR                 = info;
                 }
             }
 
             ifichier.close();
 
             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-            if (this->info.bpp ==  32) {
-                this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
-            }
-
-            return false;
         }
-
-        return true;
     }
 
     virtual void writeClientInfo() override {
-        std::ofstream ofichier(this->USER_CONF_DIR, std::ios::out | std::ios::trunc);
+        std::fstream ofichier(this->USER_CONF_DIR);
         if(ofichier) {
 
-            ofichier << "User Info" << "\n\n";
+            ofichier << "current_user_profil_id " << this->current_user_profil << "\n";
 
-            ofichier << "keylayout "             << this->info.keylayout               << "\n";
-            ofichier << "console_session "       << this->info.console_session         << "\n";
-            ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-            ofichier << "bpp "                   << this->mod_bpp                      << "\n";
-            ofichier << "width "                 << this->info.width                   << "\n";
-            ofichier << "height "                << this->info.height                  << "\n";
-            ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
-            ofichier << "fps "                   << this->fps                          << "\n";
-            ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
-            ofichier << "span "                  << this->is_spanning                  << "\n";
-            ofichier << "record "                << this->is_recording                 << "\n";
-            ofichier << "tls "                   << this->modRDPParamsData.enable_tls << "\n";
-            ofichier << "nla "                   << this->modRDPParamsData.enable_nla << "\n";
-            ofichier << "delta_time "            << this->delta_time << "\n";
-            ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-            ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << std::endl;
-            ofichier << "SHARE_DIR " << this->SHARE_DIR << std::endl;
+            std::string ligne;
+            const std::string delimiter = " ";
+
+            bool new_profil = true;
+            int read_id = -1;
+            auto pos(ligne.find(delimiter));
+            std::string tag  = ligne.substr(0, pos);
+            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+            while(std::getline(ofichier, ligne) && read_id != this->current_user_profil) {
+                pos = ligne.find(delimiter);
+                tag  = ligne.substr(0, pos);
+                info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                if (tag == std::string("id")) {
+                    read_id = std::stoi(info);
+                    if (read_id == this->current_user_profil) {
+                        new_profil = false;
+                    }
+                }
+
+            }
+            LOG(LOG_INFO, "last ligne = %s ", ligne);
+            ofichier << "aazerzeartfgfgvzedt\n";
+            LOG(LOG_INFO, "this->_front->userProfils[i].name = %s id = %d", this->userProfils[this->current_user_profil].name, this->current_user_profil);
+            ofichier.seekp(ofichier.tellg());
+
+            if (new_profil) {
+                ofichier.close();
+                std::ofstream new_ofile(this->USER_CONF_DIR, std::ios::app | std::ios::out);
+                LOG(LOG_INFO, "new_profil");
+                new_ofile << "\n";
+                new_ofile << "id "   << this->userProfils[this->current_user_profil].id   << "\n";
+                new_ofile << "name " << this->userProfils[this->current_user_profil].name << "\n";
+                new_ofile << "keylayout "             << this->info.keylayout               << "\n";
+                new_ofile << "console_session "       << this->info.console_session         << "\n";
+                new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
+                new_ofile << "bpp "                   << this->mod_bpp                      << "\n";
+                new_ofile << "width "                 << this->info.width                   << "\n";
+                new_ofile << "height "                << this->info.height                  << "\n";
+                new_ofile << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
+                new_ofile << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
+                new_ofile << "span "                  << this->is_spanning                  << "\n";
+                new_ofile << "record "                << this->is_recording                 << "\n";
+                new_ofile << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
+                new_ofile << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+                new_ofile << "delta_time "            << this->delta_time << "\n";
+                new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
+                new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                new_ofile << "SHARE_DIR " << this->SHARE_DIR << "\n";
+                new_ofile << std::endl;
+
+        ofichier.close();
+            } else {
+                ofichier << "keylayout "             << this->info.keylayout               << "\n";
+                ofichier << "console_session "       << this->info.console_session         << "\n";
+                ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
+                ofichier << "bpp "                   << this->mod_bpp                      << "\n";
+                ofichier << "width "                 << this->info.width                   << "\n";
+                ofichier << "height "                << this->info.height                  << "\n";
+                ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
+                ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
+                ofichier << "span "                  << this->is_spanning                  << "\n";
+                ofichier << "record "                << this->is_recording                 << "\n";
+                ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
+                ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+                ofichier << "delta_time "            << this->delta_time << "\n";
+                ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
+                ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                ofichier << "SHARE_DIR " << this->SHARE_DIR << "\n";
+                ofichier << std::endl;
+
+        ofichier.close();
+            }
         }
+    }
+
+    void writeCurrentUserProfil(std::fstream & ofichier) {
+        ofichier << "keylayout "             << this->info.keylayout               << "\n";
+        ofichier << "console_session "       << this->info.console_session         << "\n";
+        ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
+        ofichier << "bpp "                   << this->mod_bpp                      << "\n";
+        ofichier << "width "                 << this->info.width                   << "\n";
+        ofichier << "height "                << this->info.height                  << "\n";
+        ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
+        ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
+        ofichier << "span "                  << this->is_spanning                  << "\n";
+        ofichier << "record "                << this->is_recording                 << "\n";
+        ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
+        ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+        ofichier << "delta_time "            << this->delta_time << "\n";
+        ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
+        ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+        ofichier << "SHARE_DIR " << this->SHARE_DIR << "\n";
+        ofichier << std::endl;
+
+        ofichier.close();
+    }
+
+    virtual void setDefaultConfig() {
+        this->current_user_profil = 0;
+        this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+        this->info.console_session = 0;
+        this->info.brush_cache_code = 0;
+        this->info.bpp = 24;
+        this->mod_bpp = 24;
+        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
+        this->info.width  = 800;
+        this->info.height = 600;
+        this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->info.cs_monitor.monitorCount = 1;
+        this->is_spanning = false;
+        this->is_recording = false;
+        this->modRDPParamsData.enable_tls = true;
+        this->modRDPParamsData.enable_nla = true;
+        this->delta_time = 40;
+        this->enable_shared_clipboard = true;
+        this->enable_shared_virtual_disk = true;
+        this->SHARE_DIR = std::string("/home");
+        //this->info.encryptionLevel = 1;
     }
 
     void setScreenDimension() {
@@ -375,6 +489,8 @@ public:
 
 
 
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
@@ -388,6 +504,9 @@ public:
         , _waiting_for_data(false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
+
+        this->setDefaultConfig();
+        this->setUserProfil();
         this->setClientInfo();
 
         uint8_t commandIsValid(0);

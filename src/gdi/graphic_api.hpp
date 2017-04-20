@@ -85,16 +85,26 @@ struct Depth
     static constexpr Depth depth16() { return {3}; }
     static constexpr Depth depth24() { return {4}; }
 
-    static constexpr Depth from_bpp(uint8_t bpp) {
-        // TODO assert ?
-        return {
-            bpp == 8  ? depth8() :
-            bpp == 15 ? depth15() :
-            bpp == 16 ? depth16() :
-            bpp == 24 ? depth24() :
-            bpp == 32 ? depth24() : // TODO useless ?
-            unspecified()
+    static /*c++14: constexpr*/ Depth from_bpp(uint8_t bpp)
+    {
+        struct depth_table {
+            Depth table[33] = {
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth8(),       unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  depth15(),
+                depth16(),      unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth24(),      unspecified(),  unspecified(),  unspecified(),
+                unspecified(),  unspecified(),  unspecified(),  unspecified(),
+                depth24(), // TODO useless ?
+            };
         };
+        auto const depth = bpp < sizeof(depth_table{}.table)/sizeof(depth_table{}.table[0])
+            ? depth_table{}.table[int(bpp)]
+            : unspecified();
+        assert(depth != unspecified());
+        return depth;
     }
 
     Depth() = default;
@@ -104,6 +114,7 @@ struct Depth
 
 private:
     struct bpp_table { uint8_t table[5] = {0, 8, 15, 16, 24}; };
+
 public:
     constexpr uint8_t to_bpp() const {
         return bpp_table{}.table[unsigned(this->depth_)];

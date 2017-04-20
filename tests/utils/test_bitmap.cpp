@@ -30,8 +30,8 @@
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/drawable.hpp"
-#include "check_sig.hpp"
-#include "dump_png.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/dump_png.hpp"
 #include <cstdio>
 
 

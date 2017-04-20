@@ -393,7 +393,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 {
-    #include "../../fixtures/test_mppc_7.hpp"
+    #include "fixtures/test_mppc_7.hpp"
 
     rdp_mppc_60_dec mppc_dec;
 

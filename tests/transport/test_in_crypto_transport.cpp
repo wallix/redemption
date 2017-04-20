@@ -26,7 +26,8 @@
 #include "utils/log.hpp"
 #include "transport/out_crypto_transport.hpp"
 #include "transport/in_crypto_transport.hpp"
-#include <string.h>
+#include <cstring>
+#include "test_only/lcg_random.hpp"
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
@@ -155,7 +156,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)), 
+        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(randomSample, sizeof(randomSample)));
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
@@ -291,7 +292,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)), 
+        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
@@ -352,10 +353,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         RED_CHECK_EQUAL(100, ct.partial_read(&buffer[20], 100));
         // At end of file partial_read should return what it can
         RED_CHECK_EQUAL(sizeof(buffer)-120, ct.partial_read(&buffer[120], sizeof(buffer)));
-        
-        
+
+
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)), 
+        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists

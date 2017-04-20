@@ -30,7 +30,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 
 RED_AUTO_TEST_CASE(TestPolygonCB)

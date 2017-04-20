@@ -29,11 +29,11 @@
 #include "core/client_info.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 
-#include "../../../front/fake_front.hpp"
+#include "test_only/front/fake_front.hpp"
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;

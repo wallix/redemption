@@ -25,7 +25,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
-#include "test_orders.hpp"
+#include "./test_orders.hpp"
 
 // Tests on opaque rect also cover RDPOrdersCommon
 // TODO "we should have a way in coverage.reference file to say that coverage is performed for a module using some other coverage test"

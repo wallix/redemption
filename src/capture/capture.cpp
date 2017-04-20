@@ -739,8 +739,8 @@ public:
         (void)x;
         (void)y;
         (void)ignore_frame_in_timeval;
-        uint64_t const duration = difftimeval(now, this->start_capture);
-        uint64_t const interval = this->frame_interval.count();
+        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
+        std::chrono::microseconds const interval = this->frame_interval;
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
             if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
@@ -757,14 +757,14 @@ public:
                 this->start_capture = now;
                 this->drawable.clear_mouse();
 
-                return std::chrono::microseconds(interval ? interval - duration % interval : 0u);
+                return interval.count() ? interval - duration % interval : interval;
             }
             else {
                 // Wait 0.3 x frame_interval.
                 return this->frame_interval / 3;
             }
         }
-        return std::chrono::microseconds(interval - duration);
+        return interval - duration;
     }
 };
 
@@ -812,12 +812,12 @@ public:
         (void)x;
         (void)y;
         (void)ignore_frame_in_timeval;
-        uint64_t const duration = difftimeval(now, this->start_capture);
-        uint64_t const interval = this->frame_interval.count();
+        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
+        std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
             return this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
         }
-        return std::chrono::microseconds(interval - duration % interval);
+        return interval - duration % interval;
     }
 };
 

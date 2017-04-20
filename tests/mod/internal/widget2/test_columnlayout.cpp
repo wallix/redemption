@@ -26,7 +26,7 @@
 #include "mod/internal/widget2/columnlayout.hpp"
 #include "mod/internal/widget2/screen.hpp"
 #include "mod/internal/widget2/label.hpp"
-#include "fake_draw.hpp"
+#include "test_only/mod/fake_draw.hpp"
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"

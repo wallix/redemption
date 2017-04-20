@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
     RED_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
 
-#include "transport/test_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc.hpp"
 
 

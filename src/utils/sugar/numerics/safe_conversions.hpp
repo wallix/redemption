@@ -135,6 +135,12 @@ namespace detail
     template<class T>
     using underlying_type_or_integral_t = typename underlying_type_or_integral<T>::type;
 
+    template<class T>
+    struct type_
+    {
+        using type = T;
+    };
+
     template <class Dst, class Src>
     constexpr int check_int(Src const &) noexcept
     {
@@ -144,7 +150,7 @@ namespace detail
     }
 
     template <class Dst, class Src>
-    /*c++14 constexpr*/ Dst checked_cast(Src value)
+    /*c++14 constexpr*/ Dst checked_cast(type_<Dst>, Src value)
     {
     #ifndef NDEBUG
         using dst_limits = std::numeric_limits<Dst>;
@@ -154,8 +160,14 @@ namespace detail
         return static_cast<Dst>(value);
     }
 
+    template <class Dst>
+    constexpr Dst checked_cast(type_<Dst>, Dst value)
+    {
+        return value;
+    }
+
     template <class Dst, class Src>
-    /*c++14 constexpr*/ Dst saturated_cast(Src value)
+    /*c++14 constexpr*/ Dst saturated_cast(type_<Dst>, Src value)
     {
         if (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
             return static_cast<Dst>(value);
@@ -172,6 +184,12 @@ namespace detail
         return dst_limits::min() > value ? dst_limits::min() : new_max_value;
     }
 
+    template <class Dst>
+    constexpr Dst saturated_cast(type_<Dst>, Dst value)
+    {
+        return value;
+    }
+
     using ull = unsigned long long;
     using ll = long long;
 
@@ -186,6 +204,12 @@ namespace detail
           && ll(D::min()) <= ll(S::min()) && ull(S::max()) <= ull(D::max())
         ;
     };
+
+    template<class From>
+    struct is_safe_convertible<From, From>
+    {
+        static const bool value = true;
+    };
 }
 
 
@@ -195,14 +219,7 @@ template <class Dst, class Src>
     static_assert(detail::check_int<Dst>(value), "");
     using dst_type = detail::underlying_type_or_integral_t<Dst>;
     using src_type = detail::underlying_type_or_integral_t<Src>;
-    return static_cast<Dst>(detail::checked_cast<dst_type>(static_cast<src_type>(value)));
-}
-
-template <class Dst>
-constexpr Dst checked_cast(Dst value)
-{
-    static_assert(detail::check_int<Dst>(value), "");
-    return value;
+    return static_cast<Dst>(detail::checked_cast(detail::type_<dst_type>{}, static_cast<src_type>(value)));
 }
 
 
@@ -212,14 +229,7 @@ template <class Dst, class Src>
     static_assert(detail::check_int<Dst>(value), "");
     using dst_type = detail::underlying_type_or_integral_t<Dst>;
     using src_type = detail::underlying_type_or_integral_t<Src>;
-    return static_cast<Dst>(detail::saturated_cast<dst_type>(static_cast<src_type>(value)));
-}
-
-template <class Dst>
-constexpr Dst saturated_cast(Dst value)
-{
-    static_assert(detail::check_int<Dst>(value), "");
-    return value;
+    return static_cast<Dst>(detail::saturated_cast(detail::type_<dst_type>{}, static_cast<src_type>(value)));
 }
 
 
@@ -235,11 +245,4 @@ constexpr Dst safe_cast(Src value)
     static_assert(detail::check_int<Dst>(value), "");
     static_assert(is_safe_convertible<Src, Dst>::value, "Unsafe conversion.");
     return static_cast<Dst>(value);
-}
-
-template <class Dst>
-constexpr Dst safe_cast(Dst value)
-{
-    static_assert(detail::check_int<Dst>(value), "");
-    return value;
 }
