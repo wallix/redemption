@@ -447,8 +447,8 @@ void config_spec_definition(Writer && W)
             cpp::name{"key0"}, set(default_key));
         W.member(hidden_in_gui, sesman_read, type_<types::fixed_binary<32>>(), "sign_key",
             cpp::name{"key1"}, set(default_key));
-        W.member(A, type_<bool>(), "session_log_with_encryption", desc{"Use encryption for session log file."}, set(false));
-        W.member(A, type_<bool>(), "session_log_with_checksum", desc{"Use checksum for session log file."}, set(false));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_log_with_encryption", desc{"Use encryption for session log file."}, set(false));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_log_with_checksum", desc{"Use checksum for session log file."}, set(false));
     });
 
     W.section("remote_program", [&]
