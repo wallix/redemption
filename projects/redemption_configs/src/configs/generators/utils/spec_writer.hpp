@@ -236,6 +236,26 @@ void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... ar
 { detail_::apply_if_contains<T>(pack_contains<T>(pack), pack, fn, args...); }
 
 
+namespace detail_
+{
+    template<class T>
+    std::conditional_t<
+        std::is_convertible<T, cfg_attributes::spec::attr>::value,
+        cfg_attributes::spec::attr,
+        T const &
+    >
+    to_attr_if_convertible(T const & value)
+    { return value; }
+
+    struct no_attr_t {};
+    inline no_attr_t to_attr_if_convertible(std::integral_constant<
+        cfg_attributes::spec::attr,
+        cfg_attributes::spec::attr::no_ini_no_gui
+    >)
+    { return {}; }
+}
+
+
 template<class T, class U = void>
 using enable_if_enum_t = typename std::enable_if<std::is_enum<T>::value, U>::type;
 template<class T, class U = void>
@@ -313,8 +333,20 @@ public:
     template<class... Ts>
     void member(Ts const & ... args)
     {
-        using infos_type = Infos<Ts...>;
-        std::unique_ptr<infos_type> u(new infos_type{args...});
+        static_assert(! decltype(pack_contains<cfg_attributes::spec::attr>(std::declval<pack_type<Ts...>>())) {}, "Has a direct spec::attr value");
+
+        using infos_type = Infos<
+            std::remove_const_t<
+                std::remove_reference_t<
+                    decltype(detail_::to_attr_if_convertible(args))
+                >
+            >...
+        >;
+        std::unique_ptr<infos_type> u(new infos_type{detail_::to_attr_if_convertible(args)...});
+
+        auto has_attr = pack_contains<cfg_attributes::spec::attr>(u->infos);
+        auto has_no_attr_t = pack_contains<detail_::no_attr_t>(u->infos);
+        static_assert(decltype(has_attr) {} || decltype(has_no_attr_t) {}, "spec:attr is missing");
 
         std::string varname = pack_get<AttributeName>(u->infos);
         auto it = this->section_->members.find(varname);
