@@ -852,9 +852,13 @@ public:
     // ===========================================================================
     bool can_be_start_capture() override
     {
-        LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+
+        if (this->capture) {
+            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
+            return false;
+        }
 
         if (!ini.get<cfg::globals::is_rec>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
@@ -863,14 +867,7 @@ public:
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ) {
-            LOG(LOG_INFO, "No Capture 1");
-            return false;
-        }
-
-        if (this->capture) {
-            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
-
-            LOG(LOG_INFO, "No Capture 2");
+            LOG(LOG_INFO, "Front::start_capture: Capture is not necessary");
             return false;
         }
 
