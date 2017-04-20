@@ -1114,7 +1114,7 @@ struct KeymapSym {
                     this->key_flags ^= CAPSLOCK;
                 }
                 break;
-            case 0xc5: // numlock
+            case 0xC5: // numlock
                 if (this->keys_down[extendedKeyCode]){
                     this->key_flags ^= NUMLOCK;
                 }
