@@ -21,6 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#include "utils/log.hpp"
 #include "sashimi/channels.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -44,11 +45,11 @@ REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
  * @see ssh_channel_open_forward()
  */
 int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
-    syslog(LOG_INFO, "%s ---", __PRETTY_FUNCTION__);
-    syslog(LOG_INFO, "ssh_channel_open_auth_agent %s %s", channel->show(), this->show());
+    LOG(LOG_INFO, "%s ---", __PRETTY_FUNCTION__);
+    LOG(LOG_INFO, "ssh_channel_open_auth_agent %s %s", channel->show(), this->show());
 
     if (this->session_state == SSH_SESSION_STATE_ERROR){
-        syslog(LOG_INFO, "ssh_channel_open_auth_agent E2");
+        LOG(LOG_INFO, "ssh_channel_open_auth_agent E2");
         return SSH_ERROR;
     }
 
@@ -56,7 +57,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
     switch(channel->state){
     case ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_NOT_OPEN:
-        syslog(LOG_WARNING, "CHANNEL_STATE_NOT OPEN");
+        LOG(LOG_WARNING, "CHANNEL_STATE_NOT OPEN");
         channel->channel_open(this->new_channel_id(),
                               "auth-agent@openssh.com",
                               CHANNEL_MAX_PACKET,
@@ -71,7 +72,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
     // But maybe we should have some error if we call open and channel is already opening
     // instead of accepting it.
     case ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING:
-        syslog(LOG_WARNING, "CHANNEL_STATE_OPENING");
+        LOG(LOG_WARNING, "CHANNEL_STATE_OPENING");
         err = SSH_OK;
         while(1) {
             if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING){
@@ -79,7 +80,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
                 break;
             }
             if (this->socket == nullptr) {
-                syslog(LOG_WARNING, "handle_packets early exit : no socket");
+                LOG(LOG_WARNING, "handle_packets early exit : no socket");
                 err = SSH_ERROR;
                 break;
             }
@@ -106,13 +107,13 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
     break;
     case ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN:
-        syslog(LOG_INFO, "ssh_channel_open_auth_agent SSH_CHANNEL_STATE_OPEN");
+        LOG(LOG_INFO, "ssh_channel_open_auth_agent SSH_CHANNEL_STATE_OPEN");
         // shouldn't it be an error: looks like double opening of a channel ?
         err = SSH_OK;
     break;
     case ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_CLOSED:
     case ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN_DENIED:
-        syslog(LOG_INFO, "ssh_channel_open_auth_agent SSH_CHANNEL_STATE_CLOSED/DENIED");
+        LOG(LOG_INFO, "ssh_channel_open_auth_agent SSH_CHANNEL_STATE_CLOSED/DENIED");
         err = SSH_ERROR;
         break;
     default:
@@ -178,7 +179,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 
 
 void ssh_disconnect_server(SshServerSession * server_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
 
     if (server_session->socket != nullptr && server_session->socket->fd_in != INVALID_SOCKET) {
         server_session->out_buffer->out_uint8(SSH_MSG_DISCONNECT);
@@ -205,7 +206,7 @@ void ssh_disconnect_server(SshServerSession * server_session) {
 }
 
 inline int ssh_auth_reply_success_server(SshServerSession * server_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     server_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_SUCCESS);
     server_session->packet_send();
     return SSH_OK;
@@ -221,7 +222,7 @@ inline int ssh_auth_reply_success_server(SshServerSession * server_session) {
  */
 void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, SshServerSession * server_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     ctx->front_session = server_session;
 }
 
@@ -246,20 +247,20 @@ void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, SshServerSession * 
 int ssh_userauth_kbdint_settmpprompts_server(SshServerSession * server_session, const char * name,
                                       const char * instruction, unsigned int num_prompts,
                                       const char ** prompts, unsigned char * echo) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     unsigned int i = 0;
-    syslog(LOG_INFO, "set prompt %d %s", num_prompts, prompts[0]);
+    LOG(LOG_INFO, "set prompt %d %s", num_prompts, prompts[0]);
     if (server_session->tmp_kbdint == nullptr) {
-        syslog(LOG_INFO, "%s A ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s A ---", __FUNCTION__);
         server_session->tmp_kbdint = new ssh_kbdint_struct;
         // TODO : check memory allocation
     }
     else {
-        syslog(LOG_INFO, "%s B ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s B ---", __FUNCTION__);
         ssh_kbdint_clean(server_session->tmp_kbdint);
     }
 
-    syslog(LOG_INFO, "%s C ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s C ---", __FUNCTION__);
 
     server_session->tmp_kbdint->name = strdup(name);
     // TODO : check memory allocation
@@ -305,7 +306,7 @@ int ssh_userauth_kbdint_settmpprompt_server(SshServerSession * server_session, c
                                      const char * instruction, const char * prompt,
                                      unsigned char echo, error_struct * error) {
     (void)error;
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     unsigned int num_prompts = 0;
     const char ** prompts = nullptr;
     unsigned char * echos = nullptr;
@@ -327,7 +328,7 @@ int ssh_userauth_kbdint_settmpprompt_server(SshServerSession * server_session, c
  */
 int ssh_userauth_kbdint_getnanswers_server(SshServerSession * server_session, error_struct * error) {
     (void)error;
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     if(server_session == nullptr || server_session->kbdint == nullptr){
         return SSH_ERROR;
     }
@@ -345,7 +346,7 @@ int ssh_userauth_kbdint_getnanswers_server(SshServerSession * server_session, er
  */
 const char *ssh_userauth_kbdint_getanswer_server(SshServerSession * server_session, unsigned int i, error_struct * error) {
     (void)error;
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     if (server_session == nullptr
     || server_session->kbdint == nullptr
     || server_session->kbdint->answers == nullptr) {
@@ -369,7 +370,7 @@ const char *ssh_userauth_kbdint_getanswer_server(SshServerSession * server_sessi
  * @warning Any data unread on this channel will be lost.
  */
 void ssh_channel_free_server(SshServerSession * server_session, ssh_channel channel) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     if (channel == nullptr) {
         return;
     }
@@ -405,7 +406,7 @@ void ssh_channel_free_server(SshServerSession * server_session, ssh_channel chan
  * @returns nullptr if no forwardable token is available.
  */
 ssh_gssapi_creds ssh_gssapi_get_creds_server(SshServerSession * server_session){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     if (!server_session || !server_session->gssapi || server_session->gssapi->client_creds == GSS_C_NO_CREDENTIAL)
         return nullptr;
     return static_cast<ssh_gssapi_creds>(server_session->gssapi->client_creds);
@@ -427,11 +428,11 @@ ssh_gssapi_creds ssh_gssapi_get_creds_server(SshServerSession * server_session){
  */
 void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel channel, const char *orig_addr, int orig_port)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
-    syslog(LOG_INFO, "ssh_channel_open_x11_server %s %s", channel->show(), server_session->show());
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "ssh_channel_open_x11_server %s %s", channel->show(), server_session->show());
 
     if(channel == nullptr) {
-        syslog(LOG_INFO, "ssh_channel_open_x11_server E1");
+        LOG(LOG_INFO, "ssh_channel_open_x11_server E1");
         return;
     }
 
@@ -442,7 +443,7 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
                                 channel,
                                 SSH_ERROR,
                                 channel->callbacks->userdata);
-        syslog(LOG_INFO, "ssh_channel_open_x11_server E2");
+        LOG(LOG_INFO, "ssh_channel_open_x11_server E2");
         return;
     }
 
@@ -452,7 +453,7 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
     channel->local_window = CHANNEL_INITIAL_WINDOW;
     channel->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING;
 
-    syslog(LOG_INFO, "Creating channel #%d of type x11 with %d window and %d max packet",
+    LOG(LOG_INFO, "Creating channel #%d of type x11 with %d window and %d max packet",
                 channel->local_channel, channel->local_window, channel->local_maxpacket);
 
 
@@ -483,13 +484,13 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
 
         int trigger() override
         {
-            syslog(LOG_INFO, "Event_ssh_channel_open_x11_server trigger");
+            LOG(LOG_INFO, "Event_ssh_channel_open_x11_server trigger");
             return this->channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING;
         }
 
         void action() override
         {
-            syslog(LOG_INFO, "Event_ssh_channel_open_x11_server action");
+            LOG(LOG_INFO, "Event_ssh_channel_open_x11_server action");
             channel->callbacks->channel_open_x11_server_status_function(
                                     this->server_session,
                                     this->channel,
@@ -502,7 +503,7 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
 
     server_session->add_event(event);
 
-    syslog(LOG_INFO, "ssh_channel_open_x11_server done loop");
+    LOG(LOG_INFO, "ssh_channel_open_x11_server done loop");
     return;
 }
 
@@ -529,8 +530,8 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
  */
 int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_channel channel, void *dest, uint32_t count)
 {
-//    syslog(LOG_WARNING, "ssh_channel_read channel=%s", channel->show());
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+//    LOG(LOG_WARNING, "ssh_channel_read channel=%s", channel->show());
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t len;
     int rc;
 
@@ -652,10 +653,10 @@ int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_chan
 
 
 int channel_write_common_server(ssh_session_struct * server_session, ssh_channel channel, const uint8_t *data, uint32_t len) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t origlen = len;
 
-    /*    syslog(LOG_INFO, "channel write len=%d", len);*/
+    /*    LOG(LOG_INFO, "channel write len=%d", len);*/
     /*
      * Handle the max packet len from remote side, be nice
      * 10 bytes for the headers
@@ -673,7 +674,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
 
     if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
-        syslog(LOG_INFO, "Remote channel is closed");
+        LOG(LOG_INFO, "Remote channel is closed");
         ssh_set_error(server_session->error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
@@ -685,7 +686,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
     while (len > 0) {
         while (channel->remote_window == 0) {
             if (server_session->session_state == SSH_SESSION_STATE_ERROR){
-                syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
+                LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
             if (server_session->socket == nullptr){
@@ -697,7 +698,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
 
             if (server_session->session_state == SSH_SESSION_STATE_ERROR
             || server_session->session_state == SSH_SESSION_STATE_ERROR){
-                syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
+                LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
         }
@@ -740,8 +741,8 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
  *                      to be done again.
  */
 int SshServerSession::global_request_server(const char *request, ssh_buffer_struct* buffer, int reply) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
-    syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "> GLOBAL_REQUEST %s", request);
     int rc = SSH_OK;
 
     if (this->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
@@ -756,7 +757,7 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
         this->global_req_state = SSH_CHANNEL_REQ_STATE_PENDING;
         this->packet_send();
 
-        syslog(LOG_INFO,
+        LOG(LOG_INFO,
                 "Sent a SSH_MSG_GLOBAL_REQUEST %s", request);
 
         if (reply == 0) {
@@ -791,11 +792,11 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
 
     switch(this->global_req_state){
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-        syslog(LOG_INFO, "Global request %s success",request);
+        LOG(LOG_INFO, "Global request %s success",request);
         rc = SSH_OK;
         break;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-        syslog(LOG_INFO, "Global request %s failed", request);
+        LOG(LOG_INFO, "Global request %s failed", request);
         ssh_set_error(this->error, SSH_REQUEST_DENIED,
                       "Global request %s failed", request);
         rc = SSH_ERROR;
@@ -825,24 +826,24 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
  */
 int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const uint8_t *data, uint32_t len)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     if(channel == nullptr) {
-        syslog(LOG_WARNING, "Invalid channel");
+        LOG(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
     }
     if(data == nullptr) {
-        syslog(LOG_WARNING, "Invalid data");
+        LOG(LOG_WARNING, "Invalid data");
         return SSH_ERROR;
     }
 
     if (len > INT_MAX) {
-        syslog(LOG_WARNING, "Length (%u) is bigger than INT_MAX", len);
+        LOG(LOG_WARNING, "Length (%u) is bigger than INT_MAX", len);
         return SSH_ERROR;
     }
 
     uint32_t origlen = len;
 
-    /*    syslog(LOG_INFO, "channel write len=%d", len);*/
+    /*    LOG(LOG_INFO, "channel write len=%d", len);*/
     /*
      * Handle the max packet len from remote side, be nice
      * 10 bytes for the headers
@@ -860,7 +861,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
 
     if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
-        syslog(LOG_INFO, "Remote channel is closed");
+        LOG(LOG_INFO, "Remote channel is closed");
         ssh_set_error(this->error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
@@ -872,10 +873,10 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
     while (len > 0) {
         while (channel->remote_window == 0) {
             if (this->session_state == SSH_SESSION_STATE_ERROR){
-                syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
+                LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
-            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", this->session_state, static_cast<int>(channel->state));
+            LOG(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", this->session_state, static_cast<int>(channel->state));
             if (this->socket == nullptr){
                 return SSH_ERROR;
             }
@@ -884,7 +885,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
             dopoll(this->ctx, (this->flags&SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
 
             if (this->session_state == SSH_SESSION_STATE_ERROR){
-                syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
+                LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
         }
@@ -902,7 +903,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
 
         this->packet_send();
 
-//        syslog(LOG_INFO,
+//        LOG(LOG_INFO,
 //                "channel_write wrote %ld bytes", (long int) effectivelen);
 
         channel->remote_window -= effectivelen;
@@ -939,7 +940,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
  */
 int SshServerSession::ssh_channel_open_reverse_forward_server(ssh_channel channel, const char *remotehost,
                                      int remoteport, const char *sourcehost, int localport) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     int err = SSH_ERROR;
 
     if(channel == nullptr) {

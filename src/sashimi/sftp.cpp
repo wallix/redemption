@@ -35,6 +35,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+
+#include "utils/log.hpp"
 #include "sashimi/libssh/libssh.h"
 
 #include "sashimi/buffer.hpp"
@@ -1010,8 +1012,8 @@ static void sftp_set_error(sftp_session_struct* sftp, int errnum);
 
 
 //int ssh_channel_request_sftp(ssh_session_struct * session, ssh_channel channel){
-//    syslog(LOG_INFO, "%s ---", __FUNCTION__);
-//    syslog(LOG_INFO, ">>>>>>>>>>> CHANNEL_REQUEST_SFTP %s", channel->show());
+//    LOG(LOG_INFO, "%s ---", __FUNCTION__);
+//    LOG(LOG_INFO, ">>>>>>>>>>> CHANNEL_REQUEST_SFTP %s", channel->show());
 //    if(channel == nullptr) {
 //        return SSH_ERROR;
 //    }
@@ -1020,7 +1022,7 @@ static void sftp_set_error(sftp_session_struct* sftp, int errnum);
 
 
 //sftp_session_struct* sftp_new(ssh_session_struct * session){
-//  syslog(LOG_WARNING, "sftp_new");
+//  LOG(LOG_WARNING, "sftp_new");
 
 //  sftp_session_struct * sftp = new sftp_session_struct;
 //  sftp->ext = new sftp_ext_struct;
@@ -1051,7 +1053,7 @@ static void sftp_set_error(sftp_session_struct* sftp, int errnum);
 
 sftp_session_struct* sftp_new_channel(ssh_session_struct * session, ssh_channel channel)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     sftp_session_struct * sftp = new sftp_session_struct;
     sftp->session = session;
     sftp->channel = channel;
@@ -1062,7 +1064,7 @@ sftp_session_struct* sftp_new_channel(ssh_session_struct * session, ssh_channel 
 
 sftp_session_struct* sftp_server_new(ssh_session_struct * session, ssh_channel chan)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     sftp_session_struct * sftp = new sftp_session_struct;
     sftp->session = session;
     sftp->channel = chan;
@@ -1072,7 +1074,7 @@ sftp_session_struct* sftp_server_new(ssh_session_struct * session, ssh_channel c
 
 int sftp_server_init(sftp_session_struct* sftp)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     ssh_session_struct * session = sftp->session;
     sftp_packet_struct* packet = nullptr;
     ssh_buffer_struct* reply = nullptr;
@@ -1080,7 +1082,7 @@ int sftp_server_init(sftp_session_struct* sftp)
 
     packet = sftp_packet_read(sftp);
     if (packet == nullptr) {
-        syslog(LOG_WARNING, "========================================== done 1");
+        LOG(LOG_WARNING, "========================================== done 1");
         return -1;
     }
 
@@ -1093,14 +1095,14 @@ int sftp_server_init(sftp_session_struct* sftp)
             delete packet->payload;
             delete packet;
         }
-        syslog(LOG_WARNING, "========================================== done 2");
+        LOG(LOG_WARNING, "========================================== done 2");
         return -1;
     }
 
-    syslog(LOG_INFO, "Received SSH_FXP_INIT");
+    LOG(LOG_INFO, "Received SSH_FXP_INIT");
 
     version = packet->payload->in_uint32_be();
-    syslog(LOG_INFO, "Client version: %d", version);
+    LOG(LOG_INFO, "Client version: %d", version);
     sftp->client_version = version;
 
     if (packet != nullptr) {
@@ -1114,12 +1116,12 @@ int sftp_server_init(sftp_session_struct* sftp)
 
     if (sftp_packet_write(sftp, SSH_FXP_VERSION, reply) < 0) {
         delete reply;
-        syslog(LOG_WARNING, "========================================== done 4");
+        LOG(LOG_WARNING, "========================================== done 4");
         return -1;
     }
     delete reply;
 
-    syslog(LOG_INFO, "Server version sent");
+    LOG(LOG_INFO, "Server version sent");
 
     if (version > LIBSFTP_VERSION) {
         sftp->version = LIBSFTP_VERSION;
@@ -1127,13 +1129,13 @@ int sftp_server_init(sftp_session_struct* sftp)
         sftp->version=version;
     }
 
-    syslog(LOG_WARNING, "========================================== done 5");
+    LOG(LOG_WARNING, "========================================== done 5");
     return 0;
 }
 
 int sftp_packet_write(sftp_session_struct* sftp, uint8_t type, ssh_buffer_struct* payload)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     int size;
 
     payload->buffer_prepend_data(&type, sizeof(uint8_t));
@@ -1150,7 +1152,7 @@ int sftp_packet_write(sftp_session_struct* sftp, uint8_t type, ssh_buffer_struct
         return -1;
     }
     else if(static_cast<uint32_t>(size) != payload->in_remain()) {
-        syslog(LOG_INFO,
+        LOG(LOG_INFO,
             "Had to write %d bytes, wrote only %d",
             static_cast<uint32_t>(payload->in_remain()),
             size);
@@ -1180,8 +1182,8 @@ int sftp_packet_write(sftp_session_struct* sftp, uint8_t type, ssh_buffer_struct
  */
 inline int ssh_channel_read_stdout(ssh_session_struct * session, ssh_channel channel, void *dest, uint32_t count)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
-//    syslog(LOG_WARNING, "ssh_channel_read channel=%s", channel->show());
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
+//    LOG(LOG_WARNING, "ssh_channel_read channel=%s", channel->show());
     uint32_t len;
     int rc;
 
@@ -1304,7 +1306,7 @@ inline int ssh_channel_read_stdout(ssh_session_struct * session, ssh_channel cha
 
 sftp_packet_struct* sftp_packet_read(sftp_session_struct* sftp)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     unsigned char buffer[4096];
     uint32_t size;
     int r;
@@ -1349,13 +1351,13 @@ sftp_packet_struct* sftp_packet_read(sftp_session_struct* sftp)
         packet->payload->out_blob(buffer,r);
         size -= r;
     }
-    syslog(LOG_WARNING, "G +++");
+    LOG(LOG_WARNING, "G +++");
     return packet;
 }
 
 static void sftp_set_error(sftp_session_struct* sftp, int errnum)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     if (sftp != nullptr) {
         sftp->errnum = errnum;
     }
@@ -1364,7 +1366,7 @@ static void sftp_set_error(sftp_session_struct* sftp, int errnum)
 /* Get the last sftp error */
 int sftp_get_error(sftp_session_struct* sftp)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     if (sftp == nullptr) {
         return -1;
     }
@@ -1374,7 +1376,7 @@ int sftp_get_error(sftp_session_struct* sftp)
 
 static sftp_message_struct* sftp_get_message(sftp_packet_struct * packet)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
 
     sftp_message_struct* msg = new sftp_message_struct;
     msg->payload = new ssh_buffer_struct;
@@ -1397,7 +1399,7 @@ static sftp_message_struct* sftp_get_message(sftp_packet_struct * packet)
 
     msg->id = packet->payload->in_uint32_le();
 
-    syslog(LOG_INFO,
+    LOG(LOG_INFO,
       "Packet with id %d type %d",
       msg->id,
       msg->packet_type);
@@ -1409,7 +1411,7 @@ static sftp_message_struct* sftp_get_message(sftp_packet_struct * packet)
 
 static int sftp_read_and_dispatch(sftp_session_struct* sftp)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     sftp_packet_struct* packet = nullptr;
     sftp_message_struct* msg = nullptr;
 
@@ -1441,7 +1443,7 @@ static int sftp_read_and_dispatch(sftp_session_struct* sftp)
 /* Initialize the sftp session with the server. */
 int sftp_init(sftp_session_struct* sftp)
 {
-    syslog(LOG_WARNING, "--- %s", __FUNCTION__);
+    LOG(LOG_WARNING, "--- %s", __FUNCTION__);
     char *ext_name = nullptr;
     char *ext_data = nullptr;
 
@@ -1472,7 +1474,7 @@ int sftp_init(sftp_session_struct* sftp)
 
     /* TODO: are we sure there are 4 bytes ready? */
     uint32_t version = packet->payload->in_uint32_be();
-    syslog(LOG_INFO, "SFTP server version %d", version);
+    LOG(LOG_INFO, "SFTP server version %d", version);
 
     // TODO: Horrible, fix that
 
@@ -1503,7 +1505,7 @@ int sftp_init(sftp_session_struct* sftp)
         packet->payload->buffer_get_data(ext_data, ext_data_len);
         ext_data[ext_data_len] = 0;
 
-        syslog(LOG_INFO, "SFTP server extension: %s, version: %s", ext_name, ext_data);
+        LOG(LOG_INFO, "SFTP server extension: %s, version: %s", ext_name, ext_data);
 
         char ** tmp = static_cast<char**>(realloc(sftp->ext->name, (sftp->ext->count+1) * sizeof(char *)));
         tmp[sftp->ext->count] = ext_name;
@@ -1599,7 +1601,7 @@ static int sftp_enqueue(sftp_session_struct* sftp, sftp_message_struct* msg)
     sftp_request_queue_struct * queue = new sftp_request_queue_struct;
     queue->message = msg;
 
-    syslog(LOG_INFO, "Queued msg type %d id %d", msg->id, msg->packet_type);
+    LOG(LOG_INFO, "Queued msg type %d id %d", msg->id, msg->packet_type);
 
     if(sftp->queue == nullptr) {
         sftp->queue = queue;
@@ -1641,7 +1643,7 @@ static sftp_message_struct* sftp_dequeue(sftp_session_struct* sftp, uint32_t id)
       if (queue != nullptr) {
           delete queue;
       }
-      syslog(LOG_INFO,
+      LOG(LOG_INFO,
           "Dequeued msg id %d type %d",
           msg->id,
           msg->packet_type);
@@ -2081,7 +2083,7 @@ static sftp_attributes_struct* sftp_parse_attr_3(sftp_session_struct* sftp, ssh_
         buf->buffer_get_data(attr->name, name_length);
         attr->name[name_length] = 0;
 
-        syslog(LOG_INFO, "Name: %s", attr->name);
+        LOG(LOG_INFO, "Name: %s", attr->name);
 
         if (sizeof(uint32_t) > buf->in_remain()){
             break;
@@ -2094,7 +2096,7 @@ static sftp_attributes_struct* sftp_parse_attr_3(sftp_session_struct* sftp, ssh_
         buf->buffer_get_data(attr->longname, longname_length);
         attr->longname[longname_length] = 0;
 
-        syslog(LOG_INFO, "Name: %s", attr->name);
+        LOG(LOG_INFO, "Name: %s", attr->name);
 
 
         /* Set owner and group if we talk to openssh and have the longname */
@@ -2112,12 +2114,12 @@ static sftp_attributes_struct* sftp_parse_attr_3(sftp_session_struct* sftp, ssh_
     }
 
     attr->flags = buf->in_uint32_be();
-    syslog(LOG_INFO,
+    LOG(LOG_INFO,
         "Flags: %.8lx\n", static_cast<long unsigned int>(flags));
 
     if (flags & SSH_FILEXFER_ATTR_SIZE) {
       attr->size = buf->in_uint64_be();
-      syslog(LOG_INFO,
+      LOG(LOG_INFO,
           "Size: %llu\n",
           static_cast<long long unsigned int>(attr->size));
     }
@@ -2293,7 +2295,7 @@ sftp_attributes_struct* sftp_readdir(sftp_session_struct* sftp, sftp_dir_struct*
         }
         delete payload;
 
-        syslog(LOG_INFO, "Sent a ssh_fxp_readdir with id %d", id);
+        LOG(LOG_INFO, "Sent a ssh_fxp_readdir with id %d", id);
 
         while (msg == nullptr) {
             if (sftp_read_and_dispatch(sftp) < 0) {
@@ -2363,7 +2365,7 @@ sftp_attributes_struct* sftp_readdir(sftp_session_struct* sftp, sftp_dir_struct*
         return nullptr;
     }
 
-    syslog(LOG_INFO, "Count is %d", dir->count);
+    LOG(LOG_INFO, "Count is %d", dir->count);
 
     attr = sftp_parse_attr(sftp, dir->buffer, 1);
     if (attr == nullptr) {
@@ -2512,7 +2514,7 @@ sftp_file_struct* sftp_open(sftp_session_struct* sftp, const char *file, int fla
         | ((flags & O_TRUNC)  != 0) * SSH_FXF_TRUNC
         | ((flags & O_EXCL)   != 0) * SSH_FXF_EXCL;
 
-    syslog(LOG_INFO,"Opening file %s with sftp flags %x", file, sftp_flags);
+    LOG(LOG_INFO,"Opening file %s with sftp flags %x", file, sftp_flags);
     id = sftp_get_new_id(sftp);
     buffer->out_uint32_le(id);
 
@@ -2622,7 +2624,7 @@ ssize_t sftp_write(sftp_file_struct* file, const void *buf, size_t count)
     if (len < 0) {
         return -1;
     } else  if (len != packetlen) {
-        syslog(LOG_INFO,
+        LOG(LOG_INFO,
             "Could not write as much data as expected");
     }
 
@@ -3831,7 +3833,7 @@ sftp_client_message_struct* sftp_get_client_message(sftp_session_struct* sftp) {
                 delete [] msg->attr->owner;
                 delete msg->attr;
             }
-            delete [] msg->complete_message;
+            delete msg->complete_message;
             delete [] msg->str_data;
             delete msg;
         }

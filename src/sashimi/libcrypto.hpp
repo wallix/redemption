@@ -30,6 +30,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+#include "utils/log.hpp"
 #include "libssh/libssh.h"
 #include "string.hpp"
 #include "openssl_crypto.hpp"
@@ -517,7 +518,7 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
     /* the wrapper functions for blowfish */
     int set_encrypt_key(void *key, void *IV) override
     {
-//        syslog(LOG_INFO, " ssh_blowfish_cipher_struct::set_encrypt_key");
+//        LOG(LOG_INFO, " ssh_blowfish_cipher_struct::set_encrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -530,13 +531,13 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
 
     int set_decrypt_key(void *key, void *IV) override
     {
-//        syslog(LOG_INFO, " ssh_blowfish_cipher_struct::set_decrypt_key");
+//        LOG(LOG_INFO, " ssh_blowfish_cipher_struct::set_decrypt_key");
         return this->set_encrypt_key(key, IV);
     }
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//        syslog(LOG_INFO, " ssh_blowfish_cipher_struct::cbc_encrypt");
+//        LOG(LOG_INFO, " ssh_blowfish_cipher_struct::cbc_encrypt");
       BF_cbc_encrypt(in, out, len,
             static_cast<const BF_KEY*>(this->key),
             static_cast<unsigned char *>(this->IV),
@@ -544,7 +545,7 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
     }
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
-//      syslog(LOG_INFO, "cbc_decrypt ssh_blowfish_cipher_struct");
+//      LOG(LOG_INFO, "cbc_decrypt ssh_blowfish_cipher_struct");
       BF_cbc_encrypt(in, out, len,
             static_cast<const BF_KEY*>(this->key),
             static_cast<unsigned char *>(this->IV),
@@ -563,7 +564,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -579,7 +580,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
@@ -589,7 +590,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
      * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
-//      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_encrypt_key");
       unsigned char tmp_buffer[128/8];
       unsigned int num=0;
       /* Some things are special with ctr128 :
@@ -606,7 +607,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//        syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_decrypt_key");
+//        LOG(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_decrypt_key");
         return this->cbc_encrypt(in, out, len);
     }
 };
@@ -623,7 +624,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -641,7 +642,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
@@ -651,7 +652,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
      * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
-//      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_encrypt");
       unsigned char tmp_buffer[128/8];
       unsigned int num=0;
       /* Some things are special with ctr128 :
@@ -668,7 +669,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//        syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_decrypt");
+//        LOG(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_decrypt");
         return this->cbc_encrypt(in, out, len);
     }
 };
@@ -683,7 +684,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
                 return -1;
@@ -701,7 +702,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
@@ -711,7 +712,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
      * @param[in] len must be a multiple of AES128 block size.
      */
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override {
-//      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_encrypt");
       unsigned char tmp_buffer[128/8];
       unsigned int num=0;
       /* Some things are special with ctr128 :
@@ -728,7 +729,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//        syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_decrypt");
+//        LOG(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_decrypt");
         return this->cbc_encrypt(in, out, len);
     }
 };
@@ -743,7 +744,7 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes128_cbc_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
                 return -1;
@@ -761,7 +762,7 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes128_cbc_cipher_struct::set_decrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -780,7 +781,7 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_encrypt");
       AES_cbc_encrypt(in, out, len,
         static_cast<const AES_KEY*>(this->key),
         static_cast<unsigned char *>(this->IV),
@@ -789,7 +790,7 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_decrypt");
       AES_cbc_encrypt(in, out, len,
         static_cast<const AES_KEY*>(this->key),
         static_cast<unsigned char *>(this->IV),
@@ -807,7 +808,7 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_encrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -824,7 +825,7 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_decrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -842,7 +843,7 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_encrypt");
       AES_cbc_encrypt(in, out, len,
         static_cast<const AES_KEY*>(this->key),
         static_cast<unsigned char *>(this->IV),
@@ -851,7 +852,7 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_decrypt");
       AES_cbc_encrypt(in, out, len,
         static_cast<const AES_KEY*>(this->key),
         static_cast<unsigned char *>(this->IV),
@@ -869,7 +870,7 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_encrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -887,7 +888,7 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_decrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -906,7 +907,7 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_encrypt");
       AES_cbc_encrypt(
         in, out, len,
         static_cast<const AES_KEY*>(this->key),
@@ -916,7 +917,7 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_decrypt");
       AES_cbc_encrypt(in, out, len,
         static_cast<const AES_KEY*>(this->key),
         static_cast<unsigned char *>(this->IV),
@@ -933,7 +934,7 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//        syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_encrypt_key");
+//        LOG(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -950,13 +951,13 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_encrypt");
       DES_ede3_cbc_encrypt(in, out, len,
           static_cast<DES_key_schedule*>(this->key),
           static_cast<DES_key_schedule*>(this->key) + 1,
@@ -966,7 +967,7 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_decrypt");
       DES_ede3_cbc_encrypt(in, out, len,
           static_cast<DES_key_schedule*>(this->key),
           static_cast<DES_key_schedule*>(this->key) + 1,
@@ -985,7 +986,7 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -1002,13 +1003,13 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_encrypt");
         DES_ncbc_encrypt(in, out, len,
                        static_cast<DES_key_schedule*>(this->key),
                        static_cast<unsigned char (*)[8]>(this->IV), 1);
@@ -1026,7 +1027,7 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_decrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key) + 2,
                         static_cast<unsigned char (*)[8]>(this->IV), 0);
@@ -1055,7 +1056,7 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     int set_encrypt_key(void *key, void *IV) override
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_encrypt_key");
+//      LOG(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_encrypt_key");
         if(!this->key){
             if (this->alloc_key() < 0) {
                 return -1;
@@ -1070,13 +1071,13 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) override {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_decrypt_key");
+//      LOG(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
 
     void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_encrypt");
+//      LOG(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_encrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key),
                         static_cast<unsigned char (*)[8]>(this->IV),
@@ -1085,7 +1086,7 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) override
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_decrypt");
+//      LOG(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_decrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key),
                         static_cast<unsigned char (*)[8]>(this->IV),
