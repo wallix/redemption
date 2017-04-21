@@ -59,7 +59,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
-alias libs    : libredrec ;
+alias libs    : libredrec libredcryptofile ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 

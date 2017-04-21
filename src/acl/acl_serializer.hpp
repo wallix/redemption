@@ -197,7 +197,6 @@ private:
     Transport & auth_trans;
     char session_id[256];
     CryptoContext cctx;
-    Random & rnd;
     OutCryptoTransport ct;
 
 public:
@@ -225,7 +224,6 @@ public:
         , auth_trans(auth_trans)
         , session_id{}
         , cctx(cctx)
-        , rnd(rnd)
         , ct(ini.get<cfg::crypto::session_log_with_encryption>(), ini.get<cfg::crypto::session_log_with_checksum>(), cctx, rnd)
         , remote_answer(false)
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
