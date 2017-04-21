@@ -32,6 +32,7 @@
 # define RED_CHECK(a) (a)
 # define RED_CHECK_MESSAGE(a, iostream_expr) (a), ""
 # define RED_CHECK_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
@@ -47,6 +48,10 @@
 # define RED_REQUIRE(a) (a)
 # define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
 # define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
+
+# define RED_FAIL(mess) mess
+# define RED_ERROR(mess) mess
 
 #else
 
@@ -63,6 +68,7 @@
 # define RED_CHECK BOOST_CHECK
 # define RED_CHECK_MESSAGE BOOST_CHECK_MESSAGE
 # define RED_CHECK_EQUAL_COLLECTIONS BOOST_CHECK_EQUAL_COLLECTIONS
+# define RED_CHECK_PREDICATE BOOST_CHECK_PREDICATE
 
 
 # define RED_REQUIRE_NO_THROW BOOST_REQUIRE_NO_THROW
@@ -78,6 +84,10 @@
 # define RED_REQUIRE BOOST_REQUIRE
 # define RED_REQUIRE_MESSAGE BOOST_REQUIRE_MESSAGE
 # define RED_REQUIRE_EQUAL_COLLECTIONS BOOST_REQUIRE_EQUAL_COLLECTIONS
+# define RED_REQUIRE_PREDICATE BOOST_REQUIRE_PREDICATE
+
+# define RED_FAIL BOOST_FAIL
+# define RED_ERROR BOOST_ERROR
 
 
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, ErrId) \
