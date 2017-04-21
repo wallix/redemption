@@ -64,6 +64,12 @@ public:
             this->len = newlen;
         }
 
+        NamedRegex const & operator[](std::size_t i) const
+        {
+            assert(i < this->len);
+            return this->regexes[i];
+        }
+
         NamedRegex * begin() const
         { return this->regexes.get(); }
 

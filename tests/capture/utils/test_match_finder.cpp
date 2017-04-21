@@ -28,25 +28,76 @@
 
 #include "capture/utils/match_finder.hpp"
 
-RED_AUTO_TEST_CASE(Testmatch_finder)
+RED_AUTO_TEST_CASE(MatchFinder_configure_regexes)
 {
     utils::MatchFinder::NamedRegexArray regexes;
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$kbd:a b \x01 $kbd: c", regexes, 0);
+    const char * pattern =
+        "$kbd:a b \x01"
+        " $kbd: c\x01"
+        "$kbd:ee\x01"
+        "$ocr:ocr\x01"
+        "$ocr-kbd:ocr and kbd\x01"
+        "$kbd-ocr:other ocr and kbd";
+        
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, pattern, regexes, 0);
 
-    RED_REQUIRE_EQUAL(regexes.size(), 2);
-    RED_REQUIRE_EQUAL(regexes.begin()->name, "a b ");
-    RED_REQUIRE_EQUAL(regexes.begin()[1].name, " c");
+    RED_REQUIRE_EQUAL(regexes.size(), 5);
+    RED_REQUIRE_EQUAL(regexes[0].name, "a b ");
+    RED_REQUIRE_EQUAL(regexes[1].name, " c");
+    RED_REQUIRE_EQUAL(regexes[2].name, "ee");
+    RED_REQUIRE_EQUAL(regexes[3].name, "ocr and kbd");
+    RED_REQUIRE_EQUAL(regexes[4].name, "other ocr and kbd");
 
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, 0);
+
+    RED_REQUIRE_EQUAL(regexes.size(), 3);
+    RED_REQUIRE_EQUAL(regexes[0].name, "ocr");
+    RED_REQUIRE_EQUAL(regexes[1].name, "ocr and kbd");
+    RED_REQUIRE_EQUAL(regexes[2].name, "other ocr and kbd");
+
+    regexes.resize(0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$ocr:abc", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 1);
+    RED_REQUIRE_EQUAL(regexes[0].name, "abc");
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 1);
+    RED_REQUIRE_EQUAL(regexes[0].name, "cba");
+
+    regexes.resize(0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$other", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$other", regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 0);
+}
+
+RED_AUTO_TEST_CASE(MatchFinder_report_notify)
+{
     struct Auth : auth_api {
+        bool has_log = false;
+        bool has_report = false;
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             RED_CHECK_EQUAL(duplicate_with_pid, false);
             RED_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
             RED_CHECK_EQUAL(extra, "pattern=\"$kbd:c| cacao\"");
+            this->has_log = true;
         }
         void report(const char* reason, const char* message) override {
             RED_CHECK_EQUAL(reason, "FINDPATTERN_NOTIFY");
             RED_CHECK_EQUAL(message, "$kbd:c| cacao");
+            this->has_report = true;
         }
         void set_auth_channel_target(const char*) override { RED_CHECK(false); }
         void set_auth_error_message(const char*) override { RED_CHECK(false); }
@@ -54,4 +105,32 @@ RED_AUTO_TEST_CASE(Testmatch_finder)
 
     Auth auth;
     utils::MatchFinder::report(auth, false, utils::MatchFinder::KBD_INPUT, "c", " cacao");
+    RED_CHECK(auth.has_log);
+    RED_CHECK(auth.has_report);
+}
+
+RED_AUTO_TEST_CASE(MatchFinder_report_kill)
+{
+    struct Auth : auth_api {
+        bool has_log = false;
+        bool has_report = false;
+        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
+            RED_CHECK_EQUAL(duplicate_with_pid, false);
+            RED_CHECK_EQUAL(type, "KILL_PATTERN_DETECTED");
+            RED_CHECK_EQUAL(extra, "pattern=\"$ocr:c| cacao\"");
+            this->has_log = true;
+        }
+        void report(const char* reason, const char* message) override {
+            RED_CHECK_EQUAL(reason, "FINDPATTERN_KILL");
+            RED_CHECK_EQUAL(message, "$ocr:c| cacao");
+            this->has_report = true;
+        }
+        void set_auth_channel_target(const char*) override { RED_CHECK(false); }
+        void set_auth_error_message(const char*) override { RED_CHECK(false); }
+    };
+
+    Auth auth;
+    utils::MatchFinder::report(auth, true, utils::MatchFinder::OCR, "c", " cacao");
+    RED_CHECK(auth.has_log);
+    RED_CHECK(auth.has_report);
 }
