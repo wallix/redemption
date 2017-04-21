@@ -102,7 +102,7 @@ protected:
         DataBitmap(DataBitmap const &) = delete;
         DataBitmap & operator=(DataBitmap const &) = delete;
 
-        static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
+        static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor_)>::type);
 
     public:
         static DataBitmap * construct(uint8_t bpp, uint16_t cx, uint16_t cy)
@@ -2099,7 +2099,7 @@ private:
                 constexpr bool enc_15_16 = Enc::bpp == 15 || Enc::bpp == 16;
                 constexpr bool dec_15_16 = Dec::bpp == 15 || Dec::bpp == 16;
                 if (enc_15_16 ^ dec_15_16) {
-                    pixel = BGRColor_(RGBtoBGR(pixel.to_u32()));
+                    pixel = BGRasRGBColor_(pixel);
                 }
 
                 color_to_buf(enc(pixel), dest);

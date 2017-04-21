@@ -296,7 +296,7 @@ struct DrawableTraitColor24
 
         color_t operator()(const uint8_t * p) const
         {
-            return u32_to_color(this->palette[*p] & 0xFFFFFF);
+            return u32_to_color(this->palette[*p].to_u32() & 0xFFFFFF);
         }
     };
 

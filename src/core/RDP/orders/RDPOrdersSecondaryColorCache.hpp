@@ -102,13 +102,10 @@ public:
         stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            uint32_t color = this->palette[i];
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(b);
-            stream.out_uint8(g);
-            stream.out_uint8(r);
+            BGRColor_ const color = this->palette[i];
+            stream.out_uint8(color.red());
+            stream.out_uint8(color.green());
+            stream.out_uint8(color.blue());
             stream.out_uint8(0);
         }
     }
@@ -124,11 +121,11 @@ public:
         uint16_t numberColors = stream.in_uint16_le();
 
         for (size_t i = 0; i < numberColors; i++) {
-            uint8_t b = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
             uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
             stream.in_skip_bytes(1);
-            this->palette.set_color(i, b|(g << 8)| (r << 16));
+            this->palette.set_color(i, BGRColor_(b, g, r));
         }
     }
 
@@ -140,7 +137,7 @@ public:
         for (size_t i = 0; i < 256 ; ++i){
             if (this->palette[i] != other.palette[i]){
                 printf("palette differs at index %d: %x != %x\n",
-                       static_cast<int>(i), this->palette[i], other.palette[i]);
+                       static_cast<int>(i), this->palette[i].to_u32(), other.palette[i].to_u32());
                 return false;
             }
         }
@@ -155,8 +152,8 @@ public:
             "RDPColCache(%u,"
             "[0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, ...]\n",
             unsigned(this->cacheIndex),
-            this->palette[0], this->palette[1], this->palette[2],
-            this->palette[3], this->palette[4], this->palette[5]);
+            this->palette[0].to_u32(), this->palette[1].to_u32(), this->palette[2].to_u32(),
+            this->palette[3].to_u32(), this->palette[4].to_u32(), this->palette[5].to_u32());
         if (lg >= sz){
             return sz;
         }

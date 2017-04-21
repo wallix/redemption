@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 /* 0280 */ 0x5a, 0x91, 0xc5,                                         // Z..
     };
 
-    BGRPalette palette(raw_palette);
+    BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
     Bitmap bmp(16, 24, &palette, 8, 600, raw_bitmap, sizeof(raw_bitmap), true);
 

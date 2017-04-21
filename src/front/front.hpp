@@ -4586,14 +4586,11 @@ private:
         stream.out_uint16_le(0);
 
         stream.out_uint32_le(256); /* # of colors */
-        for (auto color : this->mod_palette_rgb) {
+        for (BGRColor_ color : this->mod_palette_rgb) {
             // Palette entries is in BGR triplet format.
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
+            stream.out_uint8(color.blue());
+            stream.out_uint8(color.green());
+            stream.out_uint8(color.red());
         }
     }
 

@@ -8599,7 +8599,7 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
     // Bitmap 0 -> Waiting list
     {
-        BGRPalette palette(palette_data_0);
+        BGRPalette palette = make_bgr_palette_from_bgrx_array(palette_data_0);
 
         Bitmap bmp(24, bmp_0_bpp, &palette, bmp_0_cx, bmp_0_cy, bitmap_data_0, sizeof(bitmap_data_0), bmp_0_compressed);
 
@@ -8610,7 +8610,7 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
     // Bitmap 1 -> Waiting list
     {
-        BGRPalette palette(palette_data_1);
+        BGRPalette palette = make_bgr_palette_from_bgrx_array(palette_data_1);
 
         Bitmap bmp(24, bmp_1_bpp, &palette, bmp_1_cx, bmp_1_cy, bitmap_data_1, sizeof(bitmap_data_1), bmp_1_compressed);
 
@@ -8621,7 +8621,7 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
     // Bitmap 2 -> Waiting list
     {
-        BGRPalette palette(palette_data_2);
+        BGRPalette palette = make_bgr_palette_from_bgrx_array(palette_data_2);
 
         Bitmap bmp(24, bmp_2_bpp, &palette, bmp_2_cx, bmp_2_cy, bitmap_data_2, sizeof(bitmap_data_2), bmp_2_compressed);
 
@@ -8633,7 +8633,7 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
     // Bitmap 0 -> Bitmap cache 2
     {
-        BGRPalette palette(palette_data_0);
+        BGRPalette palette = make_bgr_palette_from_bgrx_array(palette_data_0);
 
         Bitmap bmp(24, bmp_0_bpp, &palette, bmp_0_cx, bmp_0_cy, bitmap_data_0, sizeof(bitmap_data_0), bmp_0_compressed);
 
@@ -8645,7 +8645,7 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
     // Bitmap 0 => Bitmap cache 2
     {
-        BGRPalette palette(palette_data_0);
+        BGRPalette palette = make_bgr_palette_from_bgrx_array(palette_data_0);
 
         Bitmap bmp(24, bmp_0_bpp, &palette, bmp_0_cx, bmp_0_cy, bitmap_data_0, sizeof(bitmap_data_0), bmp_0_compressed);
 

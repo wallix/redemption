@@ -257,10 +257,10 @@ struct UpdatePaletteData_Recv {
         assert(numberColors == 256);
 
         for (uint32_t i = 0; i < numberColors; i++) {
-            uint8_t const r = stream.in_uint8();
-            uint8_t const g = stream.in_uint8();
             uint8_t const b = stream.in_uint8();
-            palette.set_color(i, (r << 16) | (g << 8) | b);
+            uint8_t const g = stream.in_uint8();
+            uint8_t const r = stream.in_uint8();
+            palette.set_color(i, BGRColor_(b, g, r));
         }
     }
 };

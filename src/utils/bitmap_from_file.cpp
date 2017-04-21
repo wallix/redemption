@@ -294,7 +294,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                     uint8_t g = stream.in_uint8();
                     uint8_t b = stream.in_uint8();
                     stream.in_skip_bytes(1); // skip alpha channel
-                    palette1.set_color(i, (b << 16)|(g << 8)|r);
+                    palette1.set_color(i, BGRColor_(b, g, r));
                 }
                 break;
             default:

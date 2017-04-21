@@ -2011,10 +2011,10 @@ private:
 
         if (num_colors <= 256) {
             for (int i = 0; i < num_colors; i++) {
-                const int r = stream2.in_uint16_be() >> 8;
-                const int g = stream2.in_uint16_be() >> 8;
                 const int b = stream2.in_uint16_be() >> 8;
-                this->palette.set_color(first_color + i, (r << 16) | (g << 8) | b);
+                const int g = stream2.in_uint16_be() >> 8;
+                const int r = stream2.in_uint16_be() >> 8;
+                this->palette.set_color(first_color + i, BGRColor_(b, g, r));
             }
         }
         else {
