@@ -382,7 +382,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             else {
                 idx_palette = k & 0xf;
             }
-            BGRColor c = BGRColor(palette1[idx_palette]);
+            BGRColor c = palette1[idx_palette];
             d[0] = c.blue();
             d[1] = c.green();
             d[2] = c.red();
