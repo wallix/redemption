@@ -1172,6 +1172,7 @@ obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
 
 lib sashimi :
     sashimi_pki
+    $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
     sashimi_channels
     sashimi_sftp
     sashimi_libssh
@@ -1182,8 +1183,10 @@ lib sashimi :
     dl
     z
     rt
-    :
-    <link>shared
+   :
+       <link>shared
+#       <linkflags>-Wl,-Bsymbolic
+       $(LIB_DEPENDENCIES)
     :
     :
 ;

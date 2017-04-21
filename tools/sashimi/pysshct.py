@@ -3,7 +3,9 @@
 import ctypes
 import ctypes.util
 
-from ctypes import CFUNCTYPE, c_ulong, c_ulonglong, c_void_p, c_int, c_char_p, c_uint16, py_object, c_uint, c_uint32, c_uint64, c_float, POINTER, Structure
+from ctypes import CFUNCTYPE, c_ulong, c_ulonglong, c_int, c_char_p, c_uint16, py_object, c_uint, c_uint32, c_uint64, c_float, POINTER, Structure
+
+c_void_p = c_uint64
 
 ######### Define structs and callback types ############
 
@@ -15,8 +17,7 @@ from ctypes import CFUNCTYPE, c_ulong, c_ulonglong, c_void_p, c_int, c_char_p, c
 
 
 #the event_callback used with poll events
-event_cb = CFUNCTYPE(c_int, 
-    c_int, c_int, py_object)
+event_cb = CFUNCTYPE(c_int, c_int, c_int, py_object)
 
 
 CB_EVENT_FUNCS = {
@@ -489,7 +490,7 @@ try:
     
     lib.ssh_start_new_server_session.argtypes = [
         POINTER(ssh_server_callbacks_struct), 
-        c_void_p, c_int, c_char_p, c_int]
+        c_uint64, c_int, c_char_p, c_int]
     lib.ssh_start_new_server_session.restypes = c_void_p
     
     lib.ssh_userauth_kbdint_getanswer_server.argtypes = [
@@ -520,7 +521,8 @@ try:
     lib.ssh_event_dopoll.restype = c_int
 
     lib.ssh_new_poll_ctx.argtypes = []
-    lib.ssh_new_poll_ctx.restypes = c_void_p
+#    lib.ssh_new_poll_ctx.restypes = c_void_p
+    lib.ssh_new_poll_ctx.restypes = c_uint64
 
     lib.ssh_free.argtypes = [c_void_p]
     lib.ssh_free.restype = None
@@ -544,10 +546,10 @@ try:
     lib.ssh_key_free.argtypes = [c_void_p]
     lib.ssh_key_free.restype = None
 
-except AttributeError, e:
+except AttributeError as e:
     lib = None
     raise ImportError('ssh shared library error (%s)' % e)
-except Exception, e:
+except Exception as e:
     lib = None
     import traceback
     raise ImportError('ssh shared library not found.\n'
@@ -689,10 +691,12 @@ def buildCallbacks(api_cb_struct, cb_methods, userdata):
     callbacks.userdata = userdata
 
     for field, ftype in api_cb_struct._fields_[2:]:
+        print("buildcallbacks", field, ftype)
         setattr(callbacks, field,
             ftype(cb_methods[field])
             if cb_methods[field] is not None
             else ctypes.cast(None, ftype))
+    print("building callbacks done")
     return callbacks
 
 
