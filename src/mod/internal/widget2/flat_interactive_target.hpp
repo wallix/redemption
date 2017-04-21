@@ -53,8 +53,8 @@ public:
 
     Widget2 * last_interactive;
 
-    BGRColor_ fgcolor;
-    BGRColor_ bgcolor;
+    BGRColor fgcolor;
+    BGRColor bgcolor;
 
     bool               ask_device;
     bool               ask_login;
@@ -270,7 +270,7 @@ public:
         }
     }
 
-    BGRColor_ get_bg_color() const override {
+    BGRColor get_bg_color() const override {
         return this->bgcolor;
     }
 
@@ -281,6 +281,11 @@ public:
         }
         else if (event == NOTIFY_SUBMIT) {
             this->next_focus();
+        }
+        if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
         }
     }
 

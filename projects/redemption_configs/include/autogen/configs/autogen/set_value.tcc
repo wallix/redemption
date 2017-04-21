@@ -1863,6 +1863,49 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::crypto::key1&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_log_with_encryption")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::crypto::session_log_with_encryption&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::crypto::session_log_with_encryption&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "session_log_with_checksum")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::crypto::session_log_with_checksum&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::crypto::session_log_with_checksum&>(this->variables)
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "remote_program")) {
+        if (0) {}
+        else if (0 == strcmp(key, "allow_resize_hosted_desktop")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::remote_program::allow_resize_hosted_desktop&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::remote_program::allow_resize_hosted_desktop&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

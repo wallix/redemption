@@ -209,7 +209,7 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
 Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 {
     Bitmap bitmap;
-    BGRPalette palette1{BGRPalette::no_init()};
+    BGRPalette palette1 = BGRPalette::classic_332();
 
     /* header for bmp file */
     struct bmp_header {
@@ -294,7 +294,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                     uint8_t g = stream.in_uint8();
                     uint8_t b = stream.in_uint8();
                     stream.in_skip_bytes(1); // skip alpha channel
-                    palette1.set_color(i, (b << 16)|(g << 8)|r);
+                    palette1.set_color(i, BGRColor(b, g, r));
                 }
                 break;
             default:
@@ -357,7 +357,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
         break;
     case 16:
         initializer_data([&stream](uint8_t * d, unsigned /*x*/){
-            BGRColor_ c = decode_color16()(RDPColor::from(stream.in_uint16_le()));
+            BGRColor c = decode_color16()(RDPColor::from(stream.in_uint16_le()));
             d[0] = c.blue();
             d[1] = c.green();
             d[2] = c.red();
@@ -365,7 +365,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
         break;
     case 8:
         initializer_data([&stream, &palette1](uint8_t * d, unsigned /*x*/){
-            BGRColor_ c = decode_color8()(RDPColor::from(stream.in_uint8()), palette1);
+            BGRColor c = decode_color8()(RDPColor::from(stream.in_uint8()), palette1);
             d[0] = c.blue();
             d[1] = c.green();
             d[2] = c.red();
@@ -382,7 +382,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             else {
                 idx_palette = k & 0xf;
             }
-            BGRColor_ c = BGRColor_(palette1[idx_palette]);
+            BGRColor c = palette1[idx_palette];
             d[0] = c.blue();
             d[1] = c.green();
             d[2] = c.red();

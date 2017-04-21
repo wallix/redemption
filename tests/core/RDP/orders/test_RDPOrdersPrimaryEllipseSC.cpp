@@ -290,7 +290,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
-        RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
+        RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[14] = {CHANGE | STANDARD, ELLIPSESC,
             0x4F,   // top left right bottom coordinates and color changed
@@ -316,7 +316,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         check<RDPEllipseSC>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSESC, Rect(0, 0, 800, 600)),
-            RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})),
+            RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})),
             "ellipse draw 6");
     }
 
@@ -326,7 +326,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 300, 310, 20));
-        RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
+        RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[21] = {CHANGE | STANDARD | BOUNDS, ELLIPSESC,
             0x4F,   // x, y, w, h, r, g, b coordinates changed
@@ -356,7 +356,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         check<RDPEllipseSC>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSESC, Rect(0, 300, 310, 20)),
-            RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})),
+            RDPEllipseSC(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})),
             "ellipse draw 7");
     }
 
@@ -366,7 +366,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(10, 10, 800, 600));
-        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
+        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[17] = {CHANGE | STANDARD | BOUNDS, ELLIPSESC,
             0x4D,   // x, w, h, r, g, b coordinates changed
@@ -396,7 +396,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         check<RDPEllipseSC>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSESC, Rect(10, 10, 800, 600)),
-            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})),
+            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})),
             "ellipse draw 8");
     }
 
@@ -406,7 +406,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
-        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
+        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[11] = {
             STANDARD | BOUNDS | LASTBOUNDS,
@@ -432,7 +432,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         check<RDPEllipseSC>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSESC, Rect(0, 0, 800, 600)),
-            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})),
+            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})),
             "Ellipse Draw 9");
     }
 
@@ -478,7 +478,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
-        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030}), 0x0E, 0x00).emit(out_stream, newcommon, state_common, state_ellipse);
+        RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030}), 0x0E, 0x00).emit(out_stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[13] = {
             STANDARD | BOUNDS | LASTBOUNDS,
@@ -506,7 +506,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         check<RDPEllipseSC>(common_cmd, cmd,
             RDPOrderCommon(ELLIPSESC, Rect(0, 0, 800, 600)),
-            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030}), 0x0E, 0x00),
+            RDPEllipseSC(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030}), 0x0E, 0x00),
             "Ellipse Draw 11");
     }
 

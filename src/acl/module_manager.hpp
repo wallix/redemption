@@ -116,7 +116,9 @@ enum {
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
-    MODULE_CLI
+    MODULE_CLI,
+
+    MODULE_UNKNOWN
 };
 
 inline const char * get_module_name(int module_id) {
@@ -381,8 +383,8 @@ private:
             gdi::TextMetrics tm(this->mm.ini.get<cfg::font>(), this->osd_message.c_str());
             int w = tm.width + padw * 2;
             int h = tm.height + padh * 2;
-            this->color = color_encode(BGRColor_(BLACK), this->mm.front.client_info.bpp);
-            this->background_color = color_encode(BGRColor_(LIGHT_YELLOW), this->mm.front.client_info.bpp);
+            this->color = color_encode(BGRColor(BLACK), this->mm.front.client_info.bpp);
+            this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->mm.front.client_info.bpp);
 
             if (this->mm.front.client_info.remote_program &&
                 (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
@@ -752,6 +754,8 @@ public:
 
     ClientExecute client_execute;
 
+    int old_target_module = MODULE_UNKNOWN;
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -781,7 +785,6 @@ public:
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
         }
-        this->front.must_be_stop_capture();
     }
 
     ~ModuleManager() override {
@@ -809,7 +812,10 @@ public:
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         this->connected = false;
-        if (this->last_module) this->front.must_be_stop_capture();
+        if (this->old_target_module != target_module) {
+            this->front.must_be_stop_capture();
+        }
+        this->old_target_module = target_module;
 
         auto final = finally([this]() {
             this->ini.set<cfg::context::perform_automatic_reconnection>(false);

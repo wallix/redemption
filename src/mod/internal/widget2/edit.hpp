@@ -38,15 +38,15 @@ public:
     size_t cursor_px_pos;
     int w_text;
     int h_text;
-    BGRColor_ cursor_color;
-    BGRColor_ focus_color;
+    BGRColor cursor_color;
+    BGRColor focus_color;
     bool drawall;
     bool draw_border_focus;
     Font const & font;
 
     WidgetEdit(gdi::GraphicApi & drawable,
                Widget2 & parent, NotifyApi* notifier, const char * text,
-               int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focus_color,
+               int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, parent, notifier, group_id)
     , label(drawable, *this, nullptr, text, 0, fgcolor, bgcolor, font, xtext, ytext)
@@ -213,7 +213,7 @@ public:
         }
     }
 
-    void draw_border(Rect clip, BGRColor_ color)
+    void draw_border(Rect clip, BGRColor color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(

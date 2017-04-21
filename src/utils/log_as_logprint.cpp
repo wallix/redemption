@@ -18,20 +18,12 @@
 *   Author(s): Jonathan Poelen
 */
 
-#pragma once
+#ifndef LOGPRINT
+#  define LOGPRINT
+#  undef REDEMPTION_DECL_LOG_SYSLOG
+#endif
+#if defined(LOGNULL)
+# error "LOGNULL" is defined
+#endif
 
-#include "configs/autogen/enums.hpp"
-#include "capture/ocr/locale/locale_id.hpp"
-
-#include <chrono>
-
-
-struct OcrParams
-{
-    OcrVersion ocr_version;
-    ocr::locale::LocaleId ocr_locale;
-    bool on_title_bar_only;
-    unsigned int max_unrecog_char_rate;
-    std::chrono::microseconds interval;
-    uint32_t verbosity;
-};
+#include "utils/log.hpp"

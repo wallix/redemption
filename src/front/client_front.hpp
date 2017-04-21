@@ -46,13 +46,9 @@ public:
     , verbose(verbose)
     , info(info)
     , mod_bpp(gdi::Depth::from_bpp(info.bpp))
-    , mod_palette(BGRPalette::no_init())
+    , mod_palette(BGRPalette::classic_332())
     , gd(info.width, info.height)
     {
-        if (this->mod_bpp == gdi::Depth::depth8()) {
-            this->mod_palette = BGRPalette::classic_332();
-        }
-
         SSL_library_init();
     }
 

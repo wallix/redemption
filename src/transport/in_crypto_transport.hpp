@@ -438,10 +438,10 @@ private:
     bool do_atomic_read(uint8_t * buffer, size_t len) override
     {
         int res = do_partial_read(buffer, len);
-        if ((res != 0) && (res != len)) {
+        if ((res != 0) && (res != int(len))) {
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-        return res == len;
+        return res == int(len);
     }
 
 };

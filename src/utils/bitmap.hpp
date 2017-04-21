@@ -2094,12 +2094,12 @@ private:
 
         for (size_t y = 0; y < bmp.cy() ; y++) {
             for (size_t x = 0; x < bmp.cx() ; x++) {
-                BGRColor_ pixel = dec(buf_to_color(src));
+                BGRColor pixel = dec(buf_to_color(src));
 
                 constexpr bool enc_15_16 = Enc::bpp == 15 || Enc::bpp == 16;
                 constexpr bool dec_15_16 = Dec::bpp == 15 || Dec::bpp == 16;
                 if (enc_15_16 ^ dec_15_16) {
-                    pixel = BGRColor_(RGBtoBGR(pixel.to_u32()));
+                    pixel = BGRasRGBColor(pixel);
                 }
 
                 color_to_buf(enc(pixel), dest);

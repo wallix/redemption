@@ -59,7 +59,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
-alias libs    : libredrec ;
+alias libs    : libredrec libredcryptofile ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 
@@ -594,7 +594,6 @@ test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <libra
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
-test-canonical transport/test_transport.hpp ;
 # TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -1173,6 +1172,7 @@ obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
 
 lib sashimi :
     sashimi_pki
+    $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
     sashimi_channels
     sashimi_sftp
     sashimi_libssh
@@ -1183,8 +1183,10 @@ lib sashimi :
     dl
     z
     rt
-    :
-    <link>shared
+   :
+       <link>shared
+#       <linkflags>-Wl,-Bsymbolic
+       $(LIB_DEPENDENCIES)
     :
     :
 ;

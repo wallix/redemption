@@ -635,7 +635,7 @@ RED_AUTO_TEST_CASE(TestMemblt2)
 /* 0240 */ 0x1e, 0x00, 0x6b, 0x00, 0x0f, 0x60, 0x91, 0x09,                          // ..k..`..
     };
 
-    const BGRPalette palette(raw_palette);
+    const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
     Bitmap bmp(8, 8, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
 
@@ -751,7 +751,7 @@ RED_AUTO_TEST_CASE(TestMemblt3)
 /* 0180 */ 0x08, 0x84, 0xb4, 0x1d, 0xb4, 0x1d, 0xb4, 0x1d, 0xb4, 0x1d,                    // ..........
     };
 
-    const BGRPalette palette(raw_palette);
+    const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
     Bitmap bmp(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
 

@@ -852,9 +852,13 @@ public:
     // ===========================================================================
     bool can_be_start_capture() override
     {
-        LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+
+        if (this->capture) {
+            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
+            return false;
+        }
 
         if (!ini.get<cfg::globals::is_rec>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
@@ -863,14 +867,7 @@ public:
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ) {
-            LOG(LOG_INFO, "No Capture 1");
-            return false;
-        }
-
-        if (this->capture) {
-            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
-
-            LOG(LOG_INFO, "No Capture 2");
+            LOG(LOG_INFO, "Front::start_capture: Capture is not necessary");
             return false;
         }
 
@@ -927,12 +924,13 @@ public:
         ;
 
         OcrParams ocr_params = {
-                ini.get<cfg::ocr::version>(),
-                ocr::locale::LocaleId(
-                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-                ini.get<cfg::ocr::on_title_bar_only>(),
-                ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                ini.get<cfg::ocr::interval>()
+            ini.get<cfg::ocr::version>(),
+            ocr::locale::LocaleId(
+                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+            ini.get<cfg::ocr::on_title_bar_only>(),
+            ini.get<cfg::ocr::max_unrecog_char_rate>(),
+            ini.get<cfg::ocr::interval>(),
+            ini.get<cfg::debug::ocr>()
         };
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
@@ -4274,8 +4272,8 @@ public:
         uint8_t raw_data[256*3];
 
         GlyphTo24Bitmap( FontChar const & fc
-                     , const BGRColor_ color_fore
-                     , const BGRColor_ color_back) {
+                     , const BGRColor color_fore
+                     , const BGRColor color_back) {
 
             for (int i = 0; i < 256*3; i += 3) {
                 this->raw_data[i  ] = color_fore.blue();
@@ -4319,8 +4317,8 @@ protected:
     {
         if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
             bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
-            const BGRColor_ color_fore = color_decode(cmd.fore_color, color_ctx);
-            const BGRColor_ color_back = color_decode(cmd.back_color, color_ctx);
+            const BGRColor color_fore = color_decode(cmd.fore_color, color_ctx);
+            const BGRColor color_back = color_decode(cmd.back_color, color_ctx);
 
             uint16_t draw_pos_ref = 0;
             InStream variable_bytes(cmd.data, cmd.data_len);
@@ -4468,8 +4466,8 @@ private:
         RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
 
         if (this->client_info.bpp != this->mod_bpp) {
-            const BGRColor_ back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-            const BGRColor_ fore_color24 = color_decode(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
+            const BGRColor fore_color24 = color_decode(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
 
             cmd2.back_color = color_encode(back_color24, this->client_info.bpp);
             cmd2.fore_color = color_encode(fore_color24, this->client_info.bpp);
@@ -4588,14 +4586,11 @@ private:
         stream.out_uint16_le(0);
 
         stream.out_uint32_le(256); /* # of colors */
-        for (auto color : this->mod_palette_rgb) {
+        for (BGRColor color : this->mod_palette_rgb) {
             // Palette entries is in BGR triplet format.
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
+            stream.out_uint8(color.blue());
+            stream.out_uint8(color.green());
+            stream.out_uint8(color.red());
         }
     }
 

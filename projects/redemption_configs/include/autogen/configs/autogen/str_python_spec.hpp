@@ -666,6 +666,18 @@
 "#_hidden\n"
 "sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')\n\n"
 
+"# Use encryption for session log file.\n"
+"#_advanced\n"
+"session_log_with_encryption = boolean(default=False)\n\n"
+
+"# Use checksum for session log file.\n"
+"#_advanced\n"
+"session_log_with_checksum = boolean(default=False)\n\n"
+
+"[remote_program]\n\n"
+
+"allow_resize_hosted_desktop = boolean(default=False)\n\n"
+
 "[debug]\n\n"
 
 "#_advanced\n"

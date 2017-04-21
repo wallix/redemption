@@ -154,7 +154,7 @@ private:
     void do_send(const uint8_t * data, size_t len) override
     {
         if (this->fd == -1){
-        LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
+            LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         const ocrypto::Result res = this->encrypter.write(data, len);

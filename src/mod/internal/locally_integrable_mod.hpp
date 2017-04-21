@@ -56,6 +56,8 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     } first_click_down_event_handler;
 
+    const bool rail_enabled;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
@@ -64,14 +66,17 @@ struct LocallyIntegrableMod : public InternalMod {
     , client_execute(client_execute)
     , front_width(front_width)
     , front_height(front_height)
-    , first_click_down_event_handler(*this) {}
+    , first_click_down_event_handler(*this)
+    , rail_enabled(front.get_channel_list().get_by_name(channel_names::rail) != nullptr) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset(true);
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (this->first_click_down_event.object_and_time) {
+        if (this->rail_enabled &&
+            this->first_click_down_event.object_and_time) {
+
             out_event_handlers.emplace_back(
                     &this->first_click_down_event,
                     &this->first_click_down_event_handler,
@@ -83,6 +88,8 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void process_first_click_down_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+        REDASSERT(this->rail_enabled);
+
         if (this->first_click_down_event.object_and_time &&
             this->first_click_down_event.waked_up_by_time) {
             this->cancel_double_click_detection();
@@ -90,18 +97,28 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void rdp_input_invalidate(Rect r) override {
+r.log(LOG_INFO, "LocallyIntegrableMod::rdp_input_invalidate");
         InternalMod::rdp_input_invalidate(r);
 
-        this->client_execute.input_invalidate(r);
+        if (this->rail_enabled) {
+            this->client_execute.input_invalidate(r);
+        }
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
-        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
-
         //LOG(LOG_INFO, "device_flags=0x%X", device_flags);
+        if (!this->rail_enabled) {
+            InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+
+            return;
+        }
+
+        bool event_consumed = false;
 
         if (this->client_execute.input_mouse(device_flags, x, y)) {
             this->screen.current_over = nullptr;
+
+            event_consumed = true;
         }
 
         switch (this->dc_state) {
@@ -157,24 +174,30 @@ struct LocallyIntegrableMod : public InternalMod {
                 this->cancel_double_click_detection();
             break;
         }
+
+        if (!event_consumed) {
+            InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+        }
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4,
             Keymap2 * keymap) override {
         InternalMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-        if (!this->alt_key_pressed) {
-            if ((param1 == 56) && !param3) {
-                this->alt_key_pressed = true;
+        if (this->rail_enabled) {
+            if (!this->alt_key_pressed) {
+                if ((param1 == 56) && !param3) {
+                    this->alt_key_pressed = true;
+                }
             }
-        }
-        else {
-            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
-                this->alt_key_pressed = false;
-            }
-            else if ((param1 == 62) && !param3) {
-                LOG(LOG_INFO, "Close by user (Alt+F4)");
-                throw Error(ERR_WIDGET);    // F4 key pressed
+            else {
+                if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+                    this->alt_key_pressed = false;
+                }
+                else if ((param1 == 62) && !param3) {
+                    LOG(LOG_INFO, "Close by user (Alt+F4)");
+                    throw Error(ERR_WIDGET);    // F4 key pressed
+                }
             }
         }
     }
@@ -182,28 +205,44 @@ struct LocallyIntegrableMod : public InternalMod {
     void refresh(Rect r) override {
         InternalMod::refresh(r);
 
-        this->client_execute.input_invalidate(r);
+        if (this->rail_enabled) {
+            this->client_execute.input_invalidate(r);
+        }
     }
 
     void draw_event(time_t, gdi::GraphicApi &) override {
-        if (!this->client_execute && this->event.waked_up_by_time) {
-            this->client_execute.ready(*this, this->front_width, this->front_height, this->font());
+        if (this->rail_enabled &&
+            (false == static_cast<bool>(this->client_execute)) &&
+            this->event.waked_up_by_time) {
+
+            this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
+                this->is_resizing_hosted_desktop_allowed());
         }
     }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        if (this->client_execute && !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
+        if (this->rail_enabled && this->client_execute &&
+            !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
+
             this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
     }
 
 private:
     void cancel_double_click_detection() {
+        REDASSERT(this->rail_enabled);
+
         this->first_click_down_event.reset();
 
         this->first_click_down_event.object_and_time  = false;
         this->first_click_down_event.waked_up_by_time = false;
 
         this->dc_state = DCSTATE_WAIT;
+    }
+
+    virtual bool is_resizing_hosted_desktop_allowed() const {
+        REDASSERT(this->rail_enabled);
+
+        return false;
     }
 };

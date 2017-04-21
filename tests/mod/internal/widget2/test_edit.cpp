@@ -42,8 +42,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -80,8 +80,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
@@ -114,8 +114,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
@@ -148,8 +148,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
@@ -182,8 +182,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
@@ -216,8 +216,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -250,8 +250,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -284,8 +284,8 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;

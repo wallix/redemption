@@ -123,7 +123,7 @@ public:
     //@}
 
 private:
-    Color u32_to_color(BGRColor_ color) const {
+    Color u32_to_color(BGRColor color) const {
         return this->drawable.u32bgr_to_color(color.to_u32());
     }
 

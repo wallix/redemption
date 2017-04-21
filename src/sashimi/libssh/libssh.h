@@ -39,8 +39,8 @@
 #include <string.h>
 #include <memory.h>
 #include <stdarg.h>
-#include <syslog.h>
 
+#include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
 #include "sashimi/string.hpp"
 
@@ -87,7 +87,7 @@ static inline void ssh_set_error(error_struct & error, int code, const char *des
     va_end(va);
 
     error.error_code = code;
-    syslog(LOG_ERR, "%s", error.error_buffer);
+    LOG(LOG_ERR, "%s", error.error_buffer);
 }
 
 #include "core/error.hpp"
@@ -1062,7 +1062,7 @@ LIBSSH_API int ssh_channel_is_open_client(ssh_session_struct * session, ssh_chan
 
 LIBSSH_API ssh_session_struct * ssh_start_new_server_session(ssh_server_callbacks cb_server,
                                             struct ssh_poll_ctx_struct * ctx,
-                                            socket_t fd,
+                                            int fd,
                                             const char * filename, int authmethods);
 LIBSSH_API int ssh_channel_close_server(ssh_session_struct * session, ssh_channel channel);
 LIBSSH_API void ssh_channel_free_server(ssh_session_struct * session, ssh_channel channel);

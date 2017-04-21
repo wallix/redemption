@@ -157,10 +157,19 @@ int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, 
     return 0;
 }
 
+// 0: if end of file, len: if data was read, negative number on error
 int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len)
 {
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(return handle->in_crypto_transport.atomic_read(buffer, len) ? 0 : -2);
+    try {
+        return handle->in_crypto_transport.partial_read(buffer, len);
+    }
+    catch (Error e) {
+        return -e.id;
+    }
+    catch (...) {
+        return -1;
+    }
 }
 
 using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];

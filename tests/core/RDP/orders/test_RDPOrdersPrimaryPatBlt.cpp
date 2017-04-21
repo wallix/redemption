@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
         RDPOrderCommon newcommon(PATBLT, Rect(311, 0, 800, 600));
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
-                  encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+                  encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                   RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                 RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
             "PatBlt 1");
     }
@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
         RDPOrderCommon newcommon(PATBLT, Rect(311, 0, 800, 600));
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
-                  encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+                  encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                   RDPBrush(3, 4, 1, 0xDD)
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                 RDPBrush(3, 4, 0x01, 0xDD)),
             "PatBlt 2");
     }
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
-                  encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+                  encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                   RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
@@ -201,7 +201,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         check<RDPPatBlt>(common_cmd, cmd,
             RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor_{0x102030}), encode_color24()(BGRColor_{0x112233}),
+            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
                 RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
             "PatBlt 3");
     }

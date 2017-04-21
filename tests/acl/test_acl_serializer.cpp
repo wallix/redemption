@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean, Meng Tan
+   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 
    Unit tests for Acl Serializer
 */
@@ -29,22 +29,43 @@
 
 #include "acl/acl_serializer.hpp"
 #include "test_only/transport/test_transport.hpp"
-
+#include "../includes/test_only/lcg_random.hpp"
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
 // - Recover fields from network and update Config
+
+inline void init_keys(CryptoContext & cctx)
+{
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+}
 
 RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
     LogTransport trans;
-    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
     ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
     // try exception
     CheckTransport transexcpt("", 0);
-    AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
+                                  
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
     RED_CHECK(!ini.get<cfg::context::authenticated>());
@@ -63,8 +84,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_string(string_from_authid(AUTHID_CONTEXT_SESSION_ID)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
     GeneratorTransport trans(stream.get_data(), stream.get_offset());
-    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -100,7 +125,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_string("a\n");
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
-    AclSerializer aclexcpt(ini, 10010, transexcpt, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -116,8 +141,12 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     s += "\n!didier\n";
     OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
 
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
     GeneratorTransport trans(s.data(), s.size());
-    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
 
     RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -160,7 +189,11 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     CheckTransport trans(u.get(), big_stream.get_offset());
 
-    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -201,7 +234,11 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     GeneratorTransport trans(u.get(), big_stream.get_offset());
 
-    AclSerializer acl(ini, 10010, trans, to_verbose_flags(0));
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);

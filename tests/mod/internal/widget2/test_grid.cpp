@@ -45,8 +45,8 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 10;
@@ -176,8 +176,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel2)
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 10;
@@ -208,8 +208,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel3)
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = -10;
@@ -240,8 +240,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel4)
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 770;
@@ -272,8 +272,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel5)
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = -20;
@@ -304,8 +304,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel6)
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 760;
@@ -336,8 +336,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 760;
@@ -368,8 +368,8 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 0;
