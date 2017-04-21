@@ -186,7 +186,7 @@ public:
         this->set_wh(dim.w, dim.h);
     }
 
-    virtual void set_color(BGRColor_ bg_color, BGRColor_ fg_color) {
+    virtual void set_color(BGRColor bg_color, BGRColor fg_color) {
         (void)bg_color;
         (void)fg_color;
     }

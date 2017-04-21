@@ -53,8 +53,8 @@ public:
 
     Widget2 * last_interactive;
 
-    BGRColor_ fgcolor;
-    BGRColor_ bgcolor;
+    BGRColor fgcolor;
+    BGRColor bgcolor;
 
     bool               ask_device;
     bool               ask_login;
@@ -270,7 +270,7 @@ public:
         }
     }
 
-    BGRColor_ get_bg_color() const override {
+    BGRColor get_bg_color() const override {
         return this->bgcolor;
     }
 

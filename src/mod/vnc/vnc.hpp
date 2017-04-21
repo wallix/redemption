@@ -2014,7 +2014,7 @@ private:
                 const int b = stream2.in_uint16_be() >> 8;
                 const int g = stream2.in_uint16_be() >> 8;
                 const int r = stream2.in_uint16_be() >> 8;
-                this->palette.set_color(first_color + i, BGRColor_(b, g, r));
+                this->palette.set_color(first_color + i, BGRColor(b, g, r));
             }
         }
         else {

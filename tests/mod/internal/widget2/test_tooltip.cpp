@@ -43,9 +43,9 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = RED;
-    BGRColor_ bg_color = YELLOW;
-    BGRColor_ border_color = BLACK;
+    BGRColor fg_color = RED;
+    BGRColor bg_color = YELLOW;
+    BGRColor border_color = BLACK;
     int16_t x = 10;
     int16_t y = 10;
     const char * tooltiptext = "testémq";

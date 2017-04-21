@@ -47,46 +47,46 @@ RED_AUTO_TEST_CASE(TestColors)
         0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFFFFFF
     );
 
-    RED_CHECK_EQUAL(BGRColor_(0), color_decode(RDPColor::from(0), 8, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFFFFFF), color_decode(RDPColor::from(0xFF), 8, palette));
+    RED_CHECK_EQUAL(BGRColor(0), color_decode(RDPColor::from(0), 8, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFFFFFF), color_decode(RDPColor::from(0xFF), 8, palette));
 
-    RED_CHECK_EQUAL(BGRColor_(0), color_decode(RDPColor::from(0), 15, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFFFFFF), color_decode(RDPColor::from(0x7FFF), 15, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x0000FF), color_decode(RDPColor::from(0x7C00), 15, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x00FF00), color_decode(RDPColor::from(0x03E0), 15, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFF0000), color_decode(RDPColor::from(0x001F), 15, palette));
+    RED_CHECK_EQUAL(BGRColor(0), color_decode(RDPColor::from(0), 15, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFFFFFF), color_decode(RDPColor::from(0x7FFF), 15, palette));
+    RED_CHECK_EQUAL(BGRColor(0x0000FF), color_decode(RDPColor::from(0x7C00), 15, palette));
+    RED_CHECK_EQUAL(BGRColor(0x00FF00), color_decode(RDPColor::from(0x03E0), 15, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFF0000), color_decode(RDPColor::from(0x001F), 15, palette));
 
-    RED_CHECK_EQUAL(BGRColor_(0), color_decode(RDPColor::from(0), 16, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFFFFFF), color_decode(RDPColor::from(0xFFFF), 16, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x0000FF), color_decode(RDPColor::from(0xF800), 16, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x00FF00), color_decode(RDPColor::from(0x07E0), 16, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFF0000), color_decode(RDPColor::from(0x001F), 16, palette));
+    RED_CHECK_EQUAL(BGRColor(0), color_decode(RDPColor::from(0), 16, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFFFFFF), color_decode(RDPColor::from(0xFFFF), 16, palette));
+    RED_CHECK_EQUAL(BGRColor(0x0000FF), color_decode(RDPColor::from(0xF800), 16, palette));
+    RED_CHECK_EQUAL(BGRColor(0x00FF00), color_decode(RDPColor::from(0x07E0), 16, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFF0000), color_decode(RDPColor::from(0x001F), 16, palette));
 
-    RED_CHECK_EQUAL(RDPColor::from(0xFF), color_encode(BGRColor_(0xFFFFFF), 8));
-    RED_CHECK_EQUAL(RDPColor::from(0x03), color_encode(BGRColor_(0xFF0000), 8));
-    RED_CHECK_EQUAL(RDPColor::from(0x1C), color_encode(BGRColor_(0x00FF00), 8));
-    RED_CHECK_EQUAL(RDPColor::from(0xE0), color_encode(BGRColor_(0x0000FF), 8));
+    RED_CHECK_EQUAL(RDPColor::from(0xFF), color_encode(BGRColor(0xFFFFFF), 8));
+    RED_CHECK_EQUAL(RDPColor::from(0x03), color_encode(BGRColor(0xFF0000), 8));
+    RED_CHECK_EQUAL(RDPColor::from(0x1C), color_encode(BGRColor(0x00FF00), 8));
+    RED_CHECK_EQUAL(RDPColor::from(0xE0), color_encode(BGRColor(0x0000FF), 8));
 
-    RED_CHECK_EQUAL(RDPColor::from(0x7FFF), color_encode(BGRColor_(0xFFFFFF), 15));
-    RED_CHECK_EQUAL(RDPColor::from(0x001F), color_encode(BGRColor_(0xFF0000), 15));
-    RED_CHECK_EQUAL(RDPColor::from(0x03E0), color_encode(BGRColor_(0x00FF00), 15));
-    RED_CHECK_EQUAL(RDPColor::from(0x7C00), color_encode(BGRColor_(0x0000FF), 15));
+    RED_CHECK_EQUAL(RDPColor::from(0x7FFF), color_encode(BGRColor(0xFFFFFF), 15));
+    RED_CHECK_EQUAL(RDPColor::from(0x001F), color_encode(BGRColor(0xFF0000), 15));
+    RED_CHECK_EQUAL(RDPColor::from(0x03E0), color_encode(BGRColor(0x00FF00), 15));
+    RED_CHECK_EQUAL(RDPColor::from(0x7C00), color_encode(BGRColor(0x0000FF), 15));
 
-    RED_CHECK_EQUAL(RDPColor::from(0xFFFF), color_encode(BGRColor_(0xFFFFFF), 16));
-    RED_CHECK_EQUAL(RDPColor::from(0x001F), color_encode(BGRColor_(0xFF0000), 16));
-    RED_CHECK_EQUAL(RDPColor::from(0x07E0), color_encode(BGRColor_(0x00FF00), 16));
-    RED_CHECK_EQUAL(RDPColor::from(0xF800), color_encode(BGRColor_(0x0000FF), 16));
-
-
-    RED_CHECK_EQUAL(RDPColor::from(0xF0F0F0), color_encode(BGRColor_(0xF0F0F0), 24));
-    RED_CHECK_EQUAL(RDPColor::from(0x0F0F0F), color_encode(BGRColor_(0x0F0F0F), 32));
+    RED_CHECK_EQUAL(RDPColor::from(0xFFFF), color_encode(BGRColor(0xFFFFFF), 16));
+    RED_CHECK_EQUAL(RDPColor::from(0x001F), color_encode(BGRColor(0xFF0000), 16));
+    RED_CHECK_EQUAL(RDPColor::from(0x07E0), color_encode(BGRColor(0x00FF00), 16));
+    RED_CHECK_EQUAL(RDPColor::from(0xF800), color_encode(BGRColor(0x0000FF), 16));
 
 
-    RED_CHECK_EQUAL(BGRColor_(0), color_decode(RDPColor::from(0), 24, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFFFFFF), color_decode(RDPColor::from(0xFFFFFF), 24, palette));
-    RED_CHECK_EQUAL(BGRColor_(0xFF0000), color_decode(RDPColor::from(0xFF0000), 24, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x00FF00), color_decode(RDPColor::from(0x00FF00), 24, palette));
-    RED_CHECK_EQUAL(BGRColor_(0x0000FF), color_decode(RDPColor::from(0x0000FF), 24, palette));
+    RED_CHECK_EQUAL(RDPColor::from(0xF0F0F0), color_encode(BGRColor(0xF0F0F0), 24));
+    RED_CHECK_EQUAL(RDPColor::from(0x0F0F0F), color_encode(BGRColor(0x0F0F0F), 32));
 
-    RED_CHECK_EQUAL(BGRColor_(0x563412), BGRasRGBColor_(BGRColor_(0x123456)));
+
+    RED_CHECK_EQUAL(BGRColor(0), color_decode(RDPColor::from(0), 24, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFFFFFF), color_decode(RDPColor::from(0xFFFFFF), 24, palette));
+    RED_CHECK_EQUAL(BGRColor(0xFF0000), color_decode(RDPColor::from(0xFF0000), 24, palette));
+    RED_CHECK_EQUAL(BGRColor(0x00FF00), color_decode(RDPColor::from(0x00FF00), 24, palette));
+    RED_CHECK_EQUAL(BGRColor(0x0000FF), color_decode(RDPColor::from(0x0000FF), 24, palette));
+
+    RED_CHECK_EQUAL(BGRColor(0x563412), BGRasRGBColor(BGRColor(0x123456)));
 }

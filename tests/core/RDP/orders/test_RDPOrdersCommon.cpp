@@ -284,7 +284,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 0, 800, 600));
-        RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
+        RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[14] = {CHANGE | STANDARD, RECT,
             0x7F,   // x, y, w, h, r, g, b coordinates changed
@@ -310,7 +310,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         check<RDPOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})),
+            RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})),
             "rect draw 6");
     }
 
@@ -320,7 +320,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 300, 310, 20));
-        RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
+        RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[21] = {CHANGE | STANDARD | BOUNDS, RECT,
             0x7F,   // x, y, w, h, r, g, b coordinates changed
@@ -350,7 +350,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         check<RDPOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(RECT, Rect(0, 300, 310, 20)),
-            RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor_{0x102030})),
+            RDPOpaqueRect(Rect(5, 300, 25, 30), encode_color24()(BGRColor{0x102030})),
             "rect draw 7");
     }
 
@@ -361,7 +361,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(RECT, Rect(10, 10, 800, 600));
-        RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
+        RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[17] = {CHANGE | STANDARD | BOUNDS, RECT,
             0x7D,   // x, w, h, r, g, b coordinates changed
@@ -391,7 +391,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         check<RDPOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(RECT, Rect(10, 10, 800, 600)),
-            RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})),
+            RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})),
             "rect draw 8");
     }
 
@@ -402,7 +402,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), encode_color24()(WHITE));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 0, 800, 600));
-        RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
+        RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})).emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[11] = {
             STANDARD | BOUNDS | LASTBOUNDS,
@@ -428,7 +428,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         check<RDPOpaqueRect>(common_cmd, cmd,
             RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor_{0x102030})),
+            RDPOpaqueRect(Rect(5, 0, 810, 605), encode_color24()(BGRColor{0x102030})),
             "Rect Draw 9");
     }
 }

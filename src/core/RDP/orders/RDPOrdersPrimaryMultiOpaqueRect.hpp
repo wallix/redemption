@@ -297,7 +297,7 @@ public:
             b = stream.in_uint8();
         }
 
-        this->_Color = RDPColor::from(BGRColor_(b, g, r).to_u32());
+        this->_Color = RDPColor::from(BGRColor(b, g, r).to_u32());
 
         if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();

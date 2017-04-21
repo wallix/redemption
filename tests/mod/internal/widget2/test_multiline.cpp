@@ -42,8 +42,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -88,8 +88,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
@@ -127,8 +127,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
@@ -166,8 +166,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
@@ -205,8 +205,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
@@ -244,8 +244,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -283,8 +283,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
@@ -322,8 +322,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
@@ -361,8 +361,8 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_ fg_color = BLUE;
-    BGRColor_ bg_color = CYAN;
+    BGRColor fg_color = BLUE;
+    BGRColor bg_color = CYAN;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;

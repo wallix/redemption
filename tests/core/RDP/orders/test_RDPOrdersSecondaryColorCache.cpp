@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestColCache)
 
         BGRPalette palette = BGRPalette::classic_332();
         for (int i = 0; i < 256; ++i){
-            palette.set_color(i, BGRColor_((((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7)));
+            palette.set_color(i, BGRColor((((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7)));
         }
         RDPColCache newcmd(0, palette);
 

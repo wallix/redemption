@@ -26,9 +26,9 @@
 class WidgetScrollBar : public Widget2 {
     bool horizontal;
 
-    BGRColor_ fg_color;
-    BGRColor_ bg_color;
-    BGRColor_ focus_color;
+    BGRColor fg_color;
+    BGRColor bg_color;
+    BGRColor focus_color;
 
     Font const & font;
 
@@ -64,7 +64,7 @@ class WidgetScrollBar : public Widget2 {
 public:
     WidgetScrollBar(gdi::GraphicApi & drawable, Widget2& parent,
                     NotifyApi* notifier, bool horizontal,
-                    int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focuscolor,
+                    int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
                     Font const & font, bool rail_style, int maxvalue = 100)
     : Widget2(drawable, parent, notifier, group_id)
     , horizontal(horizontal)

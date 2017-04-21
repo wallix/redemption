@@ -328,7 +328,7 @@ private:
 
 public:
     void draw_resize_hosted_desktop_box(bool mouse_over, const Rect r) {
-        RDPColor const bg_color = encode_color24()(BGRColor_(mouse_over ? 0xCBCACA : 0xFFFFFF));
+        RDPColor const bg_color = encode_color24()(BGRColor(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
         auto const depth = gdi::ColorCtx::depth24();
 
@@ -433,7 +433,7 @@ public:
     }   // draw_resize_hosted_desktop_box
 
     void draw_maximize_box(bool mouse_over, const Rect r) {
-        RDPColor const bg_color = encode_color24()(BGRColor_(mouse_over ? 0xCBCACA : 0xFFFFFF));
+        RDPColor const bg_color = encode_color24()(BGRColor(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
         auto const depth = gdi::ColorCtx::depth24();
 
@@ -667,7 +667,7 @@ public:
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
                 }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
                 else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
+                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -678,7 +678,7 @@ public:
                                               this->minimize_box_rect.y + 3,
                                               "−",
                                               encode_color24()(BLACK),
-                                              encode_color24()(BGRColor_{0xCBCACA}),
+                                              encode_color24()(BGRColor{0xCBCACA}),
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
                                               );
@@ -696,7 +696,7 @@ public:
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
                 }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
                 else if (this->close_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor_{0x2311E8}));
+                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor{0x2311E8}));
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
@@ -707,7 +707,7 @@ public:
                                               this->close_box_rect.y + 3,
                                               "x",
                                               encode_color24()(WHITE),
-                                              encode_color24()(BGRColor_{0x2311E8}),
+                                              encode_color24()(BGRColor{0x2311E8}),
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
                                               );
@@ -1047,7 +1047,7 @@ public:
             }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
                 if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
+                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
 
                     this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
@@ -1058,7 +1058,7 @@ public:
                                               this->minimize_box_rect.y + 3,
                                               "−",
                                               encode_color24()(BLACK),
-                                              encode_color24()(BGRColor_{0xCBCACA}),
+                                              encode_color24()(BGRColor{0xCBCACA}),
                                               gdi::ColorCtx::depth24(),
                                               this->minimize_box_rect
                                               );
@@ -1094,7 +1094,7 @@ public:
             }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
                 if (this->close_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor_{0x2311E8}));
+                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor{0x2311E8}));
 
                     this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
@@ -1105,7 +1105,7 @@ public:
                                               this->close_box_rect.y + 3,
                                               "x",
                                               encode_color24()(WHITE),
-                                              encode_color24()(BGRColor_{0x2311E8}),
+                                              encode_color24()(BGRColor{0x2311E8}),
                                               gdi::ColorCtx::depth24(),
                                               this->close_box_rect
                                               );

@@ -102,7 +102,7 @@ public:
         stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            BGRColor_ const color = this->palette[i];
+            BGRColor const color = this->palette[i];
             stream.out_uint8(color.red());
             stream.out_uint8(color.green());
             stream.out_uint8(color.blue());
@@ -125,7 +125,7 @@ public:
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
             stream.in_skip_bytes(1);
-            this->palette.set_color(i, BGRColor_(b, g, r));
+            this->palette.set_color(i, BGRColor(b, g, r));
         }
     }
 

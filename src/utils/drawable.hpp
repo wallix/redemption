@@ -305,7 +305,7 @@ struct DrawableTraitColor24
         color_t operator()(const uint8_t * p) const
         {
             const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
-            const BGRColor_ bgr = decode_color15()(c);
+            const BGRColor bgr = decode_color15()(c);
             return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
@@ -315,7 +315,7 @@ struct DrawableTraitColor24
         color_t operator()(const uint8_t * p) const
         {
             const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
-            const BGRColor_ bgr = decode_color16()(c);
+            const BGRColor bgr = decode_color16()(c);
             return {bgr.blue(), bgr.green(), bgr.red()};
         }
     };
