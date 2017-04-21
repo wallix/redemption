@@ -79,7 +79,7 @@ enum {
 
 class Session {
     Inifile  & ini;
-
+    Random & rnd;
     int internal_state;
 
     Front * front;
@@ -102,6 +102,7 @@ class Session {
 public:
     Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd)
             : ini(ini)
+            , rnd(rnd)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
             , perf_file(nullptr)
@@ -383,8 +384,14 @@ public:
                                                     , 0
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
+
+                                    /* OutCryptoTransport for crypted session log file */
+                                    CryptoContext cctx;
+                                    cctx.set_master_key(ini.get<cfg::crypto::key0>());
+                                    cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+
                                     // now is authentifier start time
-                                    this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, to_verbose_flags(ini.get<cfg::debug::auth>()));
+                                    this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, cctx, this->rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
                                     this->authentifier.set_acl_serial(this->acl_serial);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;

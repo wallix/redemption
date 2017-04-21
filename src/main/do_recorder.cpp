@@ -1505,12 +1505,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool capture_kbd = false;
 
                         OcrParams ocr_params = {
-                                ini.get<cfg::ocr::version>(),
-                                ocr::locale::LocaleId(
-                                    static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-                                ini.get<cfg::ocr::on_title_bar_only>(),
-                                ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                ini.get<cfg::ocr::interval>()
+                            ini.get<cfg::ocr::version>(),
+                            ocr::locale::LocaleId(
+                                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+                            ini.get<cfg::ocr::on_title_bar_only>(),
+                            ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                            ini.get<cfg::ocr::interval>(),
+                            ini.get<cfg::debug::ocr>()
                         };
 
                         if (ini.get<cfg::debug::capture>()) {
@@ -1571,7 +1572,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_frame_interval,
                             wrm_break_interval,
                             wrm_compression_algorithm,
-                            uint32_t(wrm_verbose) // TODO 
+                            uint32_t(wrm_verbose) // TODO
                         );
 
 const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();

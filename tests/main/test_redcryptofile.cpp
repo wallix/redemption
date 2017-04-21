@@ -81,7 +81,6 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
         HashHexArray qhashhex {};
         HashHexArray fhashhex {};
 
-        LOG(LOG_INFO, "finalname=%s", finalname);
         auto * handle = redcryptofile_open_writer(
             with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
