@@ -658,6 +658,13 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
+        CHANNELS::ChannelDef channel_audio_output{ channel_names::audio_output
+                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                                 };
+        this->cl.push_back(channel_audio_output);
+
         return FrontQtRDPGraphicAPI::connect();
     }
 

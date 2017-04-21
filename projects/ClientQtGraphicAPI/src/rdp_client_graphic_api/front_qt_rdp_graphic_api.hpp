@@ -897,8 +897,8 @@ public:
         , movie_timer_label(" ", this)
         , video_timer_label(" ", this)
         , begin(0)
-        , reading_bar_len(this->_width - 56)
-        , readding_bar(this->reading_bar_len+12, READING_BAR_H)
+        , reading_bar_len(this->_width - 60)
+        , readding_bar(this->reading_bar_len+10, READING_BAR_H)
         , current_time_movie(0)
         , real_time_record(this->_front->replay_mod.get()->get_real_time_movie_begin())
     {
@@ -937,7 +937,7 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (closeReplay()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectMovieStatus(QPoint(0, this->_height+1),QSize(40, BUTTON_HEIGHT));
+        QRect rectMovieStatus(QPoint(0, this->_height+1),QSize(44, BUTTON_HEIGHT));
         this->movie_status.setGeometry(rectMovieStatus);
         this->movie_status.setFocusPolicy(Qt::NoFocus);
 
@@ -1186,7 +1186,7 @@ public:
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
         painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(0, 0, this->_width, this->_height));
-        painter.drawPixmap(QPoint(44, this->_height+4), this->readding_bar, QRect(0, 0, this->reading_bar_len+12, READING_BAR_H));
+        painter.drawPixmap(QPoint(52, this->_height+4), this->readding_bar, QRect(0, 0, this->reading_bar_len+10, READING_BAR_H));
         painter.end();
     }
 
@@ -1340,7 +1340,7 @@ public Q_SLOTS:
             this->_running = false;
             this->is_paused = true;
             this->_buttonCtrlAltDel.setText("Play");
-            this->movie_status.setText("  Pause");
+            this->movie_status.setText(" Pause");
             this->_timer_replay.stop();
         } else {
             this->_running = true;
