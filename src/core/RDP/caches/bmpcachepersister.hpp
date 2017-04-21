@@ -163,6 +163,7 @@ private:
             uint16_t cy           = stream.in_uint16_le();
 
             if (original_bpp == 8) {
+                // TODO implementation and endianness dependent
                 t.recv_atomic(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
@@ -316,6 +317,7 @@ private:
             uint16_t cy           = stream.in_uint16_le();
 
             if (original_bpp == 8) {
+                // TODO implementation and endianness dependent
                 t.recv_atomic(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
@@ -432,6 +434,7 @@ private:
                 stream.out_uint16_le(bmp.cx());
                 stream.out_uint16_le(bmp.cy());
                 if (bmp.bpp() == 8) {
+                    // TODO implementation and endianness dependent
                     stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
