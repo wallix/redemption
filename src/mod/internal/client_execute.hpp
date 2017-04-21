@@ -1741,6 +1741,9 @@ public:
     }   // bool
 
     void reset(bool soft) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "ClientExecute::reset (%s)", (soft ? "Soft" : "Hard"));
+        }
         if (soft) {
             this->mod_ = nullptr;
 
