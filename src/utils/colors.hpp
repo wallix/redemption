@@ -312,43 +312,52 @@ inline BGRColor color_from_cstr(const char * str)
 {
     BGRColor bgr;
 
-    if (0 == strcasecmp("BLACK", str))                  { bgr = BLACK; }
-    else if (0 == strcasecmp("GREY", str))              { bgr = GREY; }
-    else if (0 == strcasecmp("DARK_GREY", str))         { bgr = DARK_GREY; }
-    else if (0 == strcasecmp("ANTHRACITE", str))        { bgr = ANTHRACITE; }
-    else if (0 == strcasecmp("BLUE", str))              { bgr = BLUE; }
-    else if (0 == strcasecmp("DARK_BLUE", str))         { bgr = DARK_BLUE; }
-    else if (0 == strcasecmp("WHITE", str))             { bgr = WHITE; }
-    else if (0 == strcasecmp("RED", str))               { bgr = RED; }
-    else if (0 == strcasecmp("PINK", str))              { bgr = PINK; }
-    else if (0 == strcasecmp("GREEN", str))             { bgr = GREEN; }
-    else if (0 == strcasecmp("YELLOW", str))            { bgr = YELLOW; }
-    else if (0 == strcasecmp("LIGHT_YELLOW", str))      { bgr = LIGHT_YELLOW; }
-    else if (0 == strcasecmp("CYAN", str))              { bgr = CYAN; }
-    else if (0 == strcasecmp("WABGREEN", str))          { bgr = WABGREEN; }
-    else if (0 == strcasecmp("WABGREEN_BIS", str))      { bgr = WABGREEN_BIS; }
-    else if (0 == strcasecmp("DARK_WABGREEN", str))     { bgr = DARK_WABGREEN; }
-    else if (0 == strcasecmp("INV_DARK_WABGREEN", str)) { bgr = INV_DARK_WABGREEN; }
-    else if (0 == strcasecmp("DARK_GREEN", str))        { bgr = DARK_GREEN; }
-    else if (0 == strcasecmp("INV_DARK_GREEN", str))    { bgr = INV_DARK_GREEN; }
-    else if (0 == strcasecmp("LIGHT_GREEN", str))       { bgr = LIGHT_GREEN; }
-    else if (0 == strcasecmp("INV_LIGHT_GREEN", str))   { bgr = INV_LIGHT_GREEN; }
-    else if (0 == strcasecmp("PALE_GREEN", str))        { bgr = PALE_GREEN; }
-    else if (0 == strcasecmp("INV_PALE_GREEN", str))    { bgr = INV_PALE_GREEN; }
-    else if (0 == strcasecmp("MEDIUM_GREEN", str))      { bgr = MEDIUM_GREEN; }
-    else if (0 == strcasecmp("INV_MEDIUM_GREEN", str))  { bgr = INV_MEDIUM_GREEN; }
-    else if (0 == strcasecmp("DARK_BLUE_WIN", str))     { bgr = DARK_BLUE_WIN; }
-    else if (0 == strcasecmp("DARK_BLUE_BIS", str))     { bgr = DARK_BLUE_BIS; }
-    else if (0 == strcasecmp("MEDIUM_BLUE", str))       { bgr = MEDIUM_BLUE; }
-    else if (0 == strcasecmp("PALE_BLUE", str))         { bgr = PALE_BLUE; }
-    else if (0 == strcasecmp("LIGHT_BLUE", str))        { bgr = LIGHT_BLUE; }
-    else if (0 == strcasecmp("WINBLUE", str))           { bgr = WINBLUE; }
-    else if (0 == strcasecmp("ORANGE", str))            { bgr = ORANGE; }
-    else if (0 == strcasecmp("DARK_RED", str))          { bgr = DARK_RED; }
-    else if (0 == strcasecmp("BROWN", str))             { bgr = BROWN; }
-    else if (0 == strcasecmp("LIGHT_ORANGE", str))      { bgr = LIGHT_ORANGE; }
-    else if (0 == strcasecmp("PALE_ORANGE", str))       { bgr = PALE_ORANGE; }
-    else if (0 == strcasecmp("MEDIUM_RED", str))        { bgr = MEDIUM_RED; }
+    if (0) {}
+# define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
+    ELSE_COLOR(BLACK)
+    ELSE_COLOR(GREY)
+    ELSE_COLOR(MEDIUM_GREY)
+    ELSE_COLOR(DARK_GREY)
+    ELSE_COLOR(ANTHRACITE)
+    ELSE_COLOR(WHITE)
+
+    ELSE_COLOR(BLUE)
+    ELSE_COLOR(DARK_BLUE)
+    ELSE_COLOR(CYAN)
+    ELSE_COLOR(DARK_BLUE_WIN)
+    ELSE_COLOR(DARK_BLUE_BIS)
+    ELSE_COLOR(MEDIUM_BLUE)
+    ELSE_COLOR(PALE_BLUE)
+    ELSE_COLOR(LIGHT_BLUE)
+    ELSE_COLOR(WINBLUE)
+
+    ELSE_COLOR(RED)
+    ELSE_COLOR(DARK_RED)
+    ELSE_COLOR(MEDIUM_RED)
+    ELSE_COLOR(PINK)
+
+    ELSE_COLOR(GREEN)
+    ELSE_COLOR(WABGREEN)
+    ELSE_COLOR(WABGREEN_BIS)
+    ELSE_COLOR(DARK_WABGREEN)
+    ELSE_COLOR(INV_DARK_WABGREEN)
+    ELSE_COLOR(DARK_GREEN)
+    ELSE_COLOR(INV_DARK_GREEN)
+    ELSE_COLOR(LIGHT_GREEN)
+    ELSE_COLOR(INV_LIGHT_GREEN)
+    ELSE_COLOR(PALE_GREEN)
+    ELSE_COLOR(INV_PALE_GREEN)
+    ELSE_COLOR(MEDIUM_GREEN)
+    ELSE_COLOR(INV_MEDIUM_GREEN)
+
+    ELSE_COLOR(YELLOW)
+    ELSE_COLOR(LIGHT_YELLOW)
+
+    ELSE_COLOR(ORANGE)
+    ELSE_COLOR(LIGHT_ORANGE)
+    ELSE_COLOR(PALE_ORANGE)
+    ELSE_COLOR(BROWN)
+#undef ELSE_COLOR
     else if ((*str == '0') && (*(str + 1) == 'x')){
         bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
     }
