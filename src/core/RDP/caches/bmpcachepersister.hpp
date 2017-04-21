@@ -146,6 +146,8 @@ private:
             LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
         }
 
+        BGRPalette original_palette = BGRPalette::classic_332();
+
         for (uint16_t i = 0; i < bitmap_count; i++) {
             t.recv_atomic(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
             end += 13;
@@ -160,7 +162,6 @@ private:
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
 
-            BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
                 t.recv_atomic(end, sizeof(original_palette));
                 end += sizeof(original_palette);
@@ -295,6 +296,8 @@ private:
             LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
         }
 
+        BGRPalette original_palette = BGRPalette::classic_332();
+
         for (uint16_t i = 0; i < bitmap_count; i++) {
             t.recv_atomic(end, 13); // sig(8) + original_bpp(1) + cx(2) + cy(2);
             end +=  13;
@@ -312,7 +315,6 @@ private:
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
 
-            BGRPalette original_palette{BGRPalette::no_init()};
             if (original_bpp == 8) {
                 t.recv_atomic(end, sizeof(original_palette));
                 end += sizeof(original_palette);

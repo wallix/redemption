@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestColCache)
     {
         StaticOutStream<65536> out_stream;
 
-        BGRPalette palette{BGRPalette::no_init()};
+        BGRPalette palette = BGRPalette::classic_332();
         for (int i = 0; i < 256; ++i){
             palette.set_color(i, BGRColor_((((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7)));
         }

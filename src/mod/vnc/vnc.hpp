@@ -226,7 +226,7 @@ public:
                 tr(trkeys::password),
                 this->font())
     , mod_name{0}
-    , palette(nullptr)
+    , palette(BGRPalette::classic_332())
     , vnc_desktop(0)
     , username{0}
     , password{0}

@@ -184,19 +184,9 @@ std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPCol
 constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.as_bgr().to_u32(); }
 
 
-class BGRPalette
+struct BGRPalette
 {
-public:
     BGRPalette() = delete;
-
-    struct no_init {};
-    explicit BGRPalette(no_init) noexcept
-    : BGRPalette(nullptr)
-    {}
-
-    explicit BGRPalette(std::nullptr_t) noexcept
-    : BGRPalette(std::integral_constant<std::size_t, 4>{}, 0, 0, 0, 0)
-    {}
 
     template<class BGRValue>
     explicit BGRPalette(BGRValue const (&a)[256]) noexcept
@@ -221,7 +211,10 @@ public:
     }
 
     BGRColor_ operator[](std::size_t i) const noexcept
-    { return this->palette[i]; }
+    {
+        assert(i < 256);
+        return this->palette[i];
+    }
 
     BGRColor_ const * begin() const
     { using std::begin; return begin(this->palette); }

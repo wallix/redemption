@@ -81,7 +81,7 @@ public:
     uint8_t    cacheIndex;
 
     RDPColCache()
-      : palette(BGRPalette::no_init())
+      : palette(BGRPalette::classic_332())
       , cacheIndex(0) {}
 
     RDPColCache(uint8_t cacheIndex, const BGRPalette & palette)

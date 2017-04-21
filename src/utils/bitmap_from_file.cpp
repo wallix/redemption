@@ -209,7 +209,7 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
 Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 {
     Bitmap bitmap;
-    BGRPalette palette1{BGRPalette::no_init()};
+    BGRPalette palette1 = BGRPalette::classic_332();
 
     /* header for bmp file */
     struct bmp_header {
