@@ -66,7 +66,7 @@
 
 #define REPLAY_PATH "/replay"
 #define LOGINS_PATH "/config/logins.config"
-
+#define WINODW_CONF_PATH "/config/windows_config.config"
 
 
 
@@ -79,9 +79,6 @@ public:
     virtual void log4(bool , const char *, const char * = nullptr) {}
     virtual void disconnect_target() {}
 };
-
-
-
 
 
 class ProgressBarWindow;
@@ -126,8 +123,70 @@ public:
     const std::string    MAIN_DIR;
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
+    const std::string    WINDOWS_CONF;
 
     std::string _movie_name;
+
+
+    struct WindowsData {
+        int form_x = 0;
+        int form_y = 0;
+        int screen_x = 0;
+        int screen_y = 0;
+
+        bool no_data = true;
+
+        Front_Qt_API * front;
+
+        WindowsData(Front_Qt_API * front)
+          : front(front)
+        {}
+
+        void open() {
+            std::ifstream ifile(this->front->WINDOWS_CONF, std::ios::in);
+            if (ifile) {
+                this->no_data = false;
+
+                std::string line;
+                std::string delimiter = " ";
+
+                while(std::getline(ifile, line)) {
+                    auto pos(line.find(delimiter));
+                    std::string tag  = line.substr(0, pos);
+                    std::string info = line.substr(pos + delimiter.length(), line.length());
+
+                    if (tag.compare(std::string("form_x")) == 0) {
+                        this->form_x = std::stoi(info);
+                    } else
+                      if (tag.compare(std::string("form_y")) == 0) {
+                        this->form_y = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("screen_x")) == 0) {
+                        this->screen_x = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("screen_y")) == 0) {
+                        this->screen_y = std::stoi(info);
+                    }
+                }
+
+                ifile.close();
+            }
+        }
+
+        void write() {
+            std::ofstream ofile(this->front->WINDOWS_CONF, std::ios::out | std::ios::trunc);
+            if (ofile) {
+
+                ofile  << "form_x " << this->form_x <<  "\n";
+                ofile  << "form_y " << this->form_y <<  "\n";
+                ofile  << "screen_x " << this->screen_x <<  "\n";
+                ofile  << "screen_y " << this->screen_y <<  "\n";
+
+                ofile.close();
+            }
+        }
+
+    } windowsData;
 
 
     Front_Qt_API( RDPVerbose verbose)
@@ -152,7 +211,11 @@ public:
     , MAIN_DIR(std::string(MAIN_PATH))
     , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
     , USER_CONF_LOG(MAIN_DIR + std::string(LOGINS_PATH))
-    {}
+    , WINDOWS_CONF(MAIN_DIR + std::string(WINODW_CONF_PATH))
+    , windowsData(this)
+    {
+        this->windowsData.open();
+    }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
                                 , std::size_t , std::size_t , int ) override {}
@@ -173,9 +236,11 @@ public:
     virtual bool eventFilter(QObject *obj, QEvent *e, int screen_index) = 0;
     virtual void disconnect(std::string const & txt) = 0;
     virtual void dropScreen() = 0;
+    virtual bool is_no_win_data() = 0;
+    virtual void writeWindowsConf() = 0;
 
     virtual void replay(std::string const & movie_path) = 0;
-    virtual void load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
+    virtual bool load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
 
@@ -232,14 +297,6 @@ public:
             this->close();
         }
     }
-
-// public Q_SLOTS:
-
-//     bool close() {
-//         this->front->closeFromScreen();
-//         return QWidget::close();
-//     }
-
 };
 
 
@@ -408,10 +465,6 @@ public Q_SLOTS:
 
 
 
-
-
-
-
 class Form_Qt : public QWidget
 {
 
@@ -526,13 +579,22 @@ public:
         this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (released()), this, SLOT (optionsReleased()));
         this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
 
-        QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (this->_width/2);
-        int centerH = (desktop->height()/2) - (this->_height/2);
-        this->move(centerW, centerH);
+
+        if (this->_front->is_no_win_data()) {
+            QDesktopWidget* desktop = QApplication::desktop();
+            this->_front->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
+            this->_front->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
+
+        }
+        this->move(this->_front->windowsData.form_x, this->_front->windowsData.form_y);
     }
 
-    ~Form_Qt() {}
+    ~Form_Qt() {
+        QPoint points = this->mapToGlobal({0, 0});
+        this->_front->windowsData.form_x = points.x();
+        this->_front->windowsData.form_y = points.y();
+        this->_front->writeWindowsConf();
+    }
 
     void setAccountData() {
         this->_accountNB = 0;
@@ -905,14 +967,16 @@ public:
         painter.drawPath(path);
         this->slotRepaint();
 
-        uint32_t centerW = 0;
-        uint32_t centerH = 0;
-        if (!this->_front->is_spanning) {
-            QDesktopWidget* desktop = QApplication::desktop();
-            centerW = (desktop->width()/2)  - (this->_width/2);
-            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT+READING_PANEL)/2);
+        if (this->_front->is_spanning) {
+            this->move(0, 0);
+        } else {
+            if (this->_front->is_no_win_data()) {
+                QDesktopWidget* desktop = QApplication::desktop();
+                this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+                this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+            }
+            this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
         }
-        this->move(centerW, centerH);
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
 
@@ -923,12 +987,13 @@ public:
 
     void pre_load_movie() {
 
-        uint64_t movie_length = unsigned(this->movie_time);
-        uint64_t endin_frame = 0;
+        long int movie_length = this->movie_time;
+        long int endin_frame = 0;
         int i = 0;
 
         while (endin_frame < movie_length) {
-            this->_front->replay_mod.get()->instant_play_client(endin_frame*1000000);
+            //timeval end_fram_time = {long int(endin_frame), 0};
+            this->_front->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
             this->balises.push_back<QPixmap*>(nullptr);
             this->balises[i] = new QPixmap(*(this->_cache));
             endin_frame += BALISED_FRAME;
@@ -964,9 +1029,6 @@ public:
         , mouse_out(false)
         , is_paused(false)
         , movie_time(0)
-//         , movie_status( QString("  Stop"), this)
-//         , movie_timer_label("unused", this)
-//         , video_timer_label("unused", this)
         , begin(0)
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+12, READING_BAR_H)
@@ -1010,19 +1072,25 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-        uint32_t centerW = 0;
-        uint32_t centerH = 0;
-        if (!this->_front->is_spanning) {
-            QDesktopWidget* desktop = QApplication::desktop();
-            centerW = (desktop->width()/2)  - (this->_width/2);
-            centerH = (desktop->height()/2) - ((this->_height+BUTTON_HEIGHT)/2);
+        if (this->_front->is_spanning) {
+            this->move(0, 0);
+        } else {
+            if (this->_front->is_no_win_data()) {
+                QDesktopWidget* desktop = QApplication::desktop();
+                this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+                this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+            }
+            this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
         }
-        this->move(centerW, centerH);
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
     ~Screen_Qt() {
+        QPoint points = this->mapToGlobal({0, 0});
+        this->_front->windowsData.screen_x = points.x();
+        this->_front->windowsData.screen_y = points.y();
+        this->_front->writeWindowsConf();
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen();
         }
@@ -1056,18 +1124,22 @@ public:
         s = s % 60;
         QString date_str;
         if (h) {
-            date_str += QString(std::to_string(h).c_str()) + QString("h ");
+            date_str += QString(std::to_string(h).c_str()) + QString(":");
         }
-        if (h || m) {
-            date_str += QString(std::to_string(m).c_str()) + QString("m ");
+        if (m < 10) {
+            date_str += QString("0");
         }
-        date_str += QString(std::to_string(s).c_str()) + QString("s ");
+        date_str += QString(std::to_string(m).c_str()) + QString(":");
+        if (s < 10) {
+            date_str += QString("0");
+        }
+        date_str += QString(std::to_string(s).c_str());
 
         return date_str;
     }
 
     void show_video_real_time_hms() {
-        this->video_timer_label.setText( this->toQStringData(this->current_time_movie) + QString("/") + this->toQStringData(this->movie_time));
+        this->video_timer_label.setText( this->toQStringData(this->current_time_movie) + QString(" / ") + this->toQStringData(this->movie_time));
     }
 
     void set_mem_cursor(const uchar * data, int x, int y) {
@@ -1202,23 +1274,25 @@ private:
 
                 switch (this->_front->replay_mod.get()->get_wrm_version()) {
                     case 1:
-                        this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
-                        this->_front->replay_mod.get()->instant_play_client(this->begin*1000000);
-                        this->movie_time_start = tvtime();
+                        if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
+                            this->_front->replay_mod.get()->instant_play_client(std::chrono::microseconds(this->begin*1000000));
+                            this->movie_time_start = tvtime();
+                        }
                         break;
 
                     case 2:
                     {
                         int last_balised = (this->begin/ BALISED_FRAME);
-                        this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0});
-                        this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
-                        this->_front->replay_mod.get()->instant_play_client(this->begin*1000000);
-                        this->slotRepaint();
+                        if (this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
+                            this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
+                            this->_front->replay_mod.get()->instant_play_client(std::chrono::microseconds(this->begin*1000000));
+                            this->slotRepaint();
 
-                        this->movie_time_start = tvtime();
-                        timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
-                        timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
-                        this->_front->replay_mod.get()->set_wait_after_load_client(wait_duration);
+                            this->movie_time_start = tvtime();
+                            timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
+                            timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
+                            this->_front->replay_mod.get()->set_wait_after_load_client(wait_duration);
+                        }
                     }
                         break;
                 }
@@ -1355,9 +1429,10 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
-        this->slotRepaint();
+        if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
+            this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
+            this->slotRepaint();
+        }
     }
 
     void disconnexionRelease(){
@@ -1604,8 +1679,8 @@ public:
         }
     }
 
-    void load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) override {
-        try {
+    bool load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) override {
+         try {
             this->replay_mod.reset(new ReplayMod( *this
                                                 , (this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
@@ -1621,32 +1696,31 @@ public:
                                                 ));
 
             this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
-        } catch (const Error &) {
-            LOG(LOG_WARNING, "new ReplayMod error %s", this->_error.c_str());
+
+            return true;
+
+        } catch (const Error & err) {
+            LOG(LOG_ERR, "new ReplayMod error %s", err.errmsg());
         }
 
-
+        if (this->replay_mod == nullptr) {
+            this->dropScreen();
+            this->readError(movie_name);
+            this->form->show();
+        }
+        return false;
     }
 
     void delete_replay_mod() override {
         this->replay_mod.reset();
     }
 
-    uint32_t string_to_hex32(unsigned char * str) {
-        size_t size = sizeof(str);
-        uint32_t hex32(0);
-        for (size_t i = 0; i < size; i++) {
-            int s = str[i];
-            if(s > 47 && s < 58) {                      //this covers 0-9
-                hex32 += (s - 48) << (size - i - 1);
-            } else if (s > 64 && s < 71) {              // this covers A-F
-                hex32 += (s - 55) << (size - i - 1);
-            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
-                hex32 += (s - 'a') << (size - i - 1);
-            }
-        }
+    virtual bool is_no_win_data() {
+        return this->windowsData.no_data;
+    }
 
-        return hex32;
+    virtual void writeWindowsConf() {
+        this->windowsData.write();
     }
 
 
@@ -1657,77 +1731,89 @@ public:
     //-----------------------
 
     struct Op_0x11 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-             return ~(src | dst);                           // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
-         }                                                  // |      | RPN: DSon                     |
-     };                                                     // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+             return ~(src | dst);                          // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
+        }                                                  // |      | RPN: DSon                     |
+    };                                                     // +------+-------------------------------+
 
     struct Op_0x22 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-             return (~src & dst);                           // | 0x22 | ROP: 0x00220326               |
-         }                                                  // |      | RPN: DSna                     |
-     };                                                     // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+             return (~src & dst);                          // | 0x22 | ROP: 0x00220326               |
+        }                                                  // |      | RPN: DSna                     |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0x33 {
-        uchar op(const uchar src, const uchar) const {      // +------+-------------------------------+
-             return (~src);                                 // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
-        }                                                   // |      | RPN: Sn                       |
-     };                                                     // +------+-------------------------------+
+    struct Op_0x33 {
+        uchar op(const uchar src, const uchar) const {     // +------+-------------------------------+
+             return (~src);                                // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
+        }                                                  // |      | RPN: Sn                       |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0x44 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-            return (src & ~dst);                            // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
-        }                                                   // |      | RPN: SDna                     |
-    };                                                      // +------+-------------------------------+
+    struct Op_0x44 {
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (src & ~dst);                           // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
+        }                                                  // |      | RPN: SDna                     |
+    };                                                     // +------+-------------------------------+
 
     struct Op_0x55 {
-        uchar op(const uchar, const uchar dst) const {      // +------+-------------------------------+
-             return (~dst);                                 // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
-        }                                                   // |      | RPN: Dn                       |
-     };                                                     // +------+-------------------------------+
+        uchar op(const uchar, const uchar dst) const {     // +------+-------------------------------+
+             return (~dst);                                // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
+        }                                                  // |      | RPN: Dn                       |
+    };                                                     // +------+-------------------------------+
 
     struct Op_0x66 {
-         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
-            return (src ^ dst);                             // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
-         }                                                  // |      | RPN: DSx                      |
-     };                                                     // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (src ^ dst);                            // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
+        }                                                  // |      | RPN: DSx                      |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0x77 {
-         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
-             return ~(src & dst);                           // | 0x77 | ROP: 0x007700E6               |
-         }                                                  // |      | RPN: DSan                     |
-     };                                                     // +------+-------------------------------+
+    struct Op_0x77 {
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+             return ~(src & dst);                          // | 0x77 | ROP: 0x007700E6               |
+        }                                                  // |      | RPN: DSan                     |
+    };                                                     // +------+-------------------------------+
 
     struct Op_0x88 {
-         uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
-            return (src & dst);                             // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
-         }                                                  // |      | RPN: DSa                      |
-     };                                                     // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (src & dst);                            // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
+        }                                                  // |      | RPN: DSa                      |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0x99 {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-            return ~(src ^ dst);                            // | 0x99 | ROP: 0x00990066               |
-        }                                                   // |      | RPN: DSxn                     |
-     };                                                     // +------+-------------------------------+
+    struct Op_0x99 {
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return ~(src ^ dst);                           // | 0x99 | ROP: 0x00990066               |
+        }                                                  // |      | RPN: DSxn                     |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0xBB {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-            return (~src | dst);                            // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
-        }                                                   // |      | RPN: DSno                     |
-     };                                                     // +------+-------------------------------+
+    struct Op_0xBB {
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (~src | dst);                           // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+        }                                                  // |      | RPN: DSno                     |
+    };                                                     // +------+-------------------------------+
 
-     struct Op_0xDD {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-            return (src | ~dst);                            // | 0xDD | ROP: 0x00DD0228               |
-        }                                                   // |      | RPN: SDno                     |
-     };                                                     // +------+-------------------------------+
+    struct Op_0xDD {
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (src | ~dst);                           // | 0xDD | ROP: 0x00DD0228               |
+        }                                                  // |      | RPN: SDno                     |
+    };                                                     // +------+-------------------------------+
 
     struct Op_0xEE {
-        uchar op(const uchar src, const uchar dst) const {  // +------+-------------------------------+
-            return (src | dst);                             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
-        }                                                   // |      | RPN: DSo                      |
-    };                                                      // +------+-------------------------------+
+        uchar op(const uchar src, const uchar dst) const { // +------+-------------------------------+
+            return (src | dst);                            // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
+        }                                                  // |      | RPN: DSo                      |
+    };                                                     // +------+-------------------------------+
 
+
+    QColor u32_to_qcolor(RDPColor color, gdi::ColorCtx color_ctx) {
+
+        if (uint8_t(this->info.bpp) != color_ctx.depth().to_bpp()) {
+            BGRColor_ d = color_decode(color, color_ctx);
+            color       = color_encode(d, uint8_t(this->info.bpp));
+        }
+
+        BGRColor_ bgr = color_decode(color, this->info.bpp, this->mod_palette);
+
+        return {bgr.red(), bgr.green(), bgr.blue()};
+    }
 
     template<class Op>
     void draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
@@ -1814,21 +1900,12 @@ public:
     }
 
 
-    QColor u32_to_qcolor(uint32_t color) {
-        uint8_t b(color >> 16);
-        uint8_t g(color >> 8);
-        uint8_t r(color);
-        //std::cout <<  "r=" <<  int(r) <<  " g=" <<  int(g) << " b=" <<  int(b) <<  std::endl;
-        return {r, g, b};
-    }
 
-    QColor u32_to_qcolor_r(uint32_t color) {
-        uint8_t b(color >> 16);
-        uint8_t g(color >> 8);
-        uint8_t r(color);
-        //std::cout <<  "r=" <<  int(r) <<  " g=" <<  int(g) << " b=" <<  int(b) <<  std::endl;
-        return {b, g, r};
-    }
+
+//     QColor u32_to_qcolor_r(RDPColor color) {
+//         BGRColor_ bgr = color_decode(color, this->info.bpp, this->mod_palette);
+//         return {bgr.blue(), bgr.green(), bgr.red()};
+//     }
 
 
     QImage::Format bpp_to_QFormat(int bpp, bool alpha) {
@@ -1887,15 +1964,11 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-        (void) color_ctx;
-        //std::cout << "RDPPatBlt " << std::hex << static_cast<int>(cmd.rop) << std::endl;
-        RDPPatBlt new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+
         const Rect rect = clip.intersect(this->info.width, this->info.height).intersect(cmd.rect);
 
-        QColor backColor = this->u32_to_qcolor(new_cmd24.back_color);
-        QColor foreColor = this->u32_to_qcolor(new_cmd24.fore_color);
+        QColor backColor = this->u32_to_qcolor(cmd.back_color, color_ctx);
+        QColor foreColor = this->u32_to_qcolor(cmd.fore_color, color_ctx);
 
         if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) { // external
 
@@ -2053,12 +2126,9 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-        (void) color_ctx;
-        //std::cout << "RDPOpaqueRect" << std::endl;
-        RDPOpaqueRect new_cmd24 = cmd;
-        new_cmd24.color = color_decode_opaquerect(cmd.color, this->info.bpp, this->mod_palette);
-        QColor qcolor(this->u32_to_qcolor(new_cmd24.color));
-        Rect rect(new_cmd24.rect.intersect(clip));
+
+        QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
+        Rect rect(cmd.rect.intersect(clip));
 
         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
 
@@ -2131,16 +2201,11 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-        (void) color_ctx;
-        //std::cout << "RDPLineTo" << std::endl;
-        RDPLineTo new_cmd24 = cmd;
-        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, 24, this->mod_palette);
-        new_cmd24.pen.color  = color_decode_opaquerect(cmd.pen.color,  24, this->mod_palette);
 
         // TODO clipping
-        this->screen->setPenColor(this->u32_to_qcolor(new_cmd24.back_color));
+        this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
 
-        this->screen->paintCache().drawLine(new_cmd24.startx, new_cmd24.starty, new_cmd24.endx, new_cmd24.endy);
+        this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -2268,8 +2333,7 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-        (void) color_ctx;
-        //std::cout << "RDPMem3Blt " << std::hex << int(cmd.rop) << std::dec <<  std::endl;
+
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;
@@ -2277,50 +2341,50 @@ public:
 
         switch (cmd.rop) {
             case 0xB8:
-                {
-                    const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->info.width  - drect.x, drect.cx));
-                    const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->info.height - drect.y, drect.cy));
+            {
+                const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->info.width  - drect.x, drect.cx));
+                const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->info.height - drect.y, drect.cy));
 
-                    if (mincx <= 0 || mincy <= 0) {
-                        return;
-                    }
-                    uint32_t fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-                    const QColor fore(this->u32_to_qcolor(fore_color24));
-                    const uint8_t r(fore.red());
-                    const uint8_t g(fore.green());
-                    const uint8_t b(fore.blue());
-
-                    int rowYCoord(drect.y + drect.cy-1);
-                    const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
-
-                    QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
-                    QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-                    srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
-                    dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
-
-                    const size_t rowsize(srcBitmap.bytesPerLine());
-                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(rowsize);
-
-                    for (size_t k = 1 ; k < drect.cy; k++) {
-
-                        const uchar * srcData = srcBitmap.constScanLine(k);
-                        const uchar * dstData = dstBitmap.constScanLine(mincy - k);
-
-                        for (size_t x = 0; x < rowsize-2; x += 3) {
-                            data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
-                            data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
-                            data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
-                        }
-
-                        QImage image(data.get(), mincx, 1, srcBitmap.format());
-                        if (image.depth() != this->info.bpp) {
-                            image = image.convertToFormat(this->imageFormatRGB);
-                        }
-                        QRect trect(drect.x, rowYCoord, mincx, 1);
-                        this->screen->paintCache().drawImage(trect, image);
-                        rowYCoord--;
-                    }
+                if (mincx <= 0 || mincy <= 0) {
+                    return;
                 }
+
+                const QColor fore(this->u32_to_qcolor(cmd.fore_color, color_ctx));
+                const uint8_t r(fore.red());
+                const uint8_t g(fore.green());
+                const uint8_t b(fore.blue());
+
+                int rowYCoord(drect.y + drect.cy-1);
+                const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
+
+                QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+                QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+                srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
+                dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
+
+                const size_t rowsize(srcBitmap.bytesPerLine());
+                std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(rowsize);
+
+                for (size_t k = 1 ; k < drect.cy; k++) {
+
+                    const uchar * srcData = srcBitmap.constScanLine(k);
+                    const uchar * dstData = dstBitmap.constScanLine(mincy - k);
+
+                    for (size_t x = 0; x < rowsize-2; x += 3) {
+                        data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
+                        data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
+                        data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
+                    }
+
+                    QImage image(data.get(), mincx, 1, srcBitmap.format());
+                    if (image.depth() != this->info.bpp) {
+                        image = image.convertToFormat(this->imageFormatRGB);
+                    }
+                    QRect trect(drect.x, rowYCoord, mincx, 1);
+                    this->screen->paintCache().drawImage(trect, image);
+                    rowYCoord--;
+                }
+            }
             break;
 
             default: LOG(LOG_WARNING, "DEFAULT: RDPMem3Blt rop = %x", cmd.rop);
@@ -2415,7 +2479,8 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-        (void) color_ctx;
+
+
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
             return ;
@@ -2439,7 +2504,7 @@ public:
 
         bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
 
-        const QColor color = this->u32_to_qcolor(color_decode_opaquerect(cmd.back_color, this->info.bpp, this->mod_palette));
+        const QColor color = this->u32_to_qcolor(cmd.back_color, color_ctx);
         const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
@@ -2815,25 +2880,35 @@ public:
 
     void replay(std::string const & movie_path_) override {
         if (movie_path_.empty()) {
+//             this->readError(movie_path_);
             return;
         }
 
         this->is_replaying = true;
         //this->setScreenDimension();
-        this->load_replay_mod(movie_path_, {0, 0}, {0, 0});
-        this->info.width = this->replay_mod->get_dim().w;
-        this->info.height = this->replay_mod->get_dim().h;
-        this->cache_replay = new QPixmap(this->info.width, this->info.height);
-        this->trans_cache = new QPixmap(this->info.width, this->info.height);
-        this->trans_cache->fill(Qt::transparent);
-        this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
-        this->connected = true;
-        this->form->hide();
-        if (this->replay_mod.get()->get_wrm_version() == 2) {
-            this->bar = new ProgressBarWindow(this->screen->movie_time, this);
-            this->screen->pre_load_movie();
+        if (this->load_replay_mod(movie_path_, {0, 0}, {0, 0})) {
+            this->info.width = this->replay_mod->get_dim().w;
+            this->info.height = this->replay_mod->get_dim().h;
+            this->cache_replay = new QPixmap(this->info.width, this->info.height);
+            this->trans_cache = new QPixmap(this->info.width, this->info.height);
+            this->trans_cache->fill(Qt::transparent);
+            this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
+            this->connected = true;
+            this->form->hide();
+            if (this->replay_mod.get()->get_wrm_version() == 2) {
+                this->bar = new ProgressBarWindow(this->screen->movie_time, this);
+                this->screen->pre_load_movie();
+            }
+            this->screen->show();
         }
-        this->screen->show();
+    }
+
+    void readError(std::string const & movie_path) {
+        const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
+        LOG(LOG_INFO, "%s", errorMsg.c_str());
+        std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+
+        this->form->set_ErrorMsg(labelErrorMsg);
     }
 
     virtual bool connect() {
@@ -2872,7 +2947,7 @@ public:
                     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
                     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
 
-                LCGRandom gen(0);
+                UdevRandom gen;
                 CryptoContext cctx;
                 DummyAuthentifier * authentifier = nullptr;
                 struct timeval time;
@@ -2892,7 +2967,7 @@ public:
 
 
                 WrmParams wrmParams(
-                    this->info.bpp
+                      this->info.bpp
                     , TraceType::localfile
                     , cctx
                     , gen

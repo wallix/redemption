@@ -73,7 +73,7 @@ public:
     // Connexion socket members
     ClipBoard_Qt       * clipboard_qt;
     bool                 _monitorCountNegociated;
-    LCGRandom            gen;
+    UdevRandom           gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
 
 
@@ -285,7 +285,7 @@ public:
             std::string tag  = ligne.substr(0, pos);
             std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-            while(std::getline(ofichier, ligne) && read_id != this->current_user_profil) {
+            while(std::getline(ofichier, ligne)) {
                 pos = ligne.find(delimiter);
                 tag  = ligne.substr(0, pos);
                 info = ligne.substr(pos + delimiter.length(), ligne.length());
@@ -294,22 +294,16 @@ public:
                     read_id = std::stoi(info);
                     if (read_id == this->current_user_profil) {
                         new_profil = false;
+                        break;
                     }
                 }
-
             }
-            LOG(LOG_INFO, "last ligne = %s ", ligne);
-            ofichier << "aazerzeartfgfgvzedt\n";
-            LOG(LOG_INFO, "this->_front->userProfils[i].name = %s id = %d", this->userProfils[this->current_user_profil].name, this->current_user_profil);
-            ofichier.seekp(ofichier.tellg());
 
             if (new_profil) {
                 ofichier.close();
                 std::ofstream new_ofile(this->USER_CONF_DIR, std::ios::app | std::ios::out);
-                LOG(LOG_INFO, "new_profil");
-                new_ofile << "\n";
-                new_ofile << "id "   << this->userProfils[this->current_user_profil].id   << "\n";
-                new_ofile << "name " << this->userProfils[this->current_user_profil].name << "\n";
+                new_ofile << "\nid "     << this->userProfils[this->current_user_profil].id   << "\n";
+                new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
                 new_ofile << "console_session "       << this->info.console_session         << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
@@ -325,11 +319,13 @@ public:
                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                new_ofile << "SHARE_DIR " << this->SHARE_DIR << "\n";
-                new_ofile << std::endl;
+                new_ofile << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
 
-        ofichier.close();
+                new_ofile.close();
+
             } else {
+                ofichier.seekp(ofichier.tellg());
+                ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
                 ofichier << "console_session "       << this->info.console_session         << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
@@ -345,38 +341,55 @@ public:
                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                ofichier << "SHARE_DIR " << this->SHARE_DIR << "\n";
-                ofichier << std::endl;
+                ofichier << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
 
-        ofichier.close();
+                ofichier.close();
             }
         }
     }
 
-    void writeCurrentUserProfil(std::fstream & ofichier) {
-        ofichier << "keylayout "             << this->info.keylayout               << "\n";
-        ofichier << "console_session "       << this->info.console_session         << "\n";
-        ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-        ofichier << "bpp "                   << this->mod_bpp                      << "\n";
-        ofichier << "width "                 << this->info.width                   << "\n";
-        ofichier << "height "                << this->info.height                  << "\n";
-        ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
-        ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
-        ofichier << "span "                  << this->is_spanning                  << "\n";
-        ofichier << "record "                << this->is_recording                 << "\n";
-        ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
-        ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
-        ofichier << "delta_time "            << this->delta_time << "\n";
-        ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-        ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-        ofichier << "SHARE_DIR " << this->SHARE_DIR << "\n";
-        ofichier << std::endl;
+    virtual void deleteCurrentProtile() {
+        std::ifstream ifichier(this->USER_CONF_DIR, std::ios::in);
+        if(ifichier) {
 
-        ofichier.close();
+            std::string new_file_content;
+            int ligne_to_jump = 0;
+
+            std::string ligne;
+            const std::string delimiter = " ";
+
+            std::getline(ifichier, ligne);
+
+            while(std::getline(ifichier, ligne)) {
+                if (ligne_to_jump == 0) {
+                    int pos = ligne.find(delimiter);
+                    std::string tag  = ligne.substr(0, pos);
+                    std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                    if (tag == std::string("id")) {
+                    }
+
+                    if (tag == std::string("id") && std::stoi(info) == this->current_user_profil) {
+                        ligne_to_jump = 18;
+                    } else {
+                        new_file_content += ligne + "\n";
+                    }
+                } else {
+                    ligne_to_jump--;
+                }
+            }
+
+            ifichier.close();
+
+            std::ofstream ofichier(this->USER_CONF_DIR, std::ios::in | std::ios::trunc);
+            ofichier << "current_user_profil_id 0" << "\n";
+            ofichier << new_file_content << std::endl;
+            ofichier.close();
+        }
     }
 
     virtual void setDefaultConfig() {
-        this->current_user_profil = 0;
+        //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
@@ -500,7 +513,6 @@ public:
         : Front_RDP_Qt_API(verbose)
         , clipboard_qt(nullptr)
         , _monitorCountNegociated(false)
-        , gen(0)
         , _waiting_for_data(false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
