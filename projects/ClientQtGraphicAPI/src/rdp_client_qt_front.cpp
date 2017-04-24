@@ -478,7 +478,7 @@ public:
         mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
-        mod_rdp_params.verbose = to_verbose_flags(0);
+        //mod_rdp_params.verbose = to_verbose_flags(0);
 
 
         try {
@@ -658,9 +658,10 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
-        CHANNELS::ChannelDef channel_audio_output{ channel_names::audio_output
+        CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                  , CHANNELS::CHANNEL_CHUNK_LENGTH+3
                                                  };
         this->cl.push_back(channel_audio_output);
@@ -677,11 +678,11 @@ public:
     //--------------------------------
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_to_channel");
-            LOG(LOG_INFO, "========================================\n");
-        }
+//         if (bool(this->verbose & RDPVerbose::graphics)) {
+//             LOG(LOG_INFO, "--------- FRONT ------------------------");
+//             LOG(LOG_INFO, "send_to_channel");
+//             LOG(LOG_INFO, "========================================\n");
+//         }
 
         const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
         if (!mod_channel) {
@@ -2405,10 +2406,7 @@ public:
                                     LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow MajorFunction = %x", deviceIORequest.MajorFunction());
                                     //hexdump_c(chunk_series.get_data(), chunk_size);
                                     break;
-
                             }
-
-
                         }
                             break;
 
@@ -2423,6 +2421,8 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
+        } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
+            LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
         }
     }
 

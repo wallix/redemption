@@ -585,6 +585,7 @@ struct FileToGraphic
         HEADER_SIZE = 8
     };
 
+    
 private:
     uint8_t stream_buf[65536];
     InStream stream;
