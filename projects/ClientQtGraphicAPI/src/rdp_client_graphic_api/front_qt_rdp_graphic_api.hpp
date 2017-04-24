@@ -1275,14 +1275,14 @@ private:
 
                 switch (this->_front->replay_mod.get()->get_wrm_version()) {
 
-                    case InMetaSequenceTransport::WRM_VERSION_1:
+                    case WrmVersion::v1:
                         if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
                             this->_front->replay_mod.get()->instant_play_client(std::chrono::microseconds(this->begin*1000000));
                             this->movie_time_start = tvtime();
                         }
                         break;
 
-                    case InMetaSequenceTransport::WRM_VERSION_2:
+                    case WrmVersion::v2:
                     {
                         int last_balised = (this->begin/ BALISED_FRAME);
                         if (this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
