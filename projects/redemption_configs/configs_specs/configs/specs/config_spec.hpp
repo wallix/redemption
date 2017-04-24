@@ -453,7 +453,7 @@ void config_spec_definition(Writer && W)
 
     W.section("remote_program", [&]
     {
-        W.member(ini_and_gui, sesman_read, type_<bool>(), "allow_resize_hosted_desktop", set(false));
+        W.member(ini_and_gui, sesman_read, type_<bool>(), "allow_resize_hosted_desktop", set(true));
     });
 
     W.section("debug", [&]

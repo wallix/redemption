@@ -2100,7 +2100,7 @@ namespace cfg {
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
-            type value{0};
+            type value{1};
         };
     };
 

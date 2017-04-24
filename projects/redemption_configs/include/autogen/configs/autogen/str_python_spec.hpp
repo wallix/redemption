@@ -676,7 +676,7 @@
 
 "[remote_program]\n\n"
 
-"allow_resize_hosted_desktop = boolean(default=False)\n\n"
+"allow_resize_hosted_desktop = boolean(default=True)\n\n"
 
 "[debug]\n\n"
 
