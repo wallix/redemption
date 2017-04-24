@@ -54,6 +54,8 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
+#define BORDER_WIDTH_HEIGHT 3
+
 class ClientExecute : public windowing_api
 {
           FrontAPI             * front_   = nullptr;
@@ -152,6 +154,8 @@ class ClientExecute : public windowing_api
 
     bool allow_resize_hosted_desktop_    = false;
     bool enable_resizing_hosted_desktop_ = false;
+
+    int current_mouse_pointer_type = Pointer::POINTER_NULL;
 
     bool verbose;
 
@@ -268,62 +272,62 @@ private:
         this->north.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
         this->north.y  = this->window_rect.y;
         this->north.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
-        this->north.cy = 4;
+        this->north.cy = BORDER_WIDTH_HEIGHT;
 
         this->north_west_north.x  = this->window_rect.x;
         this->north_west_north.y  = this->window_rect.y;
         this->north_west_north.cx = TITLE_BAR_HEIGHT;
-        this->north_west_north.cy = 4;
+        this->north_west_north.cy = BORDER_WIDTH_HEIGHT;
 
         this->north_west_west.x  = this->window_rect.x;
         this->north_west_west.y  = this->window_rect.y;
-        this->north_west_west.cx = 4;
+        this->north_west_west.cx = BORDER_WIDTH_HEIGHT;
         this->north_west_west.cy = TITLE_BAR_HEIGHT;
 
         this->west.x  = this->window_rect.x;
         this->west.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
-        this->west.cx = 4;
+        this->west.cx = BORDER_WIDTH_HEIGHT;
         this->west.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
 
         this->south_west_west.x  = this->window_rect.x;
         this->south_west_west.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
-        this->south_west_west.cx = 4;
+        this->south_west_west.cx = BORDER_WIDTH_HEIGHT;
         this->south_west_west.cy = TITLE_BAR_HEIGHT;
 
         this->south_west_south.x  = this->window_rect.x;
-        this->south_west_south.y  = this->window_rect.y + this->window_rect.cy - 4;
+        this->south_west_south.y  = this->window_rect.y + this->window_rect.cy - BORDER_WIDTH_HEIGHT;
         this->south_west_south.cx = TITLE_BAR_HEIGHT;
-        this->south_west_south.cy = 4;
+        this->south_west_south.cy = BORDER_WIDTH_HEIGHT;
 
         this->south.x  = this->window_rect.x + TITLE_BAR_HEIGHT;
-        this->south.y  = this->window_rect.y + this->window_rect.cy -4;
+        this->south.y  = this->window_rect.y + this->window_rect.cy - BORDER_WIDTH_HEIGHT;
         this->south.cx = this->window_rect.cx - TITLE_BAR_HEIGHT * 2;
-        this->south.cy = 4;
+        this->south.cy = BORDER_WIDTH_HEIGHT;
 
         this->south_east_south.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
-        this->south_east_south.y  = this->window_rect.y + this->window_rect.cy - 4;
+        this->south_east_south.y  = this->window_rect.y + this->window_rect.cy - BORDER_WIDTH_HEIGHT;
         this->south_east_south.cx = TITLE_BAR_HEIGHT;
-        this->south_east_south.cy = 4;
+        this->south_east_south.cy = BORDER_WIDTH_HEIGHT;
 
-        this->south_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->south_east_east.x  = this->window_rect.x + this->window_rect.cx - BORDER_WIDTH_HEIGHT;
         this->south_east_east.y  = this->window_rect.y + this->window_rect.cy - TITLE_BAR_HEIGHT;
-        this->south_east_east.cx = 4;
+        this->south_east_east.cx = BORDER_WIDTH_HEIGHT;
         this->south_east_east.cy = TITLE_BAR_HEIGHT;
 
-        this->east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->east.x  = this->window_rect.x + this->window_rect.cx - BORDER_WIDTH_HEIGHT;
         this->east.y  = this->window_rect.y + TITLE_BAR_HEIGHT;
-        this->east.cx = 4;
+        this->east.cx = BORDER_WIDTH_HEIGHT;
         this->east.cy = this->window_rect.cy - TITLE_BAR_HEIGHT * 2;
 
-        this->north_east_east.x  = this->window_rect.x + this->window_rect.cx - 4;
+        this->north_east_east.x  = this->window_rect.x + this->window_rect.cx - BORDER_WIDTH_HEIGHT;
         this->north_east_east.y  = this->window_rect.y;
-        this->north_east_east.cx = 4;
+        this->north_east_east.cx = BORDER_WIDTH_HEIGHT;
         this->north_east_east.cy = TITLE_BAR_HEIGHT;
 
         this->north_east_north.x  = this->window_rect.x + this->window_rect.cx - TITLE_BAR_HEIGHT;
         this->north_east_north.y  = this->window_rect.y;
         this->north_east_north.cx = TITLE_BAR_HEIGHT;
-        this->north_east_north.cy = 4;
+        this->north_east_north.cy = BORDER_WIDTH_HEIGHT;
     }   // update_rects
 
 public:
@@ -603,51 +607,108 @@ public:
         this->front_->sync();
     }   // input_invalidate
 
-    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
-        bool pointer_changed = false;
-
-        if (!this->channel_) return pointer_changed;
-
+    // Return true if event is consumed.
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref) {
         //LOG(LOG_INFO,
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
+        // Mouse pointer managment
+
+        mouse_captured_ref = true;
+
+        bool mouse_pointer_should_be_set = false;
+
+             if (this->north.contains_pt(xPos, yPos) ||
+                 this->south.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
+                mouse_pointer_should_be_set = true;
+            }
+        }
+        else if (this->north_west_north.contains_pt(xPos, yPos) ||
+                 this->north_west_west.contains_pt(xPos, yPos) ||
+                 this->south_east_south.contains_pt(xPos, yPos) ||
+                 this->south_east_east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
+                mouse_pointer_should_be_set = true;
+            }
+        }
+        else if (this->west.contains_pt(xPos, yPos) ||
+                 this->east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
+                mouse_pointer_should_be_set = true;
+            }
+        }
+        else if (this->south_west_west.contains_pt(xPos, yPos) ||
+                 this->south_west_south.contains_pt(xPos, yPos) ||
+                 this->north_east_east.contains_pt(xPos, yPos) ||
+                 this->north_east_north.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
+                mouse_pointer_should_be_set = true;
+            }
+        }
+        else if ((this->title_bar_rect.contains_pt(xPos, yPos)) ||
+                 (this->enable_resizing_hosted_desktop_ &&
+                  this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) ||
+                 (this->minimize_box_rect.contains_pt(xPos, yPos)) ||
+                 (this->maximize_box_rect.contains_pt(xPos, yPos)) ||
+                 (this->close_box_rect.contains_pt(xPos, yPos))) {
+            if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
+                mouse_pointer_should_be_set = true;
+            }
+        }
+
+        if (mouse_pointer_should_be_set && !this->move_size_initialized) {
+            Pointer cursor(this->current_mouse_pointer_type);
+
+            this->front_->set_pointer(cursor);
+        }
+
+        // Mouse action managment
+
         if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
             if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
-                if (this->north.contains_pt(xPos, yPos) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTH;
-                }
-                else if ((this->north_west_north.contains_pt(xPos, yPos) ||
-                          this->north_west_west.contains_pt(xPos, yPos)) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHWEST;
-                }
-                else if (this->west.contains_pt(xPos, yPos) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_WEST;
-                }
-                else if ((this->south_west_west.contains_pt(xPos, yPos) ||
-                          this->south_west_south.contains_pt(xPos, yPos)) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTHWEST;
-                }
-                else if (this->south.contains_pt(xPos, yPos) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTH;
-                }
-                else if ((this->south_east_south.contains_pt(xPos, yPos) ||
-                          this->south_east_east.contains_pt(xPos, yPos)) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTHEAST;
-                }
-                else if (this->east.contains_pt(xPos, yPos) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_EAST;
-                }
-                else if ((this->north_east_east.contains_pt(xPos, yPos) ||
-                          this->north_east_north.contains_pt(xPos, yPos)) && !this->maximized) {
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHEAST;
-                }
-                else if (this->title_bar_rect.contains_pt(xPos, yPos) && !this->maximized) {
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
+                if (!this->maximized) {
+                         if (this->north.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTH;
                     }
+                    else if (this->north_west_north.contains_pt(xPos, yPos) ||
+                             this->north_west_west.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHWEST;
+                    }
+                    else if (this->west.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_WEST;
+                    }
+                    else if (this->south_west_west.contains_pt(xPos, yPos) ||
+                             this->south_west_south.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTHWEST;
+                    }
+                    else if (this->south.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTH;
+                    }
+                    else if (this->south_east_south.contains_pt(xPos, yPos) ||
+                             this->south_east_east.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTHEAST;
+                    }
+                    else if (this->east.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_EAST;
+                    }
+                    else if (this->north_east_east.contains_pt(xPos, yPos) ||
+                             this->north_east_north.contains_pt(xPos, yPos)) {
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHEAST;
+                    }
+                    else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
+                        }
 
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
+                    }
                 }
 
                 if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) {
@@ -657,81 +718,7 @@ public:
                     this->captured_mouse_y = yPos;
 
                     this->window_rect_saved = this->window_rect;
-                }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
-                else if (this->allow_resize_hosted_desktop_ &&
-                         this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {
-                    this->draw_resize_hosted_desktop_box(true, this->resize_hosted_desktop_box_rect);
 
-                    this->front_->sync();
-
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
-                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
-                else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
-
-                    this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
-
-                    if (this->font_) {
-                        gdi::server_draw_text(*this->front_,
-                                              *this->font_,
-                                              this->minimize_box_rect.x + 12,
-                                              this->minimize_box_rect.y + 3,
-                                              "−",
-                                              encode_color24()(BLACK),
-                                              encode_color24()(BGRColor_{0xCBCACA}),
-                                              gdi::ColorCtx::depth24(),
-                                              this->minimize_box_rect
-                                              );
-                    }
-
-                    this->front_->sync();
-
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
-                }   // else if (this->minimize_box_rect.contains_pt(xPos, yPos))
-                else if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
-                    this->draw_maximize_box(true, this->maximize_box_rect);
-
-                    this->front_->sync();
-
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
-                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
-                else if (this->close_box_rect.contains_pt(xPos, yPos)) {
-                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor_{0x2311E8}));
-
-                    this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
-
-                    if (this->font_) {
-                        gdi::server_draw_text(*this->front_,
-                                              *this->font_,
-                                              this->close_box_rect.x + 13,
-                                              this->close_box_rect.y + 3,
-                                              "x",
-                                              encode_color24()(WHITE),
-                                              encode_color24()(BGRColor_{0x2311E8}),
-                                              gdi::ColorCtx::depth24(),
-                                              this->close_box_rect
-                                              );
-                    }
-
-                    this->front_->sync();
-
-                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_CLOSEBOX;
-                }   // else if (this->close_box_rect.contains_pt(xPos, yPos))
-            }   // if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button)
-        }   // if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags)
-        else if (SlowPath::PTRFLAGS_MOVE == pointerFlags) {
-            if (((MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_NORTH == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_NORTHWEST == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_WEST == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_SOUTHWEST == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_SOUTH == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_SOUTHEAST == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_EAST == this->pressed_mouse_button) ||
-                 (MOUSE_BUTTON_PRESSED_NORTHEAST == this->pressed_mouse_button)) &&
-                !this->maximized) {
-
-                if (!this->move_size_initialized) {
                     {
                         StaticOutStream<256> out_s;
                         RAILPDUHeader header;
@@ -832,7 +819,79 @@ public:
                     }   // if (move_size_type)
 
                     this->move_size_initialized = true;
-                }
+                }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
+                else if (this->allow_resize_hosted_desktop_ &&
+                         this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {
+                    this->draw_resize_hosted_desktop_box(true, this->resize_hosted_desktop_box_rect);
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
+                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
+                else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
+                    RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor_{0xCBCACA}));
+
+                    this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
+
+                    if (this->font_) {
+                        gdi::server_draw_text(*this->front_,
+                                              *this->font_,
+                                              this->minimize_box_rect.x + 12,
+                                              this->minimize_box_rect.y + 3,
+                                              "−",
+                                              encode_color24()(BLACK),
+                                              encode_color24()(BGRColor_{0xCBCACA}),
+                                              gdi::ColorCtx::depth24(),
+                                              this->minimize_box_rect
+                                              );
+                    }
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
+                }   // else if (this->minimize_box_rect.contains_pt(xPos, yPos))
+                else if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
+                    this->draw_maximize_box(true, this->maximize_box_rect);
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
+                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
+                else if (this->close_box_rect.contains_pt(xPos, yPos)) {
+                    RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor_{0x2311E8}));
+
+                    this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
+
+                    if (this->font_) {
+                        gdi::server_draw_text(*this->front_,
+                                              *this->font_,
+                                              this->close_box_rect.x + 13,
+                                              this->close_box_rect.y + 3,
+                                              "x",
+                                              encode_color24()(WHITE),
+                                              encode_color24()(BGRColor_{0x2311E8}),
+                                              gdi::ColorCtx::depth24(),
+                                              this->close_box_rect
+                                              );
+                    }
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_CLOSEBOX;
+                }   // else if (this->close_box_rect.contains_pt(xPos, yPos))
+            }   // if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button)
+        }   // if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags)
+        else if (SlowPath::PTRFLAGS_MOVE == pointerFlags) {
+            if (((MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_NORTH == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_NORTHWEST == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_WEST == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_SOUTHWEST == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_SOUTH == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_SOUTHEAST == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_EAST == this->pressed_mouse_button) ||
+                 (MOUSE_BUTTON_PRESSED_NORTHEAST == this->pressed_mouse_button)) &&
+                !this->maximized) {
 
                 if (this->full_window_drag_enabled) {
                     int offset_x  = 0;
@@ -840,14 +899,10 @@ public:
                     int offset_cx = 0;
                     int offset_cy = 0;
 
-                    int pointer_type = Pointer::POINTER_NULL;
-
                     switch (this->pressed_mouse_button) {
                         case MOUSE_BUTTON_PRESSED_TITLEBAR:
                             offset_x = xPos - this->captured_mouse_x;
                             offset_y = yPos - this->captured_mouse_y;
-
-                            pointer_type = Pointer::POINTER_NORMAL;
                         break;
 
                         case MOUSE_BUTTON_PRESSED_NORTH: {
@@ -858,8 +913,6 @@ public:
                                 offset_y = offset_y_max;
 
                             offset_cy = -offset_y;
-
-                            pointer_type = Pointer::POINTER_SIZENS;
                         }
                         break;
 
@@ -878,8 +931,6 @@ public:
                                 offset_y = offset_y_max;
 
                             offset_cy = -offset_y;
-
-                            pointer_type = Pointer::POINTER_SIZENWSE;
                         }
                         break;
 
@@ -891,8 +942,6 @@ public:
                                 offset_x = offset_x_max;
 
                             offset_cx = -offset_x;
-
-                            pointer_type = Pointer::POINTER_SIZEWE;
                         }
                         break;
 
@@ -910,8 +959,6 @@ public:
                             offset_cy = yPos - this->captured_mouse_y;
                             if (offset_cy < offset_cy_min)
                                 offset_cy = offset_cy_min;
-
-                            pointer_type = Pointer::POINTER_SIZENESW;
                         }
                         break;
 
@@ -921,8 +968,6 @@ public:
                             offset_cy = yPos - this->captured_mouse_y;
                             if (offset_cy < offset_cy_min)
                                 offset_cy = offset_cy_min;
-
-                            pointer_type = Pointer::POINTER_SIZENS;
                         }
                         break;
 
@@ -938,8 +983,6 @@ public:
                             offset_cx = xPos - this->captured_mouse_x;
                             if (offset_cx < offset_cx_min)
                                 offset_cx = offset_cx_min;
-
-                            pointer_type = Pointer::POINTER_SIZENWSE;
                         }
                         break;
 
@@ -949,8 +992,6 @@ public:
                             offset_cx = xPos - this->captured_mouse_x;
                             if (offset_cx < offset_cx_min)
                                 offset_cx = offset_cx_min;
-
-                            pointer_type = Pointer::POINTER_SIZEWE;
                         }
                         break;
 
@@ -968,8 +1009,6 @@ public:
                             offset_cx = xPos - this->captured_mouse_x;
                             if (offset_cx < offset_cx_min)
                                 offset_cx = offset_cx_min;
-
-                            pointer_type = Pointer::POINTER_SIZENESW;
                         }
                         break;
                     }
@@ -1026,13 +1065,6 @@ public:
                     }
 
                     this->front_->draw(order);
-
-                    if (pointer_type != Pointer::POINTER_NULL) {
-                        Pointer cursor(pointer_type);
-
-                        this->front_->set_pointer(cursor);
-                        pointer_changed = true;
-                    }
 
                     this->update_widget();
                 }   // if (this->full_window_drag_enabled)
@@ -1134,44 +1166,10 @@ public:
                     this->front_->sync();
                 }
             }   // else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button)
-            else if (!this->maximized) {
-                if (this->north.contains_pt(xPos, yPos) ||
-                    this->south.contains_pt(xPos, yPos)) {
-                    Pointer cursor(Pointer::POINTER_SIZENS);
-
-                    this->front_->set_pointer(cursor);
-                    pointer_changed = true;
-                }
-                else if (this->north_west_north.contains_pt(xPos, yPos) ||
-                         this->north_west_west.contains_pt(xPos, yPos) ||
-                         this->south_east_south.contains_pt(xPos, yPos) ||
-                         this->south_east_east.contains_pt(xPos, yPos)) {
-                    Pointer cursor(Pointer::POINTER_SIZENWSE);
-
-                    this->front_->set_pointer(cursor);
-                    pointer_changed = true;
-                }
-                else if (this->west.contains_pt(xPos, yPos) ||
-                         this->east.contains_pt(xPos, yPos)) {
-                    Pointer cursor(Pointer::POINTER_SIZEWE);
-
-                    this->front_->set_pointer(cursor);
-                    pointer_changed = true;
-                }
-                else if (this->south_west_west.contains_pt(xPos, yPos) ||
-                         this->south_west_south.contains_pt(xPos, yPos) ||
-                         this->north_east_east.contains_pt(xPos, yPos) ||
-                         this->north_east_north.contains_pt(xPos, yPos)) {
-                    Pointer cursor(Pointer::POINTER_SIZENESW);
-
-                    this->front_->set_pointer(cursor);
-                    pointer_changed = true;
-                }
-            }   // else if (!this->maximized)
         }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
         else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags) {
-            if (this->allow_resize_hosted_desktop_ &&
-                (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
+                 if (this->allow_resize_hosted_desktop_ &&
+                     (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                 this->enable_resizing_hosted_desktop_ = (!this->enable_resizing_hosted_desktop_);
@@ -1183,7 +1181,7 @@ public:
                 if (this->enable_resizing_hosted_desktop_) {
                     this->update_widget();
                 }
-            }   // else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button)
+            }   // if (this->allow_resize_hosted_desktop_ &&
             else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
@@ -1353,7 +1351,6 @@ public:
 
                         this->front_->draw(order);
                     }
-
                 }   // if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)
 
                 int move_size_type = 0;
@@ -1415,7 +1412,7 @@ public:
                 if (0 != move_size_type) {
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
                 }
-            }   // else if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
+            }   // else if ((MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
         }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
         else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
             if (this->south.contains_pt(xPos, yPos) && !this->maximized) {
@@ -1475,7 +1472,13 @@ public:
             }   // else if (this->title_bar_icon_rect.contains_pt(xPos, yPos))
         }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
 
-        return pointer_changed;
+        if (!mouse_pointer_should_be_set && !this->move_size_initialized) {
+            this->current_mouse_pointer_type = Pointer::POINTER_NULL;
+
+            mouse_captured_ref = false;
+        }
+
+        return false;
     }   // input_mouse
 
     void maximize_restore_window() {

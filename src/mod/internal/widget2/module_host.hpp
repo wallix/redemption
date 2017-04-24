@@ -32,6 +32,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "gdi/graphic_api.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/widget2/composite.hpp"
 #include "mod/internal/widget2/scroll.hpp"
 #include "mod/mod_api.hpp"
@@ -238,6 +239,9 @@ private:
 
     Pointer current_pointer;
 
+    int current_pointer_pos_x = 0;
+    int current_pointer_pos_y = 0;
+
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -274,7 +278,14 @@ public:
     virtual void set_pointer(Pointer const & pointer) override {
         gdi::GraphicApi& drawable_ = this->get_drawable();
 
-        drawable_.set_pointer(pointer);
+        Rect rect = this->get_rect();
+        rect.x  += (BORDER_WIDTH_HEIGHT - 1);
+        rect.cx -= (BORDER_WIDTH_HEIGHT - 1) * 2;
+        rect.cy -= (BORDER_WIDTH_HEIGHT - 1);
+
+        if (rect.contains_pt(this->current_pointer_pos_x, this->current_pointer_pos_y)) {
+            drawable_.set_pointer(pointer);
+        }
 
         this->current_pointer = pointer;
     }
@@ -681,6 +692,9 @@ public:
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
+        this->current_pointer_pos_x = x;
+        this->current_pointer_pos_y = y;
+
         if (this->vision_rect.contains_pt(x, y)) {
             this->module_holder.rdp_input_mouse(device_flags, x - this->x() + this->mod_visible_rect.x, y - this->y() + this->mod_visible_rect.y, keymap);
         }
