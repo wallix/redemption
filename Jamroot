@@ -143,6 +143,10 @@ constant OBJ_TEST_DEPENDENCIES :
     <define>WRM_PATH='\"/tmp\"'
     <define>HASH_PATH='\"/tmp/redemption_hash\"'
     <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"'
+    <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"'
+    <define>CERTIF_PATH='\"/tmp/redemption_cert\"'
+    <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"'
+    <define>PID_PATH='\"/tmp/redemption_pid\"'
 ;
 
 constant TEST_DEPENDENCIES :

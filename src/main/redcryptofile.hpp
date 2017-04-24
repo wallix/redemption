@@ -30,17 +30,19 @@ extern "C"
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_checksum,
-        get_hmac_key_prototype * hmac_fn,
-        get_trace_key_prototype * trace_fn);
+    RedCryptoWriterHandle * redcryptofile_new_writer(
+        int with_encryption, int with_checksum, char const * path,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_open_writer(RedCryptoWriterHandle * handle, char const * path);
+    RedCryptoWriterHandle * redcryptofile_open_writer(
+        int with_encryption, int with_checksum, char const * path,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoReaderHandle * redcryptofile_open_reader(char const * path,
-        get_hmac_key_prototype * hmac_fn,
-        get_trace_key_prototype * trace_fn);
+    RedCryptoReaderHandle * redcryptofile_open_reader(
+        char const * path,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
     int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
