@@ -12,8 +12,6 @@ project redemption
 
     <conditional>@includes
 
-    <conditional>@defines
-
     $(CXXFLAGS)
 
 #    <cxxflags>-fpie
@@ -112,6 +110,7 @@ install install-lib
 
 
 constant COMMON_OBJ_DEPENDENCIES :
+    <conditional>@defines
     <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
     <define>CFG_PATH='\"$(ETC_PREFIX)\"'
 ;
@@ -138,6 +137,12 @@ constant OBJ_TEST_DEPENDENCIES :
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    <define>RECORD_PATH='\"/tmp/redemption_recorded\"'
+    <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"'
+    <define>PNG_PATH='\"/tmp\"'
+    <define>WRM_PATH='\"/tmp\"'
+    <define>HASH_PATH='\"/tmp/redemption_hash\"'
+    <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"'
 ;
 
 constant TEST_DEPENDENCIES :

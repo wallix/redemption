@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_TESTS_GET_FILE_CONTENTS_HPP
-#define REDEMPTION_TESTS_GET_FILE_CONTENTS_HPP
+#pragma once
 
 #include <fstream>
 
@@ -48,12 +47,10 @@ int get_file_contents(String& s, const char * name)
     return (sz != n) ? s.resize(std::size_t(n)), errno : 0;
 }
 
-template<class String>
+template<class String = std::string>
 String get_file_contents(const char * name)
 {
     String s;
     get_file_contents(s, name);
     return s;
 }
-
-#endif
