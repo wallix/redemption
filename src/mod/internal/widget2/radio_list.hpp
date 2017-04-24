@@ -32,7 +32,7 @@ public:
 
     WidgetRadioButton(gdi::GraphicApi & drawable,
                       NotifyApi* notifier, const char * text, bool auto_resize,
-                      int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor,
+                      int group_id, BGRColor fgcolor, BGRColor bgcolor,
                       int xtext = 0, int ytext = 0)
         : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
         , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, 4, 2)
@@ -104,12 +104,12 @@ class WidgetRadioList : public Widget2
     WidgetRadioButton * child_list[AUTOSIZE];
     size_t size;
     int selected;
-    BGRColor_ fgcolor;
-    BGRColor_ bgcolor;
+    BGRColor fgcolor;
+    BGRColor bgcolor;
 
 public:
     WidgetRadioList(mod_api & drawable, int x, int y, Widget2 & parent,
-                    NotifyApi * notifier, int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor)
+                    NotifyApi * notifier, int group_id, BGRColor fgcolor, BGRColor bgcolor)
         : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
         , size(0)
         , selected(-1)

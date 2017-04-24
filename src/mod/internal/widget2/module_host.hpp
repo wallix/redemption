@@ -301,9 +301,9 @@ public:
     , module_holder(*this, std::move(managed_mod))
     , drawable_ref(drawable)
     , hscroll(drawable, *this, this, true, BLACK,
-        BGRColor_(0x606060), BGRColor_(0xF0F0F0), BGRColor_(0xCDCDCD), font, true)
+        BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
     , vscroll(drawable, *this, this, false, BLACK,
-        BGRColor_(0x606060), BGRColor_(0xF0F0F0), BGRColor_(0xCDCDCD), font, true)
+        BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
     , monitors(cs_monitor)
     {
         this->pointer_flag = Pointer::POINTER_CUSTOM;

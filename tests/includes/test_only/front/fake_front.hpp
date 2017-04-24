@@ -283,16 +283,13 @@ public:
     , verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
-    , mod_palette(BGRPalette::no_init())
+    , mod_palette(BGRPalette::classic_332())
     , mouse_x(0)
     , mouse_y(0)
     , notimestamp(true)
     , nomouse(true)
     , gd(info.width, info.height)
     {
-        if (this->mod_bpp == 8) {
-            this->mod_palette = BGRPalette::classic_332();
-        }
         // -------- Start of system wide SSL_Ctx option ------------------------------
 
         // ERR_load_crypto_strings() registers the error strings for all libcrypto

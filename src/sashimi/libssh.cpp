@@ -22,6 +22,7 @@
    Copyright (c) 2009-2013 by Andreas Schneider <asn@cryptomilk.org>
 */
 
+#include "utils/log.hpp"
 #include "sashimi/libssh/libssh.h"
 
 #include "sashimi/buffer.hpp"
@@ -46,7 +47,7 @@ ssh_channel ssh_new_channel(ssh_session_struct * session, ssh_channel_callbacks 
 
 void ssh_set_blocking(ssh_session_struct * session, int blocking) {
     if (!session) {
-        syslog(LOG_INFO, "%s --- NULL SESSION", __FUNCTION__);
+        LOG(LOG_INFO, "%s --- NULL SESSION", __FUNCTION__);
         return;
   }
   session->flags &= ~SSH_SESSION_FLAG_BLOCKING;
@@ -73,7 +74,7 @@ void ssh_free(ssh_session_struct * session)
  *          SSH_ERROR   Error happened during the poll.
  */
 int ssh_event_dopoll(ssh_poll_ctx_struct * ctx, int timeout) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
 
     if(ctx == NULL) {
         return SSH_ERROR;
@@ -332,13 +333,13 @@ int ssh_channel_write_server(ssh_session_struct * server_session, ssh_channel ch
 
     if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
-        syslog(LOG_INFO, "Remote channel is closed");
+        LOG(LOG_INFO, "Remote channel is closed");
         ssh_set_error(*error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
 
     if (static_cast<SshServerSession*>(server_session)->session_state == SSH_SESSION_STATE_ERROR){
-        syslog(LOG_INFO, "Remote channel is closed : session error");
+        LOG(LOG_INFO, "Remote channel is closed : session error");
         return SSH_ERROR;
     }
 
@@ -417,7 +418,7 @@ int ssh_channel_request_send_exit_signal_server(ssh_session_struct * server_sess
 
 int ssh_set_auth_methods_server(ssh_session_struct * server_session, int authmethods)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    LOG(LOG_INFO, "%s ---", __FUNCTION__);
     return static_cast<SshServerSession*>(server_session)->ssh_set_auth_methods_server(authmethods);
 }
 

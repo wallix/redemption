@@ -204,7 +204,7 @@ private:
 };
 
 
-inline RDPColor color_encode(const BGRColor_ color, Depth depth) noexcept
+inline RDPColor color_encode(const BGRColor color, Depth depth) noexcept
 {
     switch (depth){
         case Depth::depth8(): return encode_color8()(color);
@@ -219,7 +219,7 @@ inline RDPColor color_encode(const BGRColor_ color, Depth depth) noexcept
 }
 
 
-inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
+inline BGRColor color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
 {
     switch (color_ctx.depth()){
         case Depth::depth8(): return decode_color8()(color, *color_ctx.palette());
@@ -230,11 +230,11 @@ inline BGRColor_ color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
     }
 
     REDASSERT(false);
-    return BGRColor_{0, 0, 0};
+    return BGRColor{0, 0, 0};
 }
 
 
-inline BGRColor_ color_decode(const RDPColor color, Depth depth, const BGRPalette & palette) noexcept
+inline BGRColor color_decode(const RDPColor color, Depth depth, const BGRPalette & palette) noexcept
 {
     return color_decode(color, ColorCtx{depth, palette});
 }

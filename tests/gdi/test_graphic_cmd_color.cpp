@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestGdCmdConverter)
 {
     encode_color15 enc;
     decode_color16 dec;
-    BGRColor_ raw_color(0x8ba93c);
+    BGRColor raw_color(0x8ba93c);
     RDPColor color16 = enc(raw_color);
     RDPOpaqueRect opaque_rect({}, color16);
 

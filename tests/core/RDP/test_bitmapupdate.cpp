@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 
     RDPDrawable gd(width, height);
     auto const color_cxt = gdi::ColorCtx::depth16();
-    gd.draw(RDPOpaqueRect(screen_rect, encode_color16()(BGRColor_(0x2F2F2F))), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color16()(BGRColor(0x2F2F2F))), screen_rect, color_cxt);
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 /* 0280 */ 0x5a, 0x91, 0xc5,                                         // Z..
     };
 
-    BGRPalette palette(raw_palette);
+    BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
     Bitmap bmp(16, 24, &palette, 8, 600, raw_bitmap, sizeof(raw_bitmap), true);
 

@@ -24,97 +24,13 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <iterator>
-
 #include <cstdint>
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
-#include <cstring> // memcpy
-
-
-typedef uint32_t BGRColor;
-typedef uint32_t RGBColor;
-
-
-constexpr BGRColor RGBtoBGR(const BGRColor & c) noexcept {
-    return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
-}
-
-struct BGRPalette
-{
-    BGRPalette() = delete;
-
-    struct no_init {};
-    explicit BGRPalette(no_init) noexcept
-    {}
-
-    explicit BGRPalette(std::nullptr_t) noexcept
-    : palette{0}
-    {}
-
-    explicit BGRPalette(uint8_t const * palette_data) noexcept
-    { this->set_data(palette_data); }
-
-    static const BGRPalette & classic_332_rgb() noexcept
-    {
-        static const BGRPalette palette([](int c) { return RGBtoBGR(c); }, 1);
-        return palette;
-    }
-
-    static const BGRPalette & classic_332() noexcept
-    {
-        static const BGRPalette palette([](int c) { return static_cast<BGRColor>(c); }, 1);
-        return palette;
-    }
-
-    BGRColor operator[](std::size_t i) const noexcept
-    { return this->palette[i]; }
-
-    BGRColor const * begin() const
-    { using std::begin; return begin(this->palette); }
-
-    BGRColor const * end() const
-    { using std::end; return end(this->palette); }
-
-    void set_color(std::size_t i, BGRColor c) noexcept
-    { this->palette[i] = c; }
-
-    void set_data(uint8_t const * palette_data)
-    { memcpy(this->palette, palette_data, sizeof(this->palette)); }
-
-    const char * data() const noexcept
-    { return reinterpret_cast<char const*>(this->palette); }
-
-    static constexpr std::size_t data_size() noexcept
-    { return sizeof(palette); }
-
-private:
-    BGRColor palette[256];
-
-    template<class Transform>
-    /*constexpr*/ BGRPalette(Transform trans, int) noexcept
-    {
-        /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    this->palette[(rindex << 5) | (gindex << 2) | bindex] =
-                    trans(
-                        // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                        // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                      | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                        // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                      | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))
-                    );
-                }
-            }
-        }
-    }
-};
-
-// typedef BGRColor BGRPalette[256];
+#include <cstring> // strcasecmp
 
 // Those are in BGR
 enum NamedBGRColor {
@@ -164,21 +80,21 @@ enum NamedBGRColor {
 };
 
 
-struct BGRasRGBColor_;
+struct BGRasRGBColor;
 
-struct BGRColor_
+struct BGRColor
 {
-    constexpr BGRColor_(NamedBGRColor color) noexcept
+    constexpr BGRColor(NamedBGRColor color) noexcept
     : color_(color)
     {}
 
-    constexpr BGRColor_(BGRasRGBColor_ const & color) noexcept;
+    constexpr BGRColor(BGRasRGBColor const & color) noexcept;
 
-    constexpr explicit BGRColor_(uint32_t color = 0) noexcept
+    constexpr explicit BGRColor(uint32_t color = 0) noexcept
     : color_(color/* & 0xFFFFFF*/)
     {}
 
-    constexpr explicit BGRColor_(uint8_t blue, uint8_t green, uint8_t red) noexcept
+    constexpr explicit BGRColor(uint8_t blue, uint8_t green, uint8_t red) noexcept
     : color_((blue << 16) | (green << 8) | red)
     {}
 
@@ -192,13 +108,13 @@ private:
     uint32_t color_;
 };
 
-struct BGRasRGBColor_
+struct BGRasRGBColor
 {
-    constexpr BGRasRGBColor_(NamedBGRColor color) noexcept
+    constexpr BGRasRGBColor(NamedBGRColor color) noexcept
     : color_(color)
     {}
 
-    constexpr BGRasRGBColor_(BGRColor_ color) noexcept
+    constexpr BGRasRGBColor(BGRColor color) noexcept
     : color_(color)
     {}
 
@@ -207,18 +123,18 @@ struct BGRasRGBColor_
     constexpr uint8_t blue() const noexcept { return this->color_.red(); }
 
 private:
-    BGRColor_ color_;
+    BGRColor color_;
 };
 
-constexpr BGRColor_::BGRColor_(BGRasRGBColor_ const & color) noexcept
-: BGRColor_(color.blue(), color.green(), color.red())
+constexpr BGRColor::BGRColor(BGRasRGBColor const & color) noexcept
+: BGRColor(color.blue(), color.green(), color.red())
 {}
 
-constexpr bool operator == (BGRColor_ const & lhs, BGRColor_ const & rhs) { return lhs.to_u32() == rhs.to_u32(); }
-constexpr bool operator != (BGRColor_ const & lhs, BGRColor_ const & rhs) { return !(lhs == rhs); }
+constexpr bool operator == (BGRColor const & lhs, BGRColor const & rhs) { return lhs.to_u32() == rhs.to_u32(); }
+constexpr bool operator != (BGRColor const & lhs, BGRColor const & rhs) { return !(lhs == rhs); }
 
 template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, BGRColor_ const & c)
+std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, BGRColor const & c)
 {
     char const * thex = "0123456789ABCDEF";
     char s[]{
@@ -233,7 +149,7 @@ std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, BGRCol
     return out << s;
 }
 
-constexpr uint32_t log_value(BGRColor_ const & c) noexcept { return c.to_u32(); }
+constexpr uint32_t log_value(BGRColor const & c) noexcept { return c.to_u32(); }
 
 
 struct RDPColor
@@ -242,8 +158,8 @@ struct RDPColor
     : color_(0)
     {}
 
-    constexpr BGRColor_ as_bgr() const noexcept { return BGRColor_(this->color_); }
-    constexpr BGRasRGBColor_ as_rgb() const noexcept { return BGRasRGBColor_(this->as_bgr()); }
+    constexpr BGRColor as_bgr() const noexcept { return BGRColor(this->color_); }
+    constexpr BGRasRGBColor as_rgb() const noexcept { return BGRasRGBColor(this->as_bgr()); }
 
     constexpr static RDPColor from(uint32_t c) noexcept
     { return RDPColor(nullptr, c); }
@@ -268,51 +184,184 @@ std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, RDPCol
 constexpr uint32_t log_value(RDPColor const & c) noexcept { return c.as_bgr().to_u32(); }
 
 
-inline BGRColor_ color_from_cstr(const char * str)
+struct BGRPalette
 {
-    BGRColor_ bgr;
+    BGRPalette() = delete;
 
-    if (0 == strcasecmp("BLACK", str))                  { bgr = BLACK; }
-    else if (0 == strcasecmp("GREY", str))              { bgr = GREY; }
-    else if (0 == strcasecmp("DARK_GREY", str))         { bgr = DARK_GREY; }
-    else if (0 == strcasecmp("ANTHRACITE", str))        { bgr = ANTHRACITE; }
-    else if (0 == strcasecmp("BLUE", str))              { bgr = BLUE; }
-    else if (0 == strcasecmp("DARK_BLUE", str))         { bgr = DARK_BLUE; }
-    else if (0 == strcasecmp("WHITE", str))             { bgr = WHITE; }
-    else if (0 == strcasecmp("RED", str))               { bgr = RED; }
-    else if (0 == strcasecmp("PINK", str))              { bgr = PINK; }
-    else if (0 == strcasecmp("GREEN", str))             { bgr = GREEN; }
-    else if (0 == strcasecmp("YELLOW", str))            { bgr = YELLOW; }
-    else if (0 == strcasecmp("LIGHT_YELLOW", str))      { bgr = LIGHT_YELLOW; }
-    else if (0 == strcasecmp("CYAN", str))              { bgr = CYAN; }
-    else if (0 == strcasecmp("WABGREEN", str))          { bgr = WABGREEN; }
-    else if (0 == strcasecmp("WABGREEN_BIS", str))      { bgr = WABGREEN_BIS; }
-    else if (0 == strcasecmp("DARK_WABGREEN", str))     { bgr = DARK_WABGREEN; }
-    else if (0 == strcasecmp("INV_DARK_WABGREEN", str)) { bgr = INV_DARK_WABGREEN; }
-    else if (0 == strcasecmp("DARK_GREEN", str))        { bgr = DARK_GREEN; }
-    else if (0 == strcasecmp("INV_DARK_GREEN", str))    { bgr = INV_DARK_GREEN; }
-    else if (0 == strcasecmp("LIGHT_GREEN", str))       { bgr = LIGHT_GREEN; }
-    else if (0 == strcasecmp("INV_LIGHT_GREEN", str))   { bgr = INV_LIGHT_GREEN; }
-    else if (0 == strcasecmp("PALE_GREEN", str))        { bgr = PALE_GREEN; }
-    else if (0 == strcasecmp("INV_PALE_GREEN", str))    { bgr = INV_PALE_GREEN; }
-    else if (0 == strcasecmp("MEDIUM_GREEN", str))      { bgr = MEDIUM_GREEN; }
-    else if (0 == strcasecmp("INV_MEDIUM_GREEN", str))  { bgr = INV_MEDIUM_GREEN; }
-    else if (0 == strcasecmp("DARK_BLUE_WIN", str))     { bgr = DARK_BLUE_WIN; }
-    else if (0 == strcasecmp("DARK_BLUE_BIS", str))     { bgr = DARK_BLUE_BIS; }
-    else if (0 == strcasecmp("MEDIUM_BLUE", str))       { bgr = MEDIUM_BLUE; }
-    else if (0 == strcasecmp("PALE_BLUE", str))         { bgr = PALE_BLUE; }
-    else if (0 == strcasecmp("LIGHT_BLUE", str))        { bgr = LIGHT_BLUE; }
-    else if (0 == strcasecmp("WINBLUE", str))           { bgr = WINBLUE; }
-    else if (0 == strcasecmp("ORANGE", str))            { bgr = ORANGE; }
-    else if (0 == strcasecmp("DARK_RED", str))          { bgr = DARK_RED; }
-    else if (0 == strcasecmp("BROWN", str))             { bgr = BROWN; }
-    else if (0 == strcasecmp("LIGHT_ORANGE", str))      { bgr = LIGHT_ORANGE; }
-    else if (0 == strcasecmp("PALE_ORANGE", str))       { bgr = PALE_ORANGE; }
-    else if (0 == strcasecmp("MEDIUM_RED", str))        { bgr = MEDIUM_RED; }
-    else if ((*str == '0') && (*(str + 1) == 'x')){
-        bgr = BGRColor_(RGBtoBGR(strtol(str + 2, nullptr, 16)));
+    template<class BGRValue>
+    explicit BGRPalette(BGRValue const (&a)[256]) noexcept
+    : BGRPalette(a, std::integral_constant<std::size_t, 4>{}, 0, 1, 2, 3)
+    {}
+
+    template<class... BGRValues, typename std::enable_if<sizeof...(BGRValues) == 256, int>::type = 1>
+    explicit BGRPalette(BGRValues ... bgr_values) noexcept
+    : palette{BGRColor(bgr_values)...}
+    {}
+
+    static const BGRPalette & classic_332_rgb() noexcept
+    {
+        static const BGRPalette palette([](BGRColor c) { return BGRasRGBColor(c); }, 1);
+        return palette;
     }
-    else { bgr = BGRColor_(RGBtoBGR(atol(str))); }
+
+    static const BGRPalette & classic_332() noexcept
+    {
+        static const BGRPalette palette([](BGRColor c) { return c; }, 1);
+        return palette;
+    }
+
+    BGRColor operator[](std::size_t i) const noexcept
+    {
+        assert(i < sizeof(this->palette)/sizeof(this->palette[0]));
+        return this->palette[i];
+    }
+
+    BGRColor const * begin() const
+    {
+        using std::begin;
+        return begin(this->palette);
+    }
+
+    BGRColor const * end() const
+    {
+        using std::end;
+        return end(this->palette);
+    }
+
+    void set_color(std::size_t i, BGRColor c) noexcept
+    { this->palette[i] = c; }
+
+    const char * data() const noexcept
+    { return reinterpret_cast<char const*>(this->palette); }
+
+    static constexpr std::size_t data_size() noexcept
+    { return sizeof(palette); }
+
+private:
+    BGRColor palette[256];
+
+    #ifndef IN_IDE_PARSER
+    template<std::size_t n, class... Ts>
+    explicit BGRPalette(std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    : BGRPalette(std::integral_constant<std::size_t, n*4>{}, ints..., ints..., ints..., ints...)
+    {}
+    #endif
+
+    template<class... Ts>
+    explicit BGRPalette(std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    : palette{BGRColor(ints)...}
+    {}
+
+    #ifndef IN_IDE_PARSER
+    template<class BGRValue, std::size_t n, class... Ts>
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    : BGRPalette(a, std::integral_constant<std::size_t, n*4>{},
+        ints...,
+        (ints + sizeof...(ints))...,
+        (ints + sizeof...(ints) * 2)...,
+        (ints + sizeof...(ints) * 3)...
+    )
+    {}
+    #endif
+
+    template<class BGRValue, class... Ts>
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    : palette{BGRColor(a[ints])...}
+    {}
+
+    template<class Transform>
+    /*constexpr*/ BGRPalette(Transform trans, int) noexcept
+    {
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    this->palette[(rindex << 5) | (gindex << 2) | bindex] =
+                    trans(BGRColor(
+                        // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                        // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                      | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                        // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                      | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))
+                    ));
+                }
+            }
+        }
+    }
+};
+
+template<class... BGRValues>
+BGRPalette make_rgb_palette(BGRValues... bgr_values) noexcept
+{
+    static_assert(sizeof...(bgr_values) == 256, "");
+    return BGRPalette(BGRasRGBColor(BGRColor(bgr_values))...);
+}
+
+inline BGRPalette make_bgr_palette_from_bgrx_array(uint8_t const (&a)[256 * 4]) noexcept
+{
+    uint32_t bgr_array[256];
+    for (int i = 0; i < 256; ++i) {
+        bgr_array[i] = (a[i * 4 + 2] << 16) | (a[i * 4 + 1] << 8) | (a[i * 4 + 0] << 0);
+    }
+    return BGRPalette(bgr_array);
+}
+
+
+inline BGRColor color_from_cstr(const char * str)
+{
+    BGRColor bgr;
+
+    if (0) {}
+# define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
+    ELSE_COLOR(BLACK)
+    ELSE_COLOR(GREY)
+    ELSE_COLOR(MEDIUM_GREY)
+    ELSE_COLOR(DARK_GREY)
+    ELSE_COLOR(ANTHRACITE)
+    ELSE_COLOR(WHITE)
+
+    ELSE_COLOR(BLUE)
+    ELSE_COLOR(DARK_BLUE)
+    ELSE_COLOR(CYAN)
+    ELSE_COLOR(DARK_BLUE_WIN)
+    ELSE_COLOR(DARK_BLUE_BIS)
+    ELSE_COLOR(MEDIUM_BLUE)
+    ELSE_COLOR(PALE_BLUE)
+    ELSE_COLOR(LIGHT_BLUE)
+    ELSE_COLOR(WINBLUE)
+
+    ELSE_COLOR(RED)
+    ELSE_COLOR(DARK_RED)
+    ELSE_COLOR(MEDIUM_RED)
+    ELSE_COLOR(PINK)
+
+    ELSE_COLOR(GREEN)
+    ELSE_COLOR(WABGREEN)
+    ELSE_COLOR(WABGREEN_BIS)
+    ELSE_COLOR(DARK_WABGREEN)
+    ELSE_COLOR(INV_DARK_WABGREEN)
+    ELSE_COLOR(DARK_GREEN)
+    ELSE_COLOR(INV_DARK_GREEN)
+    ELSE_COLOR(LIGHT_GREEN)
+    ELSE_COLOR(INV_LIGHT_GREEN)
+    ELSE_COLOR(PALE_GREEN)
+    ELSE_COLOR(INV_PALE_GREEN)
+    ELSE_COLOR(MEDIUM_GREEN)
+    ELSE_COLOR(INV_MEDIUM_GREEN)
+
+    ELSE_COLOR(YELLOW)
+    ELSE_COLOR(LIGHT_YELLOW)
+
+    ELSE_COLOR(ORANGE)
+    ELSE_COLOR(LIGHT_ORANGE)
+    ELSE_COLOR(PALE_ORANGE)
+    ELSE_COLOR(BROWN)
+#undef ELSE_COLOR
+    else if ((*str == '0') && (*(str + 1) == 'x')){
+        bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
+    }
+    else { bgr = BGRasRGBColor(BGRColor(atol(str))); }
 
     return bgr;
 }
@@ -324,10 +373,10 @@ struct decode_color8
 
     constexpr decode_color8() noexcept {}
 
-    BGRColor_ operator()(RDPColor c, BGRPalette const & palette) const noexcept
+    BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
     {
         // assert(c.as_bgr().to_u32() <= 255);
-        return BGRColor_(palette[static_cast<uint8_t>(c.as_bgr().to_u32())]);
+        return palette[static_cast<uint8_t>(c.as_bgr().to_u32())];
     }
 };
 
@@ -337,10 +386,10 @@ struct decode_color15
 
     constexpr decode_color15() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    constexpr BGRColor operator()(RDPColor c) const noexcept
     {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
-        return BGRColor_(
+        return BGRColor(
             ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r1 r2 r3
             ((c.as_bgr().to_u32() >> 2) & 0xf8) | ((c.as_bgr().to_u32() >>  7) & 0x7), // g1 g2 g3 g4 g5 g1 g2 g3
             ((c.as_bgr().to_u32() >> 7) & 0xf8) | ((c.as_bgr().to_u32() >> 12) & 0x7)  // b1 b2 b3 b4 b5 b1 b2 b3
@@ -354,10 +403,10 @@ struct decode_color16
 
     constexpr decode_color16() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    constexpr BGRColor operator()(RDPColor c) const noexcept
     {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
-        return BGRColor_(
+        return BGRColor(
             ((c.as_bgr().to_u32() << 3) & 0xf8) | ((c.as_bgr().to_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r6 r7 r8
             ((c.as_bgr().to_u32() >> 3) & 0xfc) | ((c.as_bgr().to_u32() >>  9) & 0x3), // g1 g2 g3 g4 g5 g6 g1 g2
             ((c.as_bgr().to_u32() >> 8) & 0xf8) | ((c.as_bgr().to_u32() >> 13) & 0x7)  // b1 b2 b3 b4 b5 b1 b2 b3
@@ -371,7 +420,7 @@ struct decode_color24
 
     constexpr decode_color24() noexcept {}
 
-    constexpr BGRColor_ operator()(RDPColor c) const noexcept
+    constexpr BGRColor operator()(RDPColor c) const noexcept
     {
         return c.as_bgr();
     }
@@ -397,7 +446,7 @@ struct decode_color24
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-inline BGRColor_ color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette) noexcept
+inline BGRColor color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette) noexcept
 {
     switch (in_bpp){
         case 8:  return decode_color8()(c, palette);
@@ -407,7 +456,7 @@ inline BGRColor_ color_decode(const RDPColor c, const uint8_t in_bpp, const BGRP
         case 32: return decode_color24()(c);
         default: assert(!"unknown bpp");
     }
-    return BGRColor_{0};
+    return BGRColor{0};
 }
 
 template<class Converter>
@@ -415,7 +464,7 @@ struct with_color8_palette
 {
     static constexpr const uint8_t bpp = Converter::bpp;
 
-    BGRColor_ operator()(RDPColor c) const noexcept
+    BGRColor operator()(RDPColor c) const noexcept
     {
         return Converter()(c, this->palette);
     }
@@ -431,12 +480,12 @@ struct encode_color8
 
     constexpr encode_color8() noexcept {}
 
-    constexpr RDPColor operator()(BGRasRGBColor_ c) const noexcept {
+    constexpr RDPColor operator()(BGRasRGBColor c) const noexcept {
         // bbbgggrr
         return RDPColor::from(
-            ((BGRColor_(c).to_u32() >> 16) & 0xE0)
-          | ((BGRColor_(c).to_u32() >> 11) & 0x1C)
-          | ((BGRColor_(c).to_u32() >> 6 ) & 0x03)
+            ((BGRColor(c).to_u32() >> 16) & 0xE0)
+          | ((BGRColor(c).to_u32() >> 11) & 0x1C)
+          | ((BGRColor(c).to_u32() >> 6 ) & 0x03)
         );
     }
 };
@@ -448,7 +497,7 @@ struct encode_color15
     constexpr encode_color15() noexcept {}
 
     // rgb555
-    RDPColor operator()(BGRasRGBColor_ c) const noexcept
+    RDPColor operator()(BGRasRGBColor c) const noexcept
     {
         // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return RDPColor::from(
@@ -469,7 +518,7 @@ struct encode_color16
     constexpr encode_color16() noexcept {}
 
     // rgb565
-    RDPColor operator()(BGRasRGBColor_ c) const noexcept
+    RDPColor operator()(BGRasRGBColor c) const noexcept
     {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return RDPColor::from(
@@ -489,13 +538,13 @@ struct encode_color24
 
     constexpr encode_color24() noexcept {}
 
-    RDPColor operator()(BGRColor_ c) const noexcept
+    RDPColor operator()(BGRColor c) const noexcept
     {
         return RDPColor::from(c.to_u32());
     }
 };
 
-inline RDPColor color_encode(const BGRColor_ c, const uint8_t out_bpp) noexcept
+inline RDPColor color_encode(const BGRColor c, const uint8_t out_bpp) noexcept
 {
     switch (out_bpp){
         case 8:  return encode_color8()(c);

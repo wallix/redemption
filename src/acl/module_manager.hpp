@@ -383,8 +383,8 @@ private:
             gdi::TextMetrics tm(this->mm.ini.get<cfg::font>(), this->osd_message.c_str());
             int w = tm.width + padw * 2;
             int h = tm.height + padh * 2;
-            this->color = color_encode(BGRColor_(BLACK), this->mm.front.client_info.bpp);
-            this->background_color = color_encode(BGRColor_(LIGHT_YELLOW), this->mm.front.client_info.bpp);
+            this->color = color_encode(BGRColor(BLACK), this->mm.front.client_info.bpp);
+            this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->mm.front.client_info.bpp);
 
             if (this->mm.front.client_info.remote_program &&
                 (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {

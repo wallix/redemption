@@ -30,6 +30,7 @@
 #include <sys/select.h> // fd_set
 #include <poll.h>
 
+#include "utils/log.hpp"
 #include "sashimi/libssh/libssh.h"
 #include "sashimi/libcrypto.hpp"
 #include "sashimi/pki.hpp"
@@ -282,7 +283,7 @@ struct ssh_channel_struct {
     // Well, maybe if channel is opened from the remote side when receiving a message
     // instead of sending an open request.
     void channel_open(uint32_t id, const char *channel_type_c, uint32_t maxpacket, uint32_t window, ssh_buffer_struct* buffer) {
-        syslog(LOG_INFO,
+        LOG(LOG_INFO,
                 "Creating channel #%d with %d window and %d max packet",
                 id, window, maxpacket);
 
@@ -358,6 +359,7 @@ struct ssh_poll_handle_struct {
     : lock(0)
     , socket(socket)
     {
+        LOG(LOG_INFO, "ssh_poll_handle_struct");
     }
 
     ~ssh_poll_handle_struct() {
@@ -398,6 +400,7 @@ struct ssh_poll_ctx_struct {
     , target_session(nullptr)
     , fd_poll(nullptr   )
     {
+        LOG(LOG_INFO, "new poll_ctx_struct at %p", reinterpret_cast<void*>(this));
     }
 
     ~ssh_poll_ctx_struct() {
@@ -434,6 +437,7 @@ struct ssh_socket_struct {
         , out_buffer(new ssh_buffer_struct)
         , in_buffer(new ssh_buffer_struct)
     {
+        LOG(LOG_INFO, "ssh_socket_struct::ssh_socket_struct()");
     }
 
     ~ssh_socket_struct(){
@@ -444,7 +448,7 @@ struct ssh_socket_struct {
 
 
     void close(){
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s ---", __FUNCTION__);
         if (this->fd_in != INVALID_SOCKET) {
             ::close(this->fd_in);
             if(this->fd_out != this->fd_in && this->fd_out != INVALID_SOCKET){
@@ -480,12 +484,13 @@ struct ssh_agent_struct {
   , count(0)
   , channel(nullptr)
   {
+        LOG(LOG_INFO, "ssh_agent_struct::ssh_agent_struct");
         (void)session;
   }
 
     /* caller has to free comment */
     ssh_key_struct *ssh_agent_get_next_ident(char **comment) {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s ---", __FUNCTION__);
         // TODO: add boundary checks
         uint32_t blob_len = this->ident->in_uint32_be();
         std::vector<uint8_t> blob;
@@ -514,13 +519,13 @@ struct ssh_agent_struct {
 
   void set_channel(ssh_channel_struct * channel)
   {
-    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
+    LOG(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
         __FUNCTION__,
         reinterpret_cast<void*>(channel),
         reinterpret_cast<void*>(this->channel),
         reinterpret_cast<void*>(this));
     this->channel = channel;
-    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
+    LOG(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
         __FUNCTION__,
         reinterpret_cast<void*>(channel),
         reinterpret_cast<void*>(this->channel),
@@ -545,15 +550,15 @@ struct ssh_agent_struct {
 
     bool agent_is_running(ssh_session_struct * session) {
         if (this->sock->fd_in != INVALID_SOCKET){
-            syslog(LOG_INFO, "%s : true: agent socket open", __FUNCTION__);
+            LOG(LOG_INFO, "%s : true: agent socket open", __FUNCTION__);
             return true;
         }
         if (this->channel){
-            syslog(LOG_INFO, "%s : true: agent channel OK %p", __FUNCTION__,
+            LOG(LOG_INFO, "%s : true: agent channel OK %p", __FUNCTION__,
                 reinterpret_cast<void*>(this->channel));
             return true;
         }
-        syslog(LOG_INFO, "%s : false agent=%p channel=%p session=%p",
+        LOG(LOG_INFO, "%s : false agent=%p channel=%p session=%p",
             __FUNCTION__,
             reinterpret_cast<void*>(this),
             reinterpret_cast<void*>(this->channel),
@@ -563,7 +568,7 @@ struct ssh_agent_struct {
 
     int agent_talk_channel_server(ssh_session_struct * server_session, struct ssh_buffer_struct *request, struct ssh_buffer_struct *reply, struct error_struct & error)
     {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s ---", __FUNCTION__);
 
         /* send length and then the request packet */
         size_t len = request->in_remain();
@@ -574,7 +579,7 @@ struct ssh_agent_struct {
         size_t pos = 0;
         /* using an SSH channel */
         while (4 > pos){
-            syslog(LOG_INFO, "%s ---", __FUNCTION__);
+            LOG(LOG_INFO, "%s ---", __FUNCTION__);
             ssize_t res = channel_write_common_server(server_session, this->channel, buf + pos, 4 - pos);
             switch (res){
             default:
@@ -583,7 +588,7 @@ struct ssh_agent_struct {
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:
-                syslog(LOG_WARNING, "atomicio sending request length failed: %s", strerror(errno));
+                LOG(LOG_WARNING, "atomicio sending request length failed: %s", strerror(errno));
                 return -1;
             }
         }
@@ -598,7 +603,7 @@ struct ssh_agent_struct {
             case SSH_AGAIN:
                 break;
             case SSH_ERROR:
-                syslog(LOG_WARNING, "atomicio sending request length failed: %s", strerror(errno));
+                LOG(LOG_WARNING, "atomicio sending request length failed: %s", strerror(errno));
                 return -1;
             }
         }
@@ -614,7 +619,7 @@ struct ssh_agent_struct {
               continue;
             }
             if (res == SSH_ERROR){
-                syslog(LOG_WARNING, "atomicio read response length failed: %s", strerror(errno));
+                LOG(LOG_WARNING, "atomicio read response length failed: %s", strerror(errno));
                 return -1;
             }
             pos2 += static_cast<size_t>(res);
@@ -625,34 +630,34 @@ struct ssh_agent_struct {
             ssh_set_error(error, SSH_FATAL, "Authentication response too long: %u", static_cast<unsigned>(len));
             return -1;
         }
-        syslog(LOG_INFO, "Response length: %u", static_cast<unsigned>(len));
+        LOG(LOG_INFO, "Response length: %u", static_cast<unsigned>(len));
         while (len > 0) {
-            syslog(LOG_INFO, "%s len=%u", __FUNCTION__, static_cast<unsigned>(len));
+            LOG(LOG_INFO, "%s len=%u", __FUNCTION__, static_cast<unsigned>(len));
 
             ssize_t res = ssh_channel_read_stdout_server(server_session, this->channel, payload,
                                 (len > sizeof(payload))?sizeof(payload):len);
-            syslog(LOG_INFO, "res=%u", static_cast<unsigned>(res));
+            LOG(LOG_INFO, "res=%u", static_cast<unsigned>(res));
 
             if (res == SSH_AGAIN){
-                  syslog(LOG_INFO, "%s again", __FUNCTION__);
+                  LOG(LOG_INFO, "%s again", __FUNCTION__);
                   continue;
             }
             if ((res == SSH_ERROR)||(res < 0)){
-                syslog(LOG_WARNING, "Error reading response from authentication socket.");
+                LOG(LOG_WARNING, "Error reading response from authentication socket.");
                 return -1;
             }
 
-            syslog(LOG_INFO, "%s sending reply", __FUNCTION__);
+            LOG(LOG_INFO, "%s sending reply", __FUNCTION__);
             reply->out_blob(payload, res);
             len -= res;
         }
-        syslog(LOG_INFO, "%s reply ready", __FUNCTION__);
+        LOG(LOG_INFO, "%s reply ready", __FUNCTION__);
         return 0;
     }
 
     int ssh_agent_get_ident_count_channel_ssh2_server(ssh_session_struct * server_session, error_struct & error)
     {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);
+        LOG(LOG_INFO, "%s ---", __FUNCTION__);
         ssh_buffer_struct request;
         /* send message to the agent requesting the list of identities */
         request.out_uint8(SSH2_AGENTC_REQUEST_IDENTITIES);
@@ -661,23 +666,23 @@ struct ssh_agent_struct {
         try {
 
             if (this->agent_talk_channel_server(server_session, &request, reply, error) < 0) {
-                syslog(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);
+                LOG(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);
                 error.error_code = SSH_NO_ERROR;
                 error.eid = 0;
                 throw error;
             }
 
-            syslog(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);
+            LOG(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);
 
 
             /* get message type and verify the answer */
             unsigned int type = reply->in_uint8();
 
-            syslog(LOG_WARNING, "Answer type: %d, expected answer: SSH2_AGENT_IDENTITIES_ANSWER (%d)",
+            LOG(LOG_WARNING, "Answer type: %d, expected answer: SSH2_AGENT_IDENTITIES_ANSWER (%d)",
                 type, SSH2_AGENT_IDENTITIES_ANSWER);
 
             if ((type == SSH_AGENT_FAILURE) || (type == SSH_COM_AGENT2_FAILURE) || (type == SSH2_AGENT_FAILURE)) {
-                syslog(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);
+                LOG(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);
                 error.error_code = SSH_NO_ERROR;
                 error.eid = 0;
                 throw error;
@@ -686,12 +691,12 @@ struct ssh_agent_struct {
             if (type != SSH2_AGENT_IDENTITIES_ANSWER) {
                 ssh_set_error(error, SSH_FATAL, "Bad authentication reply message type: %d", type);
                 error.eid = -1;
-                syslog(LOG_INFO, "%s type = not SSH2_AGENT_IDENTITIES_ANSWER ---", __FUNCTION__);
+                LOG(LOG_INFO, "%s type = not SSH2_AGENT_IDENTITIES_ANSWER ---", __FUNCTION__);
                 throw error;
             }
 
             this->count = reply->in_uint32_be();
-            syslog(LOG_INFO, "Agent count: %d", this->count);
+            LOG(LOG_INFO, "Agent count: %d", this->count);
 
             if (this->count > 1024) {
                 ssh_set_error(error, SSH_FATAL, "Too many identities in authentication reply: %d", this->count);

@@ -332,7 +332,7 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
         fc.data[i] = reinterpret_cast<uint8_t>(bits_data[i]);
     }
 
-    Front::GlyphTo24Bitmap g24b(fc, BGRColor_{ 96,  31,   8}, BGRColor_{255, 255, 255});
+    Front::GlyphTo24Bitmap g24b(fc, BGRColor{ 96,  31,   8}, BGRColor{255, 255, 255});
 
     std::string const out_data(reinterpret_cast<char *>(g24b.raw_data), 256*3);
     std::string const expected(reinterpret_cast<const char *>(bytes_data), 256*3);

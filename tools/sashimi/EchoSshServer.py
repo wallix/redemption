@@ -31,22 +31,23 @@ import ctypes
 
 class Logger(object):
     @staticmethod 
-    def info(s): print "Info: %s" % s
+    def info(s): print("Info: %s" % s)
     @staticmethod 
-    def error(s): print "Error: %s" % s
+    def error(s): print("Error: %s" % s)
     @staticmethod 
-    def warning(s): print "Warning: %s" % s
+    def warning(s): print("Warning: %s" % s)
     @staticmethod 
-    def debug(s): print "Debug: %s" % s
+    def debug(s): print("Debug: %s" % s)
     @staticmethod 
-    def exception(s): print "Exception: %s" % s
+    def exception(s): print("Exception: %s" % s)
     @staticmethod 
-    def trace(s):  print "Trace: %s" % s
+    def trace(s):  print("Trace: %s" % s)
 
 try:
     import pysshct
-except Exception, e:
-    Logger.info("Error importing sashimi lib %s" % traceback.format_exc(e))
+except Exception as e:
+    s = "EXCEPTION" # traceback.format_exc(e)
+    Logger.info("Error importing sashimi lib {s}".format(s=s))
 
 host_key = '/etc/sashimi/server_rsa.key'
 
@@ -208,7 +209,7 @@ class SSHServer(object):
         self.server_callbacks = pysshct.buildCallbacks(
             pysshct.ssh_server_callbacks_struct, 
             pysshct.CB_SERVER_SESSION_FUNCS, self)
-        self.libssh_mainloop = pysshct.lib.ssh_new_poll_ctx()
+        self.libssh_mainloop = libssh_mainloop = pysshct.lib.ssh_new_poll_ctx()
 
         self.authmethods = (
 #            pysshct.SSH_AUTH_METHOD_NONE
@@ -219,7 +220,7 @@ class SSHServer(object):
              )
         self.libssh_session = pysshct.lib.ssh_start_new_server_session(
             self.server_callbacks, 
-            self.libssh_mainloop,
+            libssh_mainloop,
             self.client_socket.fileno(),
             self.host_key_file, # host keyfile contains RSA, DSA or ECDSA key
             self.authmethods
@@ -236,7 +237,7 @@ class SSHServer(object):
             for channel in self.channels:
                 channel.flush()
             polltime = time.time()
-            print "Polling %s" % str(polltime)
+            print("Polling %s" % str(polltime))
 
     def __del__(self):
         if self.libssh_session is not None:
@@ -319,13 +320,17 @@ def serve():
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    print("SshEchoServer listening on port 2200 user: good")
     s.bind(('0.0.0.0', 2200))
     s.listen(100)
     try:
         while 1:
-            rfds, wfds, xfds = select.select([s], [], [], 1)
+            print('Waiting on Select')
+            rfds, wfds, xfds = select.select([s], [], [], 10)
+            print('Select woke up')
             for sck in rfds:
                 if sck == s:
+                    print("Incoming data")
                     client_socket, client_addr = s.accept()
                     child_pid = os.fork()
                     if child_pid == 0:
@@ -341,10 +346,10 @@ def serve():
         if client_socket:
             client_socket.close()
         sys.exit(1)
-    except socket.error, e:
+    except socket.error as e:
         import traceback
         Logger.debug("%s" % traceback.format_exc(e))
-    except Exception, e:
+    except Exception as e:
         import traceback
         Logger.info("%s" % traceback.format_exc(e))
 

@@ -29,10 +29,10 @@
 class WidgetRect : public Widget2
 {
 public:
-    BGRColor_ color;
+    BGRColor color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, BGRColor_ color = BLACK)
+    WidgetRect(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier, int group_id = 0, BGRColor color = BLACK)
     : Widget2(drawable, parent, notifier, group_id)
     , color(color)
     {

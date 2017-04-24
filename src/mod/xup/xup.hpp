@@ -71,7 +71,7 @@ enum {
     int bpp;
     Transport & t;
     int rop;
-    BGRColor_ fgcolor;
+    BGRColor fgcolor;
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
     RDPPen pen;
@@ -299,7 +299,7 @@ enum {
                     break;
                     case 12: /* server_set_fgcolor */
                     {
-                        this->fgcolor = BGRColor_(stream.in_uint32_le()); // TODO RGB or BGR ?
+                        this->fgcolor = BGRColor(stream.in_uint32_le()); // TODO RGB or BGR ?
                     }
                     break;
                     case 14:

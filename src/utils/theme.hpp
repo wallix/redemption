@@ -31,46 +31,46 @@
 struct Theme
 {
     struct {
-        BGRColor_ bgcolor = DARK_BLUE_BIS;
-        BGRColor_ fgcolor = WHITE;
-        BGRColor_ separator_color = LIGHT_BLUE;
-        BGRColor_ focus_color = WINBLUE;
-        BGRColor_ error_color = YELLOW;
+        BGRColor bgcolor = DARK_BLUE_BIS;
+        BGRColor fgcolor = WHITE;
+        BGRColor separator_color = LIGHT_BLUE;
+        BGRColor focus_color = WINBLUE;
+        BGRColor error_color = YELLOW;
         bool logo = false;
         std::string logo_path;
     } global {}; // note: fixes -Wmissing-field-initializers on gcc-4.9
 
     struct {
-        BGRColor_ bgcolor = WHITE;
-        BGRColor_ fgcolor = BLACK;
-        BGRColor_ focus_color = WINBLUE;
+        BGRColor bgcolor = WHITE;
+        BGRColor fgcolor = BLACK;
+        BGRColor focus_color = WINBLUE;
     } edit;
 
     struct {
-        BGRColor_ fgcolor = BLACK;
-        BGRColor_ bgcolor = LIGHT_YELLOW;
-        BGRColor_ border_color = BLACK;
+        BGRColor fgcolor = BLACK;
+        BGRColor bgcolor = LIGHT_YELLOW;
+        BGRColor border_color = BLACK;
     } tooltip;
 
     struct {
-        BGRColor_ bgcolor = PALE_BLUE;
-        BGRColor_ fgcolor = BLACK;
+        BGRColor bgcolor = PALE_BLUE;
+        BGRColor fgcolor = BLACK;
     } selector_line1;
     struct {
-        BGRColor_ bgcolor = LIGHT_BLUE;
-        BGRColor_ fgcolor = BLACK;
+        BGRColor bgcolor = LIGHT_BLUE;
+        BGRColor fgcolor = BLACK;
     } selector_line2;
     struct {
-        BGRColor_ bgcolor = MEDIUM_BLUE;
-        BGRColor_ fgcolor = WHITE;
+        BGRColor bgcolor = MEDIUM_BLUE;
+        BGRColor fgcolor = WHITE;
     } selector_selected;
     struct {
-        BGRColor_ bgcolor = WINBLUE;
-        BGRColor_ fgcolor = WHITE;
+        BGRColor bgcolor = WINBLUE;
+        BGRColor fgcolor = WHITE;
     } selector_focus;
     struct {
-        BGRColor_ bgcolor = MEDIUM_BLUE;
-        BGRColor_ fgcolor = WHITE;
+        BGRColor bgcolor = MEDIUM_BLUE;
+        BGRColor fgcolor = WHITE;
     } selector_label;
 };
 

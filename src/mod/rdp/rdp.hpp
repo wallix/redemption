@@ -25,7 +25,6 @@
 #pragma once
 #include "mod/rdp/rdp_orders.hpp"
 
-/* include "ther h files */
 #include "utils/stream.hpp"
 #include "system/ssl_calls.hpp"
 #include "mod/mod_api.hpp"
@@ -6730,8 +6729,8 @@ public:
             for (unsigned i = 0; i < dlen ; i++) {
                 const uint8_t px = indata[i];
                 // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
-                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
+                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF].to_u32());
+                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF].to_u32());
             }
         }
         break;
