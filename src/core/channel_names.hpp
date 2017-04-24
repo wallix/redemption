@@ -30,7 +30,6 @@ namespace CHANNELS {
         DEF_NAME(drdynvc);
         DEF_NAME(rail);
         DEF_NAME(sespro);
-        DEF_NAME(audio_output);
     };
 #undef DEF_NAME
 }

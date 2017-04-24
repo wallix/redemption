@@ -26,6 +26,9 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <memory>
 #include <cstring>
@@ -40,6 +43,12 @@ public:
     struct NamedRegex {
         re::Regex   regex;
         std::string name;
+        bool is_exact_search;
+
+        bool search(const char * str)
+        {
+            return this->is_exact_search ? this->regex.exact_search(str) : this->regex.search(str);
+        }
     };
 
     class NamedRegexArray {
@@ -64,6 +73,18 @@ public:
             this->len = newlen;
         }
 
+        NamedRegex const & operator[](std::size_t i) const
+        {
+            assert(i < this->len);
+            return this->regexes[i];
+        }
+
+        NamedRegex & operator[](std::size_t i)
+        {
+            assert(i < this->len);
+            return this->regexes[i];
+        }
+
         NamedRegex * begin() const
         { return this->regexes.get(); }
 
@@ -78,10 +99,25 @@ public:
     };
 
     enum ConfigureRegexes {
-          OCR         = 0
-        , KBD_INPUT   = 1
+        OCR         = 0
+      , KBD_INPUT   = 1
     };
 
+    /**
+     * \param filters_list  filters separated by '\\x01' character
+     *
+     * filter format:
+     * \code{regex}
+     *  option = "ocr" | "kbd" | "content" | "regex" | "exact-content" | "exact-regex"
+     *  option_separator = "," | "-"
+     *  filter
+     *      = \s* regex
+     *      | \s* "$:" regex
+     *      | \s* "$" option ( option_separator option )* ":" regex
+     * \endcode
+     *
+     * With \c conf_regex = KBD_INPUT, exact-content and exact-regex are respectively equivalent to content and regex
+     */
     static void configure_regexes(ConfigureRegexes conf_regex, const char * filters_list,
                                   NamedRegexArray & regexes_filter_ref, int verbose,
                                   bool is_capturing = false)
@@ -90,68 +126,90 @@ public:
             return ;
         }
 
-        char * tmp_filters = new(std::nothrow) char[strlen(filters_list) + 1];
-        if (!tmp_filters) {
-            return ; // insufficient memory
-        }
+        enum Cat { is_reg, is_str, is_exact_reg, is_exact_str };
 
-        std::unique_ptr<char[]> auto_free(tmp_filters);
+        std::string tmp_filters = filters_list;
 
-        strcpy(tmp_filters, filters_list);
+        struct Pattern { Cat cat; char const * filter; };
+        Pattern  filters[64];
+        unsigned filter_number = 0;
 
-        char     * separator;
-        char     * filters[64];
-        unsigned   filter_number = 0;
+        for (auto rng : get_line(tmp_filters, '\x01')) {
+            array_view_char av{ltrim(rng.begin(), rng.end()), rng.end()};
+            av.data()[av.size()] = '\0';
 
-        if (verbose) {
-            LOG(LOG_INFO, "filters=\"%s\"", tmp_filters);
-        }
+            if (verbose) {
+                LOG(LOG_INFO, "filter=\"%s\"", av.data());
+            }
 
-        while (*tmp_filters) {
-            if ((*tmp_filters == '\x01') || (*tmp_filters == '\t') || (*tmp_filters == ' ')) {
-                tmp_filters++;
+            if (av.empty()) {
                 continue;
             }
 
-            separator = strchr(tmp_filters, '\x01');
-            if (separator) {
-                *separator = 0;
-            }
+            if (av.front() == '$') {
+                auto end_option_list = std::find(av.begin()+1, av.end(), ':');
+                if (end_option_list != av.end() && end_option_list+1 != av.end()) {
+                    array_view_const_char options(av.begin()+1, end_option_list);
+                    bool is_exact = false;
+                    bool is_ocr = false;
+                    bool is_kbd = false;
+                    Cat cat = is_reg;
+                    struct IsWordSeparator {
+                        bool operator == (char c) const {
+                            return c == '-' || c == ',';
+                        }
+                    };
+                    for (auto token : get_split(options, IsWordSeparator{})) {
+                        auto eq = [](range<char const*> b, array_view_const_char a) {
+                            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
+                        };
 
-            if (verbose) {
-                LOG(LOG_INFO, "filter=\"%s\"", tmp_filters);
-            }
-
-            if (((conf_regex == ConfigureRegexes::OCR) && ((*tmp_filters != '$') ||
-                                                           (strcasestr(tmp_filters, "$ocr:") == tmp_filters) ||
-                                                           (strcasestr(tmp_filters, "$kbd-ocr:") == tmp_filters) ||
-                                                           (strcasestr(tmp_filters, "$ocr-kbd:") == tmp_filters))) ||
-                ((conf_regex == ConfigureRegexes::KBD_INPUT) && ((strcasestr(tmp_filters, "$kbd:") == tmp_filters) ||
-                                                                 (strcasestr(tmp_filters, "$kbd-ocr:") == tmp_filters) ||
-                                                                 (strcasestr(tmp_filters, "$ocr-kbd:") == tmp_filters)))) {
-                if (((conf_regex == ConfigureRegexes::OCR) && (*tmp_filters == '$')) ||
-                    (conf_regex == ConfigureRegexes::KBD_INPUT)) {
-                    if (*(tmp_filters + 4) == ':') {
-                        tmp_filters += 5;   // strlen("$ocr:") or strlen("$kdb:")
+                        if (eq(token, cstr_array_view("exact"))) {
+                            is_exact = true;
+                        }
+                        else {
+                            if (eq(token, cstr_array_view("ocr"))) {
+                                cat = is_exact ? is_exact_str : cat;
+                                is_ocr = true;
+                            }
+                            else if (eq(token, cstr_array_view("kbd"))) {
+                                cat = is_exact ? is_exact_str : cat;
+                                is_kbd = true;
+                            }
+                            else if (eq(token, cstr_array_view("regex"))) {
+                                cat = is_exact ? is_exact_reg : is_reg;
+                            }
+                            else if (eq(token, cstr_array_view("content"))) {
+                                cat = is_exact ? is_exact_str : is_str;
+                            }
+                            else {
+                                LOG(LOG_WARNING, "unknown filter option=\"%.*s\"", int(token.size()), token.begin());
+                            }
+                            is_exact = false;
+                        }
                     }
-                    else {
-                        REDASSERT(*(tmp_filters + 8) == ':');
-                        tmp_filters += 9;   // strlen("$kbd-ocr:") or strlen("$ocr-kbd:")
+                    if (is_exact) {
+                        cat = is_exact_str;
+                    }
+                    if (not is_ocr && not is_kbd) {
+                        is_ocr = true;
+                    }
+
+                    if ((is_ocr && conf_regex == ConfigureRegexes::OCR)
+                     || (is_kbd && conf_regex == ConfigureRegexes::KBD_INPUT)) {
+                        filters[filter_number++] = {cat, end_option_list+1};
+                        if (filter_number >= (sizeof(filters) / sizeof(filters[0]))) {
+                            break;
+                        }
                     }
                 }
-
-                filters[filter_number] = tmp_filters;
-                filter_number++;
+            }
+            else if (conf_regex == ConfigureRegexes::OCR) {
+                filters[filter_number++] = {is_reg, av.data()};
                 if (filter_number >= (sizeof(filters) / sizeof(filters[0]))) {
                     break;
                 }
             }
-
-            if (!separator) {
-                break;
-            }
-
-            tmp_filters = separator + 1;
         }
 
         if (verbose) {
@@ -163,22 +221,55 @@ public:
             regexes_filter_ref.resize(filter_number);
             NamedRegex * pregex = regexes_filter_ref.begin();
             for (unsigned i = 0; i < filter_number; i++) {
+                auto & filter = filters[i];
                 if (verbose) {
-                    LOG(LOG_INFO, "Regex=\"%s\"", filters[i]);
+                    LOG(LOG_INFO, "Regex=\"%s\"", filter.filter);
                 }
-                pregex->name = filters[i];
+
+                pregex->name = filter.filter;
+                pregex->is_exact_search
+                  = (conf_regex == ConfigureRegexes::OCR
+                  && (filter.cat == is_exact_reg || filter.cat == is_exact_str));
+
+                char const * c_str_filter = filter.filter;
+                std::string reg_pattern;
+                if (filter.cat == is_str || filter.cat == is_exact_str) {
+                    while (*c_str_filter) {
+                        switch (*c_str_filter) {
+                            case '{':
+                            case '}':
+                            case '[':
+                            case ']':
+                            case '(':
+                            case ')':
+                            case '|':
+                            case '\\':
+                            case '^':
+                            case '$':
+                            case '.':
+                            case '?':
+                            case '+':
+                            case '*':
+                                reg_pattern += '\\';
+                        }
+                        reg_pattern += *c_str_filter;
+                        ++c_str_filter;
+                    }
+                    c_str_filter = reg_pattern.c_str();
+                }
+
                 if (is_capturing) {
                     capturing_regex = '(';
-                    capturing_regex += filters[i];
+                    capturing_regex += c_str_filter;
                     capturing_regex += ')';
                     pregex->regex.reset(capturing_regex.c_str());
                 }
                 else {
-                    pregex->regex.reset(filters[i]);
+                    pregex->regex.reset(c_str_filter);
                 }
                 if (pregex->regex.message_error()) {
                     // TODO notification that the regex is too complex for us
-                    LOG(LOG_ERR, "Regex: %s err %s at position %zu" , filters[i],
+                    LOG(LOG_ERR, "Regex: %s err %s at position %zu" , c_str_filter,
                         pregex->regex.message_error(), pregex->regex.position_error());
                 }
                 else {

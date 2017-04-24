@@ -368,6 +368,7 @@ public:
                                                 , targetIP
                                                 , this->_front->port
                                                 , to_verbose_flags(0)
+                                                //, SocketTransport::Verbose::dump
                                                 , &this->error_message
                                                 );
 
@@ -591,8 +592,8 @@ public:
 
     ~Form_Qt() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->_front->windowsData.form_x = points.x();
-        this->_front->windowsData.form_y = points.y();
+        this->_front->windowsData.form_x = points.x()-1;
+        this->_front->windowsData.form_y = points.y()-39;
         this->_front->writeWindowsConf();
     }
 
@@ -1088,8 +1089,8 @@ public:
 
     ~Screen_Qt() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->_front->windowsData.screen_x = points.x();
-        this->_front->windowsData.screen_y = points.y();
+        this->_front->windowsData.screen_x = points.x()-1;
+        this->_front->windowsData.screen_y = points.y()-39;
         this->_front->writeWindowsConf();
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen();
@@ -1273,14 +1274,15 @@ private:
                 this->slotRepaint();
 
                 switch (this->_front->replay_mod.get()->get_wrm_version()) {
-                    case 1:
+
+                    case WrmVersion::v1:
                         if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
                             this->_front->replay_mod.get()->instant_play_client(std::chrono::microseconds(this->begin*1000000));
                             this->movie_time_start = tvtime();
                         }
                         break;
 
-                    case 2:
+                    case WrmVersion::v2:
                     {
                         int last_balised = (this->begin/ BALISED_FRAME);
                         if (this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
@@ -1806,11 +1808,11 @@ public:
     QColor u32_to_qcolor(RDPColor color, gdi::ColorCtx color_ctx) {
 
         if (uint8_t(this->info.bpp) != color_ctx.depth().to_bpp()) {
-            BGRColor_ d = color_decode(color, color_ctx);
+            BGRColor d = color_decode(color, color_ctx);
             color       = color_encode(d, uint8_t(this->info.bpp));
         }
 
-        BGRColor_ bgr = color_decode(color, this->info.bpp, this->mod_palette);
+        BGRColor bgr = color_decode(color, this->info.bpp, this->mod_palette);
 
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
