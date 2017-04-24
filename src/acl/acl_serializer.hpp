@@ -313,13 +313,13 @@ public:
                 ct.send(mbstr, strlen(mbstr));
             }
 
-            ct.send("type=\"", 7);
+            ct.send("type=\"", 6);
             ct.send(type, strlen(type));
             if(extra) {
                 ct.send(" ", 1);
                 ct.send(extra, strlen(extra));
             }
-            ct.send("\n", 2);
+            ct.send("\n", 1);
         }
 
         /* Log to syslog */
