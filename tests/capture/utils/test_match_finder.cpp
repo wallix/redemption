@@ -20,15 +20,17 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE Testmatch_finder
+#define RED_TEST_MODULE MatchFinder
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "capture/utils/match_finder.hpp"
 
-RED_AUTO_TEST_CASE(MatchFinder_configure_regexes)
+constexpr bool verbosity = true;
+
+RED_AUTO_TEST_CASE(configure_regexes)
 {
     utils::MatchFinder::NamedRegexArray regexes;
 
@@ -38,52 +40,115 @@ RED_AUTO_TEST_CASE(MatchFinder_configure_regexes)
         "$kbd:ee\x01"
         "$ocr:ocr\x01"
         "$ocr-kbd:ocr and kbd\x01"
-        "$kbd-ocr:other ocr and kbd";
-        
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, pattern, regexes, 0);
+        "$kbd-ocr:other ocr and kbd\x01"
+        "$exact-content,kbd,ocr:exact str\x01"
+        "$exact-regex,kbd,ocr:exact regex\x01"
+        "$content,kbd,ocr:str\x01"
+        "$content,ocr:title\x01"
+    ;
 
-    RED_REQUIRE_EQUAL(regexes.size(), 5);
-    RED_REQUIRE_EQUAL(regexes[0].name, "a b ");
-    RED_REQUIRE_EQUAL(regexes[1].name, " c");
-    RED_REQUIRE_EQUAL(regexes[2].name, "ee");
-    RED_REQUIRE_EQUAL(regexes[3].name, "ocr and kbd");
-    RED_REQUIRE_EQUAL(regexes[4].name, "other ocr and kbd");
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, pattern, regexes, verbosity);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, 0);
+    RED_REQUIRE_EQUAL(regexes.size(), 8);
+    RED_CHECK_EQUAL(regexes[0].name, "a b ");
+    RED_CHECK_EQUAL(regexes[1].name, " c");
+    RED_CHECK_EQUAL(regexes[2].name, "ee");
+    RED_CHECK_EQUAL(regexes[3].name, "ocr and kbd");
+    RED_CHECK_EQUAL(regexes[4].name, "other ocr and kbd");
+    RED_CHECK_EQUAL(regexes[5].name, "exact str");
+    RED_CHECK_EQUAL(regexes[6].name, "exact regex");
+    RED_CHECK_EQUAL(regexes[7].name, "str");
+    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[1].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[2].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[3].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[4].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[5].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[6].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[7].is_exact_search, false);
 
-    RED_REQUIRE_EQUAL(regexes.size(), 3);
-    RED_REQUIRE_EQUAL(regexes[0].name, "ocr");
-    RED_REQUIRE_EQUAL(regexes[1].name, "ocr and kbd");
-    RED_REQUIRE_EQUAL(regexes[2].name, "other ocr and kbd");
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
+
+    RED_REQUIRE_EQUAL(regexes.size(), 7);
+    RED_CHECK_EQUAL(regexes[0].name, "ocr");
+    RED_CHECK_EQUAL(regexes[1].name, "ocr and kbd");
+    RED_CHECK_EQUAL(regexes[2].name, "other ocr and kbd");
+    RED_CHECK_EQUAL(regexes[3].name, "exact str");
+    RED_CHECK_EQUAL(regexes[4].name, "exact regex");
+    RED_CHECK_EQUAL(regexes[5].name, "str");
+    RED_CHECK_EQUAL(regexes[6].name, "title");
+    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[1].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[2].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[3].is_exact_search, true);
+    RED_CHECK_EQUAL(regexes[4].is_exact_search, true);
+    RED_CHECK_EQUAL(regexes[5].is_exact_search, false);
+    RED_CHECK_EQUAL(regexes[6].is_exact_search, false);
 
     regexes.resize(0);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$ocr:abc", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$ocr:abc", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
-    RED_REQUIRE_EQUAL(regexes[0].name, "abc");
+    RED_CHECK_EQUAL(regexes[0].name, "abc");
+    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
-    RED_REQUIRE_EQUAL(regexes[0].name, "cba");
+    RED_CHECK_EQUAL(regexes[0].name, "cba");
+    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
 
     regexes.resize(0);
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "  abc", regexes, verbosity);
+    RED_REQUIRE_EQUAL(regexes.size(), 1);
+    RED_CHECK_EQUAL(regexes[0].name, "abc"); // left space is stripped
+    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+
+    regexes.resize(0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$other", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$other", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$other", regexes, 0);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$other", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 }
 
-RED_AUTO_TEST_CASE(MatchFinder_report_notify)
+RED_AUTO_TEST_CASE(search)
+{
+    utils::MatchFinder::NamedRegexArray regexes;
+
+    const char * pattern =
+        "$:(a)\x01"
+        "$regex:(b)\x01"
+        "$content:(c)\x01"
+        "$exact-regex:(d)\x01"
+        "$exact-content:(e)\x01"
+    ;
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
+
+    RED_REQUIRE_EQUAL(regexes.size(), 5);
+    RED_CHECK_EQ(regexes[0].search("(a)"), true);
+    RED_CHECK_EQ(regexes[1].search("(b)"), true);
+    RED_CHECK_EQ(regexes[2].search("(c)"), true);
+    RED_CHECK_EQ(regexes[3].search("(d)"), false);
+    RED_CHECK_EQ(regexes[4].search("(e)"), true);
+
+    RED_CHECK_EQ(regexes[0].search("-(a)-"), true);
+    RED_CHECK_EQ(regexes[1].search("-(b)-"), true);
+    RED_CHECK_EQ(regexes[2].search("-(c)-"), true);
+    RED_CHECK_EQ(regexes[3].search("-(d)-"), false);
+    RED_CHECK_EQ(regexes[4].search("-(e)-"), false);
+}
+
+RED_AUTO_TEST_CASE(report_notify)
 {
     struct Auth : auth_api {
         bool has_log = false;
@@ -109,7 +174,7 @@ RED_AUTO_TEST_CASE(MatchFinder_report_notify)
     RED_CHECK(auth.has_report);
 }
 
-RED_AUTO_TEST_CASE(MatchFinder_report_kill)
+RED_AUTO_TEST_CASE(report_kill)
 {
     struct Auth : auth_api {
         bool has_log = false;

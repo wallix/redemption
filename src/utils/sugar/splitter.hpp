@@ -47,7 +47,7 @@ public:
 
     range next() {
         this->first_ = this->cur_;
-        while (this->cur_ != last_ && *this->cur_ != this->sep_ ) {
+        while (this->cur_ != last_ && !bool(this->sep_ == *this->cur_)) {
             ++this->cur_;
         }
         range res{this->first_, this->cur_};
@@ -151,6 +151,12 @@ struct container_traits
     using iterator = decltype(adl_begin_end::begin_(std::declval<Cont>()));
 };
 
+template<class T> struct container_traits<T*> { using iterator = T*; };
+template<class T> struct container_traits<T*&> { using iterator = T*; };
+template<class T> struct container_traits<T*&&> { using iterator = T*; };
+template<class T, std::size_t n> struct container_traits<T[n]> { using iterator = T*; };
+template<class T, std::size_t n> struct container_traits<T(&)[n]> { using iterator = T*; };
+
 template<class Cont, class T>
 splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
 get_split(Cont && cont, T && sep)
@@ -159,11 +165,25 @@ get_split(Cont && cont, T && sep)
 }
 
 
-inline splitter<const char *> get_line(const char * s, char sep = '\n') {
+inline splitter<char const *> get_line(const char * s, char sep = '\n')
+{
     return {s, s+strlen(s), sep};
 }
 
-inline splitter<char *> get_line(char * s, char sep = '\n') {
+inline splitter<char *> get_line(char * s, char sep = '\n')
+{
     return {s, s+strlen(s), sep};
 }
 
+inline splitter<char const *> get_line(std::string const & s, char sep = '\n')
+{
+    return {s.data(), s.data()+s.size(), sep};
+}
+
+inline splitter<char *> get_line(std::string & s, char sep = '\n')
+{
+    return {&s[0], &s[0]+s.size(), sep};
+}
+
+splitter<char *> get_line(std::string && s, char sep = '\n') = delete;
+splitter<char const *> get_line(std::string const && s, char sep = '\n') = delete;

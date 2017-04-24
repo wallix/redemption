@@ -653,7 +653,7 @@ private:
             utils::MatchFinder::NamedRegexArray::iterator first = regexes_filter.begin();
             utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
             for (; first != last; ++first) {
-                if (first->regex.search(str)) {
+                if (first->search(str)) {
                     utils::MatchFinder::report(this->authentifier,
                         &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
                         utils::MatchFinder::ConfigureRegexes::OCR,
