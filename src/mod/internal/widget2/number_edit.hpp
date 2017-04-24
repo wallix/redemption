@@ -28,7 +28,7 @@ class WidgetNumberEdit : public WidgetEdit
 public:
     WidgetNumberEdit(gdi::GraphicApi & drawable, Widget2 & parent,
                      NotifyApi* notifier, const char* text, int group_id,
-                     BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focus_color,
+                     BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
                      Font const & font, size_t edit_position = -1,
                      int xtext = 0, int ytext = 0)
     : WidgetEdit(drawable, parent, notifier, text, group_id, fgcolor, bgcolor,

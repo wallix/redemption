@@ -136,10 +136,9 @@ class CopyPaste
     bool verbose;
 
 public:
-    CopyPaste() = default;
-
-    CopyPaste(bool verbose) : verbose(verbose) {
-    }
+    CopyPaste(bool verbose = false)
+    : verbose(verbose)
+    {}
 
     CopyPaste(const CopyPaste &) = delete;
     CopyPaste & operator=(const CopyPaste &) = delete;

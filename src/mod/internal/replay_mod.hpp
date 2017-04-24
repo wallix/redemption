@@ -204,7 +204,7 @@ public:
         this->reader.set_sync();
     }
 
-    unsigned get_wrm_version() {
+    WrmVersion get_wrm_version() {
         return this->in_trans.get_wrm_version();
     }
 

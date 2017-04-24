@@ -31,12 +31,12 @@ class WidgetTooltip : public Widget2
     uint w_border;
     uint h_border;
     WidgetMultiLine desc;
-    BGRColor_ border_color;
+    BGRColor border_color;
 
 public:
     WidgetTooltip(gdi::GraphicApi & drawable, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
-                  BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ border_color, Font const & font)
+                  BGRColor fgcolor, BGRColor bgcolor, BGRColor border_color, Font const & font)
         : Widget2(drawable, parent, notifier, 0)
         , w_border(10)
         , h_border(10)

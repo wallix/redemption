@@ -31,8 +31,8 @@ public:
 
     char buffer[buffer_size];
 
-    BGRColor_ bg_color;
-    BGRColor_ fg_color;
+    BGRColor bg_color;
+    BGRColor fg_color;
 
     CompositeArray composite_array;
 
@@ -41,7 +41,7 @@ public:
 public:
     WidgetGroupBox( gdi::GraphicApi & drawable, Widget2 & parent
                   , NotifyApi * notifier, const char * text
-                  , BGRColor_ fgcolor, BGRColor_ bgcolor, Font const & font)
+                  , BGRColor fgcolor, BGRColor bgcolor, Font const & font)
     : WidgetParent(drawable, parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
@@ -113,7 +113,7 @@ public:
         }
     }
 
-    BGRColor_ get_bg_color() const override {
+    BGRColor get_bg_color() const override {
         return this->bg_color;
     }
 

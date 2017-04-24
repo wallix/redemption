@@ -106,5 +106,13 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->front_width, this->front_height); }
+
+    void allow_mouse_pointer_change(bool allow) {
+        this->screen.allow_mouse_pointer_change(allow);
+    }
+
+    void redo_mouse_pointer_change() {
+        this->screen.redo_mouse_pointer_change();
+    }
 };
 

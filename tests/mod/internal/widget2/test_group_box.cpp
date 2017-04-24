@@ -42,8 +42,8 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_   fg_color = RED;
-    BGRColor_   bg_color = YELLOW;
+    BGRColor   fg_color = RED;
+    BGRColor   bg_color = YELLOW;
     int         group_id = 0;
     int16_t     x        = 200;
     int16_t     y        = 100;
@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
     wgroupbox.set_wh(cx, cy);
     wgroupbox.set_xy(x, y);
 
-    BGRColor_ focuscolor  = LIGHT_YELLOW;
+    BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
     WidgetFlatButton wbutton(drawable.gd, wgroupbox, notifier, "Button 1",
@@ -109,8 +109,8 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    BGRColor_   fg_color = RED;
-    BGRColor_   bg_color = YELLOW;
+    BGRColor   fg_color = RED;
+    BGRColor   bg_color = YELLOW;
     int         group_id = 0;
     int16_t     x        = 200;
     int16_t     y        = 100;
@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 
     RED_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
 
-    BGRColor_ focuscolor  = LIGHT_YELLOW;
+    BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
     WidgetFlatButton wbutton(drawable.gd, wgroupbox, notifier, "Button 1",

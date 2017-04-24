@@ -36,8 +36,8 @@ public:
     int initial_x_text;
     int x_text;
     int y_text;
-    BGRColor_ bg_color;
-    BGRColor_ fg_color;
+    BGRColor bg_color;
+    BGRColor fg_color;
     bool tool;
 
     int w_border;
@@ -48,7 +48,7 @@ public:
 public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget2& parent,
                 NotifyApi* notifier, const char * text,
-                int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, Font const & font,
+                int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, parent, notifier, group_id)
     , initial_x_text(xtext)
@@ -154,7 +154,7 @@ public:
         return res;
     }
 
-    void set_color(BGRColor_ bg_color, BGRColor_ fg_color) override {
+    void set_color(BGRColor bg_color, BGRColor fg_color) override {
         this->bg_color = bg_color;
         this->fg_color = fg_color;
     }

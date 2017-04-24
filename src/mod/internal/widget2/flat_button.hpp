@@ -43,9 +43,9 @@ private:
 public:
     int state;
     notify_event_t event;
-    BGRColor_ fg_color;
-    BGRColor_ bg_color;
-    BGRColor_ focus_color;
+    BGRColor fg_color;
+    BGRColor bg_color;
+    BGRColor focus_color;
     bool logo;
 
     Font const & font;
@@ -54,7 +54,7 @@ public:
 
     WidgetFlatButton(gdi::GraphicApi & drawable, Widget2& parent,
                      NotifyApi* notifier, const char * text,
-                     int group_id, BGRColor_ fgcolor, BGRColor_ bgcolor, BGRColor_ focuscolor,
+                     int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
                      unsigned border_width, Font const & font, int xtext = 0, int ytext = 0,
                      bool logo = false/*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, parent, notifier, group_id)

@@ -36,10 +36,10 @@ struct WidgetLabelGrid : public WidgetGrid {
 
     WidgetLabelGrid(gdi::GraphicApi & drawable, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
-               BGRColor_ bg_color_1, BGRColor_ fg_color_1,
-               BGRColor_ bg_color_2, BGRColor_ fg_color_2,
-               BGRColor_ bg_color_focus, BGRColor_ fg_color_focus,
-               BGRColor_ bg_color_selection, BGRColor_ fg_color_selection,
+               BGRColor bg_color_1, BGRColor fg_color_1,
+               BGRColor bg_color_2, BGRColor fg_color_2,
+               BGRColor bg_color_focus, BGRColor fg_color_focus,
+               BGRColor bg_color_selection, BGRColor fg_color_selection,
                Font const & font, uint16_t border = 0, int group_id = 0)
         : WidgetGrid(drawable, parent, notifier, nb_lines, nb_columns,
                      bg_color_1, fg_color_1, bg_color_2, fg_color_2,

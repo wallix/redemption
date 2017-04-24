@@ -33,14 +33,14 @@
 class WidgetCompositeRect : public WidgetComposite
 {
 public:
-    BGRColor_ color;
+    BGRColor color;
 
     WidgetCompositeRect(TestDraw & drawable)
     : WidgetComposite(drawable.gd, *this, nullptr)
     , color(0x27642F)
     {}
 
-    BGRColor_ get_bg_color() const override {
+    BGRColor get_bg_color() const override {
         return this->color;
     }
 };

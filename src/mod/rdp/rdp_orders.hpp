@@ -118,7 +118,7 @@ public:
     , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
     , glyph_index( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                  , reinterpret_cast<const uint8_t *>(""))
-    , global_palette(nullptr)
+    , global_palette(BGRPalette::classic_332())
     , bmp_cache(nullptr)
     , verbose(verbose)
     , recv_bmp_cache_count(0)

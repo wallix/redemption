@@ -121,8 +121,8 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                   3,                            // flAccel
                                   0,                            // ulCharInc
                                   1,                            // fOpRedundant
-                                  encode_color24()(BGRColor_(0x000000)),           // BackColor
-                                  encode_color24()(BGRColor_(0xc8d0d4)),           // ForeColor
+                                  encode_color24()(BGRColor(0x000000)),           // BackColor
+                                  encode_color24()(BGRColor(0xc8d0d4)),           // ForeColor
                                   rect_bk,                      // Bk
                                   rect_op,                      // Op
                                   RDPBrush(),                   // Brush
@@ -145,8 +145,8 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                     3,                              // flAccel
                                     0,                              // ulCharInc
                                     1,                              // fOpRedundant
-                                    encode_color24()(BGRColor_(0x000000)),             // BackColor
-                                    encode_color24()(BGRColor_(0xc8d0d4)),             // ForeColor
+                                    encode_color24()(BGRColor(0x000000)),             // BackColor
+                                    encode_color24()(BGRColor(0xc8d0d4)),             // ForeColor
                                     rect_bk,                        // Bk
                                     rect_op,                        // Op
                                     RDPBrush(),                     // Brush

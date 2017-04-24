@@ -31,7 +31,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "utils/drawable.hpp"
 #include "test_only/check_sig.hpp"
-#include "test_only/dump_png.hpp"
+//#include "test_only/dump_png.hpp"
 #include <cstdio>
 
 
@@ -4582,23 +4582,23 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     RED_CHECK_SIG(bmp_8_to_15,  "\x19\x66\xa2\xcd\xfd\x77\x1b\xe4\xab\xf8\x6e\x03\x77\xf5\xa9\xa6\xe4\x85\x2b\x39");
     RED_CHECK_SIG(bmp_8_to_8,   "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
 
-    dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
-    dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
-    dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
-    dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
+    //dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
+    //dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
+    //dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
+    //dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
 
-    dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
-    dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
-    dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
-    dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
+    //dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
+    //dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
+    //dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
+    //dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
 
-    dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
-    dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
-    dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
-    dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
+    //dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
+    //dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
+    //dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
+    //dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
 
-    dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
-    dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
-    dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
-    dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
+    //dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
+    //dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
+    //dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
+    //dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
 }

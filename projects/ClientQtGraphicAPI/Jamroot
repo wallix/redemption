@@ -27,8 +27,8 @@ project redemption_qt4_client
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
-
-
+    <variant>debug:<cxxflags>-frtti
+  
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
 

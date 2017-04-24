@@ -148,6 +148,13 @@ struct MetaLine
     unsigned char hash2[MD_HASH::DIGEST_LENGTH];
 };
 
+enum class WrmVersion : uint8_t
+{
+    unknown,
+    v1 = 1,
+    v2 = 2
+};
+
 class InMetaSequenceTransport : public Transport
 {
     struct cfb_t
@@ -733,7 +740,7 @@ class InMetaSequenceTransport : public Transport
         rl_t() : eof(this->buf), cur(this->buf) {}
     } rl;
 
-    unsigned meta_header_version;
+    WrmVersion meta_header_version;
     bool meta_header_has_checksum;
 
 public:
@@ -749,6 +756,10 @@ public:
     {
         ssize_t total_read = 0;
         while (1) {
+            if (this->rl.cur > this->rl.eof) {
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED");
+                return -ERR_TRANSPORT_READ_FAILED;
+            }
             char * pos = std::find(this->rl.cur, this->rl.eof, '\n');
             if (len < static_cast<size_t>(pos - this->rl.cur)) {
                 total_read += len;
@@ -779,7 +790,7 @@ public:
         return total_read;
     }
 
-    unsigned get_wrm_version() {
+    WrmVersion get_wrm_version() {
         return this->meta_header_version;
     }
 
@@ -991,7 +1002,7 @@ public:
             err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
 
-            if (meta_line.stop_time < this->begin_time && this->meta_header_version == 2) {
+            if (meta_line.stop_time < this->begin_time && this->meta_header_version == WrmVersion::v2) {
                 ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
                 if (len < 0) {
                     return -len;
@@ -1041,7 +1052,7 @@ public:
 
     int buf_read_meta_file(MetaLine & meta_line)
     {
-        if (this->meta_header_version == 1) {
+        if (this->meta_header_version == WrmVersion::v1) {
             return this->buf_read_meta_file_v1(meta_line);
         }
         else {
@@ -1093,7 +1104,7 @@ public:
     : cfb(cctx, encryption)
     , begin_time(0)
     , buf_meta(cctx, encryption)
-    , meta_header_version(1)
+    , meta_header_version(WrmVersion::v1)
     , meta_header_has_checksum(false)
     , encryption(encryption)
     {
@@ -1116,7 +1127,7 @@ public:
             ) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            this->meta_header_version = 2;
+            this->meta_header_version = WrmVersion::v2;
             this->meta_header_has_checksum = (line[0] == 'c');
         }
         // else v1

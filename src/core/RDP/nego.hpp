@@ -346,6 +346,11 @@ struct RdpNego
                     return;
                 }
             }
+            else if (x224.rdp_neg_type == X224::RDP_NEG_RSP
+            && x224.rdp_neg_code == X224::PROTOCOL_RDP){
+                this->state = NEGO_STATE_FINAL;
+                return;
+            }
             this->trans.disconnect();
             if (!this->trans.connect()){
                 LOG(LOG_ERR, "Failed to disconnect transport");
@@ -377,6 +382,11 @@ struct RdpNego
                         certif_path
                     );
                 this->state = NEGO_STATE_FINAL;
+            }
+            else if (x224.rdp_neg_type == X224::RDP_NEG_RSP
+            && x224.rdp_neg_code == X224::PROTOCOL_RDP){
+                this->state = NEGO_STATE_FINAL;
+                return;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
             && (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
