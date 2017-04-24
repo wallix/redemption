@@ -58,6 +58,11 @@ struct LocallyIntegrableMod : public InternalMod {
 
     const bool rail_enabled;
 
+    enum {
+        MO_CLIENT_EXECUTE,
+        MO_WIDGET_MODULE
+    } current_mouse_owner = MO_WIDGET_MODULE;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
@@ -97,7 +102,6 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void rdp_input_invalidate(Rect r) override {
-r.log(LOG_INFO, "LocallyIntegrableMod::rdp_input_invalidate");
         InternalMod::rdp_input_invalidate(r);
 
         if (this->rail_enabled) {
@@ -106,77 +110,87 @@ r.log(LOG_INFO, "LocallyIntegrableMod::rdp_input_invalidate");
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
-        //LOG(LOG_INFO, "device_flags=0x%X", device_flags);
-        if (!this->rail_enabled) {
+        bool out_mouse_captured = false;
+
+        if (!this->rail_enabled ||
+            !this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
+
+            switch (this->dc_state) {
+                case DCSTATE_WAIT:
+                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
+
+                        this->first_click_down_event.set(1000000);
+
+                        this->first_click_down_event.object_and_time  = true;
+                        this->first_click_down_event.waked_up_by_time = false;
+                    }
+                break;
+
+                case DCSTATE_FIRST_CLICK_DOWN:
+                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                        this->dc_state = DCSTATE_FIRST_CLICK_RELEASE;
+                    }
+                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    }
+                    else {
+                        this->cancel_double_click_detection();
+                    }
+                break;
+
+                case DCSTATE_FIRST_CLICK_RELEASE:
+                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        this->dc_state = DCSTATE_SECOND_CLICK_DOWN;
+                    }
+                    else {
+                        this->cancel_double_click_detection();
+                    }
+                break;
+
+                case DCSTATE_SECOND_CLICK_DOWN:
+                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                        this->dc_state = DCSTATE_WAIT;
+
+                        bool out_mouse_captured_2 = false;
+
+                        this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+
+                        this->cancel_double_click_detection();
+                    }
+                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    }
+                    else {
+                        this->cancel_double_click_detection();
+                    }
+                break;
+
+                default:
+                    REDASSERT(false);
+
+                    this->cancel_double_click_detection();
+                break;
+            }
+
+            if (this->rail_enabled) {
+                if (out_mouse_captured) {
+                    this->allow_mouse_pointer_change(false);
+
+                    this->current_mouse_owner = MO_CLIENT_EXECUTE;
+                }
+                else {
+                    if (MO_WIDGET_MODULE != this->current_mouse_owner) {
+                        this->redo_mouse_pointer_change();
+                    }
+
+                    this->current_mouse_owner = MO_WIDGET_MODULE;
+                }
+            }
+
             InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 
-            return;
-        }
-
-        bool event_consumed = false;
-
-        if (this->client_execute.input_mouse(device_flags, x, y)) {
-            this->screen.current_over = nullptr;
-
-            event_consumed = true;
-        }
-
-        switch (this->dc_state) {
-            case DCSTATE_WAIT:
-                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
-
-                    this->first_click_down_event.set(1000000);
-
-                    this->first_click_down_event.object_and_time  = true;
-                    this->first_click_down_event.waked_up_by_time = false;
-                }
-            break;
-
-            case DCSTATE_FIRST_CLICK_DOWN:
-                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                    this->dc_state = DCSTATE_FIRST_CLICK_RELEASE;
-                }
-                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                }
-                else {
-                    this->cancel_double_click_detection();
-                }
-            break;
-
-            case DCSTATE_FIRST_CLICK_RELEASE:
-                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    this->dc_state = DCSTATE_SECOND_CLICK_DOWN;
-                }
-                else {
-                    this->cancel_double_click_detection();
-                }
-            break;
-
-            case DCSTATE_SECOND_CLICK_DOWN:
-                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                    this->dc_state = DCSTATE_WAIT;
-
-                    this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y);
-
-                    this->cancel_double_click_detection();
-                }
-                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                }
-                else {
-                    this->cancel_double_click_detection();
-                }
-            break;
-
-            default:
-                REDASSERT(false);
-
-                this->cancel_double_click_detection();
-            break;
-        }
-
-        if (!event_consumed) {
-            InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+            if (this->rail_enabled && out_mouse_captured) {
+                this->allow_mouse_pointer_change(true);
+            }
         }
     }
 

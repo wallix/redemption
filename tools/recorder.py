@@ -29,11 +29,9 @@ def get_proxy():
     return proxy
 
 
-GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, 
-                              ctypes.c_void_p)
+GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
                               
-GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, 
-                               ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint)
+GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint)
 
 
 def get_hmac_key(resbuf):
