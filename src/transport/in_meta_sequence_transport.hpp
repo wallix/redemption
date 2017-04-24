@@ -150,6 +150,13 @@ struct MetaLine
 
 class InMetaSequenceTransport : public Transport
 {
+public:
+    enum : uint8_t {
+        WRM_VERSION_1 = 1,
+        WRM_VERSION_2 = 2
+    };
+
+private:
     struct cfb_t
     {
         CryptoContext * cctx;
@@ -995,7 +1002,7 @@ public:
             err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
 
-            if (meta_line.stop_time < this->begin_time && this->meta_header_version == 2) {
+            if (meta_line.stop_time < this->begin_time && this->meta_header_version == WRM_VERSION_2) {
                 ssize_t len = this->buf_reader_read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
                 if (len < 0) {
                     return -len;
@@ -1045,7 +1052,7 @@ public:
 
     int buf_read_meta_file(MetaLine & meta_line)
     {
-        if (this->meta_header_version == 1) {
+        if (this->meta_header_version == WRM_VERSION_1) {
             return this->buf_read_meta_file_v1(meta_line);
         }
         else {
@@ -1097,7 +1104,7 @@ public:
     : cfb(cctx, encryption)
     , begin_time(0)
     , buf_meta(cctx, encryption)
-    , meta_header_version(1)
+    , meta_header_version(WRM_VERSION_1)
     , meta_header_has_checksum(false)
     , encryption(encryption)
     {
@@ -1120,7 +1127,7 @@ public:
             ) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            this->meta_header_version = 2;
+            this->meta_header_version = WRM_VERSION_1;
             this->meta_header_has_checksum = (line[0] == 'c');
         }
         // else v1
