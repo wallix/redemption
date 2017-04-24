@@ -311,7 +311,7 @@ private:
     };
 
     template<class Cmd, class F>
-    void reencode_cmd_color(Cmd & cmd, gdi::ColorCtx color_ctx, F f)
+    void reencode_cmd_color(Cmd const & cmd, gdi::ColorCtx color_ctx, F f) const
     {
         if (this->capture_bpp == color_ctx.depth().to_bpp()) {
             f(cmd);

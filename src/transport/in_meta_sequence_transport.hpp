@@ -749,6 +749,10 @@ public:
     {
         ssize_t total_read = 0;
         while (1) {
+            if (this->rl.cur > this->rl.eof) {
+                LOG(LOG_INFO, "InMetaSequenceTransport::ERR_TRANSPORT_READ_FAILED");
+                return -ERR_TRANSPORT_READ_FAILED;
+            }
             char * pos = std::find(this->rl.cur, this->rl.eof, '\n');
             if (len < static_cast<size_t>(pos - this->rl.cur)) {
                 total_read += len;

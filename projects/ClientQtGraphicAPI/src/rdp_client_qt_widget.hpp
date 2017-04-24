@@ -226,6 +226,7 @@ public:
     virtual void setClientInfo() = 0;
     virtual void setDefaultConfig() = 0;
     virtual void writeClientInfo() = 0;
+    virtual void deleteCurrentProtile() = 0;
 
     // CHANNELS
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
@@ -256,6 +257,8 @@ public:
     QPushButton          _buttonCancel;
     QPushButton        * _buttonDeleteKey;
     QPushButton        * _buttonAddKey;
+    QPushButton          _buttonRestorConfig;
+    QPushButton          _buttonDelConfProfil;
     QTabWidget         * _tabs;
 
     QComboBox            _bppComboBox;
@@ -317,6 +320,8 @@ public:
         , _buttonCancel("Cancel", this)
         , _buttonDeleteKey(nullptr)
         , _buttonAddKey(nullptr)
+        , _buttonRestorConfig("Default configuration", this)
+        , _buttonDelConfProfil("Delete current Profile", this)
         , _tabs(nullptr)
         , _bppComboBox(this)
         , _resolutionComboBox(this)
@@ -385,6 +390,17 @@ public:
         this->profilComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutConnection->addRow(&(this->_labelProfil), &(this->profilComboBox));
         this->QObject::connect(&(this->profilComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(changeProfil(int)));
+
+
+        this->_buttonRestorConfig.setFixedSize(160, 20);
+        this->_buttonRestorConfig.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonRestorConfig) , SIGNAL (pressed()) , this, SLOT (restoreConfig()));
+
+        this->_buttonDelConfProfil.setFixedSize(160, 20);
+        this->_buttonDelConfProfil.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonDelConfProfil) , SIGNAL (pressed()) , this, SLOT (deleteCurrentProtile()));
+
+        this->_layoutConnection->addRow(&(this->_buttonRestorConfig), &(this->_buttonDelConfProfil));
 
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
@@ -548,7 +564,7 @@ public:
         this->_buttonDeleteKey->setGeometry(rectDeleteKey);
         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
         this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
-        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (released()), this, SLOT (deleteReleased()));
+        //this->QObject::connect(this->_buttonDeleteKey , SIGNAL (released()), this, SLOT (deleteReleased()));
 
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
 
@@ -590,7 +606,10 @@ public:
 
 private:
     void setConfigValues() {
-        this->profilComboBox.setCurrentIndex(this->_front->current_user_profil);
+        int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
+        if ( indexProfil != -1 ) {
+            this->profilComboBox.setCurrentIndex(indexProfil);
+        }
 
         int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
         if ( indexBpp != -1 ) {
@@ -690,8 +709,21 @@ private:
 
 
 public Q_SLOTS:
+    void deleteCurrentProtile() {
+        if (this->profilComboBox.currentIndex() != 0) {
+            this->_front->deleteCurrentProtile();
+            this->profilComboBox.removeItem(this->_front->current_user_profil);
+            this->changeProfil(0);
+        }
+    }
+
+    void restoreConfig() {
+        this->_front->setDefaultConfig();
+        this->setConfigValues();
+    }
+
     void changeProfil(int index) {
-        this->_front->current_user_profil = index;
+        this->_front->current_user_profil = this->profilComboBox.itemData(index).toInt();
         this->_front->setClientInfo();
         this->setConfigValues();
     }
@@ -714,12 +746,7 @@ public Q_SLOTS:
     void savePressed() {}
 
     void saveReleased() {
-//         if ( this->profilComboBox.findData(this->profilComboBox.currentText().toInt()) != -1 ) {
-//             this->_front->current_user_profil = this->profilComboBox.currentText().toInt();
-//         } else {
-//             this->_front->userProfils.push_back({int(this->_front->userProfils.size()-1), this->profilComboBox.currentText().toStdString().c_str()});
-//             this->_front->current_user_profil = this->_front->userProfils.size()-1;
-//         }
+
         bool new_profil = true;
         std::string text_profil = this->profilComboBox.currentText().toStdString();
         for (size_t i = 0; i < this->_front->userProfils.size(); i++) {

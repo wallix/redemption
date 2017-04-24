@@ -521,8 +521,7 @@ try:
     lib.ssh_event_dopoll.restype = c_int
 
     lib.ssh_new_poll_ctx.argtypes = []
-#    lib.ssh_new_poll_ctx.restypes = c_void_p
-    lib.ssh_new_poll_ctx.restypes = c_uint64
+    lib.ssh_new_poll_ctx.restype = c_void_p
 
     lib.ssh_free.argtypes = [c_void_p]
     lib.ssh_free.restype = None
