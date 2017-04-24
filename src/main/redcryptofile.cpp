@@ -113,19 +113,27 @@ public:
 };
 
 
+RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_checksum, const char * path,
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+{
+}
+
 RedCryptoWriterHandle * redcryptofile_open_writer(
     int with_encryption, int with_checksum, const char * path,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
 {
+    LOG(LOG_INFO, "redcryptofile_open_writer()");
     try {
         auto handler = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
         );
         std::unique_ptr<RedCryptoWriterHandle> u(handler);
         handler->out_crypto_transport.open(path, 0 /* TODO groupid */);
+        LOG(LOG_INFO, "redcryptofile_open_writer() -> exit");
         return u.release();
     }
     catch (...) {
+        LOG(LOG_INFO, "redcryptofile_open_writer() -> exit exception");
         return nullptr;
     }
 }
@@ -152,8 +160,10 @@ RedCryptoReaderHandle * redcryptofile_open_reader(
 
 int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
 {
+    LOG(LOG_INFO, "redcryptofile_write()");
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len));
+    LOG(LOG_INFO, "redcryptofile_write() done");
     return 0;
 }
 
@@ -188,13 +198,19 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
 
 int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex)
 {
+    LOG(LOG_INFO, "redcryptofile_close_writer()");
     CHECK_HANDLE(handle);
     std::unique_ptr<RedCryptoWriterHandle> u(handle);
     HashArray qhash;
     HashArray fhash;
     CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
-    hash_to_hashhex(qhash, qhashhex);
-    hash_to_hashhex(fhash, fhashhex);
+    if (qhashhex) {
+        hash_to_hashhex(qhash, qhashhex);
+    }
+    if (fhashhex) {
+        hash_to_hashhex(fhash, fhashhex);
+    }
+    LOG(LOG_INFO, "redcryptofile_close_writer() done");
     return 0;
 }
 

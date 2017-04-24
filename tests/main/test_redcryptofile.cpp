@@ -80,9 +80,17 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         HashHexArray qhashhex {};
         HashHexArray fhashhex {};
+//// ##################### API CHANGES in progress ###################""
+    REDEMPTION_LIB_EXPORT
+    RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_checksum,
+        get_hmac_key_prototype * hmac_fn,
+        get_trace_key_prototype * trace_fn);
 
-        auto * handle = redcryptofile_open_writer(
-            with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_open_writer(RedCryptoWriterHandle * handle, char const * path);
+
+
+        auto * handle = redcryptofile_new_writer(with_encryption, with_checksum, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
         RED_CHECK_EQ(redcryptofile_write(handle, bytes("We write, "), 10), 0);
         RED_CHECK_EQ(redcryptofile_write(handle, bytes("and again, "), 11), 0);

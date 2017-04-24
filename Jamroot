@@ -209,7 +209,7 @@ exe rdpproxy
 lib libredcryptofile
    :
        redcryptofile.o
-       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
+       $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
 
        openssl
        crypto
@@ -487,10 +487,10 @@ exe tls_test_server
 
 ## RedCrypto tests
 ## @{
-test-run test_redcryptofile
-    : main/test_redcryptofile.cpp
-    :
-    : <library>openssl <library>crypto <library>snappy <library>redcryptofile_test ;
+#test-run test_redcryptofile
+#    : main/test_redcryptofile.cpp
+#    :
+#    : <library>openssl <library>crypto <library>snappy <library>redcryptofile_test ;
 ## @}
 
 ## Acl tests
