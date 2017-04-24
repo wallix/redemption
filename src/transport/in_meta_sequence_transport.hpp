@@ -1127,7 +1127,7 @@ public:
             ) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            this->meta_header_version = WRM_VERSION_1;
+            this->meta_header_version = WRM_VERSION_2;
             this->meta_header_has_checksum = (line[0] == 'c');
         }
         // else v1
