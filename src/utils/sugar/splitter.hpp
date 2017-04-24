@@ -112,29 +112,50 @@ public:
 
 
 template<class ForwardIterator, class T>
-splitter<ForwardIterator> get_split(ForwardIterator first, ForwardIterator last, T sep) {
-    return {first, last, std::move(sep)};
+splitter<ForwardIterator, typename std::decay<T>::type>
+get_split(ForwardIterator first, ForwardIterator last, T && sep)
+{
+    return {first, last, std::forward<T>(sep)};
 }
 
-template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont & cont, T sep) {
+namespace adl_begin_end
+{
     using std::begin;
     using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
+
+    template<class Cont>
+    auto begin_(Cont && cont) -> decltype(begin(std::forward<Cont>(cont)))
+    { return begin(cont); }
+
+    template<class Cont>
+    auto end_(Cont && cont) -> decltype(end(std::forward<Cont>(cont)))
+    { return end(cont); }
 }
 
-template<class Cont, class T>
-splitter<typename Cont::const_iterator> get_split(const Cont & cont, T sep) {
-    using std::begin;
-    using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
+namespace fn
+{
+    template<class Cont>
+    auto begin(Cont & cont)
+    -> decltype(adl_begin_end::begin_(cont))
+    { return adl_begin_end::begin_(cont); }
+
+    template<class Cont>
+    auto end(Cont & cont)
+    -> decltype(adl_begin_end::end_(cont))
+    { return adl_begin_end::end_(cont); }
 }
 
+template<class Cont>
+struct container_traits
+{
+    using iterator = decltype(adl_begin_end::begin_(std::declval<Cont>()));
+};
+
 template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont && cont, T sep) {
-    using std::begin;
-    using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
+splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
+get_split(Cont && cont, T && sep)
+{
+    return {fn::begin(cont), fn::end(cont), std::forward<T>(sep)};
 }
 
 
