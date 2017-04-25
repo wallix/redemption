@@ -157,6 +157,24 @@ class ClientExecute : public windowing_api
 
     int current_mouse_pointer_type = Pointer::POINTER_NULL;
 
+    wait_obj title_bar_button_1_down_event;
+
+    int title_bar_button_1_down_x = 0;
+    int title_bar_button_1_down_y = 0;
+
+    class TitleBarButton1DownEventHandler : public EventHandler::CB {
+        ClientExecute& client_execute_;
+
+    public:
+        TitleBarButton1DownEventHandler(ClientExecute& client_execute)
+        : client_execute_(client_execute)
+        {}
+
+        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+            this->client_execute_.process_title_bar_button_1_down_event(now, event, drawable);
+        }
+    } title_bar_button_1_down_event_handler;
+
     bool verbose;
 
 public:
@@ -165,12 +183,34 @@ public:
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
     , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
+    , title_bar_button_1_down_event_handler(*this)
     , verbose(verbose)
     {
     }   // ClientExecute
 
     ~ClientExecute() {
         this->reset(false);
+    }
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
+        if ((true == static_cast<bool>(*this)) &&
+            this->title_bar_button_1_down_event.object_and_time) {
+
+            out_event_handlers.emplace_back(
+                    &this->title_bar_button_1_down_event,
+                    &this->title_bar_button_1_down_event_handler,
+                    INVALID_SOCKET
+                );
+        }
+    }
+
+    void process_title_bar_button_1_down_event(time_t, wait_obj*, gdi::GraphicApi&) {
+        REDASSERT(true == static_cast<bool>(*this));
+
+        this->initialize_move_size(this->title_bar_button_1_down_x, this->title_bar_button_1_down_y,
+            MOUSE_BUTTON_PRESSED_TITLEBAR);
+
+        this->title_bar_button_1_down_event.object_and_time = false;
     }
 
     Rect adjust_rect(Rect rect) {
@@ -607,11 +647,132 @@ public:
         this->front_->sync();
     }   // input_invalidate
 
+    void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_) {
+        REDASSERT(!this->move_size_initialized);
+
+        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
+
+        this->captured_mouse_x = xPos;
+        this->captured_mouse_y = yPos;
+
+        this->window_rect_saved = this->window_rect;
+
+        {
+            StaticOutStream<256> out_s;
+            RAILPDUHeader header;
+            header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
+
+            ServerMinMaxInfoPDU smmipdu;
+
+            Rect work_area_rect = this->get_current_work_area_rect();
+
+            smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+            smmipdu.MaxWidth(work_area_rect.cx - 1);
+            smmipdu.MaxHeight(work_area_rect.cy - 1);
+            smmipdu.MaxPosX(work_area_rect.x);
+            smmipdu.MaxPosY(work_area_rect.y);
+            smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
+            smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
+            smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
+            smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
+
+            smmipdu.emit(out_s);
+
+            header.emit_end();
+
+            const size_t   length     = out_s.get_offset();
+            const size_t   chunk_size = length;
+            const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+
+            if (this->verbose) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
+                smmipdu.log(LOG_INFO);
+            }
+
+            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                          flags);
+        }
+
+        int move_size_type = 0;
+        uint16_t PosX = xPos;
+        uint16_t PosY = yPos;
+        switch (pressed_mouse_button_) {
+            case MOUSE_BUTTON_PRESSED_NORTH:     move_size_type = RAIL_WMSZ_TOP;         break;
+            case MOUSE_BUTTON_PRESSED_NORTHWEST: move_size_type = RAIL_WMSZ_TOPLEFT;     break;
+            case MOUSE_BUTTON_PRESSED_WEST:      move_size_type = RAIL_WMSZ_LEFT;        break;
+            case MOUSE_BUTTON_PRESSED_SOUTHWEST: move_size_type = RAIL_WMSZ_BOTTOMLEFT;  break;
+            case MOUSE_BUTTON_PRESSED_SOUTH:     move_size_type = RAIL_WMSZ_BOTTOM;      break;
+            case MOUSE_BUTTON_PRESSED_SOUTHEAST: move_size_type = RAIL_WMSZ_BOTTOMRIGHT; break;
+            case MOUSE_BUTTON_PRESSED_EAST:      move_size_type = RAIL_WMSZ_RIGHT;       break;
+            case MOUSE_BUTTON_PRESSED_NORTHEAST: move_size_type = RAIL_WMSZ_TOPRIGHT;    break;
+            case MOUSE_BUTTON_PRESSED_TITLEBAR:
+                PosX = xPos - this->window_rect.x;
+                PosY = yPos - this->window_rect.y;
+                move_size_type = RAIL_WMSZ_MOVE;
+                break;
+        }
+
+        if (move_size_type) {
+            StaticOutStream<256> out_s;
+            RAILPDUHeader header;
+            header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+
+            ServerMoveSizeStartOrEndPDU smssoepdu;
+
+            smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+            smssoepdu.IsMoveSizeStart(1);
+            smssoepdu.MoveSizeType(move_size_type);
+            smssoepdu.PosXOrTopLeftX(PosX);
+            smssoepdu.PosYOrTopLeftY(PosY);
+
+            smssoepdu.emit(out_s);
+
+            header.emit_end();
+
+            const size_t   length     = out_s.get_offset();
+            const size_t   chunk_size = length;
+            const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+
+            if (this->verbose) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
+                smssoepdu.log(LOG_INFO);
+            }
+
+            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                          flags);
+        }   // if (move_size_type)
+
+        this->move_size_initialized = true;
+    }   // initialize_move_size
+
     // Return true if event is consumed.
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref) {
         //LOG(LOG_INFO,
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
+
+        if (this->title_bar_button_1_down_event.object_and_time) {
+            if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
+                this->initialize_move_size(this->title_bar_button_1_down_x, this->title_bar_button_1_down_y,
+                    MOUSE_BUTTON_PRESSED_TITLEBAR);
+            }
+
+            this->title_bar_button_1_down_event.object_and_time = false;
+        }
 
         // Mouse pointer managment
 
@@ -703,122 +864,28 @@ public:
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHEAST;
                     }
                     else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
-                        }
-
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
                     }
                 }
 
                 if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) {
-                    REDASSERT(!this->move_size_initialized);
+                    if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
+                        this->title_bar_button_1_down_event.set(400000);
 
-                    this->captured_mouse_x = xPos;
-                    this->captured_mouse_y = yPos;
+                        this->title_bar_button_1_down_x = xPos;
+                        this->title_bar_button_1_down_y = yPos;
 
-                    this->window_rect_saved = this->window_rect;
+                        this->title_bar_button_1_down_event.object_and_time  = true;
+                        this->title_bar_button_1_down_event.waked_up_by_time = false;
 
-                    {
-                        StaticOutStream<256> out_s;
-                        RAILPDUHeader header;
-                        header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
-
-                        ServerMinMaxInfoPDU smmipdu;
-
-                        Rect work_area_rect = this->get_current_work_area_rect();
-
-                        smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                        smmipdu.MaxWidth(work_area_rect.cx - 1);
-                        smmipdu.MaxHeight(work_area_rect.cy - 1);
-                        smmipdu.MaxPosX(work_area_rect.x);
-                        smmipdu.MaxPosY(work_area_rect.y);
-                        smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
-                        smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-                        smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
-                        smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
-
-                        smmipdu.emit(out_s);
-
-                        header.emit_end();
-
-                        const size_t   length     = out_s.get_offset();
-                        const size_t   chunk_size = length;
-                        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                                    | CHANNELS::CHANNEL_FLAG_LAST;
+                        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                         if (this->verbose) {
-                            {
-                                const bool send              = true;
-                                const bool from_or_to_client = true;
-                                ::msgdump_c(send, from_or_to_client, length, flags,
-                                    out_s.get_data(), length);
-                            }
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (0)");
-                            smmipdu.log(LOG_INFO);
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar delayed");
                         }
-
-                        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                      flags);
                     }
-
-                    int move_size_type = 0;
-                    uint16_t PosX = xPos;
-                    uint16_t PosY = yPos;
-                    switch (this->pressed_mouse_button) {
-                        case MOUSE_BUTTON_PRESSED_NORTH:     move_size_type = RAIL_WMSZ_TOP;         break;
-                        case MOUSE_BUTTON_PRESSED_NORTHWEST: move_size_type = RAIL_WMSZ_TOPLEFT;     break;
-                        case MOUSE_BUTTON_PRESSED_WEST:      move_size_type = RAIL_WMSZ_LEFT;        break;
-                        case MOUSE_BUTTON_PRESSED_SOUTHWEST: move_size_type = RAIL_WMSZ_BOTTOMLEFT;  break;
-                        case MOUSE_BUTTON_PRESSED_SOUTH:     move_size_type = RAIL_WMSZ_BOTTOM;      break;
-                        case MOUSE_BUTTON_PRESSED_SOUTHEAST: move_size_type = RAIL_WMSZ_BOTTOMRIGHT; break;
-                        case MOUSE_BUTTON_PRESSED_EAST:      move_size_type = RAIL_WMSZ_RIGHT;       break;
-                        case MOUSE_BUTTON_PRESSED_NORTHEAST: move_size_type = RAIL_WMSZ_TOPRIGHT;    break;
-                        case MOUSE_BUTTON_PRESSED_TITLEBAR:
-                            PosX = xPos - this->window_rect.x;
-                            PosY = yPos - this->window_rect.y;
-                            move_size_type = RAIL_WMSZ_MOVE;
-                            break;
-                    }
-
-                    if (move_size_type) {
-                        StaticOutStream<256> out_s;
-                        RAILPDUHeader header;
-                        header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
-
-                        ServerMoveSizeStartOrEndPDU smssoepdu;
-
-                        smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                        smssoepdu.IsMoveSizeStart(1);
-                        smssoepdu.MoveSizeType(move_size_type);
-                        smssoepdu.PosXOrTopLeftX(PosX);
-                        smssoepdu.PosYOrTopLeftY(PosY);
-
-                        smssoepdu.emit(out_s);
-
-                        header.emit_end();
-
-                        const size_t   length     = out_s.get_offset();
-                        const size_t   chunk_size = length;
-                        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                                    | CHANNELS::CHANNEL_FLAG_LAST;
-
-                        if (this->verbose) {
-                            {
-                                const bool send              = true;
-                                const bool from_or_to_client = true;
-                                ::msgdump_c(send, from_or_to_client, length, flags,
-                                    out_s.get_data(), length);
-                            }
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (0)");
-                            smssoepdu.log(LOG_INFO);
-                        }
-
-                        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                      flags);
-                    }   // if (move_size_type)
-
-                    this->move_size_initialized = true;
+                    else
+                        this->initialize_move_size(xPos, yPos, this->pressed_mouse_button);
                 }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
                 else if (this->allow_resize_hosted_desktop_ &&
                          this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {

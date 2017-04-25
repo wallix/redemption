@@ -79,14 +79,16 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (this->rail_enabled &&
-            this->first_click_down_event.object_and_time) {
+        if (this->rail_enabled) {
+            if (this->first_click_down_event.object_and_time) {
+                out_event_handlers.emplace_back(
+                        &this->first_click_down_event,
+                        &this->first_click_down_event_handler,
+                        INVALID_SOCKET
+                    );
+            }
 
-            out_event_handlers.emplace_back(
-                    &this->first_click_down_event,
-                    &this->first_click_down_event_handler,
-                    INVALID_SOCKET
-                );
+            this->client_execute.get_event_handlers(out_event_handlers);
         }
 
         InternalMod::get_event_handlers(out_event_handlers);
