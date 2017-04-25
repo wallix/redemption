@@ -119,6 +119,32 @@ class TestEncrypter(unittest.TestCase):
 
         lib.redcryptofile_delete_writer(handle)
 
+    def test_writer_encryption_checksum(self):
+        handle = lib.redcryptofile_new_writer(1, 1, get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle, None)
+        lib.redcryptofile_open_writer(handle, "./encrypted.txt")
+        
+        text = b"We write, and again, and so on."
+        total_sent = 0
+        
+        while total_sent < len(text):
+            part_len = min(10,len(text[total_sent:]))
+            res = lib.redcryptofile_write(handle, text[total_sent:], part_len)
+            self.assertTrue(res > 0)
+            if res < 0: 
+                break
+            total_sent += res
+        
+        self.assertEqual(total_sent, 31)
+        lib.redcryptofile_close_writer(handle)
+
+        self.assertEqual(lib.redcryptofile_qhashhex_writer(handle),
+            'CE901886A85C774C080921215D31A91D7D8E8AA14040D081E250EE53300CABF0')
+
+        self.assertEqual(lib.redcryptofile_fhashhex_writer(handle),         
+            'CE901886A85C774C080921215D31A91D7D8E8AA14040D081E250EE53300CABF0')
+
+        lib.redcryptofile_delete_writer(handle)
 
 if __name__ == '__main__':
     unittest.main()
