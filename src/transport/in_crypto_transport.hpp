@@ -193,7 +193,7 @@ public:
         {
             Parse p(data);
             const int magic = p.in_uint32_le();
-            if (magic != 0x4D464357) {
+            if (magic != WABCRYPTOFILE_MAGIC) {
                 this->encrypted = false;
                 // encryption requested but no encryption
                 if (this->encryption_mode == EncryptionMode::Encrypted){
@@ -227,7 +227,7 @@ public:
         uint8_t trail[8] = {};
         this->raw_read(trail, 8);
         Parse pt1(&trail[0]);
-        if (pt1.in_uint32_be() != 0x4D464357){
+        if (pt1.in_uint32_be() != WABCRYPTOFILE_MAGIC){
             // truncated file
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
@@ -423,7 +423,7 @@ private:
                 }
                 remaining_len -= res;
             };
-            
+
             this->current_len += len;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
