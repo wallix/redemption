@@ -92,6 +92,9 @@ private:
     RandomWrapper random_wrapper;
 
 public:
+    HashHexArray qhashhex;
+    HashHexArray fhashhex;
+
     OutCryptoTransport out_crypto_transport;
 };
 
@@ -203,7 +206,18 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
     *phex = '\0';
 }
 
-int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex)
+
+const char * redcryptofile_qhashhex_writer(RedCryptoWriterHandle * handle)
+{
+    return handle->qhashhex;
+}
+
+const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle)
+{
+    return handle->fhashhex;
+}
+
+int redcryptofile_close_writer(RedCryptoWriterHandle * handle)
 {
     LOG(LOG_INFO, "redcryptofile_close_writer()");
     CHECK_HANDLE(handle);
@@ -211,11 +225,11 @@ int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhas
     HashArray qhash;
     HashArray fhash;
     CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
-    if (qhashhex) {
-        hash_to_hashhex(qhash, qhashhex);
+    if (handle) {
+        hash_to_hashhex(qhash, handle->qhashhex);
     }
-    if (fhashhex) {
-        hash_to_hashhex(fhash, fhashhex);
+    if (handle) {
+        hash_to_hashhex(fhash, handle->fhashhex);
     }
     LOG(LOG_INFO, "redcryptofile_close_writer() done");
     return 0;

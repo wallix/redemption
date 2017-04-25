@@ -50,7 +50,13 @@ extern "C"
     int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
+    int redcryptofile_close_writer(RedCryptoWriterHandle * handle);
+    
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_qhashhex_writer(RedCryptoWriterHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
     int redcryptofile_close_reader(RedCryptoReaderHandle * handle);
