@@ -76,6 +76,7 @@ public:
     }
 
     ~InCryptoTransport() {
+        // TODO closed fd
     }
 
 
@@ -92,7 +93,6 @@ public:
     void hash(const char * pathname)
     {
         this->open(pathname);
-
     }
 
     int partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
@@ -105,21 +105,19 @@ public:
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-
     void open(const char * pathname)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
-
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
         this->eof = false;
-
+        this->current_len = 0;
 
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
@@ -193,7 +191,7 @@ public:
         {
             Parse p(data);
             const int magic = p.in_uint32_le();
-            if (magic != 0x4D464357) {
+            if (magic != WABCRYPTOFILE_MAGIC) {
                 this->encrypted = false;
                 // encryption requested but no encryption
                 if (this->encryption_mode == EncryptionMode::Encrypted){
@@ -227,7 +225,7 @@ public:
         uint8_t trail[8] = {};
         this->raw_read(trail, 8);
         Parse pt1(&trail[0]);
-        if (pt1.in_uint32_be() != 0x4D464357){
+        if (pt1.in_uint32_be() != WABCRYPTOFILE_MAGIC){
             // truncated file
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
@@ -423,7 +421,7 @@ private:
                 }
                 remaining_len -= res;
             };
-            
+
             this->current_len += len;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
@@ -443,5 +441,4 @@ private:
         }
         return res == int(len);
     }
-
 };

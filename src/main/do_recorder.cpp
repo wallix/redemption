@@ -346,111 +346,60 @@ static int do_recompress(
 
     int return_code = 0;
     try {
-        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-            wrmcapture_OutMetaSequenceTransport trans(
-                true,
-                true,
-                cctx,
-                rnd,
-                fstat,
-                outfile_path.c_str(),
-                ini.get<cfg::video::hash_path>().c_str(),
-                outfile_basename.c_str(),
-                begin_record,
-                player.info_width,
-                player.info_height,
-                ini.get<cfg::video::capture_groupid>(),
-                nullptr
+        CryptoContext cctx_no_crypto;
+
+        wrmcapture_OutMetaSequenceTransport trans(
+            true,
+            true,
+            ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
+            rnd,
+            fstat,
+            outfile_path.c_str(),
+            ini.get<cfg::video::hash_path>().c_str(),
+            outfile_basename.c_str(),
+            begin_record,
+            player.info_width,
+            player.info_height,
+            ini.get<cfg::video::capture_groupid>(),
+            nullptr
+        );
+        {
+            ChunkToFile recorder(
+                &trans
+              , player.info_width
+              , player.info_height
+              , player.info_bpp
+              , player.info_cache_0_entries
+              , player.info_cache_0_size
+              , player.info_cache_1_entries
+              , player.info_cache_1_size
+              , player.info_cache_2_entries
+              , player.info_cache_2_size
+
+              , player.info_number_of_cache
+              , player.info_use_waiting_list
+
+              , player.info_cache_0_persistent
+              , player.info_cache_1_persistent
+              , player.info_cache_2_persistent
+
+              , player.info_cache_3_entries
+              , player.info_cache_3_size
+              , player.info_cache_3_persistent
+              , player.info_cache_4_entries
+              , player.info_cache_4_size
+              , player.info_cache_4_persistent
+              , ini.get<cfg::video::wrm_compression_algorithm>()
             );
-            {
-                ChunkToFile recorder( &trans
-                            , player.info_width
-                            , player.info_height
-                            , player.info_bpp
-                            , player.info_cache_0_entries
-                            , player.info_cache_0_size
-                            , player.info_cache_1_entries
-                            , player.info_cache_1_size
-                            , player.info_cache_2_entries
-                            , player.info_cache_2_size
 
-                            , player.info_number_of_cache
-                            , player.info_use_waiting_list
+            player.add_consumer(&recorder);
 
-                            , player.info_cache_0_persistent
-                            , player.info_cache_1_persistent
-                            , player.info_cache_2_persistent
-
-                            , player.info_cache_3_entries
-                            , player.info_cache_3_size
-                            , player.info_cache_3_persistent
-                            , player.info_cache_4_entries
-                            , player.info_cache_4_size
-                            , player.info_cache_4_persistent
-                            , ini.get<cfg::video::wrm_compression_algorithm>());
-
-                player.add_consumer(&recorder);
-
-                player.play(program_requested_to_shutdown);
-            }
-
-            //if (program_requested_to_shutdown) {
-            //    trans.request_full_cleaning();
-            //}
+            player.play(program_requested_to_shutdown);
         }
-        else {
-            CryptoContext cctx;
-            wrmcapture_OutMetaSequenceTransport trans(
-                false,
-                false,
-                cctx,
-                rnd,
-                fstat,
-                outfile_path.c_str(),
-                ini.get<cfg::video::hash_path>().c_str(),
-                outfile_basename.c_str(),
-                begin_record,
-                player.info_width,
-                player.info_height,
-                ini.get<cfg::video::capture_groupid>(),
-                nullptr
-            );
-            {
-                ChunkToFile recorder( &trans
-                            , player.info_width
-                            , player.info_height
-                            , player.info_bpp
-                            , player.info_cache_0_entries
-                            , player.info_cache_0_size
-                            , player.info_cache_1_entries
-                            , player.info_cache_1_size
-                            , player.info_cache_2_entries
-                            , player.info_cache_2_size
 
-                            , player.info_number_of_cache
-                            , player.info_use_waiting_list
-
-                            , player.info_cache_0_persistent
-                            , player.info_cache_1_persistent
-                            , player.info_cache_2_persistent
-
-                            , player.info_cache_3_entries
-                            , player.info_cache_3_size
-                            , player.info_cache_3_persistent
-                            , player.info_cache_4_entries
-                            , player.info_cache_4_size
-                            , player.info_cache_4_persistent
-                            , ini.get<cfg::video::wrm_compression_algorithm>());
-
-                player.add_consumer(&recorder);
-
-                player.play(program_requested_to_shutdown);
-            }
-
-            //if (program_requested_to_shutdown) {
-            //    trans.request_full_cleaning();
-            //}
-        }
+        //if (program_requested_to_shutdown) {
+        //    trans.request_full_cleaning();
+        //}
     }
     catch (...) {
         return_code = -1;
@@ -1324,7 +1273,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   Random & rnd, Fstat & fstat,
                   uint32_t verbose)
 {
-
     char infile_prefix[4096];
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
@@ -1343,15 +1291,19 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
+    auto const encryption_mode = infile_is_encrypted
+      ? InMetaSequenceTransport::EncryptionMode::Encrypted
+      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
+
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
     try {
         InMetaSequenceTransport in_wrm_trans_tmp(
-            &cctx,
+            cctx,
             infile_prefix,
             infile_extension.c_str(),
-            infile_is_encrypted?1:0);
+            encryption_mode);
         file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
     }
     catch (const Error & e) {
@@ -1367,9 +1319,9 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     };
 
     InMetaSequenceTransport in_wrm_trans(
-        &cctx, infile_prefix,
+        cctx, infile_prefix,
         infile_extension.c_str(),
-        infile_is_encrypted?1:0
+        encryption_mode
     );
 
     timeval begin_capture = {begin_cap, 0};
@@ -1693,10 +1645,10 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
 
     if (!result && remove_input_file) {
         InMetaSequenceTransport in_wrm_trans_tmp(
-            &cctx,
+            cctx,
             infile_prefix,
             infile_extension.c_str(),
-            infile_is_encrypted?1:0);
+            encryption_mode);
 
         remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                     , input_basename.c_str(), infile_extension.c_str()
