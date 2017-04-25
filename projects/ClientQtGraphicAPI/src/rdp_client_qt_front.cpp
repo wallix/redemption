@@ -457,15 +457,15 @@ public:
         Inifile ini;
 
         ModRDPParams mod_rdp_params( this->user_name.c_str()
-                                , this->user_password.c_str()
-                                , this->target_IP.c_str()
-                                , this->local_IP.c_str()
-                                , 2
-                                , ini.get<cfg::font>()
-                                , ini.get<cfg::theme>()
-                                , this->server_auto_reconnect_packet_ref
-                                , to_verbose_flags(0)
-                                );
+                                   , this->user_password.c_str()
+                                   , this->target_IP.c_str()
+                                   , this->local_IP.c_str()
+                                   , 2
+                                   , ini.get<cfg::font>()
+                                   , ini.get<cfg::theme>()
+                                   , this->server_auto_reconnect_packet_ref
+                                   , to_verbose_flags(0)
+                                   );
 
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;
@@ -658,13 +658,13 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
-        CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+3
-                                                 };
-        this->cl.push_back(channel_audio_output);
+//         CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
+//                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+//                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+//                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+//                                                  , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+//                                                  };
+//         this->cl.push_back(channel_audio_output);
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -2421,7 +2421,7 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
-        } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
+        } else  /*if (!strcmp(channel.name, channel_names::rdpsnd))*/ {
             LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
         }
     }
@@ -2906,7 +2906,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::none;                     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
+    RDPVerbose verbose = RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;        // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

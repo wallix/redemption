@@ -382,7 +382,7 @@ public:
                 return false;
             }
         } else {
-            std::string windowErrorMsg(errorMsg+" ip_connect error.");
+            std::string windowErrorMsg(errorMsg+" invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
@@ -1694,10 +1694,12 @@ public:
                                                 , begin_read
                                                 , end_read
                                                 , Screen_Qt::BALISED_FRAME
-                                                , to_verbose_flags(0) //FileToGraphic::Verbose::play
+                                                //
+                                                //to_verbose_flags(0)
+                                                , FileToGraphic::Verbose::play
                                                 ));
 
-            this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
+            //this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
 
             return true;
 
