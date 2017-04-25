@@ -93,7 +93,6 @@ public:
     void hash(const char * pathname)
     {
         this->open(pathname);
-
     }
 
     int partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
@@ -106,17 +105,15 @@ public:
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-
     void open(const char * pathname)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
-
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
         this->eof = false;
@@ -444,5 +441,4 @@ private:
         }
         return res == int(len);
     }
-
 };
