@@ -35,45 +35,37 @@
 #include "test_only/lcg_random.hpp"
 
 
+inline void read_sample_files(char const * filename)
+{
+    size_t const sizes[]{1471394, 444578, 290245};
+
+    constexpr size_t buf_sz = 10000;
+    unsigned char buffer[buf_sz];
+
+    bool has_data;
+    CryptoContext cctx;
+    InMetaSequenceTransport wrm_trans(cctx, filename, ".mwrm", 0);
+    for (size_t const file_total : sizes) {
+        for (size_t i = 0; i < file_total / buf_sz; ++i) {
+            RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, buf_sz));
+            RED_CHECK(has_data);
+        }
+        RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, file_total % buf_sz));
+        RED_CHECK(has_data);
+    }
+
+    RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, 1));
+    RED_CHECK(!has_data);
+}
+
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
 {
-    // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr),
-        FIXTURES_PATH "/sample", ".mwrm", 0);
-    unsigned char buffer[10000];
-    unsigned char * pbuffer = buffer;
-    size_t total = 0;
-    auto test = [&]{
-        for (size_t i = 0; i < 221 ; i++){
-            pbuffer = buffer;
-            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
-            total += sizeof(buffer);
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
-    total += pbuffer - buffer;
-    // total size if sum of sample sizes
-    RED_CHECK_EQUAL(2200000, total);
+    read_sample_files(FIXTURES_PATH "/sample");
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {
-    // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample_v2", ".mwrm", 0);
-    unsigned char buffer[10000];
-    unsigned char * pbuffer = buffer;
-    size_t total = 0;
-    auto test = [&]{
-        for (size_t i = 0; i < 221 ; i++){
-            pbuffer = buffer;
-            wrm_trans.recv_atomic(pbuffer, sizeof(buffer));
-            total += sizeof(buffer);
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
-    total += pbuffer - buffer;
-    // total size if sum of sample sizes
-    RED_CHECK_EQUAL(2200000, total);                             // 1471394 + 444578 + 290245
+    read_sample_files(FIXTURES_PATH "/sample_v2");
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
@@ -87,7 +79,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+        CryptoContext cctx;
+        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", 0);
         RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -112,7 +105,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+    CryptoContext cctx;
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", 0);
 
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -145,7 +139,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 //        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
-    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/sample", ".mwrm", 0);
+    CryptoContext cctx;
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", 0);
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
@@ -181,7 +176,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     // This is what we are actually testing, chaining of several files content
 
     {
-        InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0);
+        CryptoContext cctx;
+        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", 0);
         RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -206,7 +202,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     }
 
     // check we can do it two times
-    InMetaSequenceTransport mwrm_trans(static_cast<CryptoContext*>(nullptr), FIXTURES_PATH "/moved_sample", ".mwrm", 0);
+    CryptoContext cctx;
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", 0);
 
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -273,14 +270,20 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     }
 
     {
-        InMetaSequenceTransport crypto_trans(&cctx, "TESTOFS", ".mwrm", 1);
+        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", 1);
+        char buffer[15];
+        // 5 + 10
+        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_atomic(buffer, 15), ERR_TRANSPORT_READ_FAILED);
+    }
+    {
+        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", 1);
 
-        char buffer[1024] = {};
-        char * bob = buffer;
+        char buffer[15];
 
-        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(bob, 15));
+        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer, 5));
+        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer + 5, 10));
 
-        RED_CHECK_EQUAL_RANGES(make_array_view(buffer, 15), cstr_array_view("AAAAXBBBBXCCCCX"));
+        RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
 
     const char * files[] = {
@@ -305,5 +308,5 @@ RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
+    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(cctx, "TESTOFSXXX", ".mwrm", 1), ERR_TRANSPORT_OPEN_FAILED);
 }
