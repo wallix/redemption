@@ -211,7 +211,7 @@ struct LocallyIntegrableMod : public InternalMod {
                     this->alt_key_pressed = false;
                 }
                 else if ((param1 == 62) && !param3) {
-                    LOG(LOG_INFO, "Close by user (Alt+F4)");
+                    LOG(LOG_INFO, "LocallyIntegrableMod::rdp_input_scancode: Close by user (Alt+F4)");
                     throw Error(ERR_WIDGET);    // F4 key pressed
                 }
             }
