@@ -59,5 +59,8 @@ extern "C"
     const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
+    void redcryptofile_delete_writer(RedCryptoWriterHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
     int redcryptofile_close_reader(RedCryptoReaderHandle * handle);
 }

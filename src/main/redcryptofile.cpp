@@ -221,7 +221,6 @@ int redcryptofile_close_writer(RedCryptoWriterHandle * handle)
 {
     LOG(LOG_INFO, "redcryptofile_close_writer()");
     CHECK_HANDLE(handle);
-    std::unique_ptr<RedCryptoWriterHandle> u(handle);
     HashArray qhash;
     HashArray fhash;
     CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
@@ -233,6 +232,14 @@ int redcryptofile_close_writer(RedCryptoWriterHandle * handle)
     }
     LOG(LOG_INFO, "redcryptofile_close_writer() done");
     return 0;
+}
+
+
+void redcryptofile_delete_writer(RedCryptoWriterHandle * handle)
+{
+    LOG(LOG_INFO, "redcryptofile_delete_writer()");
+    delete handle;
+    LOG(LOG_INFO, "redcryptofile_delete_writer() done");
 }
 
 int redcryptofile_close_reader(RedCryptoReaderHandle * handle)

@@ -58,6 +58,10 @@ try:
     lib.redcryptofile_fhashhex_writer.argtypes = [ c_void_p ]
     lib.redcryptofile_fhashhex_writer.restype = c_char_p
 
+# void redcryptofile_delete_writer(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_delete_writer.argtypes = [ c_void_p ]
+    lib.redcryptofile_delete_writer.restype = None
+
 
 except Exception as e:
     print("Failed to load redcryptofile library: %s\n" % str(e))
@@ -85,6 +89,8 @@ class TestEncrypter(unittest.TestCase):
         
         self.assertEqual(total_sent, 31)
         lib.redcryptofile_close_writer(handle)
+        lib.redcryptofile_delete_writer(handle)
+
 
     def test_writer_checksum(self):
         handle = lib.redcryptofile_new_writer(0, 1, get_hmac_key_func, get_trace_key_func)
@@ -110,6 +116,8 @@ class TestEncrypter(unittest.TestCase):
 
         self.assertEqual(lib.redcryptofile_fhashhex_writer(handle),         
             'E0901B761D62E8A6F41F729E3CBCF3F0AF4E0386046D45258DF50C06F16C6722')
+
+        lib.redcryptofile_delete_writer(handle)
 
 
 if __name__ == '__main__':
