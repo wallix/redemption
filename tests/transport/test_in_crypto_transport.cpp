@@ -86,11 +86,22 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
+        // close followed by open
+        ct.open(finalname);
+        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, 30));
+        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[30], 1));
+        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[31], 1));
+        RED_CHECK_EQUAL(true, ct.is_eof());
+        ct.close();
+        RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
     }
 
     RED_CHECK(::unlink(finalname) == 0);
-
 }
+
 
 // This sample was generated using udevrandom on Linux
 static uint8_t randomSample[8192] = {
@@ -361,4 +372,3 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
-

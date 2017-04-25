@@ -76,6 +76,7 @@ public:
     }
 
     ~InCryptoTransport() {
+        // TODO closed fd
     }
 
 
@@ -119,7 +120,7 @@ public:
         }
 
         this->eof = false;
-
+        this->current_len = 0;
 
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
