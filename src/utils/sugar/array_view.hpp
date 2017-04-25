@@ -72,13 +72,18 @@ struct array_view
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
-    constexpr type const * data() const noexcept { return this->p; }
+    constexpr type & front() const noexcept { /*assert(this->size());*/ return *this->p; }
+    constexpr type & back() const noexcept { /*assert(this->size());*/ return this->p[this->sz-1u]; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & front() noexcept { assert(this->size()); return *this->p; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() noexcept { return this->data(); }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() noexcept { return this->data() + this->size(); }
+    constexpr type const * data() const noexcept { return this->p; }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
+
     constexpr type const * begin() const { return this->data(); }
     constexpr type const * end() const { return this->data() + this->size(); }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() noexcept { return this->data(); }
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() noexcept { return this->data() + this->size(); }
 
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type & operator[](std::size_t i) noexcept
     { assert(i < this->size()); return this->data()[i]; }

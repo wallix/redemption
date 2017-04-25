@@ -43,8 +43,10 @@ public:
         , encrypter(with_encryption, with_checksum, cctx, rnd)
         , fd(-1)
     {
+//        LOG(LOG_INFO, "OutCryptoTransport::OutCryptoTransport()");
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
+//        LOG(LOG_INFO, "OutCryptoTransport::OutCryptoTransport() done");
     }
 
     const char * get_tmp(){
@@ -52,6 +54,7 @@ public:
     }
 
     ~OutCryptoTransport() {
+//        LOG(LOG_INFO, "OutCryptoTransport::~OutCryptoTransport()");
         if (this->fd == -1){
             return;
         }
@@ -79,6 +82,7 @@ public:
         catch (Error const & e){
             LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %d", e.id);
         }
+//        LOG(LOG_INFO, "OutCryptoTransport::~OutCryptoTransport() done");
     }
 
     // TODO: CGR: I want to remove that from Transport API
@@ -93,6 +97,8 @@ public:
 
     void open(const char * finalname, int groupid)
     {
+//        LOG(LOG_INFO, "OutCryptoTransport::open()");
+    
         // This should avoid double open, we do not want that
         if (this->fd != -1){
             LOG(LOG_ERR, "OutCryptoTransport::open (double open error) %s", finalname);
@@ -125,10 +131,12 @@ public:
 
         ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
         this->raw_write(res.buf.data(), res.buf.size());
+//        LOG(LOG_INFO, "OutCryptoTransport::open() done");
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+//        LOG(LOG_INFO, "OutCryptoTransport::close()");
         // This should avoid double closes, we do not want that
         if (this->fd == -1){
             LOG(LOG_ERR, "OutCryptoTransport::close error (double close error)");
@@ -148,6 +156,7 @@ public:
         }
         ::close(this->fd);
         this->fd = -1;
+//        LOG(LOG_INFO, "OutCryptoTransport::close() done");
     }
 
 private:

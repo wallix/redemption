@@ -30,7 +30,14 @@ RED_AUTO_TEST_CASE(TestSplitter)
     const char text[] = "abc,de,efg,h,ijk,lmn";
     std::string s;
     for (auto r : get_line(text, ',')) {
-        s.append(r.begin(), r.size()) += ':';
+        s.append(r.begin(), r.end()) += ':';
+    }
+    RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
+
+    s.clear();
+    std::string stest(text);
+    for (auto r : get_split(stest, ',')) {
+        s.append(r.begin(), r.end()) += ':';
     }
     RED_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 }

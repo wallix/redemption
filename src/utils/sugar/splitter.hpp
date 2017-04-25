@@ -47,7 +47,7 @@ public:
 
     range next() {
         this->first_ = this->cur_;
-        while (this->cur_ != last_ && *this->cur_ != this->sep_ ) {
+        while (this->cur_ != last_ && !bool(this->sep_ == *this->cur_)) {
             ++this->cur_;
         }
         range res{this->first_, this->cur_};
@@ -112,37 +112,78 @@ public:
 
 
 template<class ForwardIterator, class T>
-splitter<ForwardIterator> get_split(ForwardIterator first, ForwardIterator last, T sep) {
-    return {first, last, std::move(sep)};
+splitter<ForwardIterator, typename std::decay<T>::type>
+get_split(ForwardIterator first, ForwardIterator last, T && sep)
+{
+    return {first, last, std::forward<T>(sep)};
 }
 
-template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont & cont, T sep) {
+namespace adl_begin_end
+{
     using std::begin;
     using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
+
+    template<class Cont>
+    auto begin_(Cont && cont) -> decltype(begin(std::forward<Cont>(cont)))
+    { return begin(cont); }
+
+    template<class Cont>
+    auto end_(Cont && cont) -> decltype(end(std::forward<Cont>(cont)))
+    { return end(cont); }
 }
+
+namespace fn
+{
+    template<class Cont>
+    auto begin(Cont & cont)
+    -> decltype(adl_begin_end::begin_(cont))
+    { return adl_begin_end::begin_(cont); }
+
+    template<class Cont>
+    auto end(Cont & cont)
+    -> decltype(adl_begin_end::end_(cont))
+    { return adl_begin_end::end_(cont); }
+}
+
+template<class Cont>
+struct container_traits
+{
+    using iterator = decltype(adl_begin_end::begin_(std::declval<Cont>()));
+};
+
+template<class T> struct container_traits<T*> { using iterator = T*; };
+template<class T> struct container_traits<T*&> { using iterator = T*; };
+template<class T> struct container_traits<T*&&> { using iterator = T*; };
+template<class T, std::size_t n> struct container_traits<T[n]> { using iterator = T*; };
+template<class T, std::size_t n> struct container_traits<T(&)[n]> { using iterator = T*; };
 
 template<class Cont, class T>
-splitter<typename Cont::const_iterator> get_split(const Cont & cont, T sep) {
-    using std::begin;
-    using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
-}
-
-template<class Cont, class T>
-splitter<typename Cont::iterator> get_split(Cont && cont, T sep) {
-    using std::begin;
-    using std::end;
-    return {begin(cont), end(cont), std::move(sep)};
+splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
+get_split(Cont && cont, T && sep)
+{
+    return {fn::begin(cont), fn::end(cont), std::forward<T>(sep)};
 }
 
 
-inline splitter<const char *> get_line(const char * s, char sep = '\n') {
+inline splitter<char const *> get_line(const char * s, char sep = '\n')
+{
     return {s, s+strlen(s), sep};
 }
 
-inline splitter<char *> get_line(char * s, char sep = '\n') {
+inline splitter<char *> get_line(char * s, char sep = '\n')
+{
     return {s, s+strlen(s), sep};
 }
 
+inline splitter<char const *> get_line(std::string const & s, char sep = '\n')
+{
+    return {s.data(), s.data()+s.size(), sep};
+}
+
+inline splitter<char *> get_line(std::string & s, char sep = '\n')
+{
+    return {&s[0], &s[0]+s.size(), sep};
+}
+
+splitter<char *> get_line(std::string && s, char sep = '\n') = delete;
+splitter<char const *> get_line(std::string const && s, char sep = '\n') = delete;

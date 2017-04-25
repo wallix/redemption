@@ -2062,7 +2062,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
 
     if (recorder.output_filename.size()) {
-        std::string directory = PNG_PATH "/";
+        std::string directory = WRM_PATH "/";
         std::string filename                ;
         std::string extension = ".mwrm"     ;
 
@@ -2235,7 +2235,7 @@ extern "C" {
                           verbose);
 
             } catch (const Error & e) {
-                std::printf("decrypt failed: with id=%d\n", e.id);
+                std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }
         break;
         case 1: // VERifier
@@ -2248,9 +2248,9 @@ extern "C" {
                     rp.input_filename, rp.mwrm_path, rp.hash_path,
                     rp.quick_check, rp.ignore_stat_info, rp.update_stat_info, verbose, cctx
                 );
-                std::puts(res == 0 ? "verify ok\n" : "verify failed\n");
+                std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
             } catch (const Error & e) {
-                std::printf("verify failed: with id=%d\n", e.id);
+                std::cout << "verify failed: with id=" << e.id << std::endl;
             }
         break;
         default: // DECrypter
@@ -2260,12 +2260,12 @@ extern "C" {
 
                 if (!file.is_open()) {
                     std::cerr << "can't open file " << rp.full_path << "\n\n";
-                    std::puts("decrypt failed\n");
+                    std::cout << "decrypt failed" << std::endl;
                     return -1;
                 }
 
                 if (0 == encryption_type(rp.full_path, cctx)){
-                    std::puts("Input file is not encrypted\n");
+                    std::cout << "Input file is not encrypted." << std::endl;
                     return 0;
                 }
 
@@ -2301,15 +2301,15 @@ extern "C" {
                     std::cerr << strerror(errno) << std::endl << std::endl;
                 }
                 if (res == 0){
-                    std::puts("decrypt ok\n");
+                    std::cout << "decrypt ok" << std::endl;
                     return 0;
                 }
                 else {
-                    std::puts("decrypt failed\n");
+                    std::cout << "decrypt failed" << std::endl;
                     return -1;
                 }
             } catch (const Error & e) {
-                std::printf("decrypt failed: with id=%d\n", e.id);
+                std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }
         break;
         }

@@ -12,8 +12,6 @@ project redemption
 
     <conditional>@includes
 
-    <conditional>@defines
-
     $(CXXFLAGS)
 
 #    <cxxflags>-fpie
@@ -112,6 +110,7 @@ install install-lib
 
 
 constant COMMON_OBJ_DEPENDENCIES :
+    <conditional>@defines
     <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
     <define>CFG_PATH='\"$(ETC_PREFIX)\"'
 ;
@@ -138,6 +137,16 @@ constant OBJ_TEST_DEPENDENCIES :
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+    <define>RECORD_PATH='\"/tmp/redemption_recorded\"'
+    <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"'
+    <define>PNG_PATH='\"/tmp\"'
+    <define>WRM_PATH='\"/tmp\"'
+    <define>HASH_PATH='\"/tmp/redemption_hash\"'
+    <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"'
+    <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"'
+    <define>CERTIF_PATH='\"/tmp/redemption_cert\"'
+    <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"'
+    <define>PID_PATH='\"/tmp/redemption_pid\"'
 ;
 
 constant TEST_DEPENDENCIES :
@@ -209,7 +218,7 @@ exe rdpproxy
 lib libredcryptofile
    :
        redcryptofile.o
-       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
+       $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
 
        openssl
        crypto
@@ -487,10 +496,10 @@ exe tls_test_server
 
 ## RedCrypto tests
 ## @{
-test-run test_redcryptofile
-    : main/test_redcryptofile.cpp
-    :
-    : <library>openssl <library>crypto <library>snappy <library>redcryptofile_test ;
+#test-run test_redcryptofile
+#    : main/test_redcryptofile.cpp
+#    :
+#    : <library>openssl <library>crypto <library>snappy <library>redcryptofile_test ;
 ## @}
 
 ## Acl tests
