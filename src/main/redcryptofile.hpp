@@ -30,14 +30,12 @@ extern "C"
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_new_writer(
-        int with_encryption, int with_checksum, char const * path,
+    RedCryptoWriterHandle * redcryptofile_writer_new(
+        int with_encryption, int with_checksum, 
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_open_writer(
-        int with_encryption, int with_checksum, char const * path,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+    int redcryptofile_writer_open(RedCryptoWriterHandle * handle, char const * path);
 
     REDEMPTION_LIB_EXPORT
     RedCryptoReaderHandle * redcryptofile_open_reader(
@@ -45,14 +43,23 @@ extern "C"
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
+    int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
 
     // < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
     int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
+    int redcryptofile_writer_close(RedCryptoWriterHandle * handle);
+    
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    void redcryptofile_writer_delete(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
     int redcryptofile_close_reader(RedCryptoReaderHandle * handle);
