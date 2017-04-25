@@ -31,13 +31,11 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     RedCryptoWriterHandle * redcryptofile_new_writer(
-        int with_encryption, int with_checksum, char const * path,
+        int with_encryption, int with_checksum, 
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_open_writer(
-        int with_encryption, int with_checksum, char const * path,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+    int redcryptofile_open_writer(RedCryptoWriterHandle * handle, char const * path);
 
     REDEMPTION_LIB_EXPORT
     RedCryptoReaderHandle * redcryptofile_open_reader(

@@ -80,21 +80,15 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         HashHexArray qhashhex {};
         HashHexArray fhashhex {};
-//// ##################### API CHANGES in progress ###################""
-    REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_checksum,
-        get_hmac_key_prototype * hmac_fn,
-        get_trace_key_prototype * trace_fn);
-
-    REDEMPTION_LIB_EXPORT
-    int redcryptofile_open_writer(RedCryptoWriterHandle * handle, char const * path);
-
 
         auto * handle = redcryptofile_new_writer(with_encryption, with_checksum, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
-        RED_CHECK_EQ(redcryptofile_write(handle, bytes("We write, "), 10), 0);
-        RED_CHECK_EQ(redcryptofile_write(handle, bytes("and again, "), 11), 0);
-        RED_CHECK_EQ(redcryptofile_write(handle, bytes("and so on."), 10), 0);
+        RED_CHECK_EQ(redcryptofile_open_writer(handle, finalname), 0);
+
+        RED_CHECK_EQ(redcryptofile_write(handle, bytes("We write, "), 10), 10);
+        RED_CHECK_EQ(redcryptofile_write(handle, bytes("and again, "), 11), 11);
+        RED_CHECK_EQ(redcryptofile_write(handle, bytes("and so on."), 10), 10);
+
         RED_CHECK_EQ(redcryptofile_close_writer(handle, qhashhex, fhashhex), 0);
 
 //        RED_CHECK_EQ(qhashhex, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
@@ -126,7 +120,8 @@ RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
     LOG(LOG_INFO, "TestRedCryptofileError");
     LOG(LOG_INFO, "Errors below are expected this is the purpose of the test");
-    RED_CHECK_EQ(redcryptofile_open_writer(1, 1, "/", &hmac_fn, &trace_fn), nullptr);
+    auto handle = redcryptofile_new_writer(1, 1, &hmac_fn, &trace_fn);
+    RED_CHECK_EQ(redcryptofile_open_writer(handle, "/"), -1);
     RED_CHECK_EQ(redcryptofile_open_reader("/", &hmac_fn, &trace_fn), nullptr);
 
     HashHexArray qhashhex {};
