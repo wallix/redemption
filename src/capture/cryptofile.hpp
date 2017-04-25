@@ -18,7 +18,6 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-
 #pragma once
 
 #include <string.h>
@@ -44,22 +43,17 @@ enum crypto_file_state {
     CF_INIT = 2,  // Crypto File nor yet initialised
 };
 
-#define MIN(x, y)               (((x) > (y) ? (y) : (x)))
-#define AES_BLOCK_SIZE          16
-// MFCW
-#define WABCRYPTOFILE_MAGIC     0x4D464357
-#define WABCRYPTOFILE_EOF_MAGIC 0x5743464D
-#define WABCRYPTOFILE_VERSION   0x00000001
+// "MFCW"
+constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
+constexpr uint32_t WABCRYPTOFILE_EOF_MAGIC = 0x5743464D;
+constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
 
 enum {
     DERIVATOR_LENGTH = 8
 };
 
-/* size of salt to protect master key */
-#define MKSALT_LEN 8
 
-
-#define CRYPTO_BUFFER_SIZE ((4096 * 4))
+constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 extern "C" {
     typedef int get_hmac_key_prototype(char * buffer);
@@ -69,8 +63,8 @@ extern "C" {
 
 
 /* 256 bits key size */
-#define CRYPTO_KEY_LENGTH 32
-#define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
+constexpr std::size_t CRYPTO_KEY_LENGTH = 32;
+constexpr std::size_t HMAC_KEY_LENGTH = CRYPTO_KEY_LENGTH;
 
 
 class CryptoContext
@@ -467,7 +461,7 @@ public:
         unsigned int remaining_size = len;
         while (remaining_size > 0) {
             // Check how much we can append into buffer
-            unsigned int available_size = MIN(CRYPTO_BUFFER_SIZE - this->pos, remaining_size);
+            unsigned int available_size = std::min(unsigned(CRYPTO_BUFFER_SIZE - this->pos), remaining_size);
             // Append and update pos pointer
             ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
             this->pos += available_size;
@@ -484,6 +478,3 @@ public:
         return {{this->result_buffer, towrite}, len};
     }
 };
-
-
-
