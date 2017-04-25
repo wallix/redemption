@@ -157,12 +157,12 @@ class ClientExecute : public windowing_api
 
     int current_mouse_pointer_type = Pointer::POINTER_NULL;
 
-    wait_obj title_bar_button_1_down_event;
+    wait_obj button_1_down_event;
 
-    int title_bar_button_1_down_x = 0;
-    int title_bar_button_1_down_y = 0;
+    int button_1_down_x = 0;
+    int button_1_down_y = 0;
 
-    bool title_bar_button_1_down = false;
+    int button_1_down = MOUSE_BUTTON_PRESSED_NONE;
 
     class TitleBarButton1DownEventHandler : public EventHandler::CB {
         ClientExecute& client_execute_;
@@ -173,9 +173,9 @@ class ClientExecute : public windowing_api
         {}
 
         void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
-            this->client_execute_.process_title_bar_button_1_down_event(now, event, drawable);
+            this->client_execute_.process_button_1_down_event(now, event, drawable);
         }
-    } title_bar_button_1_down_event_handler;
+    } button_1_down_event_handler;
 
     bool verbose;
 
@@ -185,7 +185,7 @@ public:
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
     , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
-    , title_bar_button_1_down_event_handler(*this)
+    , button_1_down_event_handler(*this)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -196,23 +196,23 @@ public:
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
         if ((true == static_cast<bool>(*this)) &&
-            this->title_bar_button_1_down_event.object_and_time) {
+            this->button_1_down_event.object_and_time) {
 
             out_event_handlers.emplace_back(
-                    &this->title_bar_button_1_down_event,
-                    &this->title_bar_button_1_down_event_handler,
+                    &this->button_1_down_event,
+                    &this->button_1_down_event_handler,
                     INVALID_SOCKET
                 );
         }
     }
 
-    void process_title_bar_button_1_down_event(time_t, wait_obj*, gdi::GraphicApi&) {
+    void process_button_1_down_event(time_t, wait_obj*, gdi::GraphicApi&) {
         REDASSERT(true == static_cast<bool>(*this));
 
-        this->initialize_move_size(this->title_bar_button_1_down_x, this->title_bar_button_1_down_y,
-            (title_bar_button_1_down ? MOUSE_BUTTON_PRESSED_TITLEBAR : MOUSE_BUTTON_PRESSED_SOUTH));
+        this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
+            this->button_1_down);
 
-        this->title_bar_button_1_down_event.object_and_time = false;
+        this->button_1_down_event.object_and_time = false;
     }
 
     Rect adjust_rect(Rect rect) {
@@ -767,13 +767,13 @@ public:
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
-        if (this->title_bar_button_1_down_event.object_and_time) {
+        if (this->button_1_down_event.object_and_time) {
             if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
-                this->initialize_move_size(this->title_bar_button_1_down_x, this->title_bar_button_1_down_y,
+                this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
                     MOUSE_BUTTON_PRESSED_TITLEBAR);
             }
 
-            this->title_bar_button_1_down_event.object_and_time = false;
+            this->button_1_down_event.object_and_time = false;
         }
 
         // Mouse pointer managment
@@ -871,25 +871,26 @@ public:
                 }
 
                 if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) {
-                    if ((MOUSE_BUTTON_PRESSED_SOUTH == this->pressed_mouse_button) ||
+                    if ((MOUSE_BUTTON_PRESSED_NORTH == this->pressed_mouse_button) ||
+                        (MOUSE_BUTTON_PRESSED_SOUTH == this->pressed_mouse_button) ||
                         (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
-                        this->title_bar_button_1_down =
-                            (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button);
+                        this->button_1_down = this->pressed_mouse_button;
 
-                        this->title_bar_button_1_down_event.set(400000);
+                        this->button_1_down_event.set(400000);
 
-                        this->title_bar_button_1_down_x = xPos;
-                        this->title_bar_button_1_down_y = yPos;
+                        this->button_1_down_x = xPos;
+                        this->button_1_down_y = yPos;
 
-                        this->title_bar_button_1_down_event.object_and_time  = true;
-                        this->title_bar_button_1_down_event.waked_up_by_time = false;
+                        this->button_1_down_event.object_and_time  = true;
+                        this->button_1_down_event.waked_up_by_time = false;
 
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                         if (this->verbose) {
                             LOG(LOG_INFO,
                                 "ClientExecute::input_mouse: Mouse button 1 pressed on %s delayed",
-                                (this->title_bar_button_1_down ? "title bar" : "south edge"));
+                                ((this->button_1_down == MOUSE_BUTTON_PRESSED_NORTH) ? "north edge" :
+                                 ((this->button_1_down == MOUSE_BUTTON_PRESSED_TITLEBAR) ? "title bar" : "south edge")));
                         }
                     }
                     else
@@ -1490,7 +1491,7 @@ public:
             }   // else if ((MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
         }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
         else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
-            if (this->south.contains_pt(xPos, yPos) && !this->maximized) {
+            if ((this->north.contains_pt(xPos, yPos) || this->south.contains_pt(xPos, yPos)) && !this->maximized) {
                 Rect work_area_rect = this->get_current_work_area_rect();
 
                 this->window_rect.y  = 0;
