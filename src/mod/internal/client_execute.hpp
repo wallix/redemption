@@ -162,6 +162,8 @@ class ClientExecute : public windowing_api
     int title_bar_button_1_down_x = 0;
     int title_bar_button_1_down_y = 0;
 
+    bool title_bar_button_1_down = false;
+
     class TitleBarButton1DownEventHandler : public EventHandler::CB {
         ClientExecute& client_execute_;
 
@@ -208,7 +210,7 @@ public:
         REDASSERT(true == static_cast<bool>(*this));
 
         this->initialize_move_size(this->title_bar_button_1_down_x, this->title_bar_button_1_down_y,
-            MOUSE_BUTTON_PRESSED_TITLEBAR);
+            (title_bar_button_1_down ? MOUSE_BUTTON_PRESSED_TITLEBAR : MOUSE_BUTTON_PRESSED_SOUTH));
 
         this->title_bar_button_1_down_event.object_and_time = false;
     }
@@ -650,7 +652,7 @@ public:
     void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_) {
         REDASSERT(!this->move_size_initialized);
 
-        this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
+        this->pressed_mouse_button = pressed_mouse_button_;
 
         this->captured_mouse_x = xPos;
         this->captured_mouse_y = yPos;
@@ -869,7 +871,11 @@ public:
                 }
 
                 if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) {
-                    if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
+                    if ((MOUSE_BUTTON_PRESSED_SOUTH == this->pressed_mouse_button) ||
+                        (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
+                        this->title_bar_button_1_down =
+                            (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button);
+
                         this->title_bar_button_1_down_event.set(400000);
 
                         this->title_bar_button_1_down_x = xPos;
@@ -881,7 +887,9 @@ public:
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
                         if (this->verbose) {
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar delayed");
+                            LOG(LOG_INFO,
+                                "ClientExecute::input_mouse: Mouse button 1 pressed on %s delayed",
+                                (this->title_bar_button_1_down ? "title bar" : "south edge"));
                         }
                     }
                     else
