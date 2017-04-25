@@ -1291,6 +1291,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
+    auto const encryption_mode = infile_is_encrypted
+      ? InMetaSequenceTransport::EncryptionMode::Encrypted
+      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
+
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
@@ -1299,7 +1303,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             cctx,
             infile_prefix,
             infile_extension.c_str(),
-            infile_is_encrypted?1:0);
+            encryption_mode);
         file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
     }
     catch (const Error & e) {
@@ -1317,7 +1321,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     InMetaSequenceTransport in_wrm_trans(
         cctx, infile_prefix,
         infile_extension.c_str(),
-        infile_is_encrypted?1:0
+        encryption_mode
     );
 
     timeval begin_capture = {begin_cap, 0};
@@ -1644,7 +1648,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
             cctx,
             infile_prefix,
             infile_extension.c_str(),
-            infile_is_encrypted?1:0);
+            encryption_mode);
 
         remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                     , input_basename.c_str(), infile_extension.c_str()

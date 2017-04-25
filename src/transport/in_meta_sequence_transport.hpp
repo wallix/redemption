@@ -101,12 +101,15 @@ class InMetaSequenceTransport : public Transport
     WrmVersion meta_header_version;
     bool meta_header_has_checksum;
 
-public:
     MetaLine meta_line;
     char meta_path[2048];
-    int encryption;
 
 public:
+    MetaLine const & get_meta_line() const noexcept
+    {
+        return this->meta_line;
+    }
+
     ssize_t buf_reader_read_line(char * dest, size_t len, int err)
     {
         ssize_t total_read = 0;
@@ -388,21 +391,18 @@ private:
     }
 
 public:
+    using EncryptionMode = InCryptoTransport::EncryptionMode;
+
     InMetaSequenceTransport(
         CryptoContext & cctx,
         const char * filename,
         const char * extension,
-        int encryption)
-    : cfb(cctx, encryption
-        ? InCryptoTransport::EncryptionMode::Encrypted
-        : InCryptoTransport::EncryptionMode::NotEncrypted)
+        EncryptionMode encryption)
+    : cfb(cctx, encryption)
     , begin_time(0)
-    , buf_meta(cctx, encryption
-        ? InCryptoTransport::EncryptionMode::Encrypted
-        : InCryptoTransport::EncryptionMode::NotEncrypted)
+    , buf_meta(cctx, encryption)
     , meta_header_version(WrmVersion::v1)
     , meta_header_has_checksum(false)
-    , encryption(encryption)
     {
         temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
