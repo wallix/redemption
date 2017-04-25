@@ -47,9 +47,17 @@ try:
     lib.redcryptofile_write.restype = c_int
 
 # int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
-    lib.redcryptofile_close_writer.argtypes = [ c_void_p, c_char_p, c_char_p ]
+    lib.redcryptofile_close_writer.argtypes = [ c_void_p ]
     lib.redcryptofile_close_writer.restype = c_int
+
+# const char * redcryptofile_qhashhex_writer(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_qhashhex_writer.argtypes = [ c_void_p ]
+    lib.redcryptofile_qhashhex_writer.restype = c_char_p
     
+# const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_fhashhex_writer.argtypes = [ c_void_p ]
+    lib.redcryptofile_fhashhex_writer.restype = c_char_p
+
 
 except Exception as e:
     print("Failed to load redcryptofile library: %s\n" % str(e))
@@ -76,7 +84,33 @@ class TestEncrypter(unittest.TestCase):
             total_sent += res
         
         self.assertEqual(total_sent, 31)
-        lib.redcryptofile_close_writer(handle, None, None)
+        lib.redcryptofile_close_writer(handle)
+
+    def test_writer_checksum(self):
+        handle = lib.redcryptofile_new_writer(0, 1, get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle, None)
+        lib.redcryptofile_open_writer(handle, "./clear.txt")
+        
+        text = b"We write, and again, and so on."
+        total_sent = 0
+        
+        while total_sent < len(text):
+            part_len = min(10,len(text[total_sent:]))
+            res = lib.redcryptofile_write(handle, text[total_sent:], part_len)
+            self.assertTrue(res > 0)
+            if res < 0: 
+                break
+            total_sent += res
+        
+        self.assertEqual(total_sent, 31)
+        lib.redcryptofile_close_writer(handle)
+
+        self.assertEqual(lib.redcryptofile_qhashhex_writer(handle),         
+            'E0901B761D62E8A6F41F729E3CBCF3F0AF4E0386046D45258DF50C06F16C6722')
+
+        self.assertEqual(lib.redcryptofile_fhashhex_writer(handle),         
+            'E0901B761D62E8A6F41F729E3CBCF3F0AF4E0386046D45258DF50C06F16C6722')
+
 
 if __name__ == '__main__':
     unittest.main()
