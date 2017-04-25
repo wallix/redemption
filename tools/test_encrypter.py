@@ -32,35 +32,35 @@ try:
     lib = ctypes.CDLL(pathlib)
     print("load {path} OK".format(path=pathlib))
 
-# RedCryptoWriterHandle * redcryptofile_new_writer(
+# RedCryptoWriterHandle * redcryptofile_new(
 #    int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-    lib.redcryptofile_new_writer.argtypes = [ c_int, c_int, GETHMACKEY, GETTRACEKEY ]
-    lib.redcryptofile_new_writer.restype = c_void_p
+    lib.redcryptofile_writer_new.argtypes = [ c_int, c_int, GETHMACKEY, GETTRACEKEY ]
+    lib.redcryptofile_writer_new.restype = c_void_p
 
 
-# RedCryptoWriterHandle * redcryptofile_open_writer(RedCryptoWriterHandle * handle, const char * path)
-    lib.redcryptofile_open_writer.argtypes = [ c_void_p, c_char_p ]
-    lib.redcryptofile_open_writer.restype = c_int
+# RedCryptoWriterHandle * redcryptofile_open(RedCryptoWriterHandle * handle, const char * path)
+    lib.redcryptofile_writer_open.argtypes = [ c_void_p, c_char_p ]
+    lib.redcryptofile_writer_open.restype = c_int
 
 # int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
-    lib.redcryptofile_write.argtypes = [c_void_p, c_char_p, c_uint64 ]
-    lib.redcryptofile_write.restype = c_int
+    lib.redcryptofile_writer_write.argtypes = [c_void_p, c_char_p, c_uint64 ]
+    lib.redcryptofile_writer_write.restype = c_int
 
-# int redcryptofile_close_writer(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
-    lib.redcryptofile_close_writer.argtypes = [ c_void_p ]
-    lib.redcryptofile_close_writer.restype = c_int
+# int redcryptofile_close(RedCryptoWriterHandle * handle, HashHexArray qhashhex, HashHexArray fhashhex);
+    lib.redcryptofile_writer_close.argtypes = [ c_void_p ]
+    lib.redcryptofile_writer_close.restype = c_int
 
-# const char * redcryptofile_qhashhex_writer(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_qhashhex_writer.argtypes = [ c_void_p ]
-    lib.redcryptofile_qhashhex_writer.restype = c_char_p
+# const char * redcryptofile_qhashhex(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_writer_qhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_writer_qhashhex.restype = c_char_p
     
-# const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_fhashhex_writer.argtypes = [ c_void_p ]
-    lib.redcryptofile_fhashhex_writer.restype = c_char_p
+# const char * redcryptofile_fhashhex(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_writer_fhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_writer_fhashhex.restype = c_char_p
 
-# void redcryptofile_delete_writer(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_delete_writer.argtypes = [ c_void_p ]
-    lib.redcryptofile_delete_writer.restype = None
+# void redcryptofile_delete(RedCryptoWriterHandle * handle);
+    lib.redcryptofile_writer_delete.argtypes = [ c_void_p ]
+    lib.redcryptofile_writer_delete.restype = None
 
 
 except Exception as e:
@@ -71,80 +71,80 @@ except Exception as e:
 import unittest
     
 class TestEncrypter(unittest.TestCase):
-    def test_writer(self):
-        handle = lib.redcryptofile_new_writer(0, 0, get_hmac_key_func, get_trace_key_func)
+    def test(self):
+        handle = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
         self.assertNotEqual(handle, None)
-        lib.redcryptofile_open_writer(handle, "./clear.txt")
+        lib.redcryptofile_writer_open(handle, "./clear.txt")
         
         text = b"We write, and again, and so on."
         total_sent = 0
         
         while total_sent < len(text):
             part_len = min(10,len(text[total_sent:]))
-            res = lib.redcryptofile_write(handle, text[total_sent:], part_len)
+            res = lib.redcryptofile_writer_write(handle, text[total_sent:], part_len)
             self.assertTrue(res > 0)
             if res < 0: 
                 break
             total_sent += res
         
         self.assertEqual(total_sent, 31)
-        lib.redcryptofile_close_writer(handle)
-        lib.redcryptofile_delete_writer(handle)
+        lib.redcryptofile_writer_close(handle)
+        lib.redcryptofile_writer_delete(handle)
 
 
     def test_writer_checksum(self):
-        handle = lib.redcryptofile_new_writer(0, 1, get_hmac_key_func, get_trace_key_func)
+        handle = lib.redcryptofile_writer_new(0, 1, get_hmac_key_func, get_trace_key_func)
         self.assertNotEqual(handle, None)
-        lib.redcryptofile_open_writer(handle, "./clear.txt")
+        lib.redcryptofile_writer_open(handle, "./clear.txt")
         
         text = b"We write, and again, and so on."
         total_sent = 0
         
         while total_sent < len(text):
             part_len = min(10,len(text[total_sent:]))
-            res = lib.redcryptofile_write(handle, text[total_sent:], part_len)
+            res = lib.redcryptofile_writer_write(handle, text[total_sent:], part_len)
             self.assertTrue(res > 0)
             if res < 0: 
                 break
             total_sent += res
         
         self.assertEqual(total_sent, 31)
-        lib.redcryptofile_close_writer(handle)
+        lib.redcryptofile_writer_close(handle)
 
-        self.assertEqual(lib.redcryptofile_qhashhex_writer(handle),         
+        self.assertEqual(lib.redcryptofile_writer_qhashhex(handle),         
             'E0901B761D62E8A6F41F729E3CBCF3F0AF4E0386046D45258DF50C06F16C6722')
 
-        self.assertEqual(lib.redcryptofile_fhashhex_writer(handle),         
+        self.assertEqual(lib.redcryptofile_writer_fhashhex(handle),         
             'E0901B761D62E8A6F41F729E3CBCF3F0AF4E0386046D45258DF50C06F16C6722')
 
-        lib.redcryptofile_delete_writer(handle)
+        lib.redcryptofile_writer_delete(handle)
 
     def test_writer_encryption_checksum(self):
-        handle = lib.redcryptofile_new_writer(1, 1, get_hmac_key_func, get_trace_key_func)
+        handle = lib.redcryptofile_writer_new(1, 1, get_hmac_key_func, get_trace_key_func)
         self.assertNotEqual(handle, None)
-        lib.redcryptofile_open_writer(handle, "./encrypted.txt")
+        lib.redcryptofile_writer_open(handle, "./encrypted.txt")
         
         text = b"We write, and again, and so on."
         total_sent = 0
         
         while total_sent < len(text):
             part_len = min(10,len(text[total_sent:]))
-            res = lib.redcryptofile_write(handle, text[total_sent:], part_len)
+            res = lib.redcryptofile_writer_write(handle, text[total_sent:], part_len)
             self.assertTrue(res > 0)
             if res < 0: 
                 break
             total_sent += res
         
         self.assertEqual(total_sent, 31)
-        lib.redcryptofile_close_writer(handle)
+        lib.redcryptofile_writer_close(handle)
 
-        self.assertEqual(lib.redcryptofile_qhashhex_writer(handle),
+        self.assertEqual(lib.redcryptofile_writer_qhashhex(handle),
             'CE901886A85C774C080921215D31A91D7D8E8AA14040D081E250EE53300CABF0')
 
-        self.assertEqual(lib.redcryptofile_fhashhex_writer(handle),         
+        self.assertEqual(lib.redcryptofile_writer_fhashhex(handle),         
             'CE901886A85C774C080921215D31A91D7D8E8AA14040D081E250EE53300CABF0')
 
-        lib.redcryptofile_delete_writer(handle)
+        lib.redcryptofile_writer_delete(handle)
 
 if __name__ == '__main__':
     unittest.main()

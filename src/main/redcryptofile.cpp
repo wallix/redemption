@@ -116,19 +116,19 @@ public:
 };
 
 
-RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
 {
-    LOG(LOG_INFO, "redcryptofile_new_writer()");
+    LOG(LOG_INFO, "redcryptofile_writer_new()");
     try {
         auto handler = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
         );
         std::unique_ptr<RedCryptoWriterHandle> u(handler);
-        LOG(LOG_INFO, "redcryptofile_new_writer() -> exit");
+        LOG(LOG_INFO, "redcryptofile_writer_new -> exit");
         return u.release();
     }
     catch (...) {
-        LOG(LOG_INFO, "redcryptofile_new_writer() -> exit exception");
+        LOG(LOG_INFO, "redcryptofile_writer_new() -> exit exception");
         return nullptr;
     }
 }
@@ -137,9 +137,9 @@ RedCryptoWriterHandle * redcryptofile_new_writer(int with_encryption, int with_c
 #define CHECK_HANDLE(handle) if (!handle) return -1
 #define CHECK_NOTHROW(exp) do { try { exp; } catch (...) { return -1; } } while (0)
 
-int redcryptofile_open_writer(RedCryptoWriterHandle * handle, const char * path)
+int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
 {
-    LOG(LOG_INFO, "redcryptofile_open_writer()");
+    LOG(LOG_INFO, "redcryptofile_writer_open()");
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.open(path, 0 /* TODO groupid */));
     return 0;
@@ -162,7 +162,7 @@ RedCryptoReaderHandle * redcryptofile_open_reader(
     }
 }
 
-int redcryptofile_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
+int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
 {
     LOG(LOG_INFO, "redcryptofile_write()");
     CHECK_HANDLE(handle);
@@ -207,19 +207,19 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
 }
 
 
-const char * redcryptofile_qhashhex_writer(RedCryptoWriterHandle * handle)
+const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle)
 {
     return handle->qhashhex;
 }
 
-const char * redcryptofile_fhashhex_writer(RedCryptoWriterHandle * handle)
+const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle)
 {
     return handle->fhashhex;
 }
 
-int redcryptofile_close_writer(RedCryptoWriterHandle * handle)
+int redcryptofile_writer_close(RedCryptoWriterHandle * handle)
 {
-    LOG(LOG_INFO, "redcryptofile_close_writer()");
+    LOG(LOG_INFO, "redcryptofile_writer_close()");
     CHECK_HANDLE(handle);
     HashArray qhash;
     HashArray fhash;
@@ -230,16 +230,16 @@ int redcryptofile_close_writer(RedCryptoWriterHandle * handle)
     if (handle) {
         hash_to_hashhex(fhash, handle->fhashhex);
     }
-    LOG(LOG_INFO, "redcryptofile_close_writer() done");
+    LOG(LOG_INFO, "redcryptofile_writer_close() done");
     return 0;
 }
 
 
-void redcryptofile_delete_writer(RedCryptoWriterHandle * handle)
+void redcryptofile_writer_delete(RedCryptoWriterHandle * handle)
 {
-    LOG(LOG_INFO, "redcryptofile_delete_writer()");
+    LOG(LOG_INFO, "redcryptofile_writer_delete()");
     delete handle;
-    LOG(LOG_INFO, "redcryptofile_delete_writer() done");
+    LOG(LOG_INFO, "redcryptofile_writer_delete() done");
 }
 
 int redcryptofile_close_reader(RedCryptoReaderHandle * handle)
