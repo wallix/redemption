@@ -2101,6 +2101,10 @@ protected:
         }
 
         switch (cscpdu.Command()) {
+            case SC_CLOSE:
+                LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Close by user (System Command)");
+                throw Error(ERR_WIDGET);    // F4 key pressed
+                break;
             case SC_MINIMIZE:
                 {
                     {
