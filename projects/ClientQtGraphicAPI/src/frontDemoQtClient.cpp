@@ -51,7 +51,7 @@ public:
     virtual mod_api * init_mod() override {
 
         try {
-            this->info.keylayout = 0x409;
+            //this->info.keylayout = 0x409;
 
             // VNC
             this->mod = new mod_vnc( *(this->socket)
