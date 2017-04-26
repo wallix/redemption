@@ -25,10 +25,9 @@
 #include "acl/auth_api.hpp"
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "utils/pattutils.hpp"
 
 #include <memory>
 #include <cstring>
@@ -105,17 +104,7 @@ public:
 
     /**
      * \param filters_list  filters separated by '\\x01' character
-     *
-     * filter format:
-     * \code{regex}
-     *  option = "ocr" | "kbd" | "content" | "regex" | "exact-content" | "exact-regex"
-     *  option_separator = "," | "-"
-     *  filter
-     *      = \s* regex
-     *      | \s* "$:" regex
-     *      | \s* "$" option ( option_separator option )* ":" regex
-     * \endcode
-     *
+     * \see \a get_pattern_value
      * With \c conf_regex = KBD_INPUT, exact-content and exact-regex are respectively equivalent to content and regex
      */
     static void configure_regexes(ConfigureRegexes conf_regex, const char * filters_list,
@@ -126,86 +115,28 @@ public:
             return ;
         }
 
-        enum Cat { is_reg, is_str, is_exact_reg, is_exact_str };
-
         std::string tmp_filters = filters_list;
 
+        using Cat = PatternValue::Cat;
         struct Pattern { Cat cat; char const * filter; };
+
         Pattern  filters[64];
         unsigned filter_number = 0;
 
-        for (auto rng : get_line(tmp_filters, '\x01')) {
-            array_view_char av{ltrim(rng.begin(), rng.end()), rng.end()};
+        for (auto rng : get_line(tmp_filters, string_pattern_separator)) {
+            array_view_char av{rng.begin(), rng.end()};
             av.data()[av.size()] = '\0';
 
             if (verbose) {
                 LOG(LOG_INFO, "filter=\"%s\"", av.data());
             }
 
-            if (av.empty()) {
-                continue;
-            }
-
-            if (av.front() == '$') {
-                auto end_option_list = std::find(av.begin()+1, av.end(), ':');
-                if (end_option_list != av.end() && end_option_list+1 != av.end()) {
-                    array_view_const_char options(av.begin()+1, end_option_list);
-                    bool is_exact = false;
-                    bool is_ocr = false;
-                    bool is_kbd = false;
-                    Cat cat = is_reg;
-                    struct IsWordSeparator {
-                        bool operator == (char c) const {
-                            return c == '-' || c == ',';
-                        }
-                    };
-                    for (auto token : get_split(options, IsWordSeparator{})) {
-                        auto eq = [](range<char const*> b, array_view_const_char a) {
-                            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
-                        };
-
-                        if (eq(token, cstr_array_view("exact"))) {
-                            is_exact = true;
-                        }
-                        else {
-                            if (eq(token, cstr_array_view("ocr"))) {
-                                cat = is_exact ? is_exact_str : cat;
-                                is_ocr = true;
-                            }
-                            else if (eq(token, cstr_array_view("kbd"))) {
-                                cat = is_exact ? is_exact_str : cat;
-                                is_kbd = true;
-                            }
-                            else if (eq(token, cstr_array_view("regex"))) {
-                                cat = is_exact ? is_exact_reg : is_reg;
-                            }
-                            else if (eq(token, cstr_array_view("content"))) {
-                                cat = is_exact ? is_exact_str : is_str;
-                            }
-                            else {
-                                LOG(LOG_WARNING, "unknown filter option=\"%.*s\"", int(token.size()), token.begin());
-                            }
-                            is_exact = false;
-                        }
-                    }
-                    if (is_exact) {
-                        cat = is_exact_str;
-                    }
-                    if (not is_ocr && not is_kbd) {
-                        is_ocr = true;
-                    }
-
-                    if ((is_ocr && conf_regex == ConfigureRegexes::OCR)
-                     || (is_kbd && conf_regex == ConfigureRegexes::KBD_INPUT)) {
-                        filters[filter_number++] = {cat, end_option_list+1};
-                        if (filter_number >= (sizeof(filters) / sizeof(filters[0]))) {
-                            break;
-                        }
-                    }
-                }
-            }
-            else if (conf_regex == ConfigureRegexes::OCR) {
-                filters[filter_number++] = {is_reg, av.data()};
+            PatternValue const pattern_value = get_pattern_value(av);
+            if (not pattern_value.pattern.empty() && (
+                (pattern_value.is_ocr && conf_regex == ConfigureRegexes::OCR)
+             || (pattern_value.is_kbd && conf_regex == ConfigureRegexes::KBD_INPUT)
+            )) {
+                filters[filter_number++] = {pattern_value.cat, pattern_value.pattern.data()};
                 if (filter_number >= (sizeof(filters) / sizeof(filters[0]))) {
                     break;
                 }
@@ -229,11 +160,11 @@ public:
                 pregex->name = filter.filter;
                 pregex->is_exact_search
                   = (conf_regex == ConfigureRegexes::OCR
-                  && (filter.cat == is_exact_reg || filter.cat == is_exact_str));
+                  && (filter.cat == Cat::is_exact_reg || filter.cat == Cat::is_exact_str));
 
                 char const * c_str_filter = filter.filter;
                 std::string reg_pattern;
-                if (filter.cat == is_str || filter.cat == is_exact_str) {
+                if (filter.cat == Cat::is_str || filter.cat == Cat::is_exact_str) {
                     while (*c_str_filter) {
                         switch (*c_str_filter) {
                             case '{':
