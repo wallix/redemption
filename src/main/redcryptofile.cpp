@@ -257,7 +257,6 @@ int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, 
 int redcryptofile_reader_close(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    std::unique_ptr<RedCryptoReaderHandle> u(handle);
     CHECK_NOTHROW(handle->in_crypto_transport.close());
     return 0;
 }
