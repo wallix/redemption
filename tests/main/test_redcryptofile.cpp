@@ -22,8 +22,8 @@
 #define RED_TEST_MODULE TestRedcryptofile
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
-//#define LOGNULL
+// #define LOGPRINT
+#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/redcryptofile.hpp"
@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         uint8_t buf[31];
 
-        size_t total = 0; 
+        size_t total = 0;
         while (total < sizeof(buf)) {
             int res = redcryptofile_reader_read(handle, &buf[total], 10);
             LOG(LOG_INFO, "%d", res);

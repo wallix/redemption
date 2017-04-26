@@ -798,18 +798,14 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
 }
 
 
-
-RED_AUTO_TEST_CASE(TestOutCryptoTransport)
+RED_AUTO_TEST_CASE(TestOutCryptoTransport_encryption_checksum_oneshot)
 {
-    LOG(LOG_INFO, "Running test TestOutCryptoTransport");
-    OpenSSL_add_all_digests();
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
-
-    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
     const char * finalname = "./encrypted.txt";
     char tmpname[256];
@@ -817,22 +813,77 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         OutCryptoTransport ct(true, true, cctx, rnd);
         ct.open(finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
+        ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
 
+    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    RED_CHECK(::unlink(finalname) == 0); // finalname exists
+}
+
+struct TestCryptoCtx
+{
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+
+    TestCryptoCtx(bool with_encryption, bool with_checksum)
+    {
+        LCGRandom rnd(0);
+        CryptoContext cctx;
+        init_keys(cctx);
+
+        const char * finalname = "./encrypted.txt";
+        char tmpname[256];
+        {
+            OutCryptoTransport ct(with_encryption, with_checksum, cctx, rnd);
+            ct.open(finalname, 0);
+            ::strcpy(tmpname, ct.get_tmp());
+            ct.send("We write, ", 10);
+            ct.send("and again, ", 11);
+            ct.send("and so on.", 10);
+            ct.close(qhash, fhash);
+        }
+
+        RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+        RED_CHECK(::unlink(finalname) == 0); // finalname exists
+    }
+};
+
+
+RED_AUTO_TEST_CASE(TestOutCryptoTransport)
+{
+    TestCryptoCtx enc_check    (true,  true);
+    TestCryptoCtx noenc_check  (false, true);
+    TestCryptoCtx noenc_nocheck(false, false);
+    TestCryptoCtx enc_nocheck  (true,  false);
+
+    RED_CHECK_MEM_AA(enc_check.fhash, enc_check.qhash);
     RED_CHECK_MEM_AC(
-        qhash,
+        enc_check.qhash,
         "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
         "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5"
     );
 
-    RED_CHECK_MEM_AA(fhash, qhash);
+    RED_CHECK_MEM_AA(noenc_check.fhash, noenc_check.qhash);
+    RED_CHECK_MEM_AC(
+        noenc_check.qhash,
+        "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3"
+        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b"
+    );
 
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-    RED_CHECK(::unlink(finalname) == 0); // finalname exists
+    RED_CHECK_MEM_AA(noenc_nocheck.fhash, noenc_nocheck.qhash);
+    RED_CHECK_MEM_AC(
+        noenc_nocheck.qhash,
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    );
+
+    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_nocheck.qhash);
+    RED_CHECK_MEM_AC(
+        enc_nocheck.qhash,
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    );
 }
 
 RED_AUTO_TEST_CASE(TestOutCryptoTransportBigFile)
@@ -876,7 +927,6 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportBigFile)
 
 RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
 {
-    LOG(LOG_INFO, "Running test TestOutCryptoTransportAutoClose");
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -886,9 +936,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
         OutCryptoTransport ct(true, true, cctx, rnd);
         ct.open(finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
+        ct.send("We write, and again, and so on.", 31);
     }
     // if there is no explicit close we can't get hash values
     // but the file is correctly closed and ressources freed
@@ -898,7 +946,6 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
 
 RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
 {
-    LOG(LOG_INFO, "Running test TestOutCryptoTransportMultipleFiles");
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -913,16 +960,12 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
 
         ct.open(finalname1, 0);
         ::strcpy(tmpname1, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
+        ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
 
         ct.open(finalname2, 0);
         ::strcpy(tmpname2, ct.get_tmp());
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
+        ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
     RED_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
@@ -930,4 +973,3 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
     RED_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
     RED_CHECK(::unlink(finalname2) == 0); // finalname exists
 }
-

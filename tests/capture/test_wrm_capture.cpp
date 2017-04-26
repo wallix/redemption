@@ -24,8 +24,8 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "utils/log.hpp"
 
