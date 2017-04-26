@@ -407,10 +407,12 @@ public:
             return;
         }
 
-        // TODO Keys riquiring AltGr are not working
+        // AltGr or Alt are catched by Appel OS
 
-        // TODO detect if target is a Apple server and map char before to call keymapSym::event()
-        // char that must be mapped:
+        // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
+
+        // TODO with an Apple server, those chars are wrong either in US and FR layout:
+        //
         //         char             current interpretation with US layout
         //          '!'       >>            '='
         //          '§'       >>            '+'
