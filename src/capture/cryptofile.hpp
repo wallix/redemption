@@ -61,9 +61,7 @@ extern "C" {
 }
 
 
-
-/* 256 bits key size */
-constexpr std::size_t CRYPTO_KEY_LENGTH = 32;
+constexpr std::size_t CRYPTO_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 constexpr std::size_t HMAC_KEY_LENGTH = CRYPTO_KEY_LENGTH;
 
 
@@ -109,7 +107,7 @@ public:
         if (this->old_encryption_scheme){
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
-                uint8_t tmp[SHA256_DIGEST_LENGTH];
+                uint8_t tmp[MD_HASH::DIGEST_LENGTH];
                 this->get_trace_key_cb(
                       reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
                     , static_cast<int>(derivator_len)
@@ -137,7 +135,7 @@ public:
             this->master_key_loaded = true;
         }
 
-        uint8_t tmp[SHA256_DIGEST_LENGTH];
+        uint8_t tmp[MD_HASH::DIGEST_LENGTH];
         {
             MD_HASH sha256;
             sha256.update(derivator, derivator_len);

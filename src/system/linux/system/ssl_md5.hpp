@@ -32,7 +32,7 @@ class SslMd5
     MD5_CTX md5;
 
 public:
-    enum : int { DIGEST_LENGTH = MD5_DIGEST_LENGTH };
+    enum : unsigned { DIGEST_LENGTH = MD5_DIGEST_LENGTH };
 
     SslMd5()
     {

@@ -580,14 +580,14 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
             return false;
         }
 
-        uint8_t hash[SHA256_DIGEST_LENGTH]{};
+        uint8_t hash[MD_HASH::DIGEST_LENGTH]{};
         if (file_start_hmac_sha256(filename.c_str(),
                              hmac_key, hmac_key_len,
                              quick?QUICK_CHECK_LENGTH:0, hash) < 0) {
             std::cerr << "Error reading file \"" << filename << "\"\n" << std::endl;
             return false;
         }
-        if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, SHA256_DIGEST_LENGTH)){
+        if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, MD_HASH::DIGEST_LENGTH)){
             std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)\n" << std::endl;
             return false;
         }
