@@ -653,7 +653,6 @@ test-canonical utils/theme.hpp   ;
 test-canonical utils/timeout.hpp ;
 test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/translation.hpp ;
-test-canonical utils/urandom_read.hpp ;
 test-canonical utils/utf.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;

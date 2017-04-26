@@ -29,21 +29,6 @@
 #include "transport/in_crypto_transport.hpp"
 
 
-struct temporary_concat
-{
-    char str[1024];
-
-    temporary_concat(const char * a, const char * b)
-    {
-        if (std::snprintf(this->str, sizeof(this->str), "%s%s", a, b) >= int(sizeof(this->str))) {
-            throw Error(ERR_TRANSPORT);
-        }
-    }
-
-    const char * c_str() const noexcept
-    { return this->str; }
-};
-
 inline time_t meta_parse_sec(const char * first, const char * last)
 {
     time_t sec = 0;
@@ -390,6 +375,21 @@ private:
         return 0;
     }
 
+    struct temporary_concat
+    {
+        char str[1024];
+
+        temporary_concat(const char * a, const char * b)
+        {
+            if (std::snprintf(this->str, sizeof(this->str), "%s%s", a, b) >= int(sizeof(this->str))) {
+                throw Error(ERR_TRANSPORT);
+            }
+        }
+
+        const char * c_str() const noexcept
+        { return this->str; }
+    };
+
 public:
     using EncryptionMode = InCryptoTransport::EncryptionMode;
 
@@ -404,8 +404,14 @@ public:
     , meta_header_version(WrmVersion::v1)
     , meta_header_has_checksum(false)
     {
-        temporary_concat tmp(filename, extension);
-        const char * meta_filename = tmp.c_str();
+        char meta_filename[1024];
+        // concat
+        {
+            int res = std::snprintf(meta_filename, sizeof(meta_filename), "%s%s", filename, extension);
+            if (res >= int(sizeof(meta_filename))) {
+                throw Error(ERR_TRANSPORT);
+            }
+        }
         this->buf_meta.open(meta_filename);
 
         char line[32];

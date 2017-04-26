@@ -89,7 +89,6 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
-    LOG(LOG_INFO, "TestWrmCapture");
     OpenSSL_add_all_digests();
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
@@ -226,8 +225,6 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
-    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
-
     OpenSSL_add_all_digests();
 
     struct CheckFiles1 {
@@ -550,7 +547,6 @@ int wrmcapture_write_meta_file(
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {
-    LOG(LOG_INFO, "TestWrmCaptureLocalHashed");
     struct {
         std::string s;
 
@@ -598,8 +594,6 @@ struct TestFstat : Fstat
 
 RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
-    LOG(LOG_INFO, "TestOutmetaTransport");
-
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -700,8 +694,6 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
 RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
-    LOG(LOG_INFO, "TestOutmetaTransportWithSum");
-
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;

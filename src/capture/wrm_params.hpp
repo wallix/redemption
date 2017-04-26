@@ -83,7 +83,3 @@ struct WrmParams
     , wrm_verbose(wrm_verbose)
     {}
 };
-
-struct WrmInputParams
-{
-};
