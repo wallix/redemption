@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "capture/capture.hpp"
+#include "capture/file_to_graphic.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
@@ -93,7 +93,7 @@ public:
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
     , movie_path(replay_path, movie)
-    , in_trans(&this->cctx, movie_path.prefix, movie_path.extension, 0)
+    , in_trans(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
@@ -139,7 +139,7 @@ public:
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
     , movie_path(replay_path, movie)
-    , in_trans(&this->cctx, movie_path.prefix, movie_path.extension, 0)
+    , in_trans(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(this->in_trans, begin_read, end_read, true, debug_capture)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
@@ -168,7 +168,7 @@ public:
         }
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-        time_t begin_file_read = begin_read.tv_sec+this->in_trans.meta_line.start_time - this->balise_time_frame;
+        time_t begin_file_read = begin_read.tv_sec+this->in_trans.get_meta_line().start_time - this->balise_time_frame;
         this->in_trans.set_begin_time(begin_file_read);
     }
 
@@ -246,11 +246,11 @@ public:
     }
 
     time_t get_real_time_movie_begin() {
-        return this->in_trans.meta_line.start_time;
+        return this->in_trans.get_meta_line().start_time;
     }
 
     time_t get_movie_time_length() {
-        time_t start = this->in_trans.meta_line.start_time;
+        time_t start = this->in_trans.get_meta_line().start_time;
 
         std::string movie_path_str(this->movie_path.prefix);
         movie_path_str += std::string(".mwrm");

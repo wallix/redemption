@@ -95,9 +95,9 @@
         stmt, Error,                               \
         [&](Error const & e) {                     \
             if (e.id == ErrId) {                   \
-                RED_CHECK_EQUAL(e.id, ErrId);      \
                 return true;                       \
             }                                      \
+            RED_CHECK_EQUAL(e.id, ErrId);          \
             return false;                          \
         }                                          \
     )

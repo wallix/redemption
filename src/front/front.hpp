@@ -108,6 +108,7 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
+#include "utils/genfstat.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/sugar/non_null_ptr.hpp"
@@ -120,7 +121,7 @@
 #include "capture/wrm_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/flv_params_from_ini.hpp"
-#include "capture/wrm_capture.hpp" // TODO GraphicToFile::Verbose
+#include "capture/cryptofile.hpp"
 
 
 class Front : public FrontAPI
@@ -895,10 +896,10 @@ public:
         bool full_video = false;
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
-        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-            | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-            | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-            | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+        RDPSerializer::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
+            | (ini.get<cfg::debug::primary_orders>() ?RDPSerializer::Verbose::primary_orders:RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::secondary_orders>() ?RDPSerializer::Verbose::secondary_orders:RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::bitmap_update>() ?RDPSerializer::Verbose::bitmap_update:RDPSerializer::Verbose::none);
 
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();

@@ -32,7 +32,7 @@ class SslMd4
     MD4_CTX md4;
 
 public:
-    enum : int { DIGEST_LENGTH = MD4_DIGEST_LENGTH};
+    enum : unsigned { DIGEST_LENGTH = MD4_DIGEST_LENGTH};
 
     SslMd4()
     {

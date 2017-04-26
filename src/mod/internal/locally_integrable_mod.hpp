@@ -79,14 +79,16 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (this->rail_enabled &&
-            this->first_click_down_event.object_and_time) {
+        if (this->rail_enabled) {
+            if (this->first_click_down_event.object_and_time) {
+                out_event_handlers.emplace_back(
+                        &this->first_click_down_event,
+                        &this->first_click_down_event_handler,
+                        INVALID_SOCKET
+                    );
+            }
 
-            out_event_handlers.emplace_back(
-                    &this->first_click_down_event,
-                    &this->first_click_down_event_handler,
-                    INVALID_SOCKET
-                );
+            this->client_execute.get_event_handlers(out_event_handlers);
         }
 
         InternalMod::get_event_handlers(out_event_handlers);
@@ -209,7 +211,7 @@ struct LocallyIntegrableMod : public InternalMod {
                     this->alt_key_pressed = false;
                 }
                 else if ((param1 == 62) && !param3) {
-                    LOG(LOG_INFO, "Close by user (Alt+F4)");
+                    LOG(LOG_INFO, "LocallyIntegrableMod::rdp_input_scancode: Close by user (Alt+F4)");
                     throw Error(ERR_WIDGET);    // F4 key pressed
                 }
             }

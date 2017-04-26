@@ -34,7 +34,7 @@ class SslSha512
     SHA512_CTX sha512;
 
 public:
-    enum : int { DIGEST_LENGTH = SHA512_DIGEST_LENGTH };
+    enum : unsigned { DIGEST_LENGTH = SHA512_DIGEST_LENGTH };
 
     SslSha512()
     {

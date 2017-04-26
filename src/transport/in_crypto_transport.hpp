@@ -60,22 +60,23 @@ private:
 
 public:
     explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
-        : fd(-1)
-        , eof(true)
-        , file_len(0)
-        , current_len(0)
-        , cctx(cctx)
-        , clear_data{}
-        , clear_pos(0)
-        , raw_size(0)
-        , state(0)
-        , MAX_CIPHERED_SIZE(0)
-        , encryption_mode(encryption_mode)
-        , encrypted(false)
+    : fd(-1)
+    , eof(true)
+    , file_len(0)
+    , current_len(0)
+    , cctx(cctx)
+    , clear_data{}
+    , clear_pos(0)
+    , raw_size(0)
+    , state(0)
+    , MAX_CIPHERED_SIZE(0)
+    , encryption_mode(encryption_mode)
+    , encrypted(false)
     {
     }
 
     ~InCryptoTransport() {
+        // TODO closed fd
     }
 
 
@@ -92,7 +93,6 @@ public:
     void hash(const char * pathname)
     {
         this->open(pathname);
-
     }
 
     int partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
@@ -105,21 +105,19 @@ public:
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-
     void open(const char * pathname)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
-
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
 
         this->eof = false;
-
+        this->current_len = 0;
 
         size_t base_len = 0;
         const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
@@ -157,10 +155,7 @@ public:
                     this->raw_size = avail;
                     this->clear_pos = 0;
                     ::memcpy(this->clear_data, data, avail);
-                    struct stat sb;
-                    if (::stat(pathname, &sb) == 0) {
-                        this->file_len = sb.st_size;
-                    }
+                    this->file_len = this->get_file_len(pathname);
                     return;
                 }
                 this->close();
@@ -174,10 +169,7 @@ public:
             this->raw_size = 40;
             this->clear_pos = 0;
             ::memcpy(this->clear_data, data, 40);
-            struct stat sb;
-            if (::stat(pathname, &sb) == 0) {
-                this->file_len = sb.st_size;
-            }
+            this->file_len = this->get_file_len(pathname);
             return;
         }
 
@@ -190,10 +182,10 @@ public:
         // IV: 32 bytes
         // (random)
 
+        Parse p(data);
         {
-            Parse p(data);
             const int magic = p.in_uint32_le();
-            if (magic != 0x4D464357) {
+            if (magic != WABCRYPTOFILE_MAGIC) {
                 this->encrypted = false;
                 // encryption requested but no encryption
                 if (this->encryption_mode == EncryptionMode::Encrypted){
@@ -204,21 +196,20 @@ public:
                 this->raw_size = 40;
                 this->clear_pos = 0;
                 ::memcpy(this->clear_data, data, 40);
-                struct stat sb;
-                if (::stat(pathname, &sb) == 0) {
-                    this->file_len = sb.st_size;
-                }
+                this->file_len = this->get_file_len(pathname);
                 return;
             }
         }
         this->encrypted = true;
-        Parse p(data+4);
-        const int version = p.in_uint32_le();
-        if (version > WABCRYPTOFILE_VERSION) {
-            // Unsupported version
-            this->close();
-            LOG(LOG_INFO, "unsupported_version");
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+        // check version
+        {
+            const uint32_t version = p.in_uint32_le();
+            if (version > WABCRYPTOFILE_VERSION) {
+                // Unsupported version
+                this->close();
+                LOG(LOG_INFO, "unsupported_version");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
         }
 
         // Read File trailer, check for magic trailer and size
@@ -227,7 +218,7 @@ public:
         uint8_t trail[8] = {};
         this->raw_read(trail, 8);
         Parse pt1(&trail[0]);
-        if (pt1.in_uint32_be() != 0x4D464357){
+        if (pt1.in_uint32_be() != WABCRYPTOFILE_MAGIC){
             // truncated file
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
@@ -278,7 +269,6 @@ public:
     }
 
 private:
-
     size_t xaes_decrypt(const uint8_t src[], size_t src_sz, uint8_t dst[])
     {
         int written = 0;
@@ -342,9 +332,11 @@ private:
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
 
+                    // PERF allocation in loop
                     std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
                     this->raw_read(&enc_buf[0], enc_len);
 
+                    // PERF allocation in loop
                     std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
                     size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
 
@@ -423,7 +415,7 @@ private:
                 }
                 remaining_len -= res;
             };
-            
+
             this->current_len += len;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
@@ -434,7 +426,6 @@ private:
         return -1;
     }
 
-
     bool do_atomic_read(uint8_t * buffer, size_t len) override
     {
         int res = do_partial_read(buffer, len);
@@ -444,4 +435,13 @@ private:
         return res == int(len);
     }
 
+    std::size_t get_file_len(char const * pathname)
+    {
+        struct stat sb;
+        if (int err = ::stat(pathname, &sb)) {
+            LOG(LOG_ERR, "crypto: stat error %d", err);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        return sb.st_size;
+    }
 };

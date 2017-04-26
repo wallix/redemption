@@ -26,8 +26,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "utils/sugar/noncopyable.hpp"
 
-class Fstat
+class Fstat : noncopyable
 {
 public:
     virtual int stat(const char * filename, struct stat & stat)
@@ -35,6 +36,6 @@ public:
         int err = ::stat(filename, &stat);
         return err;
     }
-    virtual ~Fstat() {}
+    virtual ~Fstat() = default;
 };
 

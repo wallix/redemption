@@ -38,29 +38,24 @@
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/local_fd.hpp"
-#include "utils/sugar/range.hpp"
 #include "utils/sugar/bytes_t.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/iter.hpp"
-#include "utils/sugar/exchange.hpp"
 
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/drawable.hpp"
 #include "utils/apps/recording_progress.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/urandom_read.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
-#include "utils/pattutils.hpp"
 #include "utils/colors.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/png.hpp"
-#include "utils/fdbuf.hpp"
 
 #include "cxx/cxx.hpp"
 
@@ -126,11 +121,8 @@
 #include "capture/cryptofile.hpp"
 
 #include "capture/video_capture.hpp"
-#include "capture/wrm_capture.hpp"
 
 #include "capture/RDPChunkedDevice.hpp"
-
-#include "openssl_crypto.hpp"
 
 
 class PatternSearcher

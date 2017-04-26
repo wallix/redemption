@@ -34,7 +34,7 @@ class SslSha256
     SHA256_CTX sha256;
 
 public:
-    enum : int { DIGEST_LENGTH = SHA256_DIGEST_LENGTH };
+    enum : unsigned { DIGEST_LENGTH = SHA256_DIGEST_LENGTH };
 
     SslSha256()
     {
