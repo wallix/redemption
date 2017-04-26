@@ -567,15 +567,17 @@ public:
         // IV: 32 bytes
         // (random)
 
-
         Parse p(data+4);
-        const int version = p.in_uint32_le();
-        if (version > WABCRYPTOFILE_VERSION) {
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                ::getpid(), version, WABCRYPTOFILE_VERSION);
-            errno = EINVAL;
-            this->close();
-            return -1;
+        // check version
+        {
+            const uint32_t version = p.in_uint32_le();
+            if (version > WABCRYPTOFILE_VERSION) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                    ::getpid(), version, WABCRYPTOFILE_VERSION);
+                errno = EINVAL;
+                this->close();
+                return -1;
+            }
         }
 
         // TODO: replace p.p with some array view of 32 bytes ?

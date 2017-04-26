@@ -211,12 +211,15 @@ public:
         }
         this->encrypted = true;
         Parse p(data+4);
-        const int version = p.in_uint32_le();
-        if (version > WABCRYPTOFILE_VERSION) {
-            // Unsupported version
-            this->close();
-            LOG(LOG_INFO, "unsupported_version");
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+        // check version
+        {
+            const uint32_t version = p.in_uint32_le();
+            if (version > WABCRYPTOFILE_VERSION) {
+                // Unsupported version
+                this->close();
+                LOG(LOG_INFO, "unsupported_version");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
         }
 
         // Read File trailer, check for magic trailer and size
