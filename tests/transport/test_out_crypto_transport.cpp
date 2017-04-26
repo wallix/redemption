@@ -46,7 +46,7 @@ inline void init_keys(CryptoContext & cctx)
     ));
 }
 
-
+// TODO should be a subclass of InCryptoTransport
 class read_encrypted
 {
 public:

@@ -133,6 +133,11 @@ struct bytes_array : array_view<uint8_t>
     template<class T>
     bytes_array & operator=(T & other) noexcept(noexcept(bytes_array(other)))
     { return (*this = bytes_array(other)); }
+
+    char       * to_charp() noexcept { return reinterpret_cast<char *>(this->data()); }
+    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
+    uint8_t       * to_u8p() noexcept { return this->data(); }
+    uint8_t const * to_u8p() const noexcept { return this->data(); }
 };
 
 /**
@@ -194,4 +199,7 @@ struct const_bytes_array : array_view<const uint8_t>
     template<class T>
     const_bytes_array & operator=(T & other) noexcept(noexcept(const_bytes_array(other)))
     { return (*this = const_bytes_array(other)); }
+
+    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
+    uint8_t const * to_u8p() const noexcept { return this->data(); }
 };

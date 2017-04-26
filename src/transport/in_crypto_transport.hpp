@@ -332,9 +332,11 @@ private:
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
 
+                    // PERF allocation in loop
                     std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
                     this->raw_read(&enc_buf[0], enc_len);
 
+                    // PERF allocation in loop
                     std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
                     size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
 
