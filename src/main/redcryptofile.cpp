@@ -27,6 +27,10 @@
 
 #include "../tests/includes/test_only/lcg_random.hpp" // TODO
 
+
+#define CHECK_HANDLE(handle) if (!handle) return -1
+#define CHECK_NOTHROW(exp) do { try { exp; } catch (...) { return -1; } } while (0)
+
 extern "C"
 {
 
@@ -101,9 +105,9 @@ public:
 
 struct RedCryptoReaderHandle
 {
-    RedCryptoReaderHandle(
-        InCryptoTransport::EncryptionMode encryption,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+    RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
+                        , get_hmac_key_prototype * hmac_fn
+                        , get_trace_key_prototype * trace_fn)
     : cctxw(hmac_fn, trace_fn)
     , in_crypto_transport(cctxw.cctx, encryption)
     {}
@@ -116,16 +120,41 @@ public:
 };
 
 
-RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-{
+
+using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
+
+inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
+    char const * t = "0123456789ABCDEF";
+    static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
+    auto phex = hashhex;
+    for (uint8_t c : hash) {
+        *phex++ = t[c >> 4];
+        *phex++ = t[c & 0xf];
+    }
+    *phex = '\0';
+}
+
+
+const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle) {
+    return handle->qhashhex;
+}
+
+const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
+    return handle->fhashhex;
+}
+
+
+RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
+                                               , int with_checksum
+                                               , get_hmac_key_prototype * hmac_fn
+                                               , get_trace_key_prototype * trace_fn) {
     LOG(LOG_INFO, "redcryptofile_writer_new()");
     try {
-        auto handler = new (std::nothrow) RedCryptoWriterHandle(
+        auto handle = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
         );
-        std::unique_ptr<RedCryptoWriterHandle> u(handler);
         LOG(LOG_INFO, "redcryptofile_writer_new -> exit");
-        return u.release();
+        return handle;
     }
     catch (...) {
         LOG(LOG_INFO, "redcryptofile_writer_new() -> exit exception");
@@ -133,37 +162,15 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption, int with_c
     }
 }
 
-
-#define CHECK_HANDLE(handle) if (!handle) return -1
-#define CHECK_NOTHROW(exp) do { try { exp; } catch (...) { return -1; } } while (0)
-
-int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
-{
+int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path) {
     LOG(LOG_INFO, "redcryptofile_writer_open()");
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.open(path, 0 /* TODO groupid */));
     return 0;
 }
 
-RedCryptoReaderHandle * redcryptofile_open_reader(
-    char const * path,
-    get_hmac_key_prototype* hmac_fn, get_trace_key_prototype* trace_fn)
-{
-    try {
-        auto handler = new (std::nothrow) RedCryptoReaderHandle(
-            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
-        );
-        std::unique_ptr<RedCryptoReaderHandle> u(handler);
-        handler->in_crypto_transport.open(path);
-        return u.release();
-    }
-    catch (...) {
-        return nullptr;
-    }
-}
 
-int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len)
-{
+int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
     LOG(LOG_INFO, "redcryptofile_write()");
     CHECK_HANDLE(handle);
     try {
@@ -177,48 +184,8 @@ int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * b
     return len;
 }
 
-// 0: if end of file, len: if data was read, negative number on error
-int redcryptofile_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len)
-{
-    CHECK_HANDLE(handle);
-    try {
-        return handle->in_crypto_transport.partial_read(buffer, len);
-    }
-    catch (Error e) {
-        return -e.id;
-    }
-    catch (...) {
-        return -1;
-    }
-}
 
-using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
-
-inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept
-{
-    char const * t = "0123456789ABCDEF";
-    static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
-    auto phex = hashhex;
-    for (uint8_t c : hash) {
-        *phex++ = t[c >> 4];
-        *phex++ = t[c & 0xf];
-    }
-    *phex = '\0';
-}
-
-
-const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle)
-{
-    return handle->qhashhex;
-}
-
-const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle)
-{
-    return handle->fhashhex;
-}
-
-int redcryptofile_writer_close(RedCryptoWriterHandle * handle)
-{
+int redcryptofile_writer_close(RedCryptoWriterHandle * handle) {
     LOG(LOG_INFO, "redcryptofile_writer_close()");
     CHECK_HANDLE(handle);
     HashArray qhash;
@@ -230,24 +197,77 @@ int redcryptofile_writer_close(RedCryptoWriterHandle * handle)
     if (handle) {
         hash_to_hashhex(fhash, handle->fhashhex);
     }
+
+    hexdump(qhash, sizeof(HashArray));
+    
+
     LOG(LOG_INFO, "redcryptofile_writer_close() done");
     return 0;
 }
 
 
-void redcryptofile_writer_delete(RedCryptoWriterHandle * handle)
-{
+void redcryptofile_writer_delete(RedCryptoWriterHandle * handle) {
     LOG(LOG_INFO, "redcryptofile_writer_delete()");
     delete handle;
     LOG(LOG_INFO, "redcryptofile_writer_delete() done");
 }
 
-int redcryptofile_close_reader(RedCryptoReaderHandle * handle)
-{
+
+RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
+                                               , get_trace_key_prototype* trace_fn) {
+    LOG(LOG_INFO, "redcryptofile_reader_new()");
+    try {
+        auto handle = new (std::nothrow) RedCryptoReaderHandle(
+            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
+        );
+        LOG(LOG_INFO, "redcryptofile_reader_new() -> exit ok");
+        return handle;
+    }
+    catch (...) {
+        LOG(LOG_INFO, "redcryptofile_reader_new() -> exit exception");
+        return nullptr;
+    }
+}
+
+int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path) {
+    LOG(LOG_INFO, "redcryptofile_reader_open()");
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(handle->in_crypto_transport.open(path));
+    return 0;
+}
+
+
+// 0: if end of file, len: if data was read, negative number on error
+int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len) {
+    LOG(LOG_INFO, "redcryptofile_reader_read()");
+    CHECK_HANDLE(handle);
+    try {
+        LOG(LOG_INFO, "redcryptofile_reader_read() done");
+        return handle->in_crypto_transport.partial_read(buffer, len);
+    }
+    catch (Error e) {
+        LOG(LOG_INFO, "redcryptofile_reader_read() error");
+        return -e.id;
+    }
+    catch (...) {
+        LOG(LOG_INFO, "redcryptofile_reader_read() error");
+        return -1;
+    }
+}
+
+int redcryptofile_reader_close(RedCryptoReaderHandle * handle) {
+    LOG(LOG_INFO, "redcryptofile_reader_close()");
     CHECK_HANDLE(handle);
     std::unique_ptr<RedCryptoReaderHandle> u(handle);
     CHECK_NOTHROW(handle->in_crypto_transport.close());
+    LOG(LOG_INFO, "redcryptofile_reader_close() done");
     return 0;
+}
+
+void redcryptofile_reader_delete(RedCryptoReaderHandle * handle) {
+    LOG(LOG_INFO, "redcryptofile_reader_delete()");
+    delete handle;
+    LOG(LOG_INFO, "redcryptofile_reader_delete() done");
 }
 
 }

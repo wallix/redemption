@@ -22,8 +22,8 @@
 #define RED_TEST_MODULE TestRedcryptofile
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGPRINT
-#define LOGNULL
+#define LOGPRINT
+//#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/redcryptofile.hpp"
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
     // Writer
     {
-        int with_encryption = 0; // int used as boolean 0 false, true otherwise
+        int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, &hmac_fn, &trace_fn);
@@ -88,26 +88,27 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         RED_CHECK_EQ(redcryptofile_writer_close(handle), 0);
 
-//        RED_CHECK_EQ(qhashhex, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
-//        RED_CHECK_EQ(fhashhex, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_EQ(redcryptofile_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_EQ(redcryptofile_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
     }
 
     // Reader
     {
-        auto * handle = redcryptofile_open_reader(finalname, &hmac_fn, &trace_fn);
+        auto handle = redcryptofile_reader_new(&hmac_fn, &trace_fn);
+        RED_CHECK_NE(redcryptofile_reader_open(handle, finalname), -1);
         RED_CHECK_NE(handle, nullptr);
 
         uint8_t buf[31];
 
         size_t total = 0; 
         while (total < sizeof(buf)) {
-            int res = redcryptofile_read(handle, &buf[total], 10);
+            int res = redcryptofile_reader_read(handle, &buf[total], 10);
             LOG(LOG_INFO, "%d", res);
             BOOST_CHECK(res > 0);
             total += size_t(res);
         }
         RED_CHECK_MEM_C(bytes_array(buf, 31), "We write, and again, and so on.");
-        RED_CHECK_EQ(redcryptofile_close_reader(handle), 0);
+        RED_CHECK_EQ(redcryptofile_reader_close(handle), 0);
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
@@ -117,14 +118,16 @@ RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
     LOG(LOG_INFO, "TestRedCryptofileError");
     LOG(LOG_INFO, "Errors below are expected this is the purpose of the test");
-    auto handle = redcryptofile_writer_new(1, 1, &hmac_fn, &trace_fn);
-    RED_CHECK_EQ(redcryptofile_writer_open(handle, "/"), -1);
-    RED_CHECK_EQ(redcryptofile_open_reader("/", &hmac_fn, &trace_fn), nullptr);
+    auto handle_w = redcryptofile_writer_new(1, 1, &hmac_fn, &trace_fn);
+    RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/"), -1);
+
+    auto handle_r = redcryptofile_reader_new(&hmac_fn, &trace_fn);
+    RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/"), -1);
 
     RED_CHECK_EQ(redcryptofile_writer_write(nullptr, bytes("We write, "), 10), -1);
     RED_CHECK_EQ(redcryptofile_writer_close(nullptr), -1);
     uint8_t buf[12];
-    RED_CHECK_EQ(redcryptofile_read(nullptr, buf, 10), -1);
-    RED_CHECK_EQ(redcryptofile_close_reader(nullptr), -1);
+    RED_CHECK_EQ(redcryptofile_reader_read(nullptr, buf, 10), -1);
+    RED_CHECK_EQ(redcryptofile_reader_close(nullptr), -1);
     LOG(LOG_INFO, "TestRedCryptofileError done");
 }
