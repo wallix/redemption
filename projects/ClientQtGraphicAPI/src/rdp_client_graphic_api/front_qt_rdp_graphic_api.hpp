@@ -245,8 +245,6 @@ public:
     virtual void callback() = 0;
 
     virtual bool can_be_start_capture() override { return true; }
-    virtual bool must_be_stop_capture() override { return true; }
-
 
     virtual void options() {
         LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
@@ -327,11 +325,11 @@ public:
     {}
 
     ~Mod_Qt() {
-        this->disconnect();
+        this->disconnect(true);
     }
 
 
-    void disconnect() {
+    void disconnect(bool is_pipe_ok) {
 
         if (this->_sckRead != nullptr) {
             delete (this->_sckRead);
@@ -340,7 +338,9 @@ public:
 
         if (this->_callback != nullptr) {
             TimeSystem timeobj;
-            this->_callback->disconnect(timeobj.get_time().tv_sec);
+            if (is_pipe_ok) {
+                this->_callback->disconnect(timeobj.get_time().tv_sec);
+            }
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->mod = nullptr;
@@ -382,7 +382,7 @@ public:
                 return false;
             }
         } else {
-            std::string windowErrorMsg(errorMsg+" invalid ip or port.");
+            std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
@@ -435,6 +435,15 @@ public:
         return true;
     }
 
+    void prog_draw_event_timer(int time_to_wake) {
+        LOG(LOG_INFO, "prog_draw_event_timer");
+        if (!this->timer.isActive()) {
+
+//             this->timer.start( time_to_wake );
+//             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
+        }
+    }
+
 
 public Q_SLOTS:
     void call_draw_event() {
@@ -459,6 +468,8 @@ public Q_SLOTS:
             }
         }
     }
+
+
 
 
 
@@ -1499,6 +1510,8 @@ public:
 
     CHANNELS::ChannelDefArray   cl;
 
+    bool is_pipe_ok;
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1521,6 +1534,7 @@ public:
       , _error("error")
       , keymap()
       , ctrl_alt_delete(false)
+      , is_pipe_ok(true)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -1550,6 +1564,11 @@ public:
         this->keymap.init_layout(this->info.keylayout);
 
         this->disconnect("");
+    }
+
+    virtual bool must_be_stop_capture() override {
+        this->is_pipe_ok = false;
+        return true;
     }
 
     virtual void begin_update() override {
@@ -1604,18 +1623,15 @@ public:
             return ResizeResult::fail;
         }
 
-        bool remake_screen = (this->info.width != width || this->info.height != height);
-
-        this->mod_bpp = bpp;
         this->info.bpp = bpp;
-        this->info.width = width;
-        this->info.height = height;
         this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-        if (this->info.bpp ==  32) {
-            this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
-        }
+//         if (this->info.bpp ==  32) {
+//             this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
+//         }
 
-        if (remake_screen) {
+        if (this->info.width != width || this->info.height != height) {
+            this->info.width = width;
+            this->info.height = height;
             if (this->screen) {
                 this->screen->disconnection();
                 this->dropScreen();
@@ -1694,9 +1710,8 @@ public:
                                                 , begin_read
                                                 , end_read
                                                 , Screen_Qt::BALISED_FRAME
-                                                //
-                                                //to_verbose_flags(0)
-                                                , FileToGraphic::Verbose::play
+                                                // FileToGraphic::Verbose::play
+                                                , to_verbose_flags(0)
                                                 ));
 
             //this->replay_mod.get()->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
@@ -2897,9 +2912,9 @@ public:
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
             this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
-            this->connected = true;
+            //this->connected = true;
             this->form->hide();
-            if (this->replay_mod.get()->get_wrm_version() == 2) {
+            if (this->replay_mod.get()->get_wrm_version() == WrmVersion::v2) {
                 this->bar = new ProgressBarWindow(this->screen->movie_time, this);
                 this->screen->pre_load_movie();
             }
@@ -2916,6 +2931,7 @@ public:
     }
 
     virtual bool connect() {
+        this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
@@ -3043,7 +3059,7 @@ public:
     void disconnect(std::string const & error) override {
 
         if (this->mod_qt != nullptr) {
-            this->mod_qt->disconnect();
+            this->mod_qt->disconnect(true);
         }
 
         this->form->set_IPField(this->target_IP);
@@ -3069,9 +3085,18 @@ public:
 
     virtual void callback() override {
 
-        if (this->mod != nullptr && this->cache != nullptr) {
+        if (this->mod != nullptr) {
             try {
                 this->mod->draw_event(time(nullptr), *(this));
+                if (!this->is_pipe_ok) {
+                    this->dropScreen();
+                    const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
+                    LOG(LOG_INFO, "%s", errorMsg.c_str());
+                    std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+
+                    this->mod_qt->disconnect(false);
+                    this->disconnect(labelErrorMsg);
+                }
             } catch (const Error &) {
                 this->dropScreen();
                 const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
@@ -3081,6 +3106,7 @@ public:
                 this->disconnect(labelErrorMsg);
             }
         }
+
     }
 
 

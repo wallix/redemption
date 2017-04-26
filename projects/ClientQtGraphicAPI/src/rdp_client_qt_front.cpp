@@ -464,7 +464,8 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   , to_verbose_flags(0)
+                                   //, to_verbose_flags(0)
+                                   , RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -2798,8 +2799,6 @@ public:
 
     void send_to_clipboard_Buffer(InStream & chunk) {
 
-        // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Data
-
         const size_t length_of_data_to_dump(chunk.in_remain());
         const size_t sum_buffer_and_data(this->_cb_buffers.size + length_of_data_to_dump);
         const uint8_t * utf8_data = chunk.get_current();
@@ -2906,7 +2905,8 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;        // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
+    // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
+    RDPVerbose verbose = RDPVerbose::none;                  // RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

@@ -28,7 +28,9 @@ namespace rdpsnd {
 
 // 2.2.2.1 Server Audio Formats and Version PDU (SERVER_AUDIO_VERSION_AND_FORMATS)
 //
-// The Server Audio Formats and Version PDU is a PDU used by the server to send version information and a list of supported audio formats to the client. This PDU MUST be sent using virtual channels.
+// The Server Audio Formats and Version PDU is a PDU used by the server to send version
+// information and a list of supported audio formats to the client. This PDU MUST be sent
+// using virtual channels.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -51,24 +53,38 @@ namespace rdpsnd {
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// Header (4 bytes): A RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_FORMATS (0x07).
+// Header (4 bytes): A RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU
+//                   Header MUST be set to SNDC_FORMATS (0x07).
 //
-// dwFlags (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// dwFlags (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary
+//                    and MUST be ignored on receipt.
 //
-// dwVolume (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// dwVolume (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary
+//                     and MUST be ignored on receipt.
 //
-// dwPitch (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// dwPitch (4 bytes): A 32-bit unsigned integer. This field is unused. The value is arbitrary
+//                    and MUST be ignored on receipt.
 //
-// wDGramPort (2 bytes): A 16-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// wDGramPort (2 bytes): A 16-bit unsigned integer. This field is unused. The value is arbitrary
+//                       and MUST be ignored on receipt.
 //
-// wNumberOfFormats (2 bytes): A 16-bit unsigned integer. Number of AUDIO_FORMAT structures contained in the sndFormats array.
+// wNumberOfFormats (2 bytes): A 16-bit unsigned integer. Number of AUDIO_FORMAT structures
+//                             contained in the sndFormats array.
 //
-// cLastBlockConfirmed (1 byte): An 8-bit unsigned integer specifying the initial value for the cBlockNo counter used by the WaveInfo PDU, Wave2 PDU, Wave Encrypt PDU, UDP Wave PDU, and UDP Wave Last PDU. The value sent by the server is arbitrary. See section 3.3.5.2.1.1 for more information about the cBlockNo counter.
+// cLastBlockConfirmed (1 byte): An 8-bit unsigned integer specifying the initial value for
+//                               the cBlockNo counter used by the WaveInfo PDU, Wave2 PDU, Wave
+//                               Encrypt PDU, UDP Wave PDU, and UDP Wave Last PDU. The value sent
+//                               by the server is arbitrary. See section 3.3.5.2.1.1 for more
+//                               information about the cBlockNo counter.
 //
-// wVersion (2 bytes): A 16-bit unsigned integer that contains the version of the protocol supported by the server.<3>
+// wVersion (2 bytes): A 16-bit unsigned integer that contains the version of the protocol
+//                     supported by the server.<3>
 //
-// bPad (1 byte): An 8-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// bPad (1 byte): An 8-bit unsigned integer. This field is unused. The value is arbitrary and MUST
+//                be ignored on receipt.
 //
-// sndFormats (variable): A variable-sized array of audio formats supported by the server, each conforming in structure to the AUDIO_FORMAT structure. The number of formats in the array is wNumberOfFormats.
+// sndFormats (variable): A variable-sized array of audio formats supported by the server, each
+//                        conforming in structure to the AUDIO_FORMAT structure. The number of
+//                        formats in the array is wNumberOfFormats.
 
 }
