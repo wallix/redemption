@@ -2605,7 +2605,7 @@ public:
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
+            //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
         (void) color_ctx;
@@ -2619,7 +2619,7 @@ public:
     void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
+            //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
         (void) color_ctx;
@@ -2661,7 +2661,7 @@ public:
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
+            //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
         (void) color_ctx;
