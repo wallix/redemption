@@ -60,18 +60,18 @@ private:
 
 public:
     explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
-        : fd(-1)
-        , eof(true)
-        , file_len(0)
-        , current_len(0)
-        , cctx(cctx)
-        , clear_data{}
-        , clear_pos(0)
-        , raw_size(0)
-        , state(0)
-        , MAX_CIPHERED_SIZE(0)
-        , encryption_mode(encryption_mode)
-        , encrypted(false)
+    : fd(-1)
+    , eof(true)
+    , file_len(0)
+    , current_len(0)
+    , cctx(cctx)
+    , clear_data{}
+    , clear_pos(0)
+    , raw_size(0)
+    , state(0)
+    , MAX_CIPHERED_SIZE(0)
+    , encryption_mode(encryption_mode)
+    , encrypted(false)
     {
     }
 
@@ -155,10 +155,7 @@ public:
                     this->raw_size = avail;
                     this->clear_pos = 0;
                     ::memcpy(this->clear_data, data, avail);
-                    struct stat sb;
-                    if (::stat(pathname, &sb) == 0) {
-                        this->file_len = sb.st_size;
-                    }
+                    this->file_len = this->get_file_len(pathname);
                     return;
                 }
                 this->close();
@@ -172,10 +169,7 @@ public:
             this->raw_size = 40;
             this->clear_pos = 0;
             ::memcpy(this->clear_data, data, 40);
-            struct stat sb;
-            if (::stat(pathname, &sb) == 0) {
-                this->file_len = sb.st_size;
-            }
+            this->file_len = this->get_file_len(pathname);
             return;
         }
 
@@ -188,8 +182,8 @@ public:
         // IV: 32 bytes
         // (random)
 
+        Parse p(data);
         {
-            Parse p(data);
             const int magic = p.in_uint32_le();
             if (magic != WABCRYPTOFILE_MAGIC) {
                 this->encrypted = false;
@@ -202,15 +196,11 @@ public:
                 this->raw_size = 40;
                 this->clear_pos = 0;
                 ::memcpy(this->clear_data, data, 40);
-                struct stat sb;
-                if (::stat(pathname, &sb) == 0) {
-                    this->file_len = sb.st_size;
-                }
+                this->file_len = this->get_file_len(pathname);
                 return;
             }
         }
         this->encrypted = true;
-        Parse p(data+4);
         // check version
         {
             const uint32_t version = p.in_uint32_le();
@@ -279,7 +269,6 @@ public:
     }
 
 private:
-
     size_t xaes_decrypt(const uint8_t src[], size_t src_sz, uint8_t dst[])
     {
         int written = 0;
@@ -435,7 +424,6 @@ private:
         return -1;
     }
 
-
     bool do_atomic_read(uint8_t * buffer, size_t len) override
     {
         int res = do_partial_read(buffer, len);
@@ -443,5 +431,15 @@ private:
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
         return res == int(len);
+    }
+
+    std::size_t get_file_len(char const * pathname)
+    {
+        struct stat sb;
+        if (int err = ::stat(pathname, &sb)) {
+            LOG(LOG_ERR, "crypto: stat error %d", err);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        return sb.st_size;
     }
 };
