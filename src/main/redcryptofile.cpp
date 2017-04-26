@@ -66,14 +66,8 @@ private:
         RandomWrapper(RandomType rnd_type)
         {
             switch (rnd_type) {
-                case LCG:
-                    new (&u.lcg) LCGRandom(0);
-                    rnd = &u.lcg;
-                    break;
-                case UDEV:
-                    new (&u.udev) UdevRandom();
-                    rnd = &u.udev;
-                    break;
+                case LCG: rnd = new (&u.lcg) LCGRandom(0); break;
+                case UDEV: rnd = new (&u.udev) UdevRandom(); break;
             }
         }
 
@@ -120,8 +114,8 @@ public:
 };
 
 
-
 using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
+static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
 
 inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
     char const * t = "0123456789ABCDEF";
@@ -173,13 +167,7 @@ int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
 int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
     LOG(LOG_INFO, "redcryptofile_write()");
     CHECK_HANDLE(handle);
-    try {
-        handle->out_crypto_transport.send(buffer, len);
-    }
-    catch (...)
-    {
-        return -1;
-    }
+    CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len));
     LOG(LOG_INFO, "redcryptofile_write() done");
     return len;
 }
@@ -191,16 +179,8 @@ int redcryptofile_writer_close(RedCryptoWriterHandle * handle) {
     HashArray qhash;
     HashArray fhash;
     CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
-    if (handle) {
-        hash_to_hashhex(qhash, handle->qhashhex);
-    }
-    if (handle) {
-        hash_to_hashhex(fhash, handle->fhashhex);
-    }
-
-    hexdump(qhash, sizeof(HashArray));
-    
-
+    hash_to_hashhex(qhash, handle->qhashhex);
+    hash_to_hashhex(fhash, handle->fhashhex);
     LOG(LOG_INFO, "redcryptofile_writer_close() done");
     return 0;
 }
@@ -245,7 +225,7 @@ int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, 
         LOG(LOG_INFO, "redcryptofile_reader_read() done");
         return handle->in_crypto_transport.partial_read(buffer, len);
     }
-    catch (Error e) {
+    catch (Error const & e) {
         LOG(LOG_INFO, "redcryptofile_reader_read() error");
         return -e.id;
     }
