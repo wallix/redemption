@@ -43,7 +43,7 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
-      , translator(Translation::language_t::EN)
+      , translator(Translation::language_t::FR)
     {}
 
     ~FrontDemoQtClient() {}

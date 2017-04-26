@@ -407,6 +407,22 @@ public:
             return;
         }
 
+        // TODO Keys riquiring AltGr are not working
+
+        // TODO detect if target is a Apple server and map char before to call keymapSym::event()
+        // char that must be mapped:
+        //         char             current interpretation with US layout
+        //          '!'       >>            '='
+        //          '§'       >>            '+'
+        //          '/'       >>            '='
+        //          '-'       >>            '§'
+        //          '*'       >>            '`'
+        //          'µ'
+        //          '£'
+        //          '_'       >>            '!'
+        //          '<'       >>            '.'
+        //          '>'       >>            '/'
+
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         this->keymapSym.event(device_flags, param1);
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
