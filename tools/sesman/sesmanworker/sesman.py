@@ -978,10 +978,8 @@ class Sesman():
                     # remove all "dangerous" characters in filename
                     import re
                     session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
-
-                    Logger().info(u"Session log will be redirected to %s" % session_log_path)
-
                     self.full_log_path = RECORD_PATH + session_log_path + u".log"
+                    Logger().info(u"Session log will be redirected to %s" % self.full_log_path)
                     data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
                     self.send_data(data_to_send)
 
