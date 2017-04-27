@@ -99,6 +99,9 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
+        
+        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_hash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_hash);
     }
 
     RED_CHECK(::unlink(finalname) == 0);
@@ -171,6 +174,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(randomSample, sizeof(randomSample)));
+
+        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
+
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
@@ -219,7 +226,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 
     RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
 
-    RED_CHECK_NO_THROW([&]{
+//    RED_CHECK_NO_THROW([&]{
         char buffer[40];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(finalname);
@@ -232,7 +239,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[30], 1));
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
-    }());
+
+        auto ct_qhash = ct.qhash(finalname);
+        RED_CHECK_MEM_AA(ct_qhash.hash, qhash);
+        auto ct_fhash = ct.fhash(finalname);
+        RED_CHECK_MEM_AA(ct_fhash.hash, fhash);
+
+//    }());
 
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
@@ -307,6 +320,9 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
+
+        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
@@ -371,6 +387,9 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
+                         
+        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
 }
