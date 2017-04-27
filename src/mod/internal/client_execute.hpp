@@ -770,7 +770,7 @@ public:
         if (this->button_1_down_event.object_and_time) {
             if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
                 this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
-                    MOUSE_BUTTON_PRESSED_TITLEBAR);
+                    this->button_1_down);
             }
 
             this->button_1_down_event.object_and_time = false;
