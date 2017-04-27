@@ -426,13 +426,13 @@ private:
         return -1;
     }
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         int res = do_partial_read(buffer, len);
         if ((res != 0) && (res != int(len))) {
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-        return res == int(len);
+        return res == int(len) ? Read::Ok : Read::Eof;
     }
 
     std::size_t get_file_len(char const * pathname)

@@ -29,6 +29,8 @@
 #include <cstring>
 #include "test_only/lcg_random.hpp"
 
+using Read = Transport::Read;
+
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
     LOG(LOG_INFO, "Running test TestInCryptoTransport");
@@ -78,22 +80,22 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(finalname);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, 30));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[30], 1));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
-        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[31], 1));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
         // close followed by open
         ct.open(finalname);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, 30));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[30], 1));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
-        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[31], 1));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
@@ -160,11 +162,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, sizeof(buffer)-10));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
         RED_CHECK_EQUAL(true, ct.is_eof());
-        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[sizeof(buffer)], 1));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
@@ -223,11 +225,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, 30));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[30], 1));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
-        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[30], 1));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[30], 1));
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
     }());
@@ -296,11 +298,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(buffer, sizeof(buffer)-10));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
         RED_CHECK_EQUAL(false, ct.is_eof());
-        RED_CHECK_EQUAL(true, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
         RED_CHECK_EQUAL(true, ct.is_eof());
-        RED_CHECK_EQUAL(false, ct.atomic_read(&buffer[sizeof(buffer)], 1));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),

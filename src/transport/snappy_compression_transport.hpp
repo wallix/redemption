@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         size_t    remaining_size = len;
 
         while (remaining_size) {
@@ -72,9 +72,9 @@ private:
                 uint8_t data_buf[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
                 // read compressed_data_length(2);
-                if (!this->source_transport.atomic_read(data_buf, sizeof(uint16_t))){
+                if (Read::Eof == this->source_transport.atomic_read(data_buf, sizeof(uint16_t))){
                     if (remaining_size == len) {
-                        return false;
+                        return Read::Eof;
                     }
                     throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
@@ -96,7 +96,7 @@ private:
                 }
             }
         }
-        return true;
+        return Read::Ok;
     }
 
 

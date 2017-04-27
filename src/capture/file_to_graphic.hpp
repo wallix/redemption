@@ -321,7 +321,7 @@ public:
             }
 
             uint8_t buf[HEADER_SIZE];
-            if (!this->trans->atomic_read(buf, HEADER_SIZE)){
+            if (Transport::Read::Eof == this->trans->atomic_read(buf, HEADER_SIZE)){
                 return false;
             }
             InStream header(buf);

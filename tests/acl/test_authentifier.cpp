@@ -49,9 +49,9 @@ inline void init_keys(CryptoContext & cctx)
 class CountTransport
 : public Transport
 {
-    bool do_atomic_read(uint8_t *, size_t len) override {
+    Read do_atomic_read(uint8_t *, size_t len) override {
         this->last_quantum_received += len;
-        return true;
+        return Read::Ok;
     }
 
     void do_send(const uint8_t * const, size_t len) override {
@@ -426,7 +426,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
-    
+
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     CountTransport keepalivetrans;
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));

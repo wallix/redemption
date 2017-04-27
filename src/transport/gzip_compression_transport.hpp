@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         size_t    remaining_size = len;
 
         while (remaining_size) {
@@ -92,8 +92,8 @@ private:
             else {
                 if (!this->inflate_pending) {
                     // reset_decompressor(1) + compressed_data_length(4)
-                    if (!this->source_transport.atomic_read(this->compressed_data_buf, 5)){
-                        return false;
+                    if (Read::Eof == this->source_transport.atomic_read(this->compressed_data_buf, 5)){
+                        return Read::Eof;
                     }
 
                     InStream compressed_data(this->compressed_data_buf);
@@ -132,7 +132,7 @@ private:
                 this->inflate_pending = ((ret == 0) && (this->compression_stream.avail_out == 0));
             }
         }
-        return true;
+        return Read::Ok;
     }
 
 

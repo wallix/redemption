@@ -44,20 +44,21 @@ inline void read_sample_files(char const * filename)
     constexpr size_t buf_sz = 10000;
     unsigned char buffer[buf_sz];
 
-    bool has_data;
+    using Read = Transport::Read;
+    Read status;
     CryptoContext cctx;
     InMetaSequenceTransport wrm_trans(cctx, filename, ".mwrm", is_not_encrypted);
     for (size_t const file_total : sizes) {
         for (size_t i = 0; i < file_total / buf_sz; ++i) {
-            RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, buf_sz));
-            RED_CHECK(has_data);
+            RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, buf_sz));
+            RED_CHECK_EQUAL(Read::Ok, status);
         }
-        RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, file_total % buf_sz));
-        RED_CHECK(has_data);
+        RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, file_total % buf_sz));
+        RED_CHECK_EQUAL(Read::Ok, status);
     }
 
-    RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, 1));
-    RED_CHECK(!has_data);
+    RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, 1));
+    RED_CHECK_EQUAL(Read::Eof, status);
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
