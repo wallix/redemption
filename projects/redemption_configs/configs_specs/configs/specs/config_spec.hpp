@@ -92,10 +92,10 @@ void config_spec_definition(Writer && W)
     spec_attr_t<spec::attr::iptables_in_gui>  const iptables_in_gui{};
     spec_attr_t<spec::attr::password_in_gui>  const password_in_gui{};
 
-    sesman_io_t<sesman::io::none>   const no_sesman;
-    sesman_io_t<sesman::io::write>  const sesman_write;
-    sesman_io_t<sesman::io::read>   const sesman_read;
-    sesman_io_t<sesman::io::rw>     const sesman_rw;
+    sesman_io_t<sesman::io::none>   const no_sesman{};
+    sesman_io_t<sesman::io::write>  const sesman_write{};
+    sesman_io_t<sesman::io::read>   const sesman_read{};
+    sesman_io_t<sesman::io::rw>     const sesman_rw{};
 
     prefix_value disable_prefix_val{"disable"};
 
