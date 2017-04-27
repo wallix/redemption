@@ -42,7 +42,6 @@
 #include "core/mainloop.hpp"
 #include "utils/log.hpp"
 #include "utils/fdbuf.hpp"
-#include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"

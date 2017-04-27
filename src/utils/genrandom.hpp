@@ -85,41 +85,33 @@ class UdevRandom : public Random
         }
 
          // this object is useful for RAII, do not unwrap
-        struct fdbuf
-        {
-            const int fd;
-            explicit fdbuf(int fd) : fd(fd){}
-            ~fdbuf() { ::close(this->fd);}
+        local_fd file(fd);
 
-            // TODO This is basically a blocking read, we should provide timeout management and behaviour
-            ssize_t read(uint8_t * data, size_t len) const
-            {
-                size_t remaining_len = len;
-                while (remaining_len) {
-                    ssize_t ret = ::read(this->fd
-                                , data + (len - remaining_len)
-                                , remaining_len);
-                    if (ret < 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        // Error should still be there next time we try to read
-                        if (remaining_len != len){
-                            return len - remaining_len;
-                        }
-                        return ret;
+        // TODO This is basically a blocking read, we should provide timeout management and behaviour
+        auto read = [](uint8_t * data, size_t len) -> ssize_t {
+            size_t remaining_len = len;
+            while (remaining_len) {
+                ssize_t ret = ::read(fd, data + (len - remaining_len), remaining_len);
+                if (ret < 0){
+                    if (errno == EINTR){
+                        continue;
                     }
-                    // We must exit loop or we will enter infinite loop
-                    if (ret == 0){
-                        break;
+                    // Error should still be there next time we try to read
+                    if (remaining_len != len){
+                        return len - remaining_len;
                     }
-                    remaining_len -= ret;
+                    return ret;
                 }
-                return len - remaining_len;
+                // We must exit loop or we will enter infinite loop
+                if (ret == 0){
+                    break;
+                }
+                remaining_len -= ret;
             }
-        } file(fd);
+            return len - remaining_len;
+        };
 
-        ssize_t res = file.read(static_cast<uint8_t*>(dest), size);
+        ssize_t res = read(static_cast<uint8_t*>(dest), size);
         if (res != static_cast<ssize_t>(size)) {
             if (res >= 0){
                 LOG(LOG_ERR, "random source failed to provide enough random data [%zd]", res);

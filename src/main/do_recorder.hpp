@@ -43,12 +43,7 @@ static inline int is_file_encrypted(const std::string & full_filename)
         std::cerr << "Input file missing.\n";
         return -1;
     }
-    struct fdbuf
-    {
-        int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd){}
-        ~fdbuf() {::close(this->fd);}
-    } file(fd);
+    local_fd file(fd);
 
     const size_t len = sizeof(tmp_buf);
     size_t remaining_len = len;

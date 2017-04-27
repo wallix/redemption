@@ -38,7 +38,6 @@
 #include "utils/sugar/exchange.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/chex_to_int.hpp"
-#include "utils/fdbuf.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/word_identification.hpp"
 #include "configs/config.hpp"
