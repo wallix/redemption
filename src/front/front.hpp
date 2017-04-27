@@ -303,7 +303,7 @@ private:
                 int fd = ::open(cache_filename, O_RDONLY);
                 if (fd != -1) {
                     try {
-                        InFileTransport ift(fd);
+                        InFileTransport ift(local_fd{fd});
 
                         BmpCachePersister::Verbose cache_verbose
                             = ( bool(verbose & Verbose::cache_from_disk)
@@ -318,7 +318,6 @@ private:
                         );
                     }
                     catch (const Error & e) {
-                        ::close(fd);
                         if (e.id != ERR_PDBC_LOAD) {
                             throw;
                         }
@@ -1165,15 +1164,15 @@ public:
             throw Error(ERR_PDBC_SAVE);
         }
 
-        try {
-            OutFileTransport oft(fd);
-
-            BmpCachePersister::save_all_to_disk(
-                this->orders.get_bmp_cache(), oft,
-                convert_verbose_flags(this->verbose)
-            );
-
-            ::close(fd);
+        try
+        {
+            {
+                OutFileTransport oft(local_fd{fd});
+                BmpCachePersister::save_all_to_disk(
+                    this->orders.get_bmp_cache(), oft,
+                    convert_verbose_flags(this->verbose)
+                );
+            }
 
             if (::rename(filename_temporary, filename) == -1) {
                 LOG( LOG_WARNING
@@ -1184,7 +1183,10 @@ public:
             }
         }
         catch (...) {
-            ::close(fd);
+            LOG( LOG_WARNING
+               , "front::save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
+                 "filename=\"%s\""
+               , filename_temporary);
             ::unlink(filename_temporary);
         }
     }

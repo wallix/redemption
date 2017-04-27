@@ -25,6 +25,9 @@
 
 #include <string>
 
+#include "utils/sugar/exchange.hpp"
+
+
 #pragma once
 
 /// \brief close a file descriptor automatically
@@ -34,6 +37,16 @@ struct local_fd
     local_fd & operator=(local_fd const &) = delete;
 
     explicit local_fd(int fd) noexcept : fd_(fd) {}
+
+    local_fd(local_fd && other)
+    : fd_(exchange(other.fd_, -1))
+    {}
+
+    local_fd & operator=(local_fd && other)
+    {
+        local_fd(std::move(other)).swap(*this);
+        return *this;
+    }
 
     local_fd(char const * pathname, int flags) noexcept
     : fd_(::open(pathname, flags))
@@ -59,6 +72,19 @@ struct local_fd
 
     int fd() const noexcept { return this->fd_; }
 
+    int release() noexcept { return exchange(this->fd_, -1); }
+
+    void swap(local_fd& other)
+    {
+        using std::swap;
+        swap(fd_, other.fd_);
+    }
+
 private:
     int fd_;
 };
+
+inline void swap(local_fd& a, local_fd& b)
+{
+    a.swap(b);
+}

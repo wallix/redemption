@@ -498,13 +498,9 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     memcpy(path, filename, len);
     path[len] = 0;
     int fd = ::creat(path, 0777);
-    if (fd == -1){
-        LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), path);
-        RED_CHECK(false);
-        return;
-    }
+    RED_REQUIRE_NE(fd, -1);
 
-    OutFileTransport trans(fd);
+    OutFileTransport trans(local_fd{fd});
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);

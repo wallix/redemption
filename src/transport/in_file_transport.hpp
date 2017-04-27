@@ -23,6 +23,7 @@
 
 #include "core/error.hpp"
 #include "transport/transport.hpp"
+#include "utils/sugar/local_fd.hpp"
 
 #include <cerrno>
 
@@ -33,8 +34,8 @@ protected:
     int fd;
 
 public:
-    explicit InFileTransport(int fd)
-    : fd(fd)
+    explicit InFileTransport(local_fd fd)
+    : fd(fd.release())
     {}
 
     ~InFileTransport()

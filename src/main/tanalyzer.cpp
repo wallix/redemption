@@ -619,7 +619,7 @@ int main(int argc, char * argv[]) {
 
     local_fd file(input_filename.c_str(), O_RDONLY);
     if (file.is_open()) {
-        InFileTransport trans(file.fd());
+        InFileTransport trans(std::move(file));
         Analyzer        analyzer;
 
         TransparentPlayer player(&trans, &analyzer);

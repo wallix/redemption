@@ -2226,7 +2226,7 @@ extern "C" {
                 local_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
                 if (fd1.is_open()) {
-                    OutFileTransport out_t(fd1.fd());
+                    OutFileTransport out_t(std::move(fd1));
 
                     try {
                         char mem[4096];

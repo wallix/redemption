@@ -37,34 +37,27 @@
 
 RED_AUTO_TEST_CASE(TestOutFileTransport)
 {
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_transportXXXXXX");
     {
-        char tmpname[128];
-        sprintf(tmpname, "/tmp/test_transportXXXXXX");
-        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-        {
-            OutFileTransport ft(fd);
-            ft.send("We write, ", 10);
-            ft.send("and again, ", 11);
-            ft.send("and so on.", 10);
-        }
-        ::close(fd);
-        fd = ::open(tmpname, O_RDONLY);
-        {
-            char buf[128];
-            char * pbuf = buf;
-            InFileTransport ft(fd);
-            ft.recv_boom(pbuf, 10);
-            pbuf += 10;
-            ft.recv_boom(pbuf, 11);
-            pbuf += 11;
-            ft.recv_boom(pbuf, 10);
-            pbuf += 10;
-            RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
-            pbuf = buf;
-            RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        ::close(fd);
-        ::unlink(tmpname);
+        OutFileTransport ft(local_fd{::mkostemp(tmpname, O_WRONLY|O_CREAT)});
+        ft.send("We write, ", 10);
+        ft.send("and again, ", 11);
+        ft.send("and so on.", 10);
     }
+    {
+        char buf[128];
+        char * pbuf = buf;
+        InFileTransport ft(local_fd{::open(tmpname, O_RDONLY)});
+        ft.recv_boom(pbuf, 10);
+        pbuf += 10;
+        ft.recv_boom(pbuf, 11);
+        pbuf += 11;
+        ft.recv_boom(pbuf, 10);
+        pbuf += 10;
+        RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+        pbuf = buf;
+        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+    }
+    ::unlink(tmpname);
 }
-

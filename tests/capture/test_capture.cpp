@@ -1159,13 +1159,9 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     memcpy(path, filename, len);
     path[len] = 0;
     int fd = ::creat(path, 0777);
-    if (fd == -1){
-        LOG(LOG_INFO, "open failed with error : %s on %s", strerror(errno), path);
-        RED_CHECK(false);
-        return;
-    }
+    RED_REQUIRE_NE(fd, -1);
 
-    OutFileTransport trans(fd);
+    OutFileTransport trans(local_fd{fd});
     RED_CHECK_EQUAL(0, 0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
@@ -1205,12 +1201,8 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     in_path[len] = 0;
 
     fd = ::open(in_path, O_RDONLY);
-    if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
-        RED_CHECK(false);
-        return;
-    }
-    InFileTransport in_wrm_trans(fd);
+    RED_REQUIRE_NE(fd, -1);
+    InFileTransport in_wrm_trans(local_fd{fd});
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
@@ -2223,13 +2215,9 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     const char * input_filename = FIXTURES_PATH "/sample0.wrm";
 
     int fd = ::open(input_filename, O_RDONLY);
-    if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
-        RED_CHECK(false);
-        return;
-    }
+    RED_REQUIRE_NE(fd, -1);
 
-    InFileTransport in_wrm_trans(fd);
+    InFileTransport in_wrm_trans(local_fd{fd});
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;

@@ -23,15 +23,12 @@
 
 #include "utils/fdbuf.hpp"
 #include "transport/transport.hpp"
+#include "utils/sugar/local_fd.hpp"
 
-class OutFileTransport
-: public Transport
+struct OutFileTransport : Transport
 {
-    io::posix::fdbuf file;
-
-public:
-    explicit OutFileTransport(int fd, auth_api * auth = nullptr) noexcept
-    : file(fd)
+    explicit OutFileTransport(local_fd fd, auth_api * auth = nullptr) noexcept
+    : file(fd.release())
     {
         if (auth) {
             this->authentifier = auth;
@@ -59,12 +56,5 @@ private:
         this->last_quantum_sent += res;
     }
 
-protected:
-    io::posix::fdbuf & buffer() noexcept
-    { return this->file; }
-
-    const io::posix::fdbuf & buffer() const noexcept
-    { return this->file; }
-
-    typedef OutFileTransport TransportType;
+    io::posix::fdbuf file;
 };

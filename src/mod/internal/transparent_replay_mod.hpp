@@ -29,7 +29,6 @@ class TransparentReplayMod : public InternalMod {
 private:
     std::string * auth_error_message;
 
-    int               fd;
     InFileTransport   ift;
     TransparentPlayer player;
 
@@ -42,20 +41,15 @@ public:
                         , Font const & font)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
-    , fd([&]() {
+    , ift(local_fd{[&]() {
         const int fd = ::open(replay_path, O_RDWR);
         if (fd == -1) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         return fd;
-    }())
-    , ift(this->fd)
+    }()})
     , player(&this->ift, &this->front)
     {}
-
-    ~TransparentReplayMod() override {
-        close(this->fd);
-    }
 
     void draw_event(time_t now, gdi::GraphicApi &) override {
         (void)now;
