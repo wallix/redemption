@@ -198,33 +198,51 @@ class TestEncrypter(unittest.TestCase):
 
 
     def test_reader(self):
-        handle = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
-        self.assertNotEqual(handle, None)
-        lib.redcryptofile_writer_open(handle, "./clear.txt")
+        handle_w = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle_w, None)
+        lib.redcryptofile_writer_open(handle_w, "./clear.txt")
         
         text = b"We write, and again, and so on."
         total_sent = 0
         
         while total_sent < len(text):
             part_len = min(10,len(text[total_sent:]))
-            res = lib.redcryptofile_writer_write(handle, text[total_sent:], part_len)
+            res = lib.redcryptofile_writer_write(handle_w, text[total_sent:], part_len)
             self.assertTrue(res > 0)
             if res < 0: 
                 break
             total_sent += res
         self.assertEqual(total_sent, 31)
 
+        handle_r = lib.redcryptofile_reader_new(get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle_r, None)
+        lib.redcryptofile_reader_open(handle_r, "./clear.txt");
 
+        buf = ctypes.create_string_buffer(31)
+        total_read = lib.redcryptofile_reader_read(handle_r, buf, 31)
 
-        handle2 = lib.redcryptofile_reader_new(get_hmac_key_func, get_trace_key_func)
-        self.assertNotEqual(handle2, None)
+        # TODO : Does not work for partial reading
+        # while total_read < 31:
+        #     part_len = min(10,len(buf[total_read:]))
+        #     res = lib.redcryptofile_reader_read(handle_r, buf[total_read:], part_len)
 
-    #    lib.redcryptofile_reader_open(handle2, "./clear.txt");
-    #    total_read = lib.redcryptofile_reader_read(handle2, )
+        #     self.assertTrue(res > 0)
+        #     if res < 0: 
+        #         break
+        #     total_read += res
 
+        self.assertEqual(total_read, 31)
+        print ">>>> %d" % total_read
+        print ">>>> %s" % repr(buf.value)
 
-        lib.redcryptofile_writer_close(handle)
-        lib.redcryptofile_writer_delete(handle)
+        self.assertEqual(buf.value, "We write, and again, and so on.")
+
+        # TODO : double free or corruption
+        lib.redcryptofile_reader_close(handle_r)
+        lib.redcryptofile_reader_delete(handle_r)
+
+        lib.redcryptofile_writer_close(handle_w)
+        lib.redcryptofile_writer_delete(handle_w)
 
 if __name__ == '__main__':
     unittest.main()
