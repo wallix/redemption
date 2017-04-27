@@ -113,11 +113,7 @@ private:
                     }
 
                     const size_t compressed_data_length = compressed_data.in_uint32_le();
-
-                    if (!this->source_transport.atomic_read(this->compressed_data_buf, compressed_data_length)){
-                        throw Error(ERR_TRANSPORT_READ_FAILED);                    
-                    }
-
+                    this->source_transport.recv_boom(this->compressed_data_buf, compressed_data_length);
                     this->compression_stream.avail_in = compressed_data_length;
                     this->compression_stream.next_in  = this->compressed_data_buf;
                 }

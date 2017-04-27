@@ -328,7 +328,7 @@ public:
 
         auto in_uint32_be = [&]{
             uint8_t buf_stream[4];
-            this->t.recv_atomic(buf_stream, 4);
+            this->t.recv_boom(buf_stream, 4);
             return Parse(buf_stream).in_uint32_be();
 
         };
@@ -343,7 +343,7 @@ public:
                 char   reason[256];
                 char * preason = reason;
 
-                this->t.recv_atomic(preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
+                this->t.recv_boom(preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
                 preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
                 *preason = 0;
 
@@ -793,7 +793,7 @@ public:
             if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
                 try {
                     uint8_t type; /* message-type */
-                    this->t.recv_atomic(&type, 1);
+                    this->t.recv_boom(&type, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
                             this->lib_framebuffer_update(drawable);
@@ -842,7 +842,7 @@ public:
 
                 /* protocol version */
                 uint8_t server_protoversion[12];
-                this->t.recv_atomic(server_protoversion, 12);
+                this->t.recv_boom(server_protoversion, 12);
                 server_protoversion[11] = 0;
                 if (this->verbose) {
                     LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
@@ -852,7 +852,7 @@ public:
 
                 int32_t const security_level = [this](){
                     uint8_t buf[4];
-                    this->t.recv_atomic(buf, sizeof(buf));
+                    this->t.recv_boom(buf, sizeof(buf));
                     return Parse(buf).in_sint32_be();
                 }();
 
@@ -872,7 +872,7 @@ public:
                         }
                         uint8_t buf[16];
                         auto recv = [&](size_t len) {
-                            this->t.recv_atomic(buf, len);
+                            this->t.recv_boom(buf, len);
                         };
                         recv(16);
 
@@ -908,7 +908,7 @@ public:
                                 char   reason[256];
                                 char * preason = reason;
 
-                                this->t.recv_atomic(preason,
+                                this->t.recv_boom(preason,
                                                 std::min<size_t>(sizeof(reason) - 1, reason_length));
                                 preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
                                 *preason = 0;
@@ -947,7 +947,7 @@ public:
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
                         uint8_t buf[8+8+8];
-                        this->t.recv_atomic(buf, sizeof(buf));
+                        this->t.recv_boom(buf, sizeof(buf));
                         InStream stream(buf);
                         uint64_t gen = stream.in_uint64_be();
                         uint64_t mod = stream.in_uint64_be();
@@ -959,9 +959,9 @@ public:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
                         uint8_t buf[8192];
-                        this->t.recv_atomic(buf, 4);
+                        this->t.recv_boom(buf, 4);
                         size_t reason_length = Parse(buf).in_uint32_be();
-                        this->t.recv_atomic(buf, reason_length);
+                        this->t.recv_boom(buf, reason_length);
                         hexdump_c(buf, reason_length);
                         throw Error(ERR_VNC_CONNECTION_ERROR);
 
@@ -1050,7 +1050,7 @@ public:
 
                 {
                     uint8_t buf[24];
-                    this->t.recv_atomic(buf, sizeof(buf));  // server init
+                    this->t.recv_boom(buf, sizeof(buf));  // server init
 
                     InStream stream(buf);
                     this->width = stream.in_uint16_be();
@@ -1075,7 +1075,7 @@ public:
                         LOG(LOG_ERR, "VNC connection error");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
-                    this->t.recv_atomic(this->mod_name, lg);
+                    this->t.recv_boom(this->mod_name, lg);
                     this->mod_name[lg] = 0;
                     // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
                 }
@@ -1685,7 +1685,7 @@ private:
         uint8_t data_rec[256];
         InStream stream_rec(data_rec);
         uint8_t * end = data_rec;
-        this->t.recv_atomic(end, 3);
+        this->t.recv_boom(end, 3);
         end += 3;
         stream_rec.in_skip_bytes(1);
         size_t num_recs = stream_rec.in_uint16_be();
@@ -1694,7 +1694,7 @@ private:
         for (size_t i = 0; i < num_recs; i++) {
             stream_rec = InStream(data_rec);
             end = data_rec;
-            this->t.recv_atomic(end, 12);
+            this->t.recv_boom(end, 12);
             end += 12;
             const uint16_t x = stream_rec.in_uint16_be();
             const uint16_t y = stream_rec.in_uint16_be();
@@ -1715,7 +1715,7 @@ private:
                 for (uint16_t yy = y ; yy < y + cy ; yy += 16) {
                     uint8_t * tmp = raw.get();
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
-                    this->t.recv_atomic(tmp, cyy*cx*Bpp);
+                    this->t.recv_boom(tmp, cyy*cx*Bpp);
                     //LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
                     this->draw_tile(Rect(x, yy, cx, cyy), raw.get(), drawable);
                 }
@@ -1726,7 +1726,7 @@ private:
                 uint8_t data_copy_rect[4];
                 InStream stream_copy_rect(data_copy_rect);
                 uint8_t * end = data_copy_rect;
-                this->t.recv_atomic(end, 4);
+                this->t.recv_boom(end, 4);
                 const int srcx = stream_copy_rect.in_uint16_be();
                 const int srcy = stream_copy_rect.in_uint16_be();
                 //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
@@ -1748,7 +1748,7 @@ private:
                 InStream stream_rre(data_rre);
 
                 uint8_t * end = data_rre;
-                this->t.recv_atomic(end,
+                this->t.recv_boom(end,
                       4   /* number-of-subrectangles */
                     + Bpp /* background-pixel-value */
                     );
@@ -1775,7 +1775,7 @@ private:
 
                     InStream subrectangles(subrectangles_buf);
                     end = subrectangles_buf;
-                    this->t.recv_atomic(end, (Bpp + 8) * number_of_subrectangles_read);
+                    this->t.recv_boom(end, (Bpp + 8) * number_of_subrectangles_read);
 
                     number_of_subrectangles_remain -= number_of_subrectangles_read;
 
@@ -1813,7 +1813,7 @@ private:
                 uint8_t * end = data_zrle;
 
                 //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t.recv_atomic(end, 4);
+                this->t.recv_boom(end, 4);
 
                 uint32_t zlib_compressed_data_length = Parse(data_zrle).in_uint32_be();
 
@@ -1834,7 +1834,7 @@ private:
 
                 uint8_t zlib_compressed_data[65536];
                 end = zlib_compressed_data;
-                this->t.recv_atomic(end, zlib_compressed_data_length);
+                this->t.recv_boom(end, zlib_compressed_data_length);
                 REDASSERT(end - zlib_compressed_data == 0);
 
                 ZRLEUpdateContext zrle_update_context;
@@ -1934,7 +1934,7 @@ private:
                 const uint8_t *vnc_pointer_mask = cursor_buf + sz_pixel_array;
                 {
                     auto end = cursor_buf;
-                    this->t.recv_atomic(end, sz_pixel_array + sz_bitmask);
+                    this->t.recv_boom(end, sz_pixel_array + sz_bitmask);
                 }
 
                 Pointer cursor;
@@ -2014,7 +2014,7 @@ private:
         InStream stream(buf);
         {
             auto end = buf;
-            this->t.recv_atomic(end, 5);
+            this->t.recv_boom(end, 5);
         }
         stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
@@ -2024,7 +2024,7 @@ private:
         InStream stream2(buf2);
         {
             auto end = buf2;
-            this->t.recv_atomic(end, num_colors * 6);
+            this->t.recv_boom(end, num_colors * 6);
         }
 
         if (num_colors <= 256) {
@@ -2103,7 +2103,7 @@ private:
         this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
         {
             auto end = this->to_rdp_clipboard_data_buffer;
-            this->t.recv_atomic(end, 7);
+            this->t.recv_boom(end, 7);
         }
         this->to_rdp_clipboard_data.in_skip_bytes(3);   // padding(3)
         const uint32_t clipboard_data_length =          // length(4)
@@ -2121,7 +2121,7 @@ private:
 
             if (clipboard_data_length < this->to_rdp_clipboard_data.get_capacity()) {
                 auto end = this->to_rdp_clipboard_data_buffer;
-                this->t.recv_atomic(end, clipboard_data_length);  // Clipboard data.
+                this->t.recv_boom(end, clipboard_data_length);  // Clipboard data.
                 end += clipboard_data_length;
                 *end++ = '\0';  // Null character.
                 this->to_rdp_clipboard_data.in_skip_bytes(end - this->to_rdp_clipboard_data.get_data());
@@ -2161,7 +2161,7 @@ private:
             const uint32_t number_of_bytes_to_read =
                 std::min<uint32_t>(remaining_clipboard_data_length, sizeof(drop));
 
-            this->t.recv_atomic(end, sizeof(number_of_bytes_to_read));
+            this->t.recv_boom(end, sizeof(number_of_bytes_to_read));
             remaining_clipboard_data_length -= number_of_bytes_to_read;
         }
 

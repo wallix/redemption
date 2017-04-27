@@ -83,10 +83,7 @@ private:
                 //if (this->verbose) {
                 //    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
                 //}
-
-                if (!this->source_transport.atomic_read(data_buf, compressed_data_length)){
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
-                }
+                this->source_transport.recv_boom(data_buf, compressed_data_length);
                 this->uncompressed_data        = this->uncompressed_data_buffer;
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
 

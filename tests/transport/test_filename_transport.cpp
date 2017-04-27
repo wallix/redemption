@@ -68,13 +68,13 @@ RED_AUTO_TEST_CASE(TestFilename)
         char s[5];
         char * sp = s;
         char ** p = &sp;
-        in.recv_atomic(*p, 5);
+        in.recv_boom(*p, 5);
         RED_CHECK_EQUAL(sp-s, 5);
         RED_CHECK_EQUAL(strncmp(s, "ABCDE", 5), 0);
         try {
             sp = s;
             p = &sp;
-            in.recv_atomic(*p, 1);
+            in.recv_boom(*p, 1);
 // Behavior changed, first return 0, then exception
 //            RED_CHECK(false);
         }
@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestFilenameCrypto)
         try {
             sp = s;
             p = &sp;
-            in.recv_atomic(*p, 1);
+            in.recv_boom(*p, 1);
 // BEhavior changed. IS it OK ?
             RED_CHECK_EQUAL(sp-s, 0);
 //            RED_CHECK(false);

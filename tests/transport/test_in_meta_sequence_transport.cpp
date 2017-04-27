@@ -275,15 +275,15 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
         char buffer[15];
         // 5 + 10
-        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_atomic(buffer, 15), ERR_TRANSPORT_READ_FAILED);
+        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_READ_FAILED);
     }
     {
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
 
         char buffer[15];
 
-        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer, 5));
-        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer + 5, 10));
+        RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer, 5));
+        RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer + 5, 10));
 
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }

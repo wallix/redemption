@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     InStream payload(payload_buf, payload_length);
     {
         auto end = payload_buf;
-        t.recv_atomic(end, payload_length);
+        t.recv_boom(end, payload_length);
     }
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
 
     uint8_t buf[65536];
     auto end = buf;
-    t.recv_atomic(end, payload_length);
+    t.recv_boom(end, payload_length);
 
     InStream payload(buf, payload_length);
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
@@ -328,7 +328,7 @@ RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::ErectDomainRequest_Recv mcs(stream, MCS::PER_ENCODING);
@@ -362,7 +362,7 @@ RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
@@ -394,7 +394,7 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
@@ -425,7 +425,7 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
@@ -461,7 +461,7 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
@@ -498,7 +498,7 @@ RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
 
@@ -539,7 +539,7 @@ RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
@@ -610,7 +610,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
@@ -681,7 +681,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
@@ -733,7 +733,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
    , length);
     uint8_t buf[1024];
     auto end = buf;
-    t.recv_atomic(end, length);
+    t.recv_boom(end, length);
 
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);

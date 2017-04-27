@@ -206,9 +206,7 @@ enum {
         try{
             uint8_t buf[32768];
 
-            if (!this->t.atomic_read(buf, 8)){
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
+            this->t.recv_boom(buf, 8);
 
             InStream stream(buf);
             unsigned type = stream.in_uint16_le();
@@ -225,10 +223,7 @@ enum {
                     stream = InStream(pbuf, len);
                 }
 
-                if (!this->t.atomic_read(buf, len)){
-                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                }
-
+                this->t.recv_boom(buf, len);
 
                 for (unsigned index = 0; index < num_orders; index++) {
                     type = stream.in_uint16_le();

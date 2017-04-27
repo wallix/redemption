@@ -286,7 +286,7 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) { 
+    void log4(bool duplicate_with_pid, const char * type, const char * extra) {
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
@@ -306,7 +306,7 @@ public:
                     LOG(LOG_INFO, "exception raised %d", e.id);
                 };
             }
-            
+
             std::time_t t = std::time(nullptr);
             char mbstr[100];
             if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
@@ -683,10 +683,7 @@ private:
         void safe_read_packet() {
             uint16_t buf_sz = 0;
             do {
-                if (!this->trans.atomic_read(this->buf, HEADER_SIZE)){
-                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                }
-
+                this->trans.recv_boom(this->buf, HEADER_SIZE);
                 InStream in_stream(this->buf, 4);
                 this->has_next_buffer = in_stream.in_uint16_be();
                 buf_sz = in_stream.in_uint16_be();
@@ -694,9 +691,7 @@ private:
 
             this->p = this->buf;
             this->e = this->buf;
-            if (!this->trans.atomic_read(e, buf_sz)){
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            }
+            this->trans.recv_boom(e, buf_sz);
             e += buf_sz;
 
             if (bool(this->verbose & Verbose::buffer)) {

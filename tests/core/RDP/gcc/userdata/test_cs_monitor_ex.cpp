@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     GCC::UserData::CSMonitorEx cs_monitor_ex;
     InStream stream(buf);
     cs_monitor_ex.recv(stream);

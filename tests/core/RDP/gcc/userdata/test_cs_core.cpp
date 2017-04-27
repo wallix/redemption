@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);

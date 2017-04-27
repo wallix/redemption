@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -63,7 +63,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
@@ -222,7 +222,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     GeneratorTransport gt(indata, sz);
     uint8_t buf[sz];
     auto end = buf;
-    gt.recv_atomic(end, sz);
+    gt.recv_boom(end, sz);
     InStream stream(buf, sz);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
