@@ -26,13 +26,13 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <cstddef>
-#include <iosfwd>
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
-#include "utils/sugar/noncopyable.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "utils/sugar/stream_proto.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -237,8 +237,7 @@ private:
 };
 
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr>& operator<<(std::basic_ostream<Ch, Tr>& out, Transport::Read const& status)
+REDEMPTION_OSTREAM(out, Transport::Read status)
 {
     return out << (status == Transport::Read::Ok ? "Read::Ok" : "Read::Eof");
 }
