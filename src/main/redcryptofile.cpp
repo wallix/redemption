@@ -25,7 +25,7 @@
 
 #include <memory>
 
-#include "../tests/includes/test_only/lcg_random.hpp" // TODO
+#include "test_only/lcg_random.hpp"
 
 struct Trace
 {
