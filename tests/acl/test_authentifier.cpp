@@ -26,7 +26,7 @@
 //#define LOGPRINT
 
 //#include "acl/module_manager.hpp"
-  #include "../includes/test_only/lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "acl/authentifier.hpp"
 
