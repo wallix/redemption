@@ -33,6 +33,7 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/stream_proto.hpp"
 
 class AuthorizationChannels
 : public movable_noncopyable
@@ -159,37 +160,34 @@ public:
         return this->rdpsnd_restriction_[0];
     }
 
-
-    template<class CharT, class Traits>
-    friend std::basic_ostream<CharT, Traits> &
-    operator<<(std::basic_ostream<CharT, Traits> & os, AuthorizationChannels const & auth) {
+    REDEMPTION_FRIEND_OSTREAM(out, AuthorizationChannels const & auth) {
         auto p = [&](std::string const & s, bool all, bool val_ok, const char * name) {
             if (all) {
-                os << name << "=*\n";
+                out << name << "=*\n";
             }
             else {
-                os << name << '=';
+                out << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                     if (auth.cliprdr_restriction_[i] == val_ok) {
-                        os << cliprde_list()[i];
+                        out << cliprde_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                     if (auth.rdpdr_restriction_[i] == val_ok) {
-                        os << rdpdr_list()[i];
+                        out << rdpdr_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                     if (auth.rdpsnd_restriction_[i] == val_ok) {
-                        os << rdpdr_list()[i];
+                        out << rdpdr_list()[i];
                     }
                 }
-                os << s << '\n';
+                out << s << '\n';
             }
         };
         p(auth.allow_, auth.all_allow_, true, "allow");
         p(auth.deny_, auth.all_deny_, false, "deny");
-        return os;
+        return out;
     }
 
     // TODO review

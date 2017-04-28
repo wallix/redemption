@@ -164,7 +164,12 @@ obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj redcryptofile.o : $(REDEMPTION_SRC_PATH)/main/redcryptofile.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+obj redcryptofile.o :
+    $(REDEMPTION_SRC_PATH)/main/redcryptofile.cpp
+    :
+    <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
+    $(OBJ_EXE_DEPENDENCIES)
+;
 
 obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -361,6 +366,7 @@ exe rdpheadless
         krb5
         gssglue
     :
+        <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
         $(EXE_DEPENDENCIES)
     ;
 
@@ -619,7 +625,7 @@ test-canonical main/do_recorder.hpp :
 
 ## utils
 ## @{
-test-canonical utils/array.hpp ;
+#test-canonical utils/array.hpp ;
 test-canonical utils/asynchronous_task_manager.hpp ;
 test-canonical utils/authorization_channels.hpp ;
 test-canonical utils/bitfu.hpp ;

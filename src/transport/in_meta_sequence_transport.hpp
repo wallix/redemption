@@ -515,13 +515,13 @@ private:
         }
     }
 
-    bool buf_read(uint8_t * data, size_t len)
+    Read buf_read(uint8_t * data, size_t len)
     {
         for (;;) {
             if (!this->cfb.is_open()) {
                 if (const int e1 = this->buf_next_line()) {
                     if (e1 == ERR_TRANSPORT_NO_MORE_DATA) {
-                        return false;
+                        return Read::Eof;
                     }
                     this->status = false;
                     throw Error(ERR_TRANSPORT_READ_FAILED, e1);
@@ -530,15 +530,15 @@ private:
                 this->cfb.open(this->meta_line.filename);
             }
 
-            if (this->cfb.atomic_read(data, len)) {
-                return true;
+            if (Read::Ok == this->cfb.atomic_read(data, len)) {
+                return Read::Ok;
             }
 
             this->cfb.close();
         }
     }
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         return this->buf_read(buffer, len);
     }

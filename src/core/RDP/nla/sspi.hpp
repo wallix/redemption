@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include "utils/utf.hpp"
-#include "utils/array.hpp"
+#include "core/RDP/nla/array.hpp"
 
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION                        0

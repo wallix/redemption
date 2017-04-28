@@ -164,7 +164,7 @@ public:
     }
 
 private:
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         const ssize_t res = this->buf.read(buffer, len);
         if (res < 0){
             this->status = false;
@@ -174,12 +174,12 @@ private:
         this->last_quantum_received += res;
         if (static_cast<size_t>(res) != len){
             if (res == 0) {
-                return false;
+                return Read::Eof;
             }
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
-        return true;
+        return Read::Ok;
     }
 
 protected:
@@ -343,8 +343,7 @@ public:
     }
 
 private:
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
-
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         return this->gen.atomic_read(buffer, len);
     }
 
@@ -374,16 +373,16 @@ public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         auto avail = this->in_stream.in_remain();
         if (avail == 0){
-            return false;
+            return Read::Eof;
         }
         if (avail < len) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         this->in_stream.in_copy_bytes(buffer, len);
-        return true;
+        return Read::Ok;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override {

@@ -44,20 +44,21 @@ inline void read_sample_files(char const * filename)
     constexpr size_t buf_sz = 10000;
     unsigned char buffer[buf_sz];
 
-    bool has_data;
+    using Read = Transport::Read;
+    Read status;
     CryptoContext cctx;
     InMetaSequenceTransport wrm_trans(cctx, filename, ".mwrm", is_not_encrypted);
     for (size_t const file_total : sizes) {
         for (size_t i = 0; i < file_total / buf_sz; ++i) {
-            RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, buf_sz));
-            RED_CHECK(has_data);
+            RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, buf_sz));
+            RED_CHECK_EQUAL(Read::Ok, status);
         }
-        RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, file_total % buf_sz));
-        RED_CHECK(has_data);
+        RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, file_total % buf_sz));
+        RED_CHECK_EQUAL(Read::Ok, status);
     }
 
-    RED_CHECK_NO_THROW(has_data = wrm_trans.atomic_read(buffer, 1));
-    RED_CHECK(!has_data);
+    RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, 1));
+    RED_CHECK_EQUAL(Read::Eof, status);
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
@@ -275,15 +276,15 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
         char buffer[15];
         // 5 + 10
-        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_atomic(buffer, 15), ERR_TRANSPORT_READ_FAILED);
+        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_READ_FAILED);
     }
     {
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
 
         char buffer[15];
 
-        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer, 5));
-        RED_CHECK_NO_THROW(crypto_trans.recv_atomic(buffer + 5, 10));
+        RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer, 5));
+        RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer + 5, 10));
 
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }

@@ -220,7 +220,7 @@ void transport_read_png24(
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
         // TODO catch exception ?
-        static_cast<Transport*>(png_ptr->io_ptr)->recv_atomic(data, length);
+        static_cast<Transport*>(png_ptr->io_ptr)->recv_boom(data, length);
     };
 
     detail::PngReadStruct png;
@@ -258,7 +258,7 @@ void set_rows_from_image_chunk(
         , trans(trans)
         , in_stream(this->buf, this->chunk_size - 8)
         {
-            this->trans.recv_atomic(this->buf, this->in_stream.get_capacity());
+            this->trans.recv_boom(this->buf, this->in_stream.get_capacity());
         }
     };
 
@@ -281,12 +281,12 @@ void set_rows_from_image_chunk(
                 const size_t header_sz = 8;
                 char header_buf[header_sz];
                 InStream header(header_buf);
-                chunk_trans.trans.recv_atomic(header_buf, header_sz);
+                chunk_trans.trans.recv_boom(header_buf, header_sz);
                 chunk_trans.chunk_type = header.in_uint16_le();
                 chunk_trans.chunk_size = header.in_uint32_le();
                 chunk_trans.chunk_count = header.in_uint16_le();
                 chunk_trans.in_stream = InStream(chunk_trans.buf, chunk_trans.chunk_size - 8);
-                chunk_trans.trans.recv_atomic(chunk_trans.buf, chunk_trans.chunk_size - 8);
+                chunk_trans.trans.recv_boom(chunk_trans.buf, chunk_trans.chunk_size - 8);
             }
             break;
             case WrmChunkType::LAST_IMAGE_CHUNK:

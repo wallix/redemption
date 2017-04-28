@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include "utils/log.hpp"
+#include "utils/sugar/stream_proto.hpp"
 
 class InStream;
 class OutStream;
@@ -197,9 +198,8 @@ enum CAPSTYPE : uint16_t {
     CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30
 };
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & os, CAPSTYPE t)
-{ return os << static_cast<uint16_t>(t); }
+REDEMPTION_OSTREAM(out, CAPSTYPE t)
+{ return out << static_cast<uint16_t>(t); }
 
 
 inline static const char * get_capabilitySetType_name(uint16_t capabilitySetType)

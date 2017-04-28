@@ -236,7 +236,7 @@ public:
         return rv;
     }
 
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
@@ -246,7 +246,7 @@ public:
 
         // we properly reached end of file on a block boundary
         if (res == 0){
-            return false;
+            return Read::Eof;
         }
 
         if (res < 0){
@@ -265,7 +265,7 @@ public:
 
         // TODO move that to base class : accounting_recv(len)
         this->last_quantum_received += len;
-        return true;
+        return Read::Ok;
     }
 
 

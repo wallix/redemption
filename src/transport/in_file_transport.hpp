@@ -52,15 +52,14 @@ public:
     }
 
 private:
-
-    bool do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override {
         size_t remaining_len = len;
         while (remaining_len) {
             ssize_t const res = ::read(this->fd, buffer + (len - remaining_len), remaining_len);
             if (res <= 0){
                 if (res == 0) {
                     if (remaining_len == len){
-                        return false;
+                        return Read::Eof;
                     }
                 }
                 if ((res != 0) && (errno == EINTR)){
@@ -75,6 +74,6 @@ private:
         if (remaining_len != 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
-        return true;
+        return Read::Ok;
     }
 };
