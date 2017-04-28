@@ -117,63 +117,63 @@ struct LocallyIntegrableMod : public InternalMod {
         if (!this->rail_enabled ||
             !this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
 
-            switch (this->dc_state) {
-                case DCSTATE_WAIT:
-                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
-
-                        this->first_click_down_event.set(1000000);
-
-                        this->first_click_down_event.object_and_time  = true;
-                        this->first_click_down_event.waked_up_by_time = false;
-                    }
-                break;
-
-                case DCSTATE_FIRST_CLICK_DOWN:
-                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                        this->dc_state = DCSTATE_FIRST_CLICK_RELEASE;
-                    }
-                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    }
-                    else {
-                        this->cancel_double_click_detection();
-                    }
-                break;
-
-                case DCSTATE_FIRST_CLICK_RELEASE:
-                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        this->dc_state = DCSTATE_SECOND_CLICK_DOWN;
-                    }
-                    else {
-                        this->cancel_double_click_detection();
-                    }
-                break;
-
-                case DCSTATE_SECOND_CLICK_DOWN:
-                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                        this->dc_state = DCSTATE_WAIT;
-
-                        bool out_mouse_captured_2 = false;
-
-                        this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
-
-                        this->cancel_double_click_detection();
-                    }
-                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    }
-                    else {
-                        this->cancel_double_click_detection();
-                    }
-                break;
-
-                default:
-                    REDASSERT(false);
-
-                    this->cancel_double_click_detection();
-                break;
-            }
-
             if (this->rail_enabled) {
+                switch (this->dc_state) {
+                    case DCSTATE_WAIT:
+                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                            this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
+
+                            this->first_click_down_event.set(1000000);
+
+                            this->first_click_down_event.object_and_time  = true;
+                            this->first_click_down_event.waked_up_by_time = false;
+                        }
+                    break;
+
+                    case DCSTATE_FIRST_CLICK_DOWN:
+                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                            this->dc_state = DCSTATE_FIRST_CLICK_RELEASE;
+                        }
+                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    case DCSTATE_FIRST_CLICK_RELEASE:
+                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                            this->dc_state = DCSTATE_SECOND_CLICK_DOWN;
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    case DCSTATE_SECOND_CLICK_DOWN:
+                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                            this->dc_state = DCSTATE_WAIT;
+
+                            bool out_mouse_captured_2 = false;
+
+                            this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+
+                            this->cancel_double_click_detection();
+                        }
+                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    default:
+                        REDASSERT(false);
+
+                        this->cancel_double_click_detection();
+                    break;
+                }
+
                 if (out_mouse_captured) {
                     this->allow_mouse_pointer_change(false);
 
