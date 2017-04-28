@@ -625,7 +625,7 @@ test-canonical main/do_recorder.hpp :
 
 ## utils
 ## @{
-test-canonical utils/array.hpp ;
+#test-canonical utils/array.hpp ;
 test-canonical utils/asynchronous_task_manager.hpp ;
 test-canonical utils/authorization_channels.hpp ;
 test-canonical utils/bitfu.hpp ;
