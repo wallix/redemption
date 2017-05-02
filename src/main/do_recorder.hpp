@@ -46,7 +46,6 @@ static inline int file_start_hmac_sha256(const char * filename,
                      size_t          check_size,
                      uint8_t (& hash)[SslSha256::DIGEST_LENGTH])
 {
-    // TODO: use ifile_read
     local_fd file(filename, O_RDONLY);
     int fd = file.fd();
     if (fd < 0) {
@@ -78,67 +77,6 @@ static inline int file_start_hmac_sha256(const char * filename,
     return 0;
 }
 
-// ifile is a thin API layer over system open/read/close
-// it means open/read/close mimicks system open/read/close
-struct ifile_read_API
-{
-    ifile_read_API() = default;
-
-    ifile_read_API(ifile_read_API const &) = delete;
-    ifile_read_API & operator = (ifile_read_API const &) = delete;
-
-    // We choose to define an open function to mimick system behavior
-    // instead of opening through constructor. This allows to manage
-    // explicit error management depending on return code.
-    // if open worked open returns 0 and this->fd contains file descriptor
-    // negative code are errors, return EINVAL if lib software related
-    virtual int open(const char * s) = 0;
-    // read can either return the number of bytes asked or less.
-    // That the exact number of bytes is returned is never
-    // guaranteed and checking that is at caller's responsibility
-    // if some error occurs the return is -1 and the error code
-    // is in errno, like for system calls.
-    // returning 0 means EOF
-    virtual ssize_t read(char * buf, size_t len) = 0;
-    // close beside calling the system call must also ensure it sets fd to 1
-    // this is to avoid performing close twice when called explicitely
-    // as it is also performed by destructor (in most cases there will be
-    // no reason for calling close explicitly).
-    virtual void close() = 0;
-
-    virtual ~ifile_read_API() = default;
-};
-
-struct ifile_read : ifile_read_API
-{
-    int open(const char * s) override
-    {
-        this->fd = ::open(s, O_RDONLY);
-        return this->fd;
-    }
-
-    ssize_t read(char * buf, size_t len) override
-    {
-        return ::read(this->fd, buf, len);
-    }
-
-    void close() override
-    {
-        ::close(fd);
-        this->fd = -1;
-    }
-
-    ~ifile_read() override
-    {
-        if (this->fd != -1){
-            this->close();
-        }
-    }
-
-protected:
-    int fd = -1;
-};
-
 class LineReader
 {
 public:
@@ -148,10 +86,10 @@ public:
     char * eof;
     char * eol;
     char * cur;
-    ifile_read_API & ibuf;
+    InCryptoTransport & ibuf;
 
 public:
-    LineReader(ifile_read_API & reader_buf) noexcept
+    LineReader(InCryptoTransport & reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
@@ -168,10 +106,7 @@ public:
         this->cur = this->eol;
         if (this->cur == this->eof) // empty buffer
         {
-            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf)-1);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
+            ssize_t ret = this->ibuf.partial_read(this->buf, sizeof(this->buf)-1);
             this->cur = this->buf;
             this->eof = this->buf + ret;
             this->eof[0] = 0;
@@ -186,10 +121,7 @@ public:
             this->eof = this->cur + len;
 
             do { // read and append to buffer
-                ssize_t ret = this->ibuf.read(this->eof, std::end(this->buf)-1-this->eof);
-                if (ret < 0) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
+                ssize_t ret = this->ibuf.partial_read(this->eof, std::end(this->buf)-1-this->eof);
                 if (ret == 0) {
                     break;
                 }
@@ -289,7 +221,7 @@ struct MwrmReader
     MetaHeader header;
 
 public:
-    MwrmReader(ifile_read_API & ibuf) noexcept
+    MwrmReader(InCryptoTransport & ibuf) noexcept
     : line_reader(ibuf)
     {}
 
@@ -404,33 +336,6 @@ public:
         // TODO: check the whole line has been consumed (or it's an error)
 //        LOG(LOG_INFO, "read_meta_file: done %s", this->line_reader.get_buf().begin());
         return true;
-    }
-};
-
-class ifile_read_encrypted : public ifile_read
-{
-    InCryptoTransport in_crypto;
-
-public:
-    explicit ifile_read_encrypted(CryptoContext & cctx, int encryption)
-    : in_crypto(cctx, static_cast<InCryptoTransport::EncryptionMode>(encryption))
-    {
-    }
-
-    int open(const char * filename) override
-    {
-        this->in_crypto.open(filename);
-        return 0;
-    }
-
-    ssize_t read(char * data, size_t len) override
-    {
-        return this->in_crypto.partial_read(data, len);
-    }
-
-    bool is_encrypted() const
-    {
-        return this->in_crypto.is_encrypted();
     }
 };
 

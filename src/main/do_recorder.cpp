@@ -706,10 +706,7 @@ static inline int check_encrypted_or_checksumed(
 ) {
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-    // Let(s ifile_read autodetect encryption at opening for first file
-    int encryption = 0;
-    // cctx.old_encryption_scheme = true;
-    ifile_read_encrypted ibuf(cctx, encryption/*EncryptionMode::NotEncrypted*/);
+    InCryptoTransport ibuf(cctx, EncryptionMode::Auto);
 
     try {
         ibuf.open(full_mwrm_filename.c_str());
@@ -858,7 +855,7 @@ static inline int check_encrypted_or_checksumed(
 
         // copy mwrm headers
         {
-            ifile_read mwrm_file;
+            InCryptoTransport mwrm_file(cctx, EncryptionMode::NotEncrypted);
             mwrm_file.open(full_mwrm_filename.c_str());
             LineReader line_reader(mwrm_file);
 

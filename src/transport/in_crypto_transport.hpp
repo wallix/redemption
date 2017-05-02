@@ -34,7 +34,7 @@
 #include <memory>
 
 
-class InCryptoTransport : public Transport
+class InCryptoTransport : public Transport //, public PartialIO
 {
 public:
     enum class EncryptionMode { Auto, Encrypted, NotEncrypted };

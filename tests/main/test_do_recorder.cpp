@@ -106,6 +106,8 @@ private:
 #endif
 };
 
+using EncryptionMode = InCryptoTransport::EncryptionMode;
+
 RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
    LOG(LOG_INFO, "=================== TestDecrypterEncryptedData =============");
@@ -203,9 +205,10 @@ RED_AUTO_TEST_CASE(TestLineReader)
         "efghi\n"
         "jklmno\n"
     ;
+    CryptoContext cctx;
 
     {
-        ifile_read ifile;
+        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
         ifile.open(filename);
         LineReader line_reader(ifile);
         RED_CHECK(line_reader.next_line());
@@ -224,7 +227,7 @@ RED_AUTO_TEST_CASE(TestLineReader)
     }
 
     {
-        ifile_read ifile;
+        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
         ifile.open(filename);
         LineReader line_reader(ifile);
         RED_CHECK(line_reader.next_line());
@@ -237,7 +240,7 @@ RED_AUTO_TEST_CASE(TestLineReader)
     std::ofstream(filename) << std::string(LineReader::line_max + 20, 'a');
 
     {
-        ifile_read ifile;
+        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
         ifile.open(filename);
         LineReader line_reader(ifile);
         RED_CHECK_EXCEPTION(line_reader.next_line(), Error, [](Error const & e) {
@@ -480,7 +483,8 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 RED_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
     LOG(LOG_INFO, "=================== ReadClearHeaderV2 =============");
-    ifile_read fd;
+    CryptoContext cctx;
+    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
@@ -509,7 +513,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
 RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
     LOG(LOG_INFO, "=================== (ReadClearHeaderV1 =============");
-    ifile_read fd;
+    CryptoContext cctx;
+    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
@@ -548,7 +553,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
     LOG(LOG_INFO, "=================== ReadClearHeaderV2Checksum =============");
-    ifile_read fd;
+    CryptoContext cctx;
+    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
     MwrmReader reader(fd);
 
@@ -588,7 +594,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
 
-    ifile_read_encrypted fd(cctx, 1);
+    InCryptoTransport fd(cctx, EncryptionMode::Encrypted);
     fd.open(FIXTURES_PATH
         "/verifier/recorded/"
         "toto@10.10.43.13,Administrateur@QA@cible,"
