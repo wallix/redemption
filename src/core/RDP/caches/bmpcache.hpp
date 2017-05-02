@@ -544,11 +544,10 @@ public:
         e.cached = true;
 
         if (r.persistent()) {
-            REDASSERT(key1 && key2);
             e.sig.sig_32[0] = key1;
             e.sig.sig_32[1] = key2;
         }
-        REDASSERT(r.persistent() || (!key1 && !key2));
+
         r.add(e);
     }
 
