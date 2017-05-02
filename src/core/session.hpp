@@ -366,11 +366,18 @@ public:
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
-                                    int client_sck = local_connect(
-                                        this->ini.get<cfg::globals::authfile>().c_str(),
-                                        30, 1000
-                                    );
-
+                                
+                                    std::string authtarget = this->ini.get<cfg::globals::authfile>();
+                                    size_t pos = authtarget.find(':');
+                                    int client_sck = (pos == std::string::npos)
+                                           ? local_connect(authtarget.c_str(), 30, 1000)
+                                           : [&](){
+                                                // TODO: add some explicit error checking
+                                                std::string ip = authtarget.substr(0, pos);
+                                                int port = std::atoi(
+                                                        authtarget.substr(pos+1, std::string::npos).c_str());
+                                                return ip_connect(ip.c_str(), port, 30, 1000);
+                                            }();
                                     if (client_sck == -1) {
                                         LOG(LOG_ERR,
                                             "Failed to connect to authentifier (%s)",

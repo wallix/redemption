@@ -90,6 +90,74 @@ public:
         return this->fd != -1;
     }
 
+    struct HASH {
+        uint8_t hash[MD_HASH::DIGEST_LENGTH];
+    };
+    
+    const HASH qhash(const char * pathname)
+    {
+        SslHMAC_Sha256_Delayed hm4k;
+
+        hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+        if (this->is_open()){
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        this->fd = ::open(pathname, O_RDONLY);
+        if (this->fd < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        try {
+            this->eof = false;
+            uint8_t buffer[4096];
+            size_t total_length = 0;
+            do {
+                ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
+                if (res <= 0) { break; }
+                if (total_length >= 4096) { break; }
+                size_t remaining_size = 4096 - total_length;
+                hm4k.update(buffer, std::min(remaining_size, static_cast<size_t>(res)));
+                total_length += res;
+            } while (1);
+        } catch (...) {
+            this->close();
+            throw;
+        }
+        this->close();
+        HASH qhash;
+        hm4k.final(qhash.hash);
+        return qhash;
+    }
+
+    const HASH fhash(const char * pathname)
+    {
+        SslHMAC_Sha256_Delayed hm;
+        hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+
+        if (this->is_open()){
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        this->fd = ::open(pathname, O_RDONLY);
+        if (this->fd < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        try {
+            this->eof = false;
+            uint8_t buffer[4096];
+            do {
+                ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
+                if (res <= 0) { break; }
+                hm.update(buffer, res);
+            } while (1);
+        } catch (...) {
+            this->close();
+            throw;
+        }
+        this->close();
+        HASH fhash;
+        hm.final(fhash.hash);
+        return fhash;
+    }
+
     void hash(const char * pathname)
     {
         this->open(pathname);
