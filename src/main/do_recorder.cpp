@@ -411,6 +411,7 @@ struct HashHeader {
     unsigned version;
 };
 
+using EncryptionMode = InCryptoTransport::EncryptionMode;
 
 inline void load_hash(
     MetaLine2 & hash_line,
@@ -418,9 +419,12 @@ inline void load_hash(
     unsigned int infile_version, bool infile_is_checksumed,
     CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
-    ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
+    InCryptoTransport in_hash_fb(cctx, infile_is_encrypted ? EncryptionMode::Encrypted : EncryptionMode::NotEncrypted);
 
-    if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
+    try {
+        in_hash_fb.open(full_hash_path.c_str());
+    }
+    catch (Error const &) {
         LOG(LOG_INFO, "Open load_hash failed");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
@@ -430,10 +434,7 @@ inline void load_hash(
     {
         ssize_t remaining = sizeof(buffer);
         char * p = buffer;
-        while ((len = in_hash_fb.read(p, remaining))) {
-            if (len < 0){
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
+        while ((len = in_hash_fb.partial_read(p, remaining))) {
             p += len;
             remaining -= len;
         }
@@ -703,30 +704,31 @@ static inline int check_encrypted_or_checksumed(
     uint32_t verbose,
     CryptoContext & cctx
 ) {
-
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
     // Let(s ifile_read autodetect encryption at opening for first file
-    int encryption = 2;
+    int encryption = 0;
+    // cctx.old_encryption_scheme = true;
+    ifile_read_encrypted ibuf(cctx, encryption/*EncryptionMode::NotEncrypted*/);
 
-//    cctx.old_encryption_scheme = true;
-    ifile_read_encrypted ibuf(cctx, encryption);
-
-    if (ibuf.open(full_mwrm_filename.c_str()) < 0){
+    try {
+        ibuf.open(full_mwrm_filename.c_str());
+    }
+    catch (Error const&) {
         LOG(LOG_INFO, "ibuf.open error");
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     // now force encryption for sub files
-    bool infile_is_encrypted = ibuf.encrypted;
+    bool const infile_is_encrypted = ibuf.is_encrypted();
 
     MwrmReader reader(ibuf);
-    reader.read_meta_headers(ibuf.encrypted);
+    reader.read_meta_headers(ibuf.is_encrypted());
 
     // if we have version 1 header, ignore stat info
     ignore_stat_info |= (reader.header.version == 1);
     // if we have version >1 header and not checksum, update stat info
-    update_stat_info &= (reader.header.version > 1) & !reader.header.has_checksum & !ibuf.encrypted;
+    update_stat_info &= (reader.header.version > 1) & !reader.header.has_checksum & !ibuf.is_encrypted();
     ignore_stat_info |= update_stat_info;
 
     /*****************
@@ -2219,7 +2221,7 @@ extern "C" {
                     return 0;
                 }
 
-                ifile_read_encrypted in_t(cctx, 1);
+                InCryptoTransport in_t(cctx, EncryptionMode::Encrypted);
 
                 ssize_t res = -1;
                 local_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
@@ -2232,7 +2234,7 @@ extern "C" {
 
                         in_t.open(rp.full_path.c_str());
                         while (1) {
-                            res = in_t.read(mem, sizeof(mem));
+                            res = in_t.partial_read(mem, sizeof(mem));
                             if (res == 0){
                                 break;
                             }

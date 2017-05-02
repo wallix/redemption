@@ -76,16 +76,16 @@ public:
     }
 
     ~InCryptoTransport() {
-        // TODO closed fd
+        // TODO close fd
     }
 
 
-    bool is_encrypted()
+    bool is_encrypted() const
     {
         return this->encrypted;
     }
 
-    bool is_open()
+    bool is_open() const
     {
         return this->fd != -1;
     }
@@ -93,7 +93,7 @@ public:
     struct HASH {
         uint8_t hash[MD_HASH::DIGEST_LENGTH];
     };
-    
+
     const HASH qhash(const char * pathname)
     {
         SslHMAC_Sha256_Delayed hm4k;
@@ -491,7 +491,6 @@ private:
             this->last_quantum_received += len;
             return len - remaining_len;
         }
-        return -1;
     }
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override
