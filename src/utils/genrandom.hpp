@@ -31,6 +31,7 @@
 #include <cstdint>
 
 #include "utils/log.hpp"
+#include "utils/sugar/local_fd.hpp"
 
 
 class Random
@@ -88,7 +89,7 @@ class UdevRandom : public Random
         local_fd file(fd);
 
         // TODO This is basically a blocking read, we should provide timeout management and behaviour
-        auto read = [](uint8_t * data, size_t len) -> ssize_t {
+        auto read = [fd](uint8_t * data, size_t len) -> ssize_t {
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(fd, data + (len - remaining_len), remaining_len);
