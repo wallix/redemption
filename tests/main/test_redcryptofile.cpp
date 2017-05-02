@@ -22,8 +22,8 @@
 #define RED_TEST_MODULE TestRedcryptofile
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
-//#define LOGNULL
+// #define LOGPRINT
+#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/redcryptofile.hpp"
@@ -90,6 +90,8 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         RED_CHECK_EQ(redcryptofile_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
         RED_CHECK_EQ(redcryptofile_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+
+        redcryptofile_writer_delete(handle);
     }
 
     // Reader
@@ -100,15 +102,16 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         uint8_t buf[31];
 
-        size_t total = 0; 
+        size_t total = 0;
         while (total < sizeof(buf)) {
             int res = redcryptofile_reader_read(handle, &buf[total], 10);
-            LOG(LOG_INFO, "%d", res);
-            BOOST_CHECK(res > 0);
+            RED_CHECK_GT(res, 0);
             total += size_t(res);
         }
         RED_CHECK_MEM_C(bytes_array(buf, 31), "We write, and again, and so on.");
         RED_CHECK_EQ(redcryptofile_reader_close(handle), 0);
+
+        redcryptofile_reader_delete(handle);
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
@@ -130,4 +133,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofileError)
     RED_CHECK_EQ(redcryptofile_reader_read(nullptr, buf, 10), -1);
     RED_CHECK_EQ(redcryptofile_reader_close(nullptr), -1);
     LOG(LOG_INFO, "TestRedCryptofileError done");
+
+    redcryptofile_writer_delete(handle_w);
+    redcryptofile_reader_delete(handle_r);
 }

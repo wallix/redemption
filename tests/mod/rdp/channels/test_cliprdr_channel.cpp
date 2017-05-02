@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_atomic(end,
+            t.recv_boom(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_atomic(end, chunk_data_length);
+            t.recv_boom(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_atomic(end,
+            t.recv_boom(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -253,7 +253,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_atomic(end, chunk_data_length);
+            t.recv_boom(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -325,7 +325,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_atomic(end,
+            t.recv_boom(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -348,7 +348,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_atomic(end, chunk_data_length);
+            t.recv_boom(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
@@ -420,7 +420,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     auto test = [&]{
         while (true) {
             auto end = virtual_channel_data;
-            t.recv_atomic(end,
+            t.recv_boom(end,
                    16    // dest(4) + total_length(4) + flags(4) +
                          //     chunk_length(4)
                 );
@@ -443,7 +443,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
             end = virtual_channel_data;
             uint8_t * chunk_data = end;
 
-            t.recv_atomic(end, chunk_data_length);
+            t.recv_boom(end, chunk_data_length);
 
             //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 

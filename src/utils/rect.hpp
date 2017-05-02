@@ -26,6 +26,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "utils/sugar/stream_proto.hpp"
 
 #include <utility>
 #include <iosfwd>
@@ -230,9 +231,8 @@ struct Rect {
         }
     }
 
-    template<class Ch, class Tr>
-    friend inline std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & os, Rect const & r) {
-        return os << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
+    REDEMPTION_FRIEND_OSTREAM(out, Rect const & r) {
+        return out << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
 
     //             |                         |

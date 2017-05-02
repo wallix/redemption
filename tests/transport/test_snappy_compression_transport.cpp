@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
             char * in_buffer   = in_data;
 
 
-            in_trans.recv_atomic(in_buffer, 21);
+            in_trans.recv_boom(in_buffer, 21);
             RED_CHECK_EQUAL(in_data,
                 "azert"
                 "azert"
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
                 "azert");
 
             in_buffer = in_data;
-            in_trans.recv_atomic(in_buffer, 31);
+            in_trans.recv_boom(in_buffer, 31);
             RED_CHECK_EQUAL(in_data,
                 "wallix"
                 "wallix"
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
                 "wallix");
 
             in_buffer = in_data;
-            in_trans.recv_atomic(in_buffer, 65);
+            in_trans.recv_boom(in_buffer, 65);
             RED_CHECK_EQUAL(in_data,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"

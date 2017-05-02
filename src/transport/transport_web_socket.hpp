@@ -100,10 +100,9 @@ class TransportWebSocket :  public Transport
         }
     }
 
-    bool do_atomic_read(uint8_t * pbuffer, size_t len) override {
+    Read do_atomic_read(uint8_t * pbuffer, size_t len) override {
 
         if (this->buffer !=  nullptr) {
-
             //EM_ASM_({ console.log('Data recv from server: '+$0+', '+$1+', '+$2+', '+$3+', '+$4+'...'); }, this->buffer[0], this->buffer[1], this->buffer[2], this->buffer[3], this->buffer[4]);
 
             int lenMax(len);
@@ -123,7 +122,7 @@ class TransportWebSocket :  public Transport
             }
         } else {
         }
-        return true;
+        return Read::Ok;
     }
 
 public:

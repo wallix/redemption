@@ -321,7 +321,7 @@ public:
             }
 
             uint8_t buf[HEADER_SIZE];
-            if (!this->trans->atomic_read(buf, HEADER_SIZE)){
+            if (Transport::Read::Eof == this->trans->atomic_read(buf, HEADER_SIZE)){
                 return false;
             }
             InStream header(buf);
@@ -347,9 +347,7 @@ public:
                 this->stream = InStream(this->stream_buf);
                 if (this->chunk_size - HEADER_SIZE > 0) {
                     this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                    if (!this->trans->atomic_read(this->stream_buf, this->chunk_size - HEADER_SIZE)){
-                        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                    }
+                    this->trans->recv_boom(this->stream_buf, this->chunk_size - HEADER_SIZE);
                 }
             }
         }
@@ -855,9 +853,7 @@ public:
                 // If no drawable is available ignore images chunks
                 this->stream.rewind();
                 std::size_t sz = this->chunk_size - HEADER_SIZE;
-                if (!this->trans->atomic_read(this->stream_buf, sz)){
-                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-                }
+                this->trans->recv_boom(this->stream_buf, sz);
                 this->stream = InStream(this->stream_buf, sz, sz);
             }
             this->remaining_order_count = 0;

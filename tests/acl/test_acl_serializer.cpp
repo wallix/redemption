@@ -29,7 +29,7 @@
 
 #include "acl/acl_serializer.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "../includes/test_only/lcg_random.hpp"
+#include "test_only/lcg_random.hpp"
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
 // - Recover fields from network and update Config
@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     // try exception
     CheckTransport transexcpt("", 0);
     AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
-                                  
+
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
     RED_CHECK(!ini.get<cfg::context::authenticated>());
