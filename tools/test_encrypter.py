@@ -197,7 +197,7 @@ class TestEncrypter(unittest.TestCase):
 
 
 
-    def test_reader(self):
+    def test_reader_clear(self):
         handle_w = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
         self.assertNotEqual(handle_w, None)
         lib.redcryptofile_writer_open(handle_w, "./clear.txt")
@@ -218,26 +218,62 @@ class TestEncrypter(unittest.TestCase):
         self.assertNotEqual(handle_r, None)
         lib.redcryptofile_reader_open(handle_r, "./clear.txt");
 
-        buf = ctypes.create_string_buffer(31)
-        total_read = lib.redcryptofile_reader_read(handle_r, buf, 31)
+        
+        data = ctypes.create_string_buffer(31)
+        total_read = 0
 
-        # TODO : Does not work for partial reading
-        # while total_read < 31:
-        #     part_len = min(10,len(buf[total_read:]))
-        #     res = lib.redcryptofile_reader_read(handle_r, buf[total_read:], part_len)
-
-        #     self.assertTrue(res > 0)
-        #     if res < 0: 
-        #         break
-        #     total_read += res
+        while total_read < 31:
+            part_len = min(10,len(data[total_read:]))
+            buf = ctypes.create_string_buffer(10)
+            res = lib.redcryptofile_reader_read(handle_r, buf, part_len)
+            self.assertTrue(res > 0)
+            if res < 0: 
+                break
+            data[total_read:total_read + part_len] = ''.join(buf.value)
+            total_read += res
 
         self.assertEqual(total_read, 31)
-        print ">>>> %d" % total_read
-        print ">>>> %s" % repr(buf.value)
+        self.assertEqual(data.value, "We write, and again, and so on.")
+        lib.redcryptofile_reader_close(handle_r)
+        lib.redcryptofile_reader_delete(handle_r)
 
-        self.assertEqual(buf.value, "We write, and again, and so on.")
+        lib.redcryptofile_writer_close(handle_w)
+        lib.redcryptofile_writer_delete(handle_w)
 
-        # TODO : double free or corruption
+    def test_reader_checksum(self):
+        handle_w = lib.redcryptofile_writer_new(0, 1, get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle_w, None)
+        lib.redcryptofile_writer_open(handle_w, "./clear.txt")
+        
+        text = b"We write, and again, and so on."
+        total_sent = 0
+        
+        while total_sent < len(text):
+            part_len = min(10,len(text[total_sent:]))
+            res = lib.redcryptofile_writer_write(handle_w, text[total_sent:], part_len)
+            self.assertTrue(res > 0)
+            if res < 0: 
+                break
+            total_sent += res
+        self.assertEqual(total_sent, 31)
+
+        handle_r = lib.redcryptofile_reader_new(get_hmac_key_func, get_trace_key_func)
+        self.assertNotEqual(handle_r, None)
+        lib.redcryptofile_reader_open(handle_r, "./clear.txt");
+
+        buf = ctypes.create_string_buffer(31)
+        total_read = 0
+
+        while total_read < 31:
+            part_len = min(10,len(buf[total_read:]))
+            res = lib.redcryptofile_reader_read(handle_r, buf, part_len)
+            self.assertTrue(res > 0)
+            if res < 0: 
+                break
+            total_read += res
+
+        self.assertEqual(total_read, 31)
+
         lib.redcryptofile_reader_close(handle_r)
         lib.redcryptofile_reader_delete(handle_r)
 
