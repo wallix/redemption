@@ -261,7 +261,7 @@ public:
 
             throw Error(ERR_VNC_ZLIB_INITIALIZATION);
         }
-
+        // TODO init layout sym with apple layout
         keymapSym.init_layout_sym(keylayout);
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
@@ -411,25 +411,91 @@ public:
 
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
 
-        // TODO with an Apple server, those chars are wrong either in US and FR layout:
-        //
-        //         char             current interpretation with US layout
-        //          '!'       >>            '='
-        //          '§'       >>            '+'
-        //          '/'       >>            '='
-        //          '-'       >>            '§'
-        //          '*'       >>            '`'
-        //          'µ'
-        //          '£'
-        //          '_'       >>            '!'
-        //          '<'       >>            '.'
-        //          '>'       >>            '/'
-
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-        this->keymapSym.event(device_flags, param1);
+        LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+
+
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
+        bool FR_APPLE_KEYLAYOUT = false;
+
+        if (FR_APPLE_KEYLAYOUT) {
+            // TODO char: '£', '_', '<', '>' and mod capslock are not sent
+            switch (param1) {
+
+                case 0x35:
+                    if (this->keymapSym.is_shift_pressed()) {
+                        this->send_keyevent(0, 0xffe2);
+                        this->send_keyevent(downflag, 0x36); /* § */
+                        this->send_keyevent(1, 0xffe2);
+                    } else {
+                        if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
+                            this->send_keyevent(1, 0xffe2);
+                            this->send_keyevent(downflag, 0x3e); /* / */
+                            this->send_keyevent(0, 0xffe2);
+                        } else {
+                            this->send_keyevent(downflag, 0x38); /* ! */
+                        }
+                    }
+                    break;
+
+                case 0x07: /* - */
+                    this->send_keyevent(1, 0xffe2);
+                    this->send_keyevent(downflag, 0x3d);
+                    this->send_keyevent(0, 0xffe2);
+                    break;
+
+                case 0x2b: /* * */
+                    this->send_keyevent(1, 0xffe2);
+                    this->send_keyevent(downflag, 0x2a);
+                    this->send_keyevent(0, 0xffe2);
+                    break;
+
+                case 0x1b: /* £ */
+                    if (this->keymapSym.is_shift_pressed()) {
+                        // ? for '£'
+                    } else {
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                    }
+                    break;
+
+                case 0x09: /* _ */
+                    if (!this->keymapSym.is_shift_pressed()) {
+                        this->send_keyevent(1, 0xffe2);
+                        //this->send_keyevent(downflag, '_');    // ? for '_'
+                        this->send_keyevent(0, 0xffe2);
+                    } else {
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                    }
+                    break;
+
+                case 0x56:
+                    if (this->keymapSym.is_shift_pressed()) {
+                        // ? for '>'
+                    } else {
+                        // ? for '<'
+                    }
+                    break;
+
+                case 0x0d: /* = */
+                    this->send_keyevent(downflag, 0x2f);
+                    break;
+
+                default:
+                    this->keyMapSym_event(device_flags, param1, downflag);
+                    break;
+
+            }
+        } else {
+            this->keyMapSym_event(device_flags, param1, downflag);
+        }
+
+    } // rdp_input_scancode
+
+    void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
+        this->keymapSym.event(device_flags, param1);
         int key = this->keymapSym.get_sym();
+
         if (key > 0) {
             if (this->left_ctrl_pressed) {
                 if (key == 0xfe03) {
@@ -450,7 +516,7 @@ public:
                 this->left_ctrl_pressed = true;
             }
         }
-    } // rdp_input_scancode
+    }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
         if (this->verbose) {

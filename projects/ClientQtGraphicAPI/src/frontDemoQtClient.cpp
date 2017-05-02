@@ -51,7 +51,8 @@ public:
     virtual mod_api * init_mod() override {
 
         try {
-            //this->info.keylayout = 0x409;
+            this->info.keylayout = KEYBOARDS::EN_US;
+            //int vnc_keylayout = 0x1409;                    // US Apple
 
             // VNC
             this->mod = new mod_vnc( *(this->socket)
@@ -73,7 +74,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
-                                   , 0xffffffff);
+                                   , 0xffffffff-2);
 
         } catch (const Error &) {
             return nullptr;

@@ -435,14 +435,14 @@ public:
         return true;
     }
 
-    void prog_draw_event_timer(int time_to_wake) {
-        LOG(LOG_INFO, "prog_draw_event_timer");
-        if (!this->timer.isActive()) {
-
-//             this->timer.start( time_to_wake );
-//             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
-        }
-    }
+//     void prog_draw_event_timer(int time_to_wake) {
+//         LOG(LOG_INFO, "prog_draw_event_timer");
+//         if (!this->timer.isActive()) {
+//
+// //             this->timer.start( time_to_wake );
+// //             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
+//         }
+//     }
 
 
 public Q_SLOTS:
@@ -1307,6 +1307,9 @@ private:
                             this->_front->replay_mod.get()->set_wait_after_load_client(wait_duration);
                         }
                     }
+                        break;
+
+                    case WrmVersion::unknown:
                         break;
                 }
 
@@ -2608,6 +2611,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPPolygonSC");
 
@@ -2622,6 +2627,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPPolygonCB");
 
@@ -2650,6 +2657,8 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPEllipseSC");
 
@@ -2664,6 +2673,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPEllipseCB");
     /*
@@ -2932,6 +2943,7 @@ public:
 
     virtual bool connect() {
         this->is_pipe_ok = true;
+        this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
         if (this->mod_qt->connect()) {
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
