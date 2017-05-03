@@ -2283,7 +2283,7 @@ extern "C" {
 
                 InCryptoTransport in_t(cctx, EncryptionMode::Encrypted);
 
-                ssize_t res = -1;
+                size_t res = -1ull;
                 unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
                 if (fd1.is_open()) {
@@ -2298,20 +2298,18 @@ extern "C" {
                             if (res == 0){
                                 break;
                             }
-                            if (res < 0){
-                                break;
-                            }
                             out_t.send(mem, res);
                         }
                     }
                     catch (Error const & e) {
                         LOG(LOG_INFO, "Exited on exception: %s", e.errmsg());
-                        res = -1;
+                        res = -1ull;
                     }
                 }
                 else {
                     std::cerr << strerror(errno) << std::endl << std::endl;
                 }
+
                 if (res == 0){
                     std::cout << "decrypt ok" << std::endl;
                     return 0;

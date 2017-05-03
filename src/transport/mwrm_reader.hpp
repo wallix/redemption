@@ -24,6 +24,8 @@
 #include "transport/in_crypto_transport.hpp"
 #include "utils/sugar/stream_proto.hpp"
 
+#include <algorithm>
+
 #include <cerrno>
 
 
@@ -106,7 +108,7 @@ public:
             this->eof = this->cur + len;
 
             do { // read and append to buffer
-                ssize_t ret = this->ibuf.partial_read(this->eof, std::end(this->buf)-2-this->eof);
+                size_t ret = this->ibuf.partial_read(this->eof, std::end(this->buf)-2-this->eof);
                 if (ret == 0) {
                     break;
                 }
