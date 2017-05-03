@@ -36,7 +36,7 @@ enum class WrmVersion : uint8_t
 
 REDEMPTION_OSTREAM(out, WrmVersion version)
 {
-    return out << static_cast<int>(version);
+    return out << 'v' << static_cast<int>(version);
 }
 
 struct MetaHeader {
@@ -93,6 +93,9 @@ public:
     /// \exception Error : ERR_TRANSPORT_READ_FAILED
     Transport::Read next_line()
     {
+        if (this->eol > this->eof) {
+            return Transport::Read::Eof;
+        }
         this->cur = this->eol;
         char * pos = std::find(this->cur, this->eof, '\n');
         if (pos == this->eof) {
@@ -122,7 +125,7 @@ public:
 
         // line without \n is a error
         if (pos == this->eof) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
         return Transport::Read::Ok;
@@ -162,22 +165,44 @@ struct MwrmReader
         next_line(); // blank
     }
 
-    /// \return false if end of file
+    void set_header(MetaHeader const & header)
+    {
+        this->header = header;
+    }
+
     Transport::Read read_meta_line(MetaLine & meta_line)
     {
         switch (this->header.version) {
         case WrmVersion::v1:
-            meta_line.size = 0;
-            meta_line.mode = 0;
-            meta_line.uid = 0;
-            meta_line.gid = 0;
-            meta_line.dev = 0;
-            meta_line.ino = 0;
-            meta_line.mtime = 0;
-            meta_line.ctime = 0;
+            this->init_stat_v1(meta_line);
             return this->read_meta_line_v1(meta_line);
         case WrmVersion::v2:
-            return this->read_meta_line_v2(meta_line);
+            return this->read_meta_line_v2(meta_line, true);
+        }
+    }
+
+    void read_meta_hash_line(MetaLine & meta_line)
+    {
+        switch (this->header.version) {
+        case WrmVersion::v1:
+            this->init_stat_v1(meta_line);
+            this->read_meta_hash_line_v1(meta_line);
+            break;
+        case WrmVersion::v2:
+            bool is_eof = false;
+            // skip header: "v2\n\n\n"
+            is_eof |= Transport::Read::Eof == this->line_reader.next_line();
+            is_eof |= Transport::Read::Eof == this->line_reader.next_line();
+            is_eof |= Transport::Read::Eof == this->line_reader.next_line();
+            if (is_eof) {
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+            this->read_meta_line_v2(meta_line, false);
+            break;
+        }
+
+        if (Transport::Read::Eof != this->line_reader.next_line()) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
     }
 
@@ -190,6 +215,18 @@ private:
     LineReader line_reader;
     MetaHeader header;
 
+    static void init_stat_v1(MetaLine & meta_line)
+    {
+        meta_line.size = 0;
+        meta_line.mode = 0;
+        meta_line.uid = 0;
+        meta_line.gid = 0;
+        meta_line.dev = 0;
+        meta_line.ino = 0;
+        meta_line.mtime = 0;
+        meta_line.ctime = 0;
+    }
+
     static char * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char * p, int & err)
     {
         for (uint8_t & chash : hash) {
@@ -197,6 +234,45 @@ private:
             chash |= chex_to_int(*p++, err);
         }
         return p;
+    }
+
+    Transport::Read read_meta_hash_line_v1(MetaLine & meta_line)
+    {
+        if (Transport::Read::Eof == this->line_reader.next_line()) {
+            return Transport::Read::Eof;
+        }
+
+        // Filename HASH_64_BYTES
+        //         ^
+        //         |
+        //     separator
+
+        auto line_buf = this->line_reader.get_buf();
+
+        typedef std::reverse_iterator<char*> reverse_iterator;
+        reverse_iterator last(line_buf.begin());
+        reverse_iterator first(line_buf.end());
+        reverse_iterator phash = std::find(first, last, ' ');
+
+        if (phash - first != 65) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        int err = 0;
+        char * p = phash.base();
+        memcpy(meta_line.hash1, p, sizeof(meta_line.hash1));
+        p += 32;
+        memcpy(meta_line.hash2, p, sizeof(meta_line.hash2));
+        p += 32;
+        if (err || *p != '\n') {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        auto const path_len = std::min(size_t(p - line_buf.begin()), sizeof(meta_line.filename)-1);
+        memcpy(meta_line.filename, line_buf.begin(), path_len);
+        meta_line.filename[path_len] = 0;
+
+        return Transport::Read::Ok;
     }
 
     Transport::Read read_meta_line_v1(MetaLine & meta_line)
@@ -267,7 +343,7 @@ private:
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
-        auto path_len = std::min(int(e2.base() - line_buf.begin()), PATH_MAX);
+        auto const path_len = std::min(size_t(e2.base() - line_buf.begin()), sizeof(meta_line.filename)-1);
         memcpy(meta_line.filename, line_buf.begin(), path_len);
         meta_line.filename[path_len] = 0;
 
@@ -284,7 +360,7 @@ private:
         return pline;
     }
 
-    Transport::Read read_meta_line_v2(MetaLine & meta_line)
+    Transport::Read read_meta_line_v2(MetaLine & meta_line, bool has_start_and_stop_time)
     {
         if (Transport::Read::Eof == this->line_reader.next_line()) {
             return Transport::Read::Eof;
@@ -322,8 +398,14 @@ private:
         err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+        if (has_start_and_stop_time) {
+            err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
+            err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+        }
+        else {
+            meta_line.start_time = 0;
+            meta_line.stop_time  = 0;
+        }
         if (this->header.has_checksum) {
             // ' ' hash ' ' hash '\n'
             err |= line_buf.size() - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;

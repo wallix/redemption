@@ -34,7 +34,9 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include "utils/fileutils.hpp"
+#include "transport/in_crypto_transport.hpp"
 
 #include "test_only/get_file_contents.hpp"
 
@@ -1184,4 +1186,3 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
         ::rmdir(tmpdirname);
     }
 }
-
