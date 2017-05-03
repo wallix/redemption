@@ -685,7 +685,7 @@ public:
                             //--------------------------
                             if (!this->getCustomKeysExtendedKeylayoutApplied()) {
                                 if (!this->getCustomKeysExtended()) {
-//                                     this->showkey(keyStatusFlag, keyEvent);
+                                    this->showkey(keyStatusFlag, keyEvent);
                                     std::cout << "Error: Key(0x" << keyCode << ") not recognized." << std::endl;
                                 }
                             }
@@ -695,9 +695,9 @@ public:
             }
         }
 
-        //if (this->_verbose > 0) {
+        if (this->_verbose > 0) {
             this->showkey(keyStatusFlag, keyEvent);
-        //}
+        }
         if (this->_unvalidScanCode) {
          this->scanCode = 0;
         }

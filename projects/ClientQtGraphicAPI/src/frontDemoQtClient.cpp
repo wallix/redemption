@@ -44,15 +44,16 @@ public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
       , translator(Translation::language_t::FR)
-    {}
+    {
+        this->info.keylayout = KEYBOARDS::EN_US;
+    }
 
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
 
         try {
-            this->info.keylayout = KEYBOARDS::EN_US;
-            //int vnc_keylayout = 0x1409;                    // US Apple
+
 
             // VNC
             this->mod = new mod_vnc( *(this->socket)
@@ -83,17 +84,18 @@ public:
         return this->mod;
     }
 
-//     virtual void callback() override {
-//         FrontQtRDPGraphicAPI::callback();
-//     }
-//
-//     virtual bool connect() override {
-//         return FrontQtRDPGraphicAPI::connect();
-//     }
+    virtual void callback() override {
+        FrontQtRDPGraphicAPI::callback();
+    }
 
-//     virtual void options() override {
-//         return FrontQtRDPGraphicAPI::options();
-//     }
+    virtual void connect() override {
+        FrontQtRDPGraphicAPI::connect();
+        // TODO check verr num state
+    }
+
+    virtual void options() override {
+        FrontQtRDPGraphicAPI::options();
+    }
 
 
 };
