@@ -414,9 +414,9 @@ struct HashHeader {
 using EncryptionMode = InCryptoTransport::EncryptionMode;
 
 inline void load_hash(
-    MetaLine2 & hash_line,
+    MetaLine & hash_line,
     const std::string & full_hash_path, const std::string & input_filename,
-    unsigned int infile_version, bool infile_is_checksumed,
+    WrmVersion infile_version, bool infile_is_checksumed,
     CryptoContext & cctx, bool infile_is_encrypted, int verbose
 ) {
     InCryptoTransport in_hash_fb(cctx, infile_is_encrypted ? EncryptionMode::Encrypted : EncryptionMode::NotEncrypted);
@@ -444,7 +444,7 @@ inline void load_hash(
     char * eof = &buffer[len];
     char * cur = &buffer[0];
 
-    if (infile_version == 1) {
+    if (infile_version == WrmVersion::v1) {
         if (verbose) {
             LOG(LOG_INFO, "Hash data v1");
         }
@@ -542,7 +542,7 @@ inline void load_hash(
     }
 }
 
-static inline bool meta_line_stat_equal_stat(MetaLine2 const & metadata, struct stat64 const & sb)
+static inline bool meta_line_stat_equal_stat(MetaLine const & metadata, struct stat64 const & sb)
 {
     return
 //           metadata.dev == sb.st_dev
@@ -561,7 +561,7 @@ struct out_is_mismatch
     bool & is_mismatch;
 };
 
-static inline int check_file(const std::string & filename, const MetaLine2 & metadata,
+static inline int check_file(const std::string & filename, const MetaLine & metadata,
                       bool quick, bool has_checksum, bool ignore_stat_info,
                       uint8_t const * hmac_key, size_t hmac_key_len, bool update_stat_info, out_is_mismatch has_mismatch_stat)
 {
@@ -720,32 +720,32 @@ static inline int check_encrypted_or_checksumed(
     bool const infile_is_encrypted = ibuf.is_encrypted();
 
     MwrmReader reader(ibuf);
-    reader.read_meta_headers(ibuf.is_encrypted());
+    reader.read_meta_headers();
 
     // if we have version 1 header, ignore stat info
-    ignore_stat_info |= (reader.header.version == 1);
+    ignore_stat_info |= (reader.get_header().version == WrmVersion::v1);
     // if we have version >1 header and not checksum, update stat info
-    update_stat_info &= (reader.header.version > 1) & !reader.header.has_checksum & !ibuf.is_encrypted();
+    update_stat_info &= (int(reader.get_header().version) > int(WrmVersion::v1)) & !reader.get_header().has_checksum & !ibuf.is_encrypted();
     ignore_stat_info |= update_stat_info;
 
     /*****************
     * Load file hash *
     *****************/
     LOG(LOG_INFO, "Load file hash");
-    MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
+    MetaLine hash_line {};
 
     std::string const full_hash_path = hash_path + input_filename;
 
     // if reading hash fails
     try {
-        load_hash(hash_line, full_hash_path, input_filename, reader.header.version, reader.header.has_checksum, cctx, infile_is_encrypted, verbose);
+        load_hash(hash_line, full_hash_path, input_filename, reader.get_header().version, reader.get_header().has_checksum, cctx, infile_is_encrypted, verbose);
     }
     catch (...) {
         std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"\n" << std::endl;
         // this is an error because checksum comes from hash file
         // and extended stat info also comes from hash file
         // if we can't read hash files we are in troubles
-        if (reader.header.has_checksum || !ignore_stat_info){
+        if (reader.get_header().has_checksum || !ignore_stat_info){
             return 1;
         }
     }
@@ -756,7 +756,7 @@ static inline int check_encrypted_or_checksumed(
     * Check mwrm file *
     ******************/
     if (!check_file(
-        full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum,
+        full_mwrm_filename, hash_line, quick_check, reader.get_header().has_checksum,
         ignore_stat_info, cctx.get_hmac_key(), 32,
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
@@ -778,9 +778,9 @@ static inline int check_encrypted_or_checksumed(
     bool wrm_stat_is_ok = true;
 
 
-    MetaLine2 meta_line_wrm;
+    MetaLine meta_line_wrm;
 
-    while (reader.read_meta_file(meta_line_wrm)) {
+    while (Transport::Read::Ok == reader.read_meta_line(meta_line_wrm)) {
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
@@ -791,7 +791,7 @@ static inline int check_encrypted_or_checksumed(
 
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
-            full_part_filename, meta_line_wrm, quick_check, reader.header.has_checksum,
+            full_part_filename, meta_line_wrm, quick_check, reader.get_header().has_checksum,
             ignore_stat_info, cctx.get_hmac_key(), 32,
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
@@ -861,7 +861,7 @@ static inline int check_encrypted_or_checksumed(
 
             // v2, w h, nochecksum, blank, blank
             for (int i = 0; i < 5; ++i) {
-                if (!line_reader.next_line()) {
+                if (Transport::Read::Eof == line_reader.next_line()) {
                     throw Error(ERR_TRANSPORT_READ_FAILED, 0);
                 }
                 auto av = line_reader.get_buf();
@@ -1795,6 +1795,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "\n\nUsage: redrec [options]\n\n";
+        // TODO error code description
         std::cout << desc << "\n\n";
         return -1;
     }

@@ -35,7 +35,6 @@
 #include <fstream>
 #include <sstream>
 #include "utils/fileutils.hpp"
-#include "capture/capture.hpp"
 
 #include "test_only/get_file_contents.hpp"
 
@@ -43,12 +42,13 @@ extern "C" {
     inline int hmac_fn(char * buffer)
     {
         // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
-        uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
+        uint8_t hmac_key[] = {
             0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
             0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
             0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
             0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        memcpy(buffer, hmac_key, SslSha256::DIGEST_LENGTH);
+        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+        memcpy(buffer, hmac_key, sizeof(hmac_key));
         return 0;
     }
 
@@ -59,12 +59,12 @@ extern "C" {
         (void)len;
         (void)oldscheme;
         // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
-        uint8_t trace_key[SslSha256::DIGEST_LENGTH] = {
+        uint8_t trace_key[] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
             0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
-            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2
-         };
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
@@ -155,100 +155,6 @@ RED_AUTO_TEST_CASE(TestDecrypterClearData)
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/decrypted.2.out\".\nInput file is not encrypted.\n");
     RED_CHECK_EQUAL(0, res);
-}
-
-
-RED_AUTO_TEST_CASE(TestReverseIterators)
-{
-   LOG(LOG_INFO, "=================== TestReverseIterators =============");
-
-    // Show how to extract filename even if it contains spaces
-    // the idea is that the final fields are fixed, henceforth
-    // we can skip these fields by looking for spaces from end of line
-    // once filename is found we can manage other fields as usual.
-    // no need to search backward.
-
-    char line[256] = {};
-    const char * str = "ff fff sssss eeeee hhhhh HHHHH\n";
-    int len = strlen(str);
-    memcpy(line, str, len+1);
-    typedef std::reverse_iterator<char*> reverse_iterator;
-
-    reverse_iterator first(line);
-    reverse_iterator last(line + len);
-
-    reverse_iterator space4 = std::find(last, first, ' ');
-    space4++;
-    reverse_iterator space3 = std::find(space4, first, ' ');
-    space3++;
-    reverse_iterator space2 = std::find(space3, first, ' ');
-    space2++;
-    reverse_iterator space1 = std::find(space2, first, ' ');
-    space1++;
-    int filename_len = first-space1;
-
-    char filename[128];
-    memcpy(filename, line, filename_len);
-
-    RED_CHECK(0 == memcmp("ff fff", filename, filename_len));
-
-}
-
-
-RED_AUTO_TEST_CASE(TestLineReader)
-{
-   LOG(LOG_INFO, "=================== TestLineReader =============");
-    char const * filename = "/tmp/test_app_verifier_s.txt";
-
-    std::ofstream(filename) <<
-        "abcd\n"
-        "efghi\n"
-        "jklmno\n"
-    ;
-    CryptoContext cctx;
-
-    {
-        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
-        ifile.open(filename);
-        LineReader line_reader(ifile);
-        RED_CHECK(line_reader.next_line());
-        RED_CHECK_EQUAL(5, line_reader.get_buf().size());
-        RED_CHECK(line_reader.next_line());
-        RED_CHECK_EQUAL(6, line_reader.get_buf().size());
-        RED_CHECK(line_reader.next_line());
-        RED_CHECK_EQUAL(7, line_reader.get_buf().size());
-        RED_CHECK(not line_reader.next_line());
-    }
-
-    std::size_t const big_line_len = LineReader::line_max - LineReader::line_max / 4;
-    {
-        std::string s(big_line_len, 'a');
-        std::ofstream(filename) << s << '\n' << s << '\n';
-    }
-
-    {
-        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
-        ifile.open(filename);
-        LineReader line_reader(ifile);
-        RED_CHECK(line_reader.next_line());
-        RED_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
-        RED_CHECK(line_reader.next_line());
-        RED_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
-        RED_CHECK(!line_reader.next_line());
-    }
-
-    std::ofstream(filename) << std::string(LineReader::line_max + 20, 'a');
-
-    {
-        InCryptoTransport ifile(cctx, EncryptionMode::NotEncrypted);
-        ifile.open(filename);
-        LineReader line_reader(ifile);
-        RED_CHECK_EXCEPTION(line_reader.next_line(), Error, [](Error const & e) {
-            return e.id == ERR_TRANSPORT_READ_FAILED && e.errnum == 0;
-        });
-    }
-
-    remove(filename);
 }
 
 // python tools/verifier.py -i toto@10.10.43.13\,Administrateur@QA@cible\,20160218-183009\,wab-5-0-0.yourdomain\,7335.mwrm --hash-path tests/fixtures/verifier/hash/ --mwrm-path tests/fixtures/verifier/recorded/ --verbose 10
@@ -480,161 +386,6 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     RED_CHECK_EQUAL(1, res);
 }
 
-RED_AUTO_TEST_CASE(ReadClearHeaderV2)
-{
-    LOG(LOG_INFO, "=================== ReadClearHeaderV2 =============");
-    CryptoContext cctx;
-    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
-    fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
-    MwrmReader reader(fd);
-
-    reader.read_meta_headers(false);
-    RED_CHECK(reader.header.version == 2);
-    RED_CHECK(!reader.header.has_checksum);
-
-    MetaLine2 meta_line;
-    RED_CHECK(reader.read_meta_file(meta_line));
-    RED_CHECK_EQUAL(meta_line.filename,
-                        "/var/wab/recorded/rdp/"
-                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-                        "wab-5-0-0.yourdomain,7681-000000.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 181826);
-    RED_CHECK_EQUAL(meta_line.mode, 33056);
-    RED_CHECK_EQUAL(meta_line.uid, 1001);
-    RED_CHECK_EQUAL(meta_line.gid, 1001);
-    RED_CHECK_EQUAL(meta_line.dev, 65030);
-    RED_CHECK_EQUAL(meta_line.ino, 81);
-    RED_CHECK_EQUAL(meta_line.mtime, 1455816421);
-    RED_CHECK_EQUAL(meta_line.ctime, 1455816421);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-}
-
-RED_AUTO_TEST_CASE(ReadClearHeaderV1)
-{
-    LOG(LOG_INFO, "=================== (ReadClearHeaderV1 =============");
-    CryptoContext cctx;
-    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
-    fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
-    MwrmReader reader(fd);
-
-    reader.read_meta_headers(false);
-    RED_CHECK(reader.header.version == 1);
-    RED_CHECK(!reader.header.has_checksum);
-
-    MetaLine2 meta_line;
-    reader.read_meta_file(meta_line);
-    RED_CHECK_EQUAL(meta_line.filename,
-                        "/var/wab/recorded/rdp/"
-                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-                        "wab-5-0-0.yourdomain,7681-000000.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 0);
-    RED_CHECK_EQUAL(meta_line.mode, 0);
-    RED_CHECK_EQUAL(meta_line.uid, 0);
-    RED_CHECK_EQUAL(meta_line.gid, 0);
-    RED_CHECK_EQUAL(meta_line.dev, 0);
-    RED_CHECK_EQUAL(meta_line.ino, 0);
-    RED_CHECK_EQUAL(meta_line.mtime, 0);
-    RED_CHECK_EQUAL(meta_line.ctime, 0);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-
-    RED_CHECK(0 == memcmp(meta_line.hash1,
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        32));
-    RED_CHECK(0 == memcmp(meta_line.hash2,
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        32));
-
-}
-
-RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
-{
-    LOG(LOG_INFO, "=================== ReadClearHeaderV2Checksum =============");
-    CryptoContext cctx;
-    InCryptoTransport fd(cctx, EncryptionMode::NotEncrypted);
-    fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
-    MwrmReader reader(fd);
-
-    reader.read_meta_headers(false);
-    RED_CHECK(reader.header.version == 2);
-    RED_CHECK(reader.header.has_checksum);
-
-    MetaLine2 meta_line;
-    reader.read_meta_file(meta_line);
-    RED_CHECK(true);
-    RED_CHECK_EQUAL(meta_line.filename, "./tests/fixtures/sample0.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 1);
-    RED_CHECK_EQUAL(meta_line.mode, 2);
-    RED_CHECK_EQUAL(meta_line.uid, 3);
-    RED_CHECK_EQUAL(meta_line.gid, 4);
-    RED_CHECK_EQUAL(meta_line.dev, 5);
-    RED_CHECK_EQUAL(meta_line.ino, 6);
-    RED_CHECK_EQUAL(meta_line.mtime, 7);
-    RED_CHECK_EQUAL(meta_line.ctime, 8);
-    RED_CHECK_EQUAL(meta_line.start_time, 1352304810);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    RED_CHECK(0 == memcmp(meta_line.hash1,
-                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
-                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA",
-                        32));
-    RED_CHECK(0 == memcmp(meta_line.hash2,
-                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
-                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB",
-                        32));
-}
-
-RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
-{
-    LOG(LOG_INFO, "=================== ReadEncryptedHeaderV2Checksum =============");
-
-    CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
-    cctx.set_get_trace_key_cb(trace_fn);
-
-    InCryptoTransport fd(cctx, EncryptionMode::Encrypted);
-    fd.open(FIXTURES_PATH
-        "/verifier/recorded/"
-        "toto@10.10.43.13,Administrateur@QA@cible,"
-        "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm");
-
-    MwrmReader reader(fd);
-
-    reader.read_meta_headers(true);
-    RED_CHECK(reader.header.version == 2);
-    RED_CHECK(reader.header.has_checksum);
-
-    MetaLine2 meta_line;
-    RED_CHECK(reader.read_meta_file(meta_line));
-
-    {
-        std::string expected("/var/wab/recorded/rdp"
-                             "/toto@10.10.43.13,Administrateur@QA@cible,"
-                             "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
-        RED_REQUIRE_EQUAL(meta_line.filename, expected);
-    }
-    RED_CHECK_EQUAL(meta_line.size, 163032);
-    RED_CHECK_EQUAL(meta_line.mode, 33056);
-    RED_CHECK_EQUAL(meta_line.uid, 1001);
-    RED_CHECK_EQUAL(meta_line.gid, 1001);
-    RED_CHECK_EQUAL(meta_line.dev, 65030);
-    RED_CHECK_EQUAL(meta_line.ino, 89);
-    RED_CHECK_EQUAL(meta_line.mtime, 1455816632);
-    RED_CHECK_EQUAL(meta_line.ctime, 1455816632);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455816611);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    RED_CHECK_MEM_AC(meta_line.hash1,
-      "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
-      "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
-    RED_CHECK_MEM_AC(meta_line.hash2,
-      "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
-      "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
-
-    RED_CHECK(!reader.read_meta_file(meta_line));
-}
-
 inline int hmac_2016_fn(char * buffer)
 {
 
@@ -651,9 +402,6 @@ inline int hmac_2016_fn(char * buffer)
 inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
 {
 //    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
-
-    (void)base;
-    (void)len;
 
     struct {
         std::string base;
@@ -730,7 +478,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
     }
     memset(buffer, 0, 32);
     LOG(LOG_INFO, "key not found for base=%*s", len, base);
-    hexdump_d(buffer, 32);
+    //hexdump_d(buffer, 32);
     return 0;
 }
 
@@ -839,7 +587,6 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     LOG(LOG_INFO, "=================== TestVerifierMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
@@ -855,8 +602,8 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nverify failed\n");
-    RED_CHECK_EQUAL(1, res);
+    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
+    RED_CHECK_EQUAL(0, res);
 }
 
 // "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
