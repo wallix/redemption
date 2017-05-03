@@ -21,23 +21,22 @@
 
 #pragma once
 
-#include "utils/fdbuf.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/make_unique.hpp"
 
 #include <memory>
 
-class TransportError : noncopyable_but_movable
+class ReportError : noncopyable_but_movable
 {
 public:
     template<class F>
-    static TransportError mk(F && f)
+    static ReportError mk(F && f)
     {
-        return TransportError(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)});
+        return ReportError(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)});
     }
 
-    static TransportError mk(std::nullptr_t = nullptr)
+    static ReportError mk(std::nullptr_t = nullptr)
     {
         // disable allocation/deallocation
         struct NullImpl : ImplBase
@@ -46,7 +45,7 @@ public:
             Error get_error(Error err) override { return err; }
         };
         static NullImpl null_impl;
-        return TransportError(&null_impl);
+        return ReportError(&null_impl);
     }
 
     Error get_error(Error err)
@@ -76,27 +75,27 @@ private:
     };
 
     template<class F, class Fu>
-    static TransportError dispath_mk(Fu && f, std::false_type = typename std::is_pointer<F>::type{})
+    static ReportError dispath_mk(Fu && f, std::false_type = typename std::is_pointer<F>::type{})
     {
-        return TransportError{{new FuncImpl<F>{std::forward<Fu>(f)}}};
+        return ReportError{{new FuncImpl<F>{std::forward<Fu>(f)}}};
     }
 
     template<class F, class Fu>
-    static TransportError dispath_mk(Fu && f, std::true_type = typename std::is_pointer<F>::type{})
+    static ReportError dispath_mk(Fu && f, std::true_type = typename std::is_pointer<F>::type{})
     {
-        return f ? TransportError(new FuncImpl<F>{f}) : mk(nullptr);
+        return f ? ReportError(new FuncImpl<F>{f}) : mk(nullptr);
     }
 
-    TransportError(ImplBase* p)
+    ReportError(ImplBase* p)
     : impl(p)
     {}
 
     std::unique_ptr<ImplBase> impl;
 };
 
-inline TransportError auth_report_error(auth_api& auth)
+inline ReportError auth_report_error(auth_api& auth)
 {
-    return TransportError::mk([&auth](Error error) {
+    return ReportError::mk([&auth](Error error) {
         if (error.id == ENOSPC) {
             auth.report("FILESYSTEM_FULL", "100|unknow");
             error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
@@ -105,33 +104,78 @@ inline TransportError auth_report_error(auth_api& auth)
     });
 }
 
-inline TransportError auth_report_error(auth_api* auth)
+inline ReportError auth_report_error(auth_api* auth)
 {
-    return auth ? auth_report_error(*auth) : TransportError::mk();
+    return auth ? auth_report_error(*auth) : ReportError::mk([](Error error){
+        if (error.id == ENOSPC) {
+            LOG(LOG_ERR, "FILESYSTEM_FULL");
+            error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+        }
+        return error;
+    });
 }
 
 struct OutFileTransport : Transport
 {
-    explicit OutFileTransport(unique_fd fd, TransportError report_error = TransportError::mk()) noexcept
-    : file(fd.release())
-    , report(std::move(report_error))
+    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError::mk()) noexcept
+    : file(std::move(fd))
+    , report_error(std::move(report_error))
     {}
 
-    bool disconnect() override {
-        return !this->file.close();
+    bool disconnect() override
+    {
+        return this->file.close();
+    }
+
+    void seek(int64_t offset, int whence) override
+    {
+        if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
+
+    int get_fd() const override
+    {
+        return this->file.fd();
+    }
+
+    void open(unique_fd fd)
+    {
+        this->file = std::move(fd);
+    }
+
+    bool is_open() const
+    {
+        return this->file.is_open();
+    }
+
+    // alias on disconnect
+    void close()
+    {
+        this->file.close();
     }
 
 private:
     void do_send(const uint8_t * data, size_t len) override
     {
-        const ssize_t res = this->file.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            throw this->report(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
+        size_t total_sent = 0;
+        while (total_sent != len) {
+            ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
+            if (ret <= 0){
+                if (errno == EINTR) {
+                    continue;
+                }
+                break;
+            }
+            total_sent += ret;
         }
-        this->last_quantum_sent += res;
+        this->last_quantum_sent += total_sent;
+        if (total_sent != len) {
+            this->status = false;
+            throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
+        }
     }
 
-    io::posix::fdbuf file;
-    TransportError report;
+    unique_fd file;
+    ReportError report_error;
 };

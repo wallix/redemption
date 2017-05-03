@@ -638,7 +638,6 @@ test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
 test-canonical utils/drawable.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/ellipse.hpp ;
-test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
 test-canonical utils/genrandom.hpp ;
 test-canonical utils/genfstat.hpp ;

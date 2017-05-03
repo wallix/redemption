@@ -64,17 +64,55 @@ struct unique_fd
     : unique_fd(pathname.c_str(), flags, mode)
     {}
 
-    ~unique_fd() { if (this->is_open()) ::close(this->fd_); }
+    ~unique_fd()
+    {
+        this->close();
+    }
 
-    explicit operator bool () const noexcept { return this->is_open(); }
-    bool operator!() const noexcept { return !this->is_open(); }
-    bool is_open() const noexcept { return this->fd_ >= 0; }
+    explicit operator bool () const noexcept
+    {
+        return this->is_open();
+    }
 
-    int fd() const noexcept { return this->fd_; }
+    bool operator!() const noexcept
+    {
+        return !this->is_open();
+    }
 
-    int release() noexcept { return exchange(this->fd_, -1); }
+    bool is_open() const noexcept
+    {
+        return this->fd_ >= 0;
+    }
 
-    void swap(unique_fd& other)
+    int fd() const noexcept
+    {
+        return this->fd_;
+    }
+
+    int release() noexcept
+    {
+        return exchange(this->fd_, -1);
+    }
+
+    bool close()
+    {
+        if (this->is_open()) {
+            int res = ::close(this->fd_);
+            this->fd_ = -1;
+            return res != -1;
+        }
+        return false;
+    }
+
+    void reset(int fd = -1) noexcept
+    {
+        if (this->is_open()) {
+            ::close(this->fd_);
+        }
+        this->fd_ = fd;
+    }
+
+    void swap(unique_fd& other) noexcept
     {
         using std::swap;
         swap(fd_, other.fd_);
@@ -84,7 +122,12 @@ private:
     int fd_;
 };
 
-inline void swap(unique_fd& a, unique_fd& b)
+inline void swap(unique_fd& a, unique_fd& b) noexcept
 {
     a.swap(b);
+}
+
+inline unique_fd invalid_fd() noexcept
+{
+    return unique_fd{-1};
 }

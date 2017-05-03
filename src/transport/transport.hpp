@@ -137,11 +137,6 @@ public:
         return 0;
     }
 
-    void send(const char * const buffer, size_t len)
-    {
-        this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
-    }
-
     enum class Read : bool { Eof, Ok };
 
     /// recv_boom read len bytes into buffer or throw an Error
@@ -156,9 +151,7 @@ public:
 
     void recv_boom(char * buffer, size_t len)
     {
-        if (Read::Eof == this->atomic_read(reinterpret_cast<uint8_t*>(buffer), len)){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
+        this->recv_boom(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
     /// atomic_read either read len bytes into buffer or throw an Error
@@ -180,6 +173,11 @@ public:
         this->do_send(buffer, len);
     }
 
+    void send(const char * const buffer, size_t len)
+    {
+        this->do_send(reinterpret_cast<const uint8_t*>(buffer), len);
+    }
+
     virtual void flush()
     {}
 
@@ -196,13 +194,13 @@ private:
     virtual Read do_atomic_read(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
     virtual void do_send(const uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
 public:
