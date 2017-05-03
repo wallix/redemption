@@ -1550,6 +1550,7 @@ public:
                                         : mod_vnc::ClipboardEncodingType::Latin1,
                                     this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                                     authentifier,
+                                    false, 
                                     this->ini.get<cfg::debug::mod_vnc>()
                                 )
                         );

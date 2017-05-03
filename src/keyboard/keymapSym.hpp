@@ -1252,7 +1252,7 @@ struct KeymapSym {
                     //----------------------------------------
                     // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
                     // if ( (this->is_ctrl_pressed() && this->is_alt_pressed()) ||
-                    if (this->is_right_alt_pressed()) {
+                    if (this->is_alt_pressed()) {
                         layout = &this->keylayout_WORK_altgr_sym;
                         if (this->verbose) {
                             LOG(LOG_INFO, "Use KEYLAYOUT WORK Altgr");

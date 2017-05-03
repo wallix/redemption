@@ -66,7 +66,7 @@
  *                                                                              // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
  *                                                                              // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  *
- *      qsckm.clearCustomKeyCod();                                              // Call clearCustomKeyCod() to empty custom entries.
+ *      qsckm.clearCustomKeyCode();                                              // Call clearCustomKeyCode() to empty custom entries.
  *
  *
  *
@@ -213,6 +213,7 @@ private:
             case Qt::Key_sterling    : this->scanCode = 0xA3; break; // £
             case Qt::Key_currency    : this->scanCode = 0x1B; break; //
             case Qt::Key_degree      : this->scanCode = 0xB0; break; // °
+            case Qt::Key_mu          : this->scanCode = 0xB5; break; /*µ*/
             case Qt::Key_Slash    :
                 if (this->_keyboardMods == 0) {
                     scanCode = 0x21;
@@ -262,8 +263,8 @@ private:
             case Qt::Key_Q          : this->scanCode = 'q';  break; /*Q*/         case Qt::Key_multiply  : this->scanCode = '*';  break; /***/
             case Qt::Key_S          : this->scanCode = 's';  break; /*S*/         case Qt::Key_Space     : this->scanCode = ' ';  break; /* */
             case Qt::Key_W          : this->scanCode = 'w';  break; /*W*/         case Qt::Key_section   : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_Eacute     : this->scanCode = 0xE;  break; /*é*/         case Qt::Key_degree    : this->scanCode = 0xB0; break; // °
-            case Qt::Key_Ccedilla   : this->scanCode = 0xE7; break; /*ç*/         //case Qt::Key_         : this->scanCode = '';  break; /**/
+            case Qt::Key_Eacute     : this->scanCode = 0xE;  break; /*é*/         case Qt::Key_degree    : this->scanCode = 0xB0; break; /*°*/
+            case Qt::Key_Ccedilla   : this->scanCode = 0xE7; break; /*ç*/
             case Qt::Key_Agrave     : this->scanCode = 0xE0; break; /*à*/         //case Qt::Key_         : this->scanCode = '';  break; /**/
             case Qt::Key_Ugrave     : this->scanCode = 0xF9; break; /*ù*/
             case Qt::Key_Egrave     : this->scanCode = 0xE8; break; /*è*/
@@ -273,7 +274,7 @@ private:
                     scanCode = 0x21;
                     this->flag = this->flag | KBD_FLAGS_EXTENDED;
                 }
-                break;
+                break; /* / */
 
             default: break;
         }
@@ -435,7 +436,7 @@ private:
 
             default: break;
         }
-    }//==========================================================================================================================
+    }//====================================================================================================
 
 
     //===================
@@ -621,11 +622,10 @@ public:
                 }
             }
         }
-
     }
 
 
-    void clearCustomKeyCod() {
+    void clearCustomKeyCode() {
         this->_customNoExtendedKeylayoutApplied.clear();
         this->_customExtendedKeylayoutApplied.clear();
         this->_customNoExtended.clear();

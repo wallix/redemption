@@ -105,6 +105,7 @@ public:
     std::unique_ptr<ReplayMod> replay_mod;
     bool                 is_recording;
     bool                 is_replaying;
+    bool                 connected;
 
 
     QImage::Format       imageFormatRGB;
@@ -202,6 +203,7 @@ public:
     , replay_mod(nullptr)
     , is_recording(false)
     , is_replaying(false)
+    , connected(false)
     , qtRDPKeymap()
     , bar(nullptr)
     , cache(nullptr)
@@ -221,7 +223,7 @@ public:
                                 , std::size_t , std::size_t , int ) override {}
 
     // CONTROLLER
-    virtual bool connexionReleased() = 0;
+    virtual void connexionReleased() = 0;
     virtual void closeFromScreen() = 0;
     virtual void RefreshPressed() = 0;
     virtual void CtrlAltDelPressed() = 0;
@@ -435,14 +437,14 @@ public:
         return true;
     }
 
-    void prog_draw_event_timer(int time_to_wake) {
-        LOG(LOG_INFO, "prog_draw_event_timer");
-        if (!this->timer.isActive()) {
-
-//             this->timer.start( time_to_wake );
-//             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
-        }
-    }
+//     void prog_draw_event_timer(int time_to_wake) {
+//         LOG(LOG_INFO, "prog_draw_event_timer");
+//         if (!this->timer.isActive()) {
+//
+// //             this->timer.start( time_to_wake );
+// //             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
+//         }
+//     }
 
 
 public Q_SLOTS:
@@ -757,7 +759,8 @@ private Q_SLOTS:
 
     void connexionReleased() {
 
-        if (this->_front->connexionReleased()) {
+        this->_front->connexionReleased();
+        if (this->_front->connected) {
             bool alreadySet = false;
             this->_pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
 
@@ -1308,6 +1311,9 @@ private:
                         }
                     }
                         break;
+
+                    case WrmVersion::unknown:
+                        break;
                 }
 
                 this->_timer_replay.start(1);
@@ -1497,7 +1503,6 @@ public:
 
     // Connexion socket members
     int                  _timer;
-    bool                 connected;
      std::unique_ptr<Capture>  capture;
     Font                 _font;
     std::string          _error;
@@ -2608,6 +2613,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPPolygonSC");
 
@@ -2622,6 +2629,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPPolygonCB");
 
@@ -2650,6 +2659,8 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPEllipseSC");
 
@@ -2664,6 +2675,8 @@ public:
             //cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+        (void) cmd;
+        (void) clip;
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPEllipseCB");
     /*
@@ -2796,20 +2809,20 @@ public:
         return false;
     }
 
-    bool connexionReleased() override {
+    void connexionReleased() override {
         this->form->setCursor(Qt::WaitCursor);
         this->user_name     = this->form->get_userNameField();
         this->target_IP     = this->form->get_IPField();
         this->user_password = this->form->get_PWDField();
         this->port          = this->form->get_portField();
 
-        bool res(false);
+        //bool res(false);
         if (!this->target_IP.empty()){
-            res = this->connect();
+            this->connect();
         }
         this->form->setCursor(Qt::ArrowCursor);
 
-        return res;
+        //return res;
     }
 
     void RefreshPressed() override {
@@ -2930,9 +2943,10 @@ public:
         this->form->set_ErrorMsg(labelErrorMsg);
     }
 
-    virtual bool connect() {
+    virtual void connect() {
         this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
+            this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
@@ -2940,7 +2954,6 @@ public:
             this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
 
             this->is_replaying = false;
-            this->connected = true;
 
             if (this->is_recording && !this->is_replaying) {
                 Inifile ini;
@@ -2975,11 +2988,11 @@ public:
                 PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, authentifier, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
                 FlvParams flv_params = flv_params_from_ini(this->info.width, this->info.height, ini);
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
-                                        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
-                                        ini.get<cfg::ocr::on_title_bar_only>(),
-                                        ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                        ini.get<cfg::ocr::interval>()
-                                    };
+                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
+                                         ini.get<cfg::ocr::on_title_bar_only>(),
+                                         ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                         ini.get<cfg::ocr::interval>()
+                                       };
 
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
@@ -3049,11 +3062,11 @@ public:
             if (this->mod_qt->listen()) {
                 this->form->hide();
                 this->screen->show();
-                return true;
+                this->connected = true;
+            } else {
+                this->connected = false;
             }
         }
-
-        return false;
     }
 
     void disconnect(std::string const & error) override {

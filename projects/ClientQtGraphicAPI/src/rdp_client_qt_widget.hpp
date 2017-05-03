@@ -184,8 +184,21 @@ public:
           : id(id)
           , name(name) {}
     };
-
     std::vector<UserProfil> userProfils;
+
+    struct KeyCustomDefinition {
+        int qtKeyID  = 0;
+        int scanCode = 0;
+        int ASCII8   = 0;
+        int extended = 0;
+
+        KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
+          : qtKeyID(qtKeyID)
+          , scanCode(scanCode)
+          , ASCII8(ASCII8)
+          , extended(extended) {}
+    };
+    std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
 
     Front_RDP_Qt_API( RDPVerbose verbose)
@@ -505,42 +518,52 @@ public:
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
 
-        std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
-        if(ifichier) {
-
-            std::string ligne;
-            std::string delimiter = " ";
-
-            while(getline(ifichier, ligne)) {
-
-                int pos(ligne.find(delimiter));
-
-                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int scanCode = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int ASCII8   = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int extended = std::stoi(ligne.substr(0, pos));
-
-                    this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-
-                    this->addRow();
-                    this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
-                }
-            }
+        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
+            this->addRow();
+            this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
+                               this->_front->keyCustomDefinitions[i].scanCode,
+                               this->_front->keyCustomDefinitions[i].ASCII8,
+                               this->_front->keyCustomDefinitions[i].extended);
         }
+
+//         std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
+//         if(ifichier) {
+//
+//             std::string ligne;
+//             std::string delimiter = " ";
+//
+//             while(getline(ifichier, ligne)) {
+//
+//                 int pos(ligne.find(delimiter));
+//
+//                 if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
+//
+//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+//                     pos = ligne.find(delimiter);
+//
+//                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
+//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+//                     pos = ligne.find(delimiter);
+//
+//                     int scanCode = std::stoi(ligne.substr(0, pos));
+//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+//                     pos = ligne.find(delimiter);
+//
+//                     int ASCII8   = std::stoi(ligne.substr(0, pos));
+//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+//                     pos = ligne.find(delimiter);
+//
+//                     int extended = std::stoi(ligne.substr(0, pos));
+//
+//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+//
+//                     this->addRow();
+//                     this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
+//                 }
+//             }
+//
+//             ifichier.close();
+//         }
         this->addRow();
 
 
@@ -821,7 +844,7 @@ public Q_SLOTS:
 
 
         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
-        this->_front->qtRDPKeymap.clearCustomKeyCod();
+        this->_front->qtRDPKeymap.clearCustomKeyCode();
 
         std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
         if(ofichier) {
