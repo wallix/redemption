@@ -118,6 +118,10 @@ public:
     } fileSystemData;
 
 
+
+
+
+
     virtual void options() override {
         new DialogOptions_Qt(this, this->form);
     }
@@ -267,6 +271,44 @@ public:
             ifichier.close();
 
             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
+        }
+
+        this->qtRDPKeymap.clearCustomKeyCode();
+        std::ifstream iFileKeyData(this->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
+        if(iFileKeyData) {
+
+            std::string ligne;
+            std::string delimiter = " ";
+
+            while(getline(iFileKeyData, ligne)) {
+
+                int pos(ligne.find(delimiter));
+
+                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
+
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int scanCode = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int ASCII8   = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int extended = std::stoi(ligne.substr(0, pos));
+
+                    this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+                    this->keyCustomDefinitions.push_back({qtKeyID, scanCode, ASCII8, extended});
+                }
+            }
+
+            iFileKeyData.close();
         }
     }
 
@@ -464,8 +506,8 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   //, to_verbose_flags(0)
-                                   , RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
+                                   , to_verbose_flags(0)
+                                   //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
