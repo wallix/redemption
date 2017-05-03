@@ -418,7 +418,7 @@ public:
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
-        bool FR_APPLE_KEYLAYOUT = true;
+        bool FR_APPLE_KEYLAYOUT = false;
 
         if (FR_APPLE_KEYLAYOUT) {
             // TODO char: '£', '_', '<', '>' and mod capslock are not sent
