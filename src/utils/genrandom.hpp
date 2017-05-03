@@ -31,7 +31,7 @@
 #include <cstdint>
 
 #include "utils/log.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 
 class Random
@@ -86,7 +86,7 @@ class UdevRandom : public Random
         }
 
          // this object is useful for RAII, do not unwrap
-        local_fd file(fd);
+        unique_fd file(fd);
 
         // TODO This is basically a blocking read, we should provide timeout management and behaviour
         auto read = [fd](uint8_t * data, size_t len) -> ssize_t {

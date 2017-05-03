@@ -303,7 +303,7 @@ private:
                 int fd = ::open(cache_filename, O_RDONLY);
                 if (fd != -1) {
                     try {
-                        InFileTransport ift(local_fd{fd});
+                        InFileTransport ift(unique_fd{fd});
 
                         BmpCachePersister::Verbose cache_verbose
                             = ( bool(verbose & Verbose::cache_from_disk)
@@ -1167,7 +1167,7 @@ public:
         try
         {
             {
-                OutFileTransport oft(local_fd{fd});
+                OutFileTransport oft(unique_fd{fd});
                 BmpCachePersister::save_all_to_disk(
                     this->orders.get_bmp_cache(), oft,
                     convert_verbose_flags(this->verbose)

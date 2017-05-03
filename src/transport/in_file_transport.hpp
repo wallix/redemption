@@ -23,7 +23,7 @@
 
 #include "core/error.hpp"
 #include "transport/transport.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <cerrno>
 
@@ -34,7 +34,7 @@ protected:
     int fd;
 
 public:
-    explicit InFileTransport(local_fd fd)
+    explicit InFileTransport(unique_fd fd)
     : fd(fd.release())
     {}
 

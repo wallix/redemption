@@ -31,40 +31,40 @@
 #pragma once
 
 /// \brief close a file descriptor automatically
-struct local_fd
+struct unique_fd
 {
-    local_fd(local_fd const &) = delete;
-    local_fd & operator=(local_fd const &) = delete;
+    unique_fd(unique_fd const &) = delete;
+    unique_fd & operator=(unique_fd const &) = delete;
 
-    explicit local_fd(int fd) noexcept : fd_(fd) {}
+    explicit unique_fd(int fd) noexcept : fd_(fd) {}
 
-    local_fd(local_fd && other)
+    unique_fd(unique_fd && other)
     : fd_(exchange(other.fd_, -1))
     {}
 
-    local_fd & operator=(local_fd && other)
+    unique_fd & operator=(unique_fd && other)
     {
-        local_fd(std::move(other)).swap(*this);
+        unique_fd(std::move(other)).swap(*this);
         return *this;
     }
 
-    local_fd(char const * pathname, int flags) noexcept
+    unique_fd(char const * pathname, int flags) noexcept
     : fd_(::open(pathname, flags))
     {}
 
-    local_fd(char const * pathname, int flags, mode_t mode) noexcept
+    unique_fd(char const * pathname, int flags, mode_t mode) noexcept
     : fd_(::open(pathname, flags, mode))
     {}
 
-    local_fd(std::string const & pathname, int flags) noexcept
-    : local_fd(pathname.c_str(), flags)
+    unique_fd(std::string const & pathname, int flags) noexcept
+    : unique_fd(pathname.c_str(), flags)
     {}
 
-    local_fd(std::string const & pathname, int flags, mode_t mode) noexcept
-    : local_fd(pathname.c_str(), flags, mode)
+    unique_fd(std::string const & pathname, int flags, mode_t mode) noexcept
+    : unique_fd(pathname.c_str(), flags, mode)
     {}
 
-    ~local_fd() { if (this->is_open()) ::close(this->fd_); }
+    ~unique_fd() { if (this->is_open()) ::close(this->fd_); }
 
     explicit operator bool () const noexcept { return this->is_open(); }
     bool operator!() const noexcept { return !this->is_open(); }
@@ -74,7 +74,7 @@ struct local_fd
 
     int release() noexcept { return exchange(this->fd_, -1); }
 
-    void swap(local_fd& other)
+    void swap(unique_fd& other)
     {
         using std::swap;
         swap(fd_, other.fd_);
@@ -84,7 +84,7 @@ private:
     int fd_;
 };
 
-inline void swap(local_fd& a, local_fd& b)
+inline void swap(unique_fd& a, unique_fd& b)
 {
     a.swap(b);
 }

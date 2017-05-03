@@ -41,7 +41,7 @@ public:
                         , Font const & font)
     : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
-    , ift(local_fd{[&]() {
+    , ift(unique_fd{[&]() {
         const int fd = ::open(replay_path, O_RDWR);
         if (fd == -1) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);

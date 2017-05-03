@@ -62,7 +62,7 @@
 #include "capture/wrm_capture.hpp"
 #include "capture/RDPChunkedDevice.hpp"
 #include "capture/flv_params_from_ini.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
@@ -92,7 +92,7 @@ static inline int file_start_hmac_sha256(const char * filename,
                      size_t          check_size,
                      uint8_t (& hash)[SslSha256::DIGEST_LENGTH])
 {
-    local_fd file(filename, O_RDONLY);
+    unique_fd file(filename, O_RDONLY);
     int fd = file.fd();
     if (fd < 0) {
         return fd;
@@ -133,7 +133,7 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
     }
 
     {
-        local_fd file(fd);
+        unique_fd file(fd);
 
         const size_t len = sizeof(tmp_buf);
         size_t remaining_len = len;
@@ -2268,7 +2268,7 @@ extern "C" {
         default: // DECrypter
             try {
                 // TODO file is unused
-                local_fd file(rp.full_path, O_RDONLY);
+                unique_fd file(rp.full_path, O_RDONLY);
 
                 if (!file.is_open()) {
                     std::cerr << "can't open file " << rp.full_path << "\n\n";
@@ -2284,7 +2284,7 @@ extern "C" {
                 InCryptoTransport in_t(cctx, EncryptionMode::Encrypted);
 
                 ssize_t res = -1;
-                local_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+                unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
                 if (fd1.is_open()) {
                     OutFileTransport out_t(std::move(fd1));

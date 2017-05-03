@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestOutFileTransport)
     char tmpname[128];
     sprintf(tmpname, "/tmp/test_transportXXXXXX");
     {
-        OutFileTransport ft(local_fd{::mkostemp(tmpname, O_WRONLY|O_CREAT)});
+        OutFileTransport ft(unique_fd{::mkostemp(tmpname, O_WRONLY|O_CREAT)});
         ft.send("We write, ", 10);
         ft.send("and again, ", 11);
         ft.send("and so on.", 10);
@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestOutFileTransport)
     {
         char buf[128];
         char * pbuf = buf;
-        InFileTransport ft(local_fd{::open(tmpname, O_RDONLY)});
+        InFileTransport ft(unique_fd{::open(tmpname, O_RDONLY)});
         ft.recv_boom(pbuf, 10);
         pbuf += 10;
         ft.recv_boom(pbuf, 11);

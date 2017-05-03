@@ -1161,7 +1161,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     int fd = ::creat(path, 0777);
     RED_REQUIRE_NE(fd, -1);
 
-    OutFileTransport trans(local_fd{fd});
+    OutFileTransport trans(unique_fd{fd});
     RED_CHECK_EQUAL(0, 0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
@@ -1202,7 +1202,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     fd = ::open(in_path, O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
-    InFileTransport in_wrm_trans(local_fd{fd});
+    InFileTransport in_wrm_trans(unique_fd{fd});
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
@@ -2217,7 +2217,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     int fd = ::open(input_filename, O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
 
-    InFileTransport in_wrm_trans(local_fd{fd});
+    InFileTransport in_wrm_trans(unique_fd{fd});
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;

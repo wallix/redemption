@@ -23,7 +23,7 @@
 
 #include "utils/fdbuf.hpp"
 #include "transport/transport.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/make_unique.hpp"
 
 #include <memory>
@@ -112,7 +112,7 @@ inline TransportError auth_report_error(auth_api* auth)
 
 struct OutFileTransport : Transport
 {
-    explicit OutFileTransport(local_fd fd, TransportError report_error = TransportError::mk()) noexcept
+    explicit OutFileTransport(unique_fd fd, TransportError report_error = TransportError::mk()) noexcept
     : file(fd.release())
     , report(std::move(report_error))
     {}

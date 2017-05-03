@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
 
     std::unique_ptr<OutFileTransport> persistent_key_list_oft;
 
-    if (local_fd persistent_key_list_ofd{
+    if (unique_fd persistent_key_list_ofd{
         persistent_key_list_filename,
         O_CREAT | O_TRUNC | O_WRONLY,
         S_IRUSR | S_IWUSR | S_IRGRP
@@ -232,7 +232,7 @@ int main(int argc, char * argv[]) {
             std::unique_ptr<OutFileTransport> record_oft;
 
             if (!record_filename.empty()) {
-                if (local_fd record_fd{
+                if (unique_fd record_fd{
                     record_filename,
                     O_CREAT | O_TRUNC | O_WRONLY,
                     S_IRUSR | S_IWUSR | S_IRGRP
@@ -247,7 +247,7 @@ int main(int argc, char * argv[]) {
 
             std::unique_ptr<InFileTransport> persistent_key_list_ift;
 
-            if (local_fd persistent_key_list_ifd{persistent_key_list_filename.c_str(), O_RDONLY}) {
+            if (unique_fd persistent_key_list_ifd{persistent_key_list_filename.c_str(), O_RDONLY}) {
                 persistent_key_list_ift.reset(new InFileTransport(std::move(persistent_key_list_ifd)));
             }
             else {

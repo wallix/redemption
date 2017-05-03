@@ -500,7 +500,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     int fd = ::creat(path, 0777);
     RED_REQUIRE_NE(fd, -1);
 
-    OutFileTransport trans(local_fd{fd});
+    OutFileTransport trans(unique_fd{fd});
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);

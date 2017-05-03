@@ -37,7 +37,7 @@
 #include "utils/log.hpp"
 
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/bytes_t.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
@@ -1149,7 +1149,7 @@ public:
         std::string record_path,
         const char * const basename,
         bool enable_agent)
-    : meta_trans(local_fd{[&](){
+    : meta_trans(unique_fd{[&](){
         record_path.append(basename).append(".meta");
         const char * filename = record_path.c_str();
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0440);

@@ -194,7 +194,7 @@ private:
         try
         {
             {
-                OutFileTransport oft(local_fd{fd});
+                OutFileTransport oft(unique_fd{fd});
                 BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
             }
 
@@ -253,7 +253,7 @@ public:
                 return;
             }
 
-            InFileTransport ift(local_fd{fd});
+            InFileTransport ift(unique_fd{fd});
 
             try {
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
