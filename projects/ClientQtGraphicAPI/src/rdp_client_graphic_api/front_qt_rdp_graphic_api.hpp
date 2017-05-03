@@ -2988,11 +2988,11 @@ public:
                 PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, authentifier, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
                 FlvParams flv_params = flv_params_from_ini(this->info.width, this->info.height, ini);
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
-                                        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
-                                        ini.get<cfg::ocr::on_title_bar_only>(),
-                                        ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                        ini.get<cfg::ocr::interval>()
-                                    };
+                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
+                                         ini.get<cfg::ocr::on_title_bar_only>(),
+                                         ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                         ini.get<cfg::ocr::interval>()
+                                       };
 
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");

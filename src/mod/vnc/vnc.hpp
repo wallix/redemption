@@ -195,6 +195,8 @@ private:
 
     time_t beginning;
 
+    bool server_is_apple;
+
 
 public:
     //==============================================================================================================
@@ -217,6 +219,7 @@ public:
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , auth_api & authentifier
+           , bool server_is_apple
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -246,6 +249,7 @@ public:
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , authentifier(authentifier)
+    , server_is_apple(server_is_apple)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -418,10 +422,7 @@ public:
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
-        bool FR_APPLE_KEYLAYOUT = false;
-
-        if (FR_APPLE_KEYLAYOUT) {
-            // TODO char: '£', '_', '<', '>' and mod capslock are not sent
+        if (this->server_is_apple) {
             switch (param1) {
 
                 case 0x35:

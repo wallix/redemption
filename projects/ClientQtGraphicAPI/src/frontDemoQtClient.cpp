@@ -39,22 +39,25 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
     Translator translator;
     Theme      theme;
 
+    bool is_apple;
+
 
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
       , translator(Translation::language_t::FR)
     {
-        this->info.keylayout = KEYBOARDS::EN_US;
+        this->is_apple = true;
     }
 
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
+        if (this->is_apple) {
+            this->info.keylayout = KEYBOARDS::EN_US;
+        }
 
         try {
-
-
             // VNC
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
@@ -75,6 +78,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
+                                   , this->is_apple
                                    , 0xffffffff-2);
 
         } catch (const Error &) {

@@ -269,6 +269,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
         , authentifier       // acl
+        , false
         , verbose);
     mod.get_event().set();
 
