@@ -148,9 +148,6 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
     RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-
-    RED_CHECK_MEM_AC(meta_line.hash1, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-    RED_CHECK_MEM_AC(meta_line.hash2, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2)
