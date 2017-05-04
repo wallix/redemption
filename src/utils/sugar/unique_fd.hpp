@@ -44,7 +44,8 @@ struct unique_fd
 
     unique_fd & operator=(unique_fd && other)
     {
-        unique_fd(std::move(other)).swap(*this);
+        unique_fd tmp(std::move(other));
+        tmp.swap(*this);
         return *this;
     }
 
