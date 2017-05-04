@@ -350,13 +350,6 @@ struct NTLMContext
         memset(buff, 0, buff_size);
         memcpy(buff, tmp_md5,
             std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
-
-
-        if (this->verbose) {
-            if (!buff) {
-                LOG(LOG_INFO, "NTOWFv2 error: nullptr result");
-            }
-        }
     }
     // all strings are in unicode utf16
     void LMOWFv2(const uint8_t * pass,   size_t pass_size,
