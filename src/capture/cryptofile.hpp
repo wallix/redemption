@@ -62,7 +62,7 @@ extern "C" {
 
 
 constexpr std::size_t CRYPTO_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
-constexpr std::size_t HMAC_KEY_LENGTH = CRYPTO_KEY_LENGTH;
+constexpr std::size_t HMAC_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 
 
 class CryptoContext

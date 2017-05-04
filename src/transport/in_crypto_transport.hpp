@@ -30,6 +30,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/parse.hpp"
 #include "capture/cryptofile.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <memory>
 
@@ -75,10 +76,7 @@ public:
     {
     }
 
-    ~InCryptoTransport() {
-        // TODO close fd
-    }
-
+    ~InCryptoTransport() = default;
 
     bool is_encrypted() const
     {
@@ -96,33 +94,33 @@ public:
 
     const HASH qhash(const char * pathname)
     {
-        SslHMAC_Sha256_Delayed hm4k;
-
-        hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->fd = ::open(pathname, O_RDONLY);
-        if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-        try {
-            this->eof = false;
-            uint8_t buffer[4096];
+
+        SslHMAC_Sha256 hm4k(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+
+        {
+            int fd = ::open(pathname, O_RDONLY);
+            if (fd < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            unique_fd auto_close(fd);
+
+            constexpr std::size_t buffer_size = 4096;
+            uint8_t buffer[buffer_size];
             size_t total_length = 0;
             do {
-                ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
-                if (res <= 0) { break; }
-                if (total_length >= 4096) { break; }
-                size_t remaining_size = 4096 - total_length;
-                hm4k.update(buffer, std::min(remaining_size, static_cast<size_t>(res)));
+                size_t const remaining_size = buffer_size - total_length;
+                ssize_t res = ::read(fd, buffer, remaining_size);
+                if (res == 0) { break; }
+                if (res < 0 && errno == EINTR) { continue; }
+                if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
+                hm4k.update(buffer, res);
                 total_length += res;
-            } while (1);
-        } catch (...) {
-            this->close();
-            throw;
+            } while (total_length != buffer_size);
         }
-        this->close();
+
         HASH qhash;
         hm4k.final(qhash.hash);
         return qhash;
@@ -130,29 +128,29 @@ public:
 
     const HASH fhash(const char * pathname)
     {
-        SslHMAC_Sha256_Delayed hm;
-        hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->fd = ::open(pathname, O_RDONLY);
-        if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-        try {
-            this->eof = false;
+
+        SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+
+        {
+            this->fd = ::open(pathname, O_RDONLY);
+            if (this->fd < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            unique_fd auto_close(fd);
+
             uint8_t buffer[4096];
             do {
                 ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
-                if (res <= 0) { break; }
+                if (res == 0) { break; }
+                if (res < 0 && errno == EINTR) { continue; }
+                if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
                 hm.update(buffer, res);
             } while (1);
-        } catch (...) {
-            this->close();
-            throw;
         }
-        this->close();
+
         HASH fhash;
         hm.final(fhash.hash);
         return fhash;

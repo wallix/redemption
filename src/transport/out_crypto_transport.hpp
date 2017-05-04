@@ -149,8 +149,8 @@ public:
         this->file_size = 0;
         this->pos = 0;
         if (this->checksum) {
-            this->hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-            this->hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
+            this->hm.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+            this->hm4k.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
         }
 
         if (this->encryption) {

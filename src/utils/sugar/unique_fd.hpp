@@ -66,7 +66,7 @@ struct unique_fd
 
     ~unique_fd()
     {
-        this->close();
+        this->reset();
     }
 
     explicit operator bool () const noexcept

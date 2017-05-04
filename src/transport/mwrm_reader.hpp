@@ -180,6 +180,9 @@ struct MwrmReader
             return this->read_meta_line_v1(meta_line);
         case WrmVersion::v2:
             return this->read_meta_line_v2(meta_line, true);
+        default:
+            assert(false);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
     }
 
