@@ -58,6 +58,7 @@ private:
 
 protected:
     char final_filename[1024];
+    bool status = true;
 };
 
 

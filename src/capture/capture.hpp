@@ -594,6 +594,7 @@ private:
     }
 
     Buf buf;
+    bool status = true;
 };
 
 struct NotifyTitleChanged : private noncopyable

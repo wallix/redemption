@@ -51,8 +51,6 @@ protected:
     uint64_t last_quantum_received;
     uint64_t last_quantum_sent;
 
-    bool status;
-
     auth_api * authentifier;
 
 public:
@@ -62,7 +60,6 @@ public:
     , seqno(0)
     , last_quantum_received(0)
     , last_quantum_sent(0)
-    , status(true)
     , authentifier(get_null_authentifier())
     {}
 
@@ -83,9 +80,6 @@ public:
 
     uint64_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
-
-    virtual bool get_status() const
-    { return this->status; }
 
     void set_authentifier(auth_api * authentifier)
     {

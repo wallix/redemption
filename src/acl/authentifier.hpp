@@ -28,8 +28,6 @@
 #include "utils/log.hpp"
 #include "configs/config.hpp"
 #include "acl_serializer.hpp"
-#include "module_manager.hpp"
-#include "front/front.hpp"
 
 #include "utils/verbose_flags.hpp"
 

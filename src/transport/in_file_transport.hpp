@@ -80,7 +80,6 @@ private:
                 if (res != 0 && errno == EINTR){
                     continue;
                 }
-                this->status = false;
                 this->last_quantum_received += len;
                 throw Error(ERR_TRANSPORT_READ_FAILED, res);
             }

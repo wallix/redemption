@@ -100,8 +100,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     #include "fixtures/trace_rdesktop_client.hpp"
 
     // Comment the code block below to generate testing data.
-    uint32_t     verbose = 511;
-    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);

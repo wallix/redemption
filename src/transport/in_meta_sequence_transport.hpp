@@ -86,11 +86,6 @@ public:
         return this->mwrm_reader.get_header().version;
     }
 
-    bool get_status() const override
-    {
-        return this->status ? this->cfb.get_status() : false;
-    }
-
     void set_begin_time(time_t begin_time)
     {
         this->begin_time = begin_time;
@@ -196,4 +191,5 @@ private:
 
     MetaLine meta_line;
     char meta_path[2048];
+    bool status = true;
 };

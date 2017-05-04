@@ -433,11 +433,12 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
+            int err = errno;
             if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed code=%d", errno);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+                LOG(LOG_ERR, "Write to transport failed code=%d", err);
+                err = -res;
             }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
         ++this->seqno;
         return true;
@@ -467,6 +468,8 @@ private:
         }
         this->last_quantum_sent += res;
     }
+
+    bool status = true;
 };
 
 

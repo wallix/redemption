@@ -83,8 +83,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_TLSw2008.hpp"
-    TestTransport t(indata, sizeof(indata) - 1,
-        outdata, sizeof(outdata) - 1, verbose);
+    TestTransport t(indata, sizeof(indata) - 1, outdata, sizeof(outdata) - 1);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -125,16 +124,12 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     LCGRandom gen(0);
     LCGTime timeobj;
     NullAuthentifier authentifier;
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier);
-    mod_api * mod = &mod_;
 
     if (verbose > 2) {
-        LOG(LOG_INFO,
-            "========= CREATION OF MOD DONE ====================\n\n");
+        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    RED_CHECK(t.get_status());
-
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
@@ -143,9 +138,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 70) break;
-        mod->draw_event(time(nullptr), front);
+        mod.draw_event(time(nullptr), front);
     }
 
+    t.disable_remaining_error();
     //front.dump_png("trace_w2008_tls_");
 }
 
@@ -183,7 +179,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     //                     );
 
     #include "fixtures/dump_TLSw2008_2.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -224,14 +220,12 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     LCGRandom gen(0);
     LCGTime timeobj;
     NullAuthentifier authentifier;
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier);
-    mod_api * mod = &mod_;
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    RED_CHECK(t.get_status());
 
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
@@ -241,8 +235,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 40) break;
-        mod->draw_event(time(nullptr), front);
+        mod.draw_event(time(nullptr), front);
     }
 
+    t.disable_remaining_error();
 //    front.dump_png("trace_w2008_tls_");
 }

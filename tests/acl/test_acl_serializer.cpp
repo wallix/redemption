@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestAclSerializer
 #include "system/redemption_unit_tests.hpp"
 
-
 #define LOGNULL
 // #define LOGPRINT
 
@@ -125,6 +124,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_string("a\n");
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
+    transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }

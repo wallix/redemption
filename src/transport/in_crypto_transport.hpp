@@ -476,7 +476,6 @@ private:
                     if (errno == EINTR){
                         continue;
                     }
-                    this->status = false;
                     throw Error(ERR_TRANSPORT_READ_FAILED, res);
                 }
                 remaining_len -= res;

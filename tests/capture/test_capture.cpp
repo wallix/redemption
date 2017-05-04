@@ -937,7 +937,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
 
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
@@ -1115,7 +1115,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
+    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -1311,7 +1311,7 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
+    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
     trans.disable_remaining_error();
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(2, 256, false),
@@ -1454,7 +1454,7 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
+    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
@@ -1640,7 +1640,7 @@ RED_AUTO_TEST_CASE(TestImageChunk)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                         BmpCache::CacheOption(600, 256, false),
                         BmpCache::CacheOption(300, 1024, false),
@@ -1715,7 +1715,7 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1, 511);
+    CheckTransport trans(expected, sizeof(expected)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -1800,7 +1800,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1, 511);
+    CheckTransport trans(expected, sizeof(expected)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),

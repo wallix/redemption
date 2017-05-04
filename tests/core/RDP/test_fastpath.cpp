@@ -112,8 +112,6 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     out_t.send(out_s.get_data(), out_s.get_offset());
     out_t.send(out_payload.get_data(), out_payload.get_offset());
-
-    RED_CHECK_EQUAL(true, out_t.get_status());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
@@ -197,8 +195,6 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     out_t.send(out_s.get_data(), out_s.get_offset());
     out_t.send(out_payload.get_data(), out_payload.get_offset());
-
-    RED_CHECK_EQUAL(true, out_t.get_status());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -355,8 +351,4 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     }
 
     RED_CHECK_EQUAL(0, in_su.payload.in_remain());
-
-    RED_CHECK_EQUAL(true, out_t.get_status());
 }
-
-
