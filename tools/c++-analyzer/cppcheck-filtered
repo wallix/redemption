@@ -10,4 +10,6 @@ cmd="$1"
   --suppress=uninitMemberVar \
   --suppress=selfInitialization \
   --suppress=noExplicitConstructor \
-  --suppress=CastIntegerToAddressAtReturn
+  --suppress=CastIntegerToAddressAtReturn \
+  --suppress=noConstructor \
+  --suppress=noCopyConstructor
