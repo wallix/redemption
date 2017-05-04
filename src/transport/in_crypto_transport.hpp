@@ -485,7 +485,6 @@ private:
             if (this->file_len <= this->current_len) {
                 this->eof = true;
             }
-            this->last_quantum_received += len;
             return len - remaining_len;
         }
     }

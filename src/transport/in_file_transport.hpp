@@ -80,12 +80,10 @@ private:
                 if (res != 0 && errno == EINTR){
                     continue;
                 }
-                this->last_quantum_received += len;
                 throw Error(ERR_TRANSPORT_READ_FAILED, res);
             }
             remaining_len -= res;
         }
-        this->last_quantum_received += len;
         if (remaining_len != 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }

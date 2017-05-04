@@ -201,8 +201,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     RED_REQUIRE_EQUAL(ini.changed_field_size(), 1);
 
     acl.send_acl_data();
-
-    RED_CHECK_EQUAL(trans.get_total_sent(), big_stream.get_offset());
 }
 
 

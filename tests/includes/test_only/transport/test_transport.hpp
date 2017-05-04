@@ -177,8 +177,6 @@ private:
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
-
-        this->last_quantum_sent += len;
     }
 
     std::unique_ptr<uint8_t[]> data;

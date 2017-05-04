@@ -466,7 +466,6 @@ private:
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
-        this->last_quantum_sent += res;
     }
 
     bool status = true;

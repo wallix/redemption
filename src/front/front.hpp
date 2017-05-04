@@ -760,16 +760,6 @@ public:
         return this->event;
     }
 
-    uint64_t get_total_received() const
-    {
-        return this->trans.get_total_received();
-    }
-
-    uint64_t get_total_sent() const
-    {
-        return this->trans.get_total_sent();
-    }
-
     ResizeResult server_resize(int width, int height, int bpp) override
     {
         ResizeResult res = ResizeResult::no_need;

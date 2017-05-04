@@ -169,7 +169,6 @@ private:
             }
             total_sent += ret;
         }
-        this->last_quantum_sent += total_sent;
         if (total_sent != len) {
             throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
         }

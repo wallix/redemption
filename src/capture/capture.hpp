@@ -590,7 +590,6 @@ private:
     void do_send(const uint8_t * data, size_t len) override
     {
         this->buf.write(data, len);
-        this->last_quantum_sent += len;
     }
 
     Buf buf;

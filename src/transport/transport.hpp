@@ -42,24 +42,13 @@ using std::size_t;
 
 class Transport : noncopyable
 {
-    uint64_t total_received;
-    uint64_t total_sent;
-
 protected:
     uint32_t seqno;
-
-    uint64_t last_quantum_received;
-    uint64_t last_quantum_sent;
-
     auth_api * authentifier;
 
 public:
     Transport()
-    : total_received(0)
-    , total_sent(0)
-    , seqno(0)
-    , last_quantum_received(0)
-    , last_quantum_sent(0)
+    : seqno(0)
     , authentifier(get_null_authentifier())
     {}
 
@@ -69,34 +58,9 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    uint64_t get_total_received() const
-    { return this->total_received + this->last_quantum_received; }
-
-    uint64_t get_last_quantum_received() const
-    { return this->last_quantum_received; }
-
-    uint64_t get_total_sent() const
-    { return this->total_sent + this->last_quantum_sent; }
-
-    uint64_t get_last_quantum_sent() const
-    { return this->last_quantum_sent; }
-
     void set_authentifier(auth_api * authentifier)
     {
         this->authentifier = authentifier;
-    }
-
-    //void reset_quantum_sent() noexcept
-    //{
-    //    this->last_quantum_sent = 0;
-    //}
-
-    void tick()
-    {
-        this->total_received += this->last_quantum_received;
-        this->total_sent += this->last_quantum_sent;
-        this->last_quantum_received = 0;
-        this->last_quantum_sent = 0;
     }
 
     virtual void enable_client_tls(
