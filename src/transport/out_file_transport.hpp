@@ -49,7 +49,14 @@ public:
             //void operator delete(void *)
             //{}
 
-            Error get_error(Error err) override { return err; }
+            Error get_error(Error err) override
+            {
+                if (err.id == ENOSPC) {
+                    LOG(LOG_ERR, "FILESYSTEM_FULL");
+                    err.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                }
+                return err;
+            }
         };
         return ReportError(new NullImpl);
     }
@@ -112,13 +119,7 @@ inline ReportError auth_report_error(auth_api& auth)
 
 inline ReportError auth_report_error(auth_api* auth)
 {
-    return auth ? auth_report_error(*auth) : ReportError::mk([](Error error){
-        if (error.id == ENOSPC) {
-            LOG(LOG_ERR, "FILESYSTEM_FULL");
-            error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-        }
-        return error;
-    });
+    return auth ? auth_report_error(*auth) : ReportError::mk(nullptr);
 }
 
 struct OutFileTransport : Transport
@@ -165,18 +166,15 @@ private:
     void do_send(const uint8_t * data, size_t len) override
     {
         size_t total_sent = 0;
-        while (total_sent != len) {
+        while (len > total_sent) {
             ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
             if (ret <= 0){
                 if (errno == EINTR) {
                     continue;
                 }
-                break;
+                throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
             }
             total_sent += ret;
-        }
-        if (total_sent != len) {
-            throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
         }
     }
 
