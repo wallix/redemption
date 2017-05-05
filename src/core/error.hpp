@@ -343,12 +343,13 @@ struct Error {
     int errnum;
 
 private:
-    enum {
-          MSG_NULL
-        , MSG_WITH_ID
-        , MSG_WITHOUT_ID
+    enum class MsgType
+    {
+        Null,
+        WithId,
+        WithoutId,
     };
-    mutable int  msg_type = MSG_NULL;
+    mutable MsgType msg_type = MsgType::Null;
     mutable char msg[64]  = { 0 };
 
     Error() = delete;
@@ -401,19 +402,16 @@ public:
 
         default:
             {
-                int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);
+                MsgType requested_message_type = (with_id ? MsgType::WithId : MsgType::WithoutId);
 
                 if (requested_message_type != this->msg_type) {
-                    if (requested_message_type == MSG_WITH_ID) {
-                        snprintf( this->msg, sizeof(this->msg)
-                                , "Exception Error no : %d", this->id);
+                    if (requested_message_type == MsgType::WithId) {
+                        snprintf(this->msg, sizeof(this->msg), "Exception Error no : %d", this->id);
                     }
                     else {
-                        snprintf( this->msg, sizeof(this->msg)
-                                , "Exception");
+                        snprintf(this->msg, sizeof(this->msg), "Exception");
                     }
                     this->msg[sizeof(this->msg) - 1] = 0;
-
                     this->msg_type = requested_message_type;
                 }
                 return this->msg;
