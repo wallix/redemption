@@ -23,9 +23,9 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-//#include "acl/module_manager.hpp"
+#include "acl/module_manager.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "acl/authentifier.hpp"
@@ -45,20 +45,6 @@ inline void init_keys(CryptoContext & cctx)
          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
     ));
 }
-
-class CountTransport
-: public Transport
-{
-    Read do_atomic_read(uint8_t *, size_t len) override {
-        this->last_quantum_received += len;
-        return Read::Ok;
-    }
-
-    void do_send(const uint8_t * const, size_t len) override {
-        // TODO move that to base class : accounting_send(len) (or base class send could just do accounting)
-        this->last_quantum_sent += len;
-    }
-};
 
 RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 {
@@ -104,19 +90,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
             "keepalive\nASK\n"
     ;
 
-//    printf("len=%x\n",
-//        (unsigned)strlen(
-//        "keepalive\nASK\n"
-//        "password\ntotopass\n"
-//        "target_device\nwin\n"
-//        "target_login\nuser\n"
-//        "target_password\nwhoknows\n"
-//        "proto_dest\nRDP\n"
-//        "authenticated\nTrue\n"
-//        ));
-
-//    exit(0);
-
     char indata[] =
         "\x00\x00\x00\x8F"
         "login\n!toto\n"
@@ -127,7 +100,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         "proto_dest\n!RDP\n"
         "module\n!RDP\n"
         "authenticated\n!True\n"
-
     ;
 
     LCGRandom rnd(0);
@@ -220,19 +192,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
             "keepalive\nASK\n"
     ;
 
-//    printf("len=%x\n",
-//        (unsigned)strlen(
-//        "keepalive\nASK\n"
-//        "password\ntotopass\n"
-//        "target_device\nwin\n"
-//        "target_login\nuser\n"
-//        "target_password\nwhoknows\n"
-//        "proto_dest\nRDP\n"
-//        "authenticated\nTrue\n"
-//        ));
-
-//    exit(0);
-
     char indata[] =
         "\x00\x00\x00\x8F"
         "login\n!toto\n"
@@ -265,7 +224,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     signal = BACK_EVENT_NEXT;
 
     bool has_activity = true;
-    CountTransport keepalivetrans;
     // Ask next_module, send inital data to ACL
     acl_serial.check(sesman, mm, 10011, signal, front_signal,has_activity);
     // Receive answer, OK to connect
@@ -357,19 +315,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "real_target_device\n!\n"
     ;
 
-//    printf("len=%x\n",
-//        (unsigned)strlen(
-//        "keepalive\nASK\n"
-//        "password\ntotopass\n"
-//        "target_device\nwin\n"
-//        "target_login\nuser\n"
-//        "target_password\nwhoknows\n"
-//        "proto_dest\nRDP\n"
-//        "authenticated\nTrue\n"
-//        ));
-
-//    exit(0);
-
     char indata[] =
         "\x00\x00\x00\x83"
         "login\n!toto\n"
@@ -400,27 +345,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
         "\x00\x00\x00\x10"
         "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
-
-        "\x00\x00\x00\x10"
-        "keepalive\n!True\n"
     ;
 
     LCGRandom rnd(0);
@@ -428,7 +352,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     init_keys(cctx);
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    CountTransport keepalivetrans;
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);

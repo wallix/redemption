@@ -32,7 +32,7 @@
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
@@ -72,7 +72,7 @@ Bitmap bitmap_from_file_impl(const char * filename)
 {
     png_byte type1[8];
 
-    local_fd file{filename, O_RDONLY};
+    unique_fd file{filename, O_RDONLY};
 
     if (!file) {
         LOG(LOG_ERR, "Bitmap: error loading bitmap from file [%s] %s(%u)",

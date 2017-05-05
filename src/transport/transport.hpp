@@ -42,27 +42,13 @@ using std::size_t;
 
 class Transport : noncopyable
 {
-    uint64_t total_received;
-    uint64_t total_sent;
-
 protected:
     uint32_t seqno;
-
-    uint64_t last_quantum_received;
-    uint64_t last_quantum_sent;
-
-    bool status;
-
     auth_api * authentifier;
 
 public:
     Transport()
-    : total_received(0)
-    , total_sent(0)
-    , seqno(0)
-    , last_quantum_received(0)
-    , last_quantum_sent(0)
-    , status(true)
+    : seqno(0)
     , authentifier(get_null_authentifier())
     {}
 
@@ -72,37 +58,9 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    uint64_t get_total_received() const
-    { return this->total_received + this->last_quantum_received; }
-
-    uint64_t get_last_quantum_received() const
-    { return this->last_quantum_received; }
-
-    uint64_t get_total_sent() const
-    { return this->total_sent + this->last_quantum_sent; }
-
-    uint64_t get_last_quantum_sent() const
-    { return this->last_quantum_sent; }
-
-    virtual bool get_status() const
-    { return this->status; }
-
     void set_authentifier(auth_api * authentifier)
     {
         this->authentifier = authentifier;
-    }
-
-    //void reset_quantum_sent() noexcept
-    //{
-    //    this->last_quantum_sent = 0;
-    //}
-
-    void tick()
-    {
-        this->total_received += this->last_quantum_received;
-        this->total_sent += this->last_quantum_sent;
-        this->last_quantum_received = 0;
-        this->last_quantum_sent = 0;
     }
 
     virtual void enable_client_tls(
@@ -137,11 +95,6 @@ public:
         return 0;
     }
 
-    void send(const char * const buffer, size_t len)
-    {
-        this->do_send(reinterpret_cast<const uint8_t * const>(buffer), len);
-    }
-
     enum class Read : bool { Eof, Ok };
 
     /// recv_boom read len bytes into buffer or throw an Error
@@ -156,9 +109,7 @@ public:
 
     void recv_boom(char * buffer, size_t len)
     {
-        if (Read::Eof == this->atomic_read(reinterpret_cast<uint8_t*>(buffer), len)){
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
+        this->recv_boom(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
     /// atomic_read either read len bytes into buffer or throw an Error
@@ -180,6 +131,11 @@ public:
         this->do_send(buffer, len);
     }
 
+    void send(const char * const buffer, size_t len)
+    {
+        this->do_send(reinterpret_cast<const uint8_t*>(buffer), len);
+    }
+
     virtual void flush()
     {}
 
@@ -196,13 +152,13 @@ private:
     virtual Read do_atomic_read(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
     virtual void do_send(const uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
 public:

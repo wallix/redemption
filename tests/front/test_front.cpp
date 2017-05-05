@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(TestFront)
         #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
-        GeneratorTransport front_trans(indata, sizeof(indata), verbose);
+        GeneratorTransport front_trans(indata, sizeof(indata)-1);
 
         RED_CHECK(true);
 
@@ -215,15 +215,15 @@ RED_AUTO_TEST_CASE(TestFront)
         //                  , &error_message
         //                  );
 
-        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata), verbose);
+        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
 
         if (verbose > 2){
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         RED_CHECK(true);
+        RED_CHECK(true);
 
-         ModRDPParams mod_rdp_params( "administrateur"
+        ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
                                    , "10.10.47.36"
                                    , "10.10.43.33"
@@ -257,22 +257,20 @@ RED_AUTO_TEST_CASE(TestFront)
         RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
-        mod_api * mod = &mod_;
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
         RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        RED_CHECK(t.get_status());
         // incoming connexion data
         RED_CHECK_EQUAL(front.client_info.width, 1024);
         RED_CHECK_EQUAL(front.client_info.height, 768);
 
 
-        while (!mod->is_up_and_running())
-            mod->draw_event(now, front);
+        while (!mod.is_up_and_running())
+            mod.draw_event(now, front);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
@@ -287,7 +285,7 @@ RED_AUTO_TEST_CASE(TestFront)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(now, front);
+            mod.draw_event(now, front);
             now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();
@@ -394,7 +392,8 @@ RED_AUTO_TEST_CASE(TestFront2)
         #include "fixtures/trace_front_client.hpp"
 
         // Comment the code block below to generate testing data.
-        GeneratorTransport front_trans(indata, sizeof(indata), verbose);
+        GeneratorTransport front_trans(indata, sizeof(indata)-1);
+        front_trans.disable_remaining_error();
 
         RED_CHECK(true);
 
@@ -437,15 +436,15 @@ RED_AUTO_TEST_CASE(TestFront2)
         //                  , &error_message
         //                  );
 
-        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata), verbose);
+        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
 
         if (verbose > 2){
             LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
         }
 
-         RED_CHECK(true);
+        RED_CHECK(true);
 
-         ModRDPParams mod_rdp_params( "administrateur"
+        ModRDPParams mod_rdp_params( "administrateur"
                                    , "S3cur3!1nux"
                                    , "10.10.47.36"
                                    , "10.10.43.33"
@@ -479,20 +478,18 @@ RED_AUTO_TEST_CASE(TestFront2)
         RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
-        mod_api * mod = &mod_;
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
          RED_CHECK(true);
 
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
-        RED_CHECK(t.get_status());
         RED_CHECK_EQUAL(front.client_info.width, 800);
         RED_CHECK_EQUAL(front.client_info.height, 600);
 
-        while (!mod->is_up_and_running())
-            mod->draw_event(now, front);
+        while (!mod.is_up_and_running())
+            mod.draw_event(now, front);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
@@ -507,7 +504,7 @@ RED_AUTO_TEST_CASE(TestFront2)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(now, front);
+            mod.draw_event(now, front);
             now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();

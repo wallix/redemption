@@ -518,7 +518,7 @@ public:
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
 
-        for (int i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
+        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
             this->addRow();
             this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
                                this->_front->keyCustomDefinitions[i].scanCode,

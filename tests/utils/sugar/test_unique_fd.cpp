@@ -22,18 +22,18 @@
 #define RED_TEST_MODULE TestLocalFd
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <string>
 
 RED_AUTO_TEST_CASE(TestLocalFd)
 {
-    std::string const unknown_file = "/tmp/local_fd_unknown_file";
-    RED_CHECK(!local_fd(unknown_file, O_RDONLY).is_open());
-    RED_CHECK(!bool(local_fd(unknown_file, O_RDONLY)));
-    RED_CHECK(!local_fd(unknown_file, O_RDONLY));
+    std::string const unknown_file = "/tmp/unique_fd_unknown_file";
+    RED_CHECK(!unique_fd(unknown_file, O_RDONLY).is_open());
+    RED_CHECK(!bool(unique_fd(unknown_file, O_RDONLY)));
+    RED_CHECK(!unique_fd(unknown_file, O_RDONLY));
 
-    local_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
+    unique_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
     RED_CHECK(fd.is_open());
     RED_CHECK_GE(fd.fd(), 0);
 

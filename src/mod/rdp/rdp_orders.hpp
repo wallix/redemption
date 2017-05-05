@@ -193,11 +193,10 @@ private:
 
         try
         {
-            OutFileTransport oft(fd);
-
-            BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
-
-            ::close(fd);
+            {
+                OutFileTransport oft(unique_fd{fd});
+                BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
+            }
 
             if (::rename(filename_temporary, filename) == -1) {
                 LOG( LOG_WARNING
@@ -209,7 +208,10 @@ private:
         }
         catch (...)
         {
-            ::close(fd);
+            LOG( LOG_WARNING
+               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
+                 "filename=\"%s\""
+               , filename_temporary);
             ::unlink(filename_temporary);
         }
     }
@@ -251,7 +253,7 @@ public:
                 return;
             }
 
-            InFileTransport ift(fd);
+            InFileTransport ift(unique_fd{fd});
 
             try {
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -264,8 +266,6 @@ public:
             }
             catch (...) {
             }
-
-            ::close(fd);
         }
     }
 

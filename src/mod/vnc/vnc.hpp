@@ -195,6 +195,11 @@ private:
 
     time_t beginning;
 
+    bool server_is_apple;
+
+    int key_random;
+
+
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -216,6 +221,7 @@ public:
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , auth_api & authentifier
+           , bool server_is_apple
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -245,6 +251,8 @@ public:
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , authentifier(authentifier)
+    , server_is_apple(server_is_apple)
+    , key_random(0)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -417,11 +425,30 @@ public:
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
-        bool FR_APPLE_KEYLAYOUT = false;
-
-        if (FR_APPLE_KEYLAYOUT) {
-            // TODO char: '£', '_', '<', '>' and mod capslock are not sent
+        if (this->server_is_apple) {
             switch (param1) {
+
+                case 0x0b:
+                    if (this->keymapSym.is_alt_pressed()) {
+                        this->send_keyevent(0, 0xffe9);
+                        this->send_keyevent(downflag, 0xa4); /* @ */
+                        this->send_keyevent(1, 0xffe9);
+                    } else {
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                    }
+                    break;
+
+                case 0x04:
+                    if (this->keymapSym.is_alt_pressed()) {
+                        this->send_keyevent(0, 0xffe9);
+                        this->send_keyevent(1, 0xffe2);
+                        this->send_keyevent(downflag, 0xa4); /* # */
+                        this->send_keyevent(0, 0xffe2);
+                        this->send_keyevent(1, 0xffe9);
+                    } else {
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                    }
+                    break;
 
                 case 0x35:
                     if (this->keymapSym.is_shift_pressed()) {
@@ -440,9 +467,13 @@ public:
                     break;
 
                 case 0x07: /* - */
-                    this->send_keyevent(1, 0xffe2);
-                    this->send_keyevent(downflag, 0x3d);
-                    this->send_keyevent(0, 0xffe2);
+                    if (!this->keymapSym.is_shift_pressed()) {
+                        this->send_keyevent(1, 0xffe2);
+                        this->send_keyevent(downflag, 0x3d);
+                        this->send_keyevent(0, 0xffe2);
+                    } else {
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                    }
                     break;
 
                 case 0x2b: /* * */
@@ -453,7 +484,7 @@ public:
 
                 case 0x1b: /* £ */
                     if (this->keymapSym.is_shift_pressed()) {
-                        // ? for '£'
+                        this->send_keyevent(downflag, 0x5c);
                     } else {
                         this->keyMapSym_event(device_flags, param1, downflag);
                     }
@@ -462,18 +493,20 @@ public:
                 case 0x09: /* _ */
                     if (!this->keymapSym.is_shift_pressed()) {
                         this->send_keyevent(1, 0xffe2);
-                        //this->send_keyevent(downflag, '_');    // ? for '_'
+                        this->send_keyevent(downflag, 0xad);
                         this->send_keyevent(0, 0xffe2);
                     } else {
-                        this->keyMapSym_event(device_flags, param1, downflag);
+                        this->send_keyevent(downflag, 0x38); /* 8 */
                     }
                     break;
 
                 case 0x56:
                     if (this->keymapSym.is_shift_pressed()) {
-                        // ? for '>'
+                        this->send_keyevent(downflag, 0x7e); /* > */
                     } else {
-                        // ? for '<'
+                        this->send_keyevent(1, 0xffe2);
+                        this->send_keyevent(downflag, 0x60); /* < */
+                        this->send_keyevent(0, 0xffe2);
                     }
                     break;
 
@@ -491,6 +524,7 @@ public:
         }
 
     } // rdp_input_scancode
+
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
         this->keymapSym.event(device_flags, param1);

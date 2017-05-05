@@ -22,17 +22,15 @@
 #define RED_TEST_MODULE TestInMetaSequenceTransport
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
-#define LOGPRINT
-
-#include "utils/sugar/iter.hpp"
+#define LOGNULL
+// #define LOGPRINT
 
 #include "capture/wrm_capture.hpp"
-#include "capture/capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
 #include "test_only/lcg_random.hpp"
+
 
 constexpr auto is_encrypted = InCryptoTransport::EncryptionMode::Encrypted;
 constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypted;
@@ -254,6 +252,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     RED_CHECK(true);
 
+    // two files: 5 and 10 bytes
     {
         LCGRandom rnd(0);
         Fstat fstat;
@@ -284,6 +283,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         char buffer[15];
 
         RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer, 5));
+        // internal: next()
         RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer + 5, 10));
 
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));

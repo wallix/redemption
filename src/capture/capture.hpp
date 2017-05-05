@@ -43,7 +43,7 @@
 #include "capture/RDPChunkedDevice.hpp"
 #include "core/wait_obj.hpp"
 #include "core/RDP/state_chunk.hpp"
-#include "utils/fdbuf.hpp"
+#include "transport/out_file_transport.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/png.hpp"
@@ -451,14 +451,17 @@ struct OutFilenameSequenceTransport : public Transport
     {
         char current_filename_[1024];
         FilenameGenerator filegen_;
-        io::posix::fdbuf buf_;
+        OutFileTransport buf_;
         unsigned num_file_;
         int groupid_;
 
     public:
-        explicit pngcapture_out_sequence_filename_buf_impl(capture_out_sequence_filename_buf_param const & params)
+        explicit pngcapture_out_sequence_filename_buf_impl(
+            capture_out_sequence_filename_buf_param const & params,
+            auth_api * auth
+        )
         : filegen_(params.format, params.prefix, params.filename, params.extension)
-        , buf_()
+        , buf_(invalid_fd(), auth_report_error(auth))
         , num_file_(0)
         , groupid_(params.groupid)
         {
@@ -468,15 +471,12 @@ struct OutFilenameSequenceTransport : public Transport
         int close()
         { return this->next(); }
 
-        ssize_t write(const void * data, size_t len)
+        void write(const uint8_t * data, size_t len)
         {
             if (!this->buf_.is_open()) {
-                const int res = this->open_filename(this->filegen_.get(this->num_file_));
-                if (res < 0) {
-                    return res;
-                }
+                this->open_filename(this->filegen_.get(this->num_file_));
             }
-            return this->buf_.write(data, len);
+            this->buf_.send(data, len);
         }
 
         /// \return 0 if success
@@ -490,31 +490,17 @@ struct OutFilenameSequenceTransport : public Transport
             return 1;
         }
 
-        off64_t seek(int64_t offset, int whence)
-        { return this->buf_.seek(offset, whence); }
-
         const FilenameGenerator & seqgen() const noexcept
         { return this->filegen_; }
 
-        io::posix::fdbuf & buf() noexcept
-        { return this->buf_; }
-
-        const char * current_path() const
-        {
-            if (!this->current_filename_[0] && !this->num_file_) {
-                return nullptr;
-            }
-            return this->filegen_.get(this->num_file_ - 1);
-        }
-
-    protected:
-        ssize_t open_filename(const char * filename)
+    private:
+        void open_filename(const char * filename)
         {
             snprintf(this->current_filename_, sizeof(this->current_filename_),
                         "%sred-XXXXXX.tmp", filename);
             const int fd = ::mkostemps(this->current_filename_, 4, O_WRONLY | O_CREAT);
             if (fd < 0) {
-                return fd;
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
             LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
             // TODO PERF used fchmod
@@ -525,7 +511,7 @@ struct OutFilenameSequenceTransport : public Transport
                    , strerror(errno), errno);
             }
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
-            return this->buf_.open(fd);
+            this->buf_.open(unique_fd{fd});
         }
 
         const char * rename_filename()
@@ -565,7 +551,7 @@ struct OutFilenameSequenceTransport : public Transport
         const char * const extension,
         const int groupid,
         auth_api * authentifier)
-    : buf(capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid))
+    : buf(capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid), authentifier)
     {
         if (authentifier) {
             this->set_authentifier(authentifier);
@@ -573,13 +559,13 @@ struct OutFilenameSequenceTransport : public Transport
     }
 
     const FilenameGenerator * seqgen() const noexcept
-    { return &(this->buffer().seqgen()); }
+    { return &(this->buf.seqgen()); }
 
     bool next() override {
         if (this->status == false) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        const ssize_t res = this->buffer().next();
+        const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
             if (res < 0){
@@ -601,29 +587,13 @@ struct OutFilenameSequenceTransport : public Transport
     }
 
 private:
-
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            auto eid = ERR_TRANSPORT_WRITE_FAILED;
-            if (errno == ENOSPC) {
-                this->authentifier->report("FILESYSTEM_FULL", "100|unknown");
-                errno = ENOSPC;
-                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
-            }
-            throw Error(eid, errno);
-        }
-        this->last_quantum_sent += res;
+    void do_send(const uint8_t * data, size_t len) override
+    {
+        this->buf.write(data, len);
     }
 
-    Buf & buffer() noexcept
-    { return this->buf; }
-
-    const Buf & buffer() const noexcept
-    { return this->buf; }
-
     Buf buf;
+    bool status = true;
 };
 
 struct NotifyTitleChanged : private noncopyable

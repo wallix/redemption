@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 // Socket VNC Target (3) : closing connection
     };
 
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     const bool is_socket_transport = false;
 
     // To always get the same client random, in tests
@@ -269,6 +269,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
         , authentifier       // acl
+        , false
         , verbose);
     mod.get_event().set();
 
@@ -284,13 +285,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(front.info.width, 800);
     RED_CHECK_EQUAL(front.info.height, 600);
 
-//    mod.draw_event(time(nullptr), front);
-////    RED_CHECK(t.status);
+    t.disable_remaining_error();
 
 //    mod.draw_event(time(nullptr), front);
-////    RED_CHECK(t.status);
-
 //    mod.draw_event(time(nullptr), front);
-////    RED_CHECK(t.status);
-
+//    mod.draw_event(time(nullptr), front);
 }

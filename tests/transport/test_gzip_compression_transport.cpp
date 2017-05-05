@@ -29,69 +29,30 @@
 
 RED_AUTO_TEST_CASE(TestGZipCompressionTransport)
 {
-    //for (unsigned int i = 0; i < 100000; i++) {
-        MemoryTransport mt;
+    MemoryTransport mt;
 
-        {
-            GZipCompressionOutTransport out_trans(mt, 0xFFFF);
+    {
+        GZipCompressionOutTransport out_trans(mt, 0xFFFF);
 
-            out_trans.send(
-                  "azert"
-                  "azert"
-                  "azert"
-                  "azert"
-                , 21);
-            out_trans.send(
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                , 31);
-            out_trans.next();
-            out_trans.send(
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                , 65);
-        }
+        RED_CHECK_NO_THROW(out_trans.send("azert" "azert" "azert" "azert" , 21));
+        RED_CHECK_NO_THROW(out_trans.send("wallix" "wallix" "wallix" "wallix" "wallix", 31));
+        RED_CHECK_NO_THROW(out_trans.next());
+        RED_CHECK_NO_THROW(out_trans.send(
+            "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF", 65));
+    }
 
-        {
-            GZipCompressionInTransport  in_trans(mt, 0xFFFF);
+    {
+        GZipCompressionInTransport  in_trans(mt, 0xFFFF);
 
-            char   in_data[128] = { 0 };
-            char * in_buffer   = in_data;
+        char   in_data[128] = { 0 };
 
-            in_trans.recv_boom(in_buffer, 21);
-            in_buffer = in_data;
-            RED_CHECK_EQUAL(in_buffer,
-                "azert"
-                "azert"
-                "azert"
-                "azert"
-            );
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 21));
+        RED_CHECK_EQUAL(in_data, "azert" "azert" "azert" "azert");
 
-            in_buffer = in_data;
-            in_trans.recv_boom(in_buffer, 31);
-            in_buffer = in_data;
-            RED_CHECK_EQUAL(in_buffer,
-                "wallix"
-                "wallix"
-                "wallix"
-                "wallix"
-                "wallix"
-            );
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 31));
+        RED_CHECK_EQUAL(in_data, "wallix" "wallix" "wallix" "wallix" "wallix");
 
-            in_buffer = in_data;
-            in_trans.recv_boom(in_buffer, 65);
-            in_buffer = in_data;
-            RED_CHECK_EQUAL(in_buffer,
-                "0123456789ABCDEF"
-                "0123456789ABCDEF"
-                "0123456789ABCDEF"
-                "0123456789ABCDEF"
-            );
-        }
-    //}
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 65));
+        RED_CHECK_EQUAL(in_data, "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF");
+    }
 }

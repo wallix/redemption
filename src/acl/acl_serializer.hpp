@@ -37,7 +37,8 @@
 #include "utils/get_printable_password.hpp"
 #include "transport/out_crypto_transport.hpp"
 #include "utils/verbose_flags.hpp"
-#include "module_manager.hpp"
+#include "acl/mm_api.hpp"
+#include "acl/module_manager.hpp" // TODO only for MODULE_*
 
 #include <fstream>
 #include <iostream>
@@ -296,15 +297,8 @@ public:
         if (log_redir) {
 
             if(!ct.is_open()) {
-                char tmpname[128];
-                try {
-                    std::string const & filename = this->ini.get<cfg::session_log::log_path>();
-                    ct.open(filename.c_str(), 0);
-                    ::strcpy(tmpname, ct.get_tmp());
-                }
-                catch (Error e) {
-                    LOG(LOG_INFO, "exception raised %d", e.id);
-                };
+                auto const & filename = this->ini.get<cfg::session_log::log_path>();
+                ct.open(filename.c_str(), 0);
             }
 
             std::time_t t = std::time(nullptr);

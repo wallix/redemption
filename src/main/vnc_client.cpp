@@ -158,6 +158,7 @@ int main(int argc, char** argv)
       , mod_vnc::ClipboardEncodingType::UTF8
       , bogus_clipboard_infinite_loop
       , authentifier       // acl
+      , false
       , verbose);
     mod.get_event().set();
 

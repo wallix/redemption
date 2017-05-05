@@ -937,7 +937,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
 
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
@@ -1115,7 +1115,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
+    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -1159,13 +1159,9 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     memcpy(path, filename, len);
     path[len] = 0;
     int fd = ::creat(path, 0777);
-    if (fd == -1){
-        LOG(LOG_INFO, "open failed with error : %s on %s", strerror(errno), path);
-        RED_CHECK(false);
-        return;
-    }
+    RED_REQUIRE_NE(fd, -1);
 
-    OutFileTransport trans(fd);
+    OutFileTransport trans(unique_fd{fd});
     RED_CHECK_EQUAL(0, 0);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
@@ -1205,12 +1201,8 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     in_path[len] = 0;
 
     fd = ::open(in_path, O_RDONLY);
-    if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
-        RED_CHECK(false);
-        return;
-    }
-    InFileTransport in_wrm_trans(fd);
+    RED_REQUIRE_NE(fd, -1);
+    InFileTransport in_wrm_trans(unique_fd{fd});
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
@@ -1319,7 +1311,7 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
+    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
     trans.disable_remaining_error();
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(2, 256, false),
@@ -1462,7 +1454,7 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
+    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
@@ -1648,7 +1640,7 @@ RED_AUTO_TEST_CASE(TestImageChunk)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                         BmpCache::CacheOption(600, 256, false),
                         BmpCache::CacheOption(300, 1024, false),
@@ -1723,7 +1715,7 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1, 511);
+    CheckTransport trans(expected, sizeof(expected)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -1808,7 +1800,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     now.tv_sec = 1000;
 
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1, 511);
+    CheckTransport trans(expected, sizeof(expected)-1);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -2223,13 +2215,9 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     const char * input_filename = FIXTURES_PATH "/sample0.wrm";
 
     int fd = ::open(input_filename, O_RDONLY);
-    if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
-        RED_CHECK(false);
-        return;
-    }
+    RED_REQUIRE_NE(fd, -1);
 
-    InFileTransport in_wrm_trans(fd);
+    InFileTransport in_wrm_trans(unique_fd{fd});
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;

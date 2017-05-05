@@ -25,9 +25,8 @@
 
 #include "transport.hpp"
 #include "utils/stream.hpp"
-#include "utils/verbose_flags.hpp"
 
-static const size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
+constexpr size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
 /*****************************
 * GZipCompressionInTransport

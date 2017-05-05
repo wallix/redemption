@@ -39,21 +39,25 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
     Translator translator;
     Theme      theme;
 
+    bool is_apple;
+
 
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
       , translator(Translation::language_t::FR)
-    {}
+    {
+        this->is_apple = true;
+    }
 
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
+        if (this->is_apple) {
+            this->info.keylayout = KEYBOARDS::EN_US;
+        }
 
         try {
-            this->info.keylayout = KEYBOARDS::EN_US;
-            //int vnc_keylayout = 0x1409;                    // US Apple
-
             // VNC
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
@@ -74,6 +78,7 @@ public:
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->authentifier
+                                   , this->is_apple
                                    , 0xffffffff-2);
 
         } catch (const Error &) {
@@ -83,17 +88,18 @@ public:
         return this->mod;
     }
 
-//     virtual void callback() override {
-//         FrontQtRDPGraphicAPI::callback();
-//     }
-//
-//     virtual bool connect() override {
-//         return FrontQtRDPGraphicAPI::connect();
-//     }
+    virtual void callback() override {
+        FrontQtRDPGraphicAPI::callback();
+    }
 
-//     virtual void options() override {
-//         return FrontQtRDPGraphicAPI::options();
-//     }
+    virtual void connect() override {
+        FrontQtRDPGraphicAPI::connect();
+        // TODO check verr num state
+    }
+
+    virtual void options() override {
+        FrontQtRDPGraphicAPI::options();
+    }
 
 
 };

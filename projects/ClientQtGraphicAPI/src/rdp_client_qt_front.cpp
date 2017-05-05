@@ -624,7 +624,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    virtual bool connect() override {
+    virtual void connect() override {
 
         this->setClientInfo();
 

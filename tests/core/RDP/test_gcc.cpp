@@ -82,8 +82,7 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     TestTransport t(
         "", 0,
         gcc_conference_create_request_expected,
-        sizeof(gcc_conference_create_request_expected) - sizeof(gcc_user_data),
-        256);
+        sizeof(gcc_conference_create_request_expected) - sizeof(gcc_user_data));
 
     StaticOutStream<65536> stream;
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0

@@ -29,67 +29,30 @@
 
 RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 {
-    //size_t source_length = 56000;
-    //LOG(LOG_INFO, "snappy_max_compressed_length(%u)=%u", source_length, ::snappy_max_compressed_length(source_length));
+    MemoryTransport mt;
 
-    //for (unsigned int i = 0; i < 100000; i++) {
-        MemoryTransport mt;
+    {
+        SnappyCompressionOutTransport out_trans(mt);
 
-        {
-            SnappyCompressionOutTransport out_trans(mt);
+        RED_CHECK_NO_THROW(out_trans.send( "azert" "azert" "azert" "azert" , 21));
+        RED_CHECK_NO_THROW(out_trans.send( "wallix" "wallix" "wallix" "wallix" "wallix", 31));
+        RED_CHECK_NO_THROW(out_trans.next());
+        RED_CHECK_NO_THROW(out_trans.send(
+            "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF", 65));
+    }
 
-            out_trans.send(
-                  "azert"
-                  "azert"
-                  "azert"
-                  "azert"
-                , 21);
-            out_trans.send(
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                  "wallix"
-                , 31);
-            out_trans.next();
-            out_trans.send(
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                  "0123456789ABCDEF"
-                , 65);
-        }
+    {
+        SnappyCompressionInTransport  in_trans(mt);
 
-        {
-            SnappyCompressionInTransport  in_trans(mt);
+        char   in_data[128] = { 0 };
 
-            char   in_data[128] = { 0 };
-            char * in_buffer   = in_data;
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 21));
+        RED_CHECK_EQUAL(in_data, "azert" "azert" "azert" "azert");
 
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 31));
+        RED_CHECK_EQUAL(in_data, "wallix" "wallix" "wallix" "wallix" "wallix");
 
-            in_trans.recv_boom(in_buffer, 21);
-            RED_CHECK_EQUAL(in_data,
-                "azert"
-                "azert"
-                "azert"
-                "azert");
-
-            in_buffer = in_data;
-            in_trans.recv_boom(in_buffer, 31);
-            RED_CHECK_EQUAL(in_data,
-                "wallix"
-                "wallix"
-                "wallix"
-                "wallix"
-                "wallix");
-
-            in_buffer = in_data;
-            in_trans.recv_boom(in_buffer, 65);
-            RED_CHECK_EQUAL(in_data,
-                "0123456789ABCDEF"
-                "0123456789ABCDEF"
-                "0123456789ABCDEF"
-                "0123456789ABCDEF");
-        }
-    //}
+        RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 65));
+        RED_CHECK_EQUAL(in_data, "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF");
+    }
 }

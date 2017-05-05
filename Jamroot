@@ -551,7 +551,6 @@ test-canonical utils/sugar/cast.hpp ;
 test-canonical utils/sugar/exchange.hpp ;
 test-canonical utils/sugar/finally.hpp ;
 test-canonical utils/sugar/iter.hpp ;
-test-canonical utils/sugar/local_fd.hpp ;
 test-canonical utils/sugar/make_unique.hpp ;
 test-canonical utils/sugar/movable_noncopyable.hpp ;
 test-canonical utils/sugar/noncopyable.hpp ;
@@ -561,6 +560,7 @@ test-canonical utils/sugar/splitter.hpp ;
 test-canonical utils/sugar/strutils.hpp ;
 test-canonical utils/sugar/underlying_cast.hpp ;
 test-canonical utils/sugar/update_lock.hpp ;
+test-canonical utils/sugar/unique_fd.hpp ;
 ## @}
 
 
@@ -605,7 +605,8 @@ test-canonical transport/out_crypto_transport.hpp : <library>openssl <library>cr
 test-canonical transport/in_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
-test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>png <library>snappy <library>dl <library>z ;
+test-canonical transport/mwrm_reader.hpp : <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
@@ -637,7 +638,6 @@ test-canonical utils/diffiehellman.hpp ;
 test-canonical utils/difftimeval.hpp ;
 test-canonical utils/drawable.hpp : <library>bitmap <library>crypto <library>png.o ;
 test-canonical utils/ellipse.hpp ;
-test-canonical utils/fdbuf.hpp ;
 test-canonical utils/fileutils.hpp ;
 test-canonical utils/genrandom.hpp ;
 test-canonical utils/genfstat.hpp ;

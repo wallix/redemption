@@ -237,7 +237,7 @@ private:
 };
 
 
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 
@@ -283,7 +283,7 @@ inline void Font::load_from_file(char const * file_path)
         LOG(LOG_ERR, "Font: can't open font file [%s] for reading", file_path);
         return ;
     }
-    local_fd auto_close{fd};
+    unique_fd auto_close{fd};
 
 
     size_t const stream_buf_sz = 8192;

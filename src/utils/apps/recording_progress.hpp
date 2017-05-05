@@ -23,7 +23,7 @@
 #include "utils/log.hpp"
 
 #include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <cassert>
 #include <ctime>
