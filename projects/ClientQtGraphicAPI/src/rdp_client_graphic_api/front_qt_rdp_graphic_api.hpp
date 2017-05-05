@@ -461,6 +461,8 @@ public Q_SLOTS:
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
+//                         LOG(LOG_INFO, "time_to_wake = %d", time_to_wake);
+//                         this->timer.start( 40 );
                     } else {
                         this->timer.start( time_to_wake );
                     }

@@ -969,16 +969,20 @@ class Sesman():
                     # NB :  backslashes are replaced by pipes for IE compatibility
                     random.seed(self.pid)
 
-                    #keeping code synchronized with wabengine/src/common/data.py
-                    session_log_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
-                    session_log_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
-                    session_log_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
-                    session_log_path += u"%s," % gethostname()
-                    session_log_path += u"%s" % random.randint(1000, 9999)
-                    # remove all "dangerous" characters in filename
-                    import re
-                    session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
-                    self.full_log_path = RECORD_PATH + session_log_path + u".log"
+                    if self.full_path is not None:
+                         self.full_log_path = self.full_path + u".log"
+                    else:
+                        #keeping code synchronized with wabengine/src/common/data.py
+                        session_log_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
+                        session_log_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+                        session_log_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
+                        session_log_path += u"%s," % gethostname()
+                        session_log_path += u"%s" % random.randint(1000, 9999)
+                        # remove all "dangerous" characters in filename
+                        import re
+                        session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
+                        self.full_log_path = RECORD_PATH + session_log_path + u".log"
+
                     Logger().info(u"Session log will be redirected to %s" % self.full_log_path)
                     data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
                     self.send_data(data_to_send)
