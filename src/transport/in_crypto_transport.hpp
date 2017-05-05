@@ -30,11 +30,12 @@
 #include "utils/fileutils.hpp"
 #include "utils/parse.hpp"
 #include "capture/cryptofile.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <memory>
 
 
-class InCryptoTransport : public Transport
+class InCryptoTransport : public Transport //, public PartialIO
 {
 public:
     enum class EncryptionMode { Auto, Encrypted, NotEncrypted };
@@ -75,17 +76,14 @@ public:
     {
     }
 
-    ~InCryptoTransport() {
-        // TODO closed fd
-    }
+    ~InCryptoTransport() = default;
 
-
-    bool is_encrypted()
+    bool is_encrypted() const
     {
         return this->encrypted;
     }
 
-    bool is_open()
+    bool is_open() const
     {
         return this->fd != -1;
     }
@@ -93,36 +91,36 @@ public:
     struct HASH {
         uint8_t hash[MD_HASH::DIGEST_LENGTH];
     };
-    
+
     const HASH qhash(const char * pathname)
     {
-        SslHMAC_Sha256_Delayed hm4k;
-
-        hm4k.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->fd = ::open(pathname, O_RDONLY);
-        if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-        try {
-            this->eof = false;
-            uint8_t buffer[4096];
+
+        SslHMAC_Sha256 hm4k(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+
+        {
+            int fd = ::open(pathname, O_RDONLY);
+            if (fd < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            unique_fd auto_close(fd);
+
+            constexpr std::size_t buffer_size = 4096;
+            uint8_t buffer[buffer_size];
             size_t total_length = 0;
             do {
-                ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
-                if (res <= 0) { break; }
-                if (total_length >= 4096) { break; }
-                size_t remaining_size = 4096 - total_length;
-                hm4k.update(buffer, std::min(remaining_size, static_cast<size_t>(res)));
+                size_t const remaining_size = buffer_size - total_length;
+                ssize_t res = ::read(fd, buffer, remaining_size);
+                if (res == 0) { break; }
+                if (res < 0 && errno == EINTR) { continue; }
+                if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
+                hm4k.update(buffer, res);
                 total_length += res;
-            } while (1);
-        } catch (...) {
-            this->close();
-            throw;
+            } while (total_length != buffer_size);
         }
-        this->close();
+
         HASH qhash;
         hm4k.final(qhash.hash);
         return qhash;
@@ -130,29 +128,29 @@ public:
 
     const HASH fhash(const char * pathname)
     {
-        SslHMAC_Sha256_Delayed hm;
-        hm.init(this->cctx.get_hmac_key(), CRYPTO_KEY_LENGTH);
-
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->fd = ::open(pathname, O_RDONLY);
-        if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-        try {
-            this->eof = false;
+
+        SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+
+        {
+            this->fd = ::open(pathname, O_RDONLY);
+            if (this->fd < 0) {
+                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            }
+            unique_fd auto_close(fd);
+
             uint8_t buffer[4096];
             do {
                 ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
-                if (res <= 0) { break; }
+                if (res == 0) { break; }
+                if (res < 0 && errno == EINTR) { continue; }
+                if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
                 hm.update(buffer, res);
             } while (1);
-        } catch (...) {
-            this->close();
-            throw;
         }
-        this->close();
+
         HASH fhash;
         hm.final(fhash.hash);
         return fhash;
@@ -163,12 +161,12 @@ public:
         this->open(pathname);
     }
 
-    int partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    size_t partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
     {
         return this->do_partial_read(buffer, len);
     }
 
-    int partial_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    size_t partial_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
     {
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
@@ -367,7 +365,7 @@ private:
         }
     }
 
-    int do_partial_read(uint8_t * buffer, size_t len)
+    size_t do_partial_read(uint8_t * buffer, size_t len)
     {
         if (this->eof){
             return 0;
@@ -461,7 +459,7 @@ private:
                 }
                 return len;
             }
-            unsigned int remaining_len = len;
+            size_t remaining_len = len;
             if (this->raw_size - this->clear_pos > 0){
                 ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
                 remaining_len -= this->raw_size - this->clear_pos;
@@ -478,7 +476,6 @@ private:
                     if (errno == EINTR){
                         continue;
                     }
-                    this->status = false;
                     throw Error(ERR_TRANSPORT_READ_FAILED, res);
                 }
                 remaining_len -= res;
@@ -488,19 +485,17 @@ private:
             if (this->file_len <= this->current_len) {
                 this->eof = true;
             }
-            this->last_quantum_received += len;
             return len - remaining_len;
         }
-        return -1;
     }
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
-        int res = do_partial_read(buffer, len);
-        if ((res != 0) && (res != int(len))) {
+        size_t res = do_partial_read(buffer, len);
+        if (res != 0 && res != len) {
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-        return res == int(len) ? Read::Ok : Read::Eof;
+        return res == len ? Read::Ok : Read::Eof;
     }
 
     std::size_t get_file_len(char const * pathname)

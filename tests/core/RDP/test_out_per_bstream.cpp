@@ -139,8 +139,7 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1; // -1 to ignore final 0
     TestTransport t(
         "", 0,
-        gcc_conference_create_request_expected, sz - (sizeof(gcc_user_data) - 1),
-        256);
+        gcc_conference_create_request_expected, sz - (sizeof(gcc_user_data) - 1));
 
     StaticOutPerStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, sizeof(gcc_user_data)-1);

@@ -157,7 +157,6 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
         remaining_len -= ret;
         total_sent += ret;
     }
-    this->last_quantum_sent += total_sent;
 }
 
 //@}

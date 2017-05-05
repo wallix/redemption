@@ -93,8 +93,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
 
-    try {
-    {
+    RED_CHECK_NO_THROW(([]{
         // Timestamps are applied only when flushing
         timeval now;
         now.tv_usec = 0;
@@ -190,12 +189,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-    }
-
-    }
-    catch(Error & e) {
-        LOG(LOG_INFO, "Exception raised : %d\n", e.id);
-    };
+    })());
 
 
     {

@@ -289,7 +289,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister)
     //LogTransport t;
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    CheckTransport t(outdata, sizeof(outdata)-1, verbose);
+    CheckTransport t(outdata, sizeof(outdata)-1);
 
     BmpCachePersister::save_all_to_disk(bmp_cache, t, to_verbose_flags(verbose));
 }
@@ -310,7 +310,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister1)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    GeneratorTransport t(outdata, sizeof(outdata));
+    GeneratorTransport t(outdata, sizeof(outdata)-1);
 
     BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
 
@@ -351,7 +351,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister2)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    GeneratorTransport t(outdata, sizeof(outdata));
+    GeneratorTransport t(outdata, sizeof(outdata)-1);
 
     BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
 

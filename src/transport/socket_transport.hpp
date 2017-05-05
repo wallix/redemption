@@ -45,6 +45,9 @@
 class SocketTransport
 : public Transport
 {
+    size_t total_sent = 0;
+    size_t total_received = 0;
+
 public:
     int sck;
     int sck_closed;
@@ -97,7 +100,7 @@ public:
         if (bool(verbose)) {
             LOG( LOG_INFO
                , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
-               , this->name, this->sck, this->get_total_received(), this->get_total_sent());
+               , this->name, this->sck, this->total_received, this->total_sent);
         }
     }
 
@@ -263,8 +266,7 @@ public:
             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
-        // TODO move that to base class : accounting_recv(len)
-        this->last_quantum_received += len;
+        this->total_received += len;
         return Read::Ok;
     }
 
@@ -289,8 +291,7 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
-        // TODO move that to base class : accounting_send(len)
-        this->last_quantum_sent += len;
+        this->total_sent += len;
     }
 
 private:

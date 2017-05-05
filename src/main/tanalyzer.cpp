@@ -54,7 +54,7 @@
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "capture/transparentplayer.hpp"
 #include "main/version.hpp"
-#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "program_options/program_options.hpp"
 
 struct GraphicNull
@@ -617,9 +617,9 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    local_fd file(input_filename.c_str(), O_RDONLY);
+    unique_fd file(input_filename.c_str(), O_RDONLY);
     if (file.is_open()) {
-        InFileTransport trans(file.fd());
+        InFileTransport trans(std::move(file));
         Analyzer        analyzer;
 
         TransparentPlayer player(&trans, &analyzer);

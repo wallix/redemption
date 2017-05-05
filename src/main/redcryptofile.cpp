@@ -242,7 +242,7 @@ int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, 
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     try {
-        return handle->in_crypto_transport.partial_read(buffer, len);
+        return int(handle->in_crypto_transport.partial_read(buffer, len));
     }
     catch (Error const & e) {
         EXIT_ON_EXCEPTION;

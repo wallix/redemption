@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -215,7 +215,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -310,7 +310,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -405,7 +405,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);

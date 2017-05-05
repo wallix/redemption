@@ -38,211 +38,92 @@
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 
-namespace transbuf {
-
-    class dynarray_buf
-    {
-        std::unique_ptr<uint8_t[]> data;
-        std::size_t len = 0;
-        std::size_t current = 0;
-
-    public:
-        dynarray_buf() = default;
-
-        int open(size_t len, const void * data = nullptr)
-        {
-            this->data.reset(new(std::nothrow) uint8_t[len]);
-            if (!this->data) {
-                return -1;
-            }
-            if (data) {
-                memcpy(this->data.get(), data, len);
-            }
-            this->len = len;
-            this->current = 0;
-            return 0;
-        }
-
-        int close() noexcept
-        {
-            this->data.reset();
-            this->current = 0;
-            this->len = 0;
-            return 0;
-        }
-
-        long int read(void * buffer, size_t len)
-        { return this->copy(buffer, this->data.get() + this->current, len); }
-
-        long int write(const void * buffer, size_t len)
-        { return this->copy(this->data.get() + this->current, buffer, len); }
-
-        bool is_open() const noexcept
-        { return this->data.get(); }
-
-        int flush() const noexcept
-        { return 0; }
-
-    private:
-        long int copy(void * dest, const void * src, size_t len)
-        {
-            const size_t rlen = std::min<size_t>(this->len - this->current, len);
-            memcpy(dest, src, rlen);
-            this->current += rlen;
-            return rlen;
-        }
-    };
-
-}
-
-
-namespace transbuf {
-
-    class check_base
-    {
-        std::unique_ptr<uint8_t[]> data;
-        std::size_t len;
-        std::size_t current;
-
-    public:
-        check_base() noexcept
-        : len(0)
-        , current(0)
-        {}
-
-        int open(const char * data, size_t len)
-        {
-            this->data.reset(new(std::nothrow) uint8_t[len]);
-            memcpy(this->data.get(), data, len);
-            this->len = len;
-            this->current = 0;
-            return 0;
-        }
-
-        int close() noexcept
-        {
-            this->data.reset();
-            this->current = 0;
-            this->len = 0;
-            return 0;
-        }
-
-        int write(const void * buffer, size_t len)
-        {
-            const size_t rlen = std::min<size_t>(this->len - this->current, len);
-            const uint8_t * databuf = static_cast<const uint8_t *>(buffer);
-            const uint8_t * p = std::mismatch(databuf, databuf + rlen, this->data.get() + this->current).first;
-            this->current += rlen;
-            return p - (databuf + rlen);
-        }
-
-        bool is_open() const noexcept
-        { return this->data.get(); }
-
-        int flush() const noexcept
-        { return 0; }
-    };
-
-}
-
-
-
-class InputTransportDynarray : public Transport
+struct RemainingError : std::runtime_error
 {
-    transbuf::dynarray_buf buf;
+    using std::runtime_error::runtime_error;
+};
 
-public:
-    InputTransportDynarray() = default;
+struct GeneratorTransport : Transport
+{
+    GeneratorTransport(const void * data, size_t len)
+    : len(len)
+    {
+        this->data.reset(new(std::nothrow) uint8_t[len]);
+        if (!this->data) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        if (data) {
+            memcpy(this->data.get(), data, len);
+        }
+    }
 
-    template<class T>
-    explicit InputTransportDynarray(const T & buf_params)
-    : buf(buf_params)
-    {}
+    ~GeneratorTransport()
+    {
+        this->disconnect();
+    }
 
-    bool disconnect() override {
-        return !this->buf.close();
+    void disable_remaining_error()
+    {
+        this->remaining_is_error = false;
+    }
+
+    bool disconnect() override
+    {
+        if (this->remaining_is_error && this->len != this->current) {
+            this->remaining_is_error = false;
+            LOG(LOG_ERR, "=============== Expected ==========");
+            hexdump_c(this->data.get() + this->current, this->len - this->current);
+            std::ostringstream out;
+            out << "~GeneratorTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
+            throw RemainingError{out.str()};
+        }
+        return true;
     }
 
 private:
-    Read do_atomic_read(uint8_t * buffer, size_t len) override {
-        const ssize_t res = this->buf.read(buffer, len);
-        if (res < 0){
-            this->status = false;
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
+    {
+        size_t const remaining = this->len - this->current;
+        if (!remaining) {
+            return Read::Eof;
         }
-
-        this->last_quantum_received += res;
-        if (static_cast<size_t>(res) != len){
-            if (res == 0) {
-                return Read::Eof;
-            }
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        if (len > remaining) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
+        memcpy(buffer, this->data.get() + this->current, len);
+        this->current += len;
         return Read::Ok;
     }
 
-protected:
-    transbuf::dynarray_buf & buffer() noexcept
-    { return this->buf; }
-
-    const transbuf::dynarray_buf & buffer() const noexcept
-    { return this->buf; }
-
-    typedef InputTransportDynarray TransportType;
-};
-
-
-struct GeneratorTransport : public InputTransportDynarray
-{
-    GeneratorTransport(const void * data, size_t len, bool verbose = false)
-    : verbose(verbose)
+    void do_send(const uint8_t * const buffer, size_t len) override
     {
-        if (this->buffer().open(len, data)) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
+        LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
+        hexdump_c(buffer, len);
+        LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
     }
 
-    void do_send(const uint8_t * const buffer, size_t len) override {
-        LOG(LOG_INFO, "do_send %zu bytes", len);
-        if (this->verbose){
-            LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
-            hexdump_c(buffer, len);
-            LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
-        }
-    }
-
-private:
-    bool verbose;
+    std::unique_ptr<uint8_t[]> data;
+    std::size_t len = 0;
+    std::size_t current = 0;
+    bool remaining_is_error = true;
 };
 
 
-class CheckTransport
-: public Transport
+struct CheckTransport : Transport
 {
-    std::unique_ptr<uint8_t[]> data;
-    std::size_t len;
-    std::size_t current;
-    bool remaining_is_error = true;
-
-    struct remaining_error : std::runtime_error {
-        using std::runtime_error::runtime_error;
-    };
-
-public:
-    CheckTransport(const char * data, size_t len, bool verbose = false)
+    CheckTransport(const char * data, size_t len)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     , current(0)
     {
-        (void)verbose;
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
         memcpy(this->data.get(), data, len);
     }
 
-    void disable_remaining_error() {
+    void disable_remaining_error()
+    {
         this->remaining_is_error = false;
     }
 
@@ -250,12 +131,15 @@ public:
         this->disconnect();
     }
 
-    bool disconnect() override {
+    bool disconnect() override
+    {
         if (this->remaining_is_error && this->len != this->current) {
-            this->status = false;
+            this->remaining_is_error = false;
+            LOG(LOG_ERR, "=============== Expected ==========");
+            hexdump_c(this->data.get() + this->current, this->len - this->current);
             std::ostringstream out;
-            out << "Check transport remaining=" << (this->len-this->current) << " len=" << this->len;
-            throw remaining_error{out.str()};
+            out << "~CheckTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
+            throw RemainingError{out.str()};
         }
         return true;
     }
@@ -263,7 +147,7 @@ public:
 private:
     void do_send(const uint8_t * const data, size_t len) override
     {
-        const size_t available_len = std::min<size_t>(this->len - this->current, len );
+        const size_t available_len = std::min<size_t>(this->len - this->current, len);
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
@@ -277,7 +161,6 @@ private:
             LOG(LOG_ERR, "=============== Got ===============");
             hexdump_c(data + differs, available_len - differs);
             this->data.reset();
-            this->status = false;
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
@@ -291,73 +174,73 @@ private:
             LOG(LOG_ERR, "=============== Got Unexpected Data ==========");
             hexdump_c(data + available_len, len - available_len);
             this->data.reset();
-            this->status = false;
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
-
-        this->last_quantum_sent += len;
     }
+
+    std::unique_ptr<uint8_t[]> data;
+    std::size_t len;
+    std::size_t current;
+    bool remaining_is_error = true;
 };
 
 
-class TestTransport
-: public Transport
+struct TestTransport : public Transport
 {
-    CheckTransport check;
-    GeneratorTransport gen;
-    std::unique_ptr<uint8_t[]> public_key;
-    std::size_t public_key_length;
-
-public:
     TestTransport(
-        const char * outdata, size_t outlen,
         const char * indata, size_t inlen,
-        bool verbose = false)
-    : check(indata, inlen, verbose)
-    , gen(outdata, outlen, verbose)
+        const char * outdata, size_t outlen)
+    : check(outdata, outlen)
+    , gen(indata, inlen)
     , public_key_length(0)
     {}
 
-
-    void disable_remaining_error() {
+    void disable_remaining_error()
+    {
         this->check.disable_remaining_error();
+        this->gen.disable_remaining_error();
     }
 
-    void set_public_key(const uint8_t * data, size_t data_size) {
+    void set_public_key(const uint8_t * data, size_t data_size)
+    {
         this->public_key.reset(new uint8_t[data_size]);
         this->public_key_length = data_size;
         memcpy(this->public_key.get(), data, data_size);
     }
 
-    const uint8_t * get_public_key() const override {
+    const uint8_t * get_public_key() const override
+    {
         return this->public_key.get();
     }
 
-    size_t get_public_key_length() const override {
+    size_t get_public_key_length() const override
+    {
         return this->public_key_length;
     }
 
-    bool get_status() const override {
-        return this->check.get_status() && this->gen.get_status();
-    }
-
 private:
-    Read do_atomic_read(uint8_t * buffer, size_t len) override {
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
+    {
         return this->gen.atomic_read(buffer, len);
     }
 
-    void do_send(const uint8_t * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override
+    {
         this->check.send(buffer, len);
     }
+
+    CheckTransport check;
+    GeneratorTransport gen;
+    std::unique_ptr<uint8_t[]> public_key;
+    std::size_t public_key_length;
 };
 
 
-
-class LogTransport
-: public Transport
+class LogTransport : public Transport
 {
-    void do_send(const uint8_t * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override
+    {
         LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
         hexdump_c(buffer, len);
         LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
@@ -368,24 +251,52 @@ class LogTransport
 class MemoryTransport : public Transport
 {
     uint8_t buf[65536];
+    bool remaining_is_error = true;
 
 public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    Read do_atomic_read(uint8_t * buffer, size_t len) override {
-        auto avail = this->in_stream.in_remain();
-        if (avail == 0){
+    ~MemoryTransport()
+    {
+        this->disconnect();
+    }
+
+    void disable_remaining_error()
+    {
+        this->remaining_is_error = false;
+    }
+
+    bool disconnect() override
+    {
+        if (this->remaining_is_error && this->in_stream.get_offset() != this->out_stream.get_offset()) {
+            std::ostringstream out;
+            out << "~MemoryTransport() remaining=" << this->in_stream.get_offset() << " len=" << this->out_stream.get_offset();
+            throw RemainingError{out.str()};
+        }
+        return true;
+    }
+
+private:
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
+    {
+        auto const in_offset = this->in_stream.get_offset();
+        auto const out_offset = this->out_stream.get_offset();
+        if (in_offset == out_offset){
             return Read::Eof;
         }
-        if (avail < len) {
+        if (in_offset + len > out_offset){
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         this->in_stream.in_copy_bytes(buffer, len);
         return Read::Ok;
     }
 
-    void do_send(const uint8_t * const buffer, size_t len) override {
+    void do_send(const uint8_t * const buffer, size_t len) override
+    {
+        if (len > this->out_stream.tailroom()) {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };

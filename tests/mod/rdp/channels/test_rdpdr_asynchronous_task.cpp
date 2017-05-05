@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     //TestToServerSender test_to_server_sender(log_transport);
 
     #include "fixtures/test_rdpdr_drive_read_task.hpp"
-    CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
+    CheckTransport check_transport(outdata, sizeof(outdata)-1);
     TestToServerSender test_to_server_sender(check_transport);
 
     const uint32_t DeviceId = 0;
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
     LOG(LOG_INFO, "CHECK_EXCEPTION_ERROR_ID");
-    CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
+    CheckTransport check_transport(outdata, sizeof(outdata)-1);
 
     LOG(LOG_INFO, "check_transport");
     TestToServerSender test_to_server_sender(check_transport);
