@@ -27,7 +27,7 @@
 
 #include <memory>
 
-class ReportError : noncopyable_but_movable
+class ReportError
 {
 public:
     template<class F>
@@ -74,15 +74,6 @@ private:
 
     struct NullImpl : ImplBase
     {
-        // disable allocation/deallocation
-        //void* operator new(std::size_t count)
-        //{
-        //    static std::aligned_storage<sizeof(NullImpl), alignof(NullImpl)>::type data;
-        //    return &data;
-        //}
-        //void operator delete(void *)
-        //{}
-
         Error get_error(Error err) override;
         ImplBase* clone() const override { return new NullImpl; }
     };

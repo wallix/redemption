@@ -162,7 +162,8 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
         in_test.open(full_filename.c_str());
         char mem[4096];
         try {
-            (void)in_test.partial_read(mem, sizeof(mem));
+            auto len = in_test.partial_read(mem, sizeof(mem));
+            (void)len;
         } catch (Error const&) {
             cctx.old_encryption_scheme = 1;
             return 1;

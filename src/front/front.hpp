@@ -1120,65 +1120,16 @@ public:
         return compress_type_selector[client_supported_type][front_supported_type];
     }
 
-    void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini.get<cfg::client::persistent_disk_bitmap_cache>() || !this->ini.get<cfg::client::persist_bitmap_cache_on_disk>())
-            return;
-
-        const char * persistent_path = PERSISTENT_PATH "/client";
-
-        // Ensures that the directory exists.
-        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
-            LOG( LOG_ERR
-               , "front::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
-               , persistent_path);
-            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-        }
-
-        // Generates the name of file.
-        char filename[2048];
-        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
-        filename[sizeof(filename) - 1] = '\0';
-
-        char filename_temporary[2048];
-        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
-        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
-
-        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
-        if (fd == -1) {
-            LOG( LOG_ERR
-               , "front::save_persistent_disk_bitmap_cache: "
-                 "failed to open (temporary) file for writing. filename=\"%s\""
-               , filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
-        }
-
-        try
-        {
-            {
-                OutFileTransport oft(unique_fd{fd}, report_error_from_reporter(this->authentifier));
-                BmpCachePersister::save_all_to_disk(
-                    this->orders.get_bmp_cache(), oft,
-                    convert_verbose_flags(this->verbose)
-                );
-            }
-
-            if (::rename(filename_temporary, filename) == -1) {
-                LOG( LOG_WARNING
-                   , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
-                     "old_filename=\"%s\" new_filename=\"%s\""
-                   , filename_temporary, filename);
-                ::unlink(filename_temporary);
-            }
-        }
-        catch (...) {
-            LOG( LOG_WARNING
-               , "front::save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
-                 "filename=\"%s\""
-               , filename_temporary);
-            ::unlink(filename_temporary);
-        }
+    void save_persistent_disk_bitmap_cache() const
+    {
+        ::save_persistent_disk_bitmap_cache(
+            this->orders.get_bmp_cache(),
+            PERSISTENT_PATH "/client",
+            this->ini.get<cfg::globals::host>().c_str(),
+            this->orders.bpp(),
+            report_error_from_reporter(this->authentifier),
+            convert_verbose_flags(this->verbose)
+        );
     }
 
 private:
