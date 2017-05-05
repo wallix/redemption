@@ -76,7 +76,7 @@ private:
     } while (0)
 
 #ifdef IN_IDE_PARSER
-# define CHECK_NOTHROW(expr, errid) expr
+# define CHECK_NOTHROW(expr, errid) expr; errid
 #else
 # define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
 #endif

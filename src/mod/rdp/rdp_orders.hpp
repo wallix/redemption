@@ -194,7 +194,7 @@ private:
         try
         {
             {
-                OutFileTransport oft(unique_fd{fd});
+                OutFileTransport oft(unique_fd{fd}, ReportError{} /* TODO report_error_from_reporter(authentifier) */);
                 BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
             }
 

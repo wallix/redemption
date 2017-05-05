@@ -1157,7 +1157,7 @@ public:
         try
         {
             {
-                OutFileTransport oft(unique_fd{fd});
+                OutFileTransport oft(unique_fd{fd}, report_error_from_reporter(this->authentifier));
                 BmpCachePersister::save_all_to_disk(
                     this->orders.get_bmp_cache(), oft,
                     convert_verbose_flags(this->verbose)

@@ -461,7 +461,7 @@ struct OutFilenameSequenceTransport : public Transport
             auth_api * auth
         )
         : filegen_(params.format, params.prefix, params.filename, params.extension)
-        , buf_(invalid_fd(), auth_report_error(auth))
+        , buf_(invalid_fd(), report_error_from_reporter(auth))
         , num_file_(0)
         , groupid_(params.groupid)
         {

@@ -273,7 +273,7 @@ public:
     explicit OutCryptoTransport(
         bool with_encryption, bool with_checksum,
         CryptoContext & cctx, Random & rnd,
-        ReportError report_error = ReportError::mk()
+        ReportError report_error = ReportError()
     ) noexcept
     : with_checksum(with_checksum)
     , encrypter(with_encryption, with_checksum, cctx, rnd)
@@ -286,6 +286,11 @@ public:
     const char * get_tmp() const
     {
         return &this->tmpname[0];
+    }
+
+    ReportError & get_report_error()
+    {
+        return this->out_file.get_report_error();
     }
 
     ~OutCryptoTransport()
@@ -345,17 +350,19 @@ public:
         snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
         this->out_file.open(unique_fd(::mkostemps(this->tmpname, 4, O_WRONLY | O_CREAT)));
         if (not this->is_open()){
+            int const err = errno;
             LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s)", this->tmpname, finalname);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
         }
 
         if (chmod(this->tmpname, groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            int const err = errno;
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                 , this->tmpname
                 , groupid ? "u+r, g+r" : "u+r"
-                , strerror(errno), errno);
+                , strerror(err), err);
             LOG(LOG_INFO, "OutCryptoTransport::open : chmod failed (%s -> %s)", this->tmpname, finalname);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
         }
 
         strcpy(this->finalname, finalname);
@@ -377,10 +384,11 @@ public:
         this->out_file.send(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
+                int const err = errno;
                 LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%u : %s\n"
-                   , this->tmpname, this->finalname, errno, strerror(errno));
+                   , this->tmpname, this->finalname, err, strerror(err));
                 this->out_file.close();
-                throw Error(ERR_TRANSPORT_CLOSED);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
             }
             this->tmpname[0] = 0;
         }
