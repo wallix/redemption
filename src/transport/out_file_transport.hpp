@@ -38,14 +38,20 @@ public:
 
     static ReportError mk(std::nullptr_t = nullptr)
     {
-        // disable allocation/deallocation
         struct NullImpl : ImplBase
         {
-            void operator delete(void *) {}
+            // disable allocation/deallocation
+            //void* operator new(std::size_t count)
+            //{
+            //    static std::aligned_storage<sizeof(NullImpl), alignof(NullImpl)>::type data;
+            //    return &data;
+            //}
+            //void operator delete(void *)
+            //{}
+
             Error get_error(Error err) override { return err; }
         };
-        static NullImpl null_impl;
-        return ReportError(&null_impl);
+        return ReportError(new NullImpl);
     }
 
     Error get_error(Error err)
