@@ -225,10 +225,17 @@ public:
         , auth_trans(auth_trans)
         , session_id{}
         , cctx(cctx)
-        , ct(ini.get<cfg::crypto::session_log_with_encryption>(), ini.get<cfg::crypto::session_log_with_checksum>(), cctx, rnd)
+        , ct(
+            ini.get<cfg::crypto::session_log_with_encryption>(),
+            ini.get<cfg::crypto::session_log_with_checksum>(),
+            cctx, rnd, report_error_from_reporter(*this))
         , remote_answer(false)
-        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , inactivity(ini.get<cfg::globals::session_timeout>(), acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , keepalive(
+            ini.get<cfg::globals::keepalive_grace_delay>(),
+            to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , inactivity(
+            ini.get<cfg::globals::session_timeout>(),
+            acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());

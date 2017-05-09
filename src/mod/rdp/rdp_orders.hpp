@@ -156,64 +156,16 @@ public:
     }
 
 private:
-    void save_persistent_disk_bitmap_cache() const {
-        if (!this->enable_persistent_disk_bitmap_cache || !this->persist_bitmap_cache_on_disk) {
-            return;
-        }
-
-        const char * persistent_path = PERSISTENT_PATH "/mod_rdp";
-
-        // Ensures that the directory exists.
-        if (::recursive_create_directory( persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
-            LOG( LOG_ERR
-               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
-               , persistent_path);
-            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-        }
-
-        // Generates the name of file.
-        char filename[2048];
-        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->target_host.c_str(), this->bmp_cache->bpp);
-        filename[sizeof(filename) - 1] = '\0';
-
-        char filename_temporary[2048];
-        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->target_host.c_str(), this->bmp_cache->bpp);
-        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
-
-        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
-        if (fd == -1) {
-            LOG( LOG_ERR
-               , "rdp_orders::save_persistent_disk_bitmap_cache: "
-                 "failed to open (temporary) file for writing. filename=\"%s\""
-               , filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
-        }
-
-        try
-        {
-            {
-                OutFileTransport oft(unique_fd{fd});
-                BmpCachePersister::save_all_to_disk(*this->bmp_cache, oft, convert_verbose_flags(this->verbose));
-            }
-
-            if (::rename(filename_temporary, filename) == -1) {
-                LOG( LOG_WARNING
-                   , "rdp_orders::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
-                     "old_filename=\"%s\" new_filename=\"%s\""
-                   , filename_temporary, filename);
-                ::unlink(filename_temporary);
-            }
-        }
-        catch (...)
-        {
-            LOG( LOG_WARNING
-               , "rdp_orders::save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
-                 "filename=\"%s\""
-               , filename_temporary);
-            ::unlink(filename_temporary);
-        }
+    void save_persistent_disk_bitmap_cache() const
+    {
+      ::save_persistent_disk_bitmap_cache(
+          *this->bmp_cache,
+          PERSISTENT_PATH "/mod_rdp",
+          this->target_host.c_str(),
+          this->bmp_cache->bpp,
+          ReportError{}, /* TODO report_error_from_reporter(authentifier) */
+          convert_verbose_flags(this->verbose)
+      );
     }
 
 public:

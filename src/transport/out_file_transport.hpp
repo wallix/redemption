@@ -27,32 +27,32 @@
 
 #include <memory>
 
-class ReportError : noncopyable_but_movable
+class ReportError
 {
 public:
     template<class F>
-    static ReportError mk(F && f)
-    {
-        return ReportError(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)});
-    }
+    explicit ReportError(F && f)
+    : ReportError(Internal{}, new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
+    {}
 
-    static ReportError mk(std::nullptr_t = nullptr)
-    {
-        struct NullImpl : ImplBase
-        {
-            // disable allocation/deallocation
-            //void* operator new(std::size_t count)
-            //{
-            //    static std::aligned_storage<sizeof(NullImpl), alignof(NullImpl)>::type data;
-            //    return &data;
-            //}
-            //void operator delete(void *)
-            //{}
+    explicit ReportError(std::nullptr_t = nullptr)
+    : ReportError(Internal{}, new NullImpl)
+    {}
 
-            Error get_error(Error err) override { return err; }
-        };
-        return ReportError(new NullImpl);
-    }
+    ReportError(ReportError && other)
+    : impl(std::move(other.impl))
+    {}
+
+    ReportError(ReportError const & other)
+    : impl(other.impl->clone())
+    {}
+
+    ReportError(ReportError & other)
+    : impl(other.impl->clone())
+    {}
+
+    ReportError & operator = (ReportError &&) = delete;
+    ReportError & operator = (ReportError const &) = delete;
 
     Error get_error(Error err)
     {
@@ -68,7 +68,14 @@ private:
     struct ImplBase
     {
         virtual Error get_error(Error err) = 0;
+        virtual ImplBase* clone() const = 0;
         virtual ~ImplBase() = default;
+    };
+
+    struct NullImpl : ImplBase
+    {
+        Error get_error(Error err) override;
+        ImplBase* clone() const override { return new NullImpl; }
     };
 
     template<class F>
@@ -78,52 +85,59 @@ private:
         template<class Fu>
         FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
+        ImplBase* clone() const override { return new FuncImpl(fun); }
     };
 
     template<class F, class Fu>
     static ReportError dispath_mk(Fu && f, std::false_type = typename std::is_pointer<F>::type{})
     {
-        return ReportError{{new FuncImpl<F>{std::forward<Fu>(f)}}};
+        return ReportError{Internal{}, {new FuncImpl<F>{std::forward<Fu>(f)}}};
     }
 
     template<class F, class Fu>
     static ReportError dispath_mk(Fu && f, std::true_type = typename std::is_pointer<F>::type{})
     {
-        return f ? ReportError(new FuncImpl<F>{f}) : mk(nullptr);
+        return f ? ReportError(Internal{}, new FuncImpl<F>{f}) : ReportError(nullptr);
     }
 
-    ReportError(ImplBase* p)
+    class Internal {};
+    ReportError(Internal, ImplBase* p)
     : impl(p)
     {}
 
     std::unique_ptr<ImplBase> impl;
 };
 
-inline ReportError auth_report_error(auth_api& auth)
+inline Error ReportError::NullImpl::get_error(Error err)
 {
-    return ReportError::mk([&auth](Error error) {
+    if (err.id == ENOSPC) {
+        LOG(LOG_ERR, "FILESYSTEM_FULL");
+        err.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+    }
+    return err;
+}
+
+template<class TWithReportFunction>
+ReportError report_error_from_reporter(TWithReportFunction& reporter)
+{
+    return ReportError([&reporter](Error error) {
         if (error.id == ENOSPC) {
-            auth.report("FILESYSTEM_FULL", "100|unknow");
+            reporter.report("FILESYSTEM_FULL", "100|unknow");
             error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
         }
         return error;
     });
 }
 
-inline ReportError auth_report_error(auth_api* auth)
+template<class TWithReportFunction>
+ReportError report_error_from_reporter(TWithReportFunction* reporter)
 {
-    return auth ? auth_report_error(*auth) : ReportError::mk([](Error error){
-        if (error.id == ENOSPC) {
-            LOG(LOG_ERR, "FILESYSTEM_FULL");
-            error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-        }
-        return error;
-    });
+    return reporter ? report_error_from_reporter(*reporter) : ReportError(nullptr);
 }
 
 struct OutFileTransport : Transport
 {
-    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError::mk()) noexcept
+    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept
     : file(std::move(fd))
     , report_error(std::move(report_error))
     {}
@@ -143,6 +157,11 @@ struct OutFileTransport : Transport
     int get_fd() const override
     {
         return this->file.fd();
+    }
+
+    ReportError & get_report_error()
+    {
+        return this->report_error;
     }
 
     void open(unique_fd fd)
@@ -165,18 +184,15 @@ private:
     void do_send(const uint8_t * data, size_t len) override
     {
         size_t total_sent = 0;
-        while (total_sent != len) {
+        while (len > total_sent) {
             ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
             if (ret <= 0){
                 if (errno == EINTR) {
                     continue;
                 }
-                break;
+                throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
             }
             total_sent += ret;
-        }
-        if (total_sent != len) {
-            throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
         }
     }
 

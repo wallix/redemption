@@ -1148,7 +1148,8 @@ public:
         const timeval & now,
         std::string record_path,
         const char * const basename,
-        bool enable_agent)
+        bool enable_agent,
+        ReportError report_error)
     : meta_trans(unique_fd{[&](){
         record_path.append(basename).append(".meta");
         const char * filename = record_path.c_str();
@@ -1158,7 +1159,7 @@ public:
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         return fd;
-    }()})
+    }()}, std::move(report_error))
     , meta(now, this->meta_trans)
     , session_log_agent(this->meta)
     , enable_agent(enable_agent)
@@ -1342,7 +1343,8 @@ Capture::Capture(
         if (capture_meta) {
             this->meta_capture_obj.reset(new MetaCaptureImpl(
                 now, record_tmp_path, basename,
-                meta_enable_session_log
+                meta_enable_session_log,
+                report_error_from_reporter(authentifier)
             ));
         }
 

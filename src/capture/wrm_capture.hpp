@@ -205,6 +205,7 @@ public:
         bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
+        ReportError report_error,
         Fstat & fstat,
         time_t start_sec,
         const char * const hash_prefix,
@@ -226,50 +227,45 @@ public:
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
     , with_encryption(with_encryption)
-    , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
-    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd)
+    , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd, report_error)
+    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd, report_error)
     {
-//        LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
-
+        //LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
     }
 
-
-    ssize_t open(uint16_t width, uint16_t height)
+    void open(uint16_t width, uint16_t height)
     {
         this->meta_buf_encrypt_transport.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR);
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
         unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
         this->meta_buf_encrypt_transport.send(header1, len);
-        return 0;
     }
-
 
     ~MetaSeqBuf()
     {
         this->close();
     }
 
-    ssize_t write(const uint8_t * data, size_t len)
+    void write(const uint8_t * data, size_t len)
     {
         if (!this->wrm_filter_encrypt_transport.is_open()) {
             const char * filename = this->filegen_.get(this->num_file_);
             this->wrm_filter_encrypt_transport.open(filename, this->groupid_);
         }
         this->wrm_filter_encrypt_transport.send(data, len);
-        return 0;
     }
 
-    int next()
+    bool next()
     {
         if (this->wrm_filter_encrypt_transport.is_open()) {
             uint8_t qhash[MD_HASH::DIGEST_LENGTH];
             uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             this->wrm_filter_encrypt_transport.close(qhash, fhash);
             this->next_meta_file(qhash, fhash);
-            return 0;
+            return true;
         }
-        return -1;
+        return false;
     }
 
     int close()
@@ -301,7 +297,9 @@ public:
 
 //        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
 
-        OutCryptoTransport hash_buf_encrypt_transport(this->with_encryption, false, this->cctx, this->rnd);
+        OutCryptoTransport hash_buf_encrypt_transport(
+            this->with_encryption, false, this->cctx, this->rnd,
+            this->meta_buf_encrypt_transport.get_report_error());
         hash_buf_encrypt_transport.open(this->hf_.filename, S_IRUSR|S_IRGRP);
         char header[] = "v2\n\n\n";
         hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
@@ -378,13 +376,8 @@ public:
 };
 
 
-struct wrmcapture_OutMetaSequenceTransport : public Transport
+struct wrmcapture_OutMetaSequenceTransport : Transport
 {
-    private:
-    MetaSeqBuf buf;
-
-
-    public:
     wrmcapture_OutMetaSequenceTransport(
         bool with_encryption,
         bool with_checksum,
@@ -399,76 +392,42 @@ struct wrmcapture_OutMetaSequenceTransport : public Transport
         uint16_t height,
         const int groupid,
         auth_api * authentifier)
-    : buf(with_encryption, with_checksum, cctx, rnd, fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid) {
+    : buf(
+        with_encryption, with_checksum, cctx, rnd, report_error_from_reporter(authentifier),
+        fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+    {
         if (authentifier) {
             this->set_authentifier(authentifier);
         }
-
-        const ssize_t res = this->buf.open(width, height);
-        if (res < 0) {
-            int err = errno;
-            LOG(LOG_ERR, "Write to transport failed code=%d", err);
-
-            if (err == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", path);
-                this->authentifier->report("FILESYSTEM_FULL", message);
-
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-            }
-            else {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-            }
-        }
+        this->buf.open(width, height);
     }
 
-    void timestamp(timeval now) override {
+    void timestamp(timeval now) override
+    {
         this->buf.update_sec(now.tv_sec);
     }
 
-    bool next() override {
-        if (this->status == false) {
+    bool next() override
+    {
+        if (!this->buf.next()) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        const ssize_t res = this->buf.next();
-        if (res) {
-            this->status = false;
-            int err = errno;
-            if (res < 0){
-                LOG(LOG_ERR, "Write to transport failed code=%d", err);
-                err = -res;
-            }
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
         ++this->seqno;
         return true;
     }
 
-    bool disconnect() override {
+    bool disconnect() override
+    {
         return !this->buf.close();
     }
 
 private:
-    void do_send(const uint8_t * data, size_t len) override {
-        const ssize_t res = this->buf.write(data, len);
-        if (res < 0) {
-            this->status = false;
-            if (errno == ENOSPC) {
-                char message[1024];
-                snprintf(message, sizeof(message), "100|%s", buf.filegen_.get(buf.num_file_ - 1u));
-                this->authentifier->report("FILESYSTEM_FULL", message);
-                errno = ENOSPC;
-                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception NO_ROOM");
-                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
-            }
-            else {
-                LOG(LOG_ERR, "OutMetaSequenceTransport::do_send() exception WRITE_FAILED");
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
+    void do_send(const uint8_t * data, size_t len) override
+    {
+        this->buf.write(data, len);
     }
 
-    bool status = true;
+    MetaSeqBuf buf;
 };
 
 

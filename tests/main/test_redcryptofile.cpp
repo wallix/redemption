@@ -91,6 +91,8 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
         RED_CHECK_EQ(redcryptofile_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
         RED_CHECK_EQ(redcryptofile_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
 
+        RED_CHECK_EQ(redcryptofile_writer_error_message(handle), "No error");
+
         redcryptofile_writer_delete(handle);
     }
 
@@ -105,11 +107,13 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
         size_t total = 0;
         while (total < sizeof(buf)) {
             int res = redcryptofile_reader_read(handle, &buf[total], 10);
-            RED_CHECK_GT(res, 0);
+            RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
         RED_CHECK_MEM_C(bytes_array(buf, 31), "We write, and again, and so on.");
         RED_CHECK_EQ(redcryptofile_reader_close(handle), 0);
+
+        RED_CHECK_EQ(redcryptofile_reader_error_message(handle), "No error");
 
         redcryptofile_reader_delete(handle);
     }
@@ -119,21 +123,23 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
 RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
-    LOG(LOG_INFO, "TestRedCryptofileError");
-    LOG(LOG_INFO, "Errors below are expected this is the purpose of the test");
     auto handle_w = redcryptofile_writer_new(1, 1, &hmac_fn, &trace_fn);
     RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/"), -1);
+    RED_CHECK_NE(redcryptofile_writer_error_message(handle_w), "No error");
 
     auto handle_r = redcryptofile_reader_new(&hmac_fn, &trace_fn);
     RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/"), -1);
-
-    RED_CHECK_EQ(redcryptofile_writer_write(nullptr, bytes("We write, "), 10), -1);
-    RED_CHECK_EQ(redcryptofile_writer_close(nullptr), -1);
-    uint8_t buf[12];
-    RED_CHECK_EQ(redcryptofile_reader_read(nullptr, buf, 10), -1);
-    RED_CHECK_EQ(redcryptofile_reader_close(nullptr), -1);
-    LOG(LOG_INFO, "TestRedCryptofileError done");
+    RED_CHECK_NE(redcryptofile_reader_error_message(handle_r), "No error");
 
     redcryptofile_writer_delete(handle_w);
     redcryptofile_reader_delete(handle_r);
+
+    RED_CHECK_EQ(redcryptofile_writer_write(nullptr, bytes("We write, "), 10), -1);
+    RED_CHECK_EQ(redcryptofile_writer_close(nullptr), -1);
+    RED_CHECK_NE(redcryptofile_writer_error_message(nullptr), "No error");
+
+    uint8_t buf[12];
+    RED_CHECK_EQ(redcryptofile_reader_read(nullptr, buf, 10), -1);
+    RED_CHECK_EQ(redcryptofile_reader_close(nullptr), -1);
+    RED_CHECK_NE(redcryptofile_reader_error_message(nullptr), "No error");
 }

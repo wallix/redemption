@@ -197,9 +197,6 @@ private:
 
     bool server_is_apple;
 
-    int key_random;
-
-
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -252,7 +249,6 @@ public:
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , authentifier(authentifier)
     , server_is_apple(server_is_apple)
-    , key_random(0)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
