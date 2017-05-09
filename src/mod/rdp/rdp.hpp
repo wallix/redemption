@@ -789,7 +789,8 @@ public:
         , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
-                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
+                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
+                , report_error_from_reporter(authentifier))
         , share_id(0)
         , userid(0)
         , encryptionLevel(0)
