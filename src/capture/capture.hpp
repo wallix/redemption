@@ -553,9 +553,6 @@ struct OutFilenameSequenceTransport : public Transport
         auth_api * authentifier)
     : buf(capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid), authentifier)
     {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
     }
 
     const FilenameGenerator * seqgen() const noexcept

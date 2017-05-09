@@ -396,9 +396,6 @@ struct wrmcapture_OutMetaSequenceTransport : Transport
         with_encryption, with_checksum, cctx, rnd, report_error_from_reporter(authentifier),
         fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
-        if (authentifier) {
-            this->set_authentifier(authentifier);
-        }
         this->buf.open(width, height);
     }
 
