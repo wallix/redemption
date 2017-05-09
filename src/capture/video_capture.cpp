@@ -44,32 +44,47 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+namespace
+{
+    void video_transport_log_error(Error const & error)
+    {
+        if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
+            LOG(LOG_ERR, "VideoTransport::send: %s [%u]", strerror(error.errnum), error.errnum);
+        }
+    }
+}
 
 // VideoTransportBase
 //@{
 
 VideoTransportBase::VideoTransportBase(const int groupid, auth_api * authentifier)
-: fd(-1)
+: out_file(invalid_fd(), authentifier
+    ? ReportError([authentifier](Error error){
+        video_transport_log_error(error);
+        report_and_transform_error(error, AuthReportMessage{*authentifier});
+        return error;
+    })
+    : ReportError([](Error error){
+        video_transport_log_error(error);
+        report_and_transform_error(error, LogReportMessage{});
+        return error;
+    })
+  )
 , groupid(groupid)
 {
     this->tmp_filename[0] = 0;
     this->final_filename[0] = 0;
-    if (authentifier) {
-        this->authentifier = authentifier;
-    }
 }
 
 void VideoTransportBase::seek(int64_t offset, int whence)
 {
-    if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
-        throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-    }
+    this->out_file.seek(offset, whence);
 }
 
 VideoTransportBase::~VideoTransportBase()
 {
-    if (this->fd != -1) {
-        ::close(this->fd);
+    if (this->out_file.is_open()) {
+        this->out_file.close();
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         if (::rename(this->tmp_filename, this->final_filename) < 0) {
             LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -81,41 +96,37 @@ VideoTransportBase::~VideoTransportBase()
 void VideoTransportBase::force_open()
 {
     assert(this->final_filename[0]);
+    assert(!this->out_file.is_open());
 
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
-    this->fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-    if (this->fd == -1) {
+    int fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
+    if (fd == -1) {
         LOG( LOG_ERR, "can't open temporary file %s : %s [%u]"
            , this->tmp_filename
            , strerror(errno), errno);
         this->status = false;
-        auto eid = ERR_TRANSPORT_OPEN_FAILED;
-        if (errno == ENOSPC) {
-            this->authentifier->report("FILESYSTEM_FULL", "100|unknown");
-            eid = ERR_TRANSPORT_WRITE_NO_ROOM;
-            errno = ENOSPC;
-        }
-        throw Error(eid, errno);
+        throw this->out_file.get_report_error()(Error(ERR_TRANSPORT_OPEN_FAILED, errno));
     }
-    if (fchmod(this->fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
+
+    if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
            , this->tmp_filename
            , this->groupid ? "u+r, g+r" : "u+r"
            , strerror(errno), errno);
-        ::close(this->fd);
-        this->fd = -1;
+        ::close(fd);
         unlink(this->tmp_filename);
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
+
+    this->out_file.open(unique_fd{fd});
 }
 
 void VideoTransportBase::rename()
 {
     assert(this->final_filename[0]);
-    assert(this->fd != -1);
+    assert(this->out_file.is_open());
 
-    ::close(this->fd);
-    this->fd = -1;
+    this->out_file.close();
     // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
 
     if (::rename(this->tmp_filename, this->final_filename) < 0)
@@ -131,32 +142,12 @@ void VideoTransportBase::rename()
 
 bool VideoTransportBase::is_open() const
 {
-    return this->fd > -1;
+    return this->out_file.is_open();
 }
 
 void VideoTransportBase::do_send(const uint8_t * data, size_t len)
 {
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ssize_t ret = ::write(this->fd, data + total_sent, remaining_len);
-        if (ret <= 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            this->status = false;
-            auto eid = ERR_TRANSPORT_WRITE_FAILED;
-            if (errno == ENOSPC) {
-                this->authentifier->report("FILESYSTEM_FULL", "100|unknow");
-                errno = ENOSPC;
-                eid = ERR_TRANSPORT_WRITE_NO_ROOM;
-            }
-            LOG( LOG_ERR, "VideoTransport::send: %s [%u]", strerror(errno), errno);
-            throw Error(eid, errno);
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
+    this->out_file.send(data, len);
 }
 
 //@}

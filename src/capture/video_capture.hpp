@@ -22,6 +22,7 @@
 
 #include "gdi/capture_api.hpp"
 #include "transport/transport.hpp"
+#include "transport/out_file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "flv_params.hpp"
 #include "capture/video_recorder.hpp"
@@ -51,7 +52,7 @@ protected:
     void do_send(const uint8_t * data, size_t len) override;
 
 private:
-    int fd;
+    OutFileTransport out_file;
     const int groupid;
 
     char tmp_filename[1024];
