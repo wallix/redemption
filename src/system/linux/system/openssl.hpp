@@ -491,7 +491,7 @@ struct TLSContext
 
         // TODO("Before to have default value certificate doesn't exists")
         bool bad_certificate_path = false;
-        int  checking_exception  = NO_ERROR;
+        error_type checking_exception = NO_ERROR;
 
         // ensures the certificate directory exists
         if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {

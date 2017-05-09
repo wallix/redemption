@@ -339,7 +339,7 @@ enum error_type {
 };
 
 struct Error {
-    int id;
+    error_type id;
     int errnum;
 
 private:
@@ -355,7 +355,7 @@ private:
     Error() = delete;
 
 public:
-    explicit Error(int id, int errnum = 0) noexcept
+    explicit Error(error_type id, int errnum = 0) noexcept
     : id(id)
     , errnum(errnum) {}
 
