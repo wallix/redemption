@@ -874,7 +874,7 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
+        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
     FileSystemVirtualChannel(
@@ -1532,7 +1532,7 @@ public:
                                 device_type);
                             info += "'";
 
-                            this->authentifier.log4(
+                            this->report_message.log4(
                                 !this->param_dont_log_data_into_syslog,
                                 "DRIVE_REDIRECTION_USE",
                                 info.c_str());
@@ -1667,7 +1667,7 @@ public:
                                     append_escaped_delimiters(info, target_info.file_path);
                                     info += "\"";
 
-                                    this->authentifier.log4(
+                                    this->report_message.log4(
                                         !this->param_dont_log_data_into_syslog,
                                         "DRIVE_REDIRECTION_READ",
                                         info.c_str());
@@ -1710,7 +1710,7 @@ public:
                                 append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
-                                this->authentifier.log4(
+                                this->report_message.log4(
                                     !this->param_dont_log_data_into_syslog,
                                     "DRIVE_REDIRECTION_WRITE",
                                     info.c_str());
@@ -1764,7 +1764,7 @@ public:
                                 append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
-                                this->authentifier.log4(
+                                this->report_message.log4(
                                     !this->param_dont_log_data_into_syslog,
                                     "DRIVE_REDIRECTION_DELETE",
                                     info.c_str());
@@ -1783,7 +1783,7 @@ public:
                                 append_escaped_delimiters(info, file_path);
                                 info += "\"";
 
-                                this->authentifier.log4(
+                                this->report_message.log4(
                                     !this->param_dont_log_data_into_syslog,
                                     "DRIVE_REDIRECTION_RENAME",
                                     info.c_str());

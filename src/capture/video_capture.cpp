@@ -57,16 +57,16 @@ namespace
 // VideoTransportBase
 //@{
 
-VideoTransportBase::VideoTransportBase(const int groupid, auth_api * authentifier)
-: out_file(invalid_fd(), authentifier
-    ? ReportError([authentifier](Error error){
+VideoTransportBase::VideoTransportBase(const int groupid, ReportMessageApi * report_message)
+: out_file(invalid_fd(), report_message
+    ? ReportError([report_message](Error error){
         video_transport_log_error(error);
-        report_and_transform_error(error, AuthReportMessage{*authentifier});
+        report_and_transform_error(error, ReportMessageReporter{*report_message});
         return error;
     })
     : ReportError([](Error error){
         video_transport_log_error(error);
-        report_and_transform_error(error, LogReportMessage{});
+        report_and_transform_error(error, LogReporter{});
         return error;
     })
   )
@@ -244,8 +244,8 @@ FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
     const char * const filename,
     const char * const extension,
     const int groupid,
-    auth_api * authentifier)
-: VideoTransportBase(groupid, authentifier)
+    ReportMessageApi * report_message)
+: VideoTransportBase(groupid, report_message)
 {
     int const len = std::snprintf(
         this->final_filename,
@@ -406,8 +406,8 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     const char * const filename,
     const char * const extension,
     const int groupid,
-    auth_api * authentifier)
-: VideoTransportBase(groupid, authentifier)
+    ReportMessageApi * report_message)
+: VideoTransportBase(groupid, report_message)
 {
     if (strlen(prefix) > sizeof(this->filegen.path) - 1
      || strlen(filename) > sizeof(this->filegen.base) - 1

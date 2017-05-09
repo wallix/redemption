@@ -1559,7 +1559,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
                         // PngParams
-                        png_params.authentifier = nullptr;
+                        png_params.report_message = nullptr;
                         png_params.record_tmp_path = record_tmp_path;
                         png_params.basename = basename;
                         png_params.groupid = groupid;

@@ -37,6 +37,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/report_message_api.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "transport/socket_transport.hpp"
 #include "core/channel_names.hpp"
@@ -191,7 +192,7 @@ private:
 
     uint32_t clipboard_general_capability_flags = 0;
 
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
 
     time_t beginning;
 
@@ -217,7 +218,7 @@ public:
            , bool is_socket_transport
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , auth_api & authentifier
+           , ReportMessageApi & report_message
            , bool server_is_apple
            , uint32_t verbose
            )
@@ -247,7 +248,7 @@ public:
     , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , authentifier(authentifier)
+    , report_message(report_message)
     , server_is_apple(server_is_apple)
     {
     //--------------------------------------------------------------------------------------------------------------
@@ -786,7 +787,7 @@ public:
                 cursor.update_bw();
                 this->front.set_pointer(cursor);
 
-                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
@@ -2931,7 +2932,7 @@ public:
                         ((int(seconds) % 3600) / 60),
                         (int(seconds) % 60));
 
-        this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+        this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
     }
 
     Dimension get_dim() const override

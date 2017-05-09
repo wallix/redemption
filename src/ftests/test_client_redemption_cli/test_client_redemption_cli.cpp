@@ -824,12 +824,9 @@ int main(int argc, char** argv){
         std::cout << "\n" << std::endl;
     } //======================================================================
 
-
-
     NullAuthentifier authentifier;
-    TestClientCLI front(info, authentifier, 0);
-
-
+    NullReportMessage report_message;
+    TestClientCLI front(info, report_message, 0);
 
     if (input_connection_data_complete & TestClientCLI::IP) {
         int sck(0);
@@ -883,6 +880,7 @@ int main(int argc, char** argv){
                                  , timeSystem
                                  , mod_rdp_params
                                  , authentifier
+                                 , report_message
                                  );
 
                 front._to_server_sender._callback = mod;

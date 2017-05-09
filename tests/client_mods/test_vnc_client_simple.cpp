@@ -247,7 +247,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
-    NullAuthentifier authentifier;
+    NullReportMessage report_message;
 
     mod_vnc mod(
           t
@@ -268,7 +268,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , is_socket_transport
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
-        , authentifier       // acl
+        , report_message
         , false
         , verbose);
     mod.get_event().set();

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "acl/auth_api.hpp"
+#include "core/report_message_api.hpp"
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -211,7 +211,7 @@ public:
         }
     }
 
-    static void report(auth_api & authentifier, bool is_pattern_kill,
+    static void report(ReportMessageApi & report_message, bool is_pattern_kill,
         ConfigureRegexes conf_regex, const char * pattern, const char * data) {
         char message[4096];
 
@@ -221,11 +221,11 @@ public:
         std::string extra = "pattern=\"";
         append_escaped_delimiters(extra, message);
         extra += "\"";
-        authentifier.log4(false,
+        report_message.log4(false,
             (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
             extra.c_str());
 
-        authentifier.report(
+        report_message.report(
             (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
             message);
     }

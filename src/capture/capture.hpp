@@ -458,10 +458,10 @@ struct OutFilenameSequenceTransport : public Transport
     public:
         explicit pngcapture_out_sequence_filename_buf_impl(
             capture_out_sequence_filename_buf_param const & params,
-            auth_api * auth
+            ReportError report_error
         )
         : filegen_(params.format, params.prefix, params.filename, params.extension)
-        , buf_(invalid_fd(), report_error_from_reporter(auth))
+        , buf_(invalid_fd(), std::move(report_error))
         , num_file_(0)
         , groupid_(params.groupid)
         {
@@ -542,16 +542,16 @@ struct OutFilenameSequenceTransport : public Transport
         }
     };
 
-    using Buf = pngcapture_out_sequence_filename_buf_impl;
-
     OutFilenameSequenceTransport(
         FilenameGenerator::Format format,
         const char * const prefix,
         const char * const filename,
         const char * const extension,
         const int groupid,
-        auth_api * authentifier)
-    : buf(capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid), authentifier)
+        ReportError report_error)
+    : buf(
+        capture_out_sequence_filename_buf_param(format, prefix, filename, extension, groupid),
+        std::move(report_error))
     {
     }
 
@@ -589,7 +589,7 @@ private:
         this->buf.write(data, len);
     }
 
-    Buf buf;
+    pngcapture_out_sequence_filename_buf_impl buf;
     bool status = true;
 };
 
@@ -854,7 +854,7 @@ public:
         const int groupid,
         const FlvParams flv_params,
         bool no_timestamp,
-        auth_api * authentifier,
+        ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
         const char * pattern_kill,
         const char * pattern_notify,

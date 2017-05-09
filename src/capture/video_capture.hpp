@@ -39,7 +39,7 @@ class RDPDrawable;
 
 struct VideoTransportBase : Transport
 {
-    VideoTransportBase(const int groupid, auth_api * authentifier);
+    VideoTransportBase(const int groupid, ReportMessageApi * report_message);
 
     void seek(int64_t offset, int whence) override;
 
@@ -121,7 +121,7 @@ private:
             const char * const filename,
             const char * const extension,
             const int groupid,
-            auth_api * authentifier
+            ReportMessageApi * report_message
         );
     } trans_tmp_file;
 
@@ -146,7 +146,7 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
             const char * const filename,
             const char * const extension,
             const int groupid,
-            auth_api * authentifier
+            ReportMessageApi * report_message
         );
 
         bool next() override;

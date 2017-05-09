@@ -43,7 +43,7 @@ struct WrmParams
     const char * hash_path;
     const char * basename;
     int groupid;
-//    auth_api * authentifier;
+//    AuthApi * authentifier;
 //    RDPDrawable & drawable;
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
@@ -59,7 +59,7 @@ struct WrmParams
               const char * hash_path,
               const char * basename,
               int groupid,
-//              auth_api * authentifier,
+//              AuthApi * authentifier,
 //              RDPDrawable & drawable,
               std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
               std::chrono::seconds break_interval,

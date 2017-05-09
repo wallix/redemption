@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/report_message_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/make_unique.hpp"
@@ -35,11 +36,11 @@ class ReportError
 public:
     template<class F>
     explicit ReportError(F && f)
-    : ReportError(Internal{}, new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
+    : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
     {}
 
     explicit ReportError(std::nullptr_t = nullptr)
-    : ReportError(Internal{}, new NullImpl)
+    : impl(new NullImpl)
     {}
 
     ReportError(ReportError && other)
@@ -91,11 +92,6 @@ private:
         ImplBase* clone() const override { return new FuncImpl(fun); }
     };
 
-    class Internal {};
-    ReportError(Internal, ImplBase* p)
-    : impl(p)
-    {}
-
     std::unique_ptr<ImplBase> impl;
 };
 
@@ -108,7 +104,7 @@ void report_and_transform_error(Error& error, F && report)
     }
 }
 
-struct LogReportMessage
+struct LogReporter
 {
     void operator()(char const * reason, char const * message)
     {
@@ -116,10 +112,9 @@ struct LogReportMessage
     }
 };
 
-template<class Reporter>
-struct ReporterReportMessage : noncopyable
+struct ReportMessageReporter
 {
-    ReporterReportMessage(Reporter & reporter)
+    ReportMessageReporter(ReportMessageApi & reporter)
     : reporter(reporter)
     {}
 
@@ -129,28 +124,24 @@ struct ReporterReportMessage : noncopyable
     }
 
 private:
-    Reporter & reporter;
+    ReportMessageApi & reporter;
 };
-
-using AuthReportMessage = ReporterReportMessage<auth_api>;
 
 inline Error ReportError::NullImpl::get_error(Error error)
 {
-    report_and_transform_error(error, LogReportMessage{});
+    report_and_transform_error(error, LogReporter{});
     return error;
 }
 
-template<class TWithReportFunction>
-ReportError report_error_from_reporter(TWithReportFunction& reporter)
+inline ReportError report_error_from_reporter(ReportMessageApi & reporter)
 {
     return ReportError([&reporter](Error error) {
-        report_and_transform_error(error, ReporterReportMessage<TWithReportFunction>{reporter});
+        report_and_transform_error(error, ReportMessageReporter{reporter});
         return error;
     });
 }
 
-template<class TWithReportFunction>
-ReportError report_error_from_reporter(TWithReportFunction* reporter)
+inline ReportError report_error_from_reporter(ReportMessageApi * reporter)
 {
     return reporter ? report_error_from_reporter(*reporter) : ReportError();
 }

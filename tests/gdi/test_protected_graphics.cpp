@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, ReportError{});
 
     class ImageCaptureLocal
     {

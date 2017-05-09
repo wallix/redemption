@@ -114,8 +114,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
-    NullAuthentifier authentifier;
-    Front front( front_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now);
+    NullReportMessage report_message;
+    Front front( front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

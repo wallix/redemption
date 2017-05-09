@@ -391,9 +391,9 @@ struct wrmcapture_OutMetaSequenceTransport : Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        auth_api * authentifier)
+        ReportMessageApi * report_message)
     : buf(
-        with_encryption, with_checksum, cctx, rnd, report_error_from_reporter(authentifier),
+        with_encryption, with_checksum, cctx, rnd, report_error_from_reporter(report_message),
         fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
         this->buf.open(width, height);
@@ -1212,7 +1212,7 @@ public:
     bool kbd_input_mask_enabled;
 
 public:
-    WrmCaptureImpl(const timeval & now, const WrmParams wrm_params, auth_api * authentifier, RDPDrawable & drawable)
+    WrmCaptureImpl(const timeval & now, const WrmParams wrm_params, ReportMessageApi * report_message, RDPDrawable & drawable)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
@@ -1228,7 +1228,7 @@ public:
            wrm_params.record_path,
            wrm_params.hash_path,
            wrm_params.basename,
-           now, drawable.width(), drawable.height(), wrm_params.groupid, authentifier)
+           now, drawable.width(), drawable.height(), wrm_params.groupid, report_message)
     , graphic_to_file(now, this->out, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,

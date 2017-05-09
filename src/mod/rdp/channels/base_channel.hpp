@@ -24,7 +24,7 @@
 #include "utils/asynchronous_task_manager.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/rdp_log.hpp"
-#include "acl/auth_api.hpp"
+#include "core/report_message_api.hpp"
 
 typedef int_fast32_t data_size_type;
 
@@ -34,7 +34,7 @@ class BaseVirtualChannel
     VirtualChannelDataSender* to_server_sender;
 
 protected:
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
     const RDPVerbose verbose;
 
 private:
@@ -45,11 +45,11 @@ private:
 public:
     struct Params
     {
-        auth_api    &   authentifier;
+        ReportMessageApi & report_message;
         data_size_type  exchanged_data_limit;
         RDPVerbose verbose;
 
-        Params(auth_api & authentifier) : authentifier(authentifier) {}
+        Params(ReportMessageApi & report_message) : report_message(report_message) {}
     };
 
 protected:
@@ -59,7 +59,7 @@ protected:
         const Params & params)
     : to_client_sender(to_client_sender_)
     , to_server_sender(to_server_sender_)
-    , authentifier(params.authentifier)
+    , report_message(params.report_message)
     , verbose(params.verbose)
     , exchanged_data_limit(params.exchanged_data_limit)
     {}
@@ -127,7 +127,7 @@ protected:
         && !this->exchanged_data_limit_reached_reported
         && (this->exchanged_data > this->exchanged_data_limit))
         {
-            this->authentifier.report(
+            this->report_message.report(
                 this->get_reporting_reason_exchanged_data_limit_reached(),
                 "");
 
