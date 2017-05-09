@@ -43,7 +43,6 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/bitmap_shrink.hpp"
-#include "capture/capture.hpp"
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"

@@ -61,6 +61,7 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"

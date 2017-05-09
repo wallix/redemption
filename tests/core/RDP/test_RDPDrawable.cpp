@@ -37,7 +37,7 @@
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "transport/out_file_transport.hpp"
-#include "capture/capture.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"

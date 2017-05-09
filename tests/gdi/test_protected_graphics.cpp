@@ -29,11 +29,11 @@
 
 #include <memory>
 
-#include "capture/capture.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "utils/difftimeval.hpp"
 #include "transport/transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
