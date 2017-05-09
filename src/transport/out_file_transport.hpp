@@ -91,18 +91,6 @@ private:
         ImplBase* clone() const override { return new FuncImpl(fun); }
     };
 
-    template<class F, class Fu>
-    static ReportError dispath_mk(Fu && f, std::false_type = typename std::is_pointer<F>::type{})
-    {
-        return ReportError{Internal{}, {new FuncImpl<F>{std::forward<Fu>(f)}}};
-    }
-
-    template<class F, class Fu>
-    static ReportError dispath_mk(Fu && f, std::true_type = typename std::is_pointer<F>::type{})
-    {
-        return f ? ReportError(Internal{}, new FuncImpl<F>{f}) : ReportError();
-    }
-
     class Internal {};
     ReportError(Internal, ImplBase* p)
     : impl(p)
