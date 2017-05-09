@@ -27,6 +27,9 @@
 
 #include <memory>
 
+#include <cerrno>
+
+
 class ReportError
 {
 public:
