@@ -27,6 +27,8 @@
 
 #include "test_only/lcg_random.hpp"
 
+#include "main/version.hpp"
+
 struct Trace
 {
     Trace(char const * func_name) noexcept
@@ -213,6 +215,11 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
         *phex++ = t[c & 0xf];
     }
     *phex = '\0';
+}
+
+
+const char* redcryptofile_version() {
+    return VERSION;
 }
 
 

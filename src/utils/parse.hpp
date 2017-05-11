@@ -23,8 +23,9 @@
 
 #pragma once
 
-#include <stdint.h> // for sized types
-#include <string.h> // for memcpy
+#include <cstdint> // for sized types
+#include <cstring> // for memcpy
+#include <cstdlib> // strto*
 
 class Parse {
 public:
