@@ -53,9 +53,9 @@ public:
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
-        if (this->is_apple) {
-            this->info.keylayout = KEYBOARDS::EN_US;
-        }
+//         if (this->is_apple) {
+//             this->info.keylayout = KEYBOARDS::EN_US;
+//         }
 
         try {
             // VNC
