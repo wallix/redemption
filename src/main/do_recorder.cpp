@@ -827,8 +827,6 @@ static inline int check_encrypted_or_checksumed(
             return 1;
         }
     }
-    else {
-    }
 
     struct MetaLine2CtxForRewriteStat
     {

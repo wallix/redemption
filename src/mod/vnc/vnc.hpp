@@ -198,8 +198,6 @@ private:
 
     bool server_is_apple;
 
-    int key_random;
-
     int keylayout;
 
 public:
@@ -254,7 +252,6 @@ public:
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , server_is_apple(server_is_apple)
-    , key_random(0)
     , keylayout(keylayout)
     {
     //--------------------------------------------------------------------------------------------------------------

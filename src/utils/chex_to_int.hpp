@@ -25,5 +25,5 @@ inline char chex_to_int(char c, int & err) {
         '0' <= c && c <= '9' ? c-'0'
       : 'a' <= c && c <= 'f' ? c-'a' + 10
       : 'A' <= c && c <= 'F' ? c-'A' + 10
-      : ((err |= 1), '\0');
+      : (void(err |= 1), '\0');
 }
