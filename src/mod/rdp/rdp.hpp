@@ -29,6 +29,7 @@
 #include "system/ssl_calls.hpp"
 #include "mod/mod_api.hpp"
 #include "acl/auth_api.hpp"
+#include "core/report_message_api.hpp"
 #include "core/front_api.hpp"
 
 #include "core/RDP/x224.hpp"
@@ -304,7 +305,8 @@ protected:
     int  auth_channel_flags;
     int  auth_channel_chanid;
 
-    auth_api & authentifier;
+    AuthApi & authentifier;
+    ReportMessageApi & report_message;
 
     RdpNego nego;
 
@@ -578,7 +580,7 @@ protected:
 
     class RDPServerNotifier : public ServerNotifier {
     private:
-        auth_api & authentifier;
+        ReportMessageApi & report_message;
 
         const ServerNotification server_access_allowed_message;
         const ServerNotification server_cert_create_message;
@@ -594,7 +596,7 @@ protected:
 
     public:
         RDPServerNotifier(
-                auth_api & authentifier,
+                ReportMessageApi & report_message,
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
                 ServerNotification server_cert_success_message,
@@ -602,7 +604,7 @@ protected:
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
-        : authentifier(authentifier)
+        : report_message(report_message)
         , server_access_allowed_message(server_access_allowed_message)
         , server_cert_create_message(server_cert_create_message)
         , server_cert_success_message(server_cert_success_message)
@@ -613,7 +615,7 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                this->authentifier.log4(bool(this->verbose & RDPVerbose::basic_trace),
+                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
                         "CERTIFICATE_CHECK_SUCCESS",
                         "description=\"Connexion to server allowed\""
                     );
@@ -622,7 +624,7 @@ protected:
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                this->authentifier.log4(bool(this->verbose & RDPVerbose::basic_trace),
+                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_NEW",
                         "description=\"New X.509 certificate created\""
                     );
@@ -631,7 +633,7 @@ protected:
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                this->authentifier.log4(bool(this->verbose & RDPVerbose::basic_trace),
+                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_SUCCESS",
                         "description=\"X.509 server certificate match\""
                     );
@@ -640,7 +642,7 @@ protected:
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-                this->authentifier.log4(bool(this->verbose & RDPVerbose::basic_trace),
+                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_MATCH_FAILURE",
                         "description=\"X.509 server certificate match failure\""
                     );
@@ -654,7 +656,7 @@ protected:
                     append_escaped_delimiters(extra, str_error);
                 }
                 extra += "\\\"\"";
-                this->authentifier.log4(bool(this->verbose & RDPVerbose::basic_trace),
+                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
                         "SERVER_CERTIFICATE_ERROR",
                         extra.c_str());
             }
@@ -776,7 +778,8 @@ public:
            , Random & gen
            , TimeObj & timeobj
            , const ModRDPParams & mod_rdp_params
-           , auth_api & authentifier
+           , AuthApi & authentifier
+           , ReportMessageApi & report_message
            )
         : front_width(info.width - (info.width % 4))
         , front_height(info.height)
@@ -789,7 +792,8 @@ public:
         , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
-                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose)
+                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
+                , report_error_from_reporter(report_message))
         , share_id(0)
         , userid(0)
         , encryptionLevel(0)
@@ -810,6 +814,7 @@ public:
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , authentifier(authentifier)
+        , report_message(report_message)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
@@ -891,7 +896,7 @@ public:
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
-        , server_notifier(authentifier,
+        , server_notifier(report_message,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
                           mod_rdp_params.server_cert_success_message,
@@ -1421,7 +1426,7 @@ public:
 
         if (!this->end_session_reason.empty()
         &&  !this->end_session_message.empty()) {
-            this->authentifier.report(
+            this->report_message.report(
                 this->end_session_reason.c_str(),
                 this->end_session_message.c_str());
         }
@@ -1512,7 +1517,7 @@ protected:
     const ClipboardVirtualChannel::Params
         get_clipboard_virtual_channel_params() const
     {
-        ClipboardVirtualChannel::Params clipboard_virtual_channel_params(this->authentifier);
+        ClipboardVirtualChannel::Params clipboard_virtual_channel_params(this->report_message);
 
         clipboard_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
@@ -1537,7 +1542,7 @@ protected:
     const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const
     {
-        FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->authentifier);
+        FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->report_message);
 
         file_system_virtual_channel_params.exchanged_data_limit            =
             this->max_rdpdr_data;
@@ -1577,7 +1582,7 @@ protected:
         get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
-            session_probe_virtual_channel_params(this->authentifier);
+            session_probe_virtual_channel_params(this->report_message);
 
         session_probe_virtual_channel_params.exchanged_data_limit                   =
             static_cast<data_size_type>(-1);
@@ -1643,7 +1648,7 @@ protected:
     const RemoteProgramsVirtualChannel::Params
         get_remote_programs_virtual_channel_params() const
     {
-        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->authentifier);
+        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
 
         remote_programs_virtual_channel_params.exchanged_data_limit            =
             this->max_clipboard_data;
@@ -3458,7 +3463,7 @@ public:
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
-            this->authentifier.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
             if (!this->session_disconnection_logged) {
                 double seconds = ::difftime(now, this->beginning);
@@ -3468,7 +3473,7 @@ public:
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
-                this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+                this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
                 this->session_disconnection_logged = true;
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
@@ -3630,7 +3635,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->authentifier.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3992,7 +3997,7 @@ public:
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                          "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->authentifier.report(reason, e.errmsg());
+                    this->report_message.report(reason, e.errmsg());
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -4063,7 +4068,7 @@ public:
                     *this->error_message = "Logon timer expired!";
                 }
 
-                this->authentifier.report("CONNECTION_FAILED", "Logon timer expired.");
+                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
 
                 if (this->enable_session_probe) {
                     const bool disable_input_event     = false;
@@ -5721,7 +5726,7 @@ public:
             this->session_probe_virtual_channel_p->start_launch_timeout_timer();
         }
 
-        this->authentifier.report("OPEN_SESSION_SUCCESSFUL", "OK.");
+        this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
@@ -7304,7 +7309,7 @@ private:
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 
-            this->authentifier.log4(false, "SESSION_DISCONNECTION", extra);
+            this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
             this->session_disconnection_logged = true;
         }
     }

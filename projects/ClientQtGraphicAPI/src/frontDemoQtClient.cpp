@@ -77,7 +77,7 @@ public:
                                    , true
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
-                                   , this->authentifier
+                                   , this->reportMessage
                                    , this->is_apple
                                    , 0xffffffff-2);
 

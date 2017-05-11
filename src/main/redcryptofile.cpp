@@ -27,6 +27,8 @@
 
 #include "test_only/lcg_random.hpp"
 
+#include "main/version.hpp"
+
 struct Trace
 {
     Trace(char const * func_name) noexcept
@@ -45,24 +47,42 @@ struct Trace
         LOG(LOG_ERR, "%s() exit with exception", func_name);
     }
 
+    void exit_on_error(Error const & e) noexcept
+    {
+        LOG(LOG_ERR, "%s() exit with exception Error: %s", func_name, e.errmsg());
+    }
+
 private:
     char const * func_name;
 };
 
 #define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
-#define EXIT_ON_EXCEPTION trace_l_.exit_on_exception()
+#define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
+#define EXIT_ON_ERROR(e) trace_l_.exit_on_error(e)
 
 #define CHECK_HANDLE(handle) if (!handle) return -1
-#define CHECK_NOTHROW_R(expr, return_err)                     \
-    do {                                                      \
-        try { expr; }                                         \
-        catch (...) { EXIT_ON_EXCEPTION; return return_err; } \
+
+#define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
+    do {                                                    \
+        try { expr; }                                       \
+        catch (Error const& err) {                          \
+            EXIT_ON_ERROR(err);                             \
+            error_ctx.set_error(err);                       \
+            return return_err;                              \
+        }                                                   \
+        catch (...) {                                       \
+            EXIT_ON_EXCEPTION();                            \
+            error_ctx.set_error(Error{errid});              \
+            return return_err;                              \
+        }                                                   \
     } while (0)
+
 #ifdef IN_IDE_PARSER
-# define CHECK_NOTHROW(expr) expr
+# define CHECK_NOTHROW(expr, errid) expr; errid
 #else
-# define CHECK_NOTHROW(expr) CHECK_NOTHROW_R(expr, -1)
+# define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
 #endif
+
 
 extern "C"
 {
@@ -76,6 +96,40 @@ struct CryptoContextWrapper
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
     }
+};
+
+struct RedCryptoErrrorContext
+{
+    RedCryptoErrrorContext() noexcept
+    : error(NO_ERROR)
+    , msg{}
+    {}
+
+    char const * message() noexcept
+    {
+        if (this->error.errnum && this->error.id != NO_ERROR) {
+            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d", this->error.errmsg(), this->error.errnum);
+        }
+        else {
+            std::snprintf(this->msg, sizeof(msg), "%s", this->error.errmsg());
+        }
+        this->msg[sizeof(this->msg)-1] = 0;
+        return this->msg;
+    }
+
+    static char const * handle_error_message() noexcept
+    {
+        return "Handle is nullptr";
+    }
+
+    void set_error(Error const & err) noexcept
+    {
+        this->error = err;
+    }
+
+private:
+    Error error;
+    char msg[128];
 };
 
 struct RedCryptoWriterHandle
@@ -127,6 +181,7 @@ public:
     HashHexArray fhashhex;
 
     OutCryptoTransport out_crypto_transport;
+    RedCryptoErrrorContext error_ctx;
 };
 
 
@@ -144,6 +199,7 @@ private:
 
 public:
     InCryptoTransport in_crypto_transport;
+    RedCryptoErrrorContext error_ctx;
 };
 
 
@@ -159,6 +215,11 @@ inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexce
         *phex++ = t[c & 0xf];
     }
     *phex = '\0';
+}
+
+
+const char* redcryptofile_version() {
+    return VERSION;
 }
 
 
@@ -180,14 +241,17 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
         return new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
         ),
-        nullptr
+        nullptr,
+        RedCryptoErrrorContext(),
+        ERR_TRANSPORT
     );
 }
 
 int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->out_crypto_transport.open(path, 0 /* TODO groupid */));
+    handle->error_ctx.set_error(Error(NO_ERROR));
+    CHECK_NOTHROW(handle->out_crypto_transport.open(path, 0 /* TODO groupid */), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -195,7 +259,7 @@ int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
 int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len));
+    CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
     return len;
 }
 
@@ -205,7 +269,7 @@ int redcryptofile_writer_close(RedCryptoWriterHandle * handle) {
     CHECK_HANDLE(handle);
     HashArray qhash;
     HashArray fhash;
-    CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash));
+    CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash), ERR_TRANSPORT_CLOSED);
     hash_to_hashhex(qhash, handle->qhashhex);
     hash_to_hashhex(fhash, handle->fhashhex);
     return 0;
@@ -217,6 +281,11 @@ void redcryptofile_writer_delete(RedCryptoWriterHandle * handle) {
     delete handle;
 }
 
+char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
+{
+    return handle ? handle->error_ctx.message() : RedCryptoErrrorContext::handle_error_message();
+}
+
 
 RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
                                                , get_trace_key_prototype* trace_fn) {
@@ -225,14 +294,17 @@ RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
         return new (std::nothrow) RedCryptoReaderHandle(
             InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
         ),
-        nullptr
+        nullptr,
+        RedCryptoErrrorContext(),
+        ERR_TRANSPORT
     );
 }
 
 int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->in_crypto_transport.open(path));
+    handle->error_ctx.set_error(Error(NO_ERROR));
+    CHECK_NOTHROW(handle->in_crypto_transport.open(path), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -241,29 +313,24 @@ int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path)
 int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    try {
-        return int(handle->in_crypto_transport.partial_read(buffer, len));
-    }
-    catch (Error const & e) {
-        EXIT_ON_EXCEPTION;
-        return -e.id;
-    }
-    catch (...) {
-        EXIT_ON_EXCEPTION;
-        return -1;
-    }
+    CHECK_NOTHROW(return int(handle->in_crypto_transport.partial_read(buffer, len)), ERR_TRANSPORT_READ_FAILED);
 }
 
 int redcryptofile_reader_close(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->in_crypto_transport.close());
+    CHECK_NOTHROW(handle->in_crypto_transport.close(), ERR_TRANSPORT_CLOSED);
     return 0;
 }
 
 void redcryptofile_reader_delete(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     delete handle;
+}
+
+char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle)
+{
+    return handle ? handle->error_ctx.message() : RedCryptoErrrorContext::handle_error_message();
 }
 
 }

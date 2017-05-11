@@ -31,7 +31,6 @@
 #include <chrono>
 
 class Transport;
-class auth_api;
 class Theme;
 class Font;
 

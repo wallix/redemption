@@ -162,7 +162,8 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
         in_test.open(full_filename.c_str());
         char mem[4096];
         try {
-            (void)in_test.partial_read(mem, sizeof(mem));
+            auto len = in_test.partial_read(mem, sizeof(mem));
+            (void)len;
         } catch (Error const&) {
             cctx.old_encryption_scheme = 1;
             return 1;
@@ -1558,7 +1559,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
                         // PngParams
-                        png_params.authentifier = nullptr;
+                        png_params.report_message = nullptr;
                         png_params.record_tmp_path = record_tmp_path;
                         png_params.basename = basename;
                         png_params.groupid = groupid;

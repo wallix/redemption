@@ -74,7 +74,7 @@ class RemoteProgramsSessionManager
     Rect disconnect_now_button_rect;
     bool disconnect_now_button_clicked = false;
 
-    auth_api& authentifier;
+    AuthApi& authentifier;
 
     bool has_previous_window = false;
 
@@ -113,7 +113,7 @@ public:
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
-                                 Font const & font, Theme const & theme, auth_api & authentifier,
+                                 Font const & font, Theme const & theme, AuthApi & authentifier,
                                  char const * session_probe_window_title,
                                  non_null_ptr<ClientExecute> client_execute, RDPVerbose verbose)
     : front(front)

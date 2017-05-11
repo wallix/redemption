@@ -133,7 +133,7 @@ public:
 
         bool show_maximized;
 
-        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
+        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
     SessionProbeVirtualChannel(
@@ -326,7 +326,7 @@ public:
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        this->authentifier.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                        this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                     }
                     else {
                         this->front.session_probe_started(false);
@@ -1002,7 +1002,7 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->authentifier.log4(
+            this->report_message.log4(
                 bool(this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
@@ -1040,7 +1040,7 @@ public:
                     std::string info;
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
-                    this->authentifier.log4(
+                    this->report_message.log4(
                         bool(this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -1056,7 +1056,7 @@ public:
                     std::string info;
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
-                    this->authentifier.log4(
+                    this->report_message.log4(
                         bool(this->verbose & RDPVerbose::sesprobe),
                         order.c_str(), info.c_str());
 
@@ -1074,7 +1074,7 @@ public:
                         info += "identifier=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" display_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1091,7 +1091,7 @@ public:
                         std::string info;
                         info += "command_line=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1108,7 +1108,7 @@ public:
                         info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
 
@@ -1156,7 +1156,7 @@ public:
                             info += "\" dst_addr=\""; append_escaped_delimiters(info, parameters[3]);
                             info += "\" dst_port=\""; append_escaped_delimiters(info, parameters[4]);
                             info += '"';
-                            this->authentifier.log4(
+                            this->report_message.log4(
                                 bool(this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1164,7 +1164,7 @@ public:
                                 if (::strtoul(parameters[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->authentifier.report(
+                                    this->report_message.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1208,7 +1208,7 @@ public:
                             info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
                             info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
                             info += '"';
-                            this->authentifier.log4(
+                            this->report_message.log4(
                                 bool(this->verbose & RDPVerbose::sesprobe),
                                 order.c_str(), info.c_str());
 
@@ -1216,7 +1216,7 @@ public:
                                 if (::strtoul(parameters[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->authentifier.report(
+                                    this->report_message.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1244,7 +1244,7 @@ public:
                         std::string info;
                         info += "source=\"Probe\" window=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             "TITLE_BAR", info.c_str());
                     }
@@ -1258,7 +1258,7 @@ public:
                         info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" button=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }
@@ -1272,7 +1272,7 @@ public:
                         info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" edit=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->authentifier.log4(
+                        this->report_message.log4(
                             bool(this->verbose & RDPVerbose::sesprobe),
                             order.c_str(), info.c_str());
                     }

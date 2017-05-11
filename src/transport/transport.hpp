@@ -44,12 +44,10 @@ class Transport : noncopyable
 {
 protected:
     uint32_t seqno;
-    auth_api * authentifier;
 
 public:
     Transport()
     : seqno(0)
-    , authentifier(get_null_authentifier())
     {}
 
     virtual ~Transport()
@@ -57,11 +55,6 @@ public:
 
     uint32_t get_seqno() const
     { return this->seqno; }
-
-    void set_authentifier(auth_api * authentifier)
-    {
-        this->authentifier = authentifier;
-    }
 
     virtual void enable_client_tls(
             bool server_cert_store,

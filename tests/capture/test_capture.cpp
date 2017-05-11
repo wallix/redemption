@@ -513,34 +513,34 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 RED_AUTO_TEST_CASE(TestPattern)
 {
     for (int i = 0; i < 2; ++i) {
-        struct Auth : NullAuthentifier
-        {
+        struct : NullReportMessage {
             std::string reason;
             std::string message;
 
-            void report(const char * reason, const char * message) override {
+            void report(const char * reason, const char * message) override
+            {
                 this->reason = reason;
                 this->message = message;
             }
-        } authentifier;
-        PatternsChecker checker(authentifier, i ? ".de." : nullptr, i ? nullptr : ".de.");
+        } report_message;
+        PatternsChecker checker(report_message, i ? ".de." : nullptr, i ? nullptr : ".de.");
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 
         checker(cstr_array_view("Gestionnaire"));
 
-        RED_CHECK(authentifier.reason.empty());
-        RED_CHECK(authentifier.message.empty());
+        RED_CHECK(report_message.reason.empty());
+        RED_CHECK(report_message.message.empty());
 
         checker(cstr_array_view("Gestionnaire de serveur"));
 
-        RED_CHECK_EQUAL(authentifier.reason,  reason);
-        RED_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de serveur");
+        RED_CHECK_EQUAL(report_message.reason,  reason);
+        RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de serveur");
 
         checker(cstr_array_view("Gestionnaire de licences TS"));
 
-        RED_CHECK_EQUAL(authentifier.reason,  reason);
-        RED_CHECK_EQUAL(authentifier.message, "$ocr:.de.|Gestionnaire de licences TS");
+        RED_CHECK_EQUAL(report_message.reason,  reason);
+        RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de licences TS");
     }
 }
 
@@ -1205,7 +1205,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     InFileTransport in_wrm_trans(unique_fd{fd});
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, ReportError{});
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1357,7 +1357,7 @@ RED_AUTO_TEST_CASE(TestReloadSaveCache)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1491,7 +1491,7 @@ RED_AUTO_TEST_CASE(TestReloadOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1582,7 +1582,7 @@ RED_AUTO_TEST_CASE(TestContinuationOrderStates)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, ReportError{});
     const FilenameGenerator * seq = out_png_trans.seqgen();
     RED_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
@@ -1849,7 +1849,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
         d.width(), d.height(), d.rowsize()
     );
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -1912,7 +1912,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -1983,11 +1983,11 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
-    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, ReportError{});
     DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl(), 100);
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
@@ -2065,7 +2065,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
 
@@ -2083,8 +2083,8 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
 
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
-    struct : auth_api {
-        mutable std::string s;
+    struct : NullReportMessage {
+        std::string s;
 
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
             (void)duplicate_with_pid;
@@ -2092,74 +2092,67 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
             RED_REQUIRE(extra);
             s += extra;
         }
-
-        void report(const char*, const char*) override {}
-        void set_auth_channel_target(const char*) override {}
-        void set_auth_error_message(const char*) override {}
-    } auth;
+    } report_message;
 
     timeval const time = {0, 0};
-    SessionLogKbd kbd_capture(auth);
+    SessionLogKbd kbd_capture(report_message);
 
     {
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(auth.s.size(), 8);
-        RED_CHECK_EQUAL("data='a'", auth.s);
+        RED_CHECK_EQUAL(report_message.s.size(), 8);
+        RED_CHECK_EQUAL("data='a'", report_message.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
-    auth.s.clear();
+    report_message.s.clear();
 
     {
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
         // prob is not enabled
-        RED_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(report_message.s.size(), 0);
     }
 
     kbd_capture.enable_kbd_input_mask(false);
-    auth.s.clear();
+    report_message.s.clear();
 
     {
         kbd_capture.kbd_input(time, 'a');
 
-        RED_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(report_message.s.size(), 0);
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL(auth.s.size(), 8);
-        RED_CHECK_EQUAL("data='a'", auth.s);
-        auth.s.clear();
+        RED_CHECK_EQUAL(report_message.s.size(), 8);
+        RED_CHECK_EQUAL("data='a'", report_message.s);
+        report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(auth.s.size(), 0);
+        RED_CHECK_EQUAL(report_message.s.size(), 0);
     }
 }
 
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
-    struct : auth_api {
-        mutable std::string s;
+    struct : NullReportMessage {
+        std::string s;
 
-        void report(const char* reason, const char* message) override {
+        void report(const char* reason, const char* message) override
+        {
             s += reason;
             s += " -- ";
             s += message;
             s += "\n";
         }
+    } report_message;
 
-        void set_auth_channel_target(const char*) override {}
-        void set_auth_error_message(const char*) override {}
-        void log4(bool, const char*, const char*) override {}
-    } auth;
-
-    PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
+    PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr);
 
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
@@ -2175,26 +2168,22 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
-      , auth.s
+      , report_message.s
     );
 }
 
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
-    struct : auth_api {
+    struct : NullReportMessage {
         bool is_killed = 0;
 
         void report(const char* , const char* ) override {
             this->is_killed = 1;
         }
+    } report_message;
 
-        void set_auth_channel_target(const char*) override {}
-        void set_auth_error_message(const char*) override {}
-        void log4(bool, const char*, const char*) override {}
-    } auth;
-
-    PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
+    PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr);
 
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
@@ -2204,7 +2193,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     }
     RED_CHECK_EQUAL(1, pattern_count);
-    RED_CHECK_EQUAL(auth.is_killed, true);
+    RED_CHECK_EQUAL(report_message.is_killed, true);
 }
 
 
@@ -2225,14 +2214,14 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, nullptr);
+    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2351,7 +2340,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
 //    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
@@ -2363,7 +2352,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
-    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), nullptr);
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);

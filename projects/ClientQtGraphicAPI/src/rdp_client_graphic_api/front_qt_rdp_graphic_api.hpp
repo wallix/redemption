@@ -70,15 +70,15 @@
 
 
 
-struct DummyAuthentifier : public auth_api
-{
-public:
-    virtual void set_auth_channel_target(const char *) {}
-    virtual void set_auth_error_message(const char *) {}
-    virtual void report(const char * , const char *) {}
-    virtual void log4(bool , const char *, const char * = nullptr) {}
-    virtual void disconnect_target() {}
-};
+// class DummyAuthentifier : public auth_api
+// {
+// public:
+//     virtual void set_auth_channel_target(const char *) {}
+//     virtual void set_auth_error_message(const char *) {}
+//     virtual void report(const char * , const char *) {}
+//     virtual void log4(bool , const char *, const char * = nullptr) {}
+//     virtual void disconnect_target() {}
+// };
 
 
 class ProgressBarWindow;
@@ -116,7 +116,8 @@ public:
     QPixmap            * cache_replay;
     SocketTransport    * socket;
     TimeSystem           timeSystem;
-    DummyAuthentifier    authentifier;
+    NullAuthentifier    authentifier;
+    NullReportMessage  reportMessage;
     bool                 is_spanning;
     Fstat fstat;
 
@@ -1314,8 +1315,6 @@ private:
                     }
                         break;
 
-                    case WrmVersion::unknown:
-                        break;
                 }
 
                 this->_timer_replay.start(1);
@@ -2984,10 +2983,10 @@ public:
 
                 UdevRandom gen;
                 CryptoContext cctx;
-                DummyAuthentifier * authentifier = nullptr;
+                NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, authentifier, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
+                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, reportMessage, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
                 FlvParams flv_params = flv_params_from_ini(this->info.width, this->info.height, ini);
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                          static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
@@ -3042,7 +3041,7 @@ public:
                                             , 1
                                             , flv_params
                                             , false
-                                            , authentifier
+                                            , &(this->reportMessage)
                                             , nullptr
                                             , ""
                                             , ""

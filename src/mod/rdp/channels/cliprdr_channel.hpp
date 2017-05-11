@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -78,7 +79,7 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
+        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
     ClipboardVirtualChannel(
@@ -469,7 +470,7 @@ private:
         message += "\" size=\""; message += file_size_str;
         message += '"';
 
-        this->authentifier.log4(
+        this->report_message.log4(
             !this->param_dont_log_data_into_syslog,
             "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
             message.c_str());
@@ -1042,7 +1043,7 @@ public:
                 info += std::to_string(fd.file_size());
                 info += "\"";
 
-                this->authentifier.log4(
+                this->report_message.log4(
                     !this->param_dont_log_data_into_syslog,
                     "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                     info.c_str());
@@ -1074,7 +1075,7 @@ public:
                 info += std::to_string(fd.file_size());
                 info += "\"";
 
-                this->authentifier.log4(
+                this->report_message.log4(
                     !this->param_dont_log_data_into_syslog,
                     "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                     info.c_str());

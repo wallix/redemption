@@ -74,7 +74,7 @@ public:
             , Random & gen
             , Inifile & ini
             , CryptoContext & cctx
-            , auth_api & authentifier
+            , ReportMessageApi & report_message
             , bool fp_support // If true, fast-path must be supported
             , bool mem3blt_support
             , time_t now
@@ -85,7 +85,7 @@ public:
             , gen
             , ini
             , cctx
-            , authentifier
+            , report_message
             , fp_support
             , mem3blt_support
             , now
@@ -190,8 +190,8 @@ RED_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        NullAuthentifier authentifier;
-        MyFront front( front_trans, gen1, ini , cctx, authentifier, fastpath_support, mem3blt_support
+        NullReportMessage report_message;
+        MyFront front( front_trans, gen1, ini , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
@@ -257,7 +257,8 @@ RED_AUTO_TEST_CASE(TestFront)
         RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
+        NullAuthentifier authentifier;
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message);
         RED_CHECK(true);
 
 
@@ -410,9 +411,9 @@ RED_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        NullAuthentifier authentifier;
+        NullReportMessage report_message;
         MyFront front( front_trans, gen1, ini
-                     , cctx, authentifier, fastpath_support, mem3blt_support
+                     , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
 
@@ -478,7 +479,9 @@ RED_AUTO_TEST_CASE(TestFront2)
         RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier);
+
+        NullAuthentifier authentifier;
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message);
          RED_CHECK(true);
 
 
@@ -591,7 +594,7 @@ RED_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        NullAuthentifier authentifier;
+        NullReportMessage report_message;
 
         class MyFront : public Front
         {
@@ -602,7 +605,7 @@ RED_AUTO_TEST_CASE(TestFront3)
                    , Random & gen
                    , Inifile & ini
                    , CryptoContext & cctx
-                   , auth_api * authentifier
+                   , auth_api * report_message
                    , bool fp_support // If true, fast-path must be supported
                    , bool mem3blt_support
                    , time_t now
@@ -614,7 +617,7 @@ RED_AUTO_TEST_CASE(TestFront3)
                    , gen
                    , ini
                    , cctx
-                   , authentifier
+                   , report_message
                    , fp_support
                    , mem3blt_support
                    , now
@@ -646,10 +649,10 @@ RED_AUTO_TEST_CASE(TestFront3)
                 }
         };
 
-        NullAuthentifier authentifier;
+        NullReportMessage report_message;
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
-                     , cctx, authentifier, fastpath_support, mem3blt_support
+                     , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>());
         null_mod no_mod(front);
 
@@ -714,7 +717,7 @@ RED_AUTO_TEST_CASE(TestFront3)
         RED_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, authentifier);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, report_message);
         mod_api * mod = &mod_;
          RED_CHECK(true);
 

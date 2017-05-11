@@ -76,7 +76,12 @@ public:
     {
     }
 
-    ~InCryptoTransport() = default;
+    ~InCryptoTransport()
+    {
+        if (this->is_open()){
+            ::close(this->fd);
+        }
+    }
 
     bool is_encrypted() const
     {
@@ -135,8 +140,8 @@ public:
         SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
 
         {
-            this->fd = ::open(pathname, O_RDONLY);
-            if (this->fd < 0) {
+            int fd = ::open(pathname, O_RDONLY);
+            if (fd < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED);
             }
             unique_fd auto_close(fd);

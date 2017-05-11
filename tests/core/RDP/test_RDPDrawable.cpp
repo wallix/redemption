@@ -37,7 +37,7 @@
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "transport/out_file_transport.hpp"
-#include "capture/capture.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "gdi/capture_api.hpp"
@@ -515,7 +515,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, ReportError{});
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
@@ -551,7 +551,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         CleanupTransport()
         : OutFilenameSequenceTransport(
             FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
-            "./", "xxxtest", ".png", groupid, nullptr)
+            "./", "xxxtest", ".png", groupid, ReportError{})
         {}
 
         ~CleanupTransport() {
@@ -656,7 +656,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
 RED_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, ReportError{});
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -674,7 +674,7 @@ RED_AUTO_TEST_CASE(TestScaleImage)
     const int width = 800;
     const int height = 600;
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, ReportError{});
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy);
 
@@ -718,7 +718,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
 {
     RED_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -847,7 +847,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     RED_CHECK(1);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();

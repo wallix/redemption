@@ -108,8 +108,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -220,8 +220,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -332,8 +332,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -444,8 +444,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -556,8 +556,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -668,8 +668,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;
@@ -782,8 +782,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-    NullAuthentifier authentifier;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(authentifier);
+    NullReportMessage report_message;
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
 
     file_system_virtual_channel_params.exchanged_data_limit         = 0;
     file_system_virtual_channel_params.verbose                      = verbose;

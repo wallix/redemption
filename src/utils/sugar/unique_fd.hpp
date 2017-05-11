@@ -18,6 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
+#pragma once
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -26,9 +28,6 @@
 #include <string>
 
 #include "utils/sugar/exchange.hpp"
-
-
-#pragma once
 
 /// \brief close a file descriptor automatically
 struct unique_fd

@@ -124,8 +124,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     LCGRandom gen(0);
     LCGTime timeobj;
     NullAuthentifier authentifier;
+    NullReportMessage report_message;
     mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier);
+        gen, timeobj, mod_rdp_params, authentifier, report_message);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -220,8 +221,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     LCGRandom gen(0);
     LCGTime timeobj;
     NullAuthentifier authentifier;
+    NullReportMessage report_message;
     mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier);
+        gen, timeobj, mod_rdp_params, authentifier, report_message);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

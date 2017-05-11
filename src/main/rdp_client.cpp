@@ -112,9 +112,10 @@ int main(int argc, char** argv)
     TimeSystem timeobj;
 
     NullAuthentifier authentifier;
+    NullReportMessage report_message;
 
     /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier);
+    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message);
 
     run_mod(mod, front, front_event, &mod_trans, nullptr);
 

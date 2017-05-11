@@ -15,7 +15,6 @@ To compile ReDemPtion you need the following packages:
 - libsnappy-dev
 - libpng12-dev
 - libffmpeg-dev (see below)
-- python2 or python3o
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 <!--Optionally:

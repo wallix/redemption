@@ -21,10 +21,14 @@
 
 #pragma once
 
-#include <map>
 #include "bmpcache.hpp"
-#include "transport/transport.hpp"
+#include "transport/out_crypto_transport.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/sugar/unique_fd.hpp"
+
+#include <map>
+
 
 namespace RDP {
 struct BitmapCachePersistentListEntry;
@@ -446,3 +450,62 @@ private:
     }
 };
 
+inline void save_persistent_disk_bitmap_cache(
+    BmpCache const & bmp_cache,
+    const char * persistent_path,
+    const char * target_host,
+    uint8_t bpp,
+    ReportError report_error,
+    BmpCachePersister::Verbose verbose
+)
+{
+    // Ensures that the directory exists.
+    if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
+        LOG( LOG_ERR
+            , "save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
+            , persistent_path);
+        throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
+    }
+
+    char filename_temporary[2048];
+    ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
+        persistent_path, target_host, bpp);
+    filename_temporary[sizeof(filename_temporary) - 1] = '\0';
+
+    int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
+    if (fd == -1) {
+        LOG( LOG_ERR
+            , "save_persistent_disk_bitmap_cache: "
+                "failed to open (temporary) file for writing. filename=\"%s\""
+            , filename_temporary);
+        throw Error(ERR_PDBC_SAVE);
+    }
+
+    try
+    {
+        {
+            OutFileTransport oft(unique_fd{fd}, std::move(report_error));
+            BmpCachePersister::save_all_to_disk(bmp_cache, oft, verbose);
+        }
+
+        // Generates the name of file.
+        char filename[2048];
+        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d", persistent_path, target_host, bpp);
+        filename[sizeof(filename) - 1] = '\0';
+
+        if (::rename(filename_temporary, filename) == -1) {
+            LOG( LOG_WARNING
+                , "save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
+                    "old_filename=\"%s\" new_filename=\"%s\""
+                , filename_temporary, filename);
+            ::unlink(filename_temporary);
+        }
+    }
+    catch (...) {
+        LOG( LOG_WARNING
+            , "save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
+                "filename=\"%s\""
+            , filename_temporary);
+        ::unlink(filename_temporary);
+    }
+}

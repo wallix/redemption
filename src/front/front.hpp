@@ -97,7 +97,7 @@
 #include "core/front_api.hpp"
 #include "utils/genrandom.hpp"
 
-#include "acl/auth_api.hpp"
+#include "core/report_message_api.hpp"
 
 #include "keyboard/keymap2.hpp"
 
@@ -576,7 +576,7 @@ private:
 
     rdp_mppc_enc * mppc_enc;
 
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
     bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
@@ -639,7 +639,7 @@ public:
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
-          , auth_api & authentifier
+          , ReportMessageApi & report_message
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -671,7 +671,7 @@ public:
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
-    , authentifier(authentifier)
+    , report_message(report_message)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
     {
@@ -958,7 +958,7 @@ public:
                 100u,
                 ini.get<cfg::video::png_limit>(),
                 true,
-                &this->authentifier,
+                &this->report_message,
                 record_tmp_path,
                 this->basename,
                 groupid
@@ -1031,7 +1031,7 @@ public:
                                     , record_path
                                     , groupid
                                     , flv_params
-                                    , false, &this->authentifier
+                                    , false, &this->report_message
                                     , nullptr
                                     , pattern_kill
                                     , pattern_notify
@@ -1062,8 +1062,6 @@ public:
             this->ini.set_acl<cfg::context::recording_started>(true);
         }
 
-//        this->authentifier.capture_started = true;
-
         return true;
     }
 
@@ -1071,7 +1069,6 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
-//            this->authentifier->capture_started = false;
             delete this->capture;
             this->capture = nullptr;
 
@@ -1120,65 +1117,16 @@ public:
         return compress_type_selector[client_supported_type][front_supported_type];
     }
 
-    void save_persistent_disk_bitmap_cache() const {
-        if (!this->ini.get<cfg::client::persistent_disk_bitmap_cache>() || !this->ini.get<cfg::client::persist_bitmap_cache_on_disk>())
-            return;
-
-        const char * persistent_path = PERSISTENT_PATH "/client";
-
-        // Ensures that the directory exists.
-        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
-            LOG( LOG_ERR
-               , "front::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
-               , persistent_path);
-            throw Error(ERR_BITMAP_CACHE_PERSISTENT, 0);
-        }
-
-        // Generates the name of file.
-        char filename[2048];
-        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
-        filename[sizeof(filename) - 1] = '\0';
-
-        char filename_temporary[2048];
-        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-            persistent_path, this->ini.get<cfg::globals::host>().c_str(), this->orders.bpp());
-        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
-
-        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
-        if (fd == -1) {
-            LOG( LOG_ERR
-               , "front::save_persistent_disk_bitmap_cache: "
-                 "failed to open (temporary) file for writing. filename=\"%s\""
-               , filename_temporary);
-            throw Error(ERR_PDBC_SAVE);
-        }
-
-        try
-        {
-            {
-                OutFileTransport oft(unique_fd{fd});
-                BmpCachePersister::save_all_to_disk(
-                    this->orders.get_bmp_cache(), oft,
-                    convert_verbose_flags(this->verbose)
-                );
-            }
-
-            if (::rename(filename_temporary, filename) == -1) {
-                LOG( LOG_WARNING
-                   , "front::save_persistent_disk_bitmap_cache: failed to rename the (temporary) file. "
-                     "old_filename=\"%s\" new_filename=\"%s\""
-                   , filename_temporary, filename);
-                ::unlink(filename_temporary);
-            }
-        }
-        catch (...) {
-            LOG( LOG_WARNING
-               , "front::save_persistent_disk_bitmap_cache: failed to write (temporary) file. "
-                 "filename=\"%s\""
-               , filename_temporary);
-            ::unlink(filename_temporary);
-        }
+    void save_persistent_disk_bitmap_cache() const
+    {
+        ::save_persistent_disk_bitmap_cache(
+            this->orders.get_bmp_cache(),
+            PERSISTENT_PATH "/client",
+            this->ini.get<cfg::globals::host>().c_str(),
+            this->orders.bpp(),
+            report_error_from_reporter(this->report_message),
+            convert_verbose_flags(this->verbose)
+        );
     }
 
 private:

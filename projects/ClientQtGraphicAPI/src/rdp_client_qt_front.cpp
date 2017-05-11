@@ -533,6 +533,7 @@ public:
                                 , this->timeSystem
                                 , mod_rdp_params
                                 , this->authentifier
+                                , this->reportMessage
                                 );
 
         } catch (const Error &) {

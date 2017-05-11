@@ -70,7 +70,7 @@ public:
 
         RemoteProgramsSessionManager * rail_session_manager;
 
-        Params(auth_api & authentifier) : BaseVirtualChannel::Params(authentifier) {}
+        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
     RemoteProgramsVirtualChannel(
@@ -846,7 +846,7 @@ public:
                 std::string info("ExeOrFile=\"");
                 append_escaped_delimiters(info, serpdu.ExeOrFile());
                 info += "\"";
-                this->authentifier.log4(
+                this->report_message.log4(
                     false,
                     "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
             }
