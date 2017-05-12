@@ -160,6 +160,8 @@ struct ModRDPParams {
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
+    const char * load_balance_info = "";
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -321,6 +323,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             clean_up_32_bpp_cursor);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             large_pointer_support);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);
