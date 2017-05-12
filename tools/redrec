@@ -32,8 +32,8 @@ if sys.argv[3] != '--':
     import binascii
     if len(sys.argv[3]) != 64 or len(sys.argv[4]) != 64:
         raise 'hmac_key or key len is not 64'
-    hmac_key_str = binascii.hexlify(sys.argv[3])
-    key_str = binascii.hexlify(sys.argv[4])
+    hmac_key_str = binascii.unhexlify(sys.argv[3])
+    key_str = binascii.unhexlify(sys.argv[4])
     arg_consumed += 2
 
 
@@ -41,6 +41,7 @@ GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
 GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
 
 def get_hmac_key(resbuf):
+    libred.memcpy(resbuf, hmac_key_str, 32)
     return 0
 
 def get_trace_key(base, lg, resbuf):
