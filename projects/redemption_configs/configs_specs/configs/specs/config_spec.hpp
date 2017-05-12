@@ -260,6 +260,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<RedirectionInfo>(), "redir_info");
+        W.member(no_ini_no_gui, sesman_read, type_<std::string>(), "load_balance_info");
         W.sep();
         W.member(advanced_in_gui, sesman_read, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));
         W.sep();

@@ -247,7 +247,9 @@ class Sesman():
             u'showform': False,
             u'formflag': 0,
 
-            u'recording_started' : False,
+            u'recording_started': False,
+
+            u'load_balance_info': u''
             })
         self.engine.reset_proxy_rights()
 
@@ -1776,7 +1778,8 @@ class Sesman():
             'rdp': {
                 u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
                 u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
-                u'use_client_provided_remoteapp': 'use_client_provided_remoteapp'
+                u'use_client_provided_remoteapp': 'use_client_provided_remoteapp',
+                u'load_balance_info': 'load_balance_info'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',

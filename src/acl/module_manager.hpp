@@ -1394,6 +1394,8 @@ public:
 
                 mod_rdp_params.large_pointer_support               = this->ini.get<cfg::globals::large_pointer_support>();
 
+                mod_rdp_params.load_balance_info                   = this->ini.get<cfg::mod_rdp::load_balance_info>().c_str();
+
                 try {
                     const char * const name = "RDP Target";
 
