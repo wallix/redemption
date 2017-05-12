@@ -33,7 +33,6 @@
 struct Capability;
 class InStream;
 struct OrderCaps;
-class auth_api;
 
 namespace CHANNELS {
     class ChannelDefArray;

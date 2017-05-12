@@ -61,6 +61,7 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -331,20 +332,20 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn
 
 class PatternKbd : public gdi::KbdInputApi
 {
-    auth_api * authentifier;
+    ReportMessageApi * report_message;
     PatternSearcher pattern_kill;
     PatternSearcher pattern_notify;
 
 public:
     PatternKbd(
-        auth_api * authentifier,
+        ReportMessageApi * report_message,
         char const * str_pattern_kill, char const * str_pattern_notify,
         int verbose = 0)
-    : authentifier(authentifier)
+    : report_message(report_message)
     , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                   str_pattern_kill && authentifier ? str_pattern_kill : nullptr, verbose)
+                   str_pattern_kill && report_message ? str_pattern_kill : nullptr, verbose)
     , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                     str_pattern_notify && authentifier ? str_pattern_notify : nullptr, verbose)
+                     str_pattern_notify && report_message ? str_pattern_notify : nullptr, verbose)
     {}
 
     bool contains_pattern() const {
@@ -394,9 +395,9 @@ private:
         return searcher.test_uchar(
             uchar, char_len,
             [&, this](std::string const & pattern, char const * str) {
-                assert(this->authentifier);
+                assert(this->report_message);
                 utils::MatchFinder::report(
-                    *this->authentifier,
+                    *this->report_message,
                     is_pattern_kill,
                     utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                     pattern.c_str(),
@@ -521,7 +522,7 @@ class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     static const std::size_t buffer_size = 64;
     uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
     bool is_probe_enabled_session = false;
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
 
     void copy_bytes(const_bytes_array bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
@@ -556,9 +557,9 @@ class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     }
 
 public:
-    explicit SessionLogKbd(auth_api & authentifier)
+    explicit SessionLogKbd(ReportMessageApi & report_message)
     : kbd_stream{this->buffer + session_log_prefix().size(), buffer_size}
-    , authentifier(authentifier)
+    , report_message(report_message)
     {
         memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
     }
@@ -589,7 +590,7 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset()) {
             memcpy(this->kbd_stream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
-            this->authentifier.log4(false, "KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
+            this->report_message.log4(false, "KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
             this->kbd_stream.rewind();
         }
     }
@@ -611,16 +612,16 @@ class PatternsChecker : noncopyable
 {
     utils::MatchFinder::NamedRegexArray regexes_filter_kill;
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
 
 public:
     PatternsChecker(
-        auth_api & authentifier,
+        ReportMessageApi & report_message,
         const char * const filters_kill,
         const char * const filters_notify,
         int verbose = 0
     )
-    : authentifier(authentifier)
+    : report_message(report_message)
     {
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
             filters_kill, this->regexes_filter_kill, verbose);
@@ -646,7 +647,7 @@ private:
             utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
             for (; first != last; ++first) {
                 if (first->search(str)) {
-                    utils::MatchFinder::report(this->authentifier,
+                    utils::MatchFinder::report(this->report_message,
                         &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
                         utils::MatchFinder::ConfigureRegexes::OCR,
                         first->name.c_str(), str);
@@ -682,7 +683,7 @@ public:
 
 
     PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, png_params.authentifier)
+    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, report_error_from_reporter(png_params.report_message))
     , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
@@ -1289,7 +1290,7 @@ Capture::Capture(
     const int groupid,
     const FlvParams flv_params,
     bool no_timestamp,
-    auth_api * authentifier,
+    ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
     const char * pattern_kill,
     const char * pattern_notify,
@@ -1303,17 +1304,17 @@ Capture::Capture(
     bool session_log_enabled,
     bool keyboard_fully_masked,
     bool meta_keyboard_log)
-: is_replay_mod(!authentifier)
+: is_replay_mod(!report_message)
 , gd_drawable(nullptr)
 , update_progress_data(update_progress_data)
 , mouse_info{now, width / 2, height / 2}
 , capture_event{}
 , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
 {
-   //REDASSERT(authentifier ? order_bpp == capture_bpp : true);
+   //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
 
-    if (capture_png || (authentifier && (capture_flv || capture_ocr))) {
+    if (capture_png || (report_message && (capture_flv || capture_ocr))) {
         if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
         }
@@ -1337,14 +1338,14 @@ Capture::Capture(
         }
 
         if (capture_wrm) {
-            this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, authentifier, *this->gd_drawable));
+            this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, report_message, *this->gd_drawable));
         }
 
         if (capture_meta) {
             this->meta_capture_obj.reset(new MetaCaptureImpl(
                 now, record_tmp_path, basename,
                 meta_enable_session_log,
-                report_error_from_reporter(authentifier)
+                report_error_from_reporter(report_message)
             ));
         }
 
@@ -1370,7 +1371,7 @@ Capture::Capture(
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
-                *authentifier,
+                *report_message,
                 pattern_kill,
                 pattern_notify,
                 debug_capture)
@@ -1425,8 +1426,8 @@ Capture::Capture(
 
     if (capture_kbd) {
         this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
-        this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*authentifier));
-        this->pattern_kbd_capture_obj.reset(new PatternKbd(authentifier, pattern_kill, pattern_notify, debug_capture));
+        this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
+        this->pattern_kbd_capture_obj.reset(new PatternKbd(report_message, pattern_kill, pattern_notify, debug_capture));
     }
 
     if (this->syslog_kbd_capture_obj.get() && (!syslog_keyboard_log)) {

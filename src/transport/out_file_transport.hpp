@@ -21,22 +21,26 @@
 
 #pragma once
 
+#include "core/report_message_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/make_unique.hpp"
 
 #include <memory>
 
+#include <cerrno>
+
+
 class ReportError
 {
 public:
     template<class F>
     explicit ReportError(F && f)
-    : ReportError(Internal{}, new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
+    : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
     {}
 
     explicit ReportError(std::nullptr_t = nullptr)
-    : ReportError(Internal{}, new NullImpl)
+    : impl(new NullImpl)
     {}
 
     ReportError(ReportError && other)
@@ -88,51 +92,58 @@ private:
         ImplBase* clone() const override { return new FuncImpl(fun); }
     };
 
-    template<class F, class Fu>
-    static ReportError dispath_mk(Fu && f, std::false_type = typename std::is_pointer<F>::type{})
-    {
-        return ReportError{Internal{}, {new FuncImpl<F>{std::forward<Fu>(f)}}};
-    }
-
-    template<class F, class Fu>
-    static ReportError dispath_mk(Fu && f, std::true_type = typename std::is_pointer<F>::type{})
-    {
-        return f ? ReportError(Internal{}, new FuncImpl<F>{f}) : ReportError(nullptr);
-    }
-
-    class Internal {};
-    ReportError(Internal, ImplBase* p)
-    : impl(p)
-    {}
-
     std::unique_ptr<ImplBase> impl;
 };
 
-inline Error ReportError::NullImpl::get_error(Error err)
+template<class F>
+void report_and_transform_error(Error& error, F && report)
 {
-    if (err.id == ENOSPC) {
-        LOG(LOG_ERR, "FILESYSTEM_FULL");
-        err.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+    if (error.errnum == ENOSPC) {
+        error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+        report("FILESYSTEM_FULL", "100|unknow");
     }
-    return err;
 }
 
-template<class TWithReportFunction>
-ReportError report_error_from_reporter(TWithReportFunction& reporter)
+struct LogReporter
+{
+    void operator()(char const * reason, char const * message)
+    {
+        LOG(LOG_ERR, "%s:%s", reason, message);
+    }
+};
+
+struct ReportMessageReporter
+{
+    ReportMessageReporter(ReportMessageApi & reporter)
+    : reporter(reporter)
+    {}
+
+    void operator()(char const * reason, char const * message)
+    {
+        reporter.report(reason, message);
+    }
+
+private:
+    ReportMessageApi & reporter;
+};
+
+inline Error ReportError::NullImpl::get_error(Error error)
+{
+    report_and_transform_error(error, LogReporter{});
+    return error;
+}
+
+inline ReportError report_error_from_reporter(ReportMessageApi & reporter)
 {
     return ReportError([&reporter](Error error) {
-        if (error.id == ENOSPC) {
-            reporter.report("FILESYSTEM_FULL", "100|unknow");
-            error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-        }
+        report_and_transform_error(error, ReportMessageReporter{reporter});
         return error;
     });
 }
 
-template<class TWithReportFunction>
-ReportError report_error_from_reporter(TWithReportFunction* reporter)
+inline ReportError report_error_from_reporter(ReportMessageApi * reporter)
 {
-    return reporter ? report_error_from_reporter(*reporter) : ReportError(nullptr);
+    return reporter ? report_error_from_reporter(*reporter) : ReportError();
 }
 
 struct OutFileTransport : Transport

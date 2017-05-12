@@ -97,7 +97,7 @@
 #include "core/front_api.hpp"
 #include "utils/genrandom.hpp"
 
-#include "acl/auth_api.hpp"
+#include "core/report_message_api.hpp"
 
 #include "keyboard/keymap2.hpp"
 
@@ -576,7 +576,7 @@ private:
 
     rdp_mppc_enc * mppc_enc;
 
-    auth_api & authentifier;
+    ReportMessageApi & report_message;
     bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
@@ -639,7 +639,7 @@ public:
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
-          , auth_api & authentifier
+          , ReportMessageApi & report_message
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
@@ -671,7 +671,7 @@ public:
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
-    , authentifier(authentifier)
+    , report_message(report_message)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
     {
@@ -958,7 +958,7 @@ public:
                 100u,
                 ini.get<cfg::video::png_limit>(),
                 true,
-                &this->authentifier,
+                &this->report_message,
                 record_tmp_path,
                 this->basename,
                 groupid
@@ -1031,7 +1031,7 @@ public:
                                     , record_path
                                     , groupid
                                     , flv_params
-                                    , false, &this->authentifier
+                                    , false, &this->report_message
                                     , nullptr
                                     , pattern_kill
                                     , pattern_notify
@@ -1062,8 +1062,6 @@ public:
             this->ini.set_acl<cfg::context::recording_started>(true);
         }
 
-//        this->authentifier.capture_started = true;
-
         return true;
     }
 
@@ -1071,7 +1069,6 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
-//            this->authentifier->capture_started = false;
             delete this->capture;
             this->capture = nullptr;
 
@@ -1127,7 +1124,7 @@ public:
             PERSISTENT_PATH "/client",
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
-            report_error_from_reporter(this->authentifier),
+            report_error_from_reporter(this->report_message),
             convert_verbose_flags(this->verbose)
         );
     }

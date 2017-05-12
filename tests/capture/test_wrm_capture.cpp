@@ -43,7 +43,6 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/bitmap_shrink.hpp"
-#include "capture/capture.hpp"
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
@@ -51,11 +50,7 @@
 #include "test_only/lcg_random.hpp"
 
 template<class Writer>
-void wrmcapture_write_meta_headers(Writer & writer, const char * path,
-                        uint16_t width, uint16_t height,
-                        auth_api * authentifier,
-                        bool has_checksum
-                       )
+void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t height, bool has_checksum)
 {
     char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
     const int len = sprintf(
@@ -68,22 +63,7 @@ void wrmcapture_write_meta_headers(Writer & writer, const char * path,
         unsigned(height),
         has_checksum  ? "checksum" : "nochecksum"
     );
-    const ssize_t res = writer.write(header1, len);
-    if (res < 0) {
-        int err = errno;
-        LOG(LOG_ERR, "Write to transport failed (M2): code=%d", err);
-
-        if (err == ENOSPC) {
-            char message[1024];
-            snprintf(message, sizeof(message), "100|%s", path);
-            authentifier->report("FILESYSTEM_FULL", message);
-
-            throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, err);
-        }
-        else {
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
-        }
-    }
+    RED_CHECK_EQ(writer.write(header1, len), len);
 }
 
 
@@ -411,6 +391,7 @@ inline char * wrmcapture_swrite_hash(char * p, uint8_t const * hash)
 //    );
 //}
 
+// TODO TEST do_recorder.cpp: dorecorder_write_filename(...)
 template<class Writer>
 int wrmcapture_write_filename(Writer & writer, const char * filename)
 {
@@ -668,7 +649,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     meta_len_writer.len = 0;
 
-    wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
+    wrmcapture_write_meta_headers(meta_len_writer, 800, 600, false);
 
     TestFstat fstat;
     const char * file1 = "./xxx-000000.wrm";
@@ -718,7 +699,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
             return len;
         }
     } meta_len_writer;
-    wrmcapture_write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, true);
+    wrmcapture_write_meta_headers(meta_len_writer, 800, 600, true);
 
     const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
 

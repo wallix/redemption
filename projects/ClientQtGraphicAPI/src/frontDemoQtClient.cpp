@@ -53,9 +53,9 @@ public:
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
-        if (this->is_apple) {
-            this->info.keylayout = KEYBOARDS::EN_US;
-        }
+//         if (this->is_apple) {
+//             this->info.keylayout = KEYBOARDS::EN_US;
+//         }
 
         try {
             // VNC
@@ -77,7 +77,7 @@ public:
                                    , true
                                    , mod_vnc::ClipboardEncodingType::UTF8
                                    , VncBogusClipboardInfiniteLoop::delayed
-                                   , this->authentifier
+                                   , this->reportMessage
                                    , this->is_apple
                                    , 0xffffffff-2);
 

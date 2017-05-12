@@ -105,9 +105,11 @@ private:
     bool        enable_persistent_disk_bitmap_cache;
     bool        persist_bitmap_cache_on_disk;
 
+    ReportError report_error;
+
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
-              , bool persist_bitmap_cache_on_disk, RDPVerbose verbose)
+              , bool persist_bitmap_cache_on_disk, RDPVerbose verbose, ReportError report_error)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
@@ -126,6 +128,7 @@ public:
     , target_host(target_host)
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
+    , report_error(std::move(report_error))
     {
     }
 
@@ -150,7 +153,12 @@ public:
 
     ~rdp_orders() {
         if (this->bmp_cache) {
-            this->save_persistent_disk_bitmap_cache();
+            try {
+                this->save_persistent_disk_bitmap_cache();
+            }
+            catch(Error const & err) {
+                LOG(LOG_ERR, "%s", err.errmsg());
+            }
             delete this->bmp_cache;
         }
     }
@@ -163,7 +171,7 @@ private:
           PERSISTENT_PATH "/mod_rdp",
           this->target_host.c_str(),
           this->bmp_cache->bpp,
-          ReportError{}, /* TODO report_error_from_reporter(authentifier) */
+          this->report_error,
           convert_verbose_flags(this->verbose)
       );
     }

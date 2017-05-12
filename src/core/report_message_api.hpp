@@ -14,7 +14,7 @@
      675 Mass Ave, Cambridge, MA 02139, USA.
 
     Product name: redemption, a FLOSS RDP proxy
-    Copyright (C) Wallix 2017
+    Copyright (C) Wallix 201&
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
@@ -22,30 +22,27 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
-struct AuthApi : noncopyable
+struct ReportMessageApi : noncopyable
 {
-    virtual void set_auth_channel_target(const char * target) = 0;
+    virtual void report(const char * reason, const char * message) = 0;
 
-    virtual void set_auth_error_message(const char * error_message) = 0;
+    virtual void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) = 0;
 
-    virtual void disconnect_target() = 0;
-
-    virtual ~AuthApi() = default;
+    virtual ~ReportMessageApi() = default;
 };
 
-
-struct NullAuthentifier : AuthApi
+struct NullReportMessage : ReportMessageApi
 {
-    void set_auth_channel_target(const char * target) override
+    void report(const char * reason, const char * message) override
     {
-        (void)target;
+        (void)reason;
+        (void)message;
     }
 
-    void set_auth_error_message(const char * error_message) override
+    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override
     {
-        (void)error_message;
+        (void)duplicate_with_pid;
+        (void)type;
+        (void)extra;
     }
-
-    void disconnect_target() override
-    {}
 };

@@ -240,11 +240,11 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    TestClientCLI(ClientInfo const & info, auth_api & authentifier, uint32_t verbose)
+    TestClientCLI(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
     : FrontAPI(false, false)
     , _verbose(verbose)
-    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](auth_api & authentifier){
-        ClipboardVirtualChannel::Params params(authentifier);
+    , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
+        ClipboardVirtualChannel::Params params(report_message);
 
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
         params.verbose = to_verbose_flags(0xfffffff);
@@ -257,7 +257,7 @@ public:
         params.dont_log_data_into_wrm = true;
 
         return params;
-    }(authentifier))
+    }())
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::classic_332())
     , _info(info)

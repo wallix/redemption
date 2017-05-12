@@ -29,11 +29,11 @@
 
 #include <memory>
 
-#include "capture/capture.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "utils/difftimeval.hpp"
 #include "transport/transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, nullptr);
+    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, ReportError{});
 
     class ImageCaptureLocal
     {

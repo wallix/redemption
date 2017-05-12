@@ -186,7 +186,8 @@ public:
     }
 };
 
-class AclSerializer{
+class AclSerializer : ReportMessageApi
+{
     enum {
         HEADER_SIZE = 4
     };
@@ -256,17 +257,14 @@ public:
         unlink(session_file);
     }
 
-    void report(const char * reason, const char * message) {
+    void report(const char * reason, const char * message) override
+    {
         this->ini.ask<cfg::context::keepalive>();
         char report[1024];
         snprintf(report, sizeof(report), "%s:%s:%s", reason,
             this->ini.get<cfg::globals::target_device>().c_str(), message);
         this->ini.set_acl<cfg::context::reporting>(report);
         this->send_acl_data();
-    }
-
-    void set_auth_error_message(const char * error_message) {
-        this->ini.set<cfg::context::auth_error_message>(error_message);
     }
 
     void receive() {
@@ -294,7 +292,8 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) {
+    void log4(bool duplicate_with_pid, const char * type, const char * extra) override
+    {
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
@@ -356,7 +355,10 @@ public:
         }
     }
 
-    bool check(auth_api & authentifier, MMApi & mm, time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity) {
+    bool check(
+        AuthApi & authentifier, ReportMessageApi & report_message, MMApi & mm,
+        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
+    ) {
         //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
@@ -376,7 +378,7 @@ public:
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR(trkeys::session_out_time, language(this->ini));
-            mm.invoke_close_box(message, signal, now, authentifier);
+            mm.invoke_close_box(message, signal, now, authentifier, report_message);
 
             return true;
         }
@@ -384,24 +386,28 @@ public:
         // Close by rejeted message received
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-//            const char * error_message = this->ini.get<cfg::context::rejected>();
-//            this->set_auth_error_message(error_message);
             LOG(LOG_INFO, "Close by Rejected message received : %s",
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            mm.invoke_close_box(nullptr, signal, now, authentifier);
+            mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
             return true;
         }
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box(TR(trkeys::miss_keepalive, language(this->ini)), signal, now, authentifier);
+            mm.invoke_close_box(
+                TR(trkeys::miss_keepalive, language(this->ini)),
+                signal, now, authentifier, report_message
+            );
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check_user_activity(now, has_user_activity)) {
-            mm.invoke_close_box(TR(trkeys::close_inactivity, language(this->ini)), signal, now, authentifier);
+            mm.invoke_close_box(
+                TR(trkeys::close_inactivity, language(this->ini)),
+                signal, now, authentifier, report_message
+            );
             return true;
         }
 
@@ -456,7 +462,7 @@ public:
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    mm.invoke_close_box(nullptr, signal, now, authentifier);
+                    mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
@@ -467,7 +473,7 @@ public:
                 }
                 mm.remove_mod();
                 try {
-                    mm.new_mod(next_state, now, authentifier);
+                    mm.new_mod(next_state, now, authentifier, report_message);
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {

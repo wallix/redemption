@@ -204,8 +204,8 @@ public:
     Front_RDP_Qt_API( RDPVerbose verbose)
     : FrontQtRDPGraphicAPI(verbose)
      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-            DummyAuthentifier authentifier;
-            ClipboardVirtualChannel::Params params(authentifier);
+            NullReportMessage reportMessage;
+            ClipboardVirtualChannel::Params params(reportMessage);
 
             params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
             params.verbose = to_verbose_flags(0xfffffff);

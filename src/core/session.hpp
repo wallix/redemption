@@ -366,7 +366,7 @@ public:
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
-                                
+
                                     std::string authtarget = this->ini.get<cfg::globals::authfile>();
                                     size_t pos = authtarget.find(':');
                                     int client_sck = (pos == std::string::npos)
@@ -404,7 +404,7 @@ public:
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
-                                    mm.invoke_close_box("No authentifier available",signal, now, this->authentifier);
+                                    mm.invoke_close_box("No authentifier available",signal, now, this->authentifier, this->authentifier);
                                 }
                             }
                         }
@@ -447,7 +447,10 @@ public:
                         }
 
                         if (this->acl_serial) {
-                            run_session = this->acl_serial->check(this->authentifier, mm, now, signal, front_signal, this->front->has_user_activity);
+                            run_session = this->acl_serial->check(
+                                this->authentifier, this->authentifier, mm,
+                                now, signal, front_signal, this->front->has_user_activity
+                            );
                         }
                         else if (signal == BACK_EVENT_STOP) {
                             mm.mod->get_event().reset();
@@ -467,7 +470,7 @@ public:
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(e.errmsg(), signal, now, this->authentifier);
+                    mm.invoke_close_box(e.errmsg(), signal, now, this->authentifier, this->authentifier);
                 };
             }
             if (mm.mod) {

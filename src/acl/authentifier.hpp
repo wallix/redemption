@@ -32,7 +32,8 @@
 #include "utils/verbose_flags.hpp"
 
 
-class Authentifier : public auth_api {
+class Authentifier : public AuthApi, public ReportMessageApi
+{
 
 public:
     bool connected_to_acl;
@@ -85,7 +86,7 @@ public:
 
     void set_auth_error_message(const char * error_message) override {
         if (this->connected_to_acl){
-            this->acl_serial->set_auth_error_message(error_message);
+            this->acl_serial->ini.set<cfg::context::auth_error_message>(error_message);
         }
     }
 

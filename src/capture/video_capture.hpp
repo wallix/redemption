@@ -22,6 +22,7 @@
 
 #include "gdi/capture_api.hpp"
 #include "transport/transport.hpp"
+#include "transport/out_file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "flv_params.hpp"
 #include "capture/video_recorder.hpp"
@@ -38,7 +39,7 @@ class RDPDrawable;
 
 struct VideoTransportBase : Transport
 {
-    VideoTransportBase(const int groupid, auth_api * authentifier);
+    VideoTransportBase(const int groupid, ReportMessageApi * report_message);
 
     void seek(int64_t offset, int whence) override;
 
@@ -51,7 +52,7 @@ protected:
     void do_send(const uint8_t * data, size_t len) override;
 
 private:
-    int fd;
+    OutFileTransport out_file;
     const int groupid;
 
     char tmp_filename[1024];
@@ -120,7 +121,7 @@ private:
             const char * const filename,
             const char * const extension,
             const int groupid,
-            auth_api * authentifier
+            ReportMessageApi * report_message
         );
     } trans_tmp_file;
 
@@ -145,7 +146,7 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
             const char * const filename,
             const char * const extension,
             const int groupid,
-            auth_api * authentifier
+            ReportMessageApi * report_message
         );
 
         bool next() override;

@@ -12,7 +12,6 @@ lib z : : <name>z <link>shared ;
 lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
-lib python2 : : <name>$(PYTHON_VER) <link>shared ;
 lib bz2 : : <name>bz2 <link>shared ;
 
 ## ffmpeg {

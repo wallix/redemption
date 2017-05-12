@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(search)
 
 RED_AUTO_TEST_CASE(report_notify)
 {
-    struct Auth : auth_api {
+    struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
@@ -164,19 +164,15 @@ RED_AUTO_TEST_CASE(report_notify)
             RED_CHECK_EQUAL(message, "$kbd:c| cacao");
             this->has_report = true;
         }
-        void set_auth_channel_target(const char*) override { RED_CHECK(false); }
-        void set_auth_error_message(const char*) override { RED_CHECK(false); }
-    };
-
-    Auth auth;
-    utils::MatchFinder::report(auth, false, utils::MatchFinder::KBD_INPUT, "c", " cacao");
-    RED_CHECK(auth.has_log);
-    RED_CHECK(auth.has_report);
+    } report_message;
+    utils::MatchFinder::report(report_message, false, utils::MatchFinder::KBD_INPUT, "c", " cacao");
+    RED_CHECK(report_message.has_log);
+    RED_CHECK(report_message.has_report);
 }
 
 RED_AUTO_TEST_CASE(report_kill)
 {
-    struct Auth : auth_api {
+    struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
         void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
@@ -190,12 +186,8 @@ RED_AUTO_TEST_CASE(report_kill)
             RED_CHECK_EQUAL(message, "$ocr:c| cacao");
             this->has_report = true;
         }
-        void set_auth_channel_target(const char*) override { RED_CHECK(false); }
-        void set_auth_error_message(const char*) override { RED_CHECK(false); }
-    };
-
-    Auth auth;
-    utils::MatchFinder::report(auth, true, utils::MatchFinder::OCR, "c", " cacao");
-    RED_CHECK(auth.has_log);
-    RED_CHECK(auth.has_report);
+    } report_message;
+    utils::MatchFinder::report(report_message, true, utils::MatchFinder::OCR, "c", " cacao");
+    RED_CHECK(report_message.has_log);
+    RED_CHECK(report_message.has_report);
 }

@@ -108,8 +108,7 @@ int main(int argc, char** argv)
     CryptoContext cctx;
     UdevRandom gen;
 
-    NullAuthentifier authentifier;
-
+    NullReportMessage report_message;
 
     ClientInfo info;
     info.keylayout = 0x04C;
@@ -157,7 +156,7 @@ int main(int argc, char** argv)
       , is_socket_transport
       , mod_vnc::ClipboardEncodingType::UTF8
       , bogus_clipboard_infinite_loop
-      , authentifier       // acl
+      , report_message
       , false
       , verbose);
     mod.get_event().set();
