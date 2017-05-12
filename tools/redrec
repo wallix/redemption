@@ -18,7 +18,7 @@ if len(sys.argv) > 1:
         new_argv.extend(sys.argv[1:])
         sys.argv = new_argv
 
-if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (sys.argv[3] != '--' and len(sys.argv) > 5 and sys.argv[5] == '--')):
+if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (len(sys.argv) > 5 and sys.argv[5] == '--')):
   usage()
   exit(1)
 
@@ -38,14 +38,13 @@ if sys.argv[3] != '--':
 
 
 GETHMACKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
-GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
+GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint)
 
 def get_hmac_key(resbuf):
     libred.memcpy(resbuf, hmac_key_str, 32)
     return 0
 
-def get_trace_key(base, lg, resbuf):
-    name = base[:lg]
+def get_trace_key(base, lg, resbuf, oldscheme):
     libred.memcpy(resbuf, key_str, 32)
     return 0
 

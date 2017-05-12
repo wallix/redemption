@@ -41,7 +41,7 @@
 #include "test_only/get_file_contents.hpp"
 
 extern "C" {
-    inline int hmac_fn(char * buffer)
+    inline int hmac_fn(uint8_t * buffer)
     {
         // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
         uint8_t hmac_key[] = {
@@ -54,7 +54,7 @@ extern "C" {
         return 0;
     }
 
-    inline int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
+    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
@@ -388,7 +388,7 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     RED_CHECK_EQUAL(1, res);
 }
 
-inline int hmac_2016_fn(char * buffer)
+inline int hmac_2016_fn(uint8_t * buffer)
 {
 
     uint8_t hmac_key[32] = {
@@ -401,7 +401,7 @@ inline int hmac_2016_fn(char * buffer)
     return 0;
 }
 
-inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
+inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
 //    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
 
@@ -465,7 +465,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
     for (auto & k: keys){
         if ((k.scheme == oldscheme)
         && (k.base.length() == static_cast<size_t>(len))
-        && (strncmp(k.base.c_str(), base, static_cast<size_t>(len)) == 0))
+        && (strncmp(k.base.c_str(), reinterpret_cast<char const*>(base), static_cast<size_t>(len)) == 0))
         {
             if (oldscheme){
                 LOG(LOG_INFO, "old key (derived from main master)");
@@ -474,13 +474,11 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
                 LOG(LOG_INFO, "new key (derived master to use as master)");
             }
             memcpy(buffer, k.derived_key, 32);
-//            hexdump_d(buffer, 32);
+            //hexdump_d(buffer, 32);
             return 0;
         }
     }
-    memset(buffer, 0, 32);
-    LOG(LOG_INFO, "key not found for base=%*s", len, base);
-    //hexdump_d(buffer, 32);
+    RED_CHECK(false);
     return 0;
 }
 

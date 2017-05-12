@@ -30,7 +30,7 @@
 
 extern "C" {
     inline
-    int hmac_fn(char * buffer)
+    int hmac_fn(uint8_t * buffer)
     {
         // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
         uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
@@ -44,7 +44,7 @@ extern "C" {
     }
 
     inline
-    int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
+    int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;

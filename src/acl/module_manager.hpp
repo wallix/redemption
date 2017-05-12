@@ -666,6 +666,7 @@ private:
                 else if (!this->target_info_is_shown && !f12_released) {
                     // LOG(LOG_INFO, "Show info");
                     std::string msg;
+                    msg.reserve(64);
                     if (this->mm.ini.template get<cfg::client::show_target_user_in_f12_message>()) {
                         msg  = this->mm.ini.template get<cfg::globals::target_user>();
                         msg += "@";
@@ -692,7 +693,7 @@ private:
                             msg += tr(trkeys::second);
                             msg += (seconds > 1) ? "s " : " ";
                             msg += tr(trkeys::before_closing);
-                            msg += "]";
+                            msg += ']';
                         }
                     }
                     this->mm.osd_message(std::move(msg), false);

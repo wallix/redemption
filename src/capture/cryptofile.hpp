@@ -56,8 +56,8 @@ enum {
 constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 extern "C" {
-    typedef int get_hmac_key_prototype(char * buffer);
-    typedef int get_trace_key_prototype(char * base, int len, char * buffer, unsigned oldscheme);
+    typedef int get_hmac_key_prototype(uint8_t * buffer);
+    typedef int get_trace_key_prototype(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme);
 }
 
 
@@ -67,8 +67,8 @@ constexpr std::size_t HMAC_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 
 class CryptoContext
 {
-    unsigned char master_key[CRYPTO_KEY_LENGTH] {};
-    unsigned char hmac_key[HMAC_KEY_LENGTH] {};
+    uint8_t master_key[CRYPTO_KEY_LENGTH] {};
+    uint8_t hmac_key[HMAC_KEY_LENGTH] {};
 
     get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
@@ -82,7 +82,7 @@ public:
 
 
 public:
-    auto get_hmac_key() -> unsigned char const (&)[HMAC_KEY_LENGTH]
+    auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
     {
         if (!this->hmac_key_loaded){
             if (!this->get_hmac_key_cb) {
@@ -90,13 +90,13 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
-            this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
+            this->get_hmac_key_cb(this->hmac_key);
             this->hmac_key_loaded = true;
         }
         return this->hmac_key;
     }
 
-    const unsigned char * get_master_key() const
+    const uint8_t * get_master_key() const
     {
         assert(this->master_key_loaded);
         return this->master_key;
@@ -109,11 +109,11 @@ public:
                 // if we have a callback ask key
                 uint8_t tmp[MD_HASH::DIGEST_LENGTH];
                 this->get_trace_key_cb(
-                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
-                    , static_cast<int>(derivator_len)
-                    , reinterpret_cast<char*>(tmp)
-                    , this->old_encryption_scheme?1:0
-                    );
+                    derivator
+                  , static_cast<int>(derivator_len)
+                  , tmp
+                  , this->old_encryption_scheme?1:0
+                );
                 memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
                 return;
             }
@@ -127,9 +127,9 @@ public:
 
             // if we have a callback ask key
             this->get_trace_key_cb(
-                reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+                derivator
               , static_cast<int>(derivator_len)
-              , reinterpret_cast<char*>(this->master_key)
+              , this->master_key
               , this->old_encryption_scheme?1:0
             );
             this->master_key_loaded = true;
@@ -147,6 +147,7 @@ public:
             sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
             sha256.final(tmp);
         }
+        static_assert(sizeof(trace_key) == sizeof(tmp), "");
         memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
@@ -154,7 +155,7 @@ public:
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
     {
-        const unsigned char _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const uint8_t _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         unsigned int bits = 0;
         int nbits = 0;
         char base64tbl[256];
@@ -171,7 +172,7 @@ public:
         base64tbl[int('_')] = 63;
 
         while (*txt) {
-            char const v = base64tbl[static_cast<unsigned char>(*txt)];
+            char const v = base64tbl[static_cast<uint8_t>(*txt)];
             if (v >= 0) {
                 bits <<= 6;
                 bits += v;
@@ -191,7 +192,7 @@ public:
 
     class key_data : private const_bytes_array
     {
-        static constexpr std::size_t key_length = 32;
+        static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
 
         static_assert(sizeof(master_key) == key_length, "");
         static_assert(sizeof(hmac_key) == key_length, "");
