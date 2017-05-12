@@ -78,3 +78,8 @@ from encrypter import CryptoWriter
 encrypter.lib = lib
 encrypter.get_hmac_key_func = keys.get_hmac_key_func
 encrypter.get_trace_key_func = keys.get_trace_key_func
+
+from decrypter import CryptoReader
+decrypter.lib = lib
+decrypter.get_hmac_key_func = keys.get_hmac_key_func
+decrypter.get_trace_key_func = keys.get_trace_key_func
