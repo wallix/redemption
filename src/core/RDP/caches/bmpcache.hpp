@@ -57,7 +57,7 @@ private:
         Bitmap bmp;
         #endif
         uint_fast32_t stamp;
-        uint8_t sha1[20];
+        uint8_t sha1[SslSha1::DIGEST_LENGTH];
         bool is_valid;
 
         cache_lite_element()
@@ -65,7 +65,7 @@ private:
         , sha1()
         , is_valid(false) {}
 
-        explicit cache_lite_element(const uint8_t (& sha1_)[20])
+        explicit cache_lite_element(const uint8_t (& sha1_)[SslSha1::DIGEST_LENGTH])
         : stamp(0)
         , is_valid(true) {
             memcpy(this->sha1, sha1_, sizeof(this->sha1));
@@ -93,7 +93,7 @@ private:
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
         } sig;
-        uint8_t sha1[20];
+        uint8_t sha1[SslSha1::DIGEST_LENGTH];
         bool cached;
 
         cache_element()
