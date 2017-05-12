@@ -6,120 +6,23 @@ import ctypes.util
 
 from ctypes import CFUNCTYPE, c_ulong, c_ulonglong, c_int, c_char_p, c_uint16, py_object, c_uint, c_uint32, c_uint64, c_float, c_void_p, POINTER, Structure
 
-#pathlib = '/usr/local/lib/libredcryptofile.so'
-#pathlib = './bin/clang-linux-3.8.1/debug/libredcryptofile.so'
-pathlib = './bin/gcc-4.9.2/release/libredcryptofile.so'
+pathlib = 'libredcryptofile.so'
 
-hmac_key_str = '\x86\x41\x05\x58\xc4\x95\xcc\x4e\x49\x21\x57\x87\x47\x74\x08\x8a\x33\xb0\x2a\xb8\x65\xcc\x38\x41\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c'
-key_str = '\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd\xa6\x50\x38\xfc\xd8\x86\x51\x4f\x59\x7e\x8e\x90\x81\xf6\xf4\x48\x9c\x77\x41\x51\x0f\x53\x0e\xe8'
+from redcryptofile.keys import GETHMACKEY, GETTRACEKEY, get_hmac_key_func, get_trace_key_func
 
-GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
-GETTRACEKEY = CFUNCTYPE(c_int, c_char_p, c_int, c_void_p, c_uint)
-
-def get_hmac_key(resbuf):
-    ctypes.memmove(resbuf, hmac_key_str, 32)
-    return 0
-
-def get_trace_key(base, lg, resbuf, flag):
-    name = base[:lg]
-    ctypes.memmove(resbuf, key_str, 32)
-    return 0
-
-get_hmac_key_func = GETHMACKEY(get_hmac_key)
-get_trace_key_func = GETTRACEKEY(get_trace_key)
-
-try:
-    lib = ctypes.CDLL(pathlib)
-    print("load {path} OK".format(path=pathlib))
-
-# RedCryptoWriterHandle * redcryptofile_writer_new(
-#    int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-    lib.redcryptofile_writer_new.argtypes = [ c_int, c_int, GETHMACKEY, GETTRACEKEY ]
-    lib.redcryptofile_writer_new.restype = c_void_p
-
-# int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
-    lib.redcryptofile_writer_open.argtypes = [ c_void_p, c_char_p ]
-    lib.redcryptofile_writer_open.restype = c_int
-
-# int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
-    lib.redcryptofile_writer_write.argtypes = [c_void_p, c_char_p, c_uint64 ]
-    lib.redcryptofile_writer_write.restype = c_int
-
-# int redcryptofile_writer_close(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_writer_close.argtypes = [ c_void_p ]
-    lib.redcryptofile_writer_close.restype = c_int
-
-# void redcryptofile_writer_delete(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_writer_delete.argtypes = [ c_void_p ]
-    lib.redcryptofile_writer_delete.restype = None
-
-# const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_writer_qhashhex.argtypes = [ c_void_p ]
-    lib.redcryptofile_writer_qhashhex.restype = c_char_p
+from redcryptofile import lib
     
-# const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle);
-    lib.redcryptofile_writer_fhashhex.argtypes = [ c_void_p ]
-    lib.redcryptofile_writer_fhashhex.restype = c_char_p
-
-
-
-# RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-    lib.redcryptofile_reader_new.argtypes = [ GETHMACKEY, GETTRACEKEY ]
-    lib.redcryptofile_reader_new.restype = c_void_p
-
-# int redcryptofile_reader_open(RedCryptoReaderHandle * handle, const char * path)
-    lib.redcryptofile_reader_open.argtypes = [ c_void_p, c_char_p ]
-    lib.redcryptofile_reader_open.restype = c_int
-
-# int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t const * buffer, unsigned long len);
-    lib.redcryptofile_reader_read.argtypes = [c_void_p, c_char_p, c_uint64 ]
-    lib.redcryptofile_reader_read.restype = c_int
-
-# int redcryptofile_reader_close(RedCryptoReaderHandle * handle);
-    lib.redcryptofile_reader_close.argtypes = [ c_void_p ]
-    lib.redcryptofile_reader_close.restype = c_int
-
-# void redcryptofile_reader_delete(RedCryptoReaderHandle * handle);
-    lib.redcryptofile_reader_delete.argtypes = [ c_void_p ]
-    lib.redcryptofile_reader_delete.restype = None   
-
-
-# const char * redcryptofile_qhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_qhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_qhashhex.restype = c_char_p
-    
-# const char * redcryptofile_fhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_fhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_fhashhex.restype = c_char_p 
-
-
-except Exception as e:
-    print("Failed to load redcryptofile library: %s\n" % str(e))
-    sys.exit(10)
-    
-    
-#class CryptoWriter(Object):
-#    def __init__(self, encryption, checksum, get_hmac_key_func, get_trace_key_func): 
-#        self.handle = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
-#    
-#    def __del__(self):
-#        lib.redcryptofile_writer_delete(self.handle)
-#    
-#    def __enter__(self):
-#        lib.redcryptofile_writer_open(self.handle)
-
-#    def __exit__(self, type, value, traceback):
-#        lib.redcryptofile_writer_close(self.handle)
-#        self.qhashhex = lib.redcryptofile_writer_qhashhex(self.handle).copy()
-#        self.fhashhex = lib.redcryptofile_writer_fhashhex(self.handle).copy()
-#        
-#    def write(self, data, length):
-#        return lib.redcryptofile_writer_write(self.handle, data, length)
         
     
 import unittest
     
 class TestEncrypter(unittest.TestCase):
+
+    def test_writer2(self):
+        from redcryptofile.encrypter import CryptoWriter
+        with CryptoWriter(0, 0, "./xxx.txt") as x:
+            x.write("this is my test", 15)
+
     def test_writer(self):
         handle = lib.redcryptofile_writer_new(0, 0, get_hmac_key_func, get_trace_key_func)
         self.assertNotEqual(handle, None)
