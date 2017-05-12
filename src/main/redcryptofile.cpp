@@ -224,10 +224,12 @@ const char* redcryptofile_version() {
 
 
 const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle) {
+    SCOPED_TRACE;
     return handle->qhashhex;
 }
 
 const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
+    SCOPED_TRACE;
     return handle->fhashhex;
 }
 
