@@ -121,7 +121,6 @@ public:
 
 
 
-
     virtual void options() override {
         new DialogOptions_Qt(this, this->form);
     }
@@ -701,6 +700,13 @@ public:
                                               };
             this->cl.push_back(channel_rdpdr);
         }
+
+        CHANNELS::ChannelDef channel_WabDiag { "WabDiag"
+                                           , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                             GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                           , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                           };
+        this->cl.push_back(channel_WabDiag);
 
 //         CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
 //                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -2465,10 +2471,33 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
-        } else  /*if (!strcmp(channel.name, channel_names::rdpsnd))*/ {
+        } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
             LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+
+        } else if (!strcmp(channel.name, "WabDiag")) {
+
+            int len = chunk.in_uint32_le();
+            std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
+            LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
+
+            if        (msg == std::string("ConfirmationPixelColor=White")) {
+                this->wab_diag_question = true;
+                this->answer_question(0xffffffff);
+                this->asked_color = 0xffffffff;
+            } else if (msg == std::string("ConfirmationPixelColor=Black")) {
+                this->wab_diag_question = true;
+                this->answer_question(0xff000000);
+                this->asked_color = 0xff000000;
+            } else {
+                if (msg.substr(0, 8) == std::string("Duration=")) {
+                    //LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
+                }
+            }
         }
     }
+
+
+
 
 
     void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){

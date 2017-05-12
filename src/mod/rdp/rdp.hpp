@@ -1827,6 +1827,9 @@ public:
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+//         if (!(MOUSE_FLAG_MOVE & device_flags)) {
+//             LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
+//         }
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
