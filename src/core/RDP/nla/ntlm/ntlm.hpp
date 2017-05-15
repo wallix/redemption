@@ -45,8 +45,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 private:
     Random & rand;
     TimeObj & timeobj;
+    CredHandle hCredential;
+
 public:
     bool hardcoded_tests = false;
+
+    CredHandle const & getCredentialHandle() const
+    {
+        return this->hCredential;
+    }
 
 public:
     explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
@@ -95,11 +102,13 @@ public:
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
-                                                unsigned long fCredentialUse, void * pvLogonID,
-                                                void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void * pvGetKeyArgument, PCredHandle phCredential,
-                                                TimeStamp * ptsExpiry) override {
+    SEC_STATUS AcquireCredentialsHandle(
+        const char * pszPrincipal, const char * pszPackage,
+        unsigned long fCredentialUse, void * pvLogonID,
+        void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+        void * pvGetKeyArgument, TimeStamp * ptsExpiry
+    ) override
+    {
         (void)pszPrincipal;
         (void)pszPackage;
         (void)pvLogonID;
@@ -118,8 +127,8 @@ public:
                 credentials->identity.CopyAuthIdentity(*identity);
             }
 
-            phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-            phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+            hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
@@ -134,8 +143,8 @@ public:
             else {
                 credentials->identity.clear();
             }
-            phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-            phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+            hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
@@ -143,13 +152,10 @@ public:
         return SEC_E_OK;
     }
 
-    SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) override {
+    SEC_STATUS FreeCredentialsHandle() override {
         CREDENTIALS* credentials = nullptr;
 
-        if (!phCredential) {
-            return SEC_E_INVALID_HANDLE;
-        }
-        credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
+        credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
 
         if (credentials) {
             delete credentials;
@@ -160,16 +166,12 @@ public:
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
-                                                 PCtxtHandle phContext,
-                                                 char* pszTargetName,
-                                                 unsigned long fContextReq,
-                                                 unsigned long TargetDataRep,
-                                                 SecBufferDesc * pInput,
-                                                 unsigned long verbose,
-                                                 PCtxtHandle phNewContext,
-                                                 SecBufferDesc * pOutput,
-                                                 TimeStamp * ptsExpiry) override {
+    SEC_STATUS InitializeSecurityContext(
+        PCtxtHandle phContext, char* pszTargetName, unsigned long fContextReq,
+        unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long verbose,
+        PCtxtHandle phNewContext, SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+    ) override
+    {
         (void)TargetDataRep;
         (void)ptsExpiry;
 
@@ -195,7 +197,7 @@ public:
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
+            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
 
             // if (context->Workstation.size() < 1)
             //     context->ntlm_SetContextWorkstation(nullptr);
@@ -282,14 +284,11 @@ public:
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    SEC_STATUS AcceptSecurityContext(PCredHandle phCredential,
-                                             PCtxtHandle phContext,
-                                             SecBufferDesc * pInput,
-                                             unsigned long fContextReq,
-                                             unsigned long TargetDataRep,
-                                             PCtxtHandle phNewContext,
-                                             SecBufferDesc * pOutput,
-                                             TimeStamp * ptsTimeStamp) override {
+    SEC_STATUS AcceptSecurityContext(
+        PCtxtHandle phContext, SecBufferDesc * pInput, unsigned long fContextReq,
+        unsigned long TargetDataRep, PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+        TimeStamp * ptsTimeStamp
+    ) override {
         (void)TargetDataRep;
         (void)ptsTimeStamp;
         NTLMContext* context = nullptr;
@@ -308,7 +307,7 @@ public:
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(phCredential->SecureHandleGetLowerPointer());
+            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
             if (!credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }

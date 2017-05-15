@@ -40,7 +40,6 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     uint8_t pass[] = "Hélène";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetAuthIdentityFromUtf8(name, dom, pass);
-    CredHandle credentials;
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
@@ -48,11 +47,11 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
                                             &id, nullptr, nullptr,
-                                            &credentials, &expiration);
+                                            &expiration);
 
 
     RED_CHECK_EQUAL(status, SEC_E_OK);
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
+    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(table.getCredentialHandle().SecureHandleGetLowerPointer());
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -63,7 +62,7 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
         make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
-    status = table.FreeCredentialsHandle(&credentials);
+    status = table.FreeCredentialsHandle();
     RED_CHECK_EQUAL(status, SEC_E_OK);
 }
 
@@ -79,7 +78,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     uint8_t pass[] = "Hélène";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetAuthIdentityFromUtf8(name, dom, pass);
-    CredHandle credentials;
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
@@ -88,10 +86,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
                                             &id, nullptr, nullptr,
-                                            &credentials, &expiration);
+                                            &expiration);
     RED_CHECK_EQUAL(status, SEC_E_OK);
 
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
+    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(table.getCredentialHandle().SecureHandleGetLowerPointer());
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -123,8 +121,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
     // client first call, no input buffer, no context
-    status = table.InitializeSecurityContext(&credentials,
-                                             nullptr, // context
+    status = table.InitializeSecurityContext(nullptr, // context
                                              nullptr, // TargetName
                                              fContextReq, SECURITY_NATIVE_DREP,
                                              nullptr, // input buffer desc
@@ -158,7 +155,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     CtxtHandle server_context;
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    status = table.AcceptSecurityContext(&credentials, nullptr,
+    status = table.AcceptSecurityContext(&server_context,
                                          &output_buffer_desc, fsContextReq,
                                          SECURITY_NATIVE_DREP, &server_context,
                                          &input_buffer_desc, &expiration);
@@ -175,8 +172,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // client second call, got context
     // got input buffer: challenge message
-    status = table.InitializeSecurityContext(&credentials,
-                                             &client_context, // context
+    status = table.InitializeSecurityContext(&client_context, // context
                                              nullptr, // TargetName
                                              fContextReq, SECURITY_NATIVE_DREP,
                                              &input_buffer_desc, // input buffer desc
@@ -199,7 +195,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
-    status = table.AcceptSecurityContext(&credentials, &server_context,
+    status = table.AcceptSecurityContext(&server_context,
                                          &output_buffer_desc, fsContextReq,
                                          SECURITY_NATIVE_DREP, &server_context,
                                          &input_buffer_desc, &expiration);
@@ -327,7 +323,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(status, SEC_E_OK);
     status = table.FreeContextBuffer(&client_context);
     RED_CHECK_EQUAL(status, SEC_E_OK);
-    status = table.FreeCredentialsHandle(&credentials);
+    status = table.FreeCredentialsHandle();
     RED_CHECK_EQUAL(status, SEC_E_OK);
 
 }

@@ -366,9 +366,31 @@ public:
     }
 };
 
-typedef SecHandle *PSecHandle;
-typedef SecHandle CredHandle;
-typedef PSecHandle PCredHandle;
+class CredHandle
+{
+    void* dwLower;
+    void* dwUpper;
+
+public:
+    CredHandle() = default;
+
+    void SecureHandleSetLowerPointer(void* pointer) {
+        this->dwLower = pointer;
+    }
+
+    void SecureHandleSetUpperPointer(void* pointer) {
+       this->dwUpper = pointer;
+    }
+
+    void* SecureHandleGetLowerPointer() const {
+        return this->dwLower;
+    }
+    void* SecureHandleGetUpperPointer() const {
+        return this->dwUpper;
+    }
+};
+
+typedef SecHandle* PSecHandle;
 
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
@@ -628,7 +650,6 @@ struct SecurityFunctionTable {
                                                 void* pAuthData,
                                                 SEC_GET_KEY_FN pGetKeyFn,
                                                 void* pvGetKeyArgument,
-                                                PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
         (void)pszPrincipal;
@@ -638,15 +659,13 @@ struct SecurityFunctionTable {
         (void)pAuthData;
         (void)pGetKeyFn;
         (void)pvGetKeyArgument;
-        (void)phCredential;
         (void)ptsExpiry;
          return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
-    virtual SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-        (void)phCredential;
+    virtual SEC_STATUS FreeCredentialsHandle() {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -654,8 +673,7 @@ struct SecurityFunctionTable {
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
-                                                 PCtxtHandle phContext,
+    virtual SEC_STATUS InitializeSecurityContext(PCtxtHandle phContext,
                                                  char* pszTargetName,
                                                  unsigned long fContextReq,
                                                  unsigned long TargetDataRep,
@@ -665,7 +683,6 @@ struct SecurityFunctionTable {
                                                  SecBufferDesc * pOutput,
                                                  TimeStamp * ptsExpiry) {
 
-        (void)phCredential;
         (void)phContext;
         (void)pszTargetName;
         (void)fContextReq;
@@ -680,15 +697,13 @@ struct SecurityFunctionTable {
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential,
-                                             PCtxtHandle phContext,
+    virtual SEC_STATUS AcceptSecurityContext(PCtxtHandle phContext,
                                              SecBufferDesc * pInput,
                                              unsigned long fContextReq,
                                              unsigned long TargetDataRep,
                                              PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
                                              TimeStamp * ptsTimeStamp) {
-        (void)phCredential;
         (void)phContext;
         (void)fContextReq;
         (void)TargetDataRep;

@@ -40,7 +40,6 @@ class rdpCredssp
     int recv_seq_num;
 
     CtxtHandle context;
-    CredHandle credentials;
 
     Transport& trans;
 
@@ -103,7 +102,7 @@ public:
     {
         if (this->table) {
             this->table->FreeContextBuffer(&this->context);
-            this->table->FreeCredentialsHandle(&this->credentials);
+            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -148,7 +147,7 @@ public:
         }
         if (this->table) {
             this->table->FreeContextBuffer(&this->context);
-            this->table->FreeCredentialsHandle(&this->credentials);
+            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -566,7 +565,7 @@ public:
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
                                                            &this->identity, nullptr, nullptr,
-                                                           &this->credentials, &expiration);
+                                                           &expiration);
             if (status == SEC_E_NO_CREDENTIALS) {
                 if (this->sec_interface != NTLM_Interface) {
                     this->sec_interface = NTLM_Interface;
@@ -610,8 +609,7 @@ public:
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-            status = this->table->InitializeSecurityContext(&this->credentials,
-                                                            (have_context) ?
+            status = this->table->InitializeSecurityContext(have_context ?
                                                             &this->context : nullptr,
                                                             reinterpret_cast<char*>(
                                                                 this->ServicePrincipalName.get_data()),
@@ -778,7 +776,7 @@ public:
        status = this->table->AcquireCredentialsHandle(nullptr, NLA_PKG_NAME,
                                                       SECPKG_CRED_INBOUND, nullptr,
                                                       nullptr, nullptr, nullptr,
-                                                      &this->credentials, &expiration);
+                                                      &expiration);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
@@ -842,8 +840,7 @@ public:
            output_buffer.BufferType = SECBUFFER_TOKEN;
            output_buffer.Buffer.init(cbMaxToken);
 
-           status = this->table->AcceptSecurityContext(&this->credentials,
-                                                       have_context? &this->context: nullptr,
+           status = this->table->AcceptSecurityContext(have_context? &this->context: nullptr,
                                                        &input_buffer_desc, fContextReq,
                                                        SECURITY_NATIVE_DREP, &this->context,
                                                        &output_buffer_desc, &expiration);

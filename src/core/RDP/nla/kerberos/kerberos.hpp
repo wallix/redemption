@@ -86,6 +86,10 @@ struct KERBEROSContext final {
 
 struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 {
+private:
+    CredHandle hCredential;
+
+public:
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) override {
@@ -133,7 +137,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
                                                 void * pvLogonID,
                                                 void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                                 void * pvGetKeyArgument,
-                                                PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) override {
         (void)pszPackage;
         (void)fCredentialUse;
@@ -153,8 +156,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
             spn->get_data()[length] = 0;
         }
         Krb5Creds * credentials = new Krb5Creds;
-        phCredential->SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-        phCredential->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
+        hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
+        hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
         SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
         if (pAuthData != nullptr) {
@@ -179,12 +182,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
         return SEC_E_NO_CREDENTIALS;
     }
 
-    SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) override {
-
-        if (!phCredential) {
-            return SEC_E_INVALID_HANDLE;
-        }
-        Krb5Creds* credentials = static_cast<Krb5Creds*>(phCredential->SecureHandleGetLowerPointer());
+    SEC_STATUS FreeCredentialsHandle() override {
+        Krb5Creds* credentials = static_cast<Krb5Creds*>(hCredential.SecureHandleGetLowerPointer());
         if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
@@ -220,17 +219,12 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
-                                                 PCtxtHandle phContext,
-                                                 char* pszTargetName,
-                                                 unsigned long fContextReq,
-                                                 unsigned long TargetDataRep,
-                                                 SecBufferDesc * pInput,
-                                                 unsigned long Reserved2,
-                                                 PCtxtHandle phNewContext,
-                                                 SecBufferDesc * pOutput,
-                                                 TimeStamp * ptsExpiry) override {
-        (void)phCredential;
+    SEC_STATUS InitializeSecurityContext(
+        PCtxtHandle phContext, char* pszTargetName, unsigned long fContextReq,
+        unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long Reserved2,
+        PCtxtHandle phNewContext, SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+    ) override
+    {
         (void)fContextReq;
         (void)TargetDataRep;
         (void)Reserved2;
@@ -349,18 +343,15 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    SEC_STATUS AcceptSecurityContext(PCredHandle phCredential,
-                                             PCtxtHandle phContext,
-                                             SecBufferDesc * pInput,
-                                             unsigned long fContextReq,
-                                             unsigned long TargetDataRep,
-                                             PCtxtHandle phNewContext,
-                                             SecBufferDesc * pOutput,
-                                             TimeStamp * ptsTimeStamp) override {
+    SEC_STATUS AcceptSecurityContext(
+        PCtxtHandle phContext, SecBufferDesc * pInput, unsigned long fContextReq,
+        unsigned long TargetDataRep, PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+        TimeStamp * ptsTimeStamp
+    ) override
+    {
         (void)fContextReq;
         (void)TargetDataRep;
         (void)ptsTimeStamp;
-        (void)phCredential;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
