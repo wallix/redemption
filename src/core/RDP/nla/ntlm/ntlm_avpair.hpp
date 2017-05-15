@@ -164,9 +164,11 @@ struct NtlmAvPair {
     }
 };
 
-struct NtlmAvPairList final {
+class NtlmAvPairList final
+{
     NtlmAvPair * list[AV_ID_MAX];
 
+public:
     NtlmAvPairList() {
         for (int i = 0; i < AV_ID_MAX; i++) {
             this->list[i] = nullptr;

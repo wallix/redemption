@@ -40,12 +40,15 @@ namespace {
     };
 }
 
-struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
-
+struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
+{
+private:
     Random & rand;
     TimeObj & timeobj;
+public:
     bool hardcoded_tests = false;
 
+public:
     explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
 
     SEC_STATUS CompleteAuthToken(PCtxtHandle, SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }

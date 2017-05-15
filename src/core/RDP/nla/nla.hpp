@@ -33,7 +33,7 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-struct rdpCredssp
+class rdpCredssp
 {
     bool server;
     int send_seq_num;
@@ -63,8 +63,10 @@ struct rdpCredssp
     TimeObj & timeobj;
     const bool verbose;
 
+public:
     bool hardcoded_tests = false;
 
+public:
     rdpCredssp(Transport & transport,
                uint8_t * user,
                uint8_t * domain,
