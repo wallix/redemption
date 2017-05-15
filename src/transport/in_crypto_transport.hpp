@@ -99,10 +99,6 @@ public:
 
     const HASH qhash(const char * pathname)
     {
-        if (this->is_open()){
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
         SslHMAC_Sha256 hm4k(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
 
         {
@@ -133,10 +129,6 @@ public:
 
     const HASH fhash(const char * pathname)
     {
-        if (this->is_open()){
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
         SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
 
         {
