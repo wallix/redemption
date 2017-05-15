@@ -764,6 +764,10 @@ protected:
 
     uint8_t client_random[SEC_RANDOM_SIZE] = { 0 };
 
+    std::string load_balance_info;
+
+    bool server_redirection_packet_received = false;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -925,6 +929,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
+        , load_balance_info(mod_rdp_params.load_balance_info)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1056,14 +1061,14 @@ public:
         }
 
         if (username_len >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->username));
+            LOG(LOG_WARNING, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->username));
         }
         size_t count = std::min(sizeof(this->username) - 1, username_len);
         if (count > 0) strncpy(this->username, username_pos, count);
         this->username[count] = 0;
 
         if (domain_len >= sizeof(this->domain)) {
-            LOG(LOG_INFO, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->domain));
+            LOG(LOG_WARNING, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->domain));
         }
         count = std::min(sizeof(this->domain) - 1, domain_len);
         if (count > 0) strncpy(this->domain, domain_pos, count);
@@ -1397,9 +1402,34 @@ public:
                 this->server_redirection_support ? "true" : "false");
         }
         if (this->server_redirection_support) {
+            bool load_balance_info_used = false;
+
+            const size_t load_balance_info_length = this->load_balance_info.length();
+
+            if (!this->redir_info.valid && load_balance_info_length) {
+                if (load_balance_info_length + 2 < sizeof(this->redir_info.lb_info)) {
+                    load_balance_info_used = true;
+
+                    this->redir_info.valid = true;
+
+                    ::snprintf(::char_ptr_cast(this->redir_info.lb_info),
+                        sizeof(this->redir_info.lb_info), "%s\x0D\x0A",
+                        this->load_balance_info.c_str());
+                    this->redir_info.lb_info_length = load_balance_info_length + 2;
+                }
+                else {
+                    LOG(LOG_WARNING, "mod_rdp: load balance info too long! %zu >= %zu",
+                        load_balance_info_length, sizeof(this->redir_info.lb_info));
+                }
+            }
+
             if (this->redir_info.valid && (this->redir_info.lb_info_length > 0)) {
                 this->nego.set_lb_info(this->redir_info.lb_info,
                                        this->redir_info.lb_info_length);
+
+                if (load_balance_info_used) {
+                    this->redir_info.valid = false;
+                }
             }
         }
 
@@ -1441,6 +1471,10 @@ public:
         }
 
         this->remote_programs_session_manager.reset();
+
+        if (!this->server_redirection_packet_received) {
+            this->redir_info.reset();
+        }
     }
 
     int get_fd() const override { return this->nego.trans.get_fd(); }
@@ -3913,6 +3947,7 @@ public:
                             server_redirect.receive(sctrl.payload);
                             sctrl.payload.in_skip_bytes(1);
                             server_redirect.export_to_redirection_info(this->redir_info);
+                            this->server_redirection_packet_received = true;
                             if (bool(this->verbose & RDPVerbose::basic_trace4)){
                                 server_redirect.log(LOG_INFO, "Got Packet");
                                 this->redir_info.log(LOG_INFO, "RInfo Ini");
