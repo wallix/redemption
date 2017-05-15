@@ -88,6 +88,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 {
 private:
     CredHandle hCredential;
+    CtxtHandle hContext;
 
 public:
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
@@ -111,8 +112,7 @@ public:
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextAttributes(PCtxtHandle,
-                                              unsigned long ulAttribute,
+    SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
                                               void* pBuffer) override {
         if (!pBuffer) {
             return SEC_E_INSUFFICIENT_MEMORY;
@@ -184,6 +184,9 @@ public:
 
     SEC_STATUS FreeCredentialsHandle() override {
         Krb5Creds* credentials = static_cast<Krb5Creds*>(hCredential.SecureHandleGetLowerPointer());
+        hCredential.SecureHandleSetLowerPointer(nullptr);
+        hCredential.SecureHandleSetUpperPointer(nullptr);
+
         if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
@@ -220,9 +223,9 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        PCtxtHandle phContext, char* pszTargetName, unsigned long fContextReq,
+        char* pszTargetName, unsigned long fContextReq,
         unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long Reserved2,
-        PCtxtHandle phNewContext, SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+        SecBufferDesc * pOutput, TimeStamp * ptsExpiry
     ) override
     {
         (void)fContextReq;
@@ -233,10 +236,7 @@ public:
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = nullptr;
-        if (phContext) {
-            krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        KERBEROSContext * krb_ctx = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
         if (!krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             krb_ctx = new KERBEROSContext;
@@ -244,8 +244,8 @@ public:
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
-            phNewContext->SecureHandleSetLowerPointer(krb_ctx);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
+            hContext.SecureHandleSetLowerPointer(krb_ctx);
+            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
@@ -344,8 +344,8 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        PCtxtHandle phContext, SecBufferDesc * pInput, unsigned long fContextReq,
-        unsigned long TargetDataRep, PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+        SecBufferDesc * pInput, unsigned long fContextReq,
+        unsigned long TargetDataRep, SecBufferDesc * pOutput,
         TimeStamp * ptsTimeStamp
     ) override
     {
@@ -355,10 +355,7 @@ public:
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = nullptr;
-        if (phContext) {
-            krb_ctx = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        KERBEROSContext * krb_ctx = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
         if (!krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             krb_ctx = new KERBEROSContext;
@@ -366,8 +363,8 @@ public:
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
-            phNewContext->SecureHandleSetLowerPointer(krb_ctx);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
+            hContext.SecureHandleSetLowerPointer(krb_ctx);
+            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
@@ -460,16 +457,16 @@ public:
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    SEC_STATUS FreeContextBuffer(void* pvContextBuffer) override {
+    SEC_STATUS FreeContextBuffer() override {
         KERBEROSContext* toDelete = static_cast<KERBEROSContext*>(
-            static_cast<PCtxtHandle>(pvContextBuffer)->SecureHandleGetLowerPointer());
+            hContext.SecureHandleGetLowerPointer());
         delete toDelete;
         return SEC_E_OK;
     }
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
+    SEC_STATUS EncryptMessage(unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         (void)fQOP;
         (void)MessageSeqNo;
@@ -486,11 +483,7 @@ public:
         OM_uint32 major_status;
         OM_uint32 minor_status;
         int conf_state;
-        KERBEROSContext* context = nullptr;
-
-        if (phContext) {
-            context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        KERBEROSContext* context = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -527,7 +520,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
+    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) override {
         (void)MessageSeqNo;
         (void)pfQOP;
@@ -545,11 +538,7 @@ public:
 	OM_uint32 minor_status;
 	int conf_state;
         gss_qop_t qop_state;
-        KERBEROSContext* context = nullptr;
-
-        if (phContext) {
-            context = static_cast<KERBEROSContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        KERBEROSContext* context = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -584,11 +573,11 @@ public:
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle) override {
+    SEC_STATUS ImpersonateSecurityContext() override {
         return SEC_E_OK;
     }
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext(PCtxtHandle) override {
+    SEC_STATUS RevertSecurityContext() override {
         return SEC_E_OK;
     }
 

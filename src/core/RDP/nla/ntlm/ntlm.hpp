@@ -46,6 +46,7 @@ private:
     Random & rand;
     TimeObj & timeobj;
     CredHandle hCredential;
+    CtxtHandle hContext;
 
 public:
     bool hardcoded_tests = false;
@@ -55,11 +56,16 @@ public:
         return this->hCredential;
     }
 
+    CtxtHandle const & getContextHandle() const
+    {
+        return this->hContext;
+    }
+
 public:
     explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
 
-    SEC_STATUS CompleteAuthToken(PCtxtHandle, SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
-    SEC_STATUS ImportSecurityContext(char*, SecBuffer*, HANDLE, PCtxtHandle) override
+    SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
+    SEC_STATUS ImportSecurityContext(char*, SecBuffer*, HANDLE) override
     { return SEC_E_UNSUPPORTED_FUNCTION; }
 
 
@@ -83,7 +89,7 @@ public:
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextAttributes(PCtxtHandle /*phContext*/, unsigned long ulAttribute,
+    SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
                                               void* pBuffer) override {
         if (!pBuffer) {
             return SEC_E_INSUFFICIENT_MEMORY;
@@ -156,6 +162,8 @@ public:
         CREDENTIALS* credentials = nullptr;
 
         credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
+        hCredential.SecureHandleSetLowerPointer(nullptr);
+        hCredential.SecureHandleSetUpperPointer(nullptr);
 
         if (credentials) {
             delete credentials;
@@ -167,9 +175,9 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        PCtxtHandle phContext, char* pszTargetName, unsigned long fContextReq,
+        char* pszTargetName, unsigned long fContextReq,
         unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long verbose,
-        PCtxtHandle phNewContext, SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+        SecBufferDesc * pOutput, TimeStamp * ptsExpiry
     ) override
     {
         (void)TargetDataRep;
@@ -179,10 +187,7 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
-        NTLMContext* context = nullptr;
-        if (phContext) {
-            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
 
         if (!context) {
             context = new NTLMContext(this->rand, this->timeobj);
@@ -209,8 +214,8 @@ public:
 
             context->identity.CopyAuthIdentity(credentials->identity);
 
-            phNewContext->SecureHandleSetLowerPointer(context);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            hContext.SecureHandleSetLowerPointer(context);
+            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
         }
 
         if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
@@ -285,16 +290,13 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        PCtxtHandle phContext, SecBufferDesc * pInput, unsigned long fContextReq,
-        unsigned long TargetDataRep, PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+        SecBufferDesc * pInput, unsigned long fContextReq,
+        unsigned long TargetDataRep, SecBufferDesc * pOutput,
         TimeStamp * ptsTimeStamp
     ) override {
         (void)TargetDataRep;
         (void)ptsTimeStamp;
-        NTLMContext* context = nullptr;
-        if (phContext) {
-            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
 
         if (!context) {
             context = new(std::nothrow) NTLMContext(this->rand, this->timeobj);
@@ -315,8 +317,8 @@ public:
 
             context->ntlm_SetContextServicePrincipalName(nullptr);
 
-            phNewContext->SecureHandleSetLowerPointer(context);
-            phNewContext->SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            hContext.SecureHandleSetLowerPointer(context);
+            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
         }
 
         if (context->state == NTLM_STATE_INITIAL) {
@@ -392,16 +394,16 @@ public:
         return SEC_E_OUT_OF_SEQUENCE;
     }
 
-    SEC_STATUS FreeContextBuffer(void* pvContextBuffer) override {
+    SEC_STATUS FreeContextBuffer() override {
         NTLMContext * toDelete = static_cast<NTLMContext*>(
-            static_cast<PSecHandle>(pvContextBuffer)->SecureHandleGetLowerPointer());
+            hContext.SecureHandleGetLowerPointer());
         delete toDelete;
         return SEC_E_OK;
     }
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
+    SEC_STATUS EncryptMessage(unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         (void)fQOP;
         int length;
@@ -410,13 +412,9 @@ public:
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
-        NTLMContext* context = nullptr;
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
-
-        if (phContext) {
-            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -503,7 +501,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
+    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) override {
         (void)pfQOP;
         int length = 0;
@@ -512,14 +510,10 @@ public:
         uint8_t digest[SslMd5::DIGEST_LENGTH] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
-        NTLMContext* context = nullptr;
         uint8_t expected_signature[16] = {};
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
-
-        if (phContext) {
-            context = static_cast<NTLMContext*>(phContext->SecureHandleGetLowerPointer());
-        }
+        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
         if (!context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -607,11 +601,11 @@ public:
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle) override {
+    SEC_STATUS ImpersonateSecurityContext() override {
         return SEC_E_OK;
     }
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext(PCtxtHandle) override {
+    SEC_STATUS RevertSecurityContext() override {
         return SEC_E_OK;
     }
 };

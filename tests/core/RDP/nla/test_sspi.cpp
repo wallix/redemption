@@ -261,20 +261,20 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.AcquireCredentialsHandle(nullptr, nullptr, 0, nullptr,
-                                            nullptr, nullptr, nullptr, nullptr, nullptr);
+                                            nullptr, nullptr, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeCredentialsHandle(nullptr);
+    status = table.FreeCredentialsHandle();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr,
-                                             0, nullptr, nullptr, nullptr);
+    status = table.InitializeSecurityContext(nullptr, 0, 0, nullptr,
+                                             0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr, nullptr);
+    status = table.AcceptSecurityContext(nullptr, 0, 0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.CompleteAuthToken(nullptr, nullptr);
+    status = table.CompleteAuthToken(nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.DeleteSecurityContext(nullptr);
@@ -283,13 +283,13 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ApplyControlToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryContextAttributes(nullptr, 0, nullptr);
+    status = table.QueryContextAttributes(0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImpersonateSecurityContext(nullptr);
+    status = table.ImpersonateSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.RevertSecurityContext(nullptr);
+    status = table.RevertSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.MakeSignature(nullptr, 0, nullptr, 0);
@@ -298,13 +298,13 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.VerifySignature(nullptr, nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeContextBuffer(nullptr);
+    status = table.FreeContextBuffer();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImportSecurityContext(nullptr, nullptr, nullptr, nullptr);
+    status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.AddCredentials(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
@@ -313,10 +313,10 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.EncryptMessage(nullptr, 0, nullptr, 0);
+    status = table.EncryptMessage(0, nullptr, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(nullptr, nullptr, 0, nullptr);
+    status = table.DecryptMessage(nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
