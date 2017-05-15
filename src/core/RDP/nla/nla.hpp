@@ -165,6 +165,8 @@ public:
 
             #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
+            #else
+            assert(false);
             #endif
         }
         else if (this->table == nullptr) {

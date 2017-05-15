@@ -341,50 +341,31 @@ struct CREDENTIALS {
     SEC_WINNT_AUTH_IDENTITY identity;
 };
 
-struct _SecHandle {
-    unsigned long dwLower;
-    unsigned long dwUpper;
-};
 
-
-class SecHandle {
-    _SecHandle * pHandle;
+class SecHandle
+{
+    void* dwLower;
+    void* dwUpper;
 
 public:
-    SecHandle()
-        : pHandle(new _SecHandle()) {
-    }
-    SecHandle(const SecHandle & other)
-        : pHandle(new _SecHandle(*(other.pHandle))) {
-    }
-
-    ~SecHandle() {
-        delete pHandle;
-    }
-
-    SecHandle& operator=(const SecHandle &other) {
-        *pHandle = *(other.pHandle);
-        return *this;
-    }
+    SecHandle() = default;
 
     void SecureHandleSetLowerPointer(void* pointer) {
-        this->pHandle->dwLower = reinterpret_cast<unsigned long>(pointer);
+        this->dwLower = pointer;
     }
 
     void SecureHandleSetUpperPointer(void* pointer) {
-       this->pHandle->dwUpper = reinterpret_cast<unsigned long>(pointer);
+       this->dwUpper = pointer;
     }
 
-    void* SecureHandleGetLowerPointer() {
-        void * pointer = reinterpret_cast<void*>(this->pHandle->dwLower);
-        return pointer;
+    void* SecureHandleGetLowerPointer() const {
+        return this->dwLower;
     }
-    void* SecureHandleGetUpperPointer() {
-        void * pointer = reinterpret_cast<void*>(this->pHandle->dwUpper);
-        return pointer;
+    void* SecureHandleGetUpperPointer() const {
+        return this->dwUpper;
     }
-
 };
+
 typedef SecHandle *PSecHandle;
 typedef SecHandle CredHandle;
 typedef PSecHandle PCredHandle;
