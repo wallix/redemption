@@ -98,9 +98,9 @@ struct CryptoContextWrapper
     }
 };
 
-struct RedCryptoErrrorContext
+struct RedCryptoErrorContext
 {
-    RedCryptoErrrorContext() noexcept
+    RedCryptoErrorContext() noexcept
     : error(NO_ERROR)
     , msg{}
     {}
@@ -181,12 +181,15 @@ public:
     HashHexArray fhashhex;
 
     OutCryptoTransport out_crypto_transport;
-    RedCryptoErrrorContext error_ctx;
+    RedCryptoErrorContext error_ctx;
 };
 
 
 struct RedCryptoReaderHandle
 {
+    HashHexArray qhashhex;
+    HashHexArray fhashhex;
+
     RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
                         , get_hmac_key_prototype * hmac_fn
                         , get_trace_key_prototype * trace_fn)
@@ -197,9 +200,10 @@ struct RedCryptoReaderHandle
 private:
     CryptoContextWrapper cctxw;
 
+
 public:
     InCryptoTransport in_crypto_transport;
-    RedCryptoErrrorContext error_ctx;
+    RedCryptoErrorContext error_ctx;
 };
 
 
@@ -244,7 +248,7 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
             RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
         ),
         nullptr,
-        RedCryptoErrrorContext(),
+        RedCryptoErrorContext(),
         ERR_TRANSPORT
     );
 }
@@ -285,7 +289,7 @@ void redcryptofile_writer_delete(RedCryptoWriterHandle * handle) {
 
 char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
 {
-    return handle ? handle->error_ctx.message() : RedCryptoErrrorContext::handle_error_message();
+    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
 
@@ -297,7 +301,7 @@ RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
             InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
         ),
         nullptr,
-        RedCryptoErrrorContext(),
+        RedCryptoErrorContext(),
         ERR_TRANSPORT
     );
 }
@@ -332,7 +336,39 @@ void redcryptofile_reader_delete(RedCryptoReaderHandle * handle) {
 
 char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle)
 {
-    return handle ? handle->error_ctx.message() : RedCryptoErrrorContext::handle_error_message();
+    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
+}
+
+int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file) {
+    SCOPED_TRACE;
+    try {
+        InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
+        hash_to_hashhex(qhash.hash, handle->qhashhex);
+        InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
+        hash_to_hashhex(fhash.hash, handle->fhashhex);
+    }
+    catch (Error const& err) {
+        EXIT_ON_ERROR(err);
+        handle->error_ctx.set_error(err);
+        return -1;
+    }
+    catch (...) {
+        EXIT_ON_EXCEPTION();
+        handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED});
+        return -1;
+    }
+    return 0;
+}
+
+
+const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
+    SCOPED_TRACE;
+    return handle->qhashhex;
+}
+    
+const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
+    SCOPED_TRACE;
+    return handle->qhashhex;
 }
 
 }

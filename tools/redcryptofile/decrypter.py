@@ -23,7 +23,14 @@ class CryptoReader(object):
 #        if self.checksums is not None:
 #            self.checksums.append(lib.redcryptofile_writer_qhashhex(self.handle))
 #            self.checksums.append(lib.redcryptofile_writer_fhashhex(self.handle))
-        
+
+    def hash(self):
+        if lib.redcryptofile_reader_hash(self.handle, self.filename) < 0:
+            raise IOError()
+        qhash = lib.redcryptofile_reader_qhashhex(self.handle)
+        fhash = lib.redcryptofile_reader_fhashhex(self.handle)
+        return [qhash, fhash]
+
     def read(self, part_len = 4096):
         print("CryptoReader::read")
         buf = ctypes.create_string_buffer(part_len)

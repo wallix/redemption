@@ -89,7 +89,12 @@ class TestEncrypter(unittest.TestCase):
         data = ""
         with CryptoReader(test_file) as cr:
             data = "".join(line for line in cr.read())
-        self.assertEqual(data, test_text)
+            self.assertEqual(data, test_text)
+            checksums = cr.hash()
+
+        self.assertEqual(checksums,
+         ['788A99BDCFFC5128DA01B9A6AABA9D826DCE7B874153417097EF2A82CF7875C6',
+          '788A99BDCFFC5128DA01B9A6AABA9D826DCE7B874153417097EF2A82CF7875C6'])
 
 if __name__ == '__main__':
     unittest.main()

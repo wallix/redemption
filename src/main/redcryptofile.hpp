@@ -78,4 +78,13 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     void redcryptofile_reader_delete(RedCryptoReaderHandle * handle);
+    
+    REDEMPTION_LIB_EXPORT
+    int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file);
+
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle);
+    
+    REDEMPTION_LIB_EXPORT
+    const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle);
 }

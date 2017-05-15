@@ -62,13 +62,17 @@ try:
     lib.redcryptofile_reader_delete.argtypes = [ c_void_p ]
     lib.redcryptofile_reader_delete.restype = None   
 
+# int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file);
+    lib.redcryptofile_reader_hash.argtypes = [ c_void_p, c_char_p ]
+    lib.redcryptofile_reader_hash.restype = c_int
+
 # const char * redcryptofile_qhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_qhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_qhashhex.restype = c_char_p
+    lib.redcryptofile_reader_qhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_reader_qhashhex.restype = c_char_p
     
 # const char * redcryptofile_fhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_fhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_fhashhex.restype = c_char_p 
+    lib.redcryptofile_reader_fhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_reader_fhashhex.restype = c_char_p 
 
 except Exception as e:
     print("Failed to load redcryptofile library: %s\n" % str(e))
