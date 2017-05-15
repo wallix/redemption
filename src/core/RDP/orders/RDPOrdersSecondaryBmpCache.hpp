@@ -975,6 +975,10 @@ class RDPBmpCache {
             this->key1 = stream.in_uint32_le();
             this->key2 = stream.in_uint32_le();
         }
+        else {
+            this->key1 = 0;
+            this->key2 = 0;
+        }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
         uint16_t bitmapHeight;
@@ -1127,6 +1131,10 @@ class RDPBmpCache {
         if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
             this->key1 = stream.in_uint32_le();
             this->key2 = stream.in_uint32_le();
+        }
+        else {
+            this->key1 = 0;
+            this->key2 = 0;
         }
 
         uint16_t bitmapWidth  = stream.in_2BUE();
