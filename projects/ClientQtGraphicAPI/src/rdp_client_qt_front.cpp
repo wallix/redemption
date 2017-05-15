@@ -2971,6 +2971,8 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
+    // sudo bin/gcc-4.9.2/release/link-static/rdpproxy -nf
+
     //bjam debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -w $mdp -i 10.10.40.22 -p 3389
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
