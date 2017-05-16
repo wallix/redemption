@@ -45,20 +45,20 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 private:
     Random & rand;
     TimeObj & timeobj;
-    CredHandle hCredential;
-    CtxtHandle hContext;
+    CREDENTIALS * credentials = nullptr;
+    NTLMContext * context = nullptr;
 
 public:
     bool hardcoded_tests = false;
 
-    CredHandle const & getCredentialHandle() const
+    CREDENTIALS const * getCredentialHandle() const
     {
-        return this->hCredential;
+        return this->credentials;
     }
 
-    CtxtHandle const & getContextHandle() const
+    NTLMContext const * getContextHandle() const
     {
-        return this->hContext;
+        return this->context;
     }
 
 public:
@@ -68,8 +68,8 @@ public:
 
     ~Ntlm_SecurityFunctionTable()
     {
-        delete static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
-        delete static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
+        delete this->context;
+        delete this->credentials;
     }
 
     SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
@@ -121,36 +121,30 @@ public:
     {
         (void)pszPrincipal;
         (void)pvLogonID;
-        CREDENTIALS* credentials = nullptr;
         SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
 
         if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
-            credentials = new CREDENTIALS;
+            this->credentials = new CREDENTIALS;
 
             identity = pAuthData;
 
             if (identity != nullptr) {
-                credentials->identity.CopyAuthIdentity(*identity);
+                this->credentials->identity.CopyAuthIdentity(*identity);
             }
-
-            hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-            hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
         else if (fCredentialUse == SECPKG_CRED_INBOUND) {
-            credentials = new CREDENTIALS;
+            this->credentials = new CREDENTIALS;
 
             identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
 
             if (identity) {
-                credentials->identity.CopyAuthIdentity(*identity);
+                this->credentials->identity.CopyAuthIdentity(*identity);
             }
             else {
-                credentials->identity.clear();
+                this->credentials->identity.clear();
             }
-            hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-            hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
 
             return SEC_E_OK;
         }
@@ -170,38 +164,32 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
-        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
+        if (!this->context) {
+            this->context = new NTLMContext(this->rand, this->timeobj);
 
-        if (!context) {
-            context = new NTLMContext(this->rand, this->timeobj);
-
-            if (!context) {
+            if (!this->context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
-            context->verbose = verbose;
-            // context->init();
-            context->server = false;
+            this->context->verbose = verbose;
+            // this->context->init();
+            this->context->server = false;
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
-                context->confidentiality = true;
+                this->context->confidentiality = true;
             }
-            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
 
-            // if (context->Workstation.size() < 1)
-            //     context->ntlm_SetContextWorkstation(nullptr);
-            if (!credentials) {
+            // if (this->context->Workstation.size() < 1)
+            //     this->context->ntlm_SetContextWorkstation(nullptr);
+            if (!this->credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            context->ntlm_SetContextWorkstation(reinterpret_cast<uint8_t*>(pszTargetName));
-            context->ntlm_SetContextServicePrincipalName(reinterpret_cast<uint8_t*>(pszTargetName));
+            this->context->ntlm_SetContextWorkstation(reinterpret_cast<uint8_t*>(pszTargetName));
+            this->context->ntlm_SetContextServicePrincipalName(reinterpret_cast<uint8_t*>(pszTargetName));
 
-            context->identity.CopyAuthIdentity(credentials->identity);
-
-            hContext.SecureHandleSetLowerPointer(context);
-            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            this->context->identity.CopyAuthIdentity(this->credentials->identity);
         }
 
-        if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
+        if ((!pInput) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
             if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -215,11 +203,11 @@ public:
             if (output_buffer->Buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (context->state == NTLM_STATE_INITIAL) {
-                context->state = NTLM_STATE_NEGOTIATE;
+            if (this->context->state == NTLM_STATE_INITIAL) {
+                this->context->state = NTLM_STATE_NEGOTIATE;
             }
-            if (context->state == NTLM_STATE_NEGOTIATE) {
-                return context->write_negotiate(output_buffer);
+            if (this->context->state == NTLM_STATE_NEGOTIATE) {
+                return this->context->write_negotiate(output_buffer);
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
@@ -238,12 +226,12 @@ public:
             // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
 
             // if (channel_bindings) {
-            //     context->Bindings.BindingsLength = channel_bindings->cbBuffer;
-            //     context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
+            //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
+            //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
             // }
 
-            if (context->state == NTLM_STATE_CHALLENGE) {
-                context->read_challenge(input_buffer);
+            if (this->context->state == NTLM_STATE_CHALLENGE) {
+                this->context->read_challenge(input_buffer);
 
                 if (!pOutput) {
                     return SEC_E_INVALID_TOKEN;
@@ -259,8 +247,8 @@ public:
                 if (output_buffer->Buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
-                if (context->state == NTLM_STATE_AUTHENTICATE) {
-                    return context->write_authenticate(output_buffer);
+                if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+                    return this->context->write_authenticate(output_buffer);
                 }
             }
 
@@ -276,33 +264,27 @@ public:
         SecBufferDesc * pInput, unsigned long fContextReq,
         SecBufferDesc * pOutput
     ) override {
-        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
+        if (!this->context) {
+            this->context = new(std::nothrow) NTLMContext(this->rand, this->timeobj);
 
-        if (!context) {
-            context = new(std::nothrow) NTLMContext(this->rand, this->timeobj);
-
-            if (!context) {
+            if (!this->context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
-            context->server = true;
+            this->context->server = true;
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
-                context->confidentiality = true;
+                this->context->confidentiality = true;
             }
-            CREDENTIALS* credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
-            if (!credentials) {
+            if (!this->credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            context->identity.CopyAuthIdentity(credentials->identity);
+            this->context->identity.CopyAuthIdentity(this->credentials->identity);
 
-            context->ntlm_SetContextServicePrincipalName(nullptr);
-
-            hContext.SecureHandleSetLowerPointer(context);
-            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(NTLM_PACKAGE_NAME)));
+            this->context->ntlm_SetContextServicePrincipalName(nullptr);
         }
 
-        if (context->state == NTLM_STATE_INITIAL) {
-            context->state = NTLM_STATE_NEGOTIATE;
+        if (this->context->state == NTLM_STATE_INITIAL) {
+            this->context->state = NTLM_STATE_NEGOTIATE;
 
             if (!pInput) {
                 return SEC_E_INVALID_TOKEN;
@@ -318,9 +300,9 @@ public:
             if (input_buffer->Buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            /*SEC_STATUS status = */context->read_negotiate(input_buffer);
+            /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
 
-            if (context->state == NTLM_STATE_CHALLENGE) {
+            if (this->context->state == NTLM_STATE_CHALLENGE) {
                 if (!pOutput) {
                     return SEC_E_INVALID_TOKEN;
                 }
@@ -335,12 +317,12 @@ public:
                 if (output_buffer->Buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
-                return context->write_challenge(output_buffer);
+                return this->context->write_challenge(output_buffer);
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
-        else if (context->state == NTLM_STATE_AUTHENTICATE) {
+        else if (this->context->state == NTLM_STATE_AUTHENTICATE) {
             if (!pInput) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -357,9 +339,9 @@ public:
             }
 
             if (this->hardcoded_tests) {
-                context->identity.SetPasswordFromUtf8(reinterpret_cast<uint8_t const *>("Pénélope"));
+                this->context->identity.SetPasswordFromUtf8(reinterpret_cast<uint8_t const *>("Pénélope"));
             }
-            SEC_STATUS status = context->read_authenticate(input_buffer);
+            SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (pOutput) {
                 size_t i;
@@ -385,11 +367,10 @@ public:
         uint32_t version = 1;
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
-        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!context) {
+        if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (context->verbose & 0x400) {
+        if (this->context->verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
         for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
@@ -414,15 +395,15 @@ public:
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
+        SslHMAC_Md5 hmac_md5(this->context->SendSigningKey, 16);
         hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
 
-        if (context->confidentiality) {
-            context->SendRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
+        if (this->context->confidentiality) {
+            this->context->SendRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
         }
         else {
             data_buffer->Buffer.copy(data, length);
@@ -432,7 +413,7 @@ public:
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "======== ENCRYPT ==========");
         // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(context->SendSigningKey, 16);
+        // hexdump_c(this->context->SendSigningKey, 16);
         // LOG(LOG_ERR, "\n");
 
         // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
@@ -451,7 +432,7 @@ public:
         delete [] data;
 
         /* RC4-encrypt first 8 bytes of digest */
-        context->SendRc4Seal.crypt(8, digest, checksum);
+        this->context->SendRc4Seal.crypt(8, digest, checksum);
 
         signature = signature_buffer->Buffer.get_data();
 
@@ -459,7 +440,7 @@ public:
         memcpy(signature, &version, 4);
         memcpy(&signature[4], checksum, 8);
         memcpy(&signature[12], &SeqNo, 4);
-        context->SendSeqNum++;
+        this->context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
@@ -482,11 +463,10 @@ public:
         uint8_t expected_signature[16] = {};
         PSecBuffer data_buffer = nullptr;
         PSecBuffer signature_buffer = nullptr;
-        NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!context) {
+        if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (context->verbose & 0x400) {
+        if (this->context->verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
@@ -512,15 +492,15 @@ public:
 
         /* Decrypt message using with RC4, result overwrites original buffer */
 
-        if (context->confidentiality) {
-            context->RecvRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
+        if (this->context->confidentiality) {
+            this->context->RecvRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
         }
         else {
             data_buffer->Buffer.copy(data, length);
         }
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-        SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
+        SslHMAC_Md5 hmac_md5(this->context->RecvSigningKey, 16);
         hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest);
@@ -528,7 +508,7 @@ public:
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "======== DECRYPT ==========");
         // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(context->RecvSigningKey, 16);
+        // hexdump_c(this->context->RecvSigningKey, 16);
         // LOG(LOG_ERR, "\n");
 
         // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
@@ -547,13 +527,13 @@ public:
         delete [] data;
 
         /* RC4-encrypt first 8 bytes of digest */
-        context->RecvRc4Seal.crypt(8, digest, checksum);
+        this->context->RecvRc4Seal.crypt(8, digest, checksum);
 
         /* Concatenate version, ciphertext and sequence number to build signature */
         memcpy(expected_signature, &version, 4);
         memcpy(&expected_signature[4], checksum, 8);
         memcpy(&expected_signature[12], &SeqNo, 4);
-        context->RecvSeqNum++;
+        this->context->RecvSeqNum++;
 
         if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */

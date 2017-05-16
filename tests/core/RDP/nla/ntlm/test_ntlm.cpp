@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
 
 
     RED_CHECK_EQUAL(status, SEC_E_OK);
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(table.getCredentialHandle().SecureHandleGetLowerPointer());
+    CREDENTIALS const * creds = table.getCredentialHandle();
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
         NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &client_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(server_table.getCredentialHandle().SecureHandleGetLowerPointer());
+    CREDENTIALS const * creds = server_table.getCredentialHandle();
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -201,8 +201,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
 
     // Check contexts
-    NTLMContext * client = reinterpret_cast<NTLMContext*>(client_table.getContextHandle().SecureHandleGetLowerPointer());
-    NTLMContext * server = reinterpret_cast<NTLMContext*>(server_table.getContextHandle().SecureHandleGetLowerPointer());
+    NTLMContext const * client = client_table.getContextHandle();
+    NTLMContext const * server = server_table.getContextHandle();
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
@@ -263,8 +263,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
     RED_CHECK_EQUAL(server->confidentiality, true);
-    server->confidentiality = false;
-    client->confidentiality = false;
+//     server->confidentiality = false;
+//     client->confidentiality = false;
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
     SecBuffer Buffers[2];
