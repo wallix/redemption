@@ -264,9 +264,6 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
                                             nullptr, nullptr, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeCredentialsHandle();
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
     status = table.InitializeSecurityContext(nullptr, 0, 0, nullptr,
                                              0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -297,9 +294,6 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
 
     //status = table.VerifySignature(nullptr, nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
-    status = table.FreeContextBuffer();
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);

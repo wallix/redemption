@@ -662,12 +662,6 @@ struct SecurityFunctionTable {
          return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
-    // GSS_Release_cred
-    // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
-    virtual SEC_STATUS FreeCredentialsHandle() {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
     // void * Reserved2;
 
     // GSS_Init_sec_context
@@ -753,11 +747,6 @@ struct SecurityFunctionTable {
     //                                    unsigned long MessageSeqNo, unsigned long * pfQOP) {
     //    return SEC_E_UNSUPPORTED_FUNCTION;
     //}
-
-    // FREE_CONTEXT_BUFFER FreeContextBuffer;
-    virtual SEC_STATUS FreeContextBuffer() {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,

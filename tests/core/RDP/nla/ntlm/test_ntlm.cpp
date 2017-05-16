@@ -61,9 +61,6 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
-
-    status = table.FreeCredentialsHandle();
-    RED_CHECK_EQUAL(status, SEC_E_OK);
 }
 
 RED_AUTO_TEST_CASE(TestInitialize)
@@ -325,15 +322,4 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     server_status = server_table.RevertSecurityContext();
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
-
-    // clear handles
-    server_status = server_table.FreeContextBuffer();
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
-    server_status = server_table.FreeCredentialsHandle();
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
-    client_status = client_table.FreeContextBuffer();
-    RED_CHECK_EQUAL(client_status, SEC_E_OK);
-    client_status = client_table.FreeCredentialsHandle();
-    RED_CHECK_EQUAL(client_status, SEC_E_OK);
-
 }

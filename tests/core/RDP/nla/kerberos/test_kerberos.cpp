@@ -53,8 +53,6 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     // RED_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
     //                     creds->identity.Password.get_data(),
     //                     creds->identity.Password.size()));
-    status = table.FreeCredentialsHandle();
-    RED_CHECK_EQUAL(status, SEC_E_OK);
 }
 
 

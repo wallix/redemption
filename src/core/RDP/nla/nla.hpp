@@ -99,8 +99,6 @@ public:
     ~rdpCredssp()
     {
         if (this->table) {
-            this->table->FreeContextBuffer();
-            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -144,8 +142,6 @@ public:
             LOG(LOG_INFO, "rdpCredssp::InitSecurityInterface");
         }
         if (this->table) {
-            this->table->FreeContextBuffer();
-            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -163,7 +159,7 @@ public:
             #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
             #else
-            assert(false);
+            assert(false && "Unsupported Kerberos");
             #endif
         }
         else if (this->table == nullptr) {

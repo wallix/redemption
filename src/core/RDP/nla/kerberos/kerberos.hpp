@@ -91,6 +91,19 @@ private:
     CtxtHandle hContext;
 
 public:
+    ~Kerberos_SecurityFunctionTable()
+    {
+        delete static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
+
+        Krb5Creds* credentials = static_cast<Krb5Creds*>(hCredential.SecureHandleGetLowerPointer());
+        if (credentials) {
+            credentials->destroy_credentials(nullptr);
+            delete credentials;
+        }
+
+        unsetenv("KRB5CCNAME");
+    }
+
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) override {
@@ -180,23 +193,6 @@ public:
             }
         }
         return SEC_E_NO_CREDENTIALS;
-    }
-
-    SEC_STATUS FreeCredentialsHandle() override {
-        Krb5Creds* credentials = static_cast<Krb5Creds*>(hCredential.SecureHandleGetLowerPointer());
-        hCredential.SecureHandleSetLowerPointer(nullptr);
-        hCredential.SecureHandleSetUpperPointer(nullptr);
-
-        if (!credentials) {
-            return SEC_E_INVALID_HANDLE;
-        }
-        credentials->destroy_credentials(nullptr);
-        delete credentials;
-        credentials = nullptr;
-
-        unsetenv("KRB5CCNAME");
-
-        return SEC_E_OK;
     }
 
     bool get_service_name(char * server, gss_name_t * name) {
@@ -455,13 +451,6 @@ public:
         }
         // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
         return SEC_I_COMPLETE_NEEDED;
-    }
-
-    SEC_STATUS FreeContextBuffer() override {
-        KERBEROSContext* toDelete = static_cast<KERBEROSContext*>(
-            hContext.SecureHandleGetLowerPointer());
-        delete toDelete;
-        return SEC_E_OK;
     }
 
     // GSS_Wrap

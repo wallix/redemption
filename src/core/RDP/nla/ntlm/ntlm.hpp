@@ -62,7 +62,15 @@ public:
     }
 
 public:
-    explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
+    explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj)
+        : rand(rand), timeobj(timeobj)
+    {}
+
+    ~Ntlm_SecurityFunctionTable()
+    {
+        delete static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
+        delete static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
+    }
 
     SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
     SEC_STATUS ImportSecurityContext(char*, SecBuffer*, HANDLE) override
@@ -155,20 +163,6 @@ public:
             return SEC_E_OK;
         }
 
-        return SEC_E_OK;
-    }
-
-    SEC_STATUS FreeCredentialsHandle() override {
-        CREDENTIALS* credentials = nullptr;
-
-        credentials = static_cast<CREDENTIALS*>(hCredential.SecureHandleGetLowerPointer());
-        hCredential.SecureHandleSetLowerPointer(nullptr);
-        hCredential.SecureHandleSetUpperPointer(nullptr);
-
-        if (credentials) {
-            delete credentials;
-            credentials = nullptr;
-        }
         return SEC_E_OK;
     }
 
@@ -392,13 +386,6 @@ public:
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
-    }
-
-    SEC_STATUS FreeContextBuffer() override {
-        NTLMContext * toDelete = static_cast<NTLMContext*>(
-            hContext.SecureHandleGetLowerPointer());
-        delete toDelete;
-        return SEC_E_OK;
     }
 
     // GSS_Wrap
