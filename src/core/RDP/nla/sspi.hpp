@@ -643,22 +643,14 @@ struct SecurityFunctionTable {
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
-                                                const char * pszPackage,
                                                 unsigned long fCredentialUse,
-                                                void* pvLogonID,
-                                                void* pAuthData,
-                                                SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument,
-                                                TimeStamp * ptsExpiry) {
+                                                Array * pvLogonID,
+                                                SEC_WINNT_AUTH_IDENTITY * pAuthData) {
 
         (void)pszPrincipal;
-        (void)pszPackage;
         (void)fCredentialUse;
         (void)pvLogonID;
         (void)pAuthData;
-        (void)pGetKeyFn;
-        (void)pvGetKeyArgument;
-        (void)ptsExpiry;
          return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -668,19 +660,15 @@ struct SecurityFunctionTable {
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput,
                                                  unsigned long Reserved2,
-                                                 SecBufferDesc * pOutput,
-                                                 TimeStamp * ptsExpiry) {
+                                                 SecBufferDesc * pOutput) {
 
         (void)pszTargetName;
         (void)fContextReq;
-        (void)TargetDataRep;
         (void)pInput;
         (void)Reserved2;
         (void)pOutput;
-        (void)ptsExpiry;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 

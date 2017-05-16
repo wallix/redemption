@@ -144,21 +144,14 @@ public:
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
-                                                const char * pszPackage,
-                                                unsigned long fCredentialUse,
-                                                void * pvLogonID,
-                                                void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void * pvGetKeyArgument,
-                                                TimeStamp * ptsExpiry) override {
-        (void)pszPackage;
+    SEC_STATUS AcquireCredentialsHandle(
+        const char * pszPrincipal, unsigned long fCredentialUse,
+        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
+    ) override {
         (void)fCredentialUse;
-        (void)pGetKeyFn;
-        (void)pvGetKeyArgument;
-        (void)ptsExpiry;
 
         if (pszPrincipal && pvLogonID) {
-            Array * spn = static_cast<Array *>(pvLogonID);
+            Array * spn = pvLogonID;
             const char * p = pszPrincipal;
             size_t length = 0;
             if (p) {
@@ -174,7 +167,7 @@ public:
 
         SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
         if (pAuthData != nullptr) {
-            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
+            identity = pAuthData;
         }
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
@@ -220,14 +213,12 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long Reserved2,
-        SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+        SecBufferDesc * pInput, unsigned long Reserved2,
+        SecBufferDesc * pOutput
     ) override
     {
         (void)fContextReq;
-        (void)TargetDataRep;
         (void)Reserved2;
-        (void)ptsExpiry;
 
         OM_uint32 major_status, minor_status;
 

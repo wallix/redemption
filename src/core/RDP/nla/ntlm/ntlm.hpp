@@ -117,25 +117,19 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, const char * pszPackage,
-        unsigned long fCredentialUse, void * pvLogonID,
-        void * pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-        void * pvGetKeyArgument, TimeStamp * ptsExpiry
+        const char * pszPrincipal, unsigned long fCredentialUse,
+        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
     ) override
     {
         (void)pszPrincipal;
-        (void)pszPackage;
         (void)pvLogonID;
-        (void)pGetKeyFn;
-        (void)pvGetKeyArgument;
-        (void)ptsExpiry;
         CREDENTIALS* credentials = nullptr;
         SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
 
         if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
-            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
+            identity = pAuthData;
 
             if (identity != nullptr) {
                 credentials->identity.CopyAuthIdentity(*identity);
@@ -170,13 +164,10 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        unsigned long TargetDataRep, SecBufferDesc * pInput, unsigned long verbose,
-        SecBufferDesc * pOutput, TimeStamp * ptsExpiry
+        SecBufferDesc * pInput, unsigned long verbose,
+        SecBufferDesc * pOutput
     ) override
     {
-        (void)TargetDataRep;
-        (void)ptsExpiry;
-
         if (verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }

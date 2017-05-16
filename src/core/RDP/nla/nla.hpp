@@ -535,7 +535,6 @@ public:
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
         }
-        TimeStamp expiration;
         SecPkgInfo packageInfo;
         bool interface_changed = false;
         do {
@@ -555,11 +554,9 @@ public:
 
 
             status = this->table->AcquireCredentialsHandle(this->target_host,
-                                                           NLA_PKG_NAME,
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
-                                                           &this->identity, nullptr, nullptr,
-                                                           &expiration);
+                                                           &this->identity);
             if (status == SEC_E_NO_CREDENTIALS) {
                 if (this->sec_interface != NTLM_Interface) {
                     this->sec_interface = NTLM_Interface;
@@ -602,15 +599,12 @@ public:
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-            status = this->table->InitializeSecurityContext(reinterpret_cast<char*>(
-                                                                this->ServicePrincipalName.get_data()),
-                                                            fContextReq,
-                                                            SECURITY_NATIVE_DREP,
-                                                            (have_input_buffer) ?
-                                                            &input_buffer_desc : nullptr,
-                                                            this->verbose,
-                                                            &output_buffer_desc,
-                                                            &expiration);
+            status = this->table->InitializeSecurityContext(
+                reinterpret_cast<char*>(this->ServicePrincipalName.get_data()),
+                fContextReq,
+                have_input_buffer ? &input_buffer_desc : nullptr,
+                this->verbose,
+                &output_buffer_desc);
             if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                 (status != SEC_I_COMPLETE_NEEDED) &&
                 (status != SEC_E_OK) &&
@@ -763,10 +757,10 @@ public:
        unsigned long cbMaxToken = packageInfo.cbMaxToken;
        TimeStamp expiration;
 
-       status = this->table->AcquireCredentialsHandle(nullptr, NLA_PKG_NAME,
-                                                      SECPKG_CRED_INBOUND, nullptr,
-                                                      nullptr, nullptr, nullptr,
-                                                      &expiration);
+       status = this->table->AcquireCredentialsHandle(nullptr,
+                                                      SECPKG_CRED_INBOUND,
+                                                      nullptr,
+                                                      nullptr);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);

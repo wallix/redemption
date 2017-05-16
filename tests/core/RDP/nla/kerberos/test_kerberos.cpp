@@ -33,13 +33,11 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     uint8_t pass[] = "a";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetKrbAuthIdentity(name, pass);
-    TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND,
-                                            nullptr, &id, nullptr, nullptr, &expiration);
+    status = table.AcquireCredentialsHandle(NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &id);
 
 
     RED_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);
