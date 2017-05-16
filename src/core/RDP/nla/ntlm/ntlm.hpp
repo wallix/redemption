@@ -378,9 +378,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(unsigned long fQOP,
-                                      PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
-        (void)fQOP;
+    SEC_STATUS EncryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         int length;
         uint8_t* data;
         uint32_t SeqNo(MessageSeqNo);
@@ -476,9 +474,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage,
-                                      unsigned long MessageSeqNo, unsigned long * pfQOP) override {
-        (void)pfQOP;
+    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         int length = 0;
         uint8_t* data = nullptr;
         uint32_t SeqNo(MessageSeqNo);

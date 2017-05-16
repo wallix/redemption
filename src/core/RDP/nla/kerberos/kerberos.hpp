@@ -443,9 +443,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(unsigned long fQOP,
-                                      PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
-        (void)fQOP;
+    SEC_STATUS EncryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -497,10 +495,8 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage,
-                                      unsigned long MessageSeqNo, unsigned long * pfQOP) override {
+    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
-        (void)pfQOP;
 
         // OM_uint32 gss_unwrap
         //     (OM_uint32 ,             /* minor_status */

@@ -279,7 +279,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    server_status = server_table.EncryptMessage(0, &Message, 0);
+    server_status = server_table.EncryptMessage(&Message, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 
@@ -294,7 +294,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    unsigned long pfQOP = 0;
     Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
     Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
     Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
@@ -306,7 +305,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    client_status = client_table.DecryptMessage(&Message, 0, &pfQOP);
+    client_status = client_table.DecryptMessage(&Message, 0);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 

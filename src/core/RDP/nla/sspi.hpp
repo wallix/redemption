@@ -778,10 +778,7 @@ struct SecurityFunctionTable {
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(unsigned long fQOP,
-                                      SecBufferDesc * pMessage,
-                                      unsigned long MessageSeqNo) {
-        (void)fQOP;
+    virtual SEC_STATUS EncryptMessage(SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
         (void)pMessage;
         (void)MessageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
@@ -789,11 +786,9 @@ struct SecurityFunctionTable {
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecBufferDesc * pMessage,
-                                      unsigned long MessageSeqNo, unsigned long * pfQOP) {
+    virtual SEC_STATUS DecryptMessage(SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
         (void)pMessage;
         (void)MessageSeqNo;
-        (void)pfQOP;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 

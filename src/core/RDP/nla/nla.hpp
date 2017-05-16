@@ -265,7 +265,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(0, &Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(&Message, this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "EncryptMessage status: 0x%08X\n", status);
@@ -285,7 +285,6 @@ public:
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
         int length = 0;
-        unsigned long pfQOP = 0;
         uint8_t* public_key1 = nullptr;
         uint8_t* public_key2 = nullptr;
         unsigned int public_key_length = 0;
@@ -323,7 +322,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&Message, this->recv_seq_num++, &pfQOP);
+        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X\n", status);
@@ -403,7 +402,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(0, &Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(&Message, this->send_seq_num++);
 
         if (status != SEC_E_OK)
             return status;
@@ -421,7 +420,6 @@ public:
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
         int length;
-        unsigned long pfQOP = 0;
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
@@ -450,7 +448,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&Message, this->recv_seq_num++, &pfQOP);
+        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
 
         if (status != SEC_E_OK)
             return status;
