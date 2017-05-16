@@ -26,7 +26,7 @@ class CryptoWriter(object):
             self.checksums.append(lib.redcryptofile_writer_fhashhex(self.handle))
         
     def write(self, data):
-        print("CryptoWriter::write")
+        print("CryptoWriter::write(%d)" % len(data))
         res = lib.redcryptofile_writer_write(self.handle, data, len(data))
         if res < 0:
             raise IOError()

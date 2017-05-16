@@ -43,7 +43,7 @@ private:
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
     uint8_t header_buf[40];
-    uint8_t result_buffer[32768] = {};
+    uint8_t result_buffer[65536] = {};
     char           buf[CRYPTO_BUFFER_SIZE]; //
 
     CryptoContext & cctx;
