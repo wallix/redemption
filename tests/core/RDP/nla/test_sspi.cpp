@@ -266,7 +266,7 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(nullptr, 0, 0, nullptr, nullptr);
+    status = table.AcceptSecurityContext(nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.CompleteAuthToken(nullptr);

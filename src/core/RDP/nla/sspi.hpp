@@ -676,14 +676,10 @@ struct SecurityFunctionTable {
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     virtual SEC_STATUS AcceptSecurityContext(SecBufferDesc * pInput,
                                              unsigned long fContextReq,
-                                             unsigned long TargetDataRep,
-                                             SecBufferDesc * pOutput,
-                                             TimeStamp * ptsTimeStamp) {
-        (void)fContextReq;
-        (void)TargetDataRep;
+                                             SecBufferDesc * pOutput) {
         (void)pInput;
+        (void)fContextReq;
         (void)pOutput;
-        (void)ptsTimeStamp;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 

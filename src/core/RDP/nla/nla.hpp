@@ -755,7 +755,6 @@ public:
        }
 
        unsigned long cbMaxToken = packageInfo.cbMaxToken;
-       TimeStamp expiration;
 
        status = this->table->AcquireCredentialsHandle(nullptr,
                                                       SECPKG_CRED_INBOUND,
@@ -822,8 +821,7 @@ public:
            output_buffer.Buffer.init(cbMaxToken);
 
            status = this->table->AcceptSecurityContext(&input_buffer_desc, fContextReq,
-                                                       SECURITY_NATIVE_DREP,
-                                                       &output_buffer_desc, &expiration);
+                                                       &output_buffer_desc);
 
            this->negoToken.init(output_buffer.Buffer.size());
            this->negoToken.copy(output_buffer.Buffer.get_data(),

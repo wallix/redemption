@@ -332,13 +332,10 @@ public:
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
         SecBufferDesc * pInput, unsigned long fContextReq,
-        unsigned long TargetDataRep, SecBufferDesc * pOutput,
-        TimeStamp * ptsTimeStamp
+        SecBufferDesc * pOutput
     ) override
     {
         (void)fContextReq;
-        (void)TargetDataRep;
-        (void)ptsTimeStamp;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;

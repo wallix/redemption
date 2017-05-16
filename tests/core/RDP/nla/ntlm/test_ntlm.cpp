@@ -76,8 +76,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     server_id.SetAuthIdentityFromUtf8(name, dom, pass);
     SEC_WINNT_AUTH_IDENTITY client_id;
     client_id.SetAuthIdentityFromUtf8(name, dom, pass);
-    TimeStamp server_expiration;
-    TimeStamp client_expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
@@ -158,9 +156,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    server_status = server_table.AcceptSecurityContext(&output_buffer_desc, fsContextReq,
-                                         SECURITY_NATIVE_DREP,
-                                         &input_buffer_desc, &server_expiration);
+    server_status = server_table.AcceptSecurityContext(
+        &output_buffer_desc, fsContextReq, &input_buffer_desc);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
@@ -197,9 +194,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
-    server_status = server_table.AcceptSecurityContext(&output_buffer_desc, fsContextReq,
-                                         SECURITY_NATIVE_DREP,
-                                         &input_buffer_desc, &server_expiration);
+    server_status = server_table.AcceptSecurityContext(
+        &output_buffer_desc, fsContextReq, &input_buffer_desc);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);

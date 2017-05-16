@@ -276,11 +276,8 @@ public:
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
         SecBufferDesc * pInput, unsigned long fContextReq,
-        unsigned long TargetDataRep, SecBufferDesc * pOutput,
-        TimeStamp * ptsTimeStamp
+        SecBufferDesc * pOutput
     ) override {
-        (void)TargetDataRep;
-        (void)ptsTimeStamp;
         NTLMContext* context = static_cast<NTLMContext*>(hContext.SecureHandleGetLowerPointer());
 
         if (!context) {
