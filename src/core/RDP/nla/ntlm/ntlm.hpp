@@ -73,8 +73,6 @@ public:
     }
 
     SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
-    SEC_STATUS ImportSecurityContext(char*, SecBuffer*, HANDLE) override
-    { return SEC_E_UNSUPPORTED_FUNCTION; }
 
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;

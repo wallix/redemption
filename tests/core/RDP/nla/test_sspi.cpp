@@ -296,8 +296,8 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
+    //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.AddCredentials(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);

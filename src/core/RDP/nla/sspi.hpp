@@ -752,13 +752,13 @@ struct SecurityFunctionTable {
 
     // GSS_Import_sec_context
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
-    virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
-                                             HANDLE pToken) {
-        (void)pszPackage;
-        (void)pPackedContext;
-        (void)pToken;
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+    //virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
+    //                                         HANDLE pToken) {
+    //    (void)pszPackage;
+    //    (void)pPackedContext;
+    //    (void)pToken;
+    //    return SEC_E_UNSUPPORTED_FUNCTION;
+    //}
 
     // GSS_Add_cred
     // ADD_CREDENTIALS AddCredentials;

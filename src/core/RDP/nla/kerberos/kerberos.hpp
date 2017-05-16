@@ -87,18 +87,17 @@ struct KERBEROSContext final {
 struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 {
 private:
-    CredHandle hCredential;
-    CtxtHandle hContext;
+    Krb5Creds* credentials = nullptr;
+    KERBEROSContext* krb_ctx = nullptr;
 
 public:
     ~Kerberos_SecurityFunctionTable()
     {
-        delete static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
+        delete this->krb_ctx;
 
-        Krb5Creds* credentials = static_cast<Krb5Creds*>(hCredential.SecureHandleGetLowerPointer());
-        if (credentials) {
-            credentials->destroy_credentials(nullptr);
-            delete credentials;
+        if (this->credentials) {
+            this->credentials->destroy_credentials(nullptr);
+            delete this->credentials;
         }
 
         unsetenv("KRB5CCNAME");
@@ -161,9 +160,7 @@ public:
             spn->copy(reinterpret_cast<const uint8_t *>(pszPrincipal), length);
             spn->get_data()[length] = 0;
         }
-        Krb5Creds * credentials = new Krb5Creds;
-        hCredential.SecureHandleSetLowerPointer(static_cast<void *>(credentials));
-        hCredential.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
+        this->credentials = new Krb5Creds;
 
         SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
         if (pAuthData != nullptr) {
@@ -179,8 +176,8 @@ public:
         setenv("KRB5CCNAME", cache, 1);
         LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
         if (identity) {
-            int ret = credentials->get_credentials(identity->princname,
-                                                   identity->princpass, nullptr);
+            int ret = this->credentials->get_credentials(identity->princname,
+                                                         identity->princpass, nullptr);
             if (!ret) {
                 return SEC_E_OK;
             }
@@ -223,16 +220,12 @@ public:
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!krb_ctx) {
+        if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            krb_ctx = new KERBEROSContext;
-            if (!krb_ctx) {
+            this->krb_ctx = new KERBEROSContext;
+            if (!this->krb_ctx) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-
-            hContext.SecureHandleSetLowerPointer(krb_ctx);
-            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
@@ -287,17 +280,17 @@ public:
 //                  );
         major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
-                                            &krb_ctx->gss_ctx,
-                                            krb_ctx->target_name,
+                                            &this->krb_ctx->gss_ctx,
+                                            this->krb_ctx->target_name,
                                             desired_mech,
                                             GSS_C_MUTUAL_FLAG,
                                             GSS_C_INDEFINITE,
                                             GSS_C_NO_CHANNEL_BINDINGS,
                                             &input_tok,
-                                            &krb_ctx->actual_mech,
+                                            &this->krb_ctx->actual_mech,
                                             &output_tok,
-                                            &krb_ctx->actual_services,
-                                            &krb_ctx->actual_time);
+                                            &this->krb_ctx->actual_services,
+                                            &this->krb_ctx->actual_time);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -339,16 +332,12 @@ public:
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        KERBEROSContext * krb_ctx = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!krb_ctx) {
+        if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            krb_ctx = new KERBEROSContext;
-            if (!krb_ctx) {
+            this->krb_ctx = new KERBEROSContext;
+            if (!this->krb_ctx) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-
-            hContext.SecureHandleSetLowerPointer(krb_ctx);
-            hContext.SecureHandleSetUpperPointer(const_cast<void *>(static_cast<const void *>(KERBEROS_PACKAGE_NAME)));
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
@@ -401,16 +390,16 @@ public:
    //               );
 
         major_status = gss_accept_sec_context(&minor_status,
-                                              &krb_ctx->gss_ctx,
+                                              &this->krb_ctx->gss_ctx,
                                               gss_no_cred,
                                               &input_tok,
                                               GSS_C_NO_CHANNEL_BINDINGS,
                                               nullptr,
-                                              &krb_ctx->actual_mech,
+                                              &this->krb_ctx->actual_mech,
                                               &output_tok,
-                                              &krb_ctx->actual_flag,
-                                              &krb_ctx->actual_time,
-                                              &krb_ctx->deleg_cred);
+                                              &this->krb_ctx->actual_flag,
+                                              &this->krb_ctx->actual_time,
+                                              &this->krb_ctx->deleg_cred);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -458,8 +447,7 @@ public:
         OM_uint32 major_status;
         OM_uint32 minor_status;
         int conf_state;
-        KERBEROSContext* context = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!context) {
+        if (!this->krb_ctx) {
             return SEC_E_NO_CONTEXT;
         }
         PSecBuffer data_buffer = nullptr;
@@ -477,7 +465,7 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
-        major_status = gss_wrap(&minor_status, context->gss_ctx, true,
+        major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -507,12 +495,11 @@ public:
         //      gss_qop_t *             /* qop_state */
         //      );
 
-	OM_uint32 major_status;
-	OM_uint32 minor_status;
-	int conf_state;
+        OM_uint32 major_status;
+        OM_uint32 minor_status;
+        int conf_state;
         gss_qop_t qop_state;
-        KERBEROSContext* context = static_cast<KERBEROSContext*>(hContext.SecureHandleGetLowerPointer());
-        if (!context) {
+        if (!this->krb_ctx) {
             return SEC_E_NO_CONTEXT;
         }
         PSecBuffer data_buffer = nullptr;
@@ -530,7 +517,7 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
-	major_status = gss_unwrap(&minor_status, context->gss_ctx, &inbuf, &outbuf,
+        major_status = gss_unwrap(&minor_status, this->krb_ctx->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
