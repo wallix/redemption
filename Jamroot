@@ -761,6 +761,7 @@ alias test_ntlm_suite :
     test_ntlm_message_challenge
     test_ntlm_message_authenticate
     test_ntlm_context
+    test_ntlm
 ;
 
 test-canonical core/RDP/nla/kerberos/credentials.hpp : <library>krb5 ;

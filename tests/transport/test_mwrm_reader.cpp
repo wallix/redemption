@@ -31,7 +31,7 @@
 
 
 extern "C" {
-    inline int hmac_fn(char * buffer)
+    inline int hmac_fn(uint8_t * buffer)
     {
         // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
         uint8_t hmac_key[] = {
@@ -44,7 +44,7 @@ extern "C" {
         return 0;
     }
 
-    inline int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
+    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
@@ -213,7 +213,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB");
 }
 
-inline int hmac_2016_fn(char * buffer)
+inline int hmac_2016_fn(uint8_t * buffer)
 {
     uint8_t hmac_key[32] = {
         0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
@@ -225,7 +225,7 @@ inline int hmac_2016_fn(char * buffer)
     return 0;
 }
 
-inline int trace_20161025_fn(char * /*base*/, int /*len*/, char * buffer, unsigned /*oldscheme*/)
+inline int trace_20161025_fn(uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/)
 {
     uint8_t trace_key[32] = {
         0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,

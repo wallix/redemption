@@ -760,7 +760,8 @@ struct TSSmartCardCreds {
  *     credentials [1] OCTET STRING
  * }
  */
-struct TSCredentials {
+struct TSCredentials
+{
     uint32_t credType;
     TSPasswordCreds passCreds;
     TSSmartCardCreds smartcardCreds;

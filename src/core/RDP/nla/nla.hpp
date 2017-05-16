@@ -33,14 +33,11 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-struct rdpCredssp
+class rdpCredssp
 {
     bool server;
     int send_seq_num;
     int recv_seq_num;
-
-    CtxtHandle context;
-    CredHandle credentials;
 
     Transport& trans;
 
@@ -63,8 +60,10 @@ struct rdpCredssp
     TimeObj & timeobj;
     const bool verbose;
 
+public:
     bool hardcoded_tests = false;
 
+public:
     rdpCredssp(Transport & transport,
                uint8_t * user,
                uint8_t * domain,
@@ -100,8 +99,8 @@ struct rdpCredssp
     ~rdpCredssp()
     {
         if (this->table) {
-            this->table->FreeContextBuffer(&this->context);
-            this->table->FreeCredentialsHandle(&this->credentials);
+            this->table->FreeContextBuffer();
+            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -145,8 +144,8 @@ public:
             LOG(LOG_INFO, "rdpCredssp::InitSecurityInterface");
         }
         if (this->table) {
-            this->table->FreeContextBuffer(&this->context);
-            this->table->FreeCredentialsHandle(&this->credentials);
+            this->table->FreeContextBuffer();
+            this->table->FreeCredentialsHandle();
             delete this->table;
             this->table = nullptr;
         }
@@ -163,6 +162,8 @@ public:
 
             #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
+            #else
+            assert(false);
             #endif
         }
         else if (this->table == nullptr) {
@@ -268,7 +269,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(&this->context, 0, &Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(0, &Message, this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "EncryptMessage status: 0x%08X\n", status);
@@ -326,7 +327,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&this->context, &Message, this->recv_seq_num++, &pfQOP);
+        status = this->table->DecryptMessage(&Message, this->recv_seq_num++, &pfQOP);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X\n", status);
@@ -406,7 +407,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(&this->context, 0, &Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(0, &Message, this->send_seq_num++);
 
         if (status != SEC_E_OK)
             return status;
@@ -453,7 +454,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&this->context, &Message, this->recv_seq_num++, &pfQOP);
+        status = this->table->DecryptMessage(&Message, this->recv_seq_num++, &pfQOP);
 
         if (status != SEC_E_OK)
             return status;
@@ -562,7 +563,7 @@ public:
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
                                                            &this->identity, nullptr, nullptr,
-                                                           &this->credentials, &expiration);
+                                                           &expiration);
             if (status == SEC_E_NO_CREDENTIALS) {
                 if (this->sec_interface != NTLM_Interface) {
                     this->sec_interface = NTLM_Interface;
@@ -583,7 +584,6 @@ public:
         SecBuffer output_buffer;
         SecBufferDesc input_buffer_desc = {0,0,nullptr};
         SecBufferDesc output_buffer_desc;
-        bool have_context = false;
         bool have_input_buffer = false;
         input_buffer.setzero();
         output_buffer.setzero();
@@ -606,16 +606,13 @@ public:
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-            status = this->table->InitializeSecurityContext(&this->credentials,
-                                                            (have_context) ?
-                                                            &this->context : nullptr,
-                                                            reinterpret_cast<char*>(
+            status = this->table->InitializeSecurityContext(reinterpret_cast<char*>(
                                                                 this->ServicePrincipalName.get_data()),
                                                             fContextReq,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : nullptr,
-                                                            this->verbose, &this->context,
+                                                            this->verbose,
                                                             &output_buffer_desc,
                                                             &expiration);
             if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
@@ -633,10 +630,10 @@ public:
             if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                 (status == SEC_I_COMPLETE_NEEDED) ||
                 (status == SEC_E_OK)) {
-                this->table->CompleteAuthToken(&this->context, &output_buffer_desc);
+                this->table->CompleteAuthToken(&output_buffer_desc);
 
                 // have_pub_key_auth = true;
-                if (this->table->QueryContextAttributes(&this->context, SECPKG_ATTR_SIZES,
+                if (this->table->QueryContextAttributes(SECPKG_ATTR_SIZES,
                                                         &this->ContextSizes) != SEC_E_OK) {
                     LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                     return 0;
@@ -704,7 +701,6 @@ public:
                                      this->negoToken.size());
 
             have_input_buffer = true;
-            have_context = true;
         }
 
         /* Encrypted Public Key +1 */
@@ -774,7 +770,7 @@ public:
        status = this->table->AcquireCredentialsHandle(nullptr, NLA_PKG_NAME,
                                                       SECPKG_CRED_INBOUND, nullptr,
                                                       nullptr, nullptr, nullptr,
-                                                      &this->credentials, &expiration);
+                                                      &expiration);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
@@ -786,9 +782,6 @@ public:
        SecBuffer output_buffer;
        SecBufferDesc input_buffer_desc;
        SecBufferDesc output_buffer_desc;
-       bool have_context;
-
-       have_context = false;
 
        input_buffer.setzero();
        output_buffer.setzero();
@@ -838,10 +831,8 @@ public:
            output_buffer.BufferType = SECBUFFER_TOKEN;
            output_buffer.Buffer.init(cbMaxToken);
 
-           status = this->table->AcceptSecurityContext(&this->credentials,
-                                                       have_context? &this->context: nullptr,
-                                                       &input_buffer_desc, fContextReq,
-                                                       SECURITY_NATIVE_DREP, &this->context,
+           status = this->table->AcceptSecurityContext(&input_buffer_desc, fContextReq,
+                                                       SECURITY_NATIVE_DREP,
                                                        &output_buffer_desc, &expiration);
 
            this->negoToken.init(output_buffer.Buffer.size());
@@ -849,7 +840,7 @@ public:
                                 output_buffer.Buffer.size());
 
            if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-               this->table->CompleteAuthToken(&this->context, &output_buffer_desc);
+               this->table->CompleteAuthToken(&output_buffer_desc);
 
                if (status == SEC_I_COMPLETE_NEEDED)
                    status = SEC_E_OK;
@@ -859,8 +850,7 @@ public:
 
            if (status == SEC_E_OK) {
 
-               if (this->table->QueryContextAttributes(&this->context,
-                                                       SECPKG_ATTR_SIZES,
+               if (this->table->QueryContextAttributes(SECPKG_ATTR_SIZES,
                                                        &this->ContextSizes) != SEC_E_OK) {
                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                    return 0;
@@ -887,8 +877,6 @@ public:
 
            if (status != SEC_I_CONTINUE_NEEDED)
                break;
-
-           have_context = true;
        }
 
        /* Receive encrypted credentials */
@@ -906,14 +894,14 @@ public:
            return 0;
        }
 
-       status = this->table->ImpersonateSecurityContext(&this->context);
+       status = this->table->ImpersonateSecurityContext();
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X\n", status);
            return 0;
        }
        else {
-           status = this->table->RevertSecurityContext(&this->context);
+           status = this->table->RevertSecurityContext();
 
            if (status != SEC_E_OK) {
                LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X\n", status);

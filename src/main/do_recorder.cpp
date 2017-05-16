@@ -87,8 +87,7 @@ enum { QUICK_CHECK_LENGTH = 4096 };
 // return 0 on success and puts signature in provided buffer
 // return -1 if some system error occurs, errno contains actual error
 static inline int file_start_hmac_sha256(const char * filename,
-                     uint8_t const * crypto_key,
-                     size_t          key_len,
+                     uint8_t const (&crypto_key)[HMAC_KEY_LENGTH],
                      size_t          check_size,
                      uint8_t (& hash)[SslSha256::DIGEST_LENGTH])
 {
@@ -98,12 +97,13 @@ static inline int file_start_hmac_sha256(const char * filename,
         return fd;
     }
 
-    SslHMAC_Sha256 hmac(crypto_key, key_len);
+    SslHMAC_Sha256 hmac(crypto_key, HMAC_KEY_LENGTH);
 
+    ssize_t ret = 0;
     uint8_t buf[4096] = {};
-    ssize_t ret = ::read(fd, buf, sizeof(buf));
-    for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
-        // number_of_bytes_read < check_size
+    size_t  number_of_bytes_read = 0;
+
+    while ((ret = ::read(fd, buf, sizeof(buf)))) {
         if (ret < 0){
             // interruption signal, not really an error
             if (errno == EINTR){
@@ -111,13 +111,12 @@ static inline int file_start_hmac_sha256(const char * filename,
             }
             return -1;
         }
-        if (check_size && number_of_bytes_read + ret > check_size){
+        if (check_size && number_of_bytes_read + ret >= check_size){
             hmac.update(buf, check_size - number_of_bytes_read);
             break;
         }
-        if (ret == 0){ break; }
         hmac.update(buf, ret);
-        ret = ::read(fd, buf, sizeof(buf));
+        number_of_bytes_read += ret;
     }
     hmac.final(hash);
     return 0;
@@ -590,7 +589,7 @@ inline void load_hash(
         in_hash_fb.open(full_hash_path.c_str());
     }
     catch (Error const &) {
-        LOG(LOG_INFO, "Open load_hash failed");
+        LOG(LOG_ERR, "Open load_hash failed");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
 
@@ -626,7 +625,7 @@ struct out_is_mismatch
 
 static inline int check_file(const std::string & filename, const MetaLine & metadata,
                       bool quick, bool has_checksum, bool ignore_stat_info,
-                      uint8_t const * hmac_key, size_t hmac_key_len, bool update_stat_info, out_is_mismatch has_mismatch_stat)
+                      uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], bool update_stat_info, out_is_mismatch has_mismatch_stat)
 {
     has_mismatch_stat.is_mismatch = false;
     struct stat64 sb;
@@ -643,12 +642,11 @@ static inline int check_file(const std::string & filename, const MetaLine & meta
         }
 
         uint8_t hash[MD_HASH::DIGEST_LENGTH]{};
-        if (file_start_hmac_sha256(filename.c_str(),
-                             hmac_key, hmac_key_len,
-                             quick?QUICK_CHECK_LENGTH:0, hash) < 0) {
+        if (file_start_hmac_sha256(filename.c_str(), hmac_key, quick?QUICK_CHECK_LENGTH:0, hash) < 0) {
             std::cerr << "Error reading file \"" << filename << "\"\n" << std::endl;
             return false;
         }
+
         if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, MD_HASH::DIGEST_LENGTH)){
             std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)\n" << std::endl;
             return false;
@@ -794,7 +792,10 @@ static inline int check_encrypted_or_checksumed(
     /*****************
     * Load file hash *
     *****************/
-    LOG(LOG_INFO, "Load file hash");
+    if (verbose) {
+        LOG(LOG_INFO, "Load file hash. Is encrypted %d. Is checksumed: %d",
+            infile_is_encrypted, reader.get_header().has_checksum);
+    }
     MetaLine hash_line {};
 
     std::string const full_hash_path = hash_path + input_filename;
@@ -820,14 +821,12 @@ static inline int check_encrypted_or_checksumed(
     ******************/
     if (!check_file(
         full_mwrm_filename, hash_line, quick_check, reader.get_header().has_checksum,
-        ignore_stat_info, cctx.get_hmac_key(), 32,
+        ignore_stat_info, cctx.get_hmac_key(),
         update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
     )){
         if (!has_mismatch_stat_hash) {
             return 1;
         }
-    }
-    else {
     }
 
     struct MetaLine2CtxForRewriteStat
@@ -855,7 +854,7 @@ static inline int check_encrypted_or_checksumed(
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
             full_part_filename, meta_line_wrm, quick_check, reader.get_header().has_checksum,
-            ignore_stat_info, cctx.get_hmac_key(), 32,
+            ignore_stat_info, cctx.get_hmac_key(),
             update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
         ){
             if (has_mismatch_stat_mwrm) {
@@ -1782,8 +1781,7 @@ struct RecorderParams {
     bool json_pgs = false;
 };
 
-int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose);
-
+inline
 int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
@@ -2103,14 +2101,7 @@ extern "C" {
         OpenSSL_add_all_digests();
 
         int arg_used = 0;
-
-
-          int command = 0;
-//        int command = ends_with(argv[arg_used], {"recorder.py", "verifier.py", "decoder.py"});
-//        if (command){
-//            command = command - 1;
-//        }
-//        // default command is redrec;
+        int command = 0;
 
         if (argc > arg_used + 1){
             command = in(argv[arg_used+1], {"redrec", "redver", "reddec"});

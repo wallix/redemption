@@ -33,15 +33,13 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     uint8_t pass[] = "a";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetKrbAuthIdentity(name, pass);
-    CredHandle credentials;
     TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
-                                            &id, nullptr, nullptr,
-                                            &credentials, &expiration);
+    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND,
+                                            nullptr, &id, nullptr, nullptr, &expiration);
 
 
     RED_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);
@@ -55,9 +53,8 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     // RED_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
     //                     creds->identity.Password.get_data(),
     //                     creds->identity.Password.size()));
-    status = table.FreeCredentialsHandle(&credentials);
+    status = table.FreeCredentialsHandle();
     RED_CHECK_EQUAL(status, SEC_E_OK);
-
 }
 
 

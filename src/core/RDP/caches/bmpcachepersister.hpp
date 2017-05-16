@@ -199,7 +199,7 @@ private:
                           , &original_palette, cx, cy, stream.get_data()
                           , bmp_size);
 
-                uint8_t sha1[20];
+                uint8_t sha1[SslSha1::DIGEST_LENGTH];
                 bmp.compute_sha1(sha1);
                 if (memcmp(sig, sha1, sizeof(sig))) {
                     LOG( LOG_ERR
@@ -405,15 +405,15 @@ private:
                 const uint8_t  * bmp_data = bmp.data();
 
                 // if (bmp_cache.owner == BmpCache::Front) {
-                //     uint8_t sha1[20];
+                //     uint8_t sha1[SslSha1::DIGEST_LENGTH];
                 //     bmp.compute_sha1(sha1);
 
-                //     char sig_sig[20];
+                //     char sig_sig[SslSha1::DIGEST_LENGTH];
 
                 //     snprintf( sig_sig, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
                 //             , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
 
-                //     char sig_sha1[20];
+                //     char sig_sha1[SslSha1::DIGEST_LENGTH];
 
                 //     snprintf( sig_sha1, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
                 //             , sha1[0], sha1[1], sha1[2], sha1[3], sha1[4], sha1[5], sha1[6], sha1[7]);
