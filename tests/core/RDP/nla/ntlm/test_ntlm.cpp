@@ -329,6 +329,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // clear handles
     server_status = server_table.FreeContextBuffer();
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
+    server_status = server_table.FreeCredentialsHandle();
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
     client_status = client_table.FreeContextBuffer();
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
     client_status = client_table.FreeCredentialsHandle();
