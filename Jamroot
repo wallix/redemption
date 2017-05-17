@@ -1183,10 +1183,11 @@ obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
 obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp ;
 obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
 obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
+obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) ;
 
 lib sashimi :
     sashimi_pki
-    $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
+    sashimi_log
     sashimi_channels
     sashimi_sftp
     sashimi_libssh
