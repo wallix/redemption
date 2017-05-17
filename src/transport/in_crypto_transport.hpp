@@ -411,9 +411,7 @@ private:
                     case SNAPPY_OK:
                         break;
                     case SNAPPY_INVALID_INPUT:
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     case SNAPPY_BUFFER_TOO_SMALL:
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     default:
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
@@ -425,13 +423,12 @@ private:
             } // raw_size
 
             // Check how much we can copy
-            unsigned int copiable_size = this->raw_size - this->clear_pos;
-            if (copiable_size > len){
-                copiable_size = len;
-            }
+            std::size_t const copiable_size = std::min(
+                len, static_cast<std::size_t>(this->raw_size - this->clear_pos)
+            );
             // Copy buffer to caller
             ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], copiable_size);
-            this->clear_pos      += copiable_size;
+            this->clear_pos += copiable_size;
             this->current_len += copiable_size;
             if (this->file_len <= this->current_len) {
                 this->eof = true;
