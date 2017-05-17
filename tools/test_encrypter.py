@@ -98,14 +98,14 @@ class TestEncrypter(unittest.TestCase):
 
     def test_reader_largefile(self):
 
-        buffersize = 20000
+        buffersize = 65536
         checksums = []
-        with open("/home/cgrosjean/d/ssh/Fargo.avi", "r") as f:
-            with CryptoWriter(1, 1, "./newfar4.avi", checksums, random_type="LCG") as fw:
+        with open("./tests/includes/fixtures/dump_TLSw2008.hpp", "r") as f:
+            with CryptoWriter(1, 1, "./dump.enc", checksums, random_type="LCG") as fw:
                 total_len = 0
                 total_write_len = 0
                 while True:
-                    chunk = f.read(buffersize)
+                    chunk = f.read(40000)
                     print("read chunk %d:%d:%d" % (total_len, total_len + len(chunk),len(chunk)))
                     total_len += len(chunk)
                     if not chunk:
@@ -123,9 +123,9 @@ class TestEncrypter(unittest.TestCase):
 
         data = ""
         total = 0
-        with open("./Fargo2.avi", "w") as f:
-            with CryptoReader("./newfar4.avi") as cr:
-                for line in cr.read(16384):
+        with CryptoReader("./dump.enc") as cr:
+            with open("./dump.txt", "w") as f:
+                for line in cr.read(buffersize):
                     print("line read=%d total=%d" % (len(line), total))
                     total += len(line)
                     f.write(line)

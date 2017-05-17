@@ -41,5 +41,6 @@ class CryptoReader(object):
                 raise IOError()
             if res == 0:
                 return
+            print("read->(%d,%d)" % (res, len(buf[:res])))
             yield buf[:res]
 
