@@ -113,12 +113,11 @@ public:
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
-                                              void* pBuffer) override {
-        if (!pBuffer) {
+                                      SecPkgContext_Sizes* ContextSizes) override {
+        if (!ContextSizes) {
             return SEC_E_INSUFFICIENT_MEMORY;
         }
         if (ulAttribute == SECPKG_ATTR_SIZES) {
-            SecPkgContext_Sizes* ContextSizes = static_cast<SecPkgContext_Sizes*>(pBuffer);
             ContextSizes->cbMaxToken = 4096;
             ContextSizes->cbMaxSignature = 0;
             ContextSizes->cbBlockSize = 0;

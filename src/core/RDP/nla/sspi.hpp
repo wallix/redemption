@@ -704,9 +704,9 @@ struct SecurityFunctionTable {
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     virtual SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
-                                              void* pBuffer) {
+                                              SecPkgContext_Sizes* ContextSizes) {
         (void)ulAttribute;
-        (void)pBuffer;
+        (void)ContextSizes;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
