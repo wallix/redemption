@@ -239,25 +239,22 @@ public:
         }
 
         size_t buflen = sizeof(this->result_buffer);
+        if (len > buflen - 1000) { // 1000: magic enough for header, actual value is smaller
+            len = buflen;
+        }
+        // Check how much we can append into buffer
+        size_t available_size = std::min(size_t(CRYPTO_BUFFER_SIZE - this->pos), len);
+        // Append and update pos pointer
+        ::memcpy(this->buf + this->pos, &data[0], available_size);
+        this->pos += available_size;
+        // If buffer is full, flush it to disk
         size_t towrite = 0;
-        unsigned int remaining_size = len;
-        while (remaining_size > 0) {
-            // Check how much we can append into buffer
-            unsigned int available_size = std::min(unsigned(CRYPTO_BUFFER_SIZE - this->pos), remaining_size);
-            // Append and update pos pointer
-            ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
-            this->pos += available_size;
-            // If buffer is full, flush it to disk
-            if (this->pos == CRYPTO_BUFFER_SIZE) {
-                size_t tmp_towrite = 0;
-                this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
-                towrite += tmp_towrite;
-            }
-            remaining_size -= available_size;
+        if (this->pos == CRYPTO_BUFFER_SIZE) {
+            this->flush(this->result_buffer, buflen, towrite);
         }
         // Update raw size counter
-        this->raw_size += len;
-        return {{this->result_buffer, towrite}, len};
+        this->raw_size += available_size;
+        return {{this->result_buffer, towrite}, available_size};
     }
 };
 
@@ -402,7 +399,11 @@ private:
             LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        const ocrypto::Result res = this->encrypter.write(data, len);
-        this->out_file.send(res.buf.data(), res.buf.size());
+        auto to_send = len;
+        while (to_send > 0) {
+            const ocrypto::Result res = this->encrypter.write(data, to_send);
+            this->out_file.send(res.buf.data(), res.buf.size());
+            to_send -= res.consumed;
+        }
     }
 };

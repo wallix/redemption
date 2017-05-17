@@ -100,8 +100,8 @@ class TestEncrypter(unittest.TestCase):
 
         buffersize = 65536
         checksums = []    
-        with open("/home/cgrosjean/d/ssh/Fargo.avi", "r") as f:
-            with CryptoWriter(1, 1, "./newfar4.avi", checksums) as fw:
+        with open("./tests/includes/fixtures/dump_TLSw2008.hpp", "r") as f:
+            with CryptoWriter(1, 1, "./dump.enc", checksums) as fw:
                 total_len = 0
                 total_write_len = 0
                 while True:
@@ -123,8 +123,8 @@ class TestEncrypter(unittest.TestCase):
     
         data = ""
         total = 0
-        with open("./Fargo2.avi", "w") as f:
-            with CryptoReader("./newfar4.avi") as cr:
+        with CryptoReader("./dump.enc") as cr:
+            with open("./dump.txt", "w") as f:
                 for line in cr.read(buffersize):
                     print("line read=%d total=%d" % (len(line), total))
                     total += len(line)
