@@ -213,42 +213,6 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
     // hexdump_c(id.Password.get_data(), id.Password.size());
 }
 
-RED_AUTO_TEST_CASE(TestSecureHandle)
-{
-    SecHandle handle;
-    unsigned long a = 521354;
-    SecBuffer buff;
-    buff.Buffer.init(462);
-
-    handle.SecureHandleSetLowerPointer(&a);
-    handle.SecureHandleSetUpperPointer(&buff);
-
-    unsigned long * b = reinterpret_cast<unsigned long *>(handle.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport = reinterpret_cast<PSecBuffer>(handle.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b, a);
-    RED_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
-
-    SecHandle handle2(handle);
-
-    unsigned long * b2 = reinterpret_cast<unsigned long *>(handle2.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport2 = reinterpret_cast<PSecBuffer>(handle2.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b2, a);
-    RED_CHECK_EQUAL(buffimport2->Buffer.size(), buff.Buffer.size());
-
-    SecHandle handle3;
-
-    handle3 = handle2;
-
-    unsigned long * b3 = reinterpret_cast<unsigned long *>(handle3.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport3 = reinterpret_cast<PSecBuffer>(handle3.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b3, a);
-    RED_CHECK_EQUAL(buffimport3->Buffer.size(), buff.Buffer.size());
-
-}
-
 
 RED_AUTO_TEST_CASE(TestSecFunctionTable)
 {
@@ -278,7 +242,7 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ApplyControlToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryContextAttributes(0, nullptr);
+    status = table.QueryContextSizes(nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.ImpersonateSecurityContext();

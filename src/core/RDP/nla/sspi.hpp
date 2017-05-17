@@ -342,59 +342,6 @@ struct CREDENTIALS {
 };
 
 
-class SecHandle
-{
-    void* dwLower = nullptr;
-    void* dwUpper = nullptr;
-
-public:
-    SecHandle() = default;
-
-    void SecureHandleSetLowerPointer(void* pointer) {
-        this->dwLower = pointer;
-    }
-
-    void SecureHandleSetUpperPointer(void* pointer) {
-       this->dwUpper = pointer;
-    }
-
-    void* SecureHandleGetLowerPointer() const {
-        return this->dwLower;
-    }
-    void* SecureHandleGetUpperPointer() const {
-        return this->dwUpper;
-    }
-};
-
-class CredHandle
-{
-    void* dwLower = nullptr;
-    void* dwUpper = nullptr;
-
-public:
-    CredHandle() = default;
-
-    void SecureHandleSetLowerPointer(void* pointer) {
-        this->dwLower = pointer;
-    }
-
-    void SecureHandleSetUpperPointer(void* pointer) {
-       this->dwUpper = pointer;
-    }
-
-    void* SecureHandleGetLowerPointer() const {
-        return this->dwLower;
-    }
-    void* SecureHandleGetUpperPointer() const {
-        return this->dwUpper;
-    }
-};
-
-typedef SecHandle* PSecHandle;
-
-typedef SecHandle CtxtHandle;
-
-
 enum SEC_STATUS {
     SEC_E_OK = 0x00000000,
     SEC_E_INSUFFICIENT_MEMORY = 0x80090300,
@@ -634,8 +581,7 @@ struct SecurityFunctionTable {
     //}
 
     // QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
-    //virtual SEC_STATUS QueryCredentialsAttributes(PCredHandle phCredential,
-    //                                              unsigned long ulAttribute,
+    //virtual SEC_STATUS QueryCredentialsAttributes(unsigned long ulAttribute,
     //                                              void* pBuffer) {
     //    return SEC_E_UNSUPPORTED_FUNCTION;
     //}
@@ -703,9 +649,7 @@ struct SecurityFunctionTable {
     //}
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    virtual SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
-                                              SecPkgContext_Sizes* ContextSizes) {
-        (void)ulAttribute;
+    virtual SEC_STATUS QueryContextSizes(SecPkgContext_Sizes* ContextSizes) {
         (void)ContextSizes;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
@@ -760,7 +704,7 @@ struct SecurityFunctionTable {
 
     // GSS_Add_cred
     // ADD_CREDENTIALS AddCredentials;
-    //virtual SEC_STATUS AddCredentials(PCredHandle phCredentials, char* pszPrincipal,
+    //virtual SEC_STATUS AddCredentials(char* pszPrincipal,
     //                                 char* pszPackage, uint32_t fCredentialUse,
     //                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
     //                                 void* pvGetKeyArgument, TimeStamp * ptsExpiry) {

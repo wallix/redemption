@@ -621,9 +621,8 @@ public:
                 this->table->CompleteAuthToken(&output_buffer_desc);
 
                 // have_pub_key_auth = true;
-                if (this->table->QueryContextAttributes(SECPKG_ATTR_SIZES,
-                                                        &this->ContextSizes) != SEC_E_OK) {
-                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+                if (this->table->QueryContextSizes(&this->ContextSizes) != SEC_E_OK) {
+                    LOG(LOG_ERR, "QueryContextSizes failure");
                     return 0;
                 }
                 encrypted = this->credssp_encrypt_public_key_echo();
@@ -836,9 +835,8 @@ public:
 
            if (status == SEC_E_OK) {
 
-               if (this->table->QueryContextAttributes(SECPKG_ATTR_SIZES,
-                                                       &this->ContextSizes) != SEC_E_OK) {
-                   LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+               if (this->table->QueryContextSizes(&this->ContextSizes) != SEC_E_OK) {
+                   LOG(LOG_ERR, "QueryContextSizes failure");
                    return 0;
                }
 

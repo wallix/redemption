@@ -83,20 +83,15 @@ public:
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextAttributes(unsigned long ulAttribute,
-                                      SecPkgContext_Sizes* ContextSizes) override {
+    SEC_STATUS QueryContextSizes(SecPkgContext_Sizes* ContextSizes) override {
         if (!ContextSizes) {
             return SEC_E_INSUFFICIENT_MEMORY;
         }
-        if (ulAttribute == SECPKG_ATTR_SIZES) {
-            ContextSizes->cbMaxToken = 2010;
-            ContextSizes->cbMaxSignature = 16;
-            ContextSizes->cbBlockSize = 0;
-            ContextSizes->cbSecurityTrailer = 16;
-            return SEC_E_OK;
-        }
-
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        ContextSizes->cbMaxToken = 2010;
+        ContextSizes->cbMaxSignature = 16;
+        ContextSizes->cbBlockSize = 0;
+        ContextSizes->cbSecurityTrailer = 16;
+        return SEC_E_OK;
     }
 
     // GSS_Acquire_cred

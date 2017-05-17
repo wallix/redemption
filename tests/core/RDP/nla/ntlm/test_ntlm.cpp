@@ -254,7 +254,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
                         16));
 
     SecPkgContext_Sizes ContextSizes;
-    server_table.QueryContextAttributes(SECPKG_ATTR_SIZES, &ContextSizes);
+    server_table.QueryContextSizes(&ContextSizes);
     RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
     RED_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
     RED_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
