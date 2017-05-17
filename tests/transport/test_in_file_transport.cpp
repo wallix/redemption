@@ -54,10 +54,8 @@ RED_AUTO_TEST_CASE(TestOutFileTransport)
         ft.recv_boom(pbuf, 11);
         pbuf += 11;
         ft.recv_boom(pbuf, 10);
-        pbuf += 10;
         RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
-        pbuf = buf;
-        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(pbuf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
     }
     ::unlink(tmpname);
 }
