@@ -372,79 +372,75 @@ private:
                 return 0;
             }
 
-            unsigned int remaining_size = len;
-            while (remaining_size > 0) {
-                // If we do not have any clear data available read some
+            // If we do not have any clear data available read some
+            if (!this->raw_size) {
 
-                if (!this->raw_size) {
+                // Read a full ciphered block at once
+                uint8_t hlen[4] = {};
+                this->raw_read(hlen, 4);
 
-                    // Read a full ciphered block at once
-                    uint8_t hlen[4] = {};
-                    this->raw_read(hlen, 4);
-
-                    Parse p(hlen);
-                    uint32_t enc_len = p.in_uint32_le();
-                    if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                        this->state = CF_EOF;
-                        this->clear_pos = 0;
-                        this->raw_size = 0;
-                        break;
-                    }
-                    if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
-                        this->close();
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-
-                    // PERF allocation in loop
-                    std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
-                    this->raw_read(&enc_buf[0], enc_len);
-
-                    // PERF allocation in loop
-                    std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
-                    size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
-
-                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                    const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(&pack_buf[0]),
-                            pack_buf_size, this->clear_data, &chunk_size);
-
-                    switch (status)
-                    {
-                        case SNAPPY_OK:
-                            break;
-                        case SNAPPY_INVALID_INPUT:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                        case SNAPPY_BUFFER_TOO_SMALL:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                        default:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-
+                Parse p(hlen);
+                uint32_t enc_len = p.in_uint32_le();
+                if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                    this->state = CF_EOF;
                     this->clear_pos = 0;
-                    // When reading, raw_size represent the current chunk size
-                    this->raw_size = chunk_size;
-
-                    if (!this->raw_size) { // end of file reached
-                        break;
-                    }
-                } // raw_size
-                // Check how much we can copy
-                unsigned int copiable_size = std::min(this->raw_size - this->clear_pos, remaining_size);
-                // Copy buffer to caller
-                ::memcpy(&buffer[len - remaining_size], &this->clear_data[this->clear_pos], copiable_size);
-                this->clear_pos      += copiable_size;
-                this->current_len += len;
-                if (this->file_len <= this->current_len) {
-                    this->eof = true;
-                }
-                remaining_size -= copiable_size;
-                // Check if we reach the end
-                if (this->raw_size == this->clear_pos) {
                     this->raw_size = 0;
+                    this->eof = true;
+                    return 0;
                 }
-                // TODO: for partial_read we could avoid looping on remaining size
-            } // while (remaining_size)
-            return len - remaining_size;
+                if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
+                    this->close();
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+
+                // PERF allocation in loop
+                std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
+                this->raw_read(&enc_buf[0], enc_len);
+
+                // PERF allocation in loop
+                std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
+                size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
+
+                size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                const snappy_status status = snappy_uncompress(
+                        reinterpret_cast<char *>(&pack_buf[0]),
+                        pack_buf_size, this->clear_data, &chunk_size);
+
+                switch (status)
+                {
+                    case SNAPPY_OK:
+                        break;
+                    case SNAPPY_INVALID_INPUT:
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    case SNAPPY_BUFFER_TOO_SMALL:
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    default:
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+
+                this->clear_pos = 0;
+                // When reading, raw_size represent the current chunk size
+                this->raw_size = chunk_size;
+
+            } // raw_size
+
+            // Check how much we can copy
+            unsigned int copiable_size = this->raw_size - this->clear_pos;
+            if (copiable_size > len){
+                copiable_size = len;
+            }
+            // Copy buffer to caller
+            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], copiable_size);
+            this->clear_pos      += copiable_size;
+            this->current_len += copiable_size;
+            if (this->file_len <= this->current_len) {
+                this->eof = true;
+            }
+            // Check if we reach the end
+            if (this->raw_size == this->clear_pos) {
+                this->raw_size = 0;
+            }
+            return copiable_size;
         }
         else {
             if (this->raw_size - this->clear_pos > len){
