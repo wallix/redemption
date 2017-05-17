@@ -260,18 +260,13 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QueryCredentialsAttributes(nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcquireCredentialsHandle(nullptr, nullptr, 0, nullptr,
-                                            nullptr, nullptr, nullptr, nullptr);
+    status = table.AcquireCredentialsHandle(nullptr, 0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeCredentialsHandle();
+    status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(nullptr, 0, 0, nullptr,
-                                             0, nullptr, nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
-    status = table.AcceptSecurityContext(nullptr, 0, 0, nullptr, nullptr);
+    status = table.AcceptSecurityContext(nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.CompleteAuthToken(nullptr);
@@ -298,14 +293,11 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.VerifySignature(nullptr, nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeContextBuffer();
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
     //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
+    //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.AddCredentials(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -313,25 +305,21 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.EncryptMessage(0, nullptr, 0);
+    status = table.EncryptMessage(nullptr, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(nullptr, 0, nullptr);
+    status = table.DecryptMessage(nullptr, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     SecPkgInfo packageInfo;
-    status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
+    status = table.QuerySecurityPackageInfo(&packageInfo);
     RED_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
     // RED_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
     // RED_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
     // RED_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
     // RED_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
-
-    SecPkgInfo packageInfo2;
-    status = table.QuerySecurityPackageInfo("KERBEROS", &packageInfo2);
-    RED_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
 
 }

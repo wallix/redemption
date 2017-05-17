@@ -16,10 +16,6 @@ else
   cd "$(dirname "$0")"/../..
 fi
 
-out=/tmp/scan-build-$$
-bjam debug --toolset=clang $targets -n -a \
-| grep -E "$pattern" \
-| while read l ; do
-  eval scan-build $(echo $l | sed s'# -o "[^"]\+# -o "'$out'#') -Wno-unknown-warning-option
-  rm -- $out
-done
+bjam debug --toolset=clang-wscan \
+  cxxflags='-Wno-unknown-warning-option -fsyntax-only' \
+  $targets -a -j2
