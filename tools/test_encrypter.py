@@ -1,5 +1,5 @@
 #!/usr/bin/python -O
-  
+
 import unittest
 
 from redcryptofile.encrypter import CryptoWriter
@@ -10,7 +10,7 @@ class TestEncrypter(unittest.TestCase):
 #    def test_writer2(self):
 #        try:
 #            checksums = []
-#            with CryptoWriter(0, 0, "./tmp/clear2.txt", checksums) as x:
+#            with CryptoWriter(0, 0, "./tmp/clear2.txt", checksums, random_type="LCG") as x:
 #                to_send = b"We write, and again, and so on."
 #                while to_send:
 #                    res = x.write(to_send)
@@ -22,7 +22,7 @@ class TestEncrypter(unittest.TestCase):
 #    def test_writer_checksum2(self):
 #        try:
 #            checksums = []
-#            with CryptoWriter(0, 1, "./clear.txt", checksums) as x:
+#            with CryptoWriter(0, 1, "./clear.txt", checksums, random_type="LCG") as x:
 #                to_send = b"We write, and again, and so on."
 #                while to_send:
 #                    res = x.write(to_send)
@@ -38,7 +38,7 @@ class TestEncrypter(unittest.TestCase):
 #    def test_writer_encryption2(self):
 #        try:
 #            checksums = []
-#            with CryptoWriter(1, 1, "./encrypted.txt", checksums) as x:
+#            with CryptoWriter(1, 1, "./encrypted.txt", checksums, random_type="LCG") as x:
 #                to_send = b"We write, and again, and so on."
 #                while to_send:
 #                    res = x.write(to_send)
@@ -52,12 +52,12 @@ class TestEncrypter(unittest.TestCase):
 #             '2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5'])
 
 #    def test_reader_clear(self):
-#    
+#
 #        test_text = b"We write, and \0again, and so on."
 #        test_file = "./clear.txt"
-#        
+#
 #        checksums = []
-#        with CryptoWriter(0, 0, test_file, checksums) as x:
+#        with CryptoWriter(0, 0, test_file, checksums, random_type="LCG") as x:
 #            to_send = test_text
 #            while to_send:
 #                res = x.write(to_send)
@@ -73,9 +73,9 @@ class TestEncrypter(unittest.TestCase):
 #    def test_reader_checksum(self):
 #        test_text = b"We write, and \0again, and so on."
 #        test_file = "./check.txt"
-#        
+#
 #        checksums = []
-#        with CryptoWriter(0, 1, test_file, checksums) as x:
+#        with CryptoWriter(0, 1, test_file, checksums, random_type="LCG") as x:
 #            to_send = test_text
 #            while to_send:
 #                res = x.write(to_send)
@@ -99,9 +99,9 @@ class TestEncrypter(unittest.TestCase):
     def test_reader_largefile(self):
 
         buffersize = 20000
-        checksums = []    
+        checksums = []
         with open("/home/cgrosjean/d/ssh/Fargo.avi", "r") as f:
-            with CryptoWriter(1, 1, "./newfar4.avi", checksums) as fw:
+            with CryptoWriter(1, 1, "./newfar4.avi", checksums, random_type="LCG") as fw:
                 total_len = 0
                 total_write_len = 0
                 while True:
@@ -120,7 +120,7 @@ class TestEncrypter(unittest.TestCase):
 #          '0D90D013E1F93279F3B295BC5D67227A816C1E7BFB4987E9FC6DCC2BF363AFB9'])
 
 #        print "Done writing newfar"
-    
+
         data = ""
         total = 0
         with open("./Fargo2.avi", "w") as f:
@@ -138,4 +138,4 @@ class TestEncrypter(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-        
+

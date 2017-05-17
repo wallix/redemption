@@ -227,12 +227,14 @@ const char* redcryptofile_version() {
 }
 
 
-const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle) {
+/// \return HashHexArray
+char const * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     return handle->qhashhex;
 }
 
-const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
+/// \return HashHexArray
+char const * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     return handle->fhashhex;
 }
@@ -245,7 +247,7 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
         return new (std::nothrow) RedCryptoWriterHandle(
-            RedCryptoWriterHandle::LCG /* TODO UDEV */, with_encryption, with_checksum, hmac_fn, trace_fn
+            RedCryptoWriterHandle::UDEV, with_encryption, with_checksum, hmac_fn, trace_fn
         ),
         nullptr,
         RedCryptoErrorContext(),
@@ -253,11 +255,27 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
     );
 }
 
-int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path) {
+
+RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
+    int with_encryption, int with_checksum,
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn
+) {
+    SCOPED_TRACE;
+    CHECK_NOTHROW_R(
+        return new (std::nothrow) RedCryptoWriterHandle(
+            RedCryptoWriterHandle::LCG, with_encryption, with_checksum, hmac_fn, trace_fn
+        ),
+        nullptr,
+        RedCryptoErrorContext(),
+        ERR_TRANSPORT
+    );
+}
+
+int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path, int groupid) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->out_crypto_transport.open(path, 0 /* TODO groupid */), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(handle->out_crypto_transport.open(path, groupid), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -365,7 +383,7 @@ const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     return handle->qhashhex;
 }
-    
+
 const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     return handle->qhashhex;
