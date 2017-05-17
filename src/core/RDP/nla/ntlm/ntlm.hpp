@@ -27,7 +27,7 @@
 // TODO: constants below are still globals,
 // better to move them in the scope of functions/objects using them
 namespace {
-    const char* NTLM_PACKAGE_NAME = "NTLM";
+    //const char* NTLM_PACKAGE_NAME = "NTLM";
     const char Ntlm_Name[] = "NTLM";
     const char Ntlm_Comment[] = "NTLM Security Package";
     const SecPkgInfo NTLM_SecPkgInfo = {
@@ -76,22 +76,10 @@ public:
 
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
-                                                SecPkgInfo * pPackageInfo) override {
-
-        if (strcmp(pszPackageName, NTLM_SecPkgInfo.Name) == 0) {
-
-            pPackageInfo->fCapabilities = NTLM_SecPkgInfo.fCapabilities;
-            pPackageInfo->wVersion = NTLM_SecPkgInfo.wVersion;
-            pPackageInfo->wRPCID = NTLM_SecPkgInfo.wRPCID;
-            pPackageInfo->cbMaxToken = NTLM_SecPkgInfo.cbMaxToken;
-            pPackageInfo->Name = NTLM_SecPkgInfo.Name;
-            pPackageInfo->Comment = NTLM_SecPkgInfo.Comment;
-
-            return SEC_E_OK;
-        }
-
-        return SEC_E_SECPKG_NOT_FOUND;
+    SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) override {
+        assert(pPackageInfo);
+        *pPackageInfo = NTLM_SecPkgInfo;
+        return SEC_E_OK;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
@@ -121,15 +109,12 @@ public:
     {
         (void)pszPrincipal;
         (void)pvLogonID;
-        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
 
         if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             this->credentials = new CREDENTIALS;
 
-            identity = pAuthData;
-
-            if (identity != nullptr) {
-                this->credentials->identity.CopyAuthIdentity(*identity);
+            if (pAuthData != nullptr) {
+                this->credentials->identity.CopyAuthIdentity(*pAuthData);
             }
 
             return SEC_E_OK;
@@ -137,10 +122,8 @@ public:
         else if (fCredentialUse == SECPKG_CRED_INBOUND) {
             this->credentials = new CREDENTIALS;
 
-            identity = static_cast<SEC_WINNT_AUTH_IDENTITY*>(pAuthData);
-
-            if (identity) {
-                this->credentials->identity.CopyAuthIdentity(*identity);
+            if (pAuthData) {
+                this->credentials->identity.CopyAuthIdentity(*pAuthData);
             }
             else {
                 this->credentials->identity.clear();

@@ -100,11 +100,11 @@ RED_AUTO_TEST_CASE(TestInitialize)
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
     SecPkgInfo server_packageInfo;
-    server_status = server_table.QuerySecurityPackageInfo(NTLMSP_NAME, &server_packageInfo);
+    server_status = server_table.QuerySecurityPackageInfo(&server_packageInfo);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
     SecPkgInfo client_packageInfo;
-    client_status = client_table.QuerySecurityPackageInfo(NTLMSP_NAME, &client_packageInfo);
+    client_status = client_table.QuerySecurityPackageInfo(&client_packageInfo);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
     SecBuffer input_buffer;

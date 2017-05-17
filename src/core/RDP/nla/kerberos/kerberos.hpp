@@ -24,13 +24,14 @@
 #include <gssapi/gssapi.h>
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/kerberos/credentials.hpp"
+#include <cassert>
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 
 namespace {
-    const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
+    //const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
     const char Kerberos_Name[] = "Kerberos";
     const char Kerberos_Comment[] = "Kerberos Security Package";
     const SecPkgInfo KERBEROS_SecPkgInfo = {
@@ -104,23 +105,10 @@ public:
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
-                                                SecPkgInfo * pPackageInfo) override {
-
-        (void)pszPackageName;
-        // if (strcmp(pszPackageName, KERBEROS_SecPkgInfo.Name) == 0) {
-        if (pPackageInfo) {
-            pPackageInfo->fCapabilities = KERBEROS_SecPkgInfo.fCapabilities;
-            pPackageInfo->wVersion = KERBEROS_SecPkgInfo.wVersion;
-            pPackageInfo->wRPCID = KERBEROS_SecPkgInfo.wRPCID;
-            pPackageInfo->cbMaxToken = KERBEROS_SecPkgInfo.cbMaxToken;
-            pPackageInfo->Name = KERBEROS_SecPkgInfo.Name;
-            pPackageInfo->Comment = KERBEROS_SecPkgInfo.Comment;
-
-            return SEC_E_OK;
-        }
-
-        return SEC_E_SECPKG_NOT_FOUND;
+    SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) override {
+        assert(pPackageInfo);
+        *pPackageInfo = KERBEROS_SecPkgInfo;
+        return SEC_E_OK;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;

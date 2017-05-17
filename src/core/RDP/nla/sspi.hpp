@@ -733,9 +733,7 @@ struct SecurityFunctionTable {
     //}
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
-                                                SecPkgInfo * pPackageInfo) {
-        (void)pszPackageName;
+    virtual SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) {
         (void)pPackageInfo;
         return SEC_E_SECPKG_NOT_FOUND;
     }

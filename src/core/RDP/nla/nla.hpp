@@ -543,7 +543,7 @@ public:
                 LOG(LOG_ERR, "Could not Initiate %d Security Interface!", this->sec_interface);
                 return 0;
             }
-            status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+            status = this->table->QuerySecurityPackageInfo(&packageInfo);
 
             if (status != SEC_E_OK) {
                 LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
@@ -745,7 +745,7 @@ public:
        this->InitSecurityInterface(NTLM_Interface);
 
        SecPkgInfo packageInfo;
-       status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+       status = this->table->QuerySecurityPackageInfo(&packageInfo);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
