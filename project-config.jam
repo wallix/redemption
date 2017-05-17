@@ -1,0 +1,2 @@
+# bjam --toolset=clang-wscan
+using clang : wscan : scan-build clang++ ;
