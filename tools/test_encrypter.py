@@ -100,7 +100,7 @@ class TestEncrypter(unittest.TestCase):
         buffersize = 65536
         checksums = []
         original_file = "./tests/includes/fixtures/dump_TLSw2008.hpp"
-        test_file = "./dump.enc"
+        test_file = "/tmp/dump.enc"
         with open(original_file, "r") as f:
             with CryptoWriter(1, 1, test_file, checksums, random_type="LCG") as fw:
                 total_len = 0
@@ -117,11 +117,9 @@ class TestEncrypter(unittest.TestCase):
                     chunk = None
 
 
-        #self.assertEqual(checksums,
-            #['C9A7B84600520B3365E2E71248D29873D446FC2DE2303305D0BCA955FB672036',
-             #'0D90D013E1F93279F3B295BC5D67227A816C1E7BFB4987E9FC6DCC2BF363AFB9'])
-
-#        print "Done writing newfar"
+        self.assertEqual(checksums,
+            ['77770CC3C347D5DDC0139ED6C6F794C4911FFD52348B26981812353C961A6456',
+            'D2E4E91CB003C5F56344E2BAE1535AD9922E0C1E667898D443A21282E14F1C05'])
 
         data = ""
         total = 0
@@ -130,22 +128,20 @@ class TestEncrypter(unittest.TestCase):
                 #print("line read=%d total=%d" % (len(line), total))
                 data += line
                 total += len(line)
-#            checksums = cr.hash()
 
-        #self.assertEqual(checksums,
-            #['788A99BDCFFC5128DA01B9A6AABA9D826DCE7B874153417097EF2A82CF7875C6',
-             #'788A99BDCFFC5128DA01B9A6AABA9D826DCE7B874153417097EF2A82CF7875C6'])
+        self.assertEqual(checksums,
+            ['77770CC3C347D5DDC0139ED6C6F794C4911FFD52348B26981812353C961A6456',
+             'D2E4E91CB003C5F56344E2BAE1535AD9922E0C1E667898D443A21282E14F1C05'])
 
-        with open("./dump.txt", "w") as f:
-            f.write(data)
+        #with open("/tmp/dump.txt", "w") as f:
+            #f.write(data)
 
         content = ""
         with open(original_file, 'r') as content_file:
             content = "".join(line for line in content_file.read())
-        #self.assertEqual(data, content)
+        self.assertEqual(data, content)
 
-        #os.unlink(test_file)
-
+        os.unlink(test_file)
 
 if __name__ == '__main__':
     unittest.main()

@@ -481,11 +481,19 @@ private:
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
-        size_t res = do_partial_read(buffer, len);
-        if (res != 0 && res != len) {
+        size_t res;
+        size_t total = 0;
+        size_t remaining_len = len;
+        while ((res = do_partial_read(buffer, remaining_len)) && res != remaining_len) {
+            total += res;
+            buffer += res;
+            remaining_len -= res;
+        }
+        total += res;
+        if (res != 0 && total != len) {
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-        return res == len ? Read::Ok : Read::Eof;
+        return total == len ? Read::Ok : Read::Eof;
     }
 
     std::size_t get_file_len(char const * pathname)

@@ -404,6 +404,7 @@ private:
             const ocrypto::Result res = this->encrypter.write(data, to_send);
             this->out_file.send(res.buf.data(), res.buf.size());
             to_send -= res.consumed;
+            data += res.consumed;
         }
     }
 };
