@@ -52,7 +52,7 @@ private:
     uint32_t clear_pos;                   // current position in clear_data buf
     uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
-    EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
+    DecryptContext ectx;
     // TODO: state to remove ? Seems to duplicate eof flag
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
@@ -187,7 +187,6 @@ public:
 
         ::memset(this->clear_data, 0, sizeof(this->clear_data));
 
-        ::memset(&this->ectx, 0, sizeof(this->ectx));
         this->clear_pos = 0;
         this->raw_size = 0;
         this->state = 0;
@@ -292,28 +291,12 @@ public:
 
         // TODO: replace p.with some array view of 32 bytes ?
         const uint8_t * const iv = p.p;
-        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-        const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
-        const int          nrounds = 5;
-        unsigned char      key[32];
-
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         cctx.get_derived_key(trace_key, base, base_len);
 
-        int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-        if (32 != evp_bytes_to_key_res){
+        if (!this->ectx.init(trace_key, iv)) {
             this->close();
-            LOG(LOG_INFO, "Can't read EVP_BytesToKey");
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            // TODO: add error management
-            LOG(LOG_INFO, "Can't read EVP_DecryptInit_ex");
-            this->close();
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_SSL_CALL_FAILED);
         }
     }
 
@@ -332,19 +315,6 @@ public:
     }
 
 private:
-    size_t xaes_decrypt(const uint8_t src[], size_t src_sz, uint8_t dst[])
-    {
-        int written = 0;
-        int trail = 0;
-        /* allows reusing of ectx for multiple encryption cycles */
-        if ((EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1)
-        ||  (EVP_DecryptUpdate(&this->ectx, &dst[0], &written, &src[0], src_sz) != 1)
-        ||  (EVP_DecryptFinal_ex(&this->ectx, &dst[written], &trail) != 1)){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        return written+trail;
-    }
-
     // this perform atomic read, partial read will result in exception
     void raw_read(uint8_t buffer[], const size_t len)
     {
@@ -399,7 +369,7 @@ private:
 
                 // PERF allocation in loop
                 std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
-                size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
+                size_t pack_buf_size = this->ectx.decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
 
                 size_t chunk_size = CRYPTO_BUFFER_SIZE;
                 const snappy_status status = snappy_uncompress(

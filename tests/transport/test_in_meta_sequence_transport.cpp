@@ -229,8 +229,6 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
-    OpenSSL_add_all_digests();
-
     // cleanup of possible previous test files
     {
         const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};

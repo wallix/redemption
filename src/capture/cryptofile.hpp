@@ -244,3 +244,141 @@ public:
         this->get_trace_key_cb = get_trace_key_cb;
     }
 };
+
+inline const EVP_CIPHER * get_cipher_and_prepare_key(
+        uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH],
+        unsigned char key[CRYPTO_KEY_LENGTH]
+) noexcept
+{
+    const EVP_CIPHER * cipher = ::EVP_aes_256_cbc();
+    const uint8_t salt[] = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+    const int     nrounds = 5;
+    const int i = ::EVP_BytesToKey(
+        cipher, EVP_sha1(), salt, trace_key,
+        CRYPTO_KEY_LENGTH, nrounds, key, nullptr
+    );
+    if (i != CRYPTO_KEY_LENGTH) {
+        LOG(LOG_INFO, "Can't read EVP_BytesToKey");
+        return nullptr;
+    }
+    return cipher;
+}
+
+struct CipherContextBase
+{
+    /// init or reinit
+    void mark_as_initalized() noexcept
+    {
+        this->is_initialized = true;
+    }
+
+    void deinit() noexcept
+    {
+        if (this->is_initialized) {
+            EVP_CIPHER_CTX_cleanup(&this->ectx);
+            this->is_initialized = false;
+        }
+    }
+
+    ~CipherContextBase()
+    {
+        this->deinit();
+    }
+
+    EVP_CIPHER_CTX ectx; // [en|de]cryption context
+    bool is_initialized = false;
+};
+
+struct EncryptContext
+{
+    /// init or reinit
+    bool init(uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH], uint8_t * iv) noexcept
+    {
+        unsigned char key[CRYPTO_KEY_LENGTH];
+        const EVP_CIPHER * cipher = get_cipher_and_prepare_key(trace_key, key);
+
+        if (!cipher) {
+            return false;
+        }
+
+        this->ctx.deinit();
+        ::EVP_CIPHER_CTX_init(&this->ctx.ectx);
+        if (::EVP_EncryptInit_ex(&this->ctx.ectx, cipher, nullptr, key, iv) != 1) {
+            EVP_CIPHER_CTX_cleanup(&this->ctx.ectx);
+            LOG(LOG_ERR, "Can't read EVP_EncryptInit_ex");
+            return false;
+        }
+        this->ctx.mark_as_initalized();
+
+        return true;
+    }
+
+    /**
+     * \brief Encrypt \c src_buf into \c dst_buf.
+     * \return encrypted output size
+     */
+    size_t encrypt(uint8_t const * src_buf, size_t src_sz, uint8_t * dst_buf, size_t dst_sz)
+    {
+        assert(this->ctx.is_initialized);
+        int safe_size = dst_sz;
+        int remaining_size = 0;
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_EncryptInit_ex(&this->ctx.ectx, nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_EncryptUpdate(&this->ctx.ectx, dst_buf, &safe_size, src_buf, src_sz) != 1
+         || EVP_EncryptFinal_ex(&this->ctx.ectx, dst_buf + safe_size, &remaining_size) != 1) {
+            LOG(LOG_ERR, "EncryptContext::encrypt");
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        return size_t(safe_size + remaining_size);
+    }
+
+private:
+    CipherContextBase ctx;
+};
+
+struct DecryptContext
+{
+    /// init or reinit
+    bool init(uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH], uint8_t const * iv) noexcept
+    {
+        unsigned char key[CRYPTO_KEY_LENGTH];
+        const EVP_CIPHER * cipher = get_cipher_and_prepare_key(trace_key, key);
+
+        if (!cipher) {
+            return false;
+        }
+
+        this->ctx.deinit();
+        ::EVP_CIPHER_CTX_init(&this->ctx.ectx);
+        if (::EVP_DecryptInit_ex(&this->ctx.ectx, cipher, nullptr, key, iv) != 1) {
+            EVP_CIPHER_CTX_cleanup(&this->ctx.ectx);
+            LOG(LOG_ERR, "Can't read EVP_DecryptInit_ex");
+            return false;
+        }
+        this->ctx.mark_as_initalized();
+
+        return true;
+    }
+
+    /**
+     * \brief Decrypt \c src_buf into \c dst_buf.
+     * \return decrypted output size
+     */
+    size_t decrypt(const uint8_t * src_buf, size_t src_sz, uint8_t * dst_buf)
+    {
+        assert(this->ctx.is_initialized);
+        int written = 0;
+        int trail = 0;
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_DecryptInit_ex(&this->ctx.ectx, nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_DecryptUpdate(&this->ctx.ectx, dst_buf, &written, src_buf, src_sz) != 1
+         || EVP_DecryptFinal_ex(&this->ctx.ectx, dst_buf + written, &trail) != 1){
+            LOG(LOG_ERR, "DecryptContext::decrypt");
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        return size_t(written + trail);
+    }
+
+private:
+    CipherContextBase ctx;
+};

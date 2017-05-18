@@ -36,7 +36,7 @@ struct ocrypto
     };
 
 private:
-    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+    EncryptContext ectx;
     SslHMAC_Sha256_Delayed hm;              // full hash context
     SslHMAC_Sha256_Delayed hm4k;             // quick hash context
     uint32_t       pos;                     // current position in buf
@@ -50,27 +50,6 @@ private:
     Random & rnd;
     bool encryption;
     bool checksum;
-
-    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-     * Return 0 on success, negative value on error
-     */
-    void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-    {
-        int safe_size = *dst_sz;
-        int remaining_size = 0;
-
-        /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        *dst_sz = safe_size + remaining_size;
-    }
 
     /* Flush procedure (compression, encryption)
      * Return 0 on success, negatif on error
@@ -100,9 +79,10 @@ private:
         // Encrypt
         unsigned char ciphered_buf[4 + 65536];
         uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-        this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
-                           compressed_buf_sz,
-                           ciphered_buf + 4, &ciphered_buf_sz);
+        ciphered_buf_sz = this->ectx.encrypt(
+            reinterpret_cast<unsigned char*>(compressed_buf), compressed_buf_sz,
+            ciphered_buf + 4, ciphered_buf_sz
+        );
 
         ciphered_buf[0] = ciphered_buf_sz & 0xFF;
         ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
@@ -161,22 +141,10 @@ public:
             this->rnd.random(iv, 32);
 
             ::memset(this->buf, 0, sizeof(this->buf));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
             this->pos = 0;
             this->raw_size = 0;
 
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-            if (i != 32) {
-                throw Error(ERR_SSL_CALL_FAILED);
-            }
-
-            ::EVP_CIPHER_CTX_init(&this->ectx);
-            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+            if (!this->ectx.init(trace_key, iv)) {
                 throw Error(ERR_SSL_CALL_FAILED);
             }
 
@@ -204,6 +172,8 @@ public:
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
             this->flush(this->result_buffer, buflen, towrite);
+
+            // this->ectx.deinit();
 
             unsigned char tmp_buf[8] = {
                 'M','F','C','W',

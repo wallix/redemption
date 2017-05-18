@@ -25,11 +25,11 @@ else
   find "$d" -maxdepth 1 -mindepth 1 -name 'test_*' -executable
 fi \
 | while read f ; do
+  #--suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy
   outvalgrind=`valgrind \
     --leak-check=full \
     --max-stackframe=234425648 \
     --track-fds=yes \
-    --suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy \
     "$f" 2>&1`
   error=`grep -E '^==[0-9]+== ERROR SUMMARY' -m1 <<< "$outvalgrind"`
   read p e s n other <<< "$error"
