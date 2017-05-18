@@ -36,6 +36,7 @@
 #include <cerrno>
 
 #include "openssl_crypto.hpp"
+#include "system/scoped_crypto_init.hpp"
 
 #include "configs/config.hpp"
 #include "core/check_files.hpp"
@@ -368,7 +369,7 @@ static inline int app_proxy(
     Inifile ini;
     { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
-    OpenSSL_add_all_digests();
+    ScopedCryptoInit scoped_crypto;
 
     if (!ini.get<cfg::globals::enable_transparent_mode>()) {
         if (setgid(egid) != 0){

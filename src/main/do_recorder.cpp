@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <snappy-c.h>
+#include <openssl/err.h>
 #include <stdint.h>
 #include <unistd.h>
 #include "openssl_crypto.hpp"
@@ -33,6 +34,7 @@
 #include "utils/log.hpp"
 #include "transport/transport.hpp"
 #include "system/ssl_calls.hpp"
+#include "system/scoped_crypto_init.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/exchange.hpp"
@@ -2098,7 +2100,7 @@ extern "C" {
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {
-        OpenSSL_add_all_digests();
+        ScopedCryptoInit scoped_crypto;
 
         int arg_used = 0;
         int command = 0;
@@ -2315,6 +2317,7 @@ extern "C" {
             }
         break;
         }
+
         return res;
     }
 }
