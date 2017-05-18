@@ -243,7 +243,10 @@ public:
             len = buflen;
         }
         // Check how much we can append into buffer
-        size_t available_size = std::min(size_t(CRYPTO_BUFFER_SIZE - this->pos), len);
+        size_t available_size = CRYPTO_BUFFER_SIZE - this->pos;
+        if (available_size > len) {
+            available_size = len;
+        }
         // Append and update pos pointer
         ::memcpy(this->buf + this->pos, &data[0], available_size);
         this->pos += available_size;
