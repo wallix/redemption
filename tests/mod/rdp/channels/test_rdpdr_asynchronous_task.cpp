@@ -62,6 +62,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
     RED_CHECK_NE(fd, -1);
+    unique_fd ufd{fd};
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
