@@ -264,6 +264,44 @@ inline const EVP_CIPHER * get_cipher_and_prepare_key(
     return cipher;
 }
 
+struct CipherContext
+{
+    /// init or reinit
+    void init() noexcept
+    {
+        this->deinit();
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        this->is_init = true;
+    }
+
+    void deinit() noexcept
+    {
+        if (this->is_init) {
+            EVP_CIPHER_CTX_cleanup(&this->ectx);
+            this->is_init = false;
+        }
+    }
+
+    ~CipherContext()
+    {
+        this->deinit();
+    }
+
+    EVP_CIPHER_CTX* get_ctx() noexcept
+    {
+        return &this->ectx;
+    }
+
+    bool is_initialized() const noexcept
+    {
+        return this->is_init;
+    }
+
+private:
+    EVP_CIPHER_CTX ectx; // [en|de]cryption context
+    bool is_init = false;
+};
+
 struct EncryptContext
 {
     /// init or reinit
@@ -276,14 +314,11 @@ struct EncryptContext
             return false;
         }
 
-        this->deinit();
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            EVP_CIPHER_CTX_cleanup(&this->ectx);
+        this->cctx.init();
+        if (::EVP_EncryptInit_ex(this->cctx.get_ctx(), cipher, nullptr, key, iv) != 1) {
             LOG(LOG_ERR, "Can't read EVP_EncryptInit_ex");
             return false;
         }
-        this->is_initialized = true;
 
         return true;
     }
@@ -294,13 +329,13 @@ struct EncryptContext
      */
     size_t encrypt(uint8_t const * src_buf, size_t src_sz, uint8_t * dst_buf, size_t dst_sz)
     {
-        assert(this->is_initialized);
+        assert(this->cctx.is_initialized());
         int safe_size = dst_sz;
         int remaining_size = 0;
         /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1
-         || EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1
-         || EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1) {
+        if (EVP_EncryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_EncryptUpdate(this->cctx.get_ctx(), dst_buf, &safe_size, src_buf, src_sz) != 1
+         || EVP_EncryptFinal_ex(this->cctx.get_ctx(), dst_buf + safe_size, &remaining_size) != 1) {
             LOG(LOG_ERR, "EncryptContext::encrypt");
             throw Error(ERR_SSL_CALL_FAILED);
         }
@@ -308,16 +343,7 @@ struct EncryptContext
     }
 
 private:
-    void deinit() noexcept
-    {
-        if (this->is_initialized) {
-            EVP_CIPHER_CTX_cleanup(&this->ectx);
-            this->is_initialized = false;
-        }
-    }
-
-    EVP_CIPHER_CTX ectx; // [en|de]cryption context
-    bool is_initialized = false;
+    CipherContext cctx;
 };
 
 struct DecryptContext
@@ -332,14 +358,11 @@ struct DecryptContext
             return false;
         }
 
-        this->deinit();
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if (::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            EVP_CIPHER_CTX_cleanup(&this->ectx);
+        this->cctx.init();
+        if (::EVP_DecryptInit_ex(this->cctx.get_ctx(), cipher, nullptr, key, iv) != 1) {
             LOG(LOG_ERR, "Can't read EVP_DecryptInit_ex");
             return false;
         }
-        this->is_initialized = true;
 
         return true;
     }
@@ -350,33 +373,19 @@ struct DecryptContext
      */
     size_t decrypt(const uint8_t * src_buf, size_t src_sz, uint8_t * dst_buf)
     {
-        assert(this->is_initialized);
+        assert(this->cctx.is_initialized());
         int written = 0;
         int trail = 0;
         /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1
-         || EVP_DecryptUpdate(&this->ectx, dst_buf, &written, src_buf, src_sz) != 1
-         || EVP_DecryptFinal_ex(&this->ectx, dst_buf + written, &trail) != 1){
+        if (EVP_DecryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_DecryptUpdate(this->cctx.get_ctx(), dst_buf, &written, src_buf, src_sz) != 1
+         || EVP_DecryptFinal_ex(this->cctx.get_ctx(), dst_buf + written, &trail) != 1){
             LOG(LOG_ERR, "DecryptContext::decrypt");
             throw Error(ERR_SSL_CALL_FAILED);
         }
         return size_t(written + trail);
     }
 
-    ~DecryptContext()
-    {
-        this->deinit();
-    }
-
 private:
-    void deinit() noexcept
-    {
-        if (this->is_initialized) {
-            EVP_CIPHER_CTX_cleanup(&this->ectx);
-            this->is_initialized = false;
-        }
-    }
-
-    EVP_CIPHER_CTX ectx; // [en|de]cryption context
-    bool is_initialized = false;
+    CipherContext cctx;
 };
