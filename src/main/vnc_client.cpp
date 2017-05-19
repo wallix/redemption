@@ -106,6 +106,7 @@ int main(int argc, char** argv)
     SocketTransport sock_trans( "VNC Target", vnc_sck, target_device.c_str(), target_port, to_verbose_flags(verbose), nullptr);
     // sock_trans.connect();
 
+    SSL_library_init();
     ClientFront front(false, false, info, verbose);
     //VncFront front(sock_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 

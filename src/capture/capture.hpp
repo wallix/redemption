@@ -28,6 +28,7 @@
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 #include "capture/notify_next_video.hpp"
+
 #include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
@@ -37,17 +38,14 @@
 #include "capture/full_video_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/kbdlog_params.hpp"
+
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/save_state_chunk.hpp"
 #include "capture/file_to_graphic.hpp"
-#include "capture/RDPChunkedDevice.hpp"
 #include "core/wait_obj.hpp"
-#include "core/RDP/state_chunk.hpp"
-#include "transport/out_file_transport.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/compression_transport_builder.hpp"
-#include "utils/png.hpp"
 
+#include <functional> // std::reference_wrapper
 #include <vector>
 #include <memory>
 
@@ -124,215 +122,6 @@ inline void send_meta_chunk(
     send_wrm_chunk(t, WrmChunkType::META_FILE, payload.get_offset(), 1);
     t.send(payload.get_data(), payload.get_offset());
 }
-
-
-struct ChunkToFile : public RDPChunkedDevice {
-private:
-    CompressionOutTransportBuilder compression_bullder;
-    Transport & trans_target;
-    Transport & trans;
-
-    const uint8_t wrm_format_version;
-
-    uint16_t info_version = 0;
-
-public:
-    ChunkToFile(Transport * trans
-
-               , uint16_t info_width
-               , uint16_t info_height
-               , uint16_t info_bpp
-               , uint16_t info_cache_0_entries
-               , uint16_t info_cache_0_size
-               , uint16_t info_cache_1_entries
-               , uint16_t info_cache_1_size
-               , uint16_t info_cache_2_entries
-               , uint16_t info_cache_2_size
-
-               , uint16_t info_number_of_cache
-               , bool     info_use_waiting_list
-
-               , bool     info_cache_0_persistent
-               , bool     info_cache_1_persistent
-               , bool     info_cache_2_persistent
-
-               , uint16_t info_cache_3_entries
-               , uint16_t info_cache_3_size
-               , bool     info_cache_3_persistent
-               , uint16_t info_cache_4_entries
-               , uint16_t info_cache_4_size
-               , bool     info_cache_4_persistent
-
-               , WrmCompressionAlgorithm wrm_compression_algorithm)
-    : RDPChunkedDevice()
-    , compression_bullder(*trans, wrm_compression_algorithm)
-    , trans_target(*trans)
-    , trans(this->compression_bullder.get())
-    , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
-    {
-        if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
-            LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , static_cast<unsigned>(wrm_compression_algorithm));
-        }
-
-        send_meta_chunk(
-            this->trans_target
-          , this->wrm_format_version
-
-          , info_width
-          , info_height
-          , info_bpp
-          , info_cache_0_entries
-          , info_cache_0_size
-          , info_cache_1_entries
-          , info_cache_1_size
-          , info_cache_2_entries
-          , info_cache_2_size
-
-          , info_number_of_cache
-          , info_use_waiting_list
-
-          , info_cache_0_persistent
-          , info_cache_1_persistent
-          , info_cache_2_persistent
-
-          , info_cache_3_entries
-          , info_cache_3_size
-          , info_cache_3_persistent
-          , info_cache_4_entries
-          , info_cache_4_size
-          , info_cache_4_persistent
-
-          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
-        );
-    }
-
-public:
-    void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream stream) override
-    {
-        auto wrm_chunk_type = safe_cast<WrmChunkType>(chunk_type);
-        switch (wrm_chunk_type)
-        {
-        case WrmChunkType::META_FILE:
-            {
-                this->info_version                  = stream.in_uint16_le();
-                uint16_t info_width                 = stream.in_uint16_le();
-                uint16_t info_height                = stream.in_uint16_le();
-                uint16_t info_bpp                   = stream.in_uint16_le();
-                uint16_t info_cache_0_entries       = stream.in_uint16_le();
-                uint16_t info_cache_0_size          = stream.in_uint16_le();
-                uint16_t info_cache_1_entries       = stream.in_uint16_le();
-                uint16_t info_cache_1_size          = stream.in_uint16_le();
-                uint16_t info_cache_2_entries       = stream.in_uint16_le();
-                uint16_t info_cache_2_size          = stream.in_uint16_le();
-
-                uint16_t info_number_of_cache       = 3;
-                bool     info_use_waiting_list      = false;
-
-                bool     info_cache_0_persistent    = false;
-                bool     info_cache_1_persistent    = false;
-                bool     info_cache_2_persistent    = false;
-
-                uint16_t info_cache_3_entries       = 0;
-                uint16_t info_cache_3_size          = 0;
-                bool     info_cache_3_persistent    = false;
-                uint16_t info_cache_4_entries       = 0;
-                uint16_t info_cache_4_size          = 0;
-                bool     info_cache_4_persistent    = false;
-
-                if (this->info_version > 3) {
-                    info_number_of_cache            = stream.in_uint8();
-                    info_use_waiting_list           = (stream.in_uint8() ? true : false);
-
-                    info_cache_0_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_1_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_2_persistent         = (stream.in_uint8() ? true : false);
-
-                    info_cache_3_entries            = stream.in_uint16_le();
-                    info_cache_3_size               = stream.in_uint16_le();
-                    info_cache_3_persistent         = (stream.in_uint8() ? true : false);
-
-                    info_cache_4_entries            = stream.in_uint16_le();
-                    info_cache_4_size               = stream.in_uint16_le();
-                    info_cache_4_persistent         = (stream.in_uint8() ? true : false);
-
-                    //uint8_t info_compression_algorithm = stream.in_uint8();
-                    //REDASSERT(info_compression_algorithm < 3);
-                }
-
-
-                send_meta_chunk(
-                    this->trans_target
-                  , this->wrm_format_version
-
-                  , info_width
-                  , info_height
-                  , info_bpp
-                  , info_cache_0_entries
-                  , info_cache_0_size
-                  , info_cache_1_entries
-                  , info_cache_1_size
-                  , info_cache_2_entries
-                  , info_cache_2_size
-
-                  , info_number_of_cache
-                  , info_use_waiting_list
-
-                  , info_cache_0_persistent
-                  , info_cache_1_persistent
-                  , info_cache_2_persistent
-
-                  , info_cache_3_entries
-                  , info_cache_3_size
-                  , info_cache_3_persistent
-                  , info_cache_4_entries
-                  , info_cache_4_size
-                  , info_cache_4_persistent
-
-                  , static_cast<unsigned>(this->compression_bullder.get_algorithm())
-                );
-            }
-            break;
-
-        case WrmChunkType::SAVE_STATE:
-            {
-                StateChunk sc;
-                SaveStateChunk ssc;
-
-                ssc.recv(stream, sc, this->info_version);
-
-                StaticOutStream<65536> payload;
-
-                ssc.send(payload, sc);
-
-                send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
-                this->trans.send(payload.get_data(), payload.get_offset());
-            }
-            break;
-
-        case WrmChunkType::RESET_CHUNK:
-            {
-                send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
-                this->trans.next();
-            }
-            break;
-
-        case WrmChunkType::TIMESTAMP:
-            {
-                timeval record_now;
-                stream.in_timeval_from_uint64le_usec(record_now);
-                this->trans_target.timestamp(record_now);
-            }
-            REDEMPTION_CXX_FALLTHROUGH;
-        default:
-            {
-                send_wrm_chunk(this->trans, wrm_chunk_type, stream.get_capacity(), chunk_count);
-                this->trans.send(stream.get_data(), stream.get_capacity());
-            }
-            break;
-        }
-    }
-};
 
 
 struct NotifyTitleChanged : private noncopyable

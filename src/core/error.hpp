@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 
 #define EACH_ERROR(f, fv)                                        \
     fv(NO_ERROR, 0)                                              \
@@ -419,10 +419,10 @@ public:
                 #undef MAKE_CASE_V
             }
             if (with_id) {
-                snprintf(this->msg, sizeof(this->msg), "%s no : %d", c_err, this->id);
+                std::snprintf(this->msg, sizeof(this->msg), "%s no : %d", c_err, this->id);
             }
             else {
-                snprintf(this->msg, sizeof(this->msg), "%s", c_err);
+                std::snprintf(this->msg, sizeof(this->msg), "%s", c_err);
             }
             this->msg[sizeof(this->msg) - 1] = 0;
             this->has_msg = true;

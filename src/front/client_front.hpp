@@ -27,7 +27,6 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "core/wait_obj.hpp"
 #include "core/channel_list.hpp"
 #include "gdi/graphic_cmd_color.hpp"
 
@@ -48,9 +47,7 @@ public:
     , mod_bpp(gdi::Depth::from_bpp(info.bpp))
     , mod_palette(BGRPalette::classic_332())
     , gd(info.width, info.height)
-    {
-        SSL_library_init();
-    }
+    {}
 
     ClientFront(ClientInfo & info, bool verbose)
     : ClientFront(false, false, info, verbose)

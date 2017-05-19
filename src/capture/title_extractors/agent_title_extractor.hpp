@@ -20,12 +20,10 @@
 
 #pragma once
 
-#include <cstdio>
 #include <string>
 #include <algorithm>
 
 #include "title_extractor_api.hpp"
-#include "acl/auth_api.hpp"
 
 
 class AgentTitleExtractor : public TitleExtractorApi

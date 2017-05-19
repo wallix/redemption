@@ -25,6 +25,8 @@
 #include "ocr_titles_extractor.hpp"
 #include "ppocr_titles_extractor.hpp"
 #include "ocr_title_filter.hpp"
+#include "core/defines.hpp"
+#include "configs/autogen/enums.hpp"
 
 
 template<class Extractor>

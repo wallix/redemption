@@ -530,7 +530,6 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr.o ;
 
 ## Capture tests
 ## @{
-test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/capture.hpp : <library>bitmap <library>png.o <library>crypto <library>dl <library>z <library>snappy <library>ocr <library>video_capture ;
 test-canonical capture/video_capture.hpp : <library>bitmap <library>png.o <library>dl <library>video_capture ;
 test-canonical capture/wrm_capture.hpp : <library>bitmap <library>png.o <library>crypto <library>png <library>z <library>snappy <library>dl ;

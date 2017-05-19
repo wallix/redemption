@@ -31,7 +31,6 @@
 
 #include "utils/log.hpp"
 #include "utils/sugar/bytes_t.hpp"
-#include "utils/genrandom.hpp"
 #include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
 

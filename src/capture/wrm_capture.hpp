@@ -23,14 +23,12 @@
 #include "utils/log.hpp"
 
 #include "utils/difftimeval.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/stream.hpp"
 
 #include "capture/wrm_chunk_type.hpp"
-#include "capture/cryptofile.hpp"
 #include "capture/save_state_chunk.hpp"
 #include "transport/out_crypto_transport.hpp"
 
@@ -50,9 +48,7 @@
 #include "core/RDP/RDPSerializer.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "core/RDP/share.hpp"
 
-#include <cerrno>
 #include <cstddef>
 
 
@@ -745,8 +741,7 @@ public:
     void send_save_state_chunk()
     {
         StaticOutStream<4096> payload;
-        SaveStateChunk
- ssc;
+        SaveStateChunk ssc;
         ssc.send(payload, this->ssc);
 
         //------------------------------ missing variable length ---------------
