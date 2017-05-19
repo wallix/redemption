@@ -1861,6 +1861,9 @@ public:
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+//         if (!(MOUSE_FLAG_MOVE & device_flags)) {
+//             LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
+//         }
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
@@ -2005,6 +2008,9 @@ public:
         else if (!strcmp(front_channel_name, channel_names::rdpdr)) {
             this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
         }
+        else if (!strcmp(front_channel_name, channel_names::rdpsnd)) {
+            this->send_to_mod_rdpsnd_channel(mod_channel, chunk, length, flags);
+        }
         else {
             this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
@@ -2060,6 +2066,46 @@ private:
             }
 
             this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
+            return;
+        }
+
+
+
+        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+
+        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+    }
+
+        void send_to_mod_rdpsnd_channel(const CHANNELS::ChannelDef * rdpsnd_channel,
+                                   InStream & chunk, size_t length, uint32_t flags) {
+        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            !this->file_system_drive_manager.HasManagedDrive()) {
+
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                LOG(LOG_INFO, "channel_name = rdpsnd !!!!!!!!!!!!!");
+
+//                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
+//
+//                     LOG(LOG_INFO,
+//                         "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
+//                             "send Chunked Virtual Channel Data transparently.");
+//                 }
+
+//                 if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
+//                     const bool send              = false;
+//                     const bool from_or_to_client = false;
+//                     uint32_t total_length = length;
+//                     if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
+//                         total_length = chunk.get_capacity() - chunk.get_offset();
+//                     }
+//                     ::msgdump_d(send, from_or_to_client, length, flags,
+//                     chunk.get_data(), total_length);
+//
+//                     rdpdr::streamLog(chunk, this->rdpdrLogStatus);
+//                 }
+            }
+
+            this->send_to_channel(*rdpsnd_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
             return;
         }
 
