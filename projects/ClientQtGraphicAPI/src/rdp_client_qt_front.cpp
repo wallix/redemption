@@ -708,13 +708,13 @@ public:
                                            };
         this->cl.push_back(channel_WabDiag);
 
-//         CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-//                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-//                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-//                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-//                                                  , CHANNELS::CHANNEL_CHUNK_LENGTH+3
-//                                                  };
-//         this->cl.push_back(channel_audio_output);
+        CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
+                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                                 };
+        this->cl.push_back(channel_audio_output);
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -2436,21 +2436,17 @@ public:
                                 case rdpdr::IRP_MJ_CREATE:
                                     if (bool(this->verbose & RDPVerbose::rdpdr))
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
-                                        break;
+                                    break;
 
                                 case rdpdr::IRP_MJ_READ:
                                     if (bool(this->verbose & RDPVerbose::rdpdr))
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
-                                        break;
+                                    break;
 
                                 case rdpdr::IRP_MJ_CLOSE:
                                     if (bool(this->verbose & RDPVerbose::rdpdr))
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
-                                        break;
-
-                                    hexdump_c(chunk_series.get_data(), chunk_size);
-                                        break;
-
+                                    break;
 
                                 default:
                                     LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow MajorFunction = %x", deviceIORequest.MajorFunction());
@@ -2459,7 +2455,6 @@ public:
                             }
                         }
                             break;
-
 
                         default :
                             LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", packetId);
@@ -2472,7 +2467,47 @@ public:
                     break;
             }
         } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
-            LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+
+
+            rdpsnd::RDPSNDPDUHeader header;
+            header.receive(chunk);
+            header.log();
+
+            //LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+
+            switch (header.msgType) {
+                case rdpsnd::SNDC_FORMATS:
+                    {
+                    rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
+                    safsvh.receive(chunk);
+                    safsvh.log();
+
+
+                    OutStream<1024> steam;
+
+                    rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_FORMATS);
+
+                    for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
+                        rdpsnd::AudioFormat format;
+                        format.receive(chunk);
+                        format.log();
+                    }
+
+
+                    }
+                    break;
+
+
+
+                default: LOG(LOG_INFO, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
+                    break;
+            }
+
+
+
+
+
+
 
         } else if (!strcmp(channel.name, "WabDiag")) {
 
@@ -2980,7 +3015,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;                  // RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::none;                  //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

@@ -442,6 +442,8 @@ public:
             return false;
         }
 
+
+
         return true;
     }
 
@@ -721,11 +723,17 @@ public:
     }
 
     std::string get_userNameField() {
-        return this->_userNameField.text().toStdString();
+        if (this->_userNameField.text().toStdString() !=  std::string(""))
+            return this->_userNameField.text().toStdString();
+
+        return std::string(" ");
     }
 
     std::string get_PWDField() {
-        return this->_PWDField.text().toStdString();
+        if (this->_PWDField.text().toStdString() !=  std::string(""))
+            return this->_PWDField.text().toStdString();
+
+        return std::string(" ");
     }
 
     int get_portField() {
@@ -786,6 +794,7 @@ private Q_SLOTS:
                 }
             }
             if (!alreadySet) {
+                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = this->get_IPField();
                 this->_accountData[this->_accountNB].name  = this->get_userNameField();
@@ -796,6 +805,8 @@ private Q_SLOTS:
                 if (this->_accountNB > MAX_ACCOUNT_DATA) {
                     this->_accountNB = MAX_ACCOUNT_DATA;
                 }
+
+                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
             }
 
             std::ofstream ofichier(this->_front->USER_CONF_LOG, std::ios::out | std::ios::trunc);

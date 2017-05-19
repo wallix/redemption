@@ -1267,6 +1267,7 @@ public:
                                            , this->ini.get<cfg::theme>()
                                            , this->ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
+                                          // , RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                            );
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
