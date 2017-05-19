@@ -30,12 +30,12 @@ show_resume_error ()
         --track-fds=yes \
         "$f" 2>&1 >/dev/null`
     error=`grep -E '^==[0-9]+== ERROR SUMMARY: [1-9]' -m1 <<< "$outvalgrind"`
-    [ $? = 0 ] && read a o <<<"$error" && echo "valgrind error: $o"
+    [ $? = 0 ] && read a o <<<"$error" && echo "valgrind error: $f: $o"
     leak=`grep -E '^==[0-9]+==    definitely lost: [1-9]' -m1 <<< "$outvalgrind"`
-    [ $? = 0 ] && read a o <<<"$error" && echo "valgrind leak: $o"
+    [ $? = 0 ] && read a o <<<"$leak" && echo "valgrind leak: $f: $o"
     grep -E '^==[0-9]+== Open file descriptor ([3-9]:|[0-9][^:])' <<< "$outvalgrind" \
     | while read a o ; do
-        echo "valgrind error: $o"
+        echo "valgrind error: $f: $o"
     done
   done
 }
