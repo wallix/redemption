@@ -43,7 +43,7 @@ enum NtlmState {
     NTLM_STATE_AUTHENTICATE,
     NTLM_STATE_FINAL
 };
-static const uint8_t lm_magic[] = "KGS!@#$%";
+//static const uint8_t lm_magic[] = "KGS!@#$%";
 
 static const uint8_t client_sign_magic[] =
     "session key to client-to-server signing key magic constant";
@@ -54,36 +54,44 @@ static const uint8_t client_seal_magic[] =
 static const uint8_t server_seal_magic[] =
     "session key to server-to-client sealing key magic constant";
 
-struct NTLMContext
+class NTLMContext
 {
     TimeObj & timeobj;
     Random & rand;
 
+public:
     bool server;
     bool NTLMv2;
     bool UseMIC;
     NtlmState state;
 
+public:
     int SendSeqNum;
     int RecvSeqNum;
 
+private:
     uint8_t MachineID[32];
     bool SendVersionInfo;
+public:
     bool confidentiality;
 
     SslRC4 SendRc4Seal;
     SslRC4 RecvRc4Seal;
     uint8_t* SendSigningKey;
     uint8_t* RecvSigningKey;
+private:
     uint8_t* SendSealingKey;
     uint8_t* RecvSealingKey;
 
+public:
     uint32_t NegotiateFlags;
 
-    int LmCompatibilityLevel;
+    //int LmCompatibilityLevel;
     bool SendWorkstationName;
+public:
     Array Workstation;
     Array ServicePrincipalName;
+public:
     SEC_WINNT_AUTH_IDENTITY identity;
 
     // uint8_t* ChannelBindingToken;
@@ -92,24 +100,34 @@ struct NTLMContext
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
+public:
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
+private:
     NtlmVersion version;
+public:
     Array SavedNegotiateMessage;
     Array SavedChallengeMessage;
     Array SavedAuthenticateMessage;
 
+private:
     uint8_t Timestamp[8];
     uint8_t ChallengeTimestamp[8];
+public:
     uint8_t ServerChallenge[8];
+private:
     uint8_t ClientChallenge[8];
+public:
     uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH];
-    uint8_t KeyExchangeKey[16];
-    uint8_t RandomSessionKey[16];
+private:
+    //uint8_t KeyExchangeKey[16];
+    //uint8_t RandomSessionKey[16];
+public:
     uint8_t ExportedSessionKey[16];
     uint8_t EncryptedRandomSessionKey[16];
+public:
     uint8_t ClientSigningKey[16];
     uint8_t ClientSealingKey[16];
     uint8_t ServerSigningKey[16];
@@ -119,6 +137,7 @@ struct NTLMContext
 
     bool verbose;
 
+public:
     explicit NTLMContext(Random & rand, TimeObj & timeobj)
         : timeobj(timeobj)
         , rand(rand)
@@ -138,7 +157,7 @@ struct NTLMContext
         , SendSealingKey(nullptr)
         , RecvSealingKey(nullptr)
         , NegotiateFlags(0)
-        , LmCompatibilityLevel(3)
+        //, LmCompatibilityLevel(3)
         , SendWorkstationName(true)
         , Workstation(0)
         , ServicePrincipalName(0)
@@ -150,8 +169,8 @@ struct NTLMContext
         , ServerChallenge()
         , ClientChallenge()
         , SessionBaseKey()
-        , KeyExchangeKey()
-        , RandomSessionKey()
+        //, KeyExchangeKey()
+        //, RandomSessionKey()
         , ExportedSessionKey()
         , EncryptedRandomSessionKey()
         , ClientSigningKey()

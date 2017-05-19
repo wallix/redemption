@@ -29,8 +29,6 @@
 
 #include "core/client_info.hpp"
 #include "transport/socket_transport.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/redirection_info.hpp"

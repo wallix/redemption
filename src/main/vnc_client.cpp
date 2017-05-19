@@ -30,13 +30,7 @@
 #include "core/session.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/invalid_socket.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/redirection_info.hpp"
-#include "core/channel_list.hpp"
-#include "utils/genrandom.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "program_options/program_options.hpp"
 
@@ -62,19 +56,15 @@ void run_mod(mod_api & mod, ClientFront & front, SocketTransport * st_mod);
 
 int main(int argc, char** argv)
 {
-    RedirectionInfo redir_info;
     int verbose = 16;
     std::string target_device = "10.10.46.70";
     int target_port = 5900;
     int nbretry = 3;
     int retry_delai_ms = 1000;
 
-    std::string username = "user2003";
-    std::string password = "SecureLinux$42";
+    //std::string username = "user2003";
+    //std::string password = "SecureLinux$42";
     ClientInfo client_info;
-
-    std::string input_filename;
-
 
     client_info.width = 800;
     client_info.height = 600;
@@ -83,10 +73,9 @@ int main(int argc, char** argv)
     /* Program options */
     po::options_description desc({
         {'h', "help","produce help message"},
-        {'i', "input-file",    &input_filename,               "input ini file name"},
         {'t', "target-device", &target_device, "target device"},
-        {'u', "username", &username, "username"},
-        {'p', "password", &password, "password"},
+        //{'u', "username", &username, "username"},
+        //{'p', "password", &password, "password"},
         {"verbose", &verbose, "verbose"},
     });
 
@@ -104,12 +93,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    Inifile ini;
-    CryptoContext cctx;
-    UdevRandom gen;
-
-    NullReportMessage report_message;
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -124,20 +107,15 @@ int main(int argc, char** argv)
     // sock_trans.connect();
 
     ClientFront front(false, false, info, verbose);
-
- //   VncFront front(sock_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
-
-
+    //VncFront front(sock_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 
     const bool is_socket_transport = true;
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
     Font font;
-
-    /* Random */
-    TimeSystem timeobj;
+    NullReportMessage report_message;
 
     /* mod_api */
-     mod_vnc mod(
+    mod_vnc mod(
         sock_trans
       , "10.10.46.70"
       , "SecureLinux$42"

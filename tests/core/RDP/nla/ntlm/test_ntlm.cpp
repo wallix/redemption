@@ -40,19 +40,15 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     uint8_t pass[] = "Hélène";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetAuthIdentityFromUtf8(name, dom, pass);
-    CredHandle credentials;
-    TimeStamp expiration;
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
-                                            &id, nullptr, nullptr,
-                                            &credentials, &expiration);
+    status = table.AcquireCredentialsHandle(NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &id);
 
 
     RED_CHECK_EQUAL(status, SEC_E_OK);
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
+    CREDENTIALS const * creds = table.getCredentialHandle();
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -62,9 +58,6 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
-
-    status = table.FreeCredentialsHandle(&credentials);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
 }
 
 RED_AUTO_TEST_CASE(TestInitialize)
@@ -72,26 +65,30 @@ RED_AUTO_TEST_CASE(TestInitialize)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    Ntlm_SecurityFunctionTable table(rand, timeobj);
-    SEC_STATUS status;
-    uint8_t name[] = "Ménélas";
-    uint8_t dom[] = "Sparte";
-    uint8_t pass[] = "Hélène";
-    SEC_WINNT_AUTH_IDENTITY id;
-    id.SetAuthIdentityFromUtf8(name, dom, pass);
-    CredHandle credentials;
-    TimeStamp expiration;
+    Ntlm_SecurityFunctionTable server_table(rand, timeobj);
+    Ntlm_SecurityFunctionTable client_table(rand, timeobj);
+    SEC_STATUS server_status;
+    SEC_STATUS client_status;
+    uint8_t const name[] = "Ménélas";
+    uint8_t const dom[] = "Sparte";
+    uint8_t const pass[] = "Hélène";
+    SEC_WINNT_AUTH_IDENTITY server_id;
+    server_id.SetAuthIdentityFromUtf8(name, dom, pass);
+    SEC_WINNT_AUTH_IDENTITY client_id;
+    client_id.SetAuthIdentityFromUtf8(name, dom, pass);
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
 
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(nullptr, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
-                                            &id, nullptr, nullptr,
-                                            &credentials, &expiration);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
+    server_status = server_table.AcquireCredentialsHandle(
+        NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &server_id);
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
+    client_status = client_table.AcquireCredentialsHandle(
+        NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &client_id);
+    RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    CREDENTIALS * creds = reinterpret_cast<CREDENTIALS*>(credentials.SecureHandleGetLowerPointer());
+    CREDENTIALS const * creds = server_table.getCredentialHandle();
     RED_CHECK_MEM_C(
         make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
@@ -102,11 +99,14 @@ RED_AUTO_TEST_CASE(TestInitialize)
         make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
-    SecPkgInfo packageInfo;
-    status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
+    SecPkgInfo server_packageInfo;
+    server_status = server_table.QuerySecurityPackageInfo(&server_packageInfo);
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
-    CtxtHandle client_context;
+    SecPkgInfo client_packageInfo;
+    client_status = client_table.QuerySecurityPackageInfo(&client_packageInfo);
+    RED_CHECK_EQUAL(client_status, SEC_E_OK);
+
     SecBuffer input_buffer;
     SecBuffer output_buffer;
     SecBufferDesc input_buffer_desc;
@@ -117,22 +117,21 @@ RED_AUTO_TEST_CASE(TestInitialize)
     output_buffer_desc.cBuffers = 1;
     output_buffer_desc.pBuffers = &output_buffer;
     output_buffer.BufferType = SECBUFFER_TOKEN;
-    output_buffer.Buffer.init(packageInfo.cbMaxToken);
+    output_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
     unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
     // client first call, no input buffer, no context
-    status = table.InitializeSecurityContext(&credentials,
-                                             nullptr, // context
-                                             nullptr, // TargetName
-                                             fContextReq, SECURITY_NATIVE_DREP,
-                                             nullptr, // input buffer desc
-                                             0, &client_context, // context (NTLMContext)
-                                             &output_buffer_desc, // output buffer desc
-                                             &expiration);
+    client_status = client_table.InitializeSecurityContext(
+        nullptr, // TargetName
+        fContextReq,
+        nullptr, // input buffer desc
+        0,
+        &output_buffer_desc // output buffer desc
+    );
 
-    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(client_status, SEC_I_CONTINUE_NEEDED);
 
     RED_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
     // hexdump_c(output_buffer.Buffer.get_data(), 40);
@@ -153,17 +152,14 @@ RED_AUTO_TEST_CASE(TestInitialize)
     input_buffer_desc.cBuffers = 1;
     input_buffer_desc.pBuffers = &input_buffer;
     input_buffer.BufferType = SECBUFFER_TOKEN;
-    input_buffer.Buffer.init(packageInfo.cbMaxToken);
+    input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
-    CtxtHandle server_context;
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    status = table.AcceptSecurityContext(&credentials, nullptr,
-                                         &output_buffer_desc, fsContextReq,
-                                         SECURITY_NATIVE_DREP, &server_context,
-                                         &input_buffer_desc, &expiration);
+    server_status = server_table.AcceptSecurityContext(
+        &output_buffer_desc, fsContextReq, &input_buffer_desc);
 
-    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
     // hexdump_c(input_buffer.Buffer.get_data(), 120);
 
@@ -171,20 +167,19 @@ RED_AUTO_TEST_CASE(TestInitialize)
     output_buffer_desc.cBuffers = 1;
     output_buffer_desc.pBuffers = &output_buffer;
     output_buffer.BufferType = SECBUFFER_TOKEN;
-    output_buffer.Buffer.init(packageInfo.cbMaxToken);
+    output_buffer.Buffer.init(server_packageInfo.cbMaxToken);
 
     // client second call, got context
     // got input buffer: challenge message
-    status = table.InitializeSecurityContext(&credentials,
-                                             &client_context, // context
-                                             nullptr, // TargetName
-                                             fContextReq, SECURITY_NATIVE_DREP,
-                                             &input_buffer_desc, // input buffer desc
-                                             0, &client_context, // context (NTLMContext)
-                                             &output_buffer_desc, // output buffer desc
-                                             &expiration);
+    client_status = client_table.InitializeSecurityContext(
+        nullptr, // TargetName
+        fContextReq,
+        &input_buffer_desc, // input buffer desc
+        0,
+        &output_buffer_desc // output buffer desc
+    );
 
-    RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    RED_CHECK_EQUAL(client_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
     // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
@@ -193,23 +188,21 @@ RED_AUTO_TEST_CASE(TestInitialize)
     input_buffer_desc.cBuffers = 1;
     input_buffer_desc.pBuffers = &input_buffer;
     input_buffer.BufferType = SECBUFFER_TOKEN;
-    input_buffer.Buffer.init(packageInfo.cbMaxToken);
+    input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
 
 
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
-    status = table.AcceptSecurityContext(&credentials, &server_context,
-                                         &output_buffer_desc, fsContextReq,
-                                         SECURITY_NATIVE_DREP, &server_context,
-                                         &input_buffer_desc, &expiration);
+    server_status = server_table.AcceptSecurityContext(
+        &output_buffer_desc, fsContextReq, &input_buffer_desc);
 
-    RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
 
     // Check contexts
-    NTLMContext * client = reinterpret_cast<NTLMContext*>(client_context.SecureHandleGetLowerPointer());
-    NTLMContext * server = reinterpret_cast<NTLMContext*>(server_context.SecureHandleGetLowerPointer());
+    NTLMContext const * client = client_table.getContextHandle();
+    NTLMContext const * server = server_table.getContextHandle();
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
@@ -261,7 +254,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
                         16));
 
     SecPkgContext_Sizes ContextSizes;
-    table.QueryContextAttributes(nullptr, SECPKG_ATTR_SIZES, &ContextSizes);
+    server_table.QueryContextSizes(&ContextSizes);
     RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
     RED_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
     RED_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
@@ -270,8 +263,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
     RED_CHECK_EQUAL(server->confidentiality, true);
-    server->confidentiality = false;
-    client->confidentiality = false;
+//     server->confidentiality = false;
+//     client->confidentiality = false;
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
     SecBuffer Buffers[2];
@@ -286,8 +279,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    status = table.EncryptMessage(&server_context, 0, &Message, 0);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
+    server_status = server_table.EncryptMessage(&Message, 0);
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 
     Result.copy(Buffers[0].Buffer.get_data(),
@@ -301,7 +294,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    unsigned long pfQOP = 0;
     Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
     Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
     Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
@@ -313,21 +305,12 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    status = table.DecryptMessage(&client_context, &Message, 0, &pfQOP);
+    client_status = client_table.DecryptMessage(&Message, 0);
 
-    RED_CHECK_EQUAL(status, SEC_E_OK);
+    RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    status = table.ImpersonateSecurityContext(&server_context);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-    status = table.RevertSecurityContext(&server_context);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-
-    // clear handles
-    status = table.FreeContextBuffer(&server_context);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-    status = table.FreeContextBuffer(&client_context);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-    status = table.FreeCredentialsHandle(&credentials);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-
+    server_status = server_table.ImpersonateSecurityContext();
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
+    server_status = server_table.RevertSecurityContext();
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
 }

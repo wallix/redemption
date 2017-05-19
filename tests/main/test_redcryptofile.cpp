@@ -30,7 +30,7 @@
 
 extern "C" {
     inline
-    int hmac_fn(char * buffer)
+    int hmac_fn(uint8_t * buffer)
     {
         // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
         uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
@@ -44,7 +44,7 @@ extern "C" {
     }
 
     inline
-    int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
+    int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
@@ -69,8 +69,6 @@ inline uint8_t const * bytes(char const * p)
 
 RED_AUTO_TEST_CASE(TestRedCryptofile)
 {
-    OpenSSL_add_all_digests();
-
     const char * finalname = "./encrypted.txt";
 
     // Writer
@@ -78,9 +76,9 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, &hmac_fn, &trace_fn);
+        auto * handle = redcryptofile_writer_new_with_test_random(with_encryption, with_checksum, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
-        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname), 0);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
 
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
@@ -115,7 +113,74 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         RED_CHECK_EQ(redcryptofile_reader_error_message(handle), "No error");
 
+        RED_CHECK_EQ(redcryptofile_reader_hash(handle, finalname), 0);
+
+        RED_CHECK_EQ(redcryptofile_reader_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_EQ(redcryptofile_reader_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+
         redcryptofile_reader_delete(handle);
+    }
+
+    RED_CHECK_EQ(::unlink(finalname), 0);
+}
+
+RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
+{
+    const char * finalname = "./encrypted.txt";
+
+    HashHexArray qhash;
+    HashHexArray fhash;
+
+    // Writer with udev random
+    {
+        int with_encryption = 1; // int used as boolean 0 false, true otherwise
+        int with_checksum = 1;   // int used as boolean 0 false, true otherwise
+
+        auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, &hmac_fn, &trace_fn);
+        RED_CHECK_NE(handle, nullptr);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
+
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and so on."), 10), 10);
+
+        RED_CHECK_EQ(redcryptofile_writer_close(handle), 0);
+
+        memcpy(qhash, redcryptofile_writer_qhashhex(handle), sizeof(qhash));
+        memcpy(fhash, redcryptofile_writer_fhashhex(handle), sizeof(fhash));
+        RED_CHECK_NE(qhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_NE(fhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+
+        RED_CHECK_EQ(redcryptofile_writer_error_message(handle), "No error");
+
+        redcryptofile_writer_delete(handle);
+    }
+
+    RED_CHECK_EQ(::unlink(finalname), 0);
+
+    // Writer with udev random
+    {
+        int with_encryption = 1; // int used as boolean 0 false, true otherwise
+        int with_checksum = 1;   // int used as boolean 0 false, true otherwise
+
+        auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, &hmac_fn, &trace_fn);
+        RED_CHECK_NE(handle, nullptr);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
+
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
+        RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and so on."), 10), 10);
+
+        RED_CHECK_EQ(redcryptofile_writer_close(handle), 0);
+
+        auto qhash2 = redcryptofile_writer_qhashhex(handle);
+        auto fhash2 = redcryptofile_writer_fhashhex(handle);
+        RED_CHECK_NE(qhash2, qhash);
+        RED_CHECK_NE(fhash2, fhash);
+
+        RED_CHECK_EQ(redcryptofile_writer_error_message(handle), "No error");
+
+        redcryptofile_writer_delete(handle);
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
@@ -124,11 +189,14 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
     auto handle_w = redcryptofile_writer_new(1, 1, &hmac_fn, &trace_fn);
-    RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/"), -1);
+    RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/", 0), -1);
     RED_CHECK_NE(redcryptofile_writer_error_message(handle_w), "No error");
 
     auto handle_r = redcryptofile_reader_new(&hmac_fn, &trace_fn);
     RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/"), -1);
+    RED_CHECK_NE(redcryptofile_reader_error_message(handle_r), "No error");
+
+    RED_CHECK_EQ(redcryptofile_reader_hash(handle_r, "/"), -1);
     RED_CHECK_NE(redcryptofile_reader_error_message(handle_r), "No error");
 
     redcryptofile_writer_delete(handle_w);
@@ -142,4 +210,6 @@ RED_AUTO_TEST_CASE(TestRedCryptofileError)
     RED_CHECK_EQ(redcryptofile_reader_read(nullptr, buf, 10), -1);
     RED_CHECK_EQ(redcryptofile_reader_close(nullptr), -1);
     RED_CHECK_NE(redcryptofile_reader_error_message(nullptr), "No error");
+
+
 }

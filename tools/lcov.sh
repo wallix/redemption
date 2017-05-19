@@ -21,7 +21,7 @@ bjam \
     cxxflags='--coverage --test-coverage --profile-arcs' \
     $targets
 
-dirbase=$(echo "$PWD/$build_dir"/*/*/release)
+dirbase=$(echo "$build_dir"/*/*/release)
 dirbase_len=$((${#dirbase}+7)) # + /tests/
 find "$dirbase" -name 'test_*.gcda' | while read f ; do
     base="${f%/*}"

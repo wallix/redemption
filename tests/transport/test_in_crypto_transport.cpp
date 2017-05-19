@@ -28,13 +28,13 @@
 #include "transport/in_crypto_transport.hpp"
 #include <cstring>
 #include "test_only/lcg_random.hpp"
+#include "test_only/get_file_contents.hpp"
 
 using Read = Transport::Read;
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
     LOG(LOG_INFO, "Running test TestInCryptoTransport");
-    OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
     CryptoContext cctx;
@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
-        
+
         RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_hash);
         RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_hash);
     }
@@ -185,7 +185,6 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 {
     LOG(LOG_INFO, "Running test TestInCryptoTransportCrypted");
-    OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
     CryptoContext cctx;
@@ -387,9 +386,97 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
-                         
+
         RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
         RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
+}
+
+RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
+{
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+
+    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
+    const char * encrypted_file = "/tmp/encrypted_file.enc";
+
+    constexpr std::size_t original_filesize = 4167058;
+    auto original_contents = get_file_contents(original_filename);
+    RED_CHECK_EQUAL(original_contents.size(), original_filesize);
+
+    {
+        OutCryptoTransport ct(false, false, cctx, rnd);
+        ct.open(encrypted_file, S_IRUSR|S_IRGRP);
+        ct.send(original_contents.data(), original_contents.size());
+    }
+
+    char buffer[original_filesize];
+    {
+        InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
+        ct.open(encrypted_file);
+        RED_CHECK_EQUAL(ct.is_encrypted(), false);
+        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
+        ct.close();
+    }
+    RED_CHECK_MEM_AA(buffer, original_contents);
+    RED_CHECK_EQUAL(0, ::unlink(encrypted_file));
+}
+
+RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
+{
+    LCGRandom rnd(0);
+    CryptoContext cctx;
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+
+    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
+    const char * encrypted_file = "/tmp/encrypted_file.enc";
+
+    constexpr std::size_t original_filesize = 4167058;
+    auto original_contents = get_file_contents(original_filename);
+    RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
+
+    {
+        OutCryptoTransport ct(true, false, cctx, rnd);
+        ct.open(encrypted_file, S_IRUSR|S_IRGRP);
+        ct.send(original_contents.data(), original_contents.size());
+    }
+
+    char buffer[original_filesize];
+    {
+        InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
+        ct.open(encrypted_file);
+        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
+        RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
+        ct.close();
+    }
+    RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));
+    RED_CHECK_EQUAL(0, ::unlink(encrypted_file));
 }

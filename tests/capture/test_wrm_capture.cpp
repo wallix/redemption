@@ -69,7 +69,6 @@ void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t hei
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
-    OpenSSL_add_all_digests();
     ::unlink("./capture.mwrm");
     ::unlink("/tmp/capture.mwrm");
 
@@ -199,8 +198,6 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
-    OpenSSL_add_all_digests();
-
     struct CheckFiles1 {
         const char * filename;
         size_t size;

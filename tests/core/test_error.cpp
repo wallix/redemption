@@ -27,9 +27,9 @@ RED_AUTO_TEST_CASE(TestError)
 {
     Error e(ERR_SSL_CALL_FAILED);
 
-    RED_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
+    RED_CHECK_EQUAL("Exception ERR_SSL_CALL_FAILED no : 25000", e.errmsg());
 
-    RED_CHECK_EQUAL(0, strcmp("Exception", e.errmsg(false)));
+    RED_CHECK_EQUAL("Exception ERR_SSL_CALL_FAILED", e.errmsg(false));
 
-    RED_CHECK_EQUAL(0, strcmp("Exception Error no : 25000", e.errmsg()));
+    RED_CHECK_EQUAL("Exception ERR_SSL_CALL_FAILED no : 25000", e.errmsg());
 }

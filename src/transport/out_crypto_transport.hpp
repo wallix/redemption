@@ -36,41 +36,20 @@ struct ocrypto
     };
 
 private:
-    EVP_CIPHER_CTX ectx;                    // [en|de]cryption context
+    EncryptContext ectx;
     SslHMAC_Sha256_Delayed hm;              // full hash context
     SslHMAC_Sha256_Delayed hm4k;             // quick hash context
     uint32_t       pos;                     // current position in buf
     uint32_t       raw_size;                // the unciphered/uncompressed file size
     uint32_t       file_size;               // the current file size
     uint8_t header_buf[40];
-    uint8_t result_buffer[32768] = {};
+    uint8_t result_buffer[65536] = {};
     char           buf[CRYPTO_BUFFER_SIZE]; //
 
     CryptoContext & cctx;
     Random & rnd;
     bool encryption;
     bool checksum;
-
-    /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-     * Return 0 on success, negative value on error
-     */
-    void xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-    {
-        int safe_size = *dst_sz;
-        int remaining_size = 0;
-
-        /* allows reusing of ectx for multiple encryption cycles */
-        if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        *dst_sz = safe_size + remaining_size;
-    }
 
     /* Flush procedure (compression, encryption)
      * Return 0 on success, negatif on error
@@ -100,9 +79,10 @@ private:
         // Encrypt
         unsigned char ciphered_buf[4 + 65536];
         uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-        this->xaes_encrypt(reinterpret_cast<unsigned char*>(compressed_buf),
-                           compressed_buf_sz,
-                           ciphered_buf + 4, &ciphered_buf_sz);
+        ciphered_buf_sz = this->ectx.encrypt(
+            reinterpret_cast<unsigned char*>(compressed_buf), compressed_buf_sz,
+            ciphered_buf + 4, ciphered_buf_sz
+        );
 
         ciphered_buf[0] = ciphered_buf_sz & 0xFF;
         ciphered_buf[1] = (ciphered_buf_sz >> 8) & 0xFF;
@@ -161,22 +141,10 @@ public:
             this->rnd.random(iv, 32);
 
             ::memset(this->buf, 0, sizeof(this->buf));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
             this->pos = 0;
             this->raw_size = 0;
 
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const unsigned int salt[]  = { 12345, 54321 };    // suspicious, to check...
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), reinterpret_cast<const unsigned char *>(salt),
-                                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-            if (i != 32) {
-                throw Error(ERR_SSL_CALL_FAILED);
-            }
-
-            ::EVP_CIPHER_CTX_init(&this->ectx);
-            if (::EVP_EncryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+            if (!this->ectx.init(trace_key, iv)) {
                 throw Error(ERR_SSL_CALL_FAILED);
             }
 
@@ -204,6 +172,8 @@ public:
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
             this->flush(this->result_buffer, buflen, towrite);
+
+            // this->ectx.deinit();
 
             unsigned char tmp_buf[8] = {
                 'M','F','C','W',
@@ -239,25 +209,25 @@ public:
         }
 
         size_t buflen = sizeof(this->result_buffer);
+        if (len > buflen - 1000) { // 1000: magic enough for header, actual value is smaller
+            len = buflen;
+        }
+        // Check how much we can append into buffer
+        size_t available_size = CRYPTO_BUFFER_SIZE - this->pos;
+        if (available_size > len) {
+            available_size = len;
+        }
+        // Append and update pos pointer
+        ::memcpy(this->buf + this->pos, &data[0], available_size);
+        this->pos += available_size;
+        // If buffer is full, flush it to disk
         size_t towrite = 0;
-        unsigned int remaining_size = len;
-        while (remaining_size > 0) {
-            // Check how much we can append into buffer
-            unsigned int available_size = std::min(unsigned(CRYPTO_BUFFER_SIZE - this->pos), remaining_size);
-            // Append and update pos pointer
-            ::memcpy(this->buf + this->pos, data + (len - remaining_size), available_size);
-            this->pos += available_size;
-            // If buffer is full, flush it to disk
-            if (this->pos == CRYPTO_BUFFER_SIZE) {
-                size_t tmp_towrite = 0;
-                this->flush(this->result_buffer + towrite, buflen - towrite, tmp_towrite);
-                towrite += tmp_towrite;
-            }
-            remaining_size -= available_size;
+        if (this->pos == CRYPTO_BUFFER_SIZE) {
+            this->flush(this->result_buffer, buflen, towrite);
         }
         // Update raw size counter
-        this->raw_size += len;
-        return {{this->result_buffer, towrite}, len};
+        this->raw_size += available_size;
+        return {{this->result_buffer, towrite}, available_size};
     }
 };
 
@@ -402,7 +372,12 @@ private:
             LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
-        const ocrypto::Result res = this->encrypter.write(data, len);
-        this->out_file.send(res.buf.data(), res.buf.size());
+        auto to_send = len;
+        while (to_send > 0) {
+            const ocrypto::Result res = this->encrypter.write(data, to_send);
+            this->out_file.send(res.buf.data(), res.buf.size());
+            to_send -= res.consumed;
+            data += res.consumed;
+        }
     }
 };

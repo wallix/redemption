@@ -48,19 +48,12 @@ constexpr Dst safe_cast(Src value);
 template<class T>
 struct checked_int
 {
+    using value_type = T;
+
     template<class U>
     /*c++14 constexpr*/ checked_int(U i) noexcept
     : i(checked_cast<T>(i))
     {}
-
-    checked_int & operator = (checked_int const &) = default;
-
-    template<class U>
-    checked_int & operator = (U i)
-    {
-        this->i = checked_cast<T>(i);
-        return *this;
-    }
 
     operator T () const noexcept { return this->i; }
 
@@ -73,19 +66,12 @@ private:
 template<class T>
 struct saturated_int
 {
+    using value_type = T;
+
     template<class U>
     /*c++14 constexpr*/ saturated_int(U i) noexcept
     : i(saturated_cast<T>(i))
     {}
-
-    saturated_int & operator = (saturated_int const &) = default;
-
-    template<class U>
-    saturated_int & operator = (U i)
-    {
-        this->i = saturated_cast<T>(i);
-        return *this;
-    }
 
     operator T () const noexcept { return this->i; }
 
@@ -98,19 +84,12 @@ private:
 template<class T>
 struct safe_int
 {
+    using value_type = T;
+
     template<class U>
     constexpr safe_int(U i) noexcept
     : i(safe_cast<T>(i))
     {}
-
-    /*c++14 constexpr*/ safe_int & operator = (safe_int const &) = default;
-
-    template<class U>
-    /*c++14 constexpr*/ safe_int & operator = (U i)
-    {
-        this->i = saturated_cast<T>(i);
-        return *this;
-    }
 
     constexpr operator T () const noexcept { return this->i; }
 

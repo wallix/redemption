@@ -41,7 +41,7 @@
 #include "test_only/get_file_contents.hpp"
 
 extern "C" {
-    inline int hmac_fn(char * buffer)
+    inline int hmac_fn(uint8_t * buffer)
     {
         // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
         uint8_t hmac_key[] = {
@@ -54,7 +54,7 @@ extern "C" {
         return 0;
     }
 
-    inline int trace_fn(char * base, int len, char * buffer, unsigned oldscheme)
+    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
@@ -130,6 +130,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"./decrypted.out\".\ndecrypt ok\n");
     RED_CHECK_EQUAL(0, unlink("./decrypted.out"));
     RED_CHECK_EQUAL(0, res);
@@ -155,6 +156,7 @@ RED_AUTO_TEST_CASE(TestDecrypterClearData)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/decrypted.2.out\".\nInput file is not encrypted.\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -181,6 +183,7 @@ RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "");
     RED_CHECK_EQUAL(res, -1);
 }
@@ -206,6 +209,7 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nverify failed\n");
     RED_CHECK_EQUAL(1, res);
 }
@@ -231,6 +235,7 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -259,6 +264,7 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -342,6 +348,7 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 
@@ -384,11 +391,12 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
     RED_CHECK_EQUAL(1, res);
 }
 
-inline int hmac_2016_fn(char * buffer)
+inline int hmac_2016_fn(uint8_t * buffer)
 {
 
     uint8_t hmac_key[32] = {
@@ -401,7 +409,7 @@ inline int hmac_2016_fn(char * buffer)
     return 0;
 }
 
-inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldscheme)
+inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
 //    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
 
@@ -465,7 +473,7 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
     for (auto & k: keys){
         if ((k.scheme == oldscheme)
         && (k.base.length() == static_cast<size_t>(len))
-        && (strncmp(k.base.c_str(), base, static_cast<size_t>(len)) == 0))
+        && (strncmp(k.base.c_str(), reinterpret_cast<char const*>(base), static_cast<size_t>(len)) == 0))
         {
             if (oldscheme){
                 LOG(LOG_INFO, "old key (derived from main master)");
@@ -474,13 +482,11 @@ inline int trace_20161025_fn(char * base, int len, char * buffer, unsigned oldsc
                 LOG(LOG_INFO, "new key (derived master to use as master)");
             }
             memcpy(buffer, k.derived_key, 32);
-//            hexdump_d(buffer, 32);
+            //hexdump_d(buffer, 32);
             return 0;
         }
     }
-    memset(buffer, 0, 32);
-    LOG(LOG_INFO, "key not found for base=%*s", len, base);
-    //hexdump_d(buffer, 32);
+    RED_CHECK(false);
     return 0;
 }
 
@@ -505,6 +511,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out0.txt\".\ndecrypt ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -527,6 +534,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out8.txt\".\ndecrypt ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -553,6 +561,7 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out.txt\".\ndecrypt ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -579,6 +588,7 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out2.txt\".\ndecrypt ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -604,6 +614,7 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -629,6 +640,7 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "");
     RED_CHECK_EQUAL(-1, res);
 }
@@ -657,6 +669,7 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -685,6 +698,7 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -950,6 +964,7 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
     RED_CHECK_EQUAL(0, res);
 }
@@ -985,6 +1000,7 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     int res = -1;
     CoutBuf cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
     RED_CHECK_EQUAL(1, res);
 }
@@ -1011,6 +1027,7 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
 
     CoutBuf cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 

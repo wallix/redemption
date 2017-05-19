@@ -34,8 +34,6 @@
 
 int main(int argc, char** argv)
 {
-    Inifile ini;
-
     UdevRandom rnd;
     CryptoContext cctx;
 

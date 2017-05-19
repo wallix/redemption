@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 {
-  if (/^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+|\.o\.\.\.$|^In/)
+  if (/^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
   {}
   else if (/[^.]+\.(compile\.c\+\+|link)|^testing\.unit-test /)
   {

@@ -56,8 +56,8 @@ enum {
 constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 extern "C" {
-    typedef int get_hmac_key_prototype(char * buffer);
-    typedef int get_trace_key_prototype(char * base, int len, char * buffer, unsigned oldscheme);
+    typedef int get_hmac_key_prototype(uint8_t * buffer);
+    typedef int get_trace_key_prototype(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme);
 }
 
 
@@ -67,8 +67,8 @@ constexpr std::size_t HMAC_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 
 class CryptoContext
 {
-    unsigned char master_key[CRYPTO_KEY_LENGTH] {};
-    unsigned char hmac_key[HMAC_KEY_LENGTH] {};
+    uint8_t master_key[CRYPTO_KEY_LENGTH] {};
+    uint8_t hmac_key[HMAC_KEY_LENGTH] {};
 
     get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
@@ -82,7 +82,7 @@ public:
 
 
 public:
-    auto get_hmac_key() -> unsigned char const (&)[HMAC_KEY_LENGTH]
+    auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
     {
         if (!this->hmac_key_loaded){
             if (!this->get_hmac_key_cb) {
@@ -90,13 +90,13 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
-            this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
+            this->get_hmac_key_cb(this->hmac_key);
             this->hmac_key_loaded = true;
         }
         return this->hmac_key;
     }
 
-    const unsigned char * get_master_key() const
+    const uint8_t * get_master_key() const
     {
         assert(this->master_key_loaded);
         return this->master_key;
@@ -109,11 +109,11 @@ public:
                 // if we have a callback ask key
                 uint8_t tmp[MD_HASH::DIGEST_LENGTH];
                 this->get_trace_key_cb(
-                      reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
-                    , static_cast<int>(derivator_len)
-                    , reinterpret_cast<char*>(tmp)
-                    , this->old_encryption_scheme?1:0
-                    );
+                    derivator
+                  , static_cast<int>(derivator_len)
+                  , tmp
+                  , this->old_encryption_scheme?1:0
+                );
                 memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
                 return;
             }
@@ -127,9 +127,9 @@ public:
 
             // if we have a callback ask key
             this->get_trace_key_cb(
-                reinterpret_cast<char*>(const_cast<uint8_t*>(derivator))
+                derivator
               , static_cast<int>(derivator_len)
-              , reinterpret_cast<char*>(this->master_key)
+              , this->master_key
               , this->old_encryption_scheme?1:0
             );
             this->master_key_loaded = true;
@@ -147,6 +147,7 @@ public:
             sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
             sha256.final(tmp);
         }
+        static_assert(sizeof(trace_key) == sizeof(tmp), "");
         memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
@@ -154,7 +155,7 @@ public:
 
     size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
     {
-        const unsigned char _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const uint8_t _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         unsigned int bits = 0;
         int nbits = 0;
         char base64tbl[256];
@@ -171,7 +172,7 @@ public:
         base64tbl[int('_')] = 63;
 
         while (*txt) {
-            char const v = base64tbl[static_cast<unsigned char>(*txt)];
+            char const v = base64tbl[static_cast<uint8_t>(*txt)];
             if (v >= 0) {
                 bits <<= 6;
                 bits += v;
@@ -191,7 +192,7 @@ public:
 
     class key_data : private const_bytes_array
     {
-        static constexpr std::size_t key_length = 32;
+        static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
 
         static_assert(sizeof(master_key) == key_length, "");
         static_assert(sizeof(hmac_key) == key_length, "");
@@ -242,4 +243,149 @@ public:
     {
         this->get_trace_key_cb = get_trace_key_cb;
     }
+};
+
+inline const EVP_CIPHER * get_cipher_and_prepare_key(
+        uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH],
+        unsigned char key[CRYPTO_KEY_LENGTH]
+) noexcept
+{
+    const EVP_CIPHER * cipher = ::EVP_aes_256_cbc();
+    const uint8_t salt[] = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+    const int     nrounds = 5;
+    const int i = ::EVP_BytesToKey(
+        cipher, EVP_sha1(), salt, trace_key,
+        CRYPTO_KEY_LENGTH, nrounds, key, nullptr
+    );
+    if (i != CRYPTO_KEY_LENGTH) {
+        LOG(LOG_INFO, "Can't read EVP_BytesToKey");
+        return nullptr;
+    }
+    return cipher;
+}
+
+struct CipherContext
+{
+    /// init or reinit
+    void init() noexcept
+    {
+        this->deinit();
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        this->is_init = true;
+    }
+
+    void deinit() noexcept
+    {
+        if (this->is_init) {
+            EVP_CIPHER_CTX_cleanup(&this->ectx);
+            this->is_init = false;
+        }
+    }
+
+    ~CipherContext()
+    {
+        this->deinit();
+    }
+
+    EVP_CIPHER_CTX* get_ctx() noexcept
+    {
+        return &this->ectx;
+    }
+
+    bool is_initialized() const noexcept
+    {
+        return this->is_init;
+    }
+
+private:
+    EVP_CIPHER_CTX ectx; // [en|de]cryption context
+    bool is_init = false;
+};
+
+struct EncryptContext
+{
+    /// init or reinit
+    bool init(uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH], uint8_t * iv) noexcept
+    {
+        unsigned char key[CRYPTO_KEY_LENGTH];
+        const EVP_CIPHER * cipher = get_cipher_and_prepare_key(trace_key, key);
+
+        if (!cipher) {
+            return false;
+        }
+
+        this->cctx.init();
+        if (::EVP_EncryptInit_ex(this->cctx.get_ctx(), cipher, nullptr, key, iv) != 1) {
+            LOG(LOG_ERR, "Can't read EVP_EncryptInit_ex");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * \brief Encrypt \c src_buf into \c dst_buf.
+     * \return encrypted output size
+     */
+    size_t encrypt(uint8_t const * src_buf, size_t src_sz, uint8_t * dst_buf, size_t dst_sz)
+    {
+        assert(this->cctx.is_initialized());
+        int safe_size = dst_sz;
+        int remaining_size = 0;
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_EncryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_EncryptUpdate(this->cctx.get_ctx(), dst_buf, &safe_size, src_buf, src_sz) != 1
+         || EVP_EncryptFinal_ex(this->cctx.get_ctx(), dst_buf + safe_size, &remaining_size) != 1) {
+            LOG(LOG_ERR, "EncryptContext::encrypt");
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        return size_t(safe_size + remaining_size);
+    }
+
+private:
+    CipherContext cctx;
+};
+
+struct DecryptContext
+{
+    /// init or reinit
+    bool init(uint8_t const (&trace_key)[CRYPTO_KEY_LENGTH], uint8_t const * iv) noexcept
+    {
+        unsigned char key[CRYPTO_KEY_LENGTH];
+        const EVP_CIPHER * cipher = get_cipher_and_prepare_key(trace_key, key);
+
+        if (!cipher) {
+            return false;
+        }
+
+        this->cctx.init();
+        if (::EVP_DecryptInit_ex(this->cctx.get_ctx(), cipher, nullptr, key, iv) != 1) {
+            LOG(LOG_ERR, "Can't read EVP_DecryptInit_ex");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * \brief Decrypt \c src_buf into \c dst_buf.
+     * \return decrypted output size
+     */
+    size_t decrypt(const uint8_t * src_buf, size_t src_sz, uint8_t * dst_buf)
+    {
+        assert(this->cctx.is_initialized());
+        int written = 0;
+        int trail = 0;
+        /* allows reusing of ectx for multiple encryption cycles */
+        if (EVP_DecryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
+         || EVP_DecryptUpdate(this->cctx.get_ctx(), dst_buf, &written, src_buf, src_sz) != 1
+         || EVP_DecryptFinal_ex(this->cctx.get_ctx(), dst_buf + written, &trail) != 1){
+            LOG(LOG_ERR, "DecryptContext::decrypt");
+            throw Error(ERR_SSL_CALL_FAILED);
+        }
+        return size_t(written + trail);
+    }
+
+private:
+    CipherContext cctx;
 };

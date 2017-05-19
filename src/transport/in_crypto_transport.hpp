@@ -52,7 +52,7 @@ private:
     uint32_t clear_pos;                   // current position in clear_data buf
     uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
-    EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
+    DecryptContext ectx;
     // TODO: state to remove ? Seems to duplicate eof flag
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
@@ -99,10 +99,6 @@ public:
 
     const HASH qhash(const char * pathname)
     {
-        if (this->is_open()){
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
         SslHMAC_Sha256 hm4k(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
 
         {
@@ -133,10 +129,6 @@ public:
 
     const HASH fhash(const char * pathname)
     {
-        if (this->is_open()){
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
         SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
 
         {
@@ -195,7 +187,6 @@ public:
 
         ::memset(this->clear_data, 0, sizeof(this->clear_data));
 
-        ::memset(&this->ectx, 0, sizeof(this->ectx));
         this->clear_pos = 0;
         this->raw_size = 0;
         this->state = 0;
@@ -300,28 +291,12 @@ public:
 
         // TODO: replace p.with some array view of 32 bytes ?
         const uint8_t * const iv = p.p;
-        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-        const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
-        const int          nrounds = 5;
-        unsigned char      key[32];
-
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         cctx.get_derived_key(trace_key, base, base_len);
 
-        int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-        if (32 != evp_bytes_to_key_res){
+        if (!this->ectx.init(trace_key, iv)) {
             this->close();
-            LOG(LOG_INFO, "Can't read EVP_BytesToKey");
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            // TODO: add error management
-            LOG(LOG_INFO, "Can't read EVP_DecryptInit_ex");
-            this->close();
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_SSL_CALL_FAILED);
         }
     }
 
@@ -340,19 +315,6 @@ public:
     }
 
 private:
-    size_t xaes_decrypt(const uint8_t src[], size_t src_sz, uint8_t dst[])
-    {
-        int written = 0;
-        int trail = 0;
-        /* allows reusing of ectx for multiple encryption cycles */
-        if ((EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1)
-        ||  (EVP_DecryptUpdate(&this->ectx, &dst[0], &written, &src[0], src_sz) != 1)
-        ||  (EVP_DecryptFinal_ex(&this->ectx, &dst[written], &trail) != 1)){
-            throw Error(ERR_SSL_CALL_FAILED);
-        }
-        return written+trail;
-    }
-
     // this perform atomic read, partial read will result in exception
     void raw_read(uint8_t buffer[], const size_t len)
     {
@@ -380,79 +342,72 @@ private:
                 return 0;
             }
 
-            unsigned int remaining_size = len;
-            while (remaining_size > 0) {
-                // If we do not have any clear data available read some
+            // If we do not have any clear data available read some
+            if (!this->raw_size) {
 
-                if (!this->raw_size) {
+                // Read a full ciphered block at once
+                uint8_t hlen[4] = {};
+                this->raw_read(hlen, 4);
 
-                    // Read a full ciphered block at once
-                    uint8_t hlen[4] = {};
-                    this->raw_read(hlen, 4);
-
-                    Parse p(hlen);
-                    uint32_t enc_len = p.in_uint32_le();
-                    if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                        this->state = CF_EOF;
-                        this->clear_pos = 0;
-                        this->raw_size = 0;
-                        break;
-                    }
-                    if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
-                        this->close();
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-
-                    // PERF allocation in loop
-                    std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
-                    this->raw_read(&enc_buf[0], enc_len);
-
-                    // PERF allocation in loop
-                    std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
-                    size_t pack_buf_size = xaes_decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
-
-                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                    const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(&pack_buf[0]),
-                            pack_buf_size, this->clear_data, &chunk_size);
-
-                    switch (status)
-                    {
-                        case SNAPPY_OK:
-                            break;
-                        case SNAPPY_INVALID_INPUT:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                        case SNAPPY_BUFFER_TOO_SMALL:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                        default:
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-
+                Parse p(hlen);
+                uint32_t enc_len = p.in_uint32_le();
+                if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                    this->state = CF_EOF;
                     this->clear_pos = 0;
-                    // When reading, raw_size represent the current chunk size
-                    this->raw_size = chunk_size;
-
-                    if (!this->raw_size) { // end of file reached
-                        break;
-                    }
-                } // raw_size
-                // Check how much we can copy
-                unsigned int copiable_size = std::min(this->raw_size - this->clear_pos, remaining_size);
-                // Copy buffer to caller
-                ::memcpy(&buffer[len - remaining_size], &this->clear_data[this->clear_pos], copiable_size);
-                this->clear_pos      += copiable_size;
-                this->current_len += len;
-                if (this->file_len <= this->current_len) {
-                    this->eof = true;
-                }
-                remaining_size -= copiable_size;
-                // Check if we reach the end
-                if (this->raw_size == this->clear_pos) {
                     this->raw_size = 0;
+                    this->eof = true;
+                    return 0;
                 }
-                // TODO: for partial_read we could avoid looping on remaining size
-            } // while (remaining_size)
-            return len - remaining_size;
+                if (enc_len > this->MAX_CIPHERED_SIZE) { // integrity error
+                    this->close();
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+
+                // PERF allocation in loop
+                std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
+                this->raw_read(&enc_buf[0], enc_len);
+
+                // PERF allocation in loop
+                std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
+                size_t pack_buf_size = this->ectx.decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
+
+                size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                const snappy_status status = snappy_uncompress(
+                        reinterpret_cast<char *>(&pack_buf[0]),
+                        pack_buf_size, this->clear_data, &chunk_size);
+
+                switch (status)
+                {
+                    case SNAPPY_OK:
+                        break;
+                    case SNAPPY_INVALID_INPUT:
+                    case SNAPPY_BUFFER_TOO_SMALL:
+                    default:
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+
+                this->clear_pos = 0;
+                // When reading, raw_size represent the current chunk size
+                this->raw_size = chunk_size;
+
+            } // raw_size
+
+            // Check how much we can copy
+            std::size_t const copiable_size = std::min(
+                len, static_cast<std::size_t>(this->raw_size - this->clear_pos)
+            );
+            // Copy buffer to caller
+            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], copiable_size);
+            this->clear_pos += copiable_size;
+            this->current_len += copiable_size;
+            if (this->file_len <= this->current_len) {
+                this->eof = true;
+            }
+            // Check if we reach the end
+            if (this->raw_size == this->clear_pos) {
+                this->raw_size = 0;
+            }
+            return copiable_size;
         }
         else {
             if (this->raw_size - this->clear_pos > len){
@@ -496,11 +451,19 @@ private:
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
-        size_t res = do_partial_read(buffer, len);
-        if (res != 0 && res != len) {
+        size_t res;
+        size_t total = 0;
+        size_t remaining_len = len;
+        while ((res = do_partial_read(buffer, remaining_len)) && res != remaining_len) {
+            total += res;
+            buffer += res;
+            remaining_len -= res;
+        }
+        total += res;
+        if (res != 0 && total != len) {
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-        return res == len ? Read::Ok : Read::Eof;
+        return total == len ? Read::Ok : Read::Eof;
     }
 
     std::size_t get_file_len(char const * pathname)

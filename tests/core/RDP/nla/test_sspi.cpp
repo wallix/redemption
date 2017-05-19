@@ -213,42 +213,6 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
     // hexdump_c(id.Password.get_data(), id.Password.size());
 }
 
-RED_AUTO_TEST_CASE(TestSecureHandle)
-{
-    SecHandle handle;
-    unsigned long a = 521354;
-    SecBuffer buff;
-    buff.Buffer.init(462);
-
-    handle.SecureHandleSetLowerPointer(&a);
-    handle.SecureHandleSetUpperPointer(&buff);
-
-    unsigned long * b = reinterpret_cast<unsigned long *>(handle.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport = reinterpret_cast<PSecBuffer>(handle.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b, a);
-    RED_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
-
-    SecHandle handle2(handle);
-
-    unsigned long * b2 = reinterpret_cast<unsigned long *>(handle2.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport2 = reinterpret_cast<PSecBuffer>(handle2.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b2, a);
-    RED_CHECK_EQUAL(buffimport2->Buffer.size(), buff.Buffer.size());
-
-    SecHandle handle3;
-
-    handle3 = handle2;
-
-    unsigned long * b3 = reinterpret_cast<unsigned long *>(handle3.SecureHandleGetLowerPointer());
-    PSecBuffer buffimport3 = reinterpret_cast<PSecBuffer>(handle3.SecureHandleGetUpperPointer());
-
-    RED_CHECK_EQUAL(*b3, a);
-    RED_CHECK_EQUAL(buffimport3->Buffer.size(), buff.Buffer.size());
-
-}
-
 
 RED_AUTO_TEST_CASE(TestSecFunctionTable)
 {
@@ -260,21 +224,16 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QueryCredentialsAttributes(nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcquireCredentialsHandle(nullptr, nullptr, 0, nullptr,
-                                            nullptr, nullptr, nullptr, nullptr, nullptr);
+    status = table.AcquireCredentialsHandle(nullptr, 0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeCredentialsHandle(nullptr);
+    status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr,
-                                             0, nullptr, nullptr, nullptr);
+    status = table.AcceptSecurityContext(nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr, nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
-    status = table.CompleteAuthToken(nullptr, nullptr);
+    status = table.CompleteAuthToken(nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.DeleteSecurityContext(nullptr);
@@ -283,13 +242,13 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ApplyControlToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryContextAttributes(nullptr, 0, nullptr);
+    status = table.QueryContextSizes(nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImpersonateSecurityContext(nullptr);
+    status = table.ImpersonateSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.RevertSecurityContext(nullptr);
+    status = table.RevertSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.MakeSignature(nullptr, 0, nullptr, 0);
@@ -298,14 +257,11 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.VerifySignature(nullptr, nullptr, 0, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.FreeContextBuffer(nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
     //status = table.ExportSecurityContext(nullptr, 0, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.ImportSecurityContext(nullptr, nullptr, nullptr, nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    //status = table.ImportSecurityContext(nullptr, nullptr, nullptr);
+    //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.AddCredentials(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -313,25 +269,21 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.EncryptMessage(nullptr, 0, nullptr, 0);
+    status = table.EncryptMessage(nullptr, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(nullptr, nullptr, 0, nullptr);
+    status = table.DecryptMessage(nullptr, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     SecPkgInfo packageInfo;
-    status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
+    status = table.QuerySecurityPackageInfo(&packageInfo);
     RED_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
     // RED_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
     // RED_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
     // RED_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
     // RED_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
-
-    SecPkgInfo packageInfo2;
-    status = table.QuerySecurityPackageInfo("KERBEROS", &packageInfo2);
-    RED_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
 
 }

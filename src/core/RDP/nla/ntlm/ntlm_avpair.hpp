@@ -22,6 +22,8 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 // 2.2.2.1   AV_PAIR
 // ==================================
@@ -75,8 +77,6 @@
 // | MsvAvFlags           | A 32-bit value indicating server or client configuration.   |
 // | 0x0006               | 0x00000001: indicates to the client that the account        |
 // |                      |  authentication is constrained.                             |
-// |                      | 0x00000001: indicates to the client that the account        |
-// |                      |  authentication is constrained.                             |
 // |                      | 0x00000002: indicates that the client is providing message  |
 // |                      |  integrity in the MIC field (section 2.2.1.3) in the        |
 // |                      |  AUTHENTICATE_MESSAGE.                                      |
@@ -108,7 +108,7 @@
 //  this AV pair entry. The contents of this field depend on the type expressed in the
 //  AvId field. The available types and resulting format and contents of this field are
 //  specified in the table within the AvId field description in this topic.
-enum NTLM_AV_ID {
+enum NTLM_AV_ID : uint16_t {
     MsvAvEOL = 0x0000,
     MsvAvNbComputerName,
     MsvAvNbDomainName,
@@ -123,70 +123,48 @@ enum NTLM_AV_ID {
     AV_ID_MAX
 };
 
-struct NtlmAvPair {
-    uint16_t AvId;
-    uint16_t AvLen;
-    struct {
-        uint8_t buf[65535];
-        std::size_t sz;
-    } Value;
-
-    NtlmAvPair(NTLM_AV_ID id, const uint8_t * value, std::size_t length)
-        : AvId(id)
-        , AvLen(length)
+class NtlmAvPairList final
+{
+    struct AvPair
     {
-        this->Value.sz = length;
-        if (value) {
-            memcpy(this->Value.buf, value, length);
-            this->Value.sz = length;
+        uint16_t avLen = 0;
+        // Unicode, uint32_t, FILETIME, Single_Host_Data, MD5Hash or gss_channel_bindings_struct
+        std::unique_ptr<uint8_t[]> data;
+
+        AvPair() = default;
+
+        AvPair(non_null_ptr<uint8_t const> value, uint16_t length)
+        : avLen(length)
+        , data(std::make_unique<uint8_t[]>(length))
+        {
+            memcpy(this->data.get(), value.get(), length);
         }
-    }
 
-    void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->AvId);
-        stream.out_uint16_le(this->AvLen);
-        stream.out_copy_bytes(this->Value.buf, this->Value.sz);
-    }
-
-    // void recv(OutStream & stream) {
-    //     this->AvId = stream.in_uint16_le();
-    //     this->AvLen = stream.in_uint16_le();
-    //     this->Value.init(this->AvLen);
-    //     this->Value.out_copy_bytes(stream.p, this->AvLen);
-    //     this->Value.mark_end();
-    //     this->Value.rewind();
-    //     stream.in_skip_bytes(this->AvLen);
-    // }
-
-    void log() const {
-        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", this->AvId, this->AvLen);
-        hexdump8_c(this->Value.buf, this->Value.sz);
-    }
-};
-
-struct NtlmAvPairList final {
-    NtlmAvPair * list[AV_ID_MAX];
-
-    NtlmAvPairList() {
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            this->list[i] = nullptr;
+        void emit(NTLM_AV_ID avId, OutStream & stream) const
+        {
+            stream.out_uint16_le(avId);
+            stream.out_uint16_le(this->avLen);
+            stream.out_copy_bytes(this->data.get(), this->avLen);
         }
-        this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, nullptr, 0);
-    }
 
-    ~NtlmAvPairList() {
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            delete this->list[i];
+        void log(NTLM_AV_ID avId) const
+        {
+            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(this->avLen));
+            hexdump8_c(this->data.get(), this->avLen);
         }
+    };
+    AvPair list[AV_ID_MAX];
+
+public:
+    NtlmAvPairList() = default;
+
+    void add(NTLM_AV_ID avId, non_null_ptr<uint8_t const> value, checked_int<uint16_t> length)
+    {
+        this->list[avId] = AvPair(value, length);
     }
 
-    void add(NTLM_AV_ID avId, const uint8_t * value, size_t length) {
-        if (this->list[avId])
-            delete this->list[avId];
-        this->list[avId] = new NtlmAvPair(avId, value, length);
-    }
-
-    //bool rm(NTLM_AV_ID avId) {
+    //bool rm(NTLM_AV_ID avId)
+    //{
     //    // ASSUME avID != MsvAvEOL
     //    bool res = false;
     //    if (this->list[avId]) {
@@ -197,41 +175,45 @@ struct NtlmAvPairList final {
     //    return res;
     //}
 
-    size_t length() const {
-        size_t res = 0;
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                res++;
+    size_t length() const
+    {
+        size_t res = 1;
+        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
+            auto & p = this->list[i];
+            if (p.avLen) {
+                ++res;
             }
         }
         return res;
     }
 
-    size_t packet_length() const {
-       size_t res = 0;
-       for (int i = 0; i < AV_ID_MAX; i++) {
-           if (this->list[i]) {
-               res += sizeof(this->list[i]->AvId);
-               res += sizeof(this->list[i]->AvLen);
-               // res += 4;
-               res += this->list[i]->AvLen;
-           }
-       }
-       return res;
-    }
-
-    void emit(OutStream & stream) const {
-        for (int i = 1; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                this->list[i]->emit(stream);
+    size_t packet_length() const
+    {
+        const size_t static_pair_len = sizeof(NTLM_AV_ID) + sizeof(AvPair::avLen);
+        size_t res = static_pair_len;
+        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
+            auto & p = this->list[i];
+                if (p.avLen) {
+                res += static_pair_len + p.avLen;
             }
         }
-        // ASSUME this->list[MsvAvEOL] != nullptr
-        this->list[MsvAvEOL]->emit(stream);
+        return res;
     }
 
-    void recv(InStream & stream) {
-        for (int i = 0; i < AV_ID_MAX; i++) {
+    void emit(OutStream & stream) const
+    {
+        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
+            auto & p = this->list[i];
+            if (p.avLen) {
+                p.emit(NTLM_AV_ID(i), stream);
+            }
+        }
+        this->list[MsvAvEOL].emit(MsvAvEOL, stream);
+    }
+
+    void recv(InStream & stream)
+    {
+        for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
             NTLM_AV_ID id = static_cast<NTLM_AV_ID>(stream.in_uint16_le());
             uint16_t length = stream.in_uint16_le();
             if (id == MsvAvEOL) {
@@ -244,20 +226,17 @@ struct NtlmAvPairList final {
         }
     }
 
-    void log() const {
+    void log() const
+    {
         LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
-        for (int i = 0; i < AV_ID_MAX; i++) {
-            if (this->list[i]) {
-                this->list[i]->log();
+        for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
+            auto & p = this->list[i];
+            if (p.avLen) {
+                p.log(NTLM_AV_ID(i));
             }
         }
 
         LOG(LOG_INFO, "}");
     }
-
-
 };
-
-
-

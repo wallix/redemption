@@ -65,7 +65,7 @@ class Bitmap
         // Memoize compressed bitmap
         /*mutable*/ uint8_t * data_compressed_;
         size_t size_compressed_;
-        mutable uint8_t sha1_[20];
+        mutable uint8_t sha1_[SslSha1::DIGEST_LENGTH];
         mutable bool sha1_is_init_;
 
         DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
@@ -126,7 +126,7 @@ protected:
             aux_::bitmap_data_allocator.dealloc(cdata);
         }
 
-        void copy_sha1(uint8_t (&sig)[20]) const {
+        void copy_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const {
             if (!this->sha1_is_init_) {
                 this->sha1_is_init_ = true;
                 SslSha1 sha1;
@@ -2031,7 +2031,7 @@ private:
     }
 
 public:
-    void compute_sha1(uint8_t (&sig)[20]) const
+    void compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const
     {
         this->data_bitmap->copy_sha1(sig);
     }

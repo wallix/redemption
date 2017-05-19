@@ -18,8 +18,13 @@ try:
     lib.redcryptofile_writer_new.argtypes = [ c_int, c_int, keys.GETHMACKEY, keys.GETTRACEKEY ]
     lib.redcryptofile_writer_new.restype = c_void_p
 
-# int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path)
-    lib.redcryptofile_writer_open.argtypes = [ c_void_p, c_char_p ]
+# RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
+#    int with_encryption, int with_checksum, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+    lib.redcryptofile_writer_new_with_test_random.argtypes = [ c_int, c_int, keys.GETHMACKEY, keys.GETTRACEKEY ]
+    lib.redcryptofile_writer_new_with_test_random.restype = c_void_p
+
+# int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path, int mode)
+    lib.redcryptofile_writer_open.argtypes = [ c_void_p, c_char_p, c_int ]
     lib.redcryptofile_writer_open.restype = c_int
 
 # int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
@@ -37,7 +42,7 @@ try:
 # const char * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle);
     lib.redcryptofile_writer_qhashhex.argtypes = [ c_void_p ]
     lib.redcryptofile_writer_qhashhex.restype = c_char_p
-    
+
 # const char * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle);
     lib.redcryptofile_writer_fhashhex.argtypes = [ c_void_p ]
     lib.redcryptofile_writer_fhashhex.restype = c_char_p
@@ -60,20 +65,24 @@ try:
 
 # void redcryptofile_reader_delete(RedCryptoReaderHandle * handle);
     lib.redcryptofile_reader_delete.argtypes = [ c_void_p ]
-    lib.redcryptofile_reader_delete.restype = None   
+    lib.redcryptofile_reader_delete.restype = None
+
+# int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file);
+    lib.redcryptofile_reader_hash.argtypes = [ c_void_p, c_char_p ]
+    lib.redcryptofile_reader_hash.restype = c_int
 
 # const char * redcryptofile_qhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_qhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_qhashhex.restype = c_char_p
-    
+    lib.redcryptofile_reader_qhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_reader_qhashhex.restype = c_char_p
+
 # const char * redcryptofile_fhashhex(RedCryptoReaderHandle * handle);
-##    lib.redcryptofile_reader_fhashhex.argtypes = [ c_void_p ]
-##    lib.redcryptofile_reader_fhashhex.restype = c_char_p 
+    lib.redcryptofile_reader_fhashhex.argtypes = [ c_void_p ]
+    lib.redcryptofile_reader_fhashhex.restype = c_char_p
 
 except Exception as e:
     print("Failed to load redcryptofile library: %s\n" % str(e))
     sys.exit(10)
-    
+
 from encrypter import CryptoWriter
 encrypter.lib = lib
 encrypter.get_hmac_key_func = keys.get_hmac_key_func

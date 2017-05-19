@@ -229,8 +229,6 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
-    OpenSSL_add_all_digests();
-
     // cleanup of possible previous test files
     {
         const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
@@ -275,7 +273,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
         char buffer[15];
         // 5 + 10
-        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_READ_FAILED);
+        RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_NO_MORE_DATA);
     }
     {
         InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);

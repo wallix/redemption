@@ -761,6 +761,7 @@ alias test_ntlm_suite :
     test_ntlm_message_challenge
     test_ntlm_message_authenticate
     test_ntlm_context
+    test_ntlm
 ;
 
 test-canonical core/RDP/nla/kerberos/credentials.hpp : <library>krb5 ;
@@ -1182,10 +1183,11 @@ obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
 obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp ;
 obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
 obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
+obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) ;
 
 lib sashimi :
     sashimi_pki
-    $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
+    sashimi_log
     sashimi_channels
     sashimi_sftp
     sashimi_libssh
