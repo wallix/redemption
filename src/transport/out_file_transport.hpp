@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "core/report_message_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"

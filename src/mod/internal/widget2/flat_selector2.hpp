@@ -23,13 +23,10 @@
 #pragma once
 
 #include "composite.hpp"
-#include "multiline.hpp"
 #include "label.hpp"
 #include "edit.hpp"
 #include "number_edit.hpp"
 #include "image.hpp"
-#include "utils/region.hpp"
-#include "utils/difftimeval.hpp"
 #include "labelgrid.hpp"
 
 

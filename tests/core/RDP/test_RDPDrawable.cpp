@@ -28,6 +28,7 @@
 
 #include <memory>
 
+#include "utils/sugar/cast.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "core/RDP/RDPDrawable.hpp"

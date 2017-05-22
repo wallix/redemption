@@ -33,7 +33,7 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/stream_proto.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 class AuthorizationChannels
 : public movable_noncopyable

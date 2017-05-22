@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/defines.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"

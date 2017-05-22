@@ -28,10 +28,6 @@
 
 #pragma once
 
-#include "core/RDP/gcc/data_block_type.hpp"
-#include "utils/stream.hpp"
-#include "core/error.hpp"
-
 namespace GCC {
     enum {
         MCS_GLOBAL_CHANNEL   = 1003,
