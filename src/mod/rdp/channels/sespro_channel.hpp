@@ -1028,7 +1028,7 @@ public:
                  * }
                  */
                 {
-                    std::istringstream ss(std::string(separator + 1));
+                    std::istringstream ss(separator + 1);
                     std::string        parameter;
 
                     while (std::getline(ss, parameter, '\x01')) {
