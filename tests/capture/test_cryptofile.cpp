@@ -51,3 +51,38 @@ RED_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
     RED_CHECK(0 == memcmp(expected_master_key, cctx.get_master_key(), 32));
     RED_CHECK(0 == memcmp(expected_hmac_key, cctx.get_hmac_key(), 32));
 }
+
+namespace {
+    bool visited_trace_key = false;
+}
+inline int trace_key_cb(uint8_t const * base, int len, uint8_t * /*buffer*/, unsigned /*oldscheme*/)
+{
+    RED_CHECK_EQ(reinterpret_cast<char const *>(base), "abcd.mwrm");
+    RED_CHECK_EQ(len, 9);
+    visited_trace_key = true;
+    return 0;
+}
+
+RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
+{
+    CryptoContext cctx;
+    cctx.set_get_trace_key_cb(trace_key_cb);
+
+    uint8_t trace_key[CRYPTO_KEY_LENGTH];
+
+    cctx.old_encryption_scheme = true;
+
+    visited_trace_key = false;
+    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.mwrm"), 9);
+    RED_CHECK(visited_trace_key);
+    visited_trace_key = false;
+    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.log"), 8);
+    RED_CHECK(visited_trace_key);
+
+    cctx.old_encryption_scheme = false;
+
+    visited_trace_key = false;
+    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.log"), 8);
+    RED_CHECK(visited_trace_key);
+
+}

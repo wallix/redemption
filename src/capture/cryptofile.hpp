@@ -27,10 +27,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <array>
+#include <iterator>
+#include <algorithm>
 #include <snappy-c.h>
 
 #include "utils/log.hpp"
 #include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
 
@@ -101,15 +105,50 @@ public:
         return this->master_key;
     }
 
+private:
+    // change extension to "mwrm"
+    static array_view_const_u8 get_normalized_derivator(
+        std::unique_ptr<uint8_t[]> & normalize_derivator,
+        array_view_const_u8 derivator
+    )
+    {
+        using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
+        reverse_iterator const first(derivator.end());
+        reverse_iterator const last(derivator.begin());
+        reverse_iterator const p = std::find(first, last, '.');
+        if (p != last && 0 != strcmp(reinterpret_cast<char const*>(p.base()), "mwrm"))
+        {
+            auto const ext_len = derivator.end() - p.base();
+            auto const normalize_derivator_len = derivator.size() - ext_len + 4;
+            auto const prefix_len = derivator.size() - ext_len;
+            normalize_derivator = std::make_unique<uint8_t[]>(normalize_derivator_len + 1);
+            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
+            memcpy(normalize_derivator.get() + prefix_len, "mwrm", 5);
+
+            derivator = array_view_const_u8{
+                normalize_derivator.get(),
+                normalize_derivator.get() + normalize_derivator_len
+            };
+        }
+
+        return derivator;
+    }
+
+public:
     void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
     {
         if (this->old_encryption_scheme){
             if (this->get_trace_key_cb != nullptr){
+                std::unique_ptr<uint8_t[]> normalize_derivator;
+                auto const new_derivator = get_normalized_derivator(
+                    normalize_derivator, {derivator, derivator_len}
+                );
+
                 // if we have a callback ask key
                 uint8_t tmp[MD_HASH::DIGEST_LENGTH];
                 this->get_trace_key_cb(
-                    derivator
-                  , static_cast<int>(derivator_len)
+                    new_derivator.data()
+                  , static_cast<int>(new_derivator.size())
                   , tmp
                   , this->old_encryption_scheme?1:0
                 );
@@ -124,10 +163,15 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
 
+            std::unique_ptr<uint8_t[]> normalize_derivator;
+            auto const new_derivator = get_normalized_derivator(
+                normalize_derivator, {derivator, derivator_len}
+            );
+
             // if we have a callback ask key
             this->get_trace_key_cb(
-                derivator
-              , static_cast<int>(derivator_len)
+                new_derivator.data()
+              , static_cast<int>(new_derivator.size())
               , this->master_key
               , this->old_encryption_scheme?1:0
             );
