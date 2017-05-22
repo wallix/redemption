@@ -33,7 +33,7 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-class rdpCredssp
+class rdpCredssp : noncopyable
 {
     bool server;
     int send_seq_num;
@@ -104,10 +104,6 @@ public:
         }
     }
 
-private:
-    rdpCredssp(const rdpCredssp &) /*= delete*/;
-    rdpCredssp&operator=(const rdpCredssp &) /*= delete*/;
-
 public:
     void set_credentials(uint8_t * user, uint8_t * domain,
                          uint8_t * pass, uint8_t * hostname) {
@@ -141,29 +137,33 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredssp::InitSecurityInterface");
         }
+
         if (this->table) {
             delete this->table;
             this->table = nullptr;
         }
-        if (secInter == NTLM_Interface) {
-            LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
-            if (this->hardcoded_tests) {
-                table->hardcoded_tests = true;
-            }
-            this->table = table;
-        }
-        if (secInter == Kerberos_Interface) {
-            LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
 
-            #ifndef __EMSCRIPTEN__
-            this->table = new Kerberos_SecurityFunctionTable;
-            #else
-            assert(false && "Unsupported Kerberos");
-            #endif
-        }
-        else if (this->table == nullptr) {
-            this->table = new SecurityFunctionTable;
+        switch (secInter) {
+            case NTLM_Interface:
+                LOG(LOG_INFO, "Credssp: NTLM Authentication");
+                {
+                    auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+                    if (this->hardcoded_tests) {
+                        table->hardcoded_tests = true;
+                    }
+                    this->table = table;
+                }
+                break;
+            case Kerberos_Interface:
+                LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+                #ifndef __EMSCRIPTEN__
+                this->table = new Kerberos_SecurityFunctionTable;
+                #else
+                assert(false && "Unsupported Kerberos");
+                #endif
+                break;
+            default:
+                this->table = new SecurityFunctionTable;
         }
     }
 
@@ -174,17 +174,14 @@ public:
 
         this->server = false;
 
-// ============================================
-/* Get Public Key From TLS Layer and hostname */
-// ============================================
-
+        // ============================================
+        /* Get Public Key From TLS Layer and hostname */
+        // ============================================
 
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
 
-
         return 1;
-
     }
 
     int credssp_ntlm_server_init() {
