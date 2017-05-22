@@ -558,25 +558,28 @@ struct ClientDriveDeviceListRemove {
 //  | 0x00000020<4>         |                      |
 //  +-----------------------+----------------------+
 
-enum {
-      RDPDR_DTYP_SERIAL     = 0x00000001
+enum RDPDR_DTYP : uint32_t {
+      RDPDR_DTYP_UNSPECIFIED = 0
+    , RDPDR_DTYP_SERIAL     = 0x00000001
     , RDPDR_DTYP_PARALLEL   = 0x00000002
     , RDPDR_DTYP_PRINT      = 0x00000004
     , RDPDR_DTYP_FILESYSTEM = 0x00000008
     , RDPDR_DTYP_SMARTCARD  = 0x00000020
 };
 
-    static const char * get_DeviceType_name(uint32_t DeviceType) {
-        switch (DeviceType) {
-            case RDPDR_DTYP_SERIAL:     return "RDPDR_DTYP_SERIAL";
-            case RDPDR_DTYP_PARALLEL:   return "RDPDR_DTYP_PARALLEL";
-            case RDPDR_DTYP_PRINT:      return "RDPDR_DTYP_PRINT";
-            case RDPDR_DTYP_FILESYSTEM: return "RDPDR_DTYP_FILESYSTEM";
-            case RDPDR_DTYP_SMARTCARD:  return "RDPDR_DTYP_SMARTCARD";
-        }
-
-        return "<unknown>";
+static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
+{
+    switch (DeviceType) {
+        case RDPDR_DTYP_SERIAL:     return "RDPDR_DTYP_SERIAL";
+        case RDPDR_DTYP_PARALLEL:   return "RDPDR_DTYP_PARALLEL";
+        case RDPDR_DTYP_PRINT:      return "RDPDR_DTYP_PRINT";
+        case RDPDR_DTYP_FILESYSTEM: return "RDPDR_DTYP_FILESYSTEM";
+        case RDPDR_DTYP_SMARTCARD:  return "RDPDR_DTYP_SMARTCARD";
+        case RDPDR_DTYP_UNSPECIFIED: break;
     }
+
+    return "<unknown>";
+}
 
 // DeviceId (4 bytes): A 32-bit unsigned integer that specifies a unique ID
 //  that identifies the announced device. This ID MUST be reused if the
@@ -614,7 +617,7 @@ enum {
 //  type.
 
 class DeviceAnnounceHeader {
-    uint32_t DeviceType_ = RDPDR_DTYP_SERIAL;
+    RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
     uint32_t DeviceId_   = 0;
 
     uint8_t  PreferredDosName_[8 /* PreferredDosName(8) */ + 1] = { 0 };
@@ -624,7 +627,7 @@ class DeviceAnnounceHeader {
 public:
     DeviceAnnounceHeader() = default;
 
-    DeviceAnnounceHeader(uint32_t DeviceType, uint32_t DeviceId,
+    DeviceAnnounceHeader(RDPDR_DTYP DeviceType, uint32_t DeviceId,
                          const char * preferred_dos_name,
                          uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
@@ -638,7 +641,7 @@ public:
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
 
     void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->DeviceType_);
+        stream.out_uint32_le(underlying_cast(this->DeviceType_));
         stream.out_uint32_le(this->DeviceId_);
 
         stream.out_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
@@ -660,7 +663,7 @@ public:
             }
         }
 
-        this->DeviceType_ = stream.in_uint32_le();
+        this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
         this->DeviceId_   = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
@@ -684,7 +687,7 @@ public:
         stream.in_skip_bytes(DeviceDataLength);
     }
 
-    uint32_t DeviceType() const { return this->DeviceType_; }
+    RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
 
     uint32_t DeviceId() const { return this->DeviceId_; }
 
@@ -710,13 +713,14 @@ public:
 
 
 
-    static const char * get_DeviceType_friendly_name(uint32_t DeviceType) {
+    static const char * get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
         switch (DeviceType) {
             case RDPDR_DTYP_SERIAL:     return "Serial port";
             case RDPDR_DTYP_PARALLEL:   return "Parallel port";
             case RDPDR_DTYP_PRINT:      return "Printer";
             case RDPDR_DTYP_FILESYSTEM: return "File system";
             case RDPDR_DTYP_SMARTCARD:  return "Smart card";
+            case RDPDR_DTYP_UNSPECIFIED: break;
         }
 
         return "<unknown>";
@@ -877,7 +881,7 @@ static std::string get_rdpdr_printer_flags_name(uint32_t flags)
 // CachedPrinterConfigData (variable): A variable-length array of bytes. This field is a binary large object (BLOB) of data that describes the cached printer configuration (see section 3.1.1.1).
 
 struct DeviceAnnounceHeaderPrinterSpecificData {
-    uint32_t DeviceType = 0;
+    RDPDR_DTYP DeviceType = RDPDR_DTYP_UNSPECIFIED;
     uint32_t DeviceId   = 0;
 
     uint8_t  PreferredDosName[8 /* PreferredDosName(8) */ + 1] = { 0 };
@@ -900,7 +904,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     DeviceAnnounceHeaderPrinterSpecificData() = default;
 
-    DeviceAnnounceHeaderPrinterSpecificData(uint32_t DeviceType,
+    DeviceAnnounceHeaderPrinterSpecificData(RDPDR_DTYP DeviceType,
                                             uint32_t DeviceId,
                                             const char * PreferredDosName,
                                             size_t DeviceDataLength,
@@ -932,7 +936,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
     }
 
     void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->DeviceType);
+        stream.out_uint32_le(underlying_cast(this->DeviceType));
         stream.out_uint32_le(this->DeviceId);
         stream.out_copy_bytes(this->PreferredDosName, 8);
         stream.out_uint32_le(this->DeviceDataLength);
@@ -961,7 +965,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
-        this->DeviceType = stream.in_uint32_le();
+        this->DeviceType = RDPDR_DTYP(stream.in_uint32_le());
         this->DeviceId = stream.in_uint32_le();
         stream.in_copy_bytes(this->PreferredDosName, 8);
         this->DeviceDataLength = stream.in_uint32_le();

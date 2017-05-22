@@ -115,7 +115,7 @@ public:
                );
     }
 
-    bool rdpdr_type_is_authorized(uint32_t DeviceType) const noexcept {
+    bool rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept {
         switch (DeviceType) {
             case rdpdr::RDPDR_DTYP_SERIAL:
             case rdpdr::RDPDR_DTYP_PARALLEL:
@@ -131,7 +131,7 @@ public:
                 return this->rdpdr_restriction_[4];
 
             default:
-                assert("Unknown RDPDR DeviceType");
+                assert(!"Unknown RDPDR DeviceType");
                 return false;
         }
     }
