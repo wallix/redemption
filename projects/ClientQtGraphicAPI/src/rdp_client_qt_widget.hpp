@@ -28,6 +28,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDPEA/audio_output.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 

@@ -1,0 +1,38 @@
+#!/usr/bin/awk -f
+BEGINFILE {
+    f=substr(FILENAME,5) # skip src/
+}
+/^\s*#include "/ {
+    gsub(/^\s*\#include "|".*$/, "")
+    m[f][$0]
+}
+function ptree(s, f,    ns)
+{
+    print s f
+    if (f in m)
+    {
+        ns=s "| "
+        for (sf in m[f])
+        {
+            ptree(ns, sf)
+        }
+    }
+}
+END {
+    for (f in m)
+    {
+        ptree("", f)
+    }
+    print "\n"
+    for (f in m)
+    {
+        print "\x1b[31m" f "\x1b[0m"
+        for (sf in m[f])
+        {
+            i=index(sf, "/")
+            subf=substr(sf, i+1)
+            i2=index(subf, "/")
+            print "  \x1b[37m" substr(sf, 0, i) "\x1b[36m" substr(subf, 0, i2) "\x1b[0m" substr(subf, i2+1)
+        }
+    }
+}

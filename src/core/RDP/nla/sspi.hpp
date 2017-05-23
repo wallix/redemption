@@ -747,8 +747,5 @@ typedef SecurityFunctionTable *PSecurityFunctionTable;
 enum SecInterface {
     NTLM_Interface,
     Kerberos_Interface,
-    SChannel_Interface
+    //SChannel_Interface
 };
-
-
-

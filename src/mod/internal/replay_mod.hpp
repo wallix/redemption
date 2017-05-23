@@ -27,7 +27,7 @@
 
 #include "capture/file_to_graphic.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "internal_mod.hpp"
+#include "mod/internal/internal_mod.hpp"
 
 
 class ReplayMod : public InternalMod

@@ -81,6 +81,11 @@ public:
     {
     }
 
+    ~read_encrypted()
+    {
+        EVP_CIPHER_CTX_cleanup(&this->ectx);
+    }
+
     int open(uint8_t * derivator, size_t derivator_len)
     {
         size_t base_len = derivator_len;
@@ -283,8 +288,6 @@ public:
 
 RED_AUTO_TEST_CASE(TestEncryption1)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -353,8 +356,6 @@ RED_AUTO_TEST_CASE(TestEncryption1)
 
 RED_AUTO_TEST_CASE(TestEncryption2)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -447,8 +448,6 @@ static uint8_t randomSample[8192] = {
 
 RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -546,8 +545,6 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -635,8 +632,6 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
@@ -712,8 +707,6 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 
 RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
 {
-    OpenSSL_add_all_digests();
-
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);

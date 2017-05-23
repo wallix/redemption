@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <string>
 #include <vector>
 #include <algorithm>
 
@@ -28,7 +27,6 @@
 
 #include "ocr_title.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/log.hpp"
 
 
 class OcrTitleFilter

@@ -69,8 +69,6 @@ inline uint8_t const * bytes(char const * p)
 
 RED_AUTO_TEST_CASE(TestRedCryptofile)
 {
-    OpenSSL_add_all_digests();
-
     const char * finalname = "./encrypted.txt";
 
     // Writer
@@ -128,8 +126,6 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
 RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
 {
-    OpenSSL_add_all_digests();
-
     const char * finalname = "./encrypted.txt";
 
     HashHexArray qhash;

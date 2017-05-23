@@ -26,9 +26,6 @@
 
 #include "utils/log.hpp"
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <memory>
 
 #include "openssl_tls.hpp"
@@ -48,7 +45,6 @@
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
-#include "utils/region.hpp"
 #include "capture/capture.hpp"
 #include "core/font.hpp"
 #include "utils/bitmap.hpp"
@@ -63,10 +59,8 @@
 #include "core/error.hpp"
 #include "core/callback.hpp"
 #include "utils/colors.hpp"
-#include "utils/bitfu.hpp"
 #include "utils/confdescriptor.hpp"
 #include "transport/in_file_transport.hpp"
-#include "transport/out_file_transport.hpp"
 #include "utils/pattutils.hpp"
 
 #include "core/RDP/GraphicUpdatePDU.hpp"
@@ -114,7 +108,6 @@
 #include "utils/sugar/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/graphic_cmd_color.hpp"
 
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"

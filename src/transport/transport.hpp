@@ -27,18 +27,17 @@
 #include <stdint.h>
 #include <cstddef>
 
-#include "utils/log.hpp"
 #include "core/error.hpp"
-#include "acl/auth_api.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/stream_proto.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 #include "configs/autogen/enums.hpp"
 
-#include "core/server_notifier_api.hpp"
 
 using std::size_t;
+
+class ServerNotifier;
 
 class Transport : noncopyable
 {

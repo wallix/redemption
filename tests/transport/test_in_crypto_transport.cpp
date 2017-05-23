@@ -35,7 +35,6 @@ using Read = Transport::Read;
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
     LOG(LOG_INFO, "Running test TestInCryptoTransport");
-    OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
     CryptoContext cctx;
@@ -186,7 +185,6 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 {
     LOG(LOG_INFO, "Running test TestInCryptoTransportCrypted");
-    OpenSSL_add_all_digests();
 
     LCGRandom rnd(0);
     CryptoContext cctx;

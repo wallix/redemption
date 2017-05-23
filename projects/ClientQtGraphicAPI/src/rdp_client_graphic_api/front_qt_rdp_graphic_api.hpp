@@ -129,6 +129,11 @@ public:
 
     std::string _movie_name;
 
+    bool wab_diag_question;
+    int asked_color;
+
+
+
 
     struct WindowsData {
         int form_x = 0;
@@ -215,6 +220,8 @@ public:
     , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
     , USER_CONF_LOG(MAIN_DIR + std::string(LOGINS_PATH))
     , WINDOWS_CONF(MAIN_DIR + std::string(WINODW_CONF_PATH))
+    , wab_diag_question(false)
+    , asked_color(0)
     , windowsData(this)
     {
         this->windowsData.open();
@@ -434,6 +441,8 @@ public:
             this->_front->disconnect(labelErrorMsg);
             return false;
         }
+
+
 
         return true;
     }
@@ -714,11 +723,17 @@ public:
     }
 
     std::string get_userNameField() {
-        return this->_userNameField.text().toStdString();
+        if (this->_userNameField.text().toStdString() !=  std::string(""))
+            return this->_userNameField.text().toStdString();
+
+        return std::string(" ");
     }
 
     std::string get_PWDField() {
-        return this->_PWDField.text().toStdString();
+        if (this->_PWDField.text().toStdString() !=  std::string(""))
+            return this->_PWDField.text().toStdString();
+
+        return std::string(" ");
     }
 
     int get_portField() {
@@ -779,6 +794,7 @@ private Q_SLOTS:
                 }
             }
             if (!alreadySet) {
+                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = this->get_IPField();
                 this->_accountData[this->_accountNB].name  = this->get_userNameField();
@@ -789,6 +805,8 @@ private Q_SLOTS:
                 if (this->_accountNB > MAX_ACCOUNT_DATA) {
                     this->_accountNB = MAX_ACCOUNT_DATA;
                 }
+
+                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
             }
 
             std::ofstream ofichier(this->_front->USER_CONF_LOG, std::ios::out | std::ios::trunc);
@@ -1631,9 +1649,6 @@ public:
 
         this->info.bpp = bpp;
         this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-//         if (this->info.bpp ==  32) {
-//             this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
-//         }
 
         if (this->info.width != width || this->info.height != height) {
             this->info.width = width;
@@ -1748,6 +1763,44 @@ public:
         this->windowsData.write();
     }
 
+    void answer_question(int color) {
+        QImage image = this->cache->toImage();
+
+        QRgb asked(color);
+
+        QRgb top_left  = image.pixel(0, 0);
+        QRgb top_right = image.pixel(this->info.width-1, 0);
+        QRgb bot_left  = image.pixel(0, this->info.height-1);
+        QRgb bot_right = image.pixel(this->info.width-1, this->info.height-1);
+
+        //LOG(LOG_INFO, "         top_left = 0x%04x top_right = 0x%04x bot_left = 0x%04x bot_right = 0x%04x asked_color = 0x%04x, top_left, top_right, bot_left, bot_right, asked);
+
+        if        (top_left == asked) {
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, 0, &(this->keymap));
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, &(this->keymap));
+            this->wab_diag_question = false;
+            LOG(LOG_INFO, "CLIENT >> answer_question top_left");
+
+        } else if (top_right == asked) {
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->info.width-1, 0, &(this->keymap));
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->info.width-1, 0, &(this->keymap));
+            this->wab_diag_question = false;
+            LOG(LOG_INFO, "CLIENT >> answer_question top_right");
+
+        } else if (bot_left == asked) {
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, this->info.height-1, &(this->keymap));
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, this->info.height-1, &(this->keymap));
+            this->wab_diag_question = false;
+            LOG(LOG_INFO, "CLIENT >> answer_question bot_left");
+
+        } else if (bot_right == asked) {
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->info.width-1, this->info.height-1, &(this->keymap));
+            this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->info.width-1, this->info.height-1, &(this->keymap));
+            this->wab_diag_question = false;
+            LOG(LOG_INFO, "CLIENT >> answer_question bot_right");
+
+        }
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2142,6 +2195,10 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
+        }
     }
 
 
@@ -2162,6 +2219,10 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
         }
     }
 
@@ -2217,6 +2278,10 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
+        }
     }
 
 
@@ -2237,6 +2302,10 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
         }
     }
 
@@ -2284,6 +2353,10 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
         }
     }
 
@@ -2348,6 +2421,10 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
         }
     }
 
@@ -2422,6 +2499,10 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
+        }
     }
 
 
@@ -2455,6 +2536,10 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+        }
+
+        if (this->wab_diag_question) {
+            this->answer_question(this->asked_color);
         }
     }
 
@@ -2702,12 +2787,8 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
-
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
-
-
-
 
 
 
@@ -2992,7 +3073,8 @@ public:
                                          static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
                                          ini.get<cfg::ocr::on_title_bar_only>(),
                                          ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                         ini.get<cfg::ocr::interval>()
+                                         ini.get<cfg::ocr::interval>(),
+                                         0
                                        };
 
 

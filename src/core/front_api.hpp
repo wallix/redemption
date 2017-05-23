@@ -26,7 +26,6 @@
 
 #include "gdi/graphic_api.hpp"
 
-#include "core/RDP/autoreconnect.hpp"
 #include "core/wait_obj.hpp"
 #include "utils/sugar/array_view.hpp"
 

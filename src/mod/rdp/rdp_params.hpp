@@ -24,12 +24,12 @@
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
-#include "mod/internal/client_execute.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
 #include <string>
 #include <chrono>
 
+class ClientExecute;
 class Transport;
 class Theme;
 class Font;

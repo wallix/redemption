@@ -26,7 +26,7 @@
 #pragma once
 
 #include "utils/log.hpp"
-#include "utils/sugar/stream_proto.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 #include <utility>
 #include <iosfwd>

@@ -27,7 +27,7 @@
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/rdp_log.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
+#include "core/channel_names.hpp"
 
 class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     enum class State {

@@ -2,21 +2,77 @@
 
 cd "$(dirname "$0")"/../..
 
-TEMP=`getopt -o hd: --long help -n "$0" -- "$@"`
+TEMP=`getopt -o hqd: --long help -n "$0" -- "$@"`
 [ $? -ne 0 ] && exit 1
 
 eval set -- "$TEMP"
 
 d=./bin/gcc/debug/
+q=show_full_error
 
 while true ; do
   case "$1" in
     -d) d="$2/" ; shift 2 ;;
-    -h|--help) echo "$0 [-d binary-directory] [testnames...]" ; exit 0 ;;
+    -q) q=show_resume_error ; shift 1 ;;
+    -h|--help) echo "$0 [-d binary-directory] [-q] [testnames...]" ; exit 0 ;;
     --) shift ; break ;;
     *) echo "Unknow option $1" ; exit 2 ;;
   esac
 done
+
+show_resume_error ()
+{
+  while read f ; do
+    echo "$f" >&2
+    #--suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy
+    outvalgrind=`valgrind \
+        --max-stackframe=234425648 \
+        --track-fds=yes \
+        "$f" 2>&1 >/dev/null`
+    error=`grep -E '^==[0-9]+== ERROR SUMMARY: [1-9]' -m1 <<< "$outvalgrind"`
+    [ $? = 0 ] && read a o <<<"$error" && echo "valgrind error: $f: $o"
+    leak=`grep -E '^==[0-9]+==    definitely lost: [1-9]' -m1 <<< "$outvalgrind"`
+    [ $? = 0 ] && read a o <<<"$leak" && echo "valgrind leak: $f: $o"
+    grep -E '^==[0-9]+== Open file descriptor ([3-9]:|[0-9][^:])' <<< "$outvalgrind" \
+    | while read a o ; do
+        echo "valgrind error: $f: $o"
+    done
+  done
+}
+
+show_full_error ()
+{
+  while read f ; do
+    #--suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy
+    outvalgrind=`valgrind \
+        --leak-check=full \
+        --max-stackframe=234425648 \
+        --track-fds=yes \
+        "$f" 2>&1`
+    error=`grep -E '^==[0-9]+== ERROR SUMMARY' -m1 <<< "$outvalgrind"`
+    read p e s n other <<< "$error"
+    grep -E '^==[0-9]+== +at 0x[A-F0-9]+: ' -q <<< "$outvalgrind"
+    if [ $? = 0 ] || [ $n != 0 ] ; then
+        alloc=`grep -E '^==[0-9]+==   total heap usage:' -m1 <<< "$outvalgrind"`
+        read p t h u n1 a n2 other <<< "$alloc"
+        echo -n "$f"
+        if [[ $n1 != $n2 ]] ; then
+            echo -n -e "  \e[38;5;221;1m$n1 allocs, $n2 frees\e[0m"
+        fi
+        echo -e "  \e[38;5;221;1mfail\e[0m"
+        echo "$outvalgrind" | ./tools/valgrind-filter/valgrind-output-color
+        echo "$f (valgrind ${error#* })" >&2
+        if [[ $n1 != $n2 ]] ; then
+            echo "$f (leak: $n1 allocs, $n2 frees)" >&2
+        fi
+    else
+        echo "$f  ok"
+    fi
+  done >/tmp/valgrind_files_error
+
+  echo
+  exec cat /tmp/valgrind_files_error
+}
 
 if [ ! -z "$*" ] ; then
   read -a files <<< "$@"
@@ -24,33 +80,4 @@ if [ ! -z "$*" ] ; then
 else
   find "$d" -maxdepth 1 -mindepth 1 -name 'test_*' -executable
 fi \
-| while read f ; do
-  outvalgrind=`valgrind \
-    --leak-check=full \
-    --max-stackframe=234425648 \
-    --track-fds=yes \
-    --suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy \
-    "$f" 2>&1`
-  error=`grep -E '^==[0-9]+== ERROR SUMMARY' -m1 <<< "$outvalgrind"`
-  read p e s n other <<< "$error"
-  grep -E '^==[0-9]+== +at 0x[A-F0-9]+: ' -q <<< "$outvalgrind"
-  if [ $? = 0 ] || [ $n != 0 ] ; then
-    alloc=`grep -E '^==[0-9]+==   total heap usage:' -m1 <<< "$outvalgrind"`
-    read p t h u n1 a n2 other <<< "$alloc"
-    echo -n "$f"
-    if [[ $n1 != $n2 ]] ; then
-        echo -n -e "  \e[38;5;221;1m$n1 allocs, $n2 frees\e[0m"
-    fi
-    echo -e "  \e[38;5;221;1mfail\e[0m"
-    echo "$outvalgrind" | ./tools/valgrind-filter/valgrind-output-color
-    echo "$f (valgrind ${error#* })" >&2
-    if [[ $n1 != $n2 ]] ; then
-        echo "$f (leak: $n1 allocs, $n2 frees)" >&2
-    fi
-  else
-    echo "$f  ok"
-  fi
-done >/tmp/valgrind_files_error
-
-echo
-exec cat /tmp/valgrind_files_error
+| $q
