@@ -18,19 +18,36 @@ rule setvar ( env : default )
 constant ARCH : [ SHELL "uname -m" ] ;
 # constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
 
-constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
-constant PREFIX : [ setvar PREFIX : /usr/local ] ;
-constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
-constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
-constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
-constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
-constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
-constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
-constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
-constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
-constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
-constant PID_PATH : [ setvar PID_PATH : /var/run ] ;
+INSTALLDIR_DEFAULT ?= "" ;
+PREFIX_DEFAULT ?= /usr/local ;
+
+constant INSTALLDIR : [ setvar DESTDIR : $(INSTALLDIR_DEFAULT) ] ;
+constant PREFIX : [ setvar PREFIX : $(PREFIX_DEFAULT) ] ;
+
+BIN_PREFIX_DEFAULT ?= $(PREFIX)/bin ;
+LIB_PREFIX_DEFAULT ?= $(PREFIX)/lib ;
+SHARE_PREFIX_DEFAULT ?= $(PREFIX)/share/rdpproxy ;
+RECORD_TMP_PATH_DEFAULT ?= /var/rdpproxy/tmp ;
+RECORD_PATH_DEFAULT ?= /var/rdpproxy/recorded ;
+ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
+CERT_PREFIX_DEFAULT ?= /etc/rdpproxy/cert ;
+HASH_PATH_DEFAULT ?= /var/rdpproxy/hash ;
+PERSISTENT_PATH_DEFAULT ?= /var/lib/redemption/cache ;
+DRIVE_REDIRECTION_PATH_DEFAULT ?= /var/rdpproxy/drive_redirection ;
+PID_PATH_DEFAULT ?= /var/run ;
+
+
+constant BIN_PREFIX : [ setvar BIN_PREFIX : $(BIN_PREFIX_DEFAULT) ] ;
+constant LIB_PREFIX : [ setvar LIB_PREFIX : $(LIB_PREFIX_DEFAULT) ] ;
+constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(SHARE_PREFIX_DEFAULT) ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : $(RECORD_TMP_PATH_DEFAULT) ] ;
+constant RECORD_PATH : [ setvar RECORD_PATH : $(RECORD_PATH_DEFAULT) ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : $(ETC_PREFIX_DEFAULT) ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : $(CERT_PREFIX_DEFAULT) ] ;
+constant HASH_PATH : [ setvar HASH_PATH : $(HASH_PATH_DEFAULT) ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : $(PERSISTENT_PATH_DEFAULT) ] ;
+constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : $(DRIVE_REDIRECTION_PATH_DEFAULT) ] ;
+constant PID_PATH : [ setvar PID_PATH : $(PID_PATH_DEFAULT) ] ;
 
 constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
 

@@ -369,6 +369,9 @@
 "#_advanced\n"
 "session_probe_customize_executable_name = boolean(default=False)\n\n"
 
+"#_hidden\n"
+"session_probe_enable_log = boolean(default=False)\n\n"
+
 "# This policy setting allows you to configure a time limit for disconnected application sessions.\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
