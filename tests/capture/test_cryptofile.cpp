@@ -62,27 +62,3 @@ inline int trace_key_cb(uint8_t const * base, int len, uint8_t * /*buffer*/, uns
     visited_trace_key = true;
     return 0;
 }
-
-RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
-{
-    CryptoContext cctx;
-    cctx.set_get_trace_key_cb(trace_key_cb);
-
-    uint8_t trace_key[CRYPTO_KEY_LENGTH];
-
-    cctx.old_encryption_scheme = true;
-
-    visited_trace_key = false;
-    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.mwrm"), 9);
-    RED_CHECK(visited_trace_key);
-    visited_trace_key = false;
-    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.log"), 8);
-    RED_CHECK(visited_trace_key);
-
-    cctx.old_encryption_scheme = false;
-
-    visited_trace_key = false;
-    cctx.get_derived_key(trace_key, reinterpret_cast<uint8_t const*>("abcd.log"), 8);
-    RED_CHECK(visited_trace_key);
-
-}
