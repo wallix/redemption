@@ -43,8 +43,6 @@ struct WrmParams
     const char * hash_path;
     const char * basename;
     int groupid;
-//    AuthApi * authentifier;
-//    RDPDrawable & drawable;
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
@@ -59,8 +57,6 @@ struct WrmParams
               const char * hash_path,
               const char * basename,
               int groupid,
-//              AuthApi * authentifier,
-//              RDPDrawable & drawable,
               std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
               std::chrono::seconds break_interval,
               WrmCompressionAlgorithm wrm_compression_algorithm,
@@ -75,8 +71,6 @@ struct WrmParams
     , hash_path(hash_path)
     , basename(basename)
     , groupid(groupid)
-//    , authentifier(authentifier)
-//    , drawable(drawable)
     , frame_interval(frame_interval)
     , break_interval(break_interval)
     , wrm_compression_algorithm(wrm_compression_algorithm)

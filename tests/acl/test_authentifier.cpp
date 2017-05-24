@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 

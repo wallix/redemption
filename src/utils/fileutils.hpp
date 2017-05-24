@@ -50,13 +50,8 @@ static inline const char * basename_len(const char * path, size_t & len)
 
 static inline char * basename_len(char * path, size_t & len)
 {
-    char * tmp = strrchr(path, '/');
-    if (tmp){
-        len = strlen(tmp+1);
-        return tmp+1;
-    }
-    len = strlen(path);
-    return path;
+    char const * const_path = path;
+    return const_cast<char*>(basename_len(const_path, len));
 }
 
 static inline int filesize(const char * path)
@@ -66,7 +61,7 @@ static inline int filesize(const char * path)
     if (status >= 0){
         return sb.st_size;
     }
-//    LOG(LOG_INFO, "%s", strerror(errno));
+    //LOG(LOG_INFO, "%s", strerror(errno));
     return -1;
 }
 
@@ -270,7 +265,7 @@ static inline int recursive_delete_directory(const char * directory_path) {
             }
 
             size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
-            // TODO not used alloca !!!
+            // TODO not use alloca !!!
             char * entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
 
             if (entry_path) {

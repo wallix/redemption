@@ -34,6 +34,18 @@
 
 class Authentifier : public AuthApi, public ReportMessageApi
 {
+    struct LogParam
+    {
+        bool duplicate_with_pid;
+        std::string type;
+        std::string extra;
+    };
+
+    bool session_log_is_open = false;
+    std::vector<LogParam> buffered_log_params;
+
+    Inifile & ini;
+    CryptoContext & cctx;
 
 public:
     bool connected_to_acl;
@@ -46,10 +58,10 @@ public:
         state = 0x10,
     };
 
-    Authentifier(const Authentifier&) = delete;
-
-    Authentifier(Verbose verbose)
-        : connected_to_acl(false)
+    Authentifier(Inifile & ini, CryptoContext & cctx, Verbose verbose)
+        : ini(ini)
+        , cctx(cctx)
+        , connected_to_acl(false)
         , acl_serial(nullptr)
         , verbose(verbose)
     {
@@ -69,8 +81,6 @@ public:
             LOG(LOG_INFO, "auth::~Authentifier");
         }
     }
-
-public:
 
     void receive() {
         if (this->connected_to_acl){
@@ -102,9 +112,41 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override {
-        if (this->connected_to_acl){
+    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override
+    {
+        if (this->connected_to_acl && this->session_log_is_open) {
             this->acl_serial->log4(duplicate_with_pid, type, extra);
         }
+        else {
+            this->buffered_log_params.push_back({duplicate_with_pid, type, extra ? extra : ""});
+        }
+    }
+
+    void start_mod() override
+    {
+        if (this->connected_to_acl){
+            if (this->session_log_is_open) {
+                this->acl_serial->close_session_log();
+            }
+            else {
+                cctx.set_master_key(ini.get<cfg::crypto::key0>());
+                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+            }
+
+            for (LogParam const & log_param : this->buffered_log_params) {
+                this->acl_serial->log4(
+                    log_param.duplicate_with_pid,
+                    log_param.type.c_str(),
+                    log_param.extra.c_str()
+                );
+            }
+            this->buffered_log_params.clear();
+            this->session_log_is_open = true;
+        }
+    }
+
+    void stop_mod() override
+    {
+        /*do nothing*/
     }
 };

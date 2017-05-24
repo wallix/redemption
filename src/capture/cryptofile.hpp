@@ -35,6 +35,7 @@
 #include "utils/sugar/bytes_t.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
 
@@ -68,7 +69,7 @@ constexpr std::size_t CRYPTO_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 constexpr std::size_t HMAC_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 
 
-class CryptoContext
+class CryptoContext : noncopyable
 {
     uint8_t master_key[CRYPTO_KEY_LENGTH] {};
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
