@@ -72,6 +72,7 @@ struct ModRDPParams {
     std::chrono::milliseconds    session_probe_idle_session_limit {};
     const char *                 session_probe_exe_or_file = "";
     const char *                 session_probe_arguments = "";
+    bool                         session_probe_enable_log = false;
 
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
@@ -229,6 +230,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_session_limit);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_idle_session_limit);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_customize_executable_name);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);

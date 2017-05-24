@@ -1325,6 +1325,9 @@ public:
                     this->ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str();
                 mod_rdp_params.session_probe_process_monitoring_rules             =
                     this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
+
+                mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();

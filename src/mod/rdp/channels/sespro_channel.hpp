@@ -64,6 +64,8 @@ private:
     const std::chrono::milliseconds param_session_probe_disconnected_session_limit;
     const std::chrono::milliseconds param_session_probe_idle_session_limit;
 
+    const bool param_session_probe_enable_log;
+
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
 
@@ -118,6 +120,8 @@ public:
         std::chrono::milliseconds session_probe_disconnected_session_limit;
         std::chrono::milliseconds session_probe_idle_session_limit;
 
+        bool session_probe_enable_log;
+
         const char* real_alternate_shell;
         const char* real_working_dir;
 
@@ -168,6 +172,7 @@ public:
         params.session_probe_disconnected_session_limit)
     , param_session_probe_idle_session_limit(
         params.session_probe_idle_session_limit)
+    , param_session_probe_enable_log(params.session_probe_enable_log)
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
@@ -573,6 +578,30 @@ public:
                 }
                 else {
                     const char cstr[] = "No";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            if (this->param_session_probe_enable_log)
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "EnableLog=Yes";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
 

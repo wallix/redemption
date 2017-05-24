@@ -341,6 +341,7 @@ protected:
     const std::chrono::milliseconds   session_probe_disconnected_session_limit;
     const std::chrono::milliseconds   session_probe_idle_session_limit;
     const bool                        session_probe_use_clipboard_based_launcher;
+    const bool                        session_probe_enable_log;
 
     std::string session_probe_target_informations;
 
@@ -854,6 +855,7 @@ public:
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
+        , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -1652,6 +1654,9 @@ protected:
             this->session_probe_disconnected_session_limit;
         session_probe_virtual_channel_params.session_probe_idle_session_limit       =
             this->session_probe_idle_session_limit;
+
+        session_probe_virtual_channel_params.session_probe_enable_log               =
+            this->session_probe_enable_log;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
