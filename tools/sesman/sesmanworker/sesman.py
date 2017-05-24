@@ -1797,7 +1797,10 @@ class Sesman():
                 u'session_probe_idle_session_limit' : 'idle_session_limit',
                 u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
                 u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
-                u'session_probe_extra_system_processes' : 'extra_system_processes'
+                u'session_probe_extra_system_processes' : 'extra_system_processes',
+                u'session_probe_smart_launcher_clipboard_initialization_delay' : 'smart_launcher_clipboard_initialization_delay',
+                u'session_probe_smart_launcher_long_delay' : 'smart_launcher_long_delay',
+                u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

@@ -3645,8 +3645,19 @@ public:
                         }
                         switch (this->connection_finalization_state){
                         case EARLY:
+                        {
+                            ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                            LOG(LOG_ERR, "sdata.pdutype2=%u", sdata.pdutype2);
+
+                            if (sdata.pdutype2 == PDUTYPE2_SET_ERROR_INFO_PDU)
+                            {
+                                if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                this->process_disconnect_pdu(sdata.payload);
+                            }
+
                             LOG(LOG_ERR, "Rdp::finalization is early");
                             throw Error(ERR_SEC);
+                        }
                         case WAITING_SYNCHRONIZE:
                             if (bool(this->verbose & RDPVerbose::basic_trace)){
                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
