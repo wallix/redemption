@@ -628,19 +628,30 @@ private:
     class ModWithSocket final : private SocketTransport, public Mod
     {
         ModuleManager & mm;
+        AuthApi & authentifier;
         bool target_info_is_shown = false;
 
     public:
         template<class... Args>
-        ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
-                     , std::string * error_message, sock_mod_barrier, Args && ... mod_args)
+        ModWithSocket(
+            ModuleManager & mm, AuthApi & authentifier,
+            const char * name, int sck, uint32_t verbose,
+            std::string * error_message, sock_mod_barrier, Args && ... mod_args)
         : SocketTransport( name, sck
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
-        {}
+        , authentifier(authentifier)
+        {
+            this->authentifier.start_mod();
+        }
+
+        ~ModWithSocket()
+        {
+            this->authentifier.stop_mod();
+        }
 
         void display_osd_message(std::string const & message) override {
             this->mm.osd_message(message, true);
@@ -1185,6 +1196,7 @@ public:
 
                 this->set_mod(new ModWithSocket<xup_mod>(
                     *this,
+                    authentifier,
                     name,
                     client_sck,
                     this->ini.get<cfg::debug::mod_xup>(),
@@ -1325,6 +1337,9 @@ public:
                     this->ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str();
                 mod_rdp_params.session_probe_process_monitoring_rules             =
                     this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
+
+                mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
@@ -1424,23 +1439,23 @@ public:
                         this->client_execute.reset(false);
                     }
 
-                    ModWithSocket<mod_rdp>* new_mod =
-                        new ModWithSocket<mod_rdp>(
-                                *this,
-                                name,
-                                client_sck,
-                                this->ini.get<cfg::debug::mod_rdp>(),
-                                &this->ini.get_ref<cfg::context::auth_error_message>(),
-                                sock_mod_barrier(),
-                                this->front,
-                                client_info,
-                                ini.get_ref<cfg::mod_rdp::redir_info>(),
-                                this->gen,
-                                this->timeobj,
-                                mod_rdp_params,
-                                authentifier,
-                                report_message
-                            );
+                    ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
+                        *this,
+                        authentifier,
+                        name,
+                        client_sck,
+                        this->ini.get<cfg::debug::mod_rdp>(),
+                        &this->ini.get_ref<cfg::context::auth_error_message>(),
+                        sock_mod_barrier(),
+                        this->front,
+                        client_info,
+                        ini.get_ref<cfg::mod_rdp::redir_info>(),
+                        this->gen,
+                        this->timeobj,
+                        mod_rdp_params,
+                        authentifier,
+                        report_message
+                    );
 
                     windowing_api* winapi = new_mod->get_windowing_api();
 
@@ -1528,39 +1543,38 @@ public:
                 try {
                     const char * const name = "VNC Target";
 
-                    std::unique_ptr<mod_api> managed_mod(
-                            new ModWithSocket<mod_vnc>(
-                                    *this,
-                                    name,
-                                    client_sck,
-                                    this->ini.get<cfg::debug::mod_vnc>(),
-                                    nullptr,
-                                    sock_mod_barrier(),
-                                    this->ini.get<cfg::globals::target_user>().c_str(),
-                                    this->ini.get<cfg::context::target_password>().c_str(),
-                                    this->front,
-                                    this->front.client_info.width,
-                                    this->front.client_info.height,
-                                    this->ini.get<cfg::font>(),
-                                    Translator(language(this->ini)),
-                                    this->ini.get<cfg::theme>(),
-                                    this->front.client_info.keylayout,
-                                    this->front.keymap.key_flags,
-                                    this->ini.get<cfg::mod_vnc::clipboard_up>(),
-                                    this->ini.get<cfg::mod_vnc::clipboard_down>(),
-                                    this->ini.get<cfg::mod_vnc::encodings>().c_str(),
-                                    this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
-                                    true,
-                                    this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                                        != ClipboardEncodingType::latin1
-                                        ? mod_vnc::ClipboardEncodingType::UTF8
-                                        : mod_vnc::ClipboardEncodingType::Latin1,
-                                    this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-                                    report_message,
-                                    false,
-                                    this->ini.get<cfg::debug::mod_vnc>()
-                                )
-                        );
+                    std::unique_ptr<mod_api> managed_mod(new ModWithSocket<mod_vnc>(
+                        *this,
+                        authentifier,
+                        name,
+                        client_sck,
+                        this->ini.get<cfg::debug::mod_vnc>(),
+                        nullptr,
+                        sock_mod_barrier(),
+                        this->ini.get<cfg::globals::target_user>().c_str(),
+                        this->ini.get<cfg::context::target_password>().c_str(),
+                        this->front,
+                        this->front.client_info.width,
+                        this->front.client_info.height,
+                        this->ini.get<cfg::font>(),
+                        Translator(language(this->ini)),
+                        this->ini.get<cfg::theme>(),
+                        this->front.client_info.keylayout,
+                        this->front.keymap.key_flags,
+                        this->ini.get<cfg::mod_vnc::clipboard_up>(),
+                        this->ini.get<cfg::mod_vnc::clipboard_down>(),
+                        this->ini.get<cfg::mod_vnc::encodings>().c_str(),
+                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
+                        true,
+                        this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+                            != ClipboardEncodingType::latin1
+                            ? mod_vnc::ClipboardEncodingType::UTF8
+                            : mod_vnc::ClipboardEncodingType::Latin1,
+                        this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+                        report_message,
+                        false,
+                        this->ini.get<cfg::debug::mod_vnc>()
+                    ));
 
                     if (this->front.client_info.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");

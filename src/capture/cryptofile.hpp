@@ -27,11 +27,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <array>
+#include <iterator>
+#include <algorithm>
 #include <snappy-c.h>
 
 #include "utils/log.hpp"
 #include "utils/sugar/bytes_t.hpp"
-#include "utils/genrandom.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
 
@@ -65,7 +69,7 @@ constexpr std::size_t CRYPTO_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 constexpr std::size_t HMAC_KEY_LENGTH = MD_HASH::DIGEST_LENGTH;
 
 
-class CryptoContext
+class CryptoContext : noncopyable
 {
     uint8_t master_key[CRYPTO_KEY_LENGTH] {};
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
@@ -96,6 +100,7 @@ public:
         return this->hmac_key;
     }
 
+    // for test only
     const uint8_t * get_master_key() const
     {
         assert(this->master_key_loaded);

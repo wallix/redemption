@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <cstring> // strcasecmp
 
-#include "utils/sugar/stream_proto.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 // Those are in BGR
 enum NamedBGRColor {

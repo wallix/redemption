@@ -83,6 +83,7 @@ int main(int argc, char** argv)
 
 
     Inifile ini;
+    SSL_library_init();
     ClientFront front(client_info, verbose > 10);
     ModRDPParams mod_rdp_params( username.c_str()
                                , password.c_str()

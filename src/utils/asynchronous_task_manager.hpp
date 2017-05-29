@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "core/wait_obj.hpp"
+class wait_obj;
 
 class AsynchronousTask {
 public:

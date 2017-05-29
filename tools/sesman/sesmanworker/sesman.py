@@ -1797,7 +1797,8 @@ class Sesman():
                 u'session_probe_idle_session_limit' : 'idle_session_limit',
                 u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
                 u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
-                u'session_probe_extra_system_processes' : 'extra_system_processes'
+                u'session_probe_extra_system_processes' : 'extra_system_processes',
+                u'session_probe_enable_log' : 'enable_log'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

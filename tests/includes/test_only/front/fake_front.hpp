@@ -27,6 +27,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "gdi/graphic_api.hpp"
 
 //#include <openssl/ssl.h>

@@ -90,7 +90,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         struct device_info_type
         {
             uint32_t device_id;
-            uint32_t device_type;
+            rdpdr::RDPDR_DTYP device_type;
             std::string preferred_dos_name;
         };
         using device_info_inventory_type = std::vector<device_info_type>;
@@ -204,7 +204,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
     private:
-        bool add_known_device(uint32_t DeviceId, uint32_t DeviceType, const char* PreferredDosName) {
+        bool add_known_device(uint32_t DeviceId, rdpdr::RDPDR_DTYP DeviceType, const char* PreferredDosName) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -212,8 +212,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                             "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
                                 "\"%s\"(DeviceId=%u DeviceType=%u) is already in the device list. "
                                 "Old=\"%s\" (DeviceType=%u)",
-                            PreferredDosName, DeviceId, DeviceType,
-                            info.preferred_dos_name.c_str(), info.device_type);
+                            PreferredDosName, DeviceId, underlying_cast(DeviceType),
+                            info.preferred_dos_name.c_str(), underlying_cast(info.device_type));
                     }
 
                     return false;
@@ -225,7 +225,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
                         "Add \"%s\"(DeviceId=%u DeviceType=%u) to known device list.",
-                    PreferredDosName, DeviceId, DeviceType);
+                    PreferredDosName, DeviceId, underlying_cast(DeviceType));
             }
 
             return true;
@@ -267,14 +267,14 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             return nullptr;
         }
 
-        uint32_t get_device_type(uint32_t DeviceId) {
+        rdpdr::RDPDR_DTYP get_device_type(uint32_t DeviceId) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
                     return info.device_type;
                 }
             }
 
-            return 0;
+            return rdpdr::RDPDR_DTYP_UNSPECIFIED;
         }
 
         bool is_known_device(uint32_t DeviceId) {
@@ -506,8 +506,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                             "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                 "DeviceType=%s(%u) DeviceId=%u "
                                 "PreferredDosName=\"%s\" DeviceDataLength=%u",
-                            rdpdr::get_DeviceType_name(
-                                DeviceType),
+                            rdpdr::get_DeviceType_name(static_cast<rdpdr::RDPDR_DTYP>(DeviceType)),
                             DeviceType, DeviceId, PreferredDosName,
                             DeviceDataLength);
                     }
@@ -1520,7 +1519,7 @@ public:
                             device_io_response.DeviceId());
 
                     {
-                        uint32_t device_type =
+                        rdpdr::RDPDR_DTYP device_type =
                             this->device_redirection_manager.get_device_type(
                                 device_io_response.DeviceId());
 

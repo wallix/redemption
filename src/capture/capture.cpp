@@ -19,7 +19,6 @@
               Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan
 */
 
-#include <functional>
 #include <algorithm>
 #include <chrono>
 #include <utility>
@@ -42,63 +41,21 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/iter.hpp"
 
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
-#include "utils/drawable.hpp"
-#include "utils/apps/recording_progress.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/colors.hpp"
-#include "utils/compression_transport_builder.hpp"
 #include "utils/stream.hpp"
-#include "utils/verbose_flags.hpp"
 #include "utils/png.hpp"
 
-#include "cxx/cxx.hpp"
-
-#include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
 
-#include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-#include "core/RDP/share.hpp"
-#include "core/RDP/RDPSerializer.hpp"
-
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
-
-#include "core/wait_obj.hpp"
-
-#include "configs/config.hpp"
-
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/graphic_cmd_color.hpp"
 #include "gdi/kbd_input_api.hpp"
-#include "gdi/dump_png24.hpp"
-
-#include "acl/auth_api.hpp"
 
 #include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
@@ -119,11 +76,9 @@
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 
-#include "capture/cryptofile.hpp"
-
 #include "capture/video_capture.hpp"
 
-#include "capture/RDPChunkedDevice.hpp"
+#include "utils/apps/recording_progress.hpp"
 
 
 class PatternSearcher

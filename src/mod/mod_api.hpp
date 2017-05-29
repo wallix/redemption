@@ -25,11 +25,7 @@
 #include <vector>
 
 #include "core/callback.hpp"
-#include "core/font.hpp"
 #include "core/wait_obj.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/orders/RDPOrdersCommon.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "gdi/graphic_api.hpp"
 
 class Inifile;

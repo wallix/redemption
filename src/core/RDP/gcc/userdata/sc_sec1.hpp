@@ -28,9 +28,10 @@
 
 #pragma once
 
-#include "core/RDP/gcc/data_block_type.hpp"
-#include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/crypto/ssl_lib.hpp"
+#include "utils/stream.hpp"
 #include "system/openssl.hpp"
 
 #include <inttypes.h>

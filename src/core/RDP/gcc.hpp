@@ -31,9 +31,6 @@
 #pragma once
 
 #include "core/RDP/out_per_bstream.hpp"
-#include "system/ssl_calls.hpp"
-#include "utils/crypto/ssl_lib.hpp"
-#include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 

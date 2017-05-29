@@ -30,8 +30,6 @@
 
 #include "caches/glyphcache.hpp"
 
-#include "capabilities/cap_glyphcache.hpp"
-
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -51,7 +49,6 @@
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "orders/AlternateSecondaryWindowing.hpp"
 
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"

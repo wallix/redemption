@@ -40,8 +40,6 @@
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
 
-#include <fstream>
-#include <iostream>
 #include <string>
 #include <ctime>
 #include "utils/log.hpp"
@@ -198,7 +196,6 @@ public:
 private:
     Transport & auth_trans;
     char session_id[256];
-    CryptoContext cctx;
     OutCryptoTransport ct;
 
 public:
@@ -221,11 +218,10 @@ public:
     };
 
 public:
-    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, CryptoContext cctx, Random & rnd, Verbose verbose)
+    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, CryptoContext & cctx, Random & rnd, Verbose verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
-        , cctx(cctx)
         , ct(
             ini.get<cfg::crypto::session_log_with_encryption>(),
             ini.get<cfg::crypto::session_log_with_checksum>(),
@@ -247,6 +243,13 @@ public:
 
     ~AclSerializer()
     {
+        try {
+            this->close_session_log();
+        }
+        catch (Error const & e) {
+            LOG(LOG_ERR, "auth::~AclSerializer: %s", e.errmsg());
+        }
+
         this->auth_trans.disconnect();
         if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~AclSerializer");
@@ -267,7 +270,8 @@ public:
         this->send_acl_data();
     }
 
-    void receive() {
+    void receive()
+    {
         try {
             this->incoming();
 
@@ -294,14 +298,15 @@ public:
 
     void log4(bool duplicate_with_pid, const char * type, const char * extra) override
     {
-        const bool session_log =
-            this->ini.get<cfg::session_log::enable_session_log>();
+        const bool session_log = this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
 
-        /* Log to file */
-        const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
-        if (log_redir) {
+        if (extra && !*extra) {
+            extra = nullptr;
+        }
 
+        /* Log to file */
+        if (this->ini.get<cfg::session_log::session_log_redirection>()) {
             if(!ct.is_open()) {
                 auto const & filename = this->ini.get<cfg::session_log::log_path>();
                 ct.open(filename.c_str(), 0);
@@ -327,7 +332,7 @@ public:
             LOG(LOG_INFO, "type='%s'%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
         }
         if (session_log) {
-            LOG__REDEMPTION__INTERNAL__IMPL(
+            LOG(
                 LOG_INFO
               , "[%s Session] "
                 "type='%s' "
@@ -352,6 +357,16 @@ public:
               , this->ini.get<cfg::globals::target_user>().c_str()
               , (extra ? " " : ""), (extra ? extra : "")
             );
+        }
+    }
+
+    void close_session_log()
+    {
+        if (this->ct.is_open()) {
+            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+            this->ct.close(qhash, fhash);
+            // TODO qhash and fhash are unused
         }
     }
 

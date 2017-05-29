@@ -341,6 +341,7 @@ protected:
     const std::chrono::milliseconds   session_probe_disconnected_session_limit;
     const std::chrono::milliseconds   session_probe_idle_session_limit;
     const bool                        session_probe_use_clipboard_based_launcher;
+    const bool                        session_probe_enable_log;
 
     std::string session_probe_target_informations;
 
@@ -854,6 +855,7 @@ public:
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
+        , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -1652,6 +1654,9 @@ protected:
             this->session_probe_disconnected_session_limit;
         session_probe_virtual_channel_params.session_probe_idle_session_limit       =
             this->session_probe_idle_session_limit;
+
+        session_probe_virtual_channel_params.session_probe_enable_log               =
+            this->session_probe_enable_log;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
@@ -3644,8 +3649,19 @@ public:
                         }
                         switch (this->connection_finalization_state){
                         case EARLY:
+                        {
+                            ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                            LOG(LOG_ERR, "sdata.pdutype2=%u", sdata.pdutype2);
+
+                            if (sdata.pdutype2 == PDUTYPE2_SET_ERROR_INFO_PDU)
+                            {
+                                if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                this->process_disconnect_pdu(sdata.payload);
+                            }
+
                             LOG(LOG_ERR, "Rdp::finalization is early");
                             throw Error(ERR_SEC);
+                        }
                         case WAITING_SYNCHRONIZE:
                             if (bool(this->verbose & RDPVerbose::basic_trace)){
                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");

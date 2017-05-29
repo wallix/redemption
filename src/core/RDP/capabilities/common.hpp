@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include "utils/log.hpp"
-#include "utils/sugar/stream_proto.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 class InStream;
 class OutStream;

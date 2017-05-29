@@ -40,6 +40,8 @@ RED_AUTO_TEST_CASE(TestArrayView)
     int8_t as8[3] = {-1, 0, 3};
     uint8_t au8[3] = {0, 1, 2};
 
+    //TODO array_view<const char>{} = array_view<char>{};
+
     RED_CHECK_EQUAL(test_ambiguous(a8), 1);
     RED_CHECK_EQUAL(test_ambiguous(as8), 2);
     RED_CHECK_EQUAL(test_ambiguous(au8), 3);
