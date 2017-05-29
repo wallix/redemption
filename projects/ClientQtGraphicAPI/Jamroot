@@ -138,6 +138,7 @@ exe client_rdp_Qt4 :
     png.o
     bitmap_from_file.o
     /qt//QtGui       #4
+    /qt//phonon
     bitmap
     krb5
     openssl

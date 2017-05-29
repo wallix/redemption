@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Clément Moroldo
+   Author(s): Clément Moroldo
 
 */
 
@@ -60,5 +60,10 @@
 #include <QtCore/QTimer>
 #include <QtGui/QToolTip>
 #include <QtGui/QProgressBar>
+#include <QtCore/QBuffer>
+#include <QtCore/QByteArray>
+
+#include <phonon/MediaObject>
+#include <phonon/AudioOutput>
 
 
