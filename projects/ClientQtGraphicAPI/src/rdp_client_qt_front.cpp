@@ -72,6 +72,7 @@ public:
 
     // Connexion socket members
     ClipBoard_Qt       * clipboard_qt;
+    Sound_Qt           * sound_qt;
     bool                 _monitorCountNegociated;
     UdevRandom           gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
@@ -555,10 +556,13 @@ public:
     RDPClientQtFront(char* argv[], int argc, RDPVerbose verbose)
         : Front_RDP_Qt_API(verbose)
         , clipboard_qt(nullptr)
+        , sound_qt(nullptr)
         , _monitorCountNegociated(false)
         , _waiting_for_data(false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
+        this->sound_qt     = new Sound_Qt(this->form);
+
 
         this->setDefaultConfig();
         this->setUserProfil();
@@ -2469,43 +2473,195 @@ public:
         } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
 
 
-            rdpsnd::RDPSNDPDUHeader header;
-            header.receive(chunk);
-            header.log();
+            if (this->sound_qt->wave_data_to_vait) {
+                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                this->sound_qt->wave_data_to_vait -= chunk.in_remain();
+                if (this->sound_qt->wave_data_to_vait < 0) {
+                    this->sound_qt->wave_data_to_vait = 0;
+                }
 
-            //LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                chunk.in_skip_bytes(4);
 
-            switch (header.msgType) {
-                case rdpsnd::SNDC_FORMATS:
-                    {
-                    rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
-                    safsvh.receive(chunk);
-                    safsvh.log();
+                this->sound_qt->setData(chunk.get_data()+4, chunk.get_offset());
+
+                if (!(this->sound_qt->wave_data_to_vait)) {
+
+                    this->sound_qt->play();
+
+                    StaticOutStream<32> out_stream;
+
+                    rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
+                    header_out.emit(out_stream);
+
+                    rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
+                                             , this->sound_qt->last_cConfirmedBlockNo);
+                    wc.emit(out_stream);
+
+                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                    this->mod->send_to_mod_channel( channel_names::rdpsnd
+                                                  , chunk_to_send
+                                                  , out_stream.get_offset()
+                                                  , CHANNELS::CHANNEL_FLAG_LAST |
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  );
+
+                    LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                }
+
+            } else {
+                rdpsnd::RDPSNDPDUHeader header;
+                header.receive(chunk);
+
+                switch (header.msgType) {
+
+                    case rdpsnd::SNDC_FORMATS:
+                        {
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                        rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
+                        safsvh.receive(chunk);
+
+                        StaticOutStream<1024> out_stream;
+
+                        rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_FORMATS, 38);
+                        header_out.emit(out_stream);
+
+                        rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE
+                                                                        , 0
+                                                                        , 0
+                                                                        , 0
+                                                                        , 1
+                                                                        , 0x06
+                                                                        );
+                        cafvh.emit(out_stream);
+
+                        for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
+                            rdpsnd::AudioFormat format;
+                            format.receive(chunk);
+
+                            if (format.wFormatTag == rdpsnd::WAVE_FORMAT_PCM) {
+                                format.emit(out_stream);
+                                this->sound_qt->sample_per_sec = format.nSamplesPerSec;
+                                this->sound_qt->bit_per_sample = format.wBitsPerSample;
+                                this->sound_qt->n_channels = format.nChannels;
+                                this->sound_qt->block_size = format.nBlockAlign;
+
+                            }
+                        }
+
+                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                        this->mod->send_to_mod_channel( channel_names::rdpsnd
+                                                      , chunk_to_send
+                                                      , out_stream.get_offset()
+                                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      );
+
+                        LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+
+                        StaticOutStream<32> quality_stream;
+
+                        rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_QUALITYMODE, 8);
+                        header_quality.emit(quality_stream);
+
+                        rdpsnd::QualityModePDU qm(rdpsnd::DYNAMIC_QUALITY);
+                        qm.emit(quality_stream);
+
+                        InStream chunk_to_send2(quality_stream.get_data(), quality_stream.get_offset());
+
+                        this->mod->send_to_mod_channel( channel_names::rdpsnd
+                                                      , chunk_to_send2
+                                                      , quality_stream.get_offset()
+                                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      );
+
+                        LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        }
+                        break;
+
+                    case rdpsnd::SNDC_TRAINING:
+                        {
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+                        rdpsnd::TrainingPDU train;
+                        train.receive(chunk);
+
+                        StaticOutStream<32> out_stream;
+
+                        rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_TRAINING, 8);
+                        header_quality.emit(out_stream);
+
+                        rdpsnd::TrainingConfirmPDU train_conf(train.wTimeStamp, train.wPackSize);
+                        train.emit(out_stream);
+
+                        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                        this->mod->send_to_mod_channel( channel_names::rdpsnd
+                                                      , chunk_to_send
+                                                      , out_stream.get_offset()
+                                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      );
+
+                        LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        }
+                        break;
+
+                    case rdpsnd::SNDC_WAVE:
+                        {
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
+
+                        this->sound_qt->wave_data_to_vait = header.BodySize - (header.BodySize/400);
+
+                        rdpsnd::WaveInfoPDU wi;
+                        wi.receive(chunk);
+
+                        this->sound_qt->last_wTimeStamp = wi.wTimeStamp;
+                        this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;
+
+                        this->sound_qt->init(header.BodySize);
+                        this->sound_qt->setData(chunk.get_data()+4, chunk.get_offset()+8);
+                        }
+                        break;
+
+                    case rdpsnd::SNDC_CLOSE:
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
+                        break;
+
+//                     case rdpsnd::SNDC_SETVOLUME:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
+//                         break;
+//
+//                     case rdpsnd::SNDC_SETPITCH:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETPITCH PDU");
+//                         break;
+//
+//                     case rdpsnd::SNDC_CRYPTKEY:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_CRYPTKEY PDU");
+//                         break;
+//
+//                     case rdpsnd::SNDC_WAVEENCRYPT:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVEENCRYPT PDU");
+//                         break;
+
+//                     case rdpsnd::SNDC_UDPWAVELAST:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_UDPWAVELAST PDU");
+//                         break;
+
+//                     case rdpsnd::SNDC_QUALITYMODE:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_QUALITYMODE PDU");
+//                         break;
+
+//                     case rdpsnd::SNDC_WAVE2:
+//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVE2 PDU");
+//                         break;
 
 
-                    OutStream<1024> steam;
-
-                    rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_FORMATS);
-
-                    for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
-                        rdpsnd::AudioFormat format;
-                        format.receive(chunk);
-                        format.log();
-                    }
-
-
-                    }
-                    break;
-
-
-
-                default: LOG(LOG_INFO, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
-                    break;
+                    default: LOG(LOG_INFO, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
+                        break;
+                }
             }
-
-
-
-
 
 
 
@@ -2987,7 +3143,6 @@ public:
         FrontQtRDPGraphicAPI::callback();
     }
 
-
 };
 
 
@@ -3011,6 +3166,9 @@ int main(int argc, char** argv){
     //bjam debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -w $mdp -i 10.10.40.22 -p 3389
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
+
+    // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
+
 
     QApplication app(argc, argv);
 

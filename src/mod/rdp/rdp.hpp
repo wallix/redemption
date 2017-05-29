@@ -2086,8 +2086,7 @@ private:
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                LOG(LOG_INFO, "channel_name = rdpsnd !!!!!!!!!!!!!");
+//             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
 //                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
 //
@@ -2108,7 +2107,7 @@ private:
 //
 //                     rdpdr::streamLog(chunk, this->rdpdrLogStatus);
 //                 }
-            }
+//             }
 
             this->send_to_channel(*rdpsnd_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
             return;
