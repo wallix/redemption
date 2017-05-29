@@ -2478,13 +2478,13 @@ namespace cfg {
     };
 
     struct context {
-        // type: ::configs::spec_types::directory_path
+        // type: std::string
         struct movie {
             static constexpr bool is_sesman_to_proxy() { return 0; }
             static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "movie"; }
-            using type = ::configs::spec_types::directory_path;
+            using type = std::string;
             using mapped_type = type;
             type value{};
         };
