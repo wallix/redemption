@@ -89,7 +89,7 @@ public:
         struct DeviceData {
             char name[8] = {0};
             uint32_t ID = 0;
-            uint32_t type = 0;
+            rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP::RDPDR_DTYP_UNSPECIFIED;
         };
 
         bool drives_created = false;

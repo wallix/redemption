@@ -39,6 +39,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/genfstat.hpp"
 #include "core/front_api.hpp"
 #include "mod/mod_api.hpp"

@@ -216,7 +216,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
-    RED_CHECK_EQUAL("./",                             ini.get<cfg::context::movie>());
+    RED_CHECK_EQUAL("",                             ini.get<cfg::context::movie>());
 
     RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
     RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
