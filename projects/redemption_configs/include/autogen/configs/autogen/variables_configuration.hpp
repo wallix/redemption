@@ -7,8 +7,8 @@ namespace cfg {
         // AUTHID_GLOBALS_CAPTURE_CHUNK
         // type: bool
         struct capture_chunk {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "capture_chunk"; }
             static constexpr unsigned index() { return 0; }
@@ -20,8 +20,8 @@ namespace cfg {
         // AUTHID_GLOBALS_AUTH_USER
         // type: std::string
         struct auth_user {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "auth_user"; }
             static constexpr unsigned index() { return 1; }
@@ -33,8 +33,8 @@ namespace cfg {
         // AUTHID_GLOBALS_HOST
         // type: std::string
         struct host {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "host"; }
             static constexpr unsigned index() { return 2; }
@@ -46,8 +46,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET
         // type: std::string
         struct target {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target"; }
             static constexpr unsigned index() { return 3; }
@@ -59,8 +59,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET_DEVICE
         // type: std::string
         struct target_device {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_device"; }
             static constexpr unsigned index() { return 4; }
@@ -72,8 +72,8 @@ namespace cfg {
         // AUTHID_GLOBALS_DEVICE_ID
         // type: std::string
         struct device_id {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "device_id"; }
             static constexpr unsigned index() { return 5; }
@@ -85,8 +85,8 @@ namespace cfg {
         // AUTHID_GLOBALS_PRIMARY_USER_ID
         // type: std::string
         struct primary_user_id {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "primary_user_id"; }
             static constexpr unsigned index() { return 6; }
@@ -98,8 +98,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET_USER
         // type: std::string
         struct target_user {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_user"; }
             static constexpr unsigned index() { return 7; }
@@ -111,8 +111,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET_APPLICATION
         // type: std::string
         struct target_application {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application"; }
             static constexpr unsigned index() { return 8; }
@@ -124,8 +124,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
         // type: std::string
         struct target_application_account {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application_account"; }
             static constexpr unsigned index() { return 9; }
@@ -137,8 +137,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
         // type: std::string
         struct target_application_password {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application_password"; }
             static constexpr unsigned index() { return 10; }
@@ -150,8 +150,8 @@ namespace cfg {
         // Support of Bitmap Cache.
         // type: bool
         struct bitmap_cache {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "bitmap_cache"; }
             using type = bool;
@@ -161,8 +161,8 @@ namespace cfg {
         };
         // type: bool
         struct glyph_cache {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "glyph_cache"; }
             using type = bool;
@@ -172,8 +172,8 @@ namespace cfg {
         };
         // type: unsigned int
         struct port {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "port"; }
             using type = unsigned int;
@@ -183,8 +183,8 @@ namespace cfg {
         };
         // type: bool
         struct nomouse {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "nomouse"; }
             using type = bool;
@@ -194,8 +194,8 @@ namespace cfg {
         };
         // type: bool
         struct notimestamp {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "notimestamp"; }
             using type = bool;
@@ -205,8 +205,8 @@ namespace cfg {
         };
         // type: Level
         struct encryptionLevel {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "encryptionLevel"; }
             using type = Level;
@@ -216,8 +216,8 @@ namespace cfg {
         };
         // type: std::string
         struct authfile {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "authfile"; }
             using type = std::string;
@@ -228,8 +228,8 @@ namespace cfg {
         // Time out during RDP handshake stage.
         // type: std::chrono::seconds
         struct handshake_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "handshake_timeout"; }
             using type = std::chrono::seconds;
@@ -240,8 +240,8 @@ namespace cfg {
         // No traffic auto disconnection.
         // type: std::chrono::seconds
         struct session_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "session_timeout"; }
             using type = std::chrono::seconds;
@@ -252,8 +252,8 @@ namespace cfg {
         // Keepalive.
         // type: std::chrono::seconds
         struct keepalive_grace_delay {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "keepalive_grace_delay"; }
             using type = std::chrono::seconds;
@@ -264,8 +264,8 @@ namespace cfg {
         // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
         // type: std::chrono::seconds
         struct authentication_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "authentication_timeout"; }
             using type = std::chrono::seconds;
@@ -276,8 +276,8 @@ namespace cfg {
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
         // type: std::chrono::seconds
         struct close_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "close_timeout"; }
             using type = std::chrono::seconds;
@@ -288,8 +288,8 @@ namespace cfg {
         // AUTHID_GLOBALS_TRACE_TYPE
         // type: TraceType
         struct trace_type {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "trace_type"; }
             static constexpr unsigned index() { return 11; }
@@ -300,8 +300,8 @@ namespace cfg {
         };
         // type: std::string
         struct listen_address {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "listen_address"; }
             using type = std::string;
@@ -312,8 +312,8 @@ namespace cfg {
         // Allow Transparent mode.
         // type: bool
         struct enable_transparent_mode {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_transparent_mode"; }
             using type = bool;
@@ -324,8 +324,8 @@ namespace cfg {
         // Proxy certificate password.
         // type: char[255]
         struct certificate_password {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "certificate_password"; }
             using type = char[255];
@@ -335,8 +335,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct png_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "png_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -346,8 +346,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct wrm_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "wrm_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -358,8 +358,8 @@ namespace cfg {
         // AUTHID_GLOBALS_IS_REC
         // type: bool
         struct is_rec {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "is_rec"; }
             static constexpr unsigned index() { return 12; }
@@ -371,8 +371,8 @@ namespace cfg {
         // AUTHID_GLOBALS_MOVIE_PATH
         // type: std::string
         struct movie_path {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "movie_path"; }
             static constexpr unsigned index() { return 13; }
@@ -384,8 +384,8 @@ namespace cfg {
         // Support of Bitmap Update.
         // type: bool
         struct enable_bitmap_update {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_bitmap_update"; }
             using type = bool;
@@ -396,8 +396,8 @@ namespace cfg {
         // Show close screen.
         // type: bool
         struct enable_close_box {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_close_box"; }
             using type = bool;
@@ -407,8 +407,8 @@ namespace cfg {
         };
         // type: bool
         struct enable_osd {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_osd"; }
             using type = bool;
@@ -418,8 +418,8 @@ namespace cfg {
         };
         // type: bool
         struct enable_osd_display_remote_target {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_osd_display_remote_target"; }
             using type = bool;
@@ -429,8 +429,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct persistent_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "persistent_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -440,8 +440,8 @@ namespace cfg {
         };
         // type: bool
         struct enable_wab_integration {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "enable_wab_integration"; }
             using type = bool;
@@ -451,8 +451,8 @@ namespace cfg {
         };
         // type: bool
         struct allow_using_multiple_monitors {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "allow_using_multiple_monitors"; }
             using type = bool;
@@ -463,8 +463,8 @@ namespace cfg {
         // Needed to refresh screen of Windows Server 2012.
         // type: bool
         struct bogus_refresh_rect {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "bogus_refresh_rect"; }
             using type = bool;
@@ -474,8 +474,8 @@ namespace cfg {
         };
         // type: std::string
         struct codec_id {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "codec_id"; }
             using type = std::string;
@@ -485,8 +485,8 @@ namespace cfg {
         };
         // type: Level
         struct video_quality {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "video_quality"; }
             using type = Level;
@@ -496,8 +496,8 @@ namespace cfg {
         };
         // type: bool
         struct large_pointer_support {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "large_pointer_support"; }
             using type = bool;
@@ -510,8 +510,8 @@ namespace cfg {
     struct session_log {
         // type: bool
         struct enable_session_log {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "session_log"; }
             static constexpr char const * name() { return "enable_session_log"; }
             using type = bool;
@@ -523,8 +523,8 @@ namespace cfg {
         // AUTHID_SESSION_LOG_SESSION_LOG_REDIRECTION
         // type: bool
         struct session_log_redirection {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "session_log"; }
             static constexpr char const * name() { return "session_log_redirection"; }
             static constexpr unsigned index() { return 14; }
@@ -536,8 +536,8 @@ namespace cfg {
         // AUTHID_SESSION_LOG_LOG_PATH
         // type: std::string
         struct log_path {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "session_log"; }
             static constexpr char const * name() { return "log_path"; }
             static constexpr unsigned index() { return 15; }
@@ -548,8 +548,8 @@ namespace cfg {
         };
         // type: KeyboardInputMaskingLevel
         struct keyboard_input_masking_level {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "session_log"; }
             static constexpr char const * name() { return "keyboard_input_masking_level"; }
             using type = KeyboardInputMaskingLevel;
@@ -563,8 +563,8 @@ namespace cfg {
         // AUTHID_CLIENT_KEYBOARD_LAYOUT
         // type: unsigned int
         struct keyboard_layout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "keyboard_layout"; }
             static constexpr unsigned index() { return 16; }
@@ -576,8 +576,8 @@ namespace cfg {
         // cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
         // type: std::string
         struct keyboard_layout_proposals {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "keyboard_layout_proposals"; }
             using type = std::string;
@@ -588,8 +588,8 @@ namespace cfg {
         // If true, ignore password provided by RDP client, user need do login manually.
         // type: bool
         struct ignore_logon_password {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "ignore_logon_password"; }
             using type = bool;
@@ -600,8 +600,8 @@ namespace cfg {
         // Enable font smoothing (0x80).
         // type: uint32_t
         struct performance_flags_default {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "performance_flags_default"; }
             using type = uint32_t;
@@ -613,8 +613,8 @@ namespace cfg {
 // Disable mouse cursor shadows (0x20).
         // type: uint32_t
         struct performance_flags_force_present {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "performance_flags_force_present"; }
             using type = uint32_t;
@@ -624,8 +624,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct performance_flags_force_not_present {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "performance_flags_force_not_present"; }
             using type = uint32_t;
@@ -636,8 +636,8 @@ namespace cfg {
         // If enabled, avoid automatically font smoothing in recorded session.
         // type: bool
         struct auto_adjust_performance_flags {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "auto_adjust_performance_flags"; }
             using type = bool;
@@ -648,8 +648,8 @@ namespace cfg {
         // Fallback to RDP Legacy Encryption if client does not support TLS.
         // type: bool
         struct tls_fallback_legacy {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "tls_fallback_legacy"; }
             using type = bool;
@@ -659,8 +659,8 @@ namespace cfg {
         };
         // type: bool
         struct tls_support {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "tls_support"; }
             using type = bool;
@@ -671,8 +671,8 @@ namespace cfg {
         // Needed to connect with jrdp, based on bogus X224 layer code.
         // type: bool
         struct bogus_neg_request {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "bogus_neg_request"; }
             using type = bool;
@@ -683,8 +683,8 @@ namespace cfg {
         // Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
         // type: bool
         struct bogus_user_id {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "bogus_user_id"; }
             using type = bool;
@@ -696,8 +696,8 @@ namespace cfg {
         // AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS
         // type: bool
         struct disable_tsk_switch_shortcuts {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "disable_tsk_switch_shortcuts"; }
             static constexpr unsigned index() { return 17; }
@@ -708,8 +708,8 @@ namespace cfg {
         };
         // type: RdpCompression
         struct rdp_compression {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "rdp_compression"; }
             using type = RdpCompression;
@@ -719,8 +719,8 @@ namespace cfg {
         };
         // type: ColorDepth
         struct max_color_depth {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "max_color_depth"; }
             using type = ColorDepth;
@@ -731,8 +731,8 @@ namespace cfg {
         // Persistent Disk Bitmap Cache on the front side.
         // type: bool
         struct persistent_disk_bitmap_cache {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "persistent_disk_bitmap_cache"; }
             using type = bool;
@@ -743,8 +743,8 @@ namespace cfg {
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
         // type: bool
         struct cache_waiting_list {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "cache_waiting_list"; }
             using type = bool;
@@ -755,8 +755,8 @@ namespace cfg {
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
         // type: bool
         struct persist_bitmap_cache_on_disk {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "persist_bitmap_cache_on_disk"; }
             using type = bool;
@@ -767,8 +767,8 @@ namespace cfg {
         // Support of Bitmap Compression.
         // type: bool
         struct bitmap_compression {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "bitmap_compression"; }
             using type = bool;
@@ -779,8 +779,8 @@ namespace cfg {
         // Enables support of Clent Fast-Path Input Event PDUs.
         // type: bool
         struct fast_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "fast_path"; }
             using type = bool;
@@ -790,8 +790,8 @@ namespace cfg {
         };
         // type: bool
         struct enable_suppress_output {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "enable_suppress_output"; }
             using type = bool;
@@ -803,8 +803,8 @@ namespace cfg {
 // HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)
         // type: std::string
         struct ssl_cipher_list {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "ssl_cipher_list"; }
             using type = std::string;
@@ -814,8 +814,8 @@ namespace cfg {
         };
         // type: bool
         struct show_target_user_in_f12_message {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "show_target_user_in_f12_message"; }
             using type = bool;
@@ -825,8 +825,8 @@ namespace cfg {
         };
         // type: bool
         struct enable_new_pointer_update {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "enable_new_pointer_update"; }
             using type = bool;
@@ -839,8 +839,8 @@ namespace cfg {
     struct mod_rdp {
         // type: RdpCompression
         struct rdp_compression {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "rdp_compression"; }
             using type = RdpCompression;
@@ -850,8 +850,8 @@ namespace cfg {
         };
         // type: bool
         struct disconnect_on_logon_user_change {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "disconnect_on_logon_user_change"; }
             using type = bool;
@@ -861,8 +861,8 @@ namespace cfg {
         };
         // type: std::chrono::seconds
         struct open_session_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "open_session_timeout"; }
             using type = std::chrono::seconds;
@@ -878,8 +878,8 @@ namespace cfg {
 //   22: Polyline
         // type: std::string
         struct extra_orders {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "extra_orders"; }
             using type = std::string;
@@ -890,8 +890,8 @@ namespace cfg {
         // NLA authentication in secondary target.
         // type: bool
         struct enable_nla {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "enable_nla"; }
             using type = bool;
@@ -903,8 +903,8 @@ namespace cfg {
 // (if enable_nla is disabled, this value is ignored).
         // type: bool
         struct enable_kerberos {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "enable_kerberos"; }
             using type = bool;
@@ -915,8 +915,8 @@ namespace cfg {
         // Persistent Disk Bitmap Cache on the mod side.
         // type: bool
         struct persistent_disk_bitmap_cache {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "persistent_disk_bitmap_cache"; }
             using type = bool;
@@ -927,8 +927,8 @@ namespace cfg {
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
         // type: bool
         struct cache_waiting_list {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "cache_waiting_list"; }
             using type = bool;
@@ -939,8 +939,8 @@ namespace cfg {
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
         // type: bool
         struct persist_bitmap_cache_on_disk {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "persist_bitmap_cache_on_disk"; }
             using type = bool;
@@ -951,8 +951,8 @@ namespace cfg {
         // Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
         // type: std::string
         struct allow_channels {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "allow_channels"; }
             using type = std::string;
@@ -963,8 +963,8 @@ namespace cfg {
         // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
         // type: std::string
         struct deny_channels {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "deny_channels"; }
             using type = std::string;
@@ -975,8 +975,8 @@ namespace cfg {
         // Enables support of Server Fast-Path Update PDUs.
         // type: bool
         struct fast_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "fast_path"; }
             using type = bool;
@@ -987,8 +987,8 @@ namespace cfg {
         // Enables Server Redirection Support.
         // type: bool
         struct server_redirection_support {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_redirection_support"; }
             using type = bool;
@@ -998,8 +998,8 @@ namespace cfg {
         };
         // type: RedirectionInfo
         struct redir_info {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "redir_info"; }
             using type = RedirectionInfo;
@@ -1009,8 +1009,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_LOAD_BALANCE_INFO
         // type: std::string
         struct load_balance_info {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "load_balance_info"; }
             static constexpr unsigned index() { return 18; }
@@ -1023,8 +1023,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE
         // type: bool
         struct bogus_sc_net_size {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "bogus_sc_net_size"; }
             static constexpr unsigned index() { return 19; }
@@ -1035,8 +1035,8 @@ namespace cfg {
         };
         // type: BogusLinuxCursor
         struct bogus_linux_cursor {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "bogus_linux_cursor"; }
             using type = BogusLinuxCursor;
@@ -1047,8 +1047,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
         // type: std::string
         struct proxy_managed_drives {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "proxy_managed_drives"; }
             static constexpr unsigned index() { return 20; }
@@ -1060,8 +1060,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL
         // type: bool
         struct ignore_auth_channel {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "ignore_auth_channel"; }
             static constexpr unsigned index() { return 21; }
@@ -1073,8 +1073,8 @@ namespace cfg {
         // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
         // type: char[8]
         struct auth_channel {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "auth_channel"; }
             using type = char[8];
@@ -1085,8 +1085,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_ALTERNATE_SHELL
         // type: std::string
         struct alternate_shell {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "alternate_shell"; }
             static constexpr unsigned index() { return 22; }
@@ -1098,8 +1098,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SHELL_ARGUMENTS
         // type: std::string
         struct shell_arguments {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "shell_arguments"; }
             static constexpr unsigned index() { return 23; }
@@ -1111,8 +1111,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
         // type: std::string
         struct shell_working_directory {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "shell_working_directory"; }
             static constexpr unsigned index() { return 24; }
@@ -1124,8 +1124,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
         // type: bool
         struct use_client_provided_alternate_shell {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "use_client_provided_alternate_shell"; }
             static constexpr unsigned index() { return 25; }
@@ -1137,8 +1137,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP
         // type: bool
         struct use_client_provided_remoteapp {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "use_client_provided_remoteapp"; }
             static constexpr unsigned index() { return 26; }
@@ -1150,8 +1150,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY
         // type: bool
         struct use_native_remoteapp_capability {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "use_native_remoteapp_capability"; }
             static constexpr unsigned index() { return 27; }
@@ -1163,8 +1163,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
         // type: bool
         struct enable_session_probe {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "enable_session_probe"; }
             static constexpr unsigned index() { return 28; }
@@ -1178,8 +1178,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER
         // type: bool
         struct session_probe_use_clipboard_based_launcher {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_use_clipboard_based_launcher"; }
             static constexpr unsigned index() { return 29; }
@@ -1191,8 +1191,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK
         // type: bool
         struct session_probe_enable_launch_mask {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_enable_launch_mask"; }
             static constexpr unsigned index() { return 30; }
@@ -1204,8 +1204,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
         // type: SessionProbeOnLaunchFailure
         struct session_probe_on_launch_failure {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_on_launch_failure"; }
             static constexpr unsigned index() { return 31; }
@@ -1219,8 +1219,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
         // type: std::chrono::milliseconds
         struct session_probe_launch_timeout {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_launch_timeout"; }
             static constexpr unsigned index() { return 32; }
@@ -1234,8 +1234,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
         // type: std::chrono::milliseconds
         struct session_probe_launch_fallback_timeout {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_launch_fallback_timeout"; }
             static constexpr unsigned index() { return 33; }
@@ -1248,8 +1248,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
         // type: bool
         struct session_probe_start_launch_timeout_timer_only_after_logon {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_start_launch_timeout_timer_only_after_logon"; }
             static constexpr unsigned index() { return 34; }
@@ -1261,8 +1261,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         // type: std::chrono::milliseconds
         struct session_probe_keepalive_timeout {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_keepalive_timeout"; }
             static constexpr unsigned index() { return 35; }
@@ -1274,8 +1274,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
         // type: bool
         struct session_probe_on_keepalive_timeout_disconnect_user {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_on_keepalive_timeout_disconnect_user"; }
             static constexpr unsigned index() { return 36; }
@@ -1288,8 +1288,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION
         // type: bool
         struct session_probe_end_disconnected_session {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_end_disconnected_session"; }
             static constexpr unsigned index() { return 37; }
@@ -1300,8 +1300,8 @@ namespace cfg {
         };
         // type: bool
         struct session_probe_customize_executable_name {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_customize_executable_name"; }
             using type = bool;
@@ -1312,8 +1312,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG
         // type: bool
         struct session_probe_enable_log {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_enable_log"; }
             static constexpr unsigned index() { return 38; }
@@ -1327,8 +1327,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT
         // type: std::chrono::milliseconds
         struct session_probe_disconnected_application_limit {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_disconnected_application_limit"; }
             static constexpr unsigned index() { return 39; }
@@ -1342,8 +1342,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT
         // type: std::chrono::milliseconds
         struct session_probe_disconnected_session_limit {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_disconnected_session_limit"; }
             static constexpr unsigned index() { return 40; }
@@ -1357,8 +1357,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT
         // type: std::chrono::milliseconds
         struct session_probe_idle_session_limit {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_idle_session_limit"; }
             static constexpr unsigned index() { return 41; }
@@ -1369,8 +1369,8 @@ namespace cfg {
         };
         // type: char[512]
         struct session_probe_exe_or_file {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_exe_or_file"; }
             using type = char[512];
@@ -1380,8 +1380,8 @@ namespace cfg {
         };
         // type: char[512]
         struct session_probe_arguments {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_arguments"; }
             using type = char[512];
@@ -1393,8 +1393,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_STORE
         // type: bool
         struct server_cert_store {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_store"; }
             static constexpr unsigned index() { return 42; }
@@ -1406,8 +1406,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_CHECK
         // type: ServerCertCheck
         struct server_cert_check {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_check"; }
             static constexpr unsigned index() { return 43; }
@@ -1420,8 +1420,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
         // type: ServerNotification
         struct server_access_allowed_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_access_allowed_message"; }
             static constexpr unsigned index() { return 44; }
@@ -1434,8 +1434,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
         // type: ServerNotification
         struct server_cert_create_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_create_message"; }
             static constexpr unsigned index() { return 45; }
@@ -1448,8 +1448,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
         // type: ServerNotification
         struct server_cert_success_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_success_message"; }
             static constexpr unsigned index() { return 46; }
@@ -1462,8 +1462,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
         // type: ServerNotification
         struct server_cert_failure_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_failure_message"; }
             static constexpr unsigned index() { return 47; }
@@ -1476,8 +1476,8 @@ namespace cfg {
         // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
         // type: ServerNotification
         struct server_cert_error_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "server_cert_error_message"; }
             static constexpr unsigned index() { return 48; }
@@ -1489,8 +1489,8 @@ namespace cfg {
         // Do not transmit client machine name or RDP server.
         // type: bool
         struct hide_client_name {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "hide_client_name"; }
             using type = bool;
@@ -1500,8 +1500,8 @@ namespace cfg {
         };
         // type: bool
         struct clean_up_32_bpp_cursor {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "clean_up_32_bpp_cursor"; }
             using type = bool;
@@ -1516,8 +1516,8 @@ namespace cfg {
         // AUTHID_MOD_VNC_CLIPBOARD_UP
         // type: bool
         struct clipboard_up {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "clipboard_up"; }
             static constexpr unsigned index() { return 49; }
@@ -1530,8 +1530,8 @@ namespace cfg {
         // AUTHID_MOD_VNC_CLIPBOARD_DOWN
         // type: bool
         struct clipboard_down {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "clipboard_down"; }
             static constexpr unsigned index() { return 50; }
@@ -1548,8 +1548,8 @@ namespace cfg {
 //   -239 (0xFFFFFF11): Cursor pseudo-encoding
         // type: std::string
         struct encodings {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "encodings"; }
             using type = std::string;
@@ -1559,8 +1559,8 @@ namespace cfg {
         };
         // type: bool
         struct allow_authentification_retries {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "allow_authentification_retries"; }
             using type = bool;
@@ -1572,8 +1572,8 @@ namespace cfg {
         // AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
         // type: ClipboardEncodingType
         struct server_clipboard_encoding_type {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "server_clipboard_encoding_type"; }
             static constexpr unsigned index() { return 51; }
@@ -1585,8 +1585,8 @@ namespace cfg {
         // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
         // type: VncBogusClipboardInfiniteLoop
         struct bogus_clipboard_infinite_loop {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_vnc"; }
             static constexpr char const * name() { return "bogus_clipboard_infinite_loop"; }
             static constexpr unsigned index() { return 52; }
@@ -1601,8 +1601,8 @@ namespace cfg {
         // 0 - Wait for Escape, 1 - End session
         // type: bool
         struct on_end_of_data {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "mod_replay"; }
             static constexpr char const * name() { return "on_end_of_data"; }
             using type = bool;
@@ -1615,8 +1615,8 @@ namespace cfg {
     struct ocr {
         // type: OcrVersion
         struct version {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "ocr"; }
             static constexpr char const * name() { return "version"; }
             using type = OcrVersion;
@@ -1626,8 +1626,8 @@ namespace cfg {
         };
         // type: OcrLocale
         struct locale {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "ocr"; }
             static constexpr char const * name() { return "locale"; }
             using type = OcrLocale;
@@ -1637,8 +1637,8 @@ namespace cfg {
         };
         // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
         struct interval {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "ocr"; }
             static constexpr char const * name() { return "interval"; }
             using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
@@ -1648,8 +1648,8 @@ namespace cfg {
         };
         // type: bool
         struct on_title_bar_only {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "ocr"; }
             static constexpr char const * name() { return "on_title_bar_only"; }
             using type = bool;
@@ -1662,8 +1662,8 @@ namespace cfg {
 //   100 - accept all results
         // type: unsigned int
         struct max_unrecog_char_rate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "ocr"; }
             static constexpr char const * name() { return "max_unrecog_char_rate"; }
             using type = unsigned int;
@@ -1676,8 +1676,8 @@ namespace cfg {
     struct video {
         // type: unsigned int
         struct capture_groupid {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "capture_groupid"; }
             using type = unsigned int;
@@ -1687,8 +1687,8 @@ namespace cfg {
         };
         // type: CaptureFlags
         struct capture_flags {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "capture_flags"; }
             using type = CaptureFlags;
@@ -1699,8 +1699,8 @@ namespace cfg {
         // Frame interval.
         // type: std::chrono::duration<unsigned int, std::ratio<1, 10>>
         struct png_interval {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "png_interval"; }
             using type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
@@ -1711,8 +1711,8 @@ namespace cfg {
         // Frame interval.
         // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
         struct frame_interval {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "frame_interval"; }
             using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
@@ -1723,8 +1723,8 @@ namespace cfg {
         // Time between 2 wrm movies.
         // type: std::chrono::seconds
         struct break_interval {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "break_interval"; }
             using type = std::chrono::seconds;
@@ -1735,8 +1735,8 @@ namespace cfg {
         // Number of png captures to keep.
         // type: unsigned int
         struct png_limit {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "png_limit"; }
             using type = unsigned int;
@@ -1746,8 +1746,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct replay_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "replay_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -1757,8 +1757,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct hash_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "hash_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -1768,8 +1768,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct record_tmp_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "record_tmp_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -1779,8 +1779,8 @@ namespace cfg {
         };
         // type: ::configs::spec_types::directory_path
         struct record_path {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "record_path"; }
             using type = ::configs::spec_types::directory_path;
@@ -1790,8 +1790,8 @@ namespace cfg {
         };
         // type: std::chrono::seconds
         struct inactivity_timeout {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "inactivity_timeout"; }
             using type = std::chrono::seconds;
@@ -1801,8 +1801,8 @@ namespace cfg {
         // Disable keyboard log:
         // type: KeyboardLogFlags
         struct disable_keyboard_log {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "disable_keyboard_log"; }
             using type = KeyboardLogFlags;
@@ -1813,8 +1813,8 @@ namespace cfg {
         // Disable clipboard log:
         // type: ClipboardLogFlags
         struct disable_clipboard_log {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "disable_clipboard_log"; }
             using type = ClipboardLogFlags;
@@ -1825,8 +1825,8 @@ namespace cfg {
         // Disable (redirected) file system log:
         // type: FileSystemLogFlags
         struct disable_file_system_log {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "disable_file_system_log"; }
             using type = FileSystemLogFlags;
@@ -1837,8 +1837,8 @@ namespace cfg {
         // AUTHID_VIDEO_RT_DISPLAY
         // type: unsigned int
         struct rt_display {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "rt_display"; }
             static constexpr unsigned index() { return 53; }
@@ -1849,8 +1849,8 @@ namespace cfg {
         };
         // type: ColorDepthSelectionStrategy
         struct wrm_color_depth_selection_strategy {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "wrm_color_depth_selection_strategy"; }
             using type = ColorDepthSelectionStrategy;
@@ -1860,8 +1860,8 @@ namespace cfg {
         };
         // type: WrmCompressionAlgorithm
         struct wrm_compression_algorithm {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "wrm_compression_algorithm"; }
             using type = WrmCompressionAlgorithm;
@@ -1871,8 +1871,8 @@ namespace cfg {
         };
         // type: std::chrono::seconds
         struct flv_break_interval {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "flv_break_interval"; }
             using type = std::chrono::seconds;
@@ -1882,8 +1882,8 @@ namespace cfg {
         // Bitrate for low quality.
         // type: unsigned int
         struct l_bitrate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "l_bitrate"; }
             using type = unsigned int;
@@ -1894,8 +1894,8 @@ namespace cfg {
         // Framerate for low quality.
         // type: unsigned int
         struct l_framerate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "l_framerate"; }
             using type = unsigned int;
@@ -1906,8 +1906,8 @@ namespace cfg {
         // Height for low quality.
         // type: unsigned int
         struct l_height {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "l_height"; }
             using type = unsigned int;
@@ -1918,8 +1918,8 @@ namespace cfg {
         // Width for low quality.
         // type: unsigned int
         struct l_width {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "l_width"; }
             using type = unsigned int;
@@ -1930,8 +1930,8 @@ namespace cfg {
         // Qscale (parameter given to ffmpeg) for low quality.
         // type: unsigned int
         struct l_qscale {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "l_qscale"; }
             using type = unsigned int;
@@ -1942,8 +1942,8 @@ namespace cfg {
         // Bitrate for medium quality.
         // type: unsigned int
         struct m_bitrate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "m_bitrate"; }
             using type = unsigned int;
@@ -1954,8 +1954,8 @@ namespace cfg {
         // Framerate for medium quality.
         // type: unsigned int
         struct m_framerate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "m_framerate"; }
             using type = unsigned int;
@@ -1966,8 +1966,8 @@ namespace cfg {
         // Height for medium quality.
         // type: unsigned int
         struct m_height {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "m_height"; }
             using type = unsigned int;
@@ -1978,8 +1978,8 @@ namespace cfg {
         // Width for medium quality.
         // type: unsigned int
         struct m_width {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "m_width"; }
             using type = unsigned int;
@@ -1990,8 +1990,8 @@ namespace cfg {
         // Qscale (parameter given to ffmpeg) for medium quality.
         // type: unsigned int
         struct m_qscale {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "m_qscale"; }
             using type = unsigned int;
@@ -2002,8 +2002,8 @@ namespace cfg {
         // Bitrate for high quality.
         // type: unsigned int
         struct h_bitrate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "h_bitrate"; }
             using type = unsigned int;
@@ -2014,8 +2014,8 @@ namespace cfg {
         // Framerate for high quality.
         // type: unsigned int
         struct h_framerate {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "h_framerate"; }
             using type = unsigned int;
@@ -2026,8 +2026,8 @@ namespace cfg {
         // Height for high quality.
         // type: unsigned int
         struct h_height {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "h_height"; }
             using type = unsigned int;
@@ -2038,8 +2038,8 @@ namespace cfg {
         // Width for high quality.
         // type: unsigned int
         struct h_width {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "h_width"; }
             using type = unsigned int;
@@ -2050,8 +2050,8 @@ namespace cfg {
         // Qscale (parameter given to ffmpeg) for high quality.
         // type: unsigned int
         struct h_qscale {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "h_qscale"; }
             using type = unsigned int;
@@ -2065,8 +2065,8 @@ namespace cfg {
         // AUTHID_CRYPTO_KEY0
         // type: std::array<unsigned char, 32>
         struct key0 {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "crypto"; }
             static constexpr char const * name() { return "key0"; }
             static constexpr unsigned index() { return 54; }
@@ -2078,8 +2078,8 @@ namespace cfg {
         // AUTHID_CRYPTO_KEY1
         // type: std::array<unsigned char, 32>
         struct key1 {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "crypto"; }
             static constexpr char const * name() { return "key1"; }
             static constexpr unsigned index() { return 55; }
@@ -2091,8 +2091,8 @@ namespace cfg {
         // Use encryption for session log file.
         // type: bool
         struct session_log_with_encryption {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "crypto"; }
             static constexpr char const * name() { return "session_log_with_encryption"; }
             using type = bool;
@@ -2103,8 +2103,8 @@ namespace cfg {
         // Use checksum for session log file.
         // type: bool
         struct session_log_with_checksum {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "crypto"; }
             static constexpr char const * name() { return "session_log_with_checksum"; }
             using type = bool;
@@ -2118,8 +2118,8 @@ namespace cfg {
         // AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP
         // type: bool
         struct allow_resize_hosted_desktop {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "remote_program"; }
             static constexpr char const * name() { return "allow_resize_hosted_desktop"; }
             static constexpr unsigned index() { return 56; }
@@ -2133,8 +2133,8 @@ namespace cfg {
     struct debug {
         // type: uint32_t
         struct x224 {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "x224"; }
             using type = uint32_t;
@@ -2144,8 +2144,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct mcs {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mcs"; }
             using type = uint32_t;
@@ -2155,8 +2155,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct sec {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "sec"; }
             using type = uint32_t;
@@ -2166,8 +2166,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct rdp {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "rdp"; }
             using type = uint32_t;
@@ -2177,8 +2177,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct primary_orders {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "primary_orders"; }
             using type = uint32_t;
@@ -2188,8 +2188,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct secondary_orders {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "secondary_orders"; }
             using type = uint32_t;
@@ -2199,8 +2199,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct bitmap_update {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "bitmap_update"; }
             using type = uint32_t;
@@ -2210,8 +2210,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct bitmap {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "bitmap"; }
             using type = uint32_t;
@@ -2221,8 +2221,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct capture {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "capture"; }
             using type = uint32_t;
@@ -2232,8 +2232,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct auth {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "auth"; }
             using type = uint32_t;
@@ -2243,8 +2243,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct session {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "session"; }
             using type = uint32_t;
@@ -2254,8 +2254,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct front {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "front"; }
             using type = uint32_t;
@@ -2265,8 +2265,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct mod_rdp {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mod_rdp"; }
             using type = uint32_t;
@@ -2276,8 +2276,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct mod_vnc {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mod_vnc"; }
             using type = uint32_t;
@@ -2287,8 +2287,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct mod_internal {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mod_internal"; }
             using type = uint32_t;
@@ -2298,8 +2298,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct mod_xup {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mod_xup"; }
             using type = uint32_t;
@@ -2309,8 +2309,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct widget {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "widget"; }
             using type = uint32_t;
@@ -2320,8 +2320,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct input {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "input"; }
             using type = uint32_t;
@@ -2331,8 +2331,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct password {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "password"; }
             using type = uint32_t;
@@ -2342,8 +2342,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct compression {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "compression"; }
             using type = uint32_t;
@@ -2353,8 +2353,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct cache {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "cache"; }
             using type = uint32_t;
@@ -2364,8 +2364,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct performance {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "performance"; }
             using type = uint32_t;
@@ -2375,8 +2375,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct pass_dialog_box {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "pass_dialog_box"; }
             using type = uint32_t;
@@ -2386,8 +2386,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct ocr {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "ocr"; }
             using type = uint32_t;
@@ -2397,8 +2397,8 @@ namespace cfg {
         };
         // type: uint32_t
         struct ffmpeg {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "ffmpeg"; }
             using type = uint32_t;
@@ -2408,8 +2408,8 @@ namespace cfg {
         };
         // type: unsigned int
         struct config {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "config"; }
             using type = unsigned int;
@@ -2423,8 +2423,8 @@ namespace cfg {
         // AUTHID_TRANSLATION_LANGUAGE
         // type: Language
         struct language {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "translation"; }
             static constexpr char const * name() { return "language"; }
             static constexpr unsigned index() { return 57; }
@@ -2436,8 +2436,8 @@ namespace cfg {
         // AUTHID_TRANSLATION_PASSWORD_EN
         // type: std::string
         struct password_en {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "translation"; }
             static constexpr char const * name() { return "password_en"; }
             static constexpr unsigned index() { return 58; }
@@ -2449,8 +2449,8 @@ namespace cfg {
         // AUTHID_TRANSLATION_PASSWORD_FR
         // type: std::string
         struct password_fr {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "translation"; }
             static constexpr char const * name() { return "password_fr"; }
             static constexpr unsigned index() { return 59; }
@@ -2464,8 +2464,8 @@ namespace cfg {
     struct internal_mod {
         // type: std::string
         struct theme {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "internal_mod"; }
             static constexpr char const * name() { return "theme"; }
             using type = std::string;
@@ -2478,8 +2478,8 @@ namespace cfg {
     struct context {
         // type: ::configs::spec_types::directory_path
         struct movie {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "movie"; }
             using type = ::configs::spec_types::directory_path;
@@ -2489,8 +2489,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_BITRATE
         // type: unsigned int
         struct opt_bitrate {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_bitrate"; }
             static constexpr unsigned index() { return 60; }
@@ -2502,8 +2502,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_FRAMERATE
         // type: unsigned int
         struct opt_framerate {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_framerate"; }
             static constexpr unsigned index() { return 61; }
@@ -2515,8 +2515,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_QSCALE
         // type: unsigned int
         struct opt_qscale {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_qscale"; }
             static constexpr unsigned index() { return 62; }
@@ -2528,8 +2528,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_BPP
         // type: unsigned int
         struct opt_bpp {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_bpp"; }
             static constexpr unsigned index() { return 63; }
@@ -2541,8 +2541,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_HEIGHT
         // type: unsigned int
         struct opt_height {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_height"; }
             static constexpr unsigned index() { return 64; }
@@ -2554,8 +2554,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_WIDTH
         // type: unsigned int
         struct opt_width {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_width"; }
             static constexpr unsigned index() { return 65; }
@@ -2566,8 +2566,8 @@ namespace cfg {
         };
         // type: std::string
         struct auth_error_message {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_error_message"; }
             using type = std::string;
@@ -2577,8 +2577,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR
         // type: bool
         struct selector {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector"; }
             static constexpr unsigned index() { return 66; }
@@ -2590,8 +2590,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
         // type: unsigned int
         struct selector_current_page {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_current_page"; }
             static constexpr unsigned index() { return 67; }
@@ -2603,8 +2603,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
         // type: std::string
         struct selector_device_filter {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_device_filter"; }
             static constexpr unsigned index() { return 68; }
@@ -2616,8 +2616,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
         // type: std::string
         struct selector_group_filter {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_group_filter"; }
             static constexpr unsigned index() { return 69; }
@@ -2629,8 +2629,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
         // type: std::string
         struct selector_proto_filter {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_proto_filter"; }
             static constexpr unsigned index() { return 70; }
@@ -2642,8 +2642,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
         // type: unsigned int
         struct selector_lines_per_page {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_lines_per_page"; }
             static constexpr unsigned index() { return 71; }
@@ -2655,8 +2655,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
         // type: unsigned int
         struct selector_number_of_pages {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_number_of_pages"; }
             static constexpr unsigned index() { return 72; }
@@ -2668,8 +2668,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_PASSWORD
         // type: std::string
         struct target_password {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_password"; }
             static constexpr unsigned index() { return 73; }
@@ -2681,8 +2681,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_HOST
         // type: std::string
         struct target_host {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_host"; }
             static constexpr unsigned index() { return 74; }
@@ -2694,8 +2694,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_STR
         // type: std::string
         struct target_str {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_str"; }
             static constexpr unsigned index() { return 75; }
@@ -2707,8 +2707,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_SERVICE
         // type: std::string
         struct target_service {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_service"; }
             static constexpr unsigned index() { return 76; }
@@ -2720,8 +2720,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_PORT
         // type: unsigned int
         struct target_port {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_port"; }
             static constexpr unsigned index() { return 77; }
@@ -2733,8 +2733,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TARGET_PROTOCOL
         // type: std::string
         struct target_protocol {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_protocol"; }
             static constexpr unsigned index() { return 78; }
@@ -2746,8 +2746,8 @@ namespace cfg {
         // AUTHID_CONTEXT_PASSWORD
         // type: std::string
         struct password {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "password"; }
             static constexpr unsigned index() { return 79; }
@@ -2759,8 +2759,8 @@ namespace cfg {
         // AUTHID_CONTEXT_REPORTING
         // type: std::string
         struct reporting {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "reporting"; }
             static constexpr unsigned index() { return 80; }
@@ -2772,8 +2772,8 @@ namespace cfg {
         // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
         // type: std::string
         struct auth_channel_answer {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_answer"; }
             static constexpr unsigned index() { return 81; }
@@ -2785,8 +2785,8 @@ namespace cfg {
         // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
         // type: std::string
         struct auth_channel_target {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_target"; }
             static constexpr unsigned index() { return 82; }
@@ -2798,8 +2798,8 @@ namespace cfg {
         // AUTHID_CONTEXT_MESSAGE
         // type: std::string
         struct message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "message"; }
             static constexpr unsigned index() { return 83; }
@@ -2811,8 +2811,8 @@ namespace cfg {
         // AUTHID_CONTEXT_ACCEPT_MESSAGE
         // type: bool
         struct accept_message {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "accept_message"; }
             static constexpr unsigned index() { return 84; }
@@ -2824,8 +2824,8 @@ namespace cfg {
         // AUTHID_CONTEXT_DISPLAY_MESSAGE
         // type: bool
         struct display_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "display_message"; }
             static constexpr unsigned index() { return 85; }
@@ -2837,8 +2837,8 @@ namespace cfg {
         // AUTHID_CONTEXT_REJECTED
         // type: std::string
         struct rejected {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "rejected"; }
             static constexpr unsigned index() { return 86; }
@@ -2850,8 +2850,8 @@ namespace cfg {
         // AUTHID_CONTEXT_AUTHENTICATED
         // type: bool
         struct authenticated {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "authenticated"; }
             static constexpr unsigned index() { return 87; }
@@ -2863,8 +2863,8 @@ namespace cfg {
         // AUTHID_CONTEXT_KEEPALIVE
         // type: bool
         struct keepalive {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "keepalive"; }
             static constexpr unsigned index() { return 88; }
@@ -2876,8 +2876,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SESSION_ID
         // type: std::string
         struct session_id {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_id"; }
             static constexpr unsigned index() { return 89; }
@@ -2889,8 +2889,8 @@ namespace cfg {
         // AUTHID_CONTEXT_END_DATE_CNX
         // type: unsigned int
         struct end_date_cnx {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "end_date_cnx"; }
             static constexpr unsigned index() { return 90; }
@@ -2902,8 +2902,8 @@ namespace cfg {
         // AUTHID_CONTEXT_END_TIME
         // type: std::string
         struct end_time {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "end_time"; }
             static constexpr unsigned index() { return 91; }
@@ -2915,8 +2915,8 @@ namespace cfg {
         // AUTHID_CONTEXT_MODE_CONSOLE
         // type: std::string
         struct mode_console {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "mode_console"; }
             static constexpr unsigned index() { return 92; }
@@ -2928,8 +2928,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TIMEZONE
         // type: int
         struct timezone {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "timezone"; }
             static constexpr unsigned index() { return 93; }
@@ -2941,8 +2941,8 @@ namespace cfg {
         // AUTHID_CONTEXT_REAL_TARGET_DEVICE
         // type: std::string
         struct real_target_device {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "real_target_device"; }
             static constexpr unsigned index() { return 94; }
@@ -2954,8 +2954,8 @@ namespace cfg {
         // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
         // type: bool
         struct authentication_challenge {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "authentication_challenge"; }
             static constexpr unsigned index() { return 95; }
@@ -2967,8 +2967,8 @@ namespace cfg {
         // AUTHID_CONTEXT_TICKET
         // type: std::string
         struct ticket {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ticket"; }
             static constexpr unsigned index() { return 96; }
@@ -2980,8 +2980,8 @@ namespace cfg {
         // AUTHID_CONTEXT_COMMENT
         // type: std::string
         struct comment {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "comment"; }
             static constexpr unsigned index() { return 97; }
@@ -2993,8 +2993,8 @@ namespace cfg {
         // AUTHID_CONTEXT_DURATION
         // type: std::string
         struct duration {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "duration"; }
             static constexpr unsigned index() { return 98; }
@@ -3006,8 +3006,8 @@ namespace cfg {
         // AUTHID_CONTEXT_WAITINFORETURN
         // type: std::string
         struct waitinforeturn {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "waitinforeturn"; }
             static constexpr unsigned index() { return 99; }
@@ -3019,8 +3019,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SHOWFORM
         // type: bool
         struct showform {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "showform"; }
             static constexpr unsigned index() { return 100; }
@@ -3032,8 +3032,8 @@ namespace cfg {
         // AUTHID_CONTEXT_FORMFLAG
         // type: unsigned int
         struct formflag {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "formflag"; }
             static constexpr unsigned index() { return 101; }
@@ -3045,8 +3045,8 @@ namespace cfg {
         // AUTHID_CONTEXT_MODULE
         // type: std::string
         struct module {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "module"; }
             static constexpr unsigned index() { return 102; }
@@ -3058,8 +3058,8 @@ namespace cfg {
         // AUTHID_CONTEXT_FORCEMODULE
         // type: bool
         struct forcemodule {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "forcemodule"; }
             static constexpr unsigned index() { return 103; }
@@ -3071,8 +3071,8 @@ namespace cfg {
         // AUTHID_CONTEXT_PROXY_OPT
         // type: std::string
         struct proxy_opt {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "proxy_opt"; }
             static constexpr unsigned index() { return 104; }
@@ -3084,8 +3084,8 @@ namespace cfg {
         // AUTHID_CONTEXT_PATTERN_KILL
         // type: std::string
         struct pattern_kill {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_kill"; }
             static constexpr unsigned index() { return 105; }
@@ -3097,8 +3097,8 @@ namespace cfg {
         // AUTHID_CONTEXT_PATTERN_NOTIFY
         // type: std::string
         struct pattern_notify {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_notify"; }
             static constexpr unsigned index() { return 106; }
@@ -3110,8 +3110,8 @@ namespace cfg {
         // AUTHID_CONTEXT_OPT_MESSAGE
         // type: std::string
         struct opt_message {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_message"; }
             static constexpr unsigned index() { return 107; }
@@ -3123,8 +3123,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES
         // type: std::string
         struct session_probe_outbound_connection_monitoring_rules {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_probe_outbound_connection_monitoring_rules"; }
             static constexpr unsigned index() { return 108; }
@@ -3136,8 +3136,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES
         // type: std::string
         struct session_probe_process_monitoring_rules {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_probe_process_monitoring_rules"; }
             static constexpr unsigned index() { return 109; }
@@ -3149,8 +3149,8 @@ namespace cfg {
         // AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES
         // type: std::string
         struct session_probe_extra_system_processes {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_probe_extra_system_processes"; }
             static constexpr unsigned index() { return 110; }
@@ -3161,8 +3161,8 @@ namespace cfg {
         };
         // type: std::string
         struct manager_disconnect_reason {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "manager_disconnect_reason"; }
             using type = std::string;
@@ -3172,8 +3172,8 @@ namespace cfg {
         // AUTHID_CONTEXT_DISCONNECT_REASON
         // type: std::string
         struct disconnect_reason {
-            static constexpr bool is_readable() { return 1; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason"; }
             static constexpr unsigned index() { return 111; }
@@ -3185,8 +3185,8 @@ namespace cfg {
         // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
         // type: bool
         struct disconnect_reason_ack {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason_ack"; }
             static constexpr unsigned index() { return 112; }
@@ -3197,8 +3197,8 @@ namespace cfg {
         };
         // type: std::string
         struct ip_target {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ip_target"; }
             using type = std::string;
@@ -3208,8 +3208,8 @@ namespace cfg {
         // AUTHID_CONTEXT_RECORDING_STARTED
         // type: bool
         struct recording_started {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 1; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "recording_started"; }
             static constexpr unsigned index() { return 113; }
@@ -3220,8 +3220,8 @@ namespace cfg {
         };
         // type: bool
         struct perform_automatic_reconnection {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "perform_automatic_reconnection"; }
             using type = bool;
@@ -3230,8 +3230,8 @@ namespace cfg {
         };
         // type: std::array<unsigned char, 28>
         struct server_auto_reconnect_packet {
-            static constexpr bool is_readable() { return 0; }
-            static constexpr bool is_writable() { return 0; }
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "server_auto_reconnect_packet"; }
             using type = std::array<unsigned char, 28>;
@@ -3242,8 +3242,8 @@ namespace cfg {
 
     // type: Theme
     struct theme {
-        static constexpr bool is_readable() { return 0; }
-        static constexpr bool is_writable() { return 0; }
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return ""; }
         static constexpr char const * name() { return "theme"; }
         using type = Theme;
@@ -3252,8 +3252,8 @@ namespace cfg {
     };
     // type: Font
     struct font {
-        static constexpr bool is_readable() { return 0; }
-        static constexpr bool is_writable() { return 0; }
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return ""; }
         static constexpr char const * name() { return "font"; }
         using type = Font;

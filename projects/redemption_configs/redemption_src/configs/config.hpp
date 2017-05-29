@@ -163,10 +163,6 @@ public:
     using authid_t = ::authid_t;
     using parse_error = configs::parse_error;
 
-    // TODO temporary
-    using debug_section_type = cfg::debug;
-
-
     explicit Inifile()
     {
         this->initialize();
@@ -174,38 +170,38 @@ public:
 
     template<class T>
     typename T::type const & get() const noexcept {
-        //static_assert(T::is_readable(), "T isn't readable");
+        //static_assert(T::is_sesman_to_proxy(), "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
     template<class T>
     typename T::type & get_ref() noexcept {
-        static_assert(!T::is_writable(), "reference on write variable isn't safe");
+        static_assert(!T::is_proxy_to_sesman(), "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
     template<class T, class... Args>
     void set(Args && ... args) {
-        static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
+        static_assert(!T::is_proxy_to_sesman(), "T is writable, used set_acl<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T, class... Args>
     void set_acl(Args && ... args) {
-        static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
+        static_assert(T::is_proxy_to_sesman(), "T isn't writable, used set<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T>
     void ask() {
-        static_assert(T::is_readable(), "T isn't askable");
+        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
         this->to_send_index.insert(T::index());
         static_cast<Field<T>&>(this->fields).asked_ = true;
     }
 
     template<class T>
     bool is_asked() const {
-        static_assert(T::is_readable(), "T isn't askable");
+        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
         return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
@@ -218,8 +214,8 @@ private:
             std::forward<Args>(args)...
         );
         configs::post_set_value(this->variables, static_cast<T&>(this->variables));
-        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
+        this->insert_index<T>(std::integral_constant<bool, T::is_proxy_to_sesman()>());
+        this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy()>());
     }
 
     template<class T> void insert_index(std::false_type) {}
@@ -428,7 +424,7 @@ private:
     template<class T>
     void push_to_send_index()
     {
-        static_assert(T::is_writable(), "is not writable");
+        static_assert(T::is_proxy_to_sesman(), "is not writable");
         this->to_send_index.insert(T::index());
     }
 

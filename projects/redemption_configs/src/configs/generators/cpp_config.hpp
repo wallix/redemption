@@ -127,8 +127,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         this->tab(); this->out() << "// type: "; this->inherit().write_type(type); this->out() << "\n";
         this->tab(); this->out() << "struct " << varname << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_readable() { return " << bool(properties & sesman::io::read) << "; }\n";
-        this->tab(); this->out() << "    static constexpr bool is_writable() { return " << bool(properties & sesman::io::write) << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << bool(properties & sesman::io::proxy_to_sesman) << "; }\n";
 
         this->tab(); this->out() << "    static constexpr char const * section() { return \"" << section_name << "\"; }\n";
         this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";

@@ -153,9 +153,9 @@ namespace sesman
 
     enum class io {
         none,
-        read    = 1 << 0,
-        write   = 1 << 1,
-        rw = read | write,
+        sesman_to_proxy = 1 << 0,
+        proxy_to_sesman = 1 << 1,
+        rw = sesman_to_proxy | proxy_to_sesman,
     };
 
     constexpr io operator | (io x, io y) {
