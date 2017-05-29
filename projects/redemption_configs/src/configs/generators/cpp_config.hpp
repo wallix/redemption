@@ -240,7 +240,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     template<class T, long min, long max>
     void write_type(type_<types::range<T, min, max>>) { this->out() << type_name<T>(); }
 
-    void write_type(type_<types::path>) { this->out() << "::configs::spec_types::directory_path"; }
+    void write_type(type_<types::dirpath>) { this->out() << "::configs::spec_types::directory_path"; }
     void write_type(type_<types::ip_string>) { this->out() << "std::string"; }
 
     template<class T>
