@@ -891,10 +891,10 @@ public:
 
                 buffers.send_buffer();
             }
-            catch (Error const &) {
+            catch (Error const & e) {
+                LOG(LOG_ERR, "ACL SERIALIZER : %s", e.errmsg());
                 this->ini.set_acl<cfg::context::authenticated>(false);
                 this->ini.set_acl<cfg::context::rejected>(TR(trkeys::acl_fail, language(this->ini)));
-                // this->ini.context.rejected.set_from_cstr("Authentifier service failed");
             }
 
             this->ini.clear_send_index();
