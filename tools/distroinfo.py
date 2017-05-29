@@ -43,7 +43,16 @@ def get_distro():
                 '12.10': ('Quantal', 'Quetzal'),
                 '13.04': ('Raring', 'Ringtail'),
                 '13.10': ('Saucy', 'Salamander'),
-                '14.04': ('Trusty', 'Tahr')
+                '14.04': ('Trusty', 'Tahr'),
+                '14.10': ('Utopic', 'Unicorn'),
+                '15.04': ('Vivid', 'Vervet'),
+                '15.10': ('Wily', 'Werewolf'),
+                '16.04': ('Xenial', 'Xerus'),
+                '16.10': ('Yakketi', 'Yak'),
+                '17.04': ('Zesty', 'Zapus'),
+                '17.10': ('Artful', 'Aardvark'),
+                '18.04': ('B', 'B'),
+                '18.10': ('C', 'C')
             }
             name = codenames[version][0].lower()
     else:
