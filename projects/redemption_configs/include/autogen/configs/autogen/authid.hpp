@@ -4,7 +4,7 @@
 
 #pragma once
 
-enum authid_t {
+enum authid_t : unsigned {
     AUTHID_GLOBALS_CAPTURE_CHUNK,
     AUTHID_GLOBALS_AUTH_USER,
     AUTHID_GLOBALS_HOST,
