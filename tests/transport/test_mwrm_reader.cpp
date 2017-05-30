@@ -288,6 +288,10 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_fn);
     cctx.set_get_trace_key_cb(trace_fn);
+    cctx.set_master_derivator(cstr_array_view(
+        "toto@10.10.43.13,Administrateur@QA@cible,"
+        "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
+    ));
 
     InCryptoTransport fd(cctx, is_encrypted);
     fd.open(FIXTURES_PATH

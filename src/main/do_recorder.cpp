@@ -2382,6 +2382,12 @@ extern "C" {
             return -1;
         }
 
+        {
+            size_t base_len = 0;
+            char const * base = basename_len(rp.input_filename.c_str(), base_len);
+            cctx.set_master_derivator({base, base_len});
+        }
+
         switch (command){
         case 0: // RECorder
         try {
