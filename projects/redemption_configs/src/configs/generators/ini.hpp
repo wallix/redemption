@@ -108,8 +108,8 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     {this->write_comment_line("size_max = ", N); }
 
     template<class T>
-    void write_type_info(type_<types::path>, T const & x)
-    { this->write_type_info(type_<typename types::path::fixed_type>{}, x); }
+    void write_type_info(type_<types::dirpath>, T const & x)
+    { this->write_type_info(type_<typename types::dirpath::fixed_type>{}, x); }
 
     template<class T, class E>
     enable_if_enum_t<T>
@@ -186,8 +186,8 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     { this->out() << this->quoted2(this->get_value(x)); }
 
     template<class T>
-    void write_type(type_<types::path>, T const & x)
-    { this->write_type(type_<typename types::path::fixed_type>{}, x); }
+    void write_type(type_<types::dirpath>, T const & x)
+    { this->write_type(type_<typename types::dirpath::fixed_type>{}, x); }
 
     template<class T>
     void write_type(type_<types::ip_string>, T const & x)

@@ -27,6 +27,7 @@ sed -E -e '/^tests\//{
 s/^unknown location\(0\): fatal error in "([^\"]+)": signal: (.*)$/'$cat'unknown location(0):'$reset' '$err'fatal error'$reset' in "'$name'\1'$reset'": signal: '$op'\2'$reset'/;t
 s/^terminate called.*$/'$term_mess'&'$reset'/;t
 s/^  what\(\): .*$/'$exception'&'$reset'/;t
+s/^     "([^"]+)" /    "'$exec'\1'$reset'" /;t
+s/^\*\*\* [0-9]+ failures? .*$/'$err'&'$reset'/;t
 ' \
-"$@" \
--e 's/^     "([^"]+)" /    "'$exec'\1'$reset'" /;t'
+"$@"

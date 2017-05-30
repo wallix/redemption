@@ -287,8 +287,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     }
 
     template<class T>
-    void write_type(type_<types::path>, T const & x)
-    { this->write_type(type_<typename types::path::fixed_type>{}, x); }
+    void write_type(type_<types::dirpath>, T const & x)
+    { this->write_type(type_<typename types::dirpath::fixed_type>{}, x); }
 
     template<class T>
     void write_type(type_<types::ip_string>, T const & x)

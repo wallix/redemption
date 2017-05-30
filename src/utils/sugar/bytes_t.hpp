@@ -36,15 +36,15 @@ struct bytes_t
     {}
 
     char * to_charp() const noexcept { return reinterpret_cast<char *>(this->data_); }
-    uint8_t * to_u8p() const noexcept { return this->data_; }
+    constexpr uint8_t * to_u8p() const noexcept { return this->data_; }
 
     operator char * () const noexcept { return reinterpret_cast<char *>(this->data_); }
-    operator uint8_t * () const noexcept { return this->data_; }
+    constexpr operator uint8_t * () const noexcept { return this->data_; }
 
     explicit operator bool () const noexcept { return this->data_; }
 
     uint8_t & operator[](std::size_t i) noexcept { return this->data_[i]; }
-    uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
+    constexpr uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
 
 private:
     uint8_t * data_ = nullptr;
@@ -74,7 +74,7 @@ struct const_bytes_t
 
     constexpr explicit operator bool () const noexcept { return this->data_; }
 
-    uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
+    constexpr uint8_t const & operator[](std::size_t i) const noexcept { return this->data_[i]; }
 
 private:
     uint8_t const * data_ = nullptr;
@@ -88,56 +88,47 @@ struct bytes_array : array_view<uint8_t>
 {
     bytes_array() = default;
     bytes_array(bytes_array const &) = default;
+    bytes_array & operator=(bytes_array const &) = default;
+
 
     template<class T, std::size_t n>
-    bytes_array(T (&)[n]) = delete;
+    bytes_array(T(&)[n]) = delete;
 
-    bytes_array(array_view<char> v) noexcept
-    : array_view<uint8_t>({reinterpret_cast<uint8_t *>(v.data()), v.size()})
-    {}
+    template<class T, std::size_t n>
+    bytes_array & operator=(T(&)[n]) = delete;
 
-    bytes_array(array_view<uint8_t> v) noexcept
-    : array_view<uint8_t>(v)
-    {}
 
-    template<class T, class = decltype(make_array_view(std::declval<T&>()))>
-    bytes_array(T & v) noexcept(noexcept(make_array_view(v)))
-    : bytes_array(make_array_view(v))
-    {}
-
-    bytes_array(bytes_t p, std::size_t sz) noexcept
+    constexpr bytes_array(bytes_t const p, std::size_t sz) noexcept
     : array_view<uint8_t>(p.to_u8p(), sz)
     {}
 
-    bytes_array(bytes_t p, bytes_t pright) noexcept
+    constexpr bytes_array(bytes_t p, bytes_t pright) noexcept
     : array_view<uint8_t>(p.to_u8p(), pright.to_u8p())
     {}
 
-    bytes_array & operator=(bytes_array const &) = default;
+    bytes_array(array_view<char> av) noexcept
+    : array_view<uint8_t>(reinterpret_cast<uint8_t *>(av.data()), av.size())
+    {}
 
-    template<class T, std::size_t n>
-    bytes_array & operator=(T (&)[n]) = delete;
+    template<class U, typename std::enable_if<
+      std::is_constructible<array_view<uint8_t>, U&&>::value, bool
+    >::type = 1>
+    constexpr bytes_array(U && a) noexcept
+    : array_view<uint8_t>(a)
+    {}
 
-    bytes_array & operator=(array_view<char> other) noexcept {
-        static_cast<array_view<uint8_t>&>(*this) = {
-           reinterpret_cast<uint8_t *>(other.data()), other.size()
-        };
-        return *this;
-    }
+    template<class U, typename std::enable_if<
+      std::is_constructible<array_view<char>, U&&>::value, bool
+    >::type = 1>
+    constexpr bytes_array(U && a) noexcept
+    : bytes_array(array_view<char>(a))
+    {}
 
-    bytes_array & operator=(array_view<uint8_t> other) noexcept {
-        static_cast<array_view<uint8_t>&>(*this) = other;
-        return *this;
-    }
-
-    template<class T>
-    bytes_array & operator=(T & other) noexcept(noexcept(bytes_array(other)))
-    { return (*this = bytes_array(other)); }
 
     char       * to_charp() noexcept { return reinterpret_cast<char *>(this->data()); }
     char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
     uint8_t       * to_u8p() noexcept { return this->data(); }
-    uint8_t const * to_u8p() const noexcept { return this->data(); }
+    constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
 };
 
 /**
@@ -147,17 +138,15 @@ struct const_bytes_array : array_view<const uint8_t>
 {
     const_bytes_array() = default;
     const_bytes_array(const_bytes_array const &) = default;
+    const_bytes_array & operator=(const_bytes_array const &) = default;
+
 
     template<class T, std::size_t n>
-    const_bytes_array(T (&)[n]) = delete;
+    const_bytes_array(T(&)[n]) = delete;
 
-    const_bytes_array(array_view<const char> v) noexcept
-    : array_view<const uint8_t>({reinterpret_cast<uint8_t const *>(v.data()), v.size()})
-    {}
+    template<class T, std::size_t n>
+    const_bytes_array & operator=(T(&)[n]) = delete;
 
-    constexpr const_bytes_array(array_view<const uint8_t> v) noexcept
-    : array_view<const uint8_t>(v)
-    {}
 
     constexpr const_bytes_array(const_bytes_t p, std::size_t sz) noexcept
     : array_view<const uint8_t>(p.to_u8p(), sz)
@@ -167,39 +156,25 @@ struct const_bytes_array : array_view<const uint8_t>
     : array_view<const uint8_t>(p.to_u8p(), pright.to_u8p())
     {}
 
-    constexpr const_bytes_array(bytes_array const & barray) noexcept
-    : array_view<const uint8_t>(barray.data(), barray.size())
+    const_bytes_array(array_view<const char> const av) noexcept
+    : array_view<const uint8_t>(reinterpret_cast<const uint8_t *>(av.data()), av.size())
     {}
 
-    template<class T, class = decltype(make_array_view(std::declval<T&>()))>
-    constexpr const_bytes_array(T & v) noexcept(noexcept(make_array_view(v)))
-    : const_bytes_array(make_array_view(v))
+    template<class U, typename std::enable_if<
+      std::is_constructible<array_view<const uint8_t>, U&&>::value, bool
+    >::type = 1>
+    constexpr const_bytes_array(U && a) noexcept
+    : array_view<const uint8_t>(a)
     {}
 
-    const_bytes_array & operator=(const_bytes_array const &) = default;
+    template<class U, typename std::enable_if<
+      std::is_constructible<array_view<const char>, U&&>::value, bool
+    >::type = 1>
+    constexpr const_bytes_array(U && a) noexcept
+    : const_bytes_array(array_view<const char>(a))
+    {}
 
-    template<class T, std::size_t n>
-    const_bytes_array & operator=(T (&)[n]) = delete;
-
-    const_bytes_array & operator=(array_view<const char> other) noexcept {
-        static_cast<array_view<const uint8_t>&>(*this) = {
-           reinterpret_cast<uint8_t const *>(other.data()), other.size()
-        };
-        return *this;
-    }
-
-    const_bytes_array & operator=(array_view<const uint8_t> other) noexcept {
-        static_cast<array_view<const uint8_t>&>(*this) = other;
-        return *this;
-    }
-
-    const_bytes_array & operator=(bytes_array const & barray) noexcept
-    { return (*this = static_cast<array_view<uint8_t> const &>(barray)); }
-
-    template<class T>
-    const_bytes_array & operator=(T & other) noexcept(noexcept(const_bytes_array(other)))
-    { return (*this = const_bytes_array(other)); }
-
+    
     char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
-    uint8_t const * to_u8p() const noexcept { return this->data(); }
+    constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
 };

@@ -153,10 +153,10 @@ public:
         return fhash;
     }
 
-    void hash(const char * pathname)
-    {
-        this->open(pathname);
-    }
+//    void hash(const char * pathname)
+//    {
+//        this->open(pathname);
+//    }
 
     size_t partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
     {
@@ -168,7 +168,7 @@ public:
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-    void open(const char * pathname)
+    void open(const char * const pathname, const_bytes_array derivator)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -181,9 +181,6 @@ public:
 
         this->eof = false;
         this->current_len = 0;
-
-        size_t base_len = 0;
-        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(pathname, base_len));
 
         ::memset(this->clear_data, 0, sizeof(this->clear_data));
 
@@ -292,12 +289,19 @@ public:
         // TODO: replace p.with some array view of 32 bytes ?
         const uint8_t * const iv = p.p;
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        cctx.get_derived_key(trace_key, base, base_len);
+        cctx.get_derived_key(trace_key, derivator);
 
         if (!this->ectx.init(trace_key, iv)) {
             this->close();
             throw Error(ERR_SSL_CALL_FAILED);
         }
+    }
+
+    void open(const char * const pathname)
+    {
+        size_t base_len = 0;
+        const char * base = basename_len(pathname, base_len);
+        this->open(pathname, {base, base_len});
     }
 
     void close()

@@ -73,6 +73,7 @@ class CryptoContext : noncopyable
 {
     uint8_t master_key[CRYPTO_KEY_LENGTH] {};
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
+    std::vector<uint8_t> master_derivator;
 
     get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
@@ -107,18 +108,62 @@ public:
         return this->master_key;
     }
 
-    void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
+    void set_master_derivator(const_bytes_array derivator)
+    {
+        this->master_derivator.assign(derivator.begin(), derivator.end());
+        // TODO exception if already loaded or differ
+    }
+
+private:
+    // force extension to "mwrm"
+    static array_view_const_u8 get_normalized_derivator(
+        std::unique_ptr<uint8_t[]> & normalize_derivator,
+        const_bytes_array derivator
+    )
+    {
+        using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
+        reverse_iterator const first(derivator.end());
+        reverse_iterator const last(derivator.begin());
+        reverse_iterator const p = std::find(first, last, '.');
+        if (p != last && 0 != strcmp(reinterpret_cast<char const*>(p.base()), "mwrm"))
+        {
+            auto const ext_len = derivator.end() - p.base();
+            auto const normalize_derivator_len = derivator.size() - ext_len + 4;
+            auto const prefix_len = derivator.size() - ext_len;
+            normalize_derivator = std::make_unique<uint8_t[]>(normalize_derivator_len + 1);
+            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
+            memcpy(normalize_derivator.get() + prefix_len, "mwrm", 5);
+
+            derivator = array_view_const_u8{
+                normalize_derivator.get(),
+                normalize_derivator.get() + normalize_derivator_len
+            };
+        }
+
+        return derivator;
+    }
+
+    void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], const_bytes_array derivator)
+    {
+        std::unique_ptr<uint8_t[]> normalized_derivator_gc;
+        auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
+
+        this->get_trace_key_cb(
+            new_derivator.data()
+          , static_cast<int>(new_derivator.size())
+          , buffer
+          , this->old_encryption_scheme?1:0
+        );
+    }
+
+public:
+    void get_derived_key(uint8_t (&trace_key)[CRYPTO_KEY_LENGTH], const_bytes_array derivator)
     {
         if (this->old_encryption_scheme){
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
                 uint8_t tmp[MD_HASH::DIGEST_LENGTH];
-                this->get_trace_key_cb(
-                    derivator
-                  , static_cast<int>(derivator_len)
-                  , tmp
-                  , this->old_encryption_scheme?1:0
-                );
+                this->load_trace_key(tmp, derivator);
                 memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
                 return;
             }
@@ -130,20 +175,22 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
 
-            // if we have a callback ask key
-            this->get_trace_key_cb(
-                derivator
-              , static_cast<int>(derivator_len)
-              , this->master_key
-              , this->old_encryption_scheme?1:0
-            );
+            if (this->master_derivator.empty()) {
+                LOG(LOG_ERR, "CryptoContext: derivator is undefined");
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+            }
+
+            this->load_trace_key(this->master_key, this->master_derivator);
+
             this->master_key_loaded = true;
+            //this->master_derivator.clear();
+            //this->master_derivator.shrink_to_fit();
         }
 
         uint8_t tmp[MD_HASH::DIGEST_LENGTH];
         {
             MD_HASH sha256;
-            sha256.update(derivator, derivator_len);
+            sha256.update(derivator.data(), derivator.size());
             sha256.final(tmp);
         }
         {

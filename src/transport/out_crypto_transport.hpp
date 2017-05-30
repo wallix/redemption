@@ -125,7 +125,7 @@ public:
 
     ~ocrypto() = default;
 
-    Result open(const uint8_t * derivator, size_t derivator_len)
+    Result open(const_bytes_array derivator)
     {
         this->file_size = 0;
         this->pos = 0;
@@ -136,7 +136,7 @@ public:
 
         if (this->encryption) {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            this->cctx.get_derived_key(trace_key, derivator, derivator_len);
+            this->cctx.get_derived_key(trace_key, derivator);
             unsigned char iv[32];
             this->rnd.random(iv, 32);
 
@@ -305,7 +305,7 @@ public:
         return this->out_file.is_open();
     }
 
-    void open(const char * finalname, int groupid)
+    void open(const char * const finalname, int groupid, const_bytes_array derivator)
     {
         // This should avoid double open, we do not want that
         if (this->is_open()){
@@ -336,11 +336,17 @@ public:
         }
 
         strcpy(this->finalname, finalname);
-        size_t derivator_len = 0;
-        const uint8_t * derivator = reinterpret_cast<const uint8_t *>(basename_len(finalname, derivator_len));
 
-        ocrypto::Result res = this->encrypter.open(derivator, derivator_len);
+        ocrypto::Result res = this->encrypter.open(derivator);
         this->out_file.send(res.buf.data(), res.buf.size());
+    }
+
+    // derivator implicitly basename(finalname)
+    void open(const char * finalname, int groupid)
+    {
+        size_t base_len = 0;
+        const char * base = basename_len(finalname, base_len);
+        this->open(finalname, groupid, {base, base_len});
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])

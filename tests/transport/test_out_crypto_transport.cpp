@@ -138,7 +138,7 @@ public:
         unsigned char      key[32];
 
         unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        cctx.get_derived_key(trace_key, base, base_len);
+        cctx.get_derived_key(trace_key, {base, base_len});
 
         int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
                            trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
@@ -299,7 +299,7 @@ RED_AUTO_TEST_CASE(TestEncryption1)
     ocrypto encrypter(true, true, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     RED_CHECK_EQUAL(res.buf.size(), 40);
@@ -367,7 +367,7 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     ocrypto encrypter(true, true, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     RED_CHECK_EQUAL(res.buf.size(), 40);
@@ -459,7 +459,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     ocrypto encrypter(true, true, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     memcpy(result + offset, res.buf.data(), res.buf.size());
     offset += res.buf.size();
     RED_CHECK_EQUAL(res.buf.size(), 40);
@@ -556,7 +556,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     ocrypto encrypter(false, true, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     RED_CHECK_EQUAL(res.buf.size(), 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
@@ -643,7 +643,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     ocrypto encrypter(false, false, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     RED_CHECK_EQUAL(res.buf.size(), 0);
 
     // writing data to compressed/encrypted buffer may result in data to write
@@ -718,7 +718,7 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     ocrypto encrypter(false, true, cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
-    ocrypto::Result res = encrypter.open(derivator, sizeof(derivator));
+    ocrypto::Result res = encrypter.open(make_array_view(derivator));
     RED_CHECK_EQUAL(res.buf.size(), 0);
 
     // writing data to compressed/encrypted buffer may result in data to write

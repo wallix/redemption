@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_meta, meta_params
                         , capture_kbd, kbdlog_params
                         , basename
-                        , now, scr.cx, scr.cy, 24, 24
+                        , now, scr.cx, scr.cy
                         , record_tmp_path
                         , record_path
                         , groupid
@@ -468,7 +468,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_meta, meta_params
                    , capture_kbd, kbdlog_params
                    , basename
-                   , now, scr.cx, scr.cy, 16, 16
+                   , now, scr.cx, scr.cy
                    , record_tmp_path
                    , record_path
                    , groupid

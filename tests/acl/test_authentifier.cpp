@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestAuthentifierNew
 #include "system/redemption_unit_tests.hpp"
 
-
 #define LOGNULL
 // #define LOGPRINT
 
@@ -61,33 +60,34 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\xA3"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
-           "session_log_redirection\n!True\n"
-           "bpp\n!24\n"
-           "height\n!600\n"
-           "width\n!800\n"
-           "selector_current_page\n!1\n"
-           "selector_device_filter\n!\n"
-           "selector_group_filter\n!\n"
-           "selector_proto_filter\n!\n"
-           "selector_lines_per_page\n!0\n"
-           "target_password\nASK\n"
-           "target_host\nASK\n"
-           "proto_dest\nASK\n"
-           "password\nASK\n"
-           "reporting\n!\n"
-           "auth_channel_target\n!\n"
-           "accept_message\n!False\n"
-           "display_message\n!False\n"
-           "real_target_device\n!\n"
+        "\x00\x00\x01\xA3"
+        "bpp\n!24\n"
+        "width\n!800\n"
+        "height\n!600\n"
+        "selector_current_page\n!1\n"
+        "selector_device_filter\n!\n"
+        "selector_group_filter\n!\n"
+        "selector_proto_filter\n!\n"
+        "selector_lines_per_page\n!0\n"
+        "target_password\nASK\n"
+        "target_host\nASK\n"
+        "proto_dest\nASK\n"
+        "password\nASK\n"
+        "reporting\n!\n"
+        "auth_channel_target\n!\n"
+        "accept_message\n!False\n"
+        "display_message\n!False\n"
+        "real_target_device\n!\n"
+        "login\nASK\n"
+        "ip_client\n!\n"
+        "ip_target\n!\n"
+        "target_device\nASK\n"
+        "target_login\nASK\n"
+        "session_log_redirection\n!True\n"
+
         // Time: 10043
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
+        "\x00\x00\x00\x0E"
+        "keepalive\nASK\n"
     ;
 
     char indata[] =
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
@@ -159,37 +159,37 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA3"
-           "login\nASK\n"
-           "ip_client\n!\n"
-           "ip_target\n!\n"
-           "target_device\nASK\n"
-           "target_login\nASK\n"
-           "session_log_redirection\n!True\n"
-           "bpp\n!24\n"
-           "height\n!600\n"
-           "width\n!800\n"
-           "selector_current_page\n!1\n"
-           "selector_device_filter\n!\n"
-           "selector_group_filter\n!\n"
-           "selector_proto_filter\n!\n"
-           "selector_lines_per_page\n!0\n"
-           "target_password\nASK\n"
-           "target_host\nASK\n"
-           "proto_dest\nASK\n"
-           "password\nASK\n"
-           "reporting\n!\n"
-           "auth_channel_target\n!\n"
-           "accept_message\n!False\n"
-           "display_message\n!False\n"
-           "real_target_device\n!\n"
+        "\x00\x00\x01\xA3"
+        "bpp\n!24\n"
+        "width\n!800\n"
+        "height\n!600\n"
+        "selector_current_page\n!1\n"
+        "selector_device_filter\n!\n"
+        "selector_group_filter\n!\n"
+        "selector_proto_filter\n!\n"
+        "selector_lines_per_page\n!0\n"
+        "target_password\nASK\n"
+        "target_host\nASK\n"
+        "proto_dest\nASK\n"
+        "password\nASK\n"
+        "reporting\n!\n"
+        "auth_channel_target\n!\n"
+        "accept_message\n!False\n"
+        "display_message\n!False\n"
+        "real_target_device\n!\n"
+        "login\nASK\n"
+        "ip_client\n!\n"
+        "ip_target\n!\n"
+        "target_device\nASK\n"
+        "target_login\nASK\n"
+        "session_log_redirection\n!True\n"
 
         // Time 10043
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
+        "\x00\x00\x00\x0E"
+        "keepalive\nASK\n"
 
-           "\x00\x00\x00\x0E"
-            "keepalive\nASK\n"
+        "\x00\x00\x00\x0E"
+        "keepalive\nASK\n"
     ;
 
     char indata[] =
@@ -200,8 +200,8 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
         "target_login\n!user\n"
         "target_password\n!whoknows\n"
         "proto_dest\n!RDP\n"
-        "module\n!RDP\n"
         "authenticated\n!True\n"
+        "module\n!RDP\n"
 
         // Time 10045
         "\x00\x00\x00\x10"
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
@@ -290,15 +290,9 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     char outdata[] =
         // Time 10011
         "\x00\x00\x01\xA3"
-        "login\nASK\n"
-        "ip_client\n!\n"
-        "ip_target\n!\n"
-        "target_device\nASK\n"
-        "target_login\nASK\n"
-        "session_log_redirection\n!True\n"
         "bpp\n!24\n"
-        "height\n!600\n"
         "width\n!800\n"
+        "height\n!600\n"
         "selector_current_page\n!1\n"
         "selector_device_filter\n!\n"
         "selector_group_filter\n!\n"
@@ -313,6 +307,12 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "accept_message\n!False\n"
         "display_message\n!False\n"
         "real_target_device\n!\n"
+        "login\nASK\n"
+        "ip_client\n!\n"
+        "ip_target\n!\n"
+        "target_device\nASK\n"
+        "target_login\nASK\n"
+        "session_log_redirection\n!True\n"
     ;
 
     char indata[] =
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
-    Authentifier sesman(ini, cctx, Authentifier::Verbose(to_verbose_flags(0)));
+    Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
 
