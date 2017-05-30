@@ -29,6 +29,9 @@
 
 #include "main/version.hpp"
 
+
+#ifdef SHOW_DEBUG_TRACES
+
 namespace
 {
     struct Trace
@@ -59,18 +62,15 @@ namespace
 };
 }
 
-
-#ifdef SHOW_DEBUG_TRACES
-
 #define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
 #define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
 #define EXIT_ON_ERROR(e) trace_l_.exit_on_error(e)
 
 #else
 
-#define SCOPED_TRACE 
-#define EXIT_ON_EXCEPTION() 
-#define EXIT_ON_ERROR(e) 
+#define SCOPED_TRACE
+#define EXIT_ON_EXCEPTION()
+#define EXIT_ON_ERROR(e)
 
 #endif
 
