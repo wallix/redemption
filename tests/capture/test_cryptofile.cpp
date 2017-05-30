@@ -103,3 +103,14 @@ RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
     cctx.get_derived_key(trace_key, cstr_array_view("abcdefgh.log"));
     RED_CHECK(!g_trace_key_ob.visited);
 }
+
+RED_AUTO_TEST_CASE(TestSetMasterDerivator)
+{
+    CryptoContext cctx;
+    auto abc = cstr_array_view("abc");
+    auto abcd = cstr_array_view("abcd");
+    cctx.set_master_derivator(abc);
+    RED_CHECK_NO_THROW(cctx.set_master_derivator(abc));
+    RED_CHECK_EXCEPTION_ERROR_ID(cctx.set_master_derivator(abcd), ERR_WRM_INVALID_INIT_CRYPT);
+    RED_CHECK_NO_THROW(cctx.set_master_derivator(abc));
+}

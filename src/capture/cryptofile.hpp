@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <array>
+#include <vector>
 #include <iterator>
 #include <algorithm>
 #include <snappy-c.h>
@@ -110,8 +111,14 @@ public:
 
     void set_master_derivator(const_bytes_array derivator)
     {
+        if ((this->master_key_loaded || this->master_derivator.size())
+         && (this->master_derivator.size() != derivator.size()
+          || !std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
+        )) {
+            LOG(LOG_ERR, "CryptoContext: master derivator is already defined");
+            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+        }
         this->master_derivator.assign(derivator.begin(), derivator.end());
-        // TODO exception if already loaded or differ
     }
 
 private:
