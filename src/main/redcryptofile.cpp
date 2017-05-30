@@ -386,7 +386,7 @@ const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
 
 const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
-    return handle->qhashhex;
+    return handle->fhashhex;
 }
 
 }

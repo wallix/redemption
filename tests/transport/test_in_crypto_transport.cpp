@@ -461,10 +461,21 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     auto original_contents = get_file_contents(original_filename);
     RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
 
+    uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};
+    uint8_t fhash[MD_HASH::DIGEST_LENGTH] = {};
     {
-        OutCryptoTransport ct(true, false, cctx, rnd);
+        OutCryptoTransport ct(true, true, cctx, rnd);
         ct.open(encrypted_file, S_IRUSR|S_IRGRP);
-        ct.send(original_contents.data(), original_contents.size());
+//        ct.send(original_contents.data()[total], original_contents.size());
+        
+        size_t total = 0;
+        size_t block = 40000;
+        while (total + block < original_filesize) {
+            ct.send(&original_contents.data()[total], block);
+            total += block;
+        }
+        ct.send(&original_contents.data()[total], original_filesize - total);
+        ct.close(qhash, fhash);
     }
 
     char buffer[original_filesize];
@@ -476,7 +487,15 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
         ct.close();
+        InCryptoTransport::HASH qhash2 = ct.qhash(encrypted_file);
+        InCryptoTransport::HASH fhash2 = ct.fhash(encrypted_file);
+        
+        RED_CHECK_MEM_AA(qhash2.hash, qhash);
+        RED_CHECK_MEM_AA(qhash, qhash2.hash);
+        RED_CHECK_MEM_AA(fhash2.hash, fhash);
+        RED_CHECK_MEM_AA(fhash, fhash2.hash);
     }
+    
     RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));
     RED_CHECK_EQUAL(0, ::unlink(encrypted_file));
 }
