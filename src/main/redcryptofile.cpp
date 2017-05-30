@@ -112,16 +112,10 @@ struct CryptoContextWrapper
 
     void set_master_derivator_from_file_name(char const * filename)
     {
-        if (!this->master_derivator_is_loaded) {
-            size_t base_len = 0;
-            char const * base = basename_len(filename, base_len);
-            cctx.set_master_derivator({base, base_len});
-            this->master_derivator_is_loaded = true;
-        }
+        size_t base_len = 0;
+        char const * base = basename_len(filename, base_len);
+        cctx.set_master_derivator({base, base_len});
     }
-
-private:
-    bool master_derivator_is_loaded = false;
 };
 
 struct RedCryptoErrorContext
@@ -271,13 +265,16 @@ char const * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
 
 RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
                                                , int with_checksum
+                                               , const char * derivator
                                                , get_hmac_key_prototype * hmac_fn
                                                , get_trace_key_prototype * trace_fn) {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoWriterHandle(
+        auto handle = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::UDEV, with_encryption, with_checksum, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
@@ -286,14 +283,16 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
 
 
 RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
-    int with_encryption, int with_checksum,
+    int with_encryption, int with_checksum, const char * derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn
 ) {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoWriterHandle(
+        auto handle = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG, with_encryption, with_checksum, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
@@ -341,24 +340,28 @@ char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
 }
 
 
-RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
-                                               , get_trace_key_prototype* trace_fn) {
+RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
+                                                , get_hmac_key_prototype* hmac_fn
+                                                , get_trace_key_prototype* trace_fn) 
+{
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoReaderHandle(
+        auto handle = new (std::nothrow) RedCryptoReaderHandle(
             InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
     );
+    ;
 }
 
 int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    handle->cctxw.set_master_derivator_from_file_name(path);
     CHECK_NOTHROW(handle->in_crypto_transport.open(path), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
