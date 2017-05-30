@@ -96,7 +96,10 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
-            this->get_hmac_key_cb(this->hmac_key);
+            if (int err = this->get_hmac_key_cb(this->hmac_key)) {
+                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb: callback error: %d", err);
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+            }
             this->hmac_key_loaded = true;
         }
         return this->hmac_key;
@@ -155,12 +158,15 @@ private:
         std::unique_ptr<uint8_t[]> normalized_derivator_gc;
         auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
 
-        this->get_trace_key_cb(
+        if (int err = this->get_trace_key_cb(
             new_derivator.data()
           , static_cast<int>(new_derivator.size())
           , buffer
           , this->old_encryption_scheme?1:0
-        );
+        )) {
+            LOG(LOG_ERR, "CryptoContext: get_trace_key_cb: callback error: %d", err);
+            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+        }
     }
 
 public:
