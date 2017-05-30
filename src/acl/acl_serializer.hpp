@@ -35,7 +35,7 @@
 #include "transport/transport.hpp"
 #include "utils/translation.hpp"
 #include "utils/get_printable_password.hpp"
-#include "transport/out_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*

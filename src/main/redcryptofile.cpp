@@ -20,8 +20,7 @@
 */
 
 #include "main/redcryptofile.hpp"
-#include "transport/out_crypto_transport.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include <memory>
 

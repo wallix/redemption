@@ -67,7 +67,7 @@
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF

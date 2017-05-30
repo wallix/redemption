@@ -30,7 +30,7 @@
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/save_state_chunk.hpp"
-#include "transport/out_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include "gdi/capture_api.hpp"
 #include "capture/wrm_params.hpp"
