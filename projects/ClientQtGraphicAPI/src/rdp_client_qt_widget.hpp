@@ -1364,7 +1364,7 @@ public:
 //         file.close();
 
         std::ifstream file("current.wav", std::ios::in| std::ios::binary);
-        LOG(LOG_INFO, "tellg = %d", file.tellg());
+        /*LOG(LOG_INFO, "tellg = %d", file.tellg())*/;
         file.close();
 
         Phonon::MediaSource sources(QUrl("current.wav"));
