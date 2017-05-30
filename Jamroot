@@ -544,7 +544,7 @@ test-canonical capture/utils/match_finder.hpp : ;
 ## @{
 test-canonical utils/sugar/algostring.hpp ;
 test-canonical utils/sugar/array_view.hpp ;
-test-canonical utils/sugar/bytes_t.hpp ;
+test-canonical utils/sugar/byte.hpp ;
 test-canonical utils/sugar/buffer_t.hpp ;
 test-canonical utils/sugar/cast.hpp ;
 test-canonical utils/sugar/exchange.hpp ;

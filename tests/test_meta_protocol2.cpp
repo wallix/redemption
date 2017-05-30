@@ -164,8 +164,8 @@ void test_old() {
     hexdump_c(out_stream.get_data(), out_stream.get_offset());
 }
 
-#include "utils/sugar/bytes_t.hpp"
-inline bool check_range(const_bytes_array p, const_bytes_array mem, char * message)
+#include "utils/sugar/byte.hpp"
+inline bool check_range(const_byte_array p, const_byte_array mem, char * message)
 {
     if (p.size() != mem.size() || memcmp(p.data(), mem.data(), p.size())) {
         if (auto len = p.size()) {

@@ -20,40 +20,40 @@
 
 #pragma once
 
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/byte.hpp"
 
 /**
  * \c array_view on \c uint8_t* and \c char*
  */
-struct buffer_t : bytes_array
+struct buffer_t : byte_array
 {
     buffer_t() = default;
     buffer_t(buffer_t const &) = default;
 
     buffer_t & operator=(buffer_t const &) = default;
 
-    using bytes_array::bytes_array;
+    using byte_array::byte_array;
 
     template<class T, std::size_t n>
     buffer_t(T (& a)[n]) noexcept
-    : bytes_array(a, n)
+    : byte_array(a, n)
     {}
 };
 
 /**
  * \c array_view on \c uint8_t* and \c char*
  */
-struct const_buffer_t : const_bytes_array
+struct const_buffer_t : const_byte_array
 {
     const_buffer_t() = default;
     const_buffer_t(const_buffer_t const &) = default;
 
     const_buffer_t & operator=(const_buffer_t const &) = default;
 
-    using const_bytes_array::const_bytes_array;
+    using const_byte_array::const_byte_array;
 
     template<class T, std::size_t n>
     const_buffer_t(T (& a)[n]) noexcept
-    : const_bytes_array(a, n)
+    : const_byte_array(a, n)
     {}
 };

@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
-        RED_CHECK_MEM_C(bytes_array(buf, 31), "We write, and again, and so on.");
+        RED_CHECK_MEM_C(byte_array(buf, 31), "We write, and again, and so on.");
         RED_CHECK_EQ(redcryptofile_reader_close(handle), 0);
 
         RED_CHECK_EQ(redcryptofile_reader_error_message(handle), "No error");

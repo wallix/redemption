@@ -25,12 +25,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "capture/cryptofile.hpp"
 #include "transport/transport.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/parse.hpp"
-#include "capture/cryptofile.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include <memory>
 
@@ -168,7 +169,7 @@ public:
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
-    void open(const char * const pathname, const_bytes_array derivator)
+    void open(const char * const pathname, const_byte_array derivator)
     {
         if (this->is_open()){
             throw Error(ERR_TRANSPORT_READ_FAILED);

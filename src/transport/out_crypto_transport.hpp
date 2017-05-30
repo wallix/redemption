@@ -31,7 +31,7 @@
 struct ocrypto
 {
     struct Result {
-        const_bytes_array buf;
+        const_byte_array buf;
         std::size_t consumed;
     };
 
@@ -125,7 +125,7 @@ public:
 
     ~ocrypto() = default;
 
-    Result open(const_bytes_array derivator)
+    Result open(const_byte_array derivator)
     {
         this->file_size = 0;
         this->pos = 0;
@@ -305,7 +305,7 @@ public:
         return this->out_file.is_open();
     }
 
-    void open(const char * const finalname, int groupid, const_bytes_array derivator)
+    void open(const char * const finalname, int groupid, const_byte_array derivator)
     {
         // This should avoid double open, we do not want that
         if (this->is_open()){
