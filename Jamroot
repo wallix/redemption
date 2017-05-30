@@ -223,7 +223,7 @@ exe rdpproxy
 lib libredcryptofile
    :
        redcryptofile.o
-       $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
+       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
 
        openssl
        crypto
