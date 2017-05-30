@@ -44,7 +44,12 @@ public:
         MD5_Update(&this->md5, data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    {
+        MD5_Final(out_data, &this->md5);
+    }
+
+    void unchecked_final(uint8_t * out_data)
     {
         MD5_Final(out_data, &this->md5);
     }

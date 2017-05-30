@@ -1153,7 +1153,7 @@ int ssh_pki_signature_verify_blob(const std::vector<uint8_t> & sig_blob,
     {
         SslSha1 sha1;
         sha1.update(digest, dlen);
-        sha1.final(hash);
+        sha1.unchecked_final(hash);
         //hexa("Hash to be verified with dsa", hash, SHA_DIGEST_LENGTH);
         int rc = DSA_do_verify(hash,
                            SHA_DIGEST_LENGTH,
@@ -1174,7 +1174,7 @@ int ssh_pki_signature_verify_blob(const std::vector<uint8_t> & sig_blob,
     {
         SslSha1 sha1;
         sha1.update(digest, dlen);
-        sha1.final(hash);
+        sha1.unchecked_final(hash);
         //hexa("Hash to be verified with dsa", hash, SHA_DIGEST_LENGTH);
 
         int rc = RSA_verify(NID_sha1,

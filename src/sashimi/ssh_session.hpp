@@ -358,7 +358,7 @@ struct ssh_session_struct {
             // Check memory allocation
             SslSha1 sha1;
             sha1.update(buf.get_pos_ptr(), buf.in_remain());
-            sha1.final(this->next_crypto->secret_hash);
+            sha1.unchecked_final(this->next_crypto->secret_hash);
         }
         break;
         case SSH_KEX_DH_GROUP14_SHA1:
@@ -415,7 +415,7 @@ struct ssh_session_struct {
             // Check memory allocation
             SslSha1 sha1;
             sha1.update(buf.get_pos_ptr(), buf.in_remain());
-            sha1.final(this->next_crypto->secret_hash);
+            sha1.unchecked_final(this->next_crypto->secret_hash);
         }
         break;
         case SSH_KEX_ECDH_SHA2_NISTP256:

@@ -43,7 +43,7 @@
     } while (0)
 
 
-inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
+inline void get_sig(const uint8_t * data, size_t length, uint8_t (&sig)[SslSha1::DIGEST_LENGTH])
 {
    SslSha1 sha1;
    sha1.update(data, length);
@@ -51,7 +51,7 @@ inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
 }
 
 template<class Stream>
-inline void get_sig(Stream const & stream, uint8_t * sig)
+inline void get_sig(Stream const & stream, uint8_t (&sig)[SslSha1::DIGEST_LENGTH])
 {
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.get_offset());

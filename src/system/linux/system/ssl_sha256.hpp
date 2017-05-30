@@ -43,14 +43,21 @@ public:
         }
     }
 
-    void update(const uint8_t * const data,  size_t data_size)
+    void update(const uint8_t * const data, size_t data_size)
     {
         if (0 == SHA256_Update(&this->sha256, data, data_size)){
             throw Error(ERR_SSL_CALL_SHA256_UPDATE_FAILED);
         }
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DIGEST_LENGTH])
+    {
+        if (0 == SHA256_Final(out_data, &this->sha256)){
+            throw Error(ERR_SSL_CALL_SHA256_FINAL_FAILED);
+        }
+    }
+
+    void unchecked_final(uint8_t * out_data)
     {
         if (0 == SHA256_Final(out_data, &this->sha256)){
             throw Error(ERR_SSL_CALL_SHA256_FINAL_FAILED);
