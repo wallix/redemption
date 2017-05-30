@@ -59,9 +59,20 @@ namespace
 };
 }
 
+
+#ifdef SHOW_DEBUG_TRACES
+
 #define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
 #define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
 #define EXIT_ON_ERROR(e) trace_l_.exit_on_error(e)
+
+#else
+
+#define SCOPED_TRACE 
+#define EXIT_ON_EXCEPTION() 
+#define EXIT_ON_ERROR(e) 
+
+#endif
 
 #define CHECK_HANDLE(handle) if (!handle) return -1
 
@@ -407,7 +418,7 @@ const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
 
 const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
-    return handle->qhashhex;
+    return handle->fhashhex;
 }
 
 }

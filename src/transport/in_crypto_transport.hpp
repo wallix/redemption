@@ -154,10 +154,10 @@ public:
         return fhash;
     }
 
-    void hash(const char * pathname)
-    {
-        this->open(pathname);
-    }
+//    void hash(const char * pathname)
+//    {
+//        this->open(pathname);
+//    }
 
     size_t partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
     {

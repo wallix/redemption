@@ -122,6 +122,9 @@ public:
         }
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+        this->set_sync();
+//         time_t begin_file_read = this->in_trans.get_meta_line().start_time - this->balise_time_frame;
+//         this->in_trans.set_begin_time(begin_file_read);
     }
 
     ReplayMod( FrontAPI & front
@@ -296,15 +299,22 @@ public:
         if (!this->end_of_data) {
             try
             {
+
                 int i;
-                for (i = 0; (i < 500) && this->reader.next_order(); i++) {
-                    this->reader.interpret_order();
-                    //sleep(1);
+                for (i = 0; i < 500; i++) {
+
+                    struct timeval now                = tvtime();
+                    std::chrono::microseconds elapsed = difftimeval(now, this->reader.start_synctime_now) ;
+                    if (elapsed >= this->reader.movie_elapsed_client) {
+                        if (this->reader.next_order()) {
+                            this->reader.interpret_order();
+    //                         sleep(1);
+                            }
+                        }
                 }
                 if (i == 500) {
                     this->event.set(1);
-                }
-                else {
+                } else {
                     this->front.sync();
 
                     if (!this->wait_for_escape) {
