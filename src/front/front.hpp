@@ -126,13 +126,6 @@ class Front : public FrontAPI
 
 public:
     bool has_user_activity = true;
-
-    enum CaptureState {
-          CAPTURE_STATE_UNKNOWN
-        , CAPTURE_STATE_STARTED
-        , CAPTURE_STATE_PAUSED
-        , CAPTURE_STATE_STOPED
-    } capture_state;
     Capture * capture;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -624,9 +617,6 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
-    // TODO: this is temporary, to remove after refactoring capture code
-    char basename[1024];
-
 public:
     Front(  Transport & trans
           , Random & gen
@@ -640,7 +630,6 @@ public:
           , Transport * persistent_key_list_transport = nullptr
           )
     : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
-    , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , up_and_running(0)
@@ -783,12 +772,8 @@ public:
 
                     if (this->capture)
                     {
-                        CaptureState original_capture_state = this->capture_state;
-
                         this->must_be_stop_capture();
                         this->can_be_start_capture();
-
-                        this->capture_state = original_capture_state;
                     }
 
                     // TODO Why are we not calling this->flush() instead ? Looks dubious.
@@ -845,8 +830,6 @@ public:
 
         if (!ini.get<cfg::globals::is_rec>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
-//            ini.get<cfg::context::pattern_kill>().empty() &&
-//            ini.get<cfg::context::pattern_notify>().empty()
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ) {
@@ -932,14 +915,14 @@ public:
         }
 
         char path[1024];
-//        char basename[1024];
+        char basename[1024];
         char extension[128];
 
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(this->basename, movie_path);
+        strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, path, sizeof(path), this->basename, sizeof(this->basename), extension, sizeof(extension))
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -953,7 +936,7 @@ public:
                 true,
                 &this->report_message,
                 record_tmp_path,
-                this->basename,
+                basename,
                 groupid
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
@@ -1016,10 +999,9 @@ public:
                                     , capture_flv_full, full_video_params
                                     , capture_meta, meta_params
                                     , capture_kbd, kbdlog_params
-                                    , this->basename
+                                    , basename
                                     , now
                                     , this->client_info.width, this->client_info.height
-                                    , this->mod_bpp, this->capture_bpp
                                     , record_tmp_path
                                     , record_path
                                     , groupid
@@ -1043,7 +1025,6 @@ public:
             this->capture->set_pointer_display();
         }
         this->capture->get_capture_event().set();
-        this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
@@ -1065,8 +1046,6 @@ public:
             delete this->capture;
             this->capture = nullptr;
 
-            this->capture_state = CAPTURE_STATE_STOPED;
-
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -1074,8 +1053,7 @@ public:
     }
 
     void update_config(bool enable_rt_display) {
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+        if (this->capture) {
             this->capture->update_config(enable_rt_display);
         }
     }
@@ -1083,8 +1061,7 @@ public:
     void periodic_snapshot()
     {
         //LOG(LOG_INFO, "periodic snapshot");
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+        if (this->capture) {
             struct timeval now = tvtime();
             this->capture->periodic_snapshot(
                 now, this->mouse_x, this->mouse_y
@@ -2365,8 +2342,7 @@ public:
                                                     SlowPath::PTRFLAGS_BUTTON2 |
                                                     SlowPath::PTRFLAGS_BUTTON3)) &&
                                 !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                if (  this->capture
-                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                if (this->capture) {
                                     this->capture->possible_active_window_change();
                                 }
                             }
@@ -2719,10 +2695,8 @@ private:
     }
 
     void session_update(array_view_const_char message) override {
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            struct timeval now = tvtime();
-
+        if (this->capture) {
+            timeval now = tvtime();
             this->capture->session_update(now, message);
         }
     }
@@ -3704,8 +3678,7 @@ private:
                                                     SlowPath::PTRFLAGS_BUTTON2 |
                                                     SlowPath::PTRFLAGS_BUTTON3)) &&
                                 !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                if (  this->capture
-                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                if (this->capture) {
                                     this->capture->possible_active_window_change();
                                 }
                             }
@@ -4598,7 +4571,7 @@ private:
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool const send_to_mod = this->capture && this->capture_state == CAPTURE_STATE_STARTED
+        bool const send_to_mod = this->capture
         ? (  0 == decoded_keys.count
          || (1 == decoded_keys.count
             && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0]))
@@ -4620,8 +4593,7 @@ private:
         }
 
         if (this->keymap.is_application_switching_shortcut_pressed) {
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            if (this->capture) {
                 this->capture->possible_active_window_change();
             }
         }

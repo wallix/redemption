@@ -378,8 +378,6 @@ public:
         const timeval & now,
         int width,
         int height,
-        int /*order_bpp*/,
-        int /*capture_bpp*/,
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,

@@ -68,6 +68,14 @@ struct array_view
     , sz(utils::size(x))
     {}
 
+    template<class U, class = decltype(
+        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)
+    )>
+    constexpr array_view(array_view<U> av) noexcept
+    : p(av.data())
+    , sz(av.size())
+    {}
+
     constexpr bool empty() const noexcept { return !this->sz; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }

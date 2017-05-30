@@ -1822,8 +1822,6 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
-                                , player.info_bpp
-                                , wrm_color_depth
                                 , record_tmp_path
                                 , record_path
                                 , groupid
@@ -2382,6 +2380,12 @@ extern "C" {
         if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
             // parsing error
             return -1;
+        }
+
+        {
+            size_t base_len = 0;
+            char const * base = basename_len(rp.input_filename.c_str(), base_len);
+            cctx.set_master_derivator({base, base_len});
         }
 
         switch (command){
