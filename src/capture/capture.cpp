@@ -37,7 +37,7 @@
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/byte.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
@@ -399,7 +399,7 @@ private:
         );
     }
 
-    void copy_bytes(const_bytes_array bytes) {
+    void copy_bytes(const_byte_array bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -479,7 +479,7 @@ class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     bool is_probe_enabled_session = false;
     ReportMessageApi & report_message;
 
-    void copy_bytes(const_bytes_array bytes) {
+    void copy_bytes(const_byte_array bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -935,7 +935,7 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
         );
     }
 
-    void copy_bytes(const_bytes_array bytes) {
+    void copy_bytes(const_byte_array bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }

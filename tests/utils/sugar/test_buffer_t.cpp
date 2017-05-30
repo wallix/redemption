@@ -39,8 +39,8 @@ RED_AUTO_TEST_CASE(TestBufferT)
     char const * cs = ca;
     uint8_t const * cus = cua;
 
-    bytes_t bs{s};
-    const_bytes_t cbs{cs};
+    byte_ptr bs{s};
+    const_byte_ptr cbs{cs};
     buffer_t ba;
     const_buffer_t cba;
     array_view_char av{s, 1};
