@@ -67,7 +67,7 @@
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -2293,13 +2293,6 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 }
 
 extern "C" {
-    REDEMPTION_LIB_EXPORT
-    int recmemcpy(char * dest, char * source, int len)
-    {
-        ::memcpy(dest, source, static_cast<size_t>(len));
-        return 0;
-    }
-
     REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,

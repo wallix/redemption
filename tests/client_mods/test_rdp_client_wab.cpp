@@ -122,7 +122,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message);
+        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

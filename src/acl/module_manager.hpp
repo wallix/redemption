@@ -33,6 +33,7 @@
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/rdp.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/xup/xup.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
@@ -775,6 +776,7 @@ public:
         new_mod = 0x1,
     };
 
+    rdp_api*       rdpapi = nullptr;
     windowing_api* winapi = nullptr;
 
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
@@ -797,6 +799,8 @@ public:
             delete this->internal_mod;
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
+            this->rdpapi = nullptr;
+            this->winapi = nullptr;
         }
     }
 
@@ -805,7 +809,7 @@ public:
     }
 
 private:
-    void set_mod(non_null_ptr<mod_api> mod, windowing_api* winapi = nullptr)
+    void set_mod(non_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
     {
         while (this->front.keymap.nb_char_available())
             this->front.keymap.get_char();
@@ -817,6 +821,7 @@ private:
         this->internal_mod = mod.get();
         this->mod = mod.get();
 
+        this->rdpapi = rdpapi;
         this->winapi = winapi;
     }
 
@@ -1454,9 +1459,11 @@ public:
                         this->timeobj,
                         mod_rdp_params,
                         authentifier,
-                        report_message
+                        report_message,
+                        this->ini
                     );
 
+                    rdp_api*       rdpapi = new_mod;
                     windowing_api* winapi = new_mod->get_windowing_api();
 
                     std::unique_ptr<mod_api> managed_mod(new_mod);
@@ -1481,13 +1488,14 @@ public:
                                         this->client_execute,
                                         this->front.client_info.cs_monitor
                                     ),
+                                nullptr,
                                 &this->client_execute
                             );
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {
                         // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-                        this->set_mod(managed_mod.release(), winapi);
+                        this->set_mod(managed_mod.release(), rdpapi, winapi);
                     }
                 }
                 catch (...) {
@@ -1614,7 +1622,7 @@ public:
                     throw;
                 }
 
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
                 this->connected = true;
             }
@@ -1622,10 +1630,14 @@ public:
 
         default:
             {
-                LOG(LOG_INFO, "ModuleManager::Unknown backend exception\n");
+                LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
+    }
+
+    rdp_api* get_rdp_api() const override {
+        return this->rdpapi;
     }
 };
 

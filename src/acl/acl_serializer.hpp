@@ -35,7 +35,7 @@
 #include "transport/transport.hpp"
 #include "utils/translation.hpp"
 #include "utils/get_printable_password.hpp"
-#include "transport/out_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
@@ -544,6 +544,48 @@ public:
                     this->ini.get_ref<cfg::context::disconnect_reason>().clear();
 
                     this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                }
+                else if (!this->ini.get<cfg::context::auth_command>().empty()) {
+                    if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(),
+                                      "rail_exec")) {
+                        const uint16_t flags                = this->ini.get<cfg::context::auth_command_rail_exec_flags>();
+                        const char*    original_exe_or_file = this->ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
+                        const char*    exe_or_file          = this->ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
+                        const char*    working_dir          = this->ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
+                        const char*    arguments            = this->ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
+                        const uint16_t exec_result          = this->ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+
+                        rdp_api* rdpapi = mm.get_rdp_api();
+
+                        if (!exec_result) {
+                            //LOG(LOG_INFO,
+                            //    "RailExec: "
+                            //        "original_exe_or_file=\"%s\" "
+                            //        "exe_or_file=\"%s\" "
+                            //        "working_dir=\"%s\" "
+                            //        "arguments=\"%s\" "
+                            //        "flags=%u",
+                            //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+
+                            if (rdpapi) {
+                                rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments);
+                            }
+                        }
+                        else {
+                            //LOG(LOG_INFO,
+                            //    "RailExec: "
+                            //        "exec_result=%u "
+                            //        "original_exe_or_file=\"%s\" "
+                            //        "flags=%u",
+                            //    exec_result, original_exe_or_file, flags);
+
+                            if (rdpapi) {
+                                rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+                            }
+                        }
+                    }
+
+                    this->ini.get_ref<cfg::context::auth_command>().clear();
                 }
             }
         }

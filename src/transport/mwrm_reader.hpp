@@ -21,7 +21,7 @@
 #pragma once
 
 #include "utils/chex_to_int.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
 #include <algorithm>

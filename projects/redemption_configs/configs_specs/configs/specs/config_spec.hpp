@@ -596,6 +596,18 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<bool>(), "perform_automatic_reconnection", set(false));
         W.member(no_ini_no_gui, no_sesman, type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
+        W.sep();
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command");
+        W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "auth_notify");
+        W.sep();
+        W.member(no_ini_no_gui, proxy_to_sesman, type_<unsigned>(), "auth_notify_rail_exec_flags");
+        W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "auth_notify_rail_exec_exe_or_file");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "auth_command_rail_exec_exec_result");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "auth_command_rail_exec_flags");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_original_exe_or_file");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_exe_or_file");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_working_dir");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_arguments");
     });
 
     W.section("", [&]

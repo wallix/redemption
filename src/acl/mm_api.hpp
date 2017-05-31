@@ -18,10 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "mod/rdp/rdp_api.hpp"
 
 class AuthApi;
 class ReportMessageApi;
@@ -57,5 +57,6 @@ public:
     }
     virtual void stop_record() {}
     virtual void check_module() {}
-};
 
+    virtual rdp_api* get_rdp_api() const { return nullptr; };
+};

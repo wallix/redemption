@@ -3240,6 +3240,136 @@ namespace cfg {
             using mapped_type = type;
             type value{};
         };
+        // AUTHID_CONTEXT_AUTH_COMMAND
+        // type: std::string
+        struct auth_command {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command"; }
+            static constexpr ::authid_t index() { return ::authid_t(114); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_NOTIFY
+        // type: std::string
+        struct auth_notify {
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_notify"; }
+            static constexpr ::authid_t index() { return ::authid_t(115); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS
+        // type: unsigned int
+        struct auth_notify_rail_exec_flags {
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_notify_rail_exec_flags"; }
+            static constexpr ::authid_t index() { return ::authid_t(116); }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE
+        // type: std::string
+        struct auth_notify_rail_exec_exe_or_file {
+            static constexpr bool is_sesman_to_proxy() { return 0; }
+            static constexpr bool is_proxy_to_sesman() { return 1; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_notify_rail_exec_exe_or_file"; }
+            static constexpr ::authid_t index() { return ::authid_t(117); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT
+        // type: unsigned int
+        struct auth_command_rail_exec_exec_result {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_exec_result"; }
+            static constexpr ::authid_t index() { return ::authid_t(118); }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS
+        // type: unsigned int
+        struct auth_command_rail_exec_flags {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_flags"; }
+            static constexpr ::authid_t index() { return ::authid_t(119); }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE
+        // type: std::string
+        struct auth_command_rail_exec_original_exe_or_file {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_original_exe_or_file"; }
+            static constexpr ::authid_t index() { return ::authid_t(120); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE
+        // type: std::string
+        struct auth_command_rail_exec_exe_or_file {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_exe_or_file"; }
+            static constexpr ::authid_t index() { return ::authid_t(121); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR
+        // type: std::string
+        struct auth_command_rail_exec_working_dir {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_working_dir"; }
+            static constexpr ::authid_t index() { return ::authid_t(122); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS
+        // type: std::string
+        struct auth_command_rail_exec_arguments {
+            static constexpr bool is_sesman_to_proxy() { return 1; }
+            static constexpr bool is_proxy_to_sesman() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "auth_command_rail_exec_arguments"; }
+            static constexpr ::authid_t index() { return ::authid_t(123); }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
     };
 
     // type: Theme
@@ -3567,6 +3697,16 @@ struct context
 , cfg::context::recording_started
 , cfg::context::perform_automatic_reconnection
 , cfg::context::server_auto_reconnect_packet
+, cfg::context::auth_command
+, cfg::context::auth_notify
+, cfg::context::auth_notify_rail_exec_flags
+, cfg::context::auth_notify_rail_exec_exe_or_file
+, cfg::context::auth_command_rail_exec_exec_result
+, cfg::context::auth_command_rail_exec_flags
+, cfg::context::auth_command_rail_exec_original_exe_or_file
+, cfg::context::auth_command_rail_exec_exe_or_file
+, cfg::context::auth_command_rail_exec_working_dir
+, cfg::context::auth_command_rail_exec_arguments
 { static constexpr bool is_section = true; };
 
 }
@@ -3706,5 +3846,15 @@ using VariablesAclPack = Pack<
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 , cfg::context::recording_started
+, cfg::context::auth_command
+, cfg::context::auth_notify
+, cfg::context::auth_notify_rail_exec_flags
+, cfg::context::auth_notify_rail_exec_exe_or_file
+, cfg::context::auth_command_rail_exec_exec_result
+, cfg::context::auth_command_rail_exec_flags
+, cfg::context::auth_command_rail_exec_original_exe_or_file
+, cfg::context::auth_command_rail_exec_exe_or_file
+, cfg::context::auth_command_rail_exec_working_dir
+, cfg::context::auth_command_rail_exec_arguments
 >;
 }

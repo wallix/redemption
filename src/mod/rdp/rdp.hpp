@@ -23,6 +23,7 @@
 */
 
 #pragma once
+
 #include "mod/rdp/rdp_orders.hpp"
 
 #include "utils/stream.hpp"
@@ -98,7 +99,7 @@
 
 #include <cstdlib>
 
-class mod_rdp : public mod_api
+class mod_rdp : public mod_api, public rdp_api
 {
 private:
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
@@ -553,6 +554,7 @@ protected:
                     this->remote_programs_to_client_sender.get(),
                     this->remote_programs_to_server_sender.get(),
                     this->front,
+                    this->vars,
                     this->get_remote_programs_virtual_channel_params());
         }
 
@@ -769,6 +771,8 @@ protected:
 
     bool server_redirection_packet_received = false;
 
+    ModRdpVariables vars;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -785,6 +789,7 @@ public:
            , const ModRDPParams & mod_rdp_params
            , AuthApi & authentifier
            , ReportMessageApi & report_message
+           , ModRdpVariables vars
            )
         : front_width(info.width - (info.width % 4))
         , front_height(info.height)
@@ -932,6 +937,7 @@ public:
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , load_balance_info(mod_rdp_params.load_balance_info)
+        , vars(vars)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1690,7 +1696,7 @@ protected:
         RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
 
         remote_programs_virtual_channel_params.exchanged_data_limit            =
-            this->max_clipboard_data;
+            0;
         remote_programs_virtual_channel_params.verbose                         =
             this->verbose;
 
@@ -3120,8 +3126,7 @@ public:
                     }
                     {
                         LIC::LicenseRequest_Recv lic(sec.payload);
-                        uint8_t null_data[SEC_MODULUS_SIZE];
-                        memset(null_data, 0, sizeof(null_data));
+                        uint8_t null_data[48]{};
                         /* We currently use null client keys. This is a bit naughty but, hey,
                            the security of license negotiation isn't exactly paramount. */
                         SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
@@ -7646,5 +7651,34 @@ public:
 
     bool is_auto_reconnectable() override {
         return this->is_server_auto_reconnec_packet_received;
+    }
+
+private:
+    void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
+            const char* exe_or_file, const char* working_dir,
+            const char* arguments) override {
+        if (this->remote_program) {
+            RemoteProgramsVirtualChannel& rpvc =
+                this->get_remote_programs_virtual_channel();
+
+            rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
+                working_dir, arguments);
+        }
+        else {
+            LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+        }
+    }
+
+    void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
+            uint16_t exec_result) override {
+        if (this->remote_program) {
+            RemoteProgramsVirtualChannel& rpvc =
+                this->get_remote_programs_virtual_channel();
+
+            rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+        }
+        else {
+            LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+        }
     }
 };

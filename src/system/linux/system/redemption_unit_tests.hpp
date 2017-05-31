@@ -3,6 +3,7 @@
 #define BOOST_TEST_MODULE RED_TEST_MODULE
 
 #include <boost/test/auto_unit_test.hpp>
+#include <algorithm>
 
 // // fixed link error (API changed)
 // #ifdef __clang__
@@ -139,40 +140,43 @@ namespace std
 }
 
 #include "cxx/cxx.hpp"
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/byte.hpp"
 
 namespace redemption_unit_test__
 {
-    struct xformat
+    struct xarray
     {
-        const_bytes_array sig;
+        const_byte_array sig;
+
+        std::size_t size() const
+        {
+            return sig.size();
+        }
+
+        bool operator == (xarray const & other) const
+        {
+            return other.sig.size() == other.sig.size()
+                && std::equal(sig.begin(), sig.end(), other.sig.begin());
+        }
     };
 
-    inline std::ostream & operator<<(std::ostream & out, xformat const & x)
+    inline std::ostream & operator<<(std::ostream & out, xarray const & x)
     {
-        out << "Expected data: ";
+        out << "\"";
         char const * hex_table = "0123456789abcdef";
         for (unsigned c : x.sig) {
             out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
         }
-        return out;
+        return out << "\"";
     }
 }
 
-#define RED_CHECK_MEM(mem, memref)                      \
-    do {                                                \
-        const_bytes_array mem__ {mem};                  \
-        const_bytes_array memref__ {memref};            \
-        RED_CHECK_EQUAL(mem__.size(), memref__.size()); \
-        if (mem__.size() == memref__.size()) {          \
-            RED_CHECK_MESSAGE(                          \
-                !memcmp(                                \
-                    mem__.data(), memref__.data(),      \
-                    mem__.size()                        \
-                ),                                      \
-                redemption_unit_test__::xformat{mem__}  \
-            );                                          \
-        }                                               \
+#define RED_CHECK_MEM(mem, memref)                        \
+    do {                                                  \
+        redemption_unit_test__::xarray mem__ {mem};       \
+        redemption_unit_test__::xarray memref__ {memref}; \
+        RED_CHECK_EQUAL(mem__.size(), memref__.size());   \
+        RED_CHECK_EQUAL(mem__, memref__);                 \
     } while (0)
 
 #ifdef IN_IDE_PARSER

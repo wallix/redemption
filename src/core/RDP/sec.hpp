@@ -891,18 +891,18 @@ enum {
 
     struct SessionKey
     {
-        uint8_t blob0[16];
-        uint8_t blob1[16];
-        uint8_t blob2[16];
-        uint8_t licensingEncryptionKey[16];
+        uint8_t blob0[SslMd5::DIGEST_LENGTH];
+        uint8_t blob1[SslMd5::DIGEST_LENGTH];
+        uint8_t blob2[SslMd5::DIGEST_LENGTH];
+        uint8_t licensingEncryptionKey[SslMd5::DIGEST_LENGTH];
 
-        SessionKey(const uint8_t * pre_master_secret, const uint8_t * client_random, const uint8_t * server_random)
+        SessionKey(const uint8_t * pre_master_secret, const uint8_t * client_random, const uint8_t (&server_random)[SEC_RANDOM_SIZE])
         {
-            const size_t pre_master_secret_size = 48;
-            const size_t client_random_size = 32;
-            const size_t server_random_size = 32;
-            uint8_t master_secret[48];
-            const int master_secret_size = sizeof(master_secret);
+            const size_t pre_master_secret_size = SslMd5::DIGEST_LENGTH * 3;
+            const size_t client_random_size = SEC_RANDOM_SIZE;
+            const size_t server_random_size = SEC_RANDOM_SIZE;
+            uint8_t master_secret[SslMd5::DIGEST_LENGTH * 3];
+            const size_t master_secret_size = sizeof(master_secret);
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
@@ -916,7 +916,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret);
+                md5.unchecked_final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -931,7 +931,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16);
+                md5.unchecked_final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -946,7 +946,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32);
+                md5.unchecked_final(master_secret + 32);
             }
 
             {
@@ -1380,15 +1380,16 @@ enum {
         uint8_t key1[SslMd5::DIGEST_LENGTH];
         uint8_t key2[SslMd5::DIGEST_LENGTH];
 
-        KeyBlock(const uint8_t * client_random, const uint8_t * server_random)
+        KeyBlock(const uint8_t * client_random, const uint8_t (&server_random)[SEC_RANDOM_SIZE])
         {
             const size_t client_random_size = SEC_RANDOM_SIZE;
             const size_t server_random_size = SEC_RANDOM_SIZE;
-            uint8_t pre_master_secret[48];
+            uint8_t pre_master_secret[SslMd5::DIGEST_LENGTH * 3];
             const int pre_master_secret_size = sizeof(pre_master_secret);
             // Construct pre-master secret (session key)
             // we get 24 bytes on 32 from
             // client_random and server_random
+            static_assert(SEC_RANDOM_SIZE == 32, "");
             memcpy(pre_master_secret, client_random, 24);
             memcpy(pre_master_secret + 24, server_random, 24);
 
@@ -1407,7 +1408,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret);
+                md5.unchecked_final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1422,7 +1423,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16);
+                md5.unchecked_final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1437,7 +1438,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32);
+                md5.unchecked_final(master_secret + 32);
             }
 
             {
