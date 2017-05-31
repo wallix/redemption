@@ -245,3 +245,62 @@ RED_AUTO_TEST_CASE(TrainingConfirmPDUReceive)
     RED_CHECK_EQUAL(ch.wTimeStamp, 0xfd73);
     RED_CHECK_EQUAL(ch.wPackSize, 1024);
 }
+
+RED_AUTO_TEST_CASE(WaveInfoPDUEmit)
+{
+    const size_t len = 8;
+    const char data[] =
+            "\xa7\x11\x00\x00\x00\x00\x00\x00";
+
+    StaticOutStream<32> stream;
+    rdpsnd::WaveInfoPDU ch(0x11a7, 0x0000, 0x00);
+
+    ch.emit(stream);
+
+    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
+}
+
+RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
+{
+    const size_t len = 8;
+    const char data[] =
+            "\xa7\x11\x00\x00\x00\x00\x00\x00";
+
+    InStream in_stream(data, len);
+
+    rdpsnd::WaveInfoPDU ch;
+    ch.receive(in_stream);
+
+    RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
+    RED_CHECK_EQUAL(ch.wFormatNo, 0x0000);
+    RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
+}
+
+RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)
+{
+    const size_t len = 4;
+    const char data[] =
+            "\xa7\x11\x00\x00";
+
+    StaticOutStream<32> stream;
+    rdpsnd::WaveConfirmPDU ch(0x11a7, 0x00);
+
+    ch.emit(stream);
+
+    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
+}
+
+RED_AUTO_TEST_CASE(WaveConfirmPDUReceive)
+{
+    const size_t len = 4;
+    const char data[] =
+            "\xa7\x11\x00\x00";
+
+    InStream in_stream(data, len);
+
+    rdpsnd::WaveConfirmPDU ch;
+    ch.receive(in_stream);
+
+    RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
+    RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
+}
