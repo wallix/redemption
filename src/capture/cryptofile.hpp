@@ -27,12 +27,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include <array>
+#include <vector>
 #include <iterator>
 #include <algorithm>
 #include <snappy-c.h>
 
 #include "utils/log.hpp"
-#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/byte.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -73,6 +74,7 @@ class CryptoContext : noncopyable
 {
     uint8_t master_key[CRYPTO_KEY_LENGTH] {};
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
+    std::vector<uint8_t> master_derivator;
 
     get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
@@ -94,7 +96,10 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
             // if we have a callback ask key
-            this->get_hmac_key_cb(this->hmac_key);
+            if (int err = this->get_hmac_key_cb(this->hmac_key)) {
+                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb: callback error: %d", err);
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+            }
             this->hmac_key_loaded = true;
         }
         return this->hmac_key;
@@ -107,18 +112,73 @@ public:
         return this->master_key;
     }
 
-    void get_derived_key(uint8_t (& trace_key)[CRYPTO_KEY_LENGTH], const uint8_t * derivator, size_t derivator_len)
+    void set_master_derivator(const_byte_array derivator)
+    {
+        if ((this->master_key_loaded || this->master_derivator.size())
+         && (this->master_derivator.size() != derivator.size()
+          || !std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
+        )) {
+            LOG(LOG_ERR, "CryptoContext: master derivator is already defined");
+            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+        }
+        this->master_derivator.assign(derivator.begin(), derivator.end());
+    }
+
+private:
+    // force extension to "mwrm"
+    static array_view_const_u8 get_normalized_derivator(
+        std::unique_ptr<uint8_t[]> & normalize_derivator,
+        const_byte_array derivator
+    )
+    {
+        using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
+        reverse_iterator const first(derivator.end());
+        reverse_iterator const last(derivator.begin());
+        reverse_iterator const p = std::find(first, last, '.');
+        constexpr auto ext = cstr_array_view(".mwrm");
+        if (derivator.end()-p.base() != ext.size() - 1
+         || !std::equal(
+             p.base(), p.base() + ext.size() - 1,
+             reinterpret_cast<uint8_t const*>(ext.data() + 1)
+        )) {
+            auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();
+            auto const new_len = prefix_len + ext.size();
+
+            normalize_derivator = std::make_unique<uint8_t[]>(new_len + 1);
+            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
+            memcpy(normalize_derivator.get() + prefix_len, ext.data(), ext.size());
+            normalize_derivator[new_len] = 0;
+
+            derivator = array_view_const_u8{normalize_derivator.get(), new_len};
+        }
+
+        return derivator;
+    }
+
+    void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], const_byte_array derivator)
+    {
+        std::unique_ptr<uint8_t[]> normalized_derivator_gc;
+        auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
+
+        if (int err = this->get_trace_key_cb(
+            new_derivator.data()
+          , static_cast<int>(new_derivator.size())
+          , buffer
+          , this->old_encryption_scheme?1:0
+        )) {
+            LOG(LOG_ERR, "CryptoContext: get_trace_key_cb: callback error: %d", err);
+            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+        }
+    }
+
+public:
+    void get_derived_key(uint8_t (&trace_key)[CRYPTO_KEY_LENGTH], const_byte_array derivator)
     {
         if (this->old_encryption_scheme){
             if (this->get_trace_key_cb != nullptr){
                 // if we have a callback ask key
                 uint8_t tmp[MD_HASH::DIGEST_LENGTH];
-                this->get_trace_key_cb(
-                    derivator
-                  , static_cast<int>(derivator_len)
-                  , tmp
-                  , this->old_encryption_scheme?1:0
-                );
+                this->load_trace_key(tmp, derivator);
                 memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
                 return;
             }
@@ -130,20 +190,22 @@ public:
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
             }
 
-            // if we have a callback ask key
-            this->get_trace_key_cb(
-                derivator
-              , static_cast<int>(derivator_len)
-              , this->master_key
-              , this->old_encryption_scheme?1:0
-            );
+            if (this->master_derivator.empty()) {
+                LOG(LOG_ERR, "CryptoContext: derivator is undefined");
+                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+            }
+
+            this->load_trace_key(this->master_key, this->master_derivator);
+
             this->master_key_loaded = true;
+            //this->master_derivator.clear();
+            //this->master_derivator.shrink_to_fit();
         }
 
         uint8_t tmp[MD_HASH::DIGEST_LENGTH];
         {
             MD_HASH sha256;
-            sha256.update(derivator, derivator_len);
+            sha256.update(derivator.data(), derivator.size());
             sha256.final(tmp);
         }
         {
@@ -195,7 +257,7 @@ public:
         return nbytes;
     }
 
-    class key_data : private const_bytes_array
+    class key_data : private const_byte_array
     {
         static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
 
@@ -207,21 +269,21 @@ public:
     public:
         template<class T>
         key_data(T const & bytes32) noexcept
-        : const_bytes_array(bytes32)
+        : const_byte_array(bytes32)
         {
             assert(this->size() == key_length);
         }
 
         template<class T, std::size_t array_length>
         key_data(std::array<T, array_length> const & data) noexcept
-        : const_bytes_array(data.data(), data.size())
+        : const_byte_array(data.data(), data.size())
         {
             static_assert(array_length == key_length, "");
         }
 
         template<class T, std::size_t array_length>
         key_data(T const (& data)[array_length]) noexcept
-        : const_bytes_array(data, array_length)
+        : const_byte_array(data, array_length)
         {
             static_assert(array_length == key_length, "");
         }

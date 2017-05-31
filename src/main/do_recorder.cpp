@@ -67,7 +67,7 @@
 #include "utils/chex_to_int.hpp"
 #include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -1822,8 +1822,6 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
-                                , player.info_bpp
-                                , wrm_color_depth
                                 , record_tmp_path
                                 , record_path
                                 , groupid
@@ -2296,13 +2294,6 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
 extern "C" {
     REDEMPTION_LIB_EXPORT
-    int recmemcpy(char * dest, char * source, int len)
-    {
-        ::memcpy(dest, source, static_cast<size_t>(len));
-        return 0;
-    }
-
-    REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
@@ -2382,6 +2373,12 @@ extern "C" {
         if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
             // parsing error
             return -1;
+        }
+
+        {
+            size_t base_len = 0;
+            char const * base = basename_len(rp.input_filename.c_str(), base_len);
+            cctx.set_master_derivator({base, base_len});
         }
 
         switch (command){

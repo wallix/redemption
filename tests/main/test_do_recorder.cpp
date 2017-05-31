@@ -36,7 +36,7 @@
 #include <sstream>
 #include <iostream>
 #include "utils/fileutils.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include "test_only/get_file_contents.hpp"
 

@@ -20,8 +20,7 @@
 */
 
 #include "main/redcryptofile.hpp"
-#include "transport/out_crypto_transport.hpp"
-#include "transport/in_crypto_transport.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include <memory>
 
@@ -29,36 +28,50 @@
 
 #include "main/version.hpp"
 
-struct Trace
+
+#ifdef SHOW_DEBUG_TRACES
+
+namespace
 {
-    Trace(char const * func_name) noexcept
-    : func_name(func_name)
+    struct Trace
     {
-        LOG(LOG_INFO, "%s()", func_name);
-    }
+        Trace(char const * func_name) noexcept
+        : func_name(func_name)
+        {
+            LOG(LOG_INFO, "%s()", func_name);
+        }
 
-    ~Trace()
-    {
-        LOG(LOG_INFO, "%s() done", func_name);
-    }
+        ~Trace()
+        {
+            LOG(LOG_INFO, "%s() done", func_name);
+        }
 
-    void exit_on_exception() noexcept
-    {
-        LOG(LOG_ERR, "%s() exit with exception", func_name);
-    }
+        void exit_on_exception() noexcept
+        {
+            LOG(LOG_ERR, "%s() exit with exception", func_name);
+        }
 
-    void exit_on_error(Error const & e) noexcept
-    {
-        LOG(LOG_ERR, "%s() exit with exception Error: %s", func_name, e.errmsg());
-    }
+        void exit_on_error(Error const & e) noexcept
+        {
+            LOG(LOG_ERR, "%s() exit with exception Error: %s", func_name, e.errmsg());
+        }
 
-private:
-    char const * func_name;
+    private:
+        char const * func_name;
 };
+}
 
 #define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
 #define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
 #define EXIT_ON_ERROR(e) trace_l_.exit_on_error(e)
+
+#else
+
+#define SCOPED_TRACE
+#define EXIT_ON_EXCEPTION()
+#define EXIT_ON_ERROR(e)
+
+#endif
 
 #define CHECK_HANDLE(handle) if (!handle) return -1
 
@@ -95,6 +108,13 @@ struct CryptoContextWrapper
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
+    }
+
+    void set_master_derivator_from_file_name(char const * filename)
+    {
+        size_t base_len = 0;
+        char const * base = basename_len(filename, base_len);
+        cctx.set_master_derivator({base, base_len});
     }
 };
 
@@ -140,9 +160,9 @@ struct RedCryptoWriterHandle
         RandomType random_type,
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-    : cctx_wrapper(hmac_fn, trace_fn)
+    : cctxw(hmac_fn, trace_fn)
     , random_wrapper(random_type)
-    , out_crypto_transport(with_encryption, with_checksum, cctx_wrapper.cctx, *random_wrapper.rnd)
+    , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd)
     {}
 
 private:
@@ -173,7 +193,10 @@ private:
         } u;
     };
 
-    CryptoContextWrapper cctx_wrapper;
+public:
+    CryptoContextWrapper cctxw;
+
+private:
     RandomWrapper random_wrapper;
 
 public:
@@ -197,11 +220,8 @@ struct RedCryptoReaderHandle
     , in_crypto_transport(cctxw.cctx, encryption)
     {}
 
-private:
     CryptoContextWrapper cctxw;
 
-
-public:
     InCryptoTransport in_crypto_transport;
     RedCryptoErrorContext error_ctx;
 };
@@ -210,15 +230,18 @@ public:
 using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
 static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
 
-inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
-    char const * t = "0123456789ABCDEF";
-    static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
-    auto phex = hashhex;
-    for (uint8_t c : hash) {
-        *phex++ = t[c >> 4];
-        *phex++ = t[c & 0xf];
+namespace
+{
+    inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
+        char const * t = "0123456789ABCDEF";
+        static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
+        auto phex = hashhex;
+        for (uint8_t c : hash) {
+            *phex++ = t[c >> 4];
+            *phex++ = t[c & 0xf];
+        }
+        *phex = '\0';
     }
-    *phex = '\0';
 }
 
 
@@ -242,13 +265,16 @@ char const * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
 
 RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
                                                , int with_checksum
+                                               , const char * derivator
                                                , get_hmac_key_prototype * hmac_fn
                                                , get_trace_key_prototype * trace_fn) {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoWriterHandle(
+        auto handle = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::UDEV, with_encryption, with_checksum, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
@@ -257,14 +283,16 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
 
 
 RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
-    int with_encryption, int with_checksum,
+    int with_encryption, int with_checksum, const char * derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn
 ) {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoWriterHandle(
+        auto handle = new (std::nothrow) RedCryptoWriterHandle(
             RedCryptoWriterHandle::LCG, with_encryption, with_checksum, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
@@ -275,6 +303,7 @@ int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path,
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
+    handle->cctxw.set_master_derivator_from_file_name(path);
     CHECK_NOTHROW(handle->out_crypto_transport.open(path, groupid), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
@@ -311,17 +340,22 @@ char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
 }
 
 
-RedCryptoReaderHandle * redcryptofile_reader_new(get_hmac_key_prototype* hmac_fn
-                                               , get_trace_key_prototype* trace_fn) {
+RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
+                                                , get_hmac_key_prototype* hmac_fn
+                                                , get_trace_key_prototype* trace_fn) 
+{
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
-        return new (std::nothrow) RedCryptoReaderHandle(
+        auto handle = new (std::nothrow) RedCryptoReaderHandle(
             InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
-        ),
+        );
+        handle->cctxw.set_master_derivator_from_file_name(derivator);
+        return handle,
         nullptr,
         RedCryptoErrorContext(),
         ERR_TRANSPORT
     );
+    ;
 }
 
 int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path) {
@@ -386,7 +420,7 @@ const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
 
 const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
-    return handle->qhashhex;
+    return handle->fhashhex;
 }
 
 }

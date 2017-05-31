@@ -33,7 +33,6 @@
 #include "core/font.hpp"
 #include "utils/log.hpp"
 
-#include <set>
 #include <string>
 #include <chrono>
 #include <stdexcept>
@@ -44,7 +43,8 @@
 
 namespace configs {
     template<class... Ts>
-    struct Pack : Ts... {};
+    struct Pack : Ts...
+    { static const std::size_t size = sizeof...(Ts); };
 
     template<class Base, template<class> class Tpl, class Pack>
     struct PointerPackArray;
@@ -59,12 +59,12 @@ namespace configs {
         : values{&static_cast<Tpl<Ts>&>(*this)...}
         {}
 
-        Base & operator[](std::size_t i) {
+        Base & operator[](authid_t i) {
             assert(i < sizeof...(Ts));
             return *this->values[i];
         }
 
-        Base const & operator[](std::size_t i) const {
+        Base const & operator[](authid_t i) const {
             assert(i < sizeof...(Ts));
             return *this->values[i];
         }
@@ -163,10 +163,6 @@ public:
     using authid_t = ::authid_t;
     using parse_error = configs::parse_error;
 
-    // TODO temporary
-    using debug_section_type = cfg::debug;
-
-
     explicit Inifile()
     {
         this->initialize();
@@ -174,38 +170,38 @@ public:
 
     template<class T>
     typename T::type const & get() const noexcept {
-        //static_assert(T::is_readable(), "T isn't readable");
+        //static_assert(T::is_sesman_to_proxy(), "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
     template<class T>
     typename T::type & get_ref() noexcept {
-        static_assert(!T::is_writable(), "reference on write variable isn't safe");
+        static_assert(!T::is_proxy_to_sesman(), "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
     template<class T, class... Args>
     void set(Args && ... args) {
-        static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
+        static_assert(!T::is_proxy_to_sesman(), "T is writable, used set_acl<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T, class... Args>
     void set_acl(Args && ... args) {
-        static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
+        static_assert(T::is_proxy_to_sesman(), "T isn't writable, used set<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T>
     void ask() {
-        static_assert(T::is_readable(), "T isn't askable");
+        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
         this->to_send_index.insert(T::index());
         static_cast<Field<T>&>(this->fields).asked_ = true;
     }
 
     template<class T>
     bool is_asked() const {
-        static_assert(T::is_readable(), "T isn't askable");
+        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
         return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
@@ -218,8 +214,8 @@ private:
             std::forward<Args>(args)...
         );
         configs::post_set_value(this->variables, static_cast<T&>(this->variables));
-        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
+        this->insert_index<T>(std::integral_constant<bool, T::is_proxy_to_sesman()>());
+        this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy()>());
     }
 
     template<class T> void insert_index(std::false_type) {}
@@ -343,7 +339,7 @@ public:
         FieldReference & operator=(FieldReference const &) = delete;
 
         FieldReference(Inifile & ini, authid_t id)
-        : field(&ini.fields[static_cast<unsigned>(id)])
+        : field(&ini.fields[id])
         , ini(&ini)
         , id(id)
         {}
@@ -385,16 +381,16 @@ public:
             }
 
             FieldReference operator*() const {
-                return {*this->ini, static_cast<authid_t>(*this->it)};
+                return {*this->ini, *this->it};
             }
 
         private:
-            std::set<unsigned>::const_iterator it;
+            authid_t const * it;
             Inifile * ini;
 
             friend struct FieldsChanged;
 
-            iterator(std::set<unsigned>::const_iterator it, Inifile & ini)
+            iterator(authid_t const * it, Inifile & ini)
             : it(it)
             , ini(&ini)
             {}
@@ -418,7 +414,55 @@ public:
     }
 
 private:
-    std::set<unsigned> to_send_index;
+    class ToSendIndexList
+    {
+        using uint_fast = uint_fast32_t;
+        static const std::size_t count = configs::VariablesAclPack::size;
+        std::array<uint_fast, (count + sizeof(uint_fast) - 1) / sizeof(uint_fast)> words;
+        std::array<authid_t, count> list;
+        std::size_t list_size;
+
+    public:
+        ToSendIndexList()
+        : words{}
+        , list_size(0)
+        {}
+
+        void insert(authid_t id) noexcept
+        {
+            uint_fast i = id;
+            uint_fast mask = uint_fast{1} << (i % sizeof(uint_fast));
+            uint_fast & word = this->words[i / sizeof(uint_fast)];
+            if (!(word & mask)) {
+                word |= mask;
+                this->list[this->list_size++] = id;
+            }
+        }
+
+        void clear() noexcept
+        {
+            for (auto & w : this->words) {
+                w = 0;
+            }
+            this->list_size = 0;
+        }
+
+        std::size_t size() const noexcept
+        {
+            return this->list_size;
+        }
+
+        authid_t const * cbegin() const noexcept
+        {
+            return this->list.cbegin();
+        }
+
+        authid_t const * cend() const noexcept
+        {
+            return this->cbegin() + this->size();
+        }
+    };
+    ToSendIndexList to_send_index;
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
     Buffers buffers;
@@ -428,7 +472,7 @@ private:
     template<class T>
     void push_to_send_index()
     {
-        static_assert(T::is_writable(), "is not writable");
+        static_assert(T::is_proxy_to_sesman(), "is not writable");
         this->to_send_index.insert(T::index());
     }
 

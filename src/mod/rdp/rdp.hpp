@@ -3126,8 +3126,7 @@ public:
                     }
                     {
                         LIC::LicenseRequest_Recv lic(sec.payload);
-                        uint8_t null_data[SEC_MODULUS_SIZE];
-                        memset(null_data, 0, sizeof(null_data));
+                        uint8_t null_data[48]{};
                         /* We currently use null client keys. This is a bit naughty but, hey,
                            the security of license negotiation isn't exactly paramount. */
                         SEC::SessionKey keyblock(null_data, null_data, lic.server_random);

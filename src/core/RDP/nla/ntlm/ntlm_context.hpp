@@ -328,10 +328,9 @@ public:
             static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
     // all strings are in unicode utf16
-    void hash_password(const uint8_t * pass, size_t pass_size, uint8_t * hash) {
+    void hash_password(const uint8_t * pass, size_t pass_size, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
         SslMd4 md4;
         md4.update(pass, pass_size);
-        // TODO: check hash is the size of an MD4 digest
         md4.final(hash);
     }
 
@@ -536,7 +535,7 @@ public:
      * @param signing_key Destination signing key
      */
 
-    void ntlm_generate_signing_key(const uint8_t * sign_magic, size_t magic_size, uint8_t* signing_key)
+    void ntlm_generate_signing_key(const uint8_t * sign_magic, size_t magic_size, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5sign;
         md5sign.update(this->ExportedSessionKey, 16);
@@ -575,7 +574,7 @@ public:
      * @param sealing_key Destination sealing key
      */
 
-    void ntlm_generate_sealing_key(const uint8_t * seal_magic, size_t magic_size, uint8_t* sealing_key)
+    void ntlm_generate_sealing_key(const uint8_t * seal_magic, size_t magic_size, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5seal;
         md5seal.update(this->ExportedSessionKey, 16);
@@ -1000,7 +999,7 @@ public:
         this->state = NTLM_STATE_FINAL;
     }
 
-    void ntlm_server_fetch_hash(uint8_t * hash) {
+    void ntlm_server_fetch_hash(uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
         // TODO get password hash from DC or find ourself
         // LOG(LOG_INFO, "MARK %u, %u, %u",
         //     this->identity.User.size(),
@@ -1016,7 +1015,7 @@ public:
     }
 
     // SERVER PROCEED RESPONSE CHECKING
-    SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t * hash) {
+    SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t (&hash)[16]) {
         if (!this->server) {
             return SEC_E_INTERNAL_ERROR;
         }

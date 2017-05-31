@@ -53,7 +53,7 @@ public:
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
-        
+
         try {
             // VNC
             this->mod = new mod_vnc( *(this->socket)
@@ -76,7 +76,7 @@ public:
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->reportMessage
                                    , this->is_apple
-                                   , 0xffffffff-2);
+                                   , 0xfffffffd);
 
         } catch (const Error &) {
             return nullptr;
@@ -97,8 +97,7 @@ public:
     virtual void options() override {
         FrontQtRDPGraphicAPI::options();
     }
-
-
+    
 };
 
 

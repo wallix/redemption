@@ -83,7 +83,7 @@ public:
 
     timeval record_now;
 
-private:
+// private:
     timeval start_record_now;
     timeval start_synctime_now;
 
