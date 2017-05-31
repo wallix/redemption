@@ -596,8 +596,9 @@ class Sesman():
                         self.shared.get(u'ip_target')):
                 # Prompt the user in proxy window
                 # Wait for confirmation from GUI (or timeout)
-                if not (self.interactive_ask_x509_connection() and
-                        self.engine.x509_authenticate()):
+                if not ((self.engine.is_x509_validated()
+                         or self.interactive_ask_x509_connection())
+                        and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
             elif self.passthrough_mode:
                 # Passthrough Authentification

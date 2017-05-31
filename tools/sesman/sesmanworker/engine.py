@@ -262,6 +262,17 @@ class Engine(object):
             Logger().info("Engine is_x509_connected failed: (((%s)))" % traceback.format_exc(e))
         return False
 
+    def is_x509_validated(self):
+        try:
+            result = False
+            if self.auth_x509 is not None:
+                result = self.auth_x509.is_validated()
+        except Exception, e:
+            import traceback
+            Logger().info("Engine is_x509_validated failed: (((%s)))" %
+                          traceback.format_exc(e))
+        return result
+
     def x509_authenticate(self):
         try:
             self.wabengine = self.auth_x509.get_proxy()
