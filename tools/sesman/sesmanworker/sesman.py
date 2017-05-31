@@ -130,6 +130,7 @@ class Sesman():
         self.proxy_conx  = conn
         self.addr        = addr
         self.full_path   = None
+        self.record_filename = None
         self.full_log_path = None
 
         self.engine = engine.Engine()
@@ -855,6 +856,34 @@ class Sesman():
                 Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
         return _status, _error
 
+    def create_record_path_directory(self):
+        try:
+            os.stat(RECORD_PATH)
+        except OSError:
+            try:
+                os.mkdir(RECORD_PATH)
+            except Exception:
+                Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                return False, TR(u'error_getting_record_path %s') % RECORD_PATH
+        return True, u''
+
+    def get_record_filename(self, user):
+        if not self.record_filename:
+            # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
+            # NB :  backslashes are replaced by pipes for IE compatibility
+            random.seed(self.pid)
+            #keeping code synchronized with wabengine/src/common/data/trace.py
+            path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
+            path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+            path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
+            path += u"%s," % gethostname()
+            path += u"%s" % random.randint(1000, 9999)
+            # remove all "dangerous" characters in filename
+            import re
+            path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", path)
+            self.record_filename = path
+        return self.record_filename
 
     def check_video_recording(self, isRecorded, user):
         Logger().info(u"Checking video")
@@ -871,30 +900,9 @@ class Sesman():
             self.full_path = u""
             video_path = u""
             if isRecorded:
-                try:
-                    os.stat(RECORD_PATH)
-                except OSError:
-                    try:
-                        os.mkdir(RECORD_PATH)
-                    except Exception:
-                        Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
-                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                        _status, _error = False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                _status, _error = self.create_record_path_directory()
                 if _status:
-                    # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
-                    # NB :  backslashes are replaced by pipes for IE compatibility
-                    random.seed(self.pid)
-
-                    #keeping code synchronized with wabengine/src/common/data.py
-                    video_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
-                    video_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
-                    video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
-                    video_path += u"%s," % gethostname()
-                    video_path += u"%s" % random.randint(1000, 9999)
-                    # remove all "dangerous" characters in filename
-                    import re
-                    video_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", video_path)
-
+                    video_path = self.get_record_filename(user)
                     Logger().info(u"Session will be recorded in %s" % video_path)
 
                     self.full_path = RECORD_PATH + video_path
@@ -955,35 +963,11 @@ class Sesman():
 
         try:
             self.full_log_path = u""
-            session_log_path = u""
             if logRedirected:
-                try:
-                    os.stat(RECORD_PATH)
-                except OSError:
-                    try:
-                        os.mkdir(RECORD_PATH)
-                    except Exception:
-                        Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
-                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                        _status, _error = False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                _status, _error = self.create_record_path_directory()
                 if _status:
-                    # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
-                    # NB :  backslashes are replaced by pipes for IE compatibility
-                    random.seed(self.pid)
-
-                    if self.full_path is not None:
-                         self.full_log_path = self.full_path + u".log"
-                    else:
-                        #keeping code synchronized with wabengine/src/common/data.py
-                        session_log_path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
-                        session_log_path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
-                        session_log_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
-                        session_log_path += u"%s," % gethostname()
-                        session_log_path += u"%s" % random.randint(1000, 9999)
-                        # remove all "dangerous" characters in filename
-                        import re
-                        session_log_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", session_log_path)
-                        self.full_log_path = RECORD_PATH + session_log_path + u".log"
+                    session_log_path = self.get_record_filename(user)
+                    self.full_log_path = RECORD_PATH + session_log_path + u'.log'
 
                     Logger().info(u"Session log will be redirected to %s" % self.full_log_path)
                     data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
