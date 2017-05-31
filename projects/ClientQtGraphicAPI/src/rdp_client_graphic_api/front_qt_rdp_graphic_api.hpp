@@ -1781,25 +1781,25 @@ public:
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, 0, &(this->keymap));
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, &(this->keymap));
             this->wab_diag_question = false;
-            LOG(LOG_INFO, "CLIENT >> answer_question top_left");
+//             LOG(LOG_INFO, "CLIENT >> answer_question top_left");
 
         } else if (top_right == asked) {
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->info.width-1, 0, &(this->keymap));
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->info.width-1, 0, &(this->keymap));
             this->wab_diag_question = false;
-            LOG(LOG_INFO, "CLIENT >> answer_question top_right");
+//             LOG(LOG_INFO, "CLIENT >> answer_question top_right");
 
         } else if (bot_left == asked) {
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, this->info.height-1, &(this->keymap));
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, this->info.height-1, &(this->keymap));
             this->wab_diag_question = false;
-            LOG(LOG_INFO, "CLIENT >> answer_question bot_left");
+//             LOG(LOG_INFO, "CLIENT >> answer_question bot_left");
 
         } else if (bot_right == asked) {
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->info.width-1, this->info.height-1, &(this->keymap));
             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->info.width-1, this->info.height-1, &(this->keymap));
             this->wab_diag_question = false;
-            LOG(LOG_INFO, "CLIENT >> answer_question bot_right");
+//             LOG(LOG_INFO, "CLIENT >> answer_question bot_right");
 
         }
     }
@@ -3118,8 +3118,6 @@ public:
                                             , time
                                             , this->info.width
                                             , this->info.height
-                                            , this->info.bpp
-                                            , this->info.bpp
                                             , ini.get<cfg::video::record_tmp_path>().c_str()
                                             , ini.get<cfg::video::record_tmp_path>().c_str()
                                             , 1

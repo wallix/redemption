@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
         front.clear_channels();
         NullAuthentifier authentifier;
-        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message);
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
         RED_CHECK(true);
 
 
@@ -481,7 +481,7 @@ RED_AUTO_TEST_CASE(TestFront2)
         front.clear_channels();
 
         NullAuthentifier authentifier;
-        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message);
+        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
          RED_CHECK(true);
 
 

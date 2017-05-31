@@ -881,6 +881,7 @@ int main(int argc, char** argv){
                                  , mod_rdp_params
                                  , authentifier
                                  , report_message
+                                 , ini
                                  );
 
                 front._to_server_sender._callback = mod;

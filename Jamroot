@@ -796,6 +796,7 @@ test-canonical core/RDP/ServerRedirection.hpp ;
 test-canonical core/RDP/autoreconnect.hpp ;
 test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/clipboard.hpp ;
+test-canonical core/RDPEA/audio_output.hpp ;
 test-canonical core/WMF/MetaFileFormat.hpp ;
 test-canonical core/RDP/fastpath.hpp : <library>crypto ;
 test-canonical core/RDP/lic.hpp : <library>crypto ;
