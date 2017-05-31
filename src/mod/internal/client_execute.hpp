@@ -1959,7 +1959,10 @@ protected:
             cepdu.log(LOG_INFO);
         }
 
-        if (::strcasecmp(cepdu.ExeOrFile(), DUMMY_REMOTEAPP)) {
+        const char * exe_of_file = cepdu.ExeOrFile();
+
+        if (::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
+            (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
             this->client_execute_flags       = cepdu.Flags();
             this->client_execute_exe_or_file = cepdu.ExeOrFile();
             this->client_execute_working_dir = cepdu.WorkingDir();

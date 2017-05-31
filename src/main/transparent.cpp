@@ -298,7 +298,7 @@ int main(int argc, char * argv[]) {
 
             NullAuthentifier authentifier;
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, timeobj, mod_rdp_params, authentifier, report_message);
+                        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

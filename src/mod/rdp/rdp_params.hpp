@@ -21,18 +21,25 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/translation.hpp"
+#include "configs/config_access.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "mod/rdp/rdp_log.hpp"
+#include "utils/log.hpp"
+#include "utils/translation.hpp"
 
-#include <string>
 #include <chrono>
+#include <string>
 
 class ClientExecute;
 class Transport;
 class Theme;
 class Font;
+
+using ModRdpVariables = vcfg::variables<
+    vcfg::var<cfg::context::auth_notify,                       vcfg::accessmode::set>,
+    vcfg::var<cfg::context::auth_notify_rail_exec_flags,       vcfg::accessmode::set>,
+    vcfg::var<cfg::context::auth_notify_rail_exec_exe_or_file, vcfg::accessmode::set>
+>;
 
 struct ModRDPParams {
     const char * target_user;
