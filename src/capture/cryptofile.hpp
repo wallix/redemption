@@ -135,19 +135,21 @@ private:
         reverse_iterator const first(derivator.end());
         reverse_iterator const last(derivator.begin());
         reverse_iterator const p = std::find(first, last, '.');
-        if (p != last && 0 != strcmp(reinterpret_cast<char const*>(p.base()), "mwrm"))
-        {
-            auto const ext_len = derivator.end() - p.base();
-            auto const normalize_derivator_len = derivator.size() - ext_len + 4;
-            auto const prefix_len = derivator.size() - ext_len;
-            normalize_derivator = std::make_unique<uint8_t[]>(normalize_derivator_len + 1);
-            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
-            memcpy(normalize_derivator.get() + prefix_len, "mwrm", 5);
+        constexpr auto ext = cstr_array_view(".mwrm");
+        if (derivator.end()-p.base() != ext.size() - 1
+         || !std::equal(
+             p.base(), p.base() + ext.size() - 1,
+             reinterpret_cast<uint8_t const*>(ext.data() + 1)
+        )) {
+            auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();
+            auto const new_len = prefix_len + ext.size();
 
-            derivator = array_view_const_u8{
-                normalize_derivator.get(),
-                normalize_derivator.get() + normalize_derivator_len
-            };
+            normalize_derivator = std::make_unique<uint8_t[]>(new_len + 1);
+            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
+            memcpy(normalize_derivator.get() + prefix_len, ext.data(), ext.size());
+            normalize_derivator[new_len] = 0;
+
+            derivator = array_view_const_u8{normalize_derivator.get(), new_len};
         }
 
         return derivator;

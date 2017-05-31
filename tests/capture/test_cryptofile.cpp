@@ -23,8 +23,8 @@
 #define RED_TEST_MODULE TestVerifier
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "capture/cryptofile.hpp"
 
@@ -93,6 +93,11 @@ RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
     cctx.get_derived_key(trace_key, cstr_array_view("abcdef.log"));
     RED_CHECK(g_trace_key_ob.visited);
     RED_CHECK_EQ(g_trace_key_ob.key, "abcdef.mwrm");
+
+    g_trace_key_ob.reset();
+    cctx.get_derived_key(trace_key, cstr_array_view("abcdefghi"));
+    RED_CHECK(g_trace_key_ob.visited);
+    RED_CHECK_EQ(g_trace_key_ob.key, "abcdefghi.mwrm");
 
     cctx.old_encryption_scheme = false;
 
