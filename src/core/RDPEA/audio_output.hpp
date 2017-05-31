@@ -965,7 +965,7 @@ struct WaveConfirmPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 8;   // wTimeStamp(2)) + cBlockNo(1) + bPad(1)
+        const unsigned expected = 4;   // wTimeStamp(2) + cBlockNo(1) + bPad(1)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated WaveConfirmPDU (0): expected=%u remains=%zu",
