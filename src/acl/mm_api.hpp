@@ -58,5 +58,5 @@ public:
     virtual void stop_record() {}
     virtual void check_module() {}
 
-    virtual rdp_api* get_rdp_api() const { return nullptr; };
+    virtual rdp_api* get_rdp_api() const { return nullptr; }
 };
