@@ -324,7 +324,7 @@ public:
                 ct.send(" ", 1);
                 ct.send(extra, strlen(extra));
             }
-            ct.send("\n", 1);
+            ct.send("\"\n", 1);
         }
 
         /* Log to syslog */
