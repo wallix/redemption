@@ -174,6 +174,8 @@ class Sesman():
 
         self.shared[u'recording_started'] = u'False'
 
+        self.shared[u'auth_notify'] = u''
+
         self.internal_target = False
         self.check_session_parameters = False
 
@@ -249,6 +251,8 @@ class Sesman():
             u'formflag': 0,
 
             u'recording_started': False,
+
+            u'auth_notify': u'',
 
             u'load_balance_info': u''
             })
@@ -1508,6 +1512,34 @@ class Sesman():
                                 self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data();
+
+                                if self.shared.get(u'auth_notify'):
+                                    if self.shared.get(u'auth_notify') == u'rail_exec':
+                                        Logger().info(u"rail_exec flags=\"%s\" exe_of_file=\"%s\"" % \
+                                            (self.shared.get(u'auth_notify_rail_exec_flags'), \
+                                             self.shared.get(u'auth_notify_rail_exec_exe_or_file')))
+
+                                        # self.send_data({
+                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
+                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
+                                        #         u'auth_command_rail_exec_exe_or_file':          u'||CMD',
+                                        #         u'auth_command_rail_exec_working_dir':          u'%HOMEDRIVE%%HOMEPATH%',
+                                        #         u'auth_command_rail_exec_arguments':            u'/K ping google.fr',
+                                        #         u'auth_command_rail_exec_exec_result':          u'0',   # RAIL_EXEC_S_OK
+                                        #         u'auth_command':                                u'rail_exec'
+                                        #     })
+
+                                        # self.send_data({
+                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
+                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
+                                        #         u'auth_command_rail_exec_exec_result':          u'3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
+                                        #         u'auth_command':                                u'rail_exec'
+                                        #     })
+
+                                        self.shared[u'auth_notify_rail_exec_flags']       = u''
+                                        self.shared[u'auth_notify_rail_exec_exe_or_file'] = u''
+
+                                    self.shared[u'auth_notify'] = u''
 
                                 if self.shared.get(u'recording_started') == u'True':
                                     if not trace_written:
