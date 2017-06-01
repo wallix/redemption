@@ -24,6 +24,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"

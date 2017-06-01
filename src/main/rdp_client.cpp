@@ -25,6 +25,7 @@
 
 #define LOGPRINT
 
+#include "configs/config.hpp"
 #include "front/client_front.hpp"
 
 #include "core/client_info.hpp"

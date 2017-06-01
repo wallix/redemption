@@ -24,6 +24,7 @@
 #pragma once
 
 #include "configs/io.hpp"
+#include "configs/config_access.hpp"
 
 #include "core/authid.hpp"
 
@@ -32,20 +33,17 @@
 #include "core/defines.hpp"
 #include "core/font.hpp"
 #include "utils/log.hpp"
+#include "utils/translation.hpp"
 
 #include <string>
 #include <chrono>
-#include <stdexcept>
 
 #include <cstdint>
 #include <cassert>
 #include <cstdio>
 
-namespace configs {
-    template<class... Ts>
-    struct Pack : Ts...
-    { static const std::size_t size = sizeof...(Ts); };
-
+namespace configs
+{
     template<class Base, template<class> class Tpl, class Pack>
     struct PointerPackArray;
 
@@ -83,16 +81,9 @@ namespace configs {
     {};
 }
 
-// members
-//@{
-#include "core/font.hpp"
-#include "utils/theme.hpp"
-#include "utils/redirection_info.hpp"
-//@}
+#include "configs/config_variables.hpp"
 
-#include "configs/autogen/enums.hpp"
 #include "configs/autogen/enums_func_ini.hpp"
-#include "configs/autogen/variables_configuration.hpp"
 
 #include "utils/fileutils.hpp" // file_exist
 
@@ -507,3 +498,47 @@ private:
 };
 
 #include "configs/autogen/set_value.tcc"
+
+
+inline Translation::language_t language(Inifile const & ini)
+{
+    return static_cast<Translation::language_t>(
+        ini.template get<cfg::translation::language>());
+}
+
+namespace vcfg
+{
+    template<class... Cfg>
+    Translation::language_t language(variables<Cfg...> const & vars) {
+        return ::language(vars.template get<cfg::translation::language>());
+    }
+}
+
+using vcfg::language;
+
+inline const char * Translation::translate(trkeys::TrKey_password k) const
+{
+    if (this->ini) {
+        switch (this->lang) {
+            case Translation::EN: {
+                auto & s = this->ini->template get<cfg::translation::password_en>();
+                if (!s.empty()) {
+                    return s.c_str();
+                }
+            }
+            break;
+            case Translation::FR: {
+                auto & s = this->ini->template get<cfg::translation::password_fr>();
+                if (!s.empty()) {
+                    return s.c_str();
+                }
+            }
+            break;
+            case Translation::MAX_LANG:
+                assert(false);
+                break;
+        }
+    }
+
+    return k.translations[this->lang];
+}
