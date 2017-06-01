@@ -2473,6 +2473,8 @@ public:
         } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
 
 
+        msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
+
             if (this->sound_qt->wave_data_to_vait) {
                 LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
                 this->sound_qt->wave_data_to_vait -= chunk.in_remain();
@@ -2507,6 +2509,9 @@ public:
                                                   );
 
                     LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                    msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+                    header_out.log();
+                    wc.log();
                 }
 
             } else {
@@ -2518,8 +2523,11 @@ public:
                     case rdpsnd::SNDC_FORMATS:
                         {
                         LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+
                         rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                         safsvh.receive(chunk);
+                        header.log();
+                        safsvh.log();
 
                         StaticOutStream<1024> out_stream;
 
@@ -2538,6 +2546,7 @@ public:
                         for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
                             rdpsnd::AudioFormat format;
                             format.receive(chunk);
+                            format.log();
 
                             if (format.wFormatTag == rdpsnd::WAVE_FORMAT_PCM) {
                                 format.emit(out_stream);
@@ -2559,6 +2568,9 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+                        msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+                        header_out.log();
+                        cafvh.log();
 
                         StaticOutStream<32> quality_stream;
 
@@ -2578,14 +2590,20 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
+                        header_out.log();
+                        qm.log();
                         }
                         break;
 
                     case rdpsnd::SNDC_TRAINING:
                         {
                         LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+
                         rdpsnd::TrainingPDU train;
                         train.receive(chunk);
+                        header.log();
+                        train.log();
 
                         StaticOutStream<32> out_stream;
 
@@ -2593,7 +2611,7 @@ public:
                         header_quality.emit(out_stream);
 
                         rdpsnd::TrainingConfirmPDU train_conf(train.wTimeStamp, train.wPackSize);
-                        train.emit(out_stream);
+                        train_conf.emit(out_stream);
 
                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -2605,6 +2623,9 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+                        header_quality.log();
+                        train_conf.log();
                         }
                         break;
 
@@ -2616,6 +2637,8 @@ public:
 
                         rdpsnd::WaveInfoPDU wi;
                         wi.receive(chunk);
+                        header.log();
+                        wi.log();
 
                         this->sound_qt->last_wTimeStamp = wi.wTimeStamp;
                         this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;
@@ -2669,7 +2692,7 @@ public:
 
             int len = chunk.in_uint32_le();
             std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
-            LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
+//             LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
 
             if        (msg == std::string("ConfirmationPixelColor=White")) {
                 this->wab_diag_question = true;
@@ -2680,9 +2703,9 @@ public:
                 this->answer_question(0xff000000);
                 this->asked_color = 0xff000000;
             } else {
-                if (msg.substr(0, 8) == std::string("Duration=")) {
-                    //LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
-                }
+                //if (msg.substr(0, 8) == std::string("Duration=")) {
+                    LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
+                //}
             }
         }
     }
