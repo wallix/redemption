@@ -115,8 +115,8 @@ public:
     void set_master_derivator(const_byte_array derivator)
     {
         if ((this->master_key_loaded || this->master_derivator.size())
-         && (this->master_derivator.size() != derivator.size()
-          || !std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
+         && not (this->master_derivator.size() == derivator.size()
+          && std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
         )) {
             LOG(LOG_ERR, "CryptoContext: master derivator is already defined");
             throw Error(ERR_WRM_INVALID_INIT_CRYPT);
@@ -127,7 +127,7 @@ public:
 private:
     // force extension to "mwrm"
     static array_view_const_u8 get_normalized_derivator(
-        std::unique_ptr<uint8_t[]> & normalize_derivator,
+        std::unique_ptr<uint8_t[]> & normalized_derivator,
         const_byte_array derivator
     )
     {
@@ -144,12 +144,12 @@ private:
             auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();
             auto const new_len = prefix_len + ext.size();
 
-            normalize_derivator = std::make_unique<uint8_t[]>(new_len + 1);
-            memcpy(normalize_derivator.get(), derivator.data(), prefix_len);
-            memcpy(normalize_derivator.get() + prefix_len, ext.data(), ext.size());
-            normalize_derivator[new_len] = 0;
+            normalized_derivator = std::make_unique<uint8_t[]>(new_len + 1);
+            memcpy(normalized_derivator.get(), derivator.data(), prefix_len);
+            memcpy(normalized_derivator.get() + prefix_len, ext.data(), ext.size());
+            normalized_derivator[new_len] = 0;
 
-            derivator = array_view_const_u8{normalize_derivator.get(), new_len};
+            return array_view_const_u8{normalized_derivator.get(), new_len};
         }
 
         return derivator;

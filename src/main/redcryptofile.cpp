@@ -303,7 +303,6 @@ int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path,
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    handle->cctxw.set_master_derivator_from_file_name(path);
     CHECK_NOTHROW(handle->out_crypto_transport.open(path, groupid), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
