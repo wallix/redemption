@@ -331,7 +331,7 @@ inline const EVP_CIPHER * get_cipher_and_prepare_key(
     return cipher;
 }
 
-struct CipherContext
+struct CipherContext : noncopyable
 {
     /// init or reinit
     void init() noexcept

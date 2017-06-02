@@ -102,12 +102,13 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         "authenticated\n!True\n"
     ;
 
+    Fstat fstat;
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
@@ -213,12 +214,13 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     ;
 
+    Fstat fstat;
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
@@ -347,12 +349,13 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "keepalive\n!True\n"
     ;
 
+    Fstat fstat;
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
 
     TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;

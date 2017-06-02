@@ -54,16 +54,17 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     Inifile ini;
     LogTransport trans;
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
     ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
     // try exception
     CheckTransport transexcpt("", 0);
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
@@ -84,11 +85,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
 
     GeneratorTransport trans(stream.get_data(), stream.get_offset());
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -125,7 +127,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -142,11 +144,12 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
 
     GeneratorTransport trans(s.data(), s.size());
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
     RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -190,10 +193,11 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     CheckTransport trans(u.get(), big_stream.get_offset());
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -233,10 +237,11 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     GeneratorTransport trans(u.get(), big_stream.get_offset());
 
     LCGRandom rnd(0);
+    Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, to_verbose_flags(0));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);

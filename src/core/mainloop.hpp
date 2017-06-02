@@ -28,8 +28,9 @@
 
 class CryptoContext;
 class Random;
+class Fstat;
 class Inifile;
 
-void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, unsigned uid, unsigned gid, std::string config_filename);
-void redemption_new_session(CryptoContext & cctx, Random & rnd, char const * config_filename);
+void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat, unsigned uid, unsigned gid, std::string config_filename);
+void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, char const * config_filename);
 

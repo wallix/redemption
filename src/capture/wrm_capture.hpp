@@ -55,32 +55,50 @@
 class WrmFGen
 {
     char         path[1024];
+    char         hash_path[1024];
     char         filename[1012];
     char         extension[12];
-    mutable char filename_gen[1024];
+    mutable char filename_gen[2048];
+    mutable char hash_filename_gen[2048];
 
 public:
-    WrmFGen(const char * const prefix, const char * const filename, const char * const extension)
+    WrmFGen(
+        const char * const prefix,
+        const char * const hash_prefix,
+        const char * const filename,
+        const char * const extension)
     {
         if (strlen(prefix) > sizeof(this->path) - 1
+         || strlen(hash_prefix) > sizeof(this->hash_path) - 1
          || strlen(filename) > sizeof(this->filename) - 1
          || strlen(extension) > sizeof(this->extension) - 1) {
             throw Error(ERR_TRANSPORT);
         }
 
         strcpy(this->path, prefix);
+        strcpy(this->hash_path, hash_prefix);
         strcpy(this->filename, filename);
         strcpy(this->extension, extension);
 
         this->filename_gen[0] = 0;
     }
 
-    const char * get(unsigned count) const
+    const char * get_filename(unsigned count) const
     {
-        std::snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                , this->filename, count, this->extension);
+        std::snprintf(
+            this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s",
+            this->path, this->filename, count, this->extension);
         return this->filename_gen;
     }
+
+    const char * get_hash_filename(unsigned count) const
+    {
+        std::snprintf(
+            this->hash_filename_gen, sizeof(this->hash_filename_gen), "%s%s-%06u%s",
+            this->hash_path, this->filename, count, this->extension);
+        return this->hash_filename_gen;
+    }
+
 };
 
 
@@ -97,10 +115,11 @@ struct MetaFilename
 };
 
 
-struct MetaSeqBuf
+class MetaSeqBuf
 {
-    CryptoContext & cctx;
-    Random & rnd;
+    OutCryptoTransport meta_buf_encrypt_transport;
+    OutCryptoTransport wrm_filter_encrypt_transport;
+
     Fstat & fstat;
 
     char current_filename_[1024];
@@ -114,86 +133,6 @@ struct MetaSeqBuf
     time_t stop_sec_;
 
     bool with_checksum;
-    bool with_encryption;
-    OutCryptoTransport meta_buf_encrypt_transport;
-    OutCryptoTransport wrm_filter_encrypt_transport;
-
-    void next_meta_file(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {
-        const char * filename = this->filegen_.get(this->num_file_);
-        this->current_filename_[0] = 0;
-
-        this->num_file_ ++;
-
-        struct stat stat;
-        if (fstat.stat(filename, stat)){
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
-        }
-
-        // 8Ko for a filename with expanded slash should be enough
-        // or we will truncate filename at buffersize
-        char tmp[8192];
-        size_t j = 0;
-        for (size_t i = 0; (filename[i]) && (j < sizeof(tmp)-2) ; i++){
-            switch (filename[i]){
-            case '\\':
-            case ' ':
-                tmp[j++] = '\\';
-                REDEMPTION_CXX_FALLTHROUGH;
-            default:
-                tmp[j++] = filename[i];
-            break;
-            }
-        }
-        tmp[j] = 0;
-
-        using ull = unsigned long long;
-        using ll = long long;
-
-        char mes[ sizeof(tmp) +
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            "%s %lld %llu %lld %lld %llu %lld %lld %lld",
-            tmp,
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-
-        len += std::sprintf(
-            mes + len,
-            " %lld %lld",
-            ll(this->start_sec_),
-            ll(this->stop_sec_+1)
-        );
-        char * p = mes + len;
-
-        if (this->with_checksum) {
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
-                }
-            };
-            hexdump(qhash);
-            hexdump(fhash);
-        }
-        *p++ = '\n';
-
-        this->meta_buf_encrypt_transport.send(mes, p-mes);
-        this->start_sec_ = this->stop_sec_+1;
-    }
 
 public:
     explicit MetaSeqBuf(
@@ -201,8 +140,8 @@ public:
         bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
-        ReportError report_error,
         Fstat & fstat,
+        ReportError report_error,
         time_t start_sec,
         const char * const hash_prefix,
         const char * const prefix,
@@ -210,11 +149,11 @@ public:
         const char * const extension,
         const int groupid
     )
-    : cctx(cctx)
-    , rnd(rnd)
+    : meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd, fstat, report_error)
+    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd, fstat, report_error)
     , fstat(fstat)
     , current_filename_{}
-    , filegen_(prefix, filename, extension)
+    , filegen_(prefix, hash_prefix, filename, extension)
     , num_file_(0)
     , groupid_(groupid)
     , mf_(prefix, filename)
@@ -222,16 +161,16 @@ public:
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
     , with_checksum(with_checksum)
-    , with_encryption(with_encryption)
-    , meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd, report_error)
-    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd, report_error)
     {
         //LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
     }
 
     void open(uint16_t width, uint16_t height)
     {
-        this->meta_buf_encrypt_transport.open(this->mf_.filename, S_IRUSR | S_IRGRP | S_IWUSR);
+        this->meta_buf_encrypt_transport.open(
+            this->mf_.filename,
+            this->hf_.filename,
+            S_IRUSR | S_IRGRP | S_IWUSR);
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
         unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
@@ -246,8 +185,9 @@ public:
     void write(const uint8_t * data, size_t len)
     {
         if (!this->wrm_filter_encrypt_transport.is_open()) {
-            const char * filename = this->filegen_.get(this->num_file_);
-            this->wrm_filter_encrypt_transport.open(filename, this->groupid_);
+            const char * filename = this->filegen_.get_filename(this->num_file_);
+            const char * hash_filename = this->filegen_.get_hash_filename(this->num_file_);
+            this->wrm_filter_encrypt_transport.open(filename, hash_filename, this->groupid_);
         }
         this->wrm_filter_encrypt_transport.send(data, len);
     }
@@ -255,10 +195,7 @@ public:
     bool next()
     {
         if (this->wrm_filter_encrypt_transport.is_open()) {
-            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            this->wrm_filter_encrypt_transport.close(qhash, fhash);
-            this->next_meta_file(qhash, fhash);
+            this->next_meta_file();
             return true;
         }
         return false;
@@ -267,108 +204,51 @@ public:
     int close()
     {
         if (this->wrm_filter_encrypt_transport.is_open()) {
-            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            this->wrm_filter_encrypt_transport.close(qhash, fhash);
-            this->next_meta_file(qhash, fhash);
+            this->next_meta_file();
         }
 
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
         uint8_t fhash[MD_HASH::DIGEST_LENGTH];
 
         this->meta_buf_encrypt_transport.close(qhash, fhash);
-
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
-        char filename[2048] = {};
-
-        canonical_path(
-            this->mf_.filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
-
-//        LOG(LOG_ERR, "Writing hash file to %s", this->hf_.filename);
-
-        OutCryptoTransport hash_buf_encrypt_transport(
-            this->with_encryption, false, this->cctx, this->rnd,
-            this->meta_buf_encrypt_transport.get_report_error());
-        hash_buf_encrypt_transport.open(this->hf_.filename, S_IRUSR|S_IRGRP);
-        char header[] = "v2\n\n\n";
-        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(header), sizeof(header)-1);
-
-        struct stat stat;
-        int err = fstat.stat(this->mf_.filename, stat);
-        if (err) {
-            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
-                this->hf_.filename, err);
-            return 1;
-        }
-
-        // 8Ko for a filename with expanded slash should be enough
-        // or we will truncate filename at buffersize
-        char tmp[8192];
-        size_t j = 0;
-        for (size_t i = 0; (filename[i]) && (j < sizeof(tmp)-2) ; i++){
-            switch (filename[i]){
-            case '\\':
-            case ' ':
-                tmp[j++] = '\\';
-                REDEMPTION_CXX_FALLTHROUGH;
-            default:
-                tmp[j++] = filename[i];
-            break;
-            }
-        }
-        tmp[j] = 0;
-
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[ sizeof(tmp) +
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            "%s %lld %llu %lld %lld %llu %lld %lld %lld",
-            tmp,
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
-
-        char * p = mes + len;
-        if (this->with_checksum) {
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
-                }
-            };
-            hexdump(qhash);
-            hexdump(fhash);
-        }
-        *p++ = '\n';
-
-        hash_buf_encrypt_transport.send(reinterpret_cast<uint8_t*>(mes), p-mes);
-        // qhash and fhash for hash_buf_encrypt_transport won't be used
-        hash_buf_encrypt_transport.close(qhash, fhash);
         return 0;
     }
 
     void update_sec(time_t sec)
     { this->stop_sec_ = sec; }
+
+private:
+    void next_meta_file()
+    {
+        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+
+        this->wrm_filter_encrypt_transport.close(qhash, fhash);
+
+        const char * filename = this->filegen_.get_filename(this->num_file_);
+        this->current_filename_[0] = 0;
+
+        this->num_file_ ++;
+
+        struct stat stat;
+        if (fstat.stat(filename, stat)){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+
+        OutBufferHashLineCtx buf;
+
+        buf.write_filename(filename);
+        buf.write_stat(stat);
+        buf.write_start_and_stop(this->start_sec_, this->stop_sec_);
+        if (this->with_checksum) {
+            buf.write_hashs(qhash, fhash);
+        }
+        buf.write_newline();
+
+        this->meta_buf_encrypt_transport.send(buf.mes, buf.len);
+
+        this->start_sec_ = this->stop_sec_+1;
+    }
 };
 
 
@@ -389,8 +269,9 @@ struct wrmcapture_OutMetaSequenceTransport : Transport
         const int groupid,
         ReportMessageApi * report_message)
     : buf(
-        with_encryption, with_checksum, cctx, rnd, report_error_from_reporter(report_message),
-        fstat, now.tv_sec, hash_path, path, basename, ".wrm", groupid)
+        with_encryption, with_checksum, cctx, rnd, fstat,
+        report_error_from_reporter(report_message),
+        now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
         this->buf.open(width, height);
     }

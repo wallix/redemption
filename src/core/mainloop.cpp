@@ -159,7 +159,7 @@ REDEMPTION_DIAGNOSTIC_POP
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-void redemption_new_session(CryptoContext & cctx, Random & rnd, char const * config_filename)
+void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, char const * config_filename)
 {
     char text[256];
     char source_ip[256];
@@ -225,7 +225,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, char const * con
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
-        Session session(sck, ini, cctx, rnd);
+        Session session(sck, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -240,11 +240,11 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, char const * con
 
 }
 
-void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, unsigned uid, unsigned gid, std::string config_filename)
+void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat, unsigned uid, unsigned gid, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(cctx, rnd, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(cctx, rnd, fstat, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
     REDEMPTION_DIAGNOSTIC_PUSH
