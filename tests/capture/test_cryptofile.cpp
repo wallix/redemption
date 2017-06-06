@@ -97,7 +97,12 @@ RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
     g_trace_key_ob.reset();
     cctx.get_derived_key(trace_key, cstr_array_view("abcdefghi"));
     RED_CHECK(g_trace_key_ob.visited);
-    RED_CHECK_EQ(g_trace_key_ob.key, "abcdefghi.mwrm");
+    RED_CHECK_EQ(g_trace_key_ob.key, "abcdefghi");
+
+    g_trace_key_ob.reset();
+    cctx.get_derived_key(trace_key, cstr_array_view("abcdefghi.xxx"));
+    RED_CHECK(g_trace_key_ob.visited);
+    RED_CHECK_EQ(g_trace_key_ob.key, "abcdefghi.xxx");
 
     cctx.old_encryption_scheme = false;
 
