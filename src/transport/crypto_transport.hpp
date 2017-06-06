@@ -29,7 +29,6 @@
 #include "utils/genfstat.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte.hpp"
-#include "utils/sugar/iter.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 #include <memory>
@@ -748,14 +747,14 @@ struct OutBufferHashLineCtx
     }
 
     void write_hashs(
-        uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH],
-        uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+        uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
+        uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         char * p = this->mes + this->len;
 
-        auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
+        auto hexdump = [&p](uint8_t const (&hash)[MD_HASH::DIGEST_LENGTH]) {
             *p++ = ' ';                // 1 octet
-            for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
+            for (unsigned c : hash) {
                 sprintf(p, "%02x", c); // 64 octets (hash)
                 p += 2;
             }
@@ -929,10 +928,12 @@ public:
             this->tmpname[0] = 0;
         }
         this->out_file.close();
-        this->create_hash_file();
+        this->create_hash_file(qhash, fhash);
     }
 
-    void create_hash_file()
+    void create_hash_file(
+        uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
+        uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         ocrypto hash_encrypter(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
         OutFileTransport hash_out_file(unique_fd(::open(
@@ -962,9 +963,6 @@ public:
         constexpr char header[] = "v2\n\n\n";
         this->send_data(cbyte_ptr(header), sizeof(header)-1, hash_encrypter, hash_out_file);
 
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-
         char path[1024] = {};
         char basename[1024] = {};
         char extension[256] = {};
@@ -989,6 +987,8 @@ public:
 
         // close
         {
+            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
             const ocrypto::Result res = hash_encrypter.close(qhash, fhash);
             hash_out_file.send(res.buf.data(), res.buf.size());
             hash_out_file.close();
