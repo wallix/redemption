@@ -49,7 +49,7 @@
 #include "utils/bitmap_shrink.hpp"
 
 #include "test_only/lcg_random.hpp"
-
+#include "test_only/fake_stat.hpp"
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -102,14 +102,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
-        struct FakeFstat : Fstat
-        {
-            int stat(const char*, struct ::stat & stat) override
-            {
-                stat = {};
-                return 0;
-            }
-        } fstat;
+        struct FakeFstat fstat;
         CryptoContext cctx;
 
         // TODO remove this after unifying capture interface

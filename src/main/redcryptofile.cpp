@@ -104,10 +104,12 @@ struct CryptoContextWrapper
 {
     CryptoContext cctx;
 
-    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_encryption_scheme = false, int one_shot_encryption_scheme = false)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
+        cctx.old_encryption_scheme = old_encryption_scheme;
+        cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
     }
 
     void set_master_derivator_from_file_name(char const * filename)
@@ -214,8 +216,11 @@ struct RedCryptoReaderHandle
 
     RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
                         , get_hmac_key_prototype * hmac_fn
-                        , get_trace_key_prototype * trace_fn)
-    : cctxw(hmac_fn, trace_fn)
+                        , get_trace_key_prototype * trace_fn
+                        , int old_encryption_scheme = false
+                        , int one_shot_encryption_scheme = false
+                        )
+    : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
     , in_crypto_transport(cctxw.cctx, encryption)
     {}
 
@@ -373,6 +378,7 @@ int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, 
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(return int(handle->in_crypto_transport.partial_read(buffer, len)), ERR_TRANSPORT_READ_FAILED);
 }
+
 
 int redcryptofile_reader_close(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
