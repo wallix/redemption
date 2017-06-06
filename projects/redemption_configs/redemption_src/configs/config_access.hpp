@@ -21,11 +21,16 @@
 #ifndef REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 #define REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 
-#include "config.hpp"
+#include "configs/config_variables.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/translation.hpp"
 
-#include <type_traits>
+// #include <type_traits>
+#include <utility>
+
+
+class Inifile;
+
 
 namespace vcfg {
 
@@ -106,14 +111,6 @@ public:
     }
 };
 
-
-template<class... Cfg>
-Translation::language_t language(variables<Cfg...> const & vars) {
-    return ::language(vars.template get<cfg::translation::language>());
 }
-
-}
-
-using vcfg::language;
 
 #endif

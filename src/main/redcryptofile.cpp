@@ -160,9 +160,9 @@ struct RedCryptoWriterHandle
         RandomType random_type,
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
-    : cctxw(hmac_fn, trace_fn)
-    , random_wrapper(random_type)
-    , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd)
+    : random_wrapper(random_type)
+    , cctxw(hmac_fn, trace_fn)
+    , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd, fstat)
     {}
 
 private:
@@ -193,13 +193,12 @@ private:
         } u;
     };
 
+    RandomWrapper random_wrapper;
+    Fstat fstat;
+
 public:
     CryptoContextWrapper cctxw;
 
-private:
-    RandomWrapper random_wrapper;
-
-public:
     HashHexArray qhashhex;
     HashHexArray fhashhex;
 
@@ -299,12 +298,11 @@ RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
     );
 }
 
-int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path, int groupid) {
+int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    handle->cctxw.set_master_derivator_from_file_name(path);
-    CHECK_NOTHROW(handle->out_crypto_transport.open(path, groupid), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(handle->out_crypto_transport.open(path, hashpath, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -342,7 +340,7 @@ char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
 
 RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
                                                 , get_hmac_key_prototype* hmac_fn
-                                                , get_trace_key_prototype* trace_fn) 
+                                                , get_trace_key_prototype* trace_fn)
 {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
@@ -358,11 +356,13 @@ RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
     ;
 }
 
-int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path) {
+int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->in_crypto_transport.open(path), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(
+        handle->in_crypto_transport.open(path, {derivator, strlen(derivator)}),
+        ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 

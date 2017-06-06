@@ -899,7 +899,7 @@ public:
                     "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
                         "WAB Application found. OriginalExeOrFile=\"%s\" "
                         "ExeOrFile=\"%s\"",
-                    serpdu.ExeOrFile(), iter->OriginalExeOrFile());
+                    iter->OriginalExeOrFile(), serpdu.ExeOrFile());
             }
 
             serpdu.ExeOrFile(iter->OriginalExeOrFile());
@@ -931,6 +931,8 @@ public:
         }
 
         if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+            REDASSERT(!is_auth_application);
+
             if (this->session_probe_channel) {
                 if (this->session_probe_stop_launch_sequence_notifier) {
                     this->session_probe_stop_launch_sequence_notifier->stop(serpdu.ExecResult() == RAIL_EXEC_S_OK);
@@ -984,8 +986,12 @@ public:
                 this->send_message_to_server(length, flags, out_s.get_data(),
                     length);
             }
+
+            return (!this->session_probe_channel);
         }
         else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+            REDASSERT(!is_auth_application);
+
             if (this->session_probe_channel) {
                 this->session_probe_channel->start_end_session_check();
             }
@@ -999,42 +1005,41 @@ public:
                 }
             }
 
-            if (is_auth_application) {
-                StaticOutStream<1024> out_s;
-                RAILPDUHeader header;
-                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC_RESULT);
-
-                serpdu.emit(out_s);
-
-                header.emit_end();
-
-                const size_t   length = out_s.get_offset();
-                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
-                                        | CHANNELS::CHANNEL_FLAG_LAST;
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags_,
-                        out_s.get_data(), length);
-                }
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
-                            "Send to client - Server Execute Result PDU");
-                    serpdu.log(LOG_INFO);
-                }
-
-                this->send_message_to_client(length, flags_, out_s.get_data(),
-                    length);
-
-
-                return false;
-            }
-
             return true;
         }
 
-        return false;
+        if (is_auth_application) {
+            StaticOutStream<1024> out_s;
+            RAILPDUHeader header;
+            header.emit_begin(out_s, TS_RAIL_ORDER_EXEC_RESULT);
+
+            serpdu.emit(out_s);
+
+            header.emit_end();
+
+            const size_t   length = out_s.get_offset();
+            const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                    | CHANNELS::CHANNEL_FLAG_LAST;
+            {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, length, flags_,
+                    out_s.get_data(), length);
+            }
+            if (bool(this->verbose & RDPVerbose::rail)) {
+                LOG(LOG_INFO,
+                    "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
+                        "Send to client - Server Execute Result PDU");
+                serpdu.log(LOG_INFO);
+            }
+
+            this->send_message_to_client(length, flags_, out_s.get_data(),
+                length);
+
+            return false;
+        }
+
+        return true;
     }
 
     bool process_server_get_application_id_response_pdu(uint32_t total_length,

@@ -24,6 +24,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"

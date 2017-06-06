@@ -46,7 +46,7 @@ extern "C"
     char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_writer_open(RedCryptoWriterHandle * handle, char const * path, int groupid);
+    int redcryptofile_writer_open(RedCryptoWriterHandle * handle, char const * path, char const * hashpath, int groupid);
 
     REDEMPTION_LIB_EXPORT
     int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
@@ -74,7 +74,7 @@ extern "C"
     char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path);
+    int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
 
     // < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT

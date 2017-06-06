@@ -21,22 +21,25 @@
 
 #pragma once
 
-#include "configs/config.hpp"
-#include "utils/log.hpp"
+#include "configs/autogen/enums.hpp" // Language
+
+#include <cassert>
+#include <type_traits>
+
 
 namespace trkeys
 {
-    struct TrTable { const char * translations[2]; };
+    struct TrKey { const char * translations[2]; };
 
 #define TR_PROTECTED_KV(name, en, fr) \
-    constexpr struct TrTable##_##name \
+    constexpr struct TrKey##_##name \
     { const char * translations[2]; } name{{en, fr}}
 
     TR_PROTECTED_KV(password, "Password", "Mot de passe");
 
 #undef TR_PROTECTED_KV
 
-#define TR_KV(name, en, fr) constexpr TrTable name{{en, fr}}
+#define TR_KV(name, en, fr) constexpr TrKey name{{en, fr}}
     TR_KV(login, "Login", "Login");
     TR_KV(diagnostic, "Diagnostic", "Diagnostic");
     TR_KV(connection_closed, "Connection closed", "Connexion fermée");
@@ -163,6 +166,7 @@ namespace trkeys
 #undef TR_KV
 }
 
+class Inifile;
 
 struct Translation
 {
@@ -200,49 +204,27 @@ public:
         this->ini = ini;
     }
 
-    const char * translate(trkeys::TrTable_password const & t) const
-    {
-        if (this->ini) {
-            switch (this->lang) {
-                case Translation::EN: {
-                    auto & s = this->ini->get<cfg::translation::password_en>();
-                    if (!s.empty()) {
-                        return s.c_str();
-                    }
-                }
-                break;
-                case Translation::FR: {
-                    auto & s = this->ini->get<cfg::translation::password_fr>();
-                    if (!s.empty()) {
-                        return s.c_str();
-                    }
-                }
-                break;
-                case Translation::MAX_LANG:
-                    assert(false);
-                    break;
-            }
-        }
+    // implementation in config.hpp
+    const char * translate(trkeys::TrKey_password k) const;
 
-        return t.translations[this->lang];
-    }
-
-    const char * translate(trkeys::TrTable const & t) const
+    const char * translate(trkeys::TrKey k) const
     {
-        return t.translations[this->lang];
+        return k.translations[this->lang];
     }
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
-static inline const char * TR(trkeys::TrTable_password const & t, Translation::language_t lang)
+
+inline const char * TR(trkeys::TrKey_password k, Translation::language_t lang)
 {
     TRANSLATIONCONF.set_lang(lang);
-    return TRANSLATIONCONF.translate(t);
+    return TRANSLATIONCONF.translate(k);
 }
-static inline const char * TR(trkeys::TrTable const & t, Translation::language_t lang)
+
+inline const char * TR(trkeys::TrKey k, Translation::language_t lang)
 {
     TRANSLATIONCONF.set_lang(lang);
-    return TRANSLATIONCONF.translate(t);
+    return TRANSLATIONCONF.translate(k);
 }
 
 struct Translator
@@ -251,12 +233,12 @@ struct Translator
       : lang(lang)
     {}
 
-    char const * operator()(trkeys::TrTable_password const & t) const
+    char const * operator()(trkeys::TrKey_password const & t) const
     {
         return TR(t, this->lang);
     }
 
-    char const * operator()(trkeys::TrTable const & t) const
+    char const * operator()(trkeys::TrKey const & t) const
     {
         return TR(t, this->lang);
     }
@@ -265,10 +247,10 @@ private:
     Translation::language_t lang;
 };
 
-inline Translation::language_t language(Inifile const & ini) {
-    return static_cast<Translation::language_t>(ini.get<cfg::translation::language>());
-}
+// implementation in config.hpp
+Translation::language_t language(Inifile const & ini);
 
-inline Translation::language_t language(Language lang) {
+inline Translation::language_t language(Language lang)
+{
     return static_cast<Translation::language_t>(lang);
 }

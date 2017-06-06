@@ -103,7 +103,7 @@ class Session
     Authentifier authentifier;
 
 public:
-    Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd)
+    Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : ini(ini)
         , perf_last_info_collect_time(0)
         , perf_pid(getpid())
@@ -397,7 +397,9 @@ public:
                                                     );
 
                                     // now is authentifier start time
-                                    this->acl_serial = new AclSerializer(ini, now, *this->auth_trans, cctx, rnd, to_verbose_flags(ini.get<cfg::debug::auth>()));
+                                    this->acl_serial = new AclSerializer(
+                                        ini, now, *this->auth_trans, cctx, rnd, fstat,
+                                        to_verbose_flags(ini.get<cfg::debug::auth>()));
                                     this->authentifier.set_acl_serial(this->acl_serial);
                                     this->auth_event = new wait_obj();
                                     signal = BACK_EVENT_NEXT;

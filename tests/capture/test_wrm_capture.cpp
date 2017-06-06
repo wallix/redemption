@@ -24,8 +24,8 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
-// #define LOGPRINT
+// #define LOGNULL
+#define LOGPRINT
 
 #include "utils/log.hpp"
 
@@ -69,10 +69,26 @@ void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t hei
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
-    ::unlink("./capture.mwrm");
-    ::unlink("/tmp/capture.mwrm");
+    const struct CheckFiles {
+        const char * filename;
+        int size;
+    } fileinfos[] = {
+        {"./capture-000000.wrm", 1646},
+        {"./capture-000001.wrm", 3508},
+        {"./capture-000002.wrm", 3463},
+        {"./capture-000003.wrm", -1},
+        {"./capture.mwrm", 288},
+        {"/tmp/capture-000000.wrm", 81},
+        {"/tmp/capture-000001.wrm", 81},
+        {"/tmp/capture-000002.wrm", 81},
+        {"/tmp/capture-000003.wrm", -1},
+        {"/tmp/capture.mwrm", 74},
+    };
+    for (auto const & d : fileinfos) {
+        unlink(d.filename);
+    }
 
-    RED_CHECK_NO_THROW(([]{
+    {
         // Timestamps are applied only when flushing
         timeval now;
         now.tv_usec = 0;
@@ -85,9 +101,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
-//         |GraphicToFile::Verbose::primary_orders)
-//         |GraphicToFile::Verbose::secondary_orders)
-//         |GraphicToFile::Verbose::bitmap_update)
+    //     |GraphicToFile::Verbose::primary_orders)
+    //     |GraphicToFile::Verbose::secondary_orders)
+    //     |GraphicToFile::Verbose::bitmap_update)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
@@ -168,31 +184,16 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-    })());
+    }
 
-
-    {
-        // TODO: we may have several mwrm sizes as it contains varying length numbers
-        // the right solution would be to inject predictable fstat in test environment
-
-        struct CheckFiles {
-            const char * filename;
-            int size;
-            int alt_size;
-        } fileinfos[] = {
-            {"./capture-000000.wrm", 1646, 0},
-            {"./capture-000001.wrm", 3508, 0},
-            {"./capture-000002.wrm", 3463, 0},
-            {"./capture-000003.wrm", -1, 0},
-            {"./capture.mwrm", 288, 285},
-        };
-        for (auto x : fileinfos) {
-            int fsize = filesize(x.filename);
-            if (x.alt_size != fsize) {
-                RED_CHECK_EQUAL(x.size, fsize);
-            }
-            ::unlink(x.filename);
-        }
+    for (auto x : fileinfos) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        ::unlink(x.filename);
     }
 }
 
@@ -388,41 +389,15 @@ inline char * wrmcapture_swrite_hash(char * p, uint8_t const * hash)
 //    );
 //}
 
-// TODO TEST do_recorder.cpp: dorecorder_write_filename(...)
 template<class Writer>
 int wrmcapture_write_filename(Writer & writer, const char * filename)
 {
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
+    OutBufferHashLineCtx buf;
+    buf.write_filename(filename);
 
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
+    ssize_t res = writer.write(buf.mes, buf.len);
+    if (res < static_cast<ssize_t>(buf.len)) {
+        return res < 0 ? res : 1;
     }
 
     return 0;
@@ -440,78 +415,17 @@ int wrmcapture_write_meta_file(
         return err;
     }
 
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
+    OutBufferHashLineCtx buf;
+    buf.write_filename(filename);
+    buf.write_stat(stat);
+    buf.write_start_and_stop(start_sec, stop_sec);
+    buf.write_newline();
 
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-
-    if (err) {
-        return err;
-    }
-
-    using ull = unsigned long long;
-    using ll = long long;
-    char mes[
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
-        2
-    ];
-    ssize_t len = std::sprintf(
-        mes,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-    len += std::sprintf(
-        mes + len,
-        " %lld %lld",
-        ll(start_sec),
-        ll(stop_sec)
-    );
-
-    char * p = mes + len;
-    *p++ = '\n';
-
-    ssize_t res = writer.write(mes, p-mes);
-
-    if (res < p-mes) {
+    ssize_t res = writer.write(buf.mes, buf.len);
+    if (res < static_cast<ssize_t>(buf.len)) {
         return res < 0 ? res : 1;
     }
+
     return 0;
 }
 
@@ -548,24 +462,24 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
     TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
 }
 
-//static int stat0(const char *restrict path, struct stat *restrict buf)
-
 struct TestFstat : Fstat
 {
-    static int stat0(const char * /* path */, struct stat * buf)
+    int stat(const char *, struct stat & st) override
     {
-        memset(buf, 0, sizeof(struct stat));
+        st = {};
         return 0;
-    }
-
-    int stat(const char * filename, struct stat & st) override
-    {
-        return this->stat0(filename, &st);
     }
 };
 
 RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
+    ::unlink("./xxx-000000.wrm");
+    ::unlink("./xxx-000001.wrm");
+    ::unlink("./xxx.mwrm");
+    ::unlink("./hash-xxx-000000.wrm");
+    ::unlink("./hash-xxx-000001.wrm");
+    ::unlink("./hash-xxx.mwrm");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -603,43 +517,9 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
     struct stat stat;
     RED_CHECK(!TestFstat{}.stat(meta_path, stat));
 
-    int err = wrmcapture_write_filename(meta_len_writer, filename);
-    if (!err) {
-        using ull = unsigned long long;
-        using ll = long long;
-        char mes[
-            (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-            (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
-            2
-        ];
-        ssize_t len = std::sprintf(
-            mes,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
-        );
+    wrmcapture_write_filename(meta_len_writer, filename);
+    meta_len_writer.len += 17; // " 0 0 0 0 0 0 0 0\n"
 
-        char * p = mes + len;
-        *p++ = '\n';
-
-        ssize_t res = meta_len_writer.write(mes, p-mes);
-
-        if (res < p-mes) {
-            err = res < 0 ? res : 1;
-        }
-        else {
-            err = 0;
-        }
-    }
-
-    RED_CHECK_EQUAL(err, 0);
     RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
     RED_CHECK_EQUAL(0, ::unlink(meta_hash_path));
 
@@ -653,11 +533,15 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
     RED_CHECK_EQUAL(10, filesize(file1));
     RED_CHECK_EQUAL(0, ::unlink(file1));
+    RED_CHECK_EQUAL(36, filesize("./hash-xxx-000000.wrm"));
+    RED_CHECK_EQUAL(0, ::unlink("./hash-xxx-000000.wrm"));
 
     const char * file2 = "./xxx-000001.wrm";
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1));
     RED_CHECK_EQUAL(5, filesize(file2));
     RED_CHECK_EQUAL(0, ::unlink(file2));
+    RED_CHECK_EQUAL(36, filesize("./hash-xxx-000001.wrm"));
+    RED_CHECK_EQUAL(0, ::unlink("./hash-xxx-000001.wrm"));
 
     RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
     RED_CHECK_EQUAL(0, ::unlink(meta_path));
@@ -666,6 +550,10 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
 RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
+    ::unlink("/tmp/xxx-000000.wrm");
+    ::unlink("/tmp/xxx-000001.wrm");
+    ::unlink("/tmp/xxx.mwrm");
+
     unsigned sec_start = 1352304810;
     {
         CryptoContext cctx;
@@ -723,4 +611,11 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     const char * meta_path = "./xxx.mwrm";
     RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
     RED_CHECK_EQUAL(0, ::unlink(meta_path));
+
+    RED_CHECK_EQUAL(166, filesize("/tmp/xxx-000000.wrm"));
+    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx-000000.wrm"));
+    RED_CHECK_EQUAL(166, filesize("/tmp/xxx-000001.wrm"));
+    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx-000001.wrm"));
+    RED_CHECK_EQUAL(160, filesize("/tmp/xxx.mwrm"));
+    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx.mwrm"));
 }

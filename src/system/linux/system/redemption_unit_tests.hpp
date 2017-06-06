@@ -31,7 +31,7 @@
 # define RED_CHECK_GT(a, b) (a) > (b)
 # define RED_CHECK_GE(a, b) (a) >= (b)
 # define RED_CHECK(a) (a)
-# define RED_CHECK_MESSAGE(a, iostream_expr) (a), ""
+# define RED_CHECK_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
 # define RED_CHECK_EQUAL_COLLECTIONS(a, b) (a) == (b)
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
@@ -47,7 +47,7 @@
 # define RED_REQUIRE_GT(a, b) (a) > (b)
 # define RED_REQUIRE_GE(a, b) (a) >= (b)
 # define RED_REQUIRE(a) (a)
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), ""
+# define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
 # define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) (a) == (b)
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 

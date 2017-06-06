@@ -26,6 +26,7 @@
 #include "transport/transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/sugar/iter.hpp"
@@ -485,7 +486,7 @@ private:
 };
 
 
-struct ocrypto
+struct ocrypto : noncopyable
 {
     struct Result {
         const_byte_array buf;
@@ -688,23 +689,117 @@ public:
     }
 };
 
+struct OutBufferHashLineCtx
+{
+    using ull = unsigned long long;
+    using ll = long long;
+
+    // 8Ko for a filename with expanded slash should be enough
+    // or we will truncate filename at buffersize
+    static const std::size_t tmp_filename_size = 8192;
+    char mes[
+        tmp_filename_size +
+        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
+        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
+        (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
+        2
+    ];
+    std::size_t len = 0;
+
+    void write_filename(char const * filename)
+    {
+        for (size_t i = 0; (filename[i]) && (this->len < tmp_filename_size-2) ; i++){
+            switch (filename[i]){
+            case '\\':
+            case ' ':
+                this->mes[this->len++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
+            default:
+                this->mes[this->len++] = filename[i];
+            break;
+            }
+        }
+    }
+
+    void write_stat(struct stat & stat)
+    {
+        this->len += std::sprintf(
+            this->mes + this->len,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+    }
+
+    void write_start_and_stop(time_t start, time_t stop)
+    {
+        this->len += std::sprintf(
+            this->mes + this->len,
+            " %lld %lld",
+            ll(start),
+            ll(stop+1)
+        );
+    }
+
+    void write_hashs(
+        uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH],
+        uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+    {
+        char * p = this->mes + this->len;
+
+        auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        hexdump(qhash);
+        hexdump(fhash);
+
+        this->len = p - this->mes;
+    }
+
+    void write_newline()
+    {
+        this->mes[this->len++] = '\n';
+    }
+};
 
 class OutCryptoTransport : public Transport
 {
-    bool with_checksum;
     ocrypto encrypter;
+    OutFileTransport out_file;
     char tmpname[2048];
     char finalname[2048];
-    OutFileTransport out_file;
+    std::string hash_filename;
+    bool with_encryption;
+    bool with_checksum;
+    CryptoContext & cctx;
+    Random & rnd;
+    Fstat & fstat;
+    int groupid;
+    std::vector<uint8_t> derivator;
+
 public:
     explicit OutCryptoTransport(
         bool with_encryption, bool with_checksum,
-        CryptoContext & cctx, Random & rnd,
+        CryptoContext & cctx, Random & rnd, Fstat & fstat,
         ReportError report_error = ReportError()
     ) noexcept
-    : with_checksum(with_checksum)
-    , encrypter(with_encryption, with_checksum, cctx, rnd)
+    : encrypter(with_encryption, with_checksum, cctx, rnd)
     , out_file(invalid_fd(), std::move(report_error))
+    , with_encryption(with_encryption)
+    , with_checksum(with_checksum)
+    , cctx(cctx)
+    , rnd(rnd)
+    , fstat(fstat)
     {
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
@@ -762,7 +857,7 @@ public:
         return this->out_file.is_open();
     }
 
-    void open(const char * const finalname, int groupid, const_byte_array derivator)
+    void open(const char * const finalname, const char * const hash_filename, int groupid, const_byte_array derivator)
     {
         // This should avoid double open, we do not want that
         if (this->is_open()){
@@ -772,6 +867,11 @@ public:
         // also ensure pathes are not to long, we will copy them in the object
         if (strlen(finalname) >= 2047-15){
             LOG(LOG_ERR, "OutCryptoTransport::open finalname oversize");
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        // basic compare filename
+        if (0 == strcmp(finalname, hash_filename)){
+            LOG(LOG_ERR, "OutCryptoTransport::open finalname and hash_filename are same");
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
@@ -793,17 +893,20 @@ public:
         }
 
         strcpy(this->finalname, finalname);
+        this->hash_filename = hash_filename;
+        this->derivator.assign(derivator.begin(), derivator.end());
+        this->groupid = groupid;
 
         ocrypto::Result res = this->encrypter.open(derivator);
         this->out_file.send(res.buf.data(), res.buf.size());
     }
 
     // derivator implicitly basename(finalname)
-    void open(const char * finalname, int groupid)
+    void open(const char * finalname, const char * const hash_filename, int groupid)
     {
         size_t base_len = 0;
         const char * base = basename_len(finalname, base_len);
-        this->open(finalname, groupid, {base, base_len});
+        this->open(finalname, hash_filename, groupid, {base, base_len});
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
@@ -826,19 +929,89 @@ public:
             this->tmpname[0] = 0;
         }
         this->out_file.close();
+        this->create_hash_file();
     }
 
-private:
+    void create_hash_file()
+    {
+        ocrypto hash_encrypter(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+        OutFileTransport hash_out_file(unique_fd(::open(
+            this->hash_filename.c_str(),
+            O_WRONLY | O_CREAT,
+            this->groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)));
+        if (!hash_out_file.is_open()){
+            int const err = errno;
+            LOG(LOG_ERR, "OutCryptoTransport::open: open failed hash file %s: %s", this->hash_filename, strerror(err));
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
+        }
+
+        struct stat stat;
+        int err = this->fstat.stat(this->finalname, stat);
+        if (err) {
+            LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+                this->hash_filename, err);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+
+        // open
+        {
+            const ocrypto::Result res = hash_encrypter.open(this->derivator);
+            hash_out_file.send(res.buf.data(), res.buf.size());
+        }
+
+        constexpr char header[] = "v2\n\n\n";
+        this->send_data(cbyte_ptr(header), sizeof(header)-1, hash_encrypter, hash_out_file);
+
+        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
+
+        canonical_path(
+            this->finalname,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
+
+        OutBufferHashLineCtx buf;
+        buf.write_filename(basename);
+        buf.write_filename(extension);
+        buf.write_stat(stat);
+        if (this->with_checksum) {
+            buf.write_hashs(qhash, fhash);
+        }
+        buf.write_newline();
+
+        this->send_data(cbyte_ptr(buf.mes), buf.len, hash_encrypter, hash_out_file);
+
+        // close
+        {
+            const ocrypto::Result res = hash_encrypter.close(qhash, fhash);
+            hash_out_file.send(res.buf.data(), res.buf.size());
+            hash_out_file.close();
+        }
+    }
+
     void do_send(const uint8_t * data, size_t len) override
     {
         if (not this->out_file.is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::do_send failed: file not opened (%s->%s)", this->tmpname, this->finalname);
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
+        this->send_data(data, len, this->encrypter, this->out_file);
+    }
+
+    inline static void send_data(
+        const uint8_t * data, size_t len,
+        ocrypto & encrypter, OutFileTransport & out_file)
+    {
         auto to_send = len;
         while (to_send > 0) {
-            const ocrypto::Result res = this->encrypter.write(data, to_send);
-            this->out_file.send(res.buf.data(), res.buf.size());
+            const ocrypto::Result res = encrypter.write(data, to_send);
+            out_file.send(res.buf.data(), res.buf.size());
             to_send -= res.consumed;
             data += res.consumed;
         }

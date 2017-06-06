@@ -46,9 +46,6 @@
 #include "program_options/program_options.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
-#include "capture/cryptofile.hpp"
-#include "utils/genrandom.hpp"
-
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
 
@@ -195,7 +192,7 @@ using extra_option_list = std::initializer_list<extra_option>;
 
 static inline int app_proxy(
     int argc, char const * const * argv, const char * copyright_notice
-  , CryptoContext & cctx, Random & rnd
+  , CryptoContext & cctx, Random & rnd, Fstat & fstat
 ) {
     setlocale(LC_CTYPE, "C");
 
@@ -312,7 +309,7 @@ static inline int app_proxy(
     }
 
     if (options.count("inetd")) {
-        redemption_new_session(cctx, rnd, config_filename.c_str());
+        redemption_new_session(cctx, rnd, fstat, config_filename.c_str());
         return 0;
     }
 
@@ -393,7 +390,7 @@ static inline int app_proxy(
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, cctx, rnd, euid, egid, std::move(config_filename));
+    redemption_main_loop(ini, cctx, rnd, fstat, euid, egid, std::move(config_filename));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

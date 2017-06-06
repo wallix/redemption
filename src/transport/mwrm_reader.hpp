@@ -63,6 +63,22 @@ struct MetaLine
     time_t  stop_time;
     uint8_t hash1[MD_HASH::DIGEST_LENGTH];
     uint8_t hash2[MD_HASH::DIGEST_LENGTH];
+    
+    MetaLine() 
+    : filename{}
+    , size(0)
+    , mode(0)
+    , uid(0)
+    , gid(0)
+    , dev(0)
+    , ino(0)
+    , mtime{}
+    , ctime{}
+    , start_time{}
+    , stop_time{}
+    , hash1{}
+    , hash2{}
+    {}
 };
 
 class LineReader

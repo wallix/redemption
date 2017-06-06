@@ -218,14 +218,16 @@ public:
     };
 
 public:
-    AclSerializer(Inifile & ini, time_t acl_start_time, Transport & auth_trans, CryptoContext & cctx, Random & rnd, Verbose verbose)
+    AclSerializer(
+        Inifile & ini, time_t acl_start_time, Transport & auth_trans,
+        CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose)
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
         , ct(
             ini.get<cfg::crypto::session_log_with_encryption>(),
             ini.get<cfg::crypto::session_log_with_checksum>(),
-            cctx, rnd, report_error_from_reporter(*this))
+            cctx, rnd, fstat, report_error_from_reporter(*this))
         , remote_answer(false)
         , keepalive(
             ini.get<cfg::globals::keepalive_grace_delay>(),
@@ -308,8 +310,11 @@ public:
         /* Log to file */
         if (this->ini.get<cfg::session_log::session_log_redirection>()) {
             if(!ct.is_open()) {
-                auto const & filename = this->ini.get<cfg::session_log::log_path>();
-                ct.open(filename.c_str(), 0);
+                size_t base_len = 0;
+                char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
+                char const * basename = basename_len(filename, base_len);
+                auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
+                ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
             }
 
             std::time_t t = std::time(nullptr);
@@ -324,7 +329,7 @@ public:
                 ct.send(" ", 1);
                 ct.send(extra, strlen(extra));
             }
-            ct.send("\n", 1);
+            ct.send("\"\n", 1);
         }
 
         /* Log to syslog */

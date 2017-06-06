@@ -26,8 +26,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "configs/config.hpp"
 #include "utils/translation.hpp"
-#include <string>
 
 RED_AUTO_TEST_CASE(TestTranslation)
 {

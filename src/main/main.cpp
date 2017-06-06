@@ -28,14 +28,16 @@
 
 #include "capture/cryptofile.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
 #include "configs/config.hpp"
 
 #include "main/version.hpp"
 
 int main(int argc, char** argv)
 {
-    UdevRandom rnd;
     CryptoContext cctx;
+    UdevRandom rnd;
+    Fstat fstat;
 
     return app_proxy(
         argc, argv
@@ -46,5 +48,6 @@ int main(int argc, char** argv)
         "and Meng Tan."
       , cctx
       , rnd
+      , fstat
     );
 }
