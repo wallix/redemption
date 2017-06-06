@@ -500,7 +500,7 @@ Q_OBJECT
 
 public:
     enum : int {
-        MAX_ACCOUNT_DATA = 10
+        MAX_ACCOUNT_DATA = 15
     };
 
     Front_Qt_API       * _front;

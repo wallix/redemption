@@ -309,6 +309,10 @@ public:
                         if (this->reader.next_order()) {
                             this->reader.interpret_order();
     //                         sleep(1);
+                            } else {
+//                                 TimeSystem timeobj;
+//                                 this->disconnect(timeobj.get_time().tv_sec);
+                                //throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                             }
                         }
                 }
