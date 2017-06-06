@@ -126,6 +126,15 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->authids.emplace_back(str, pack_get<sesman::name>(infos));
         }
         this->tab(); this->out() << "// type: "; this->inherit().write_type(type); this->out() << "\n";
+        if ((properties & sesman::io::rw) == sesman::io::sesman_to_proxy) {
+            this->tab(); this->out() << "// sesman -> proxy\n";
+        }
+        else if ((properties & sesman::io::rw) == sesman::io::proxy_to_sesman) {
+            this->tab(); this->out() << "// sesman <- proxy\n";
+        }
+        else if ((properties & sesman::io::rw) == sesman::io::rw) {
+            this->tab(); this->out() << "// sesman <-> proxy\n";
+        }
         this->tab(); this->out() << "// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << "\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";

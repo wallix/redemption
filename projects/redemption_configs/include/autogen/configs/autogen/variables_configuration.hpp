@@ -5,6 +5,7 @@
 namespace cfg {
     // AUTHID_GLOBALS_CAPTURE_CHUNK
     // type: bool
+    // sesman -> proxy
     // value{}
     struct globals::capture_chunk {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -19,6 +20,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_AUTH_USER
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct globals::auth_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -33,6 +35,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_HOST
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct globals::host {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -47,6 +50,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct globals::target {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -61,6 +65,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET_DEVICE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::target_device {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -75,6 +80,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_DEVICE_ID
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::device_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -89,6 +95,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_PRIMARY_USER_ID
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::primary_user_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -103,6 +110,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET_USER
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct globals::target_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -117,6 +125,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET_APPLICATION
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::target_application {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -131,6 +140,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::target_application_account {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -145,6 +155,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::target_application_password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -309,6 +320,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_TRACE_TYPE
     // type: TraceType
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct globals::trace_type {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -385,6 +397,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_IS_REC
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct globals::is_rec {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -399,6 +412,7 @@ namespace cfg {
     };
     // AUTHID_GLOBALS_MOVIE_PATH
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct globals::movie_path {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -562,6 +576,7 @@ namespace cfg {
     // Log redirection in a file
     // AUTHID_SESSION_LOG_SESSION_LOG_REDIRECTION
     // type: bool
+    // sesman <- proxy
     // value{1}
     struct session_log::session_log_redirection {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -576,6 +591,7 @@ namespace cfg {
     };
     // AUTHID_SESSION_LOG_LOG_PATH
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct session_log::log_path {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -603,6 +619,7 @@ namespace cfg {
 
     // AUTHID_CLIENT_KEYBOARD_LAYOUT
     // type: unsigned int
+    // sesman <- proxy
     // value{0}
     struct client::keyboard_layout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -747,6 +764,7 @@ namespace cfg {
     // If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
     // AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct client::disable_tsk_switch_shortcuts {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1084,6 +1102,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_LOAD_BALANCE_INFO
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct mod_rdp::load_balance_info {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1099,6 +1118,7 @@ namespace cfg {
     // Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
     // AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::bogus_sc_net_size {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1125,6 +1145,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct mod_rdp::proxy_managed_drives {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1139,6 +1160,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::ignore_auth_channel {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1166,6 +1188,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_ALTERNATE_SHELL
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct mod_rdp::alternate_shell {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1180,6 +1203,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SHELL_ARGUMENTS
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct mod_rdp::shell_arguments {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1194,6 +1218,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct mod_rdp::shell_working_directory {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1208,6 +1233,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::use_client_provided_alternate_shell {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1222,6 +1248,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::use_client_provided_remoteapp {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1236,6 +1263,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::use_native_remoteapp_capability {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1250,6 +1278,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::enable_session_probe {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1266,6 +1295,7 @@ namespace cfg {
 // Clipboard redirection should be remain enabled on Terminal Server.
     // AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::session_probe_use_clipboard_based_launcher {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1280,6 +1310,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::session_probe_enable_launch_mask {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1294,6 +1325,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
     // type: SessionProbeOnLaunchFailure
+    // sesman -> proxy
     // value{static_cast<type>(2)}
     struct mod_rdp::session_probe_on_launch_failure {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1310,6 +1342,7 @@ namespace cfg {
 // 0 to disable timeout.
     // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{20000}
     struct mod_rdp::session_probe_launch_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1326,6 +1359,7 @@ namespace cfg {
 // 0 to disable timeout.
     // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{7000}
     struct mod_rdp::session_probe_launch_fallback_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1341,6 +1375,7 @@ namespace cfg {
     // Minimum supported server : Windows Server 2008.
     // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1355,6 +1390,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{5000}
     struct mod_rdp::session_probe_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1369,6 +1405,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::session_probe_on_keepalive_timeout_disconnect_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1384,6 +1421,7 @@ namespace cfg {
     // End automatically a disconnected session
     // AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::session_probe_end_disconnected_session {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1410,6 +1448,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::session_probe_enable_log {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1426,6 +1465,7 @@ namespace cfg {
 // 0 to disable timeout.
     // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::session_probe_disconnected_application_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1442,6 +1482,7 @@ namespace cfg {
 // 0 to disable timeout.
     // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::session_probe_disconnected_session_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1458,6 +1499,7 @@ namespace cfg {
 // 0 to disable timeout.
     // AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT
     // type: std::chrono::milliseconds
+    // sesman -> proxy
     // value{0}
     struct mod_rdp::session_probe_idle_session_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1497,6 +1539,7 @@ namespace cfg {
     // Keep known server certificates on WAB
     // AUTHID_MOD_RDP_SERVER_CERT_STORE
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct mod_rdp::server_cert_store {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1511,6 +1554,7 @@ namespace cfg {
     };
     // AUTHID_MOD_RDP_SERVER_CERT_CHECK
     // type: ServerCertCheck
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_cert_check {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1526,6 +1570,7 @@ namespace cfg {
     // Warn if check allow connexion to server.
     // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
     // type: ServerNotification
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_access_allowed_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1541,6 +1586,7 @@ namespace cfg {
     // Warn that new server certificate file was created.
     // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
     // type: ServerNotification
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_cert_create_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1556,6 +1602,7 @@ namespace cfg {
     // Warn that server certificate file was successfully checked.
     // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
     // type: ServerNotification
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_cert_success_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1571,6 +1618,7 @@ namespace cfg {
     // Warn that server certificate file checking failed.
     // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
     // type: ServerNotification
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_cert_failure_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1586,6 +1634,7 @@ namespace cfg {
     // Warn that server certificate check raised some internal error.
     // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
     // type: ServerNotification
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_rdp::server_cert_error_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1627,6 +1676,7 @@ namespace cfg {
     // Enable or disable the clipboard from client (client to server).
     // AUTHID_MOD_VNC_CLIPBOARD_UP
     // type: bool
+    // sesman -> proxy
     // value{}
     struct mod_vnc::clipboard_up {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1642,6 +1692,7 @@ namespace cfg {
     // Enable or disable the clipboard from server (server to client).
     // AUTHID_MOD_VNC_CLIPBOARD_DOWN
     // type: bool
+    // sesman -> proxy
     // value{}
     struct mod_vnc::clipboard_down {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1687,6 +1738,7 @@ namespace cfg {
     // VNC server clipboard data encoding type.
     // AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
     // type: ClipboardEncodingType
+    // sesman -> proxy
     // value{static_cast<type>(1)}
     struct mod_vnc::server_clipboard_encoding_type {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1701,6 +1753,7 @@ namespace cfg {
     };
     // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
     // type: VncBogusClipboardInfiniteLoop
+    // sesman -> proxy
     // value{static_cast<type>(0)}
     struct mod_vnc::bogus_clipboard_infinite_loop {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -1968,6 +2021,7 @@ namespace cfg {
     };
     // AUTHID_VIDEO_RT_DISPLAY
     // type: unsigned int
+    // sesman -> proxy
     // value{0}
     struct video::rt_display {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2213,6 +2267,7 @@ namespace cfg {
 
     // AUTHID_CRYPTO_KEY0
     // type: std::array<unsigned char, 32>
+    // sesman -> proxy
     // value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }}
     struct crypto::key0 {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2227,6 +2282,7 @@ namespace cfg {
     };
     // AUTHID_CRYPTO_KEY1
     // type: std::array<unsigned char, 32>
+    // sesman -> proxy
     // value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }}
     struct crypto::key1 {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2268,6 +2324,7 @@ namespace cfg {
 
     // AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP
     // type: bool
+    // sesman -> proxy
     // value{1}
     struct remote_program::allow_resize_hosted_desktop {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2596,6 +2653,7 @@ namespace cfg {
 
     // AUTHID_TRANSLATION_LANGUAGE
     // type: Language
+    // sesman -> proxy
     // value{static_cast<type>(0)}
     struct translation::language {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2610,6 +2668,7 @@ namespace cfg {
     };
     // AUTHID_TRANSLATION_PASSWORD_EN
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct translation::password_en {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2624,6 +2683,7 @@ namespace cfg {
     };
     // AUTHID_TRANSLATION_PASSWORD_FR
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct translation::password_fr {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2663,6 +2723,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_BITRATE
     // type: unsigned int
+    // sesman -> proxy
     // value{40000}
     struct context::opt_bitrate {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2677,6 +2738,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_FRAMERATE
     // type: unsigned int
+    // sesman -> proxy
     // value{5}
     struct context::opt_framerate {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2691,6 +2753,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_QSCALE
     // type: unsigned int
+    // sesman -> proxy
     // value{15}
     struct context::opt_qscale {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2705,6 +2768,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_BPP
     // type: unsigned int
+    // sesman <-> proxy
     // value{24}
     struct context::opt_bpp {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2719,6 +2783,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_HEIGHT
     // type: unsigned int
+    // sesman <-> proxy
     // value{600}
     struct context::opt_height {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2733,6 +2798,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_WIDTH
     // type: unsigned int
+    // sesman <-> proxy
     // value{800}
     struct context::opt_width {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2758,6 +2824,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct context::selector {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2772,6 +2839,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
     // type: unsigned int
+    // sesman <-> proxy
     // value{1}
     struct context::selector_current_page {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2786,6 +2854,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::selector_device_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2800,6 +2869,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::selector_group_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2814,6 +2884,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::selector_proto_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2828,6 +2899,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
     // type: unsigned int
+    // sesman <-> proxy
     // value{0}
     struct context::selector_lines_per_page {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2842,6 +2914,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
     // type: unsigned int
+    // sesman -> proxy
     // value{1}
     struct context::selector_number_of_pages {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2856,6 +2929,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_PASSWORD
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::target_password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2870,6 +2944,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_HOST
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::target_host {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2884,6 +2959,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_STR
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::target_str {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2898,6 +2974,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_SERVICE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::target_service {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2912,6 +2989,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_PORT
     // type: unsigned int
+    // sesman <-> proxy
     // value{3389}
     struct context::target_port {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2926,6 +3004,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TARGET_PROTOCOL
     // type: std::string
+    // sesman -> proxy
     // value = "RDP"
     struct context::target_protocol {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2940,6 +3019,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_PASSWORD
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2954,6 +3034,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_REPORTING
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::reporting {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2968,6 +3049,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_channel_answer {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2982,6 +3064,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::auth_channel_target {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -2996,6 +3079,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_MESSAGE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3010,6 +3094,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_ACCEPT_MESSAGE
     // type: bool
+    // sesman <- proxy
     // value{}
     struct context::accept_message {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3024,6 +3109,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_DISPLAY_MESSAGE
     // type: bool
+    // sesman <-> proxy
     // value{}
     struct context::display_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3038,6 +3124,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_REJECTED
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::rejected {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3052,6 +3139,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTHENTICATED
     // type: bool
+    // sesman <-> proxy
     // value{0}
     struct context::authenticated {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3066,6 +3154,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_KEEPALIVE
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct context::keepalive {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3080,6 +3169,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SESSION_ID
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::session_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3094,6 +3184,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_END_DATE_CNX
     // type: unsigned int
+    // sesman -> proxy
     // value{0}
     struct context::end_date_cnx {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3108,6 +3199,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_END_TIME
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::end_time {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3122,6 +3214,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_MODE_CONSOLE
     // type: std::string
+    // sesman -> proxy
     // value = "allow"
     struct context::mode_console {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3136,6 +3229,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TIMEZONE
     // type: int
+    // sesman -> proxy
     // value{-3600}
     struct context::timezone {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3150,6 +3244,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_REAL_TARGET_DEVICE
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::real_target_device {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3164,6 +3259,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
     // type: bool
+    // sesman -> proxy
     // value{}
     struct context::authentication_challenge {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3178,6 +3274,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_TICKET
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::ticket {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3192,6 +3289,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_COMMENT
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::comment {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3206,6 +3304,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_DURATION
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::duration {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3220,6 +3319,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_WAITINFORETURN
     // type: std::string
+    // sesman <-> proxy
     // value{}
     struct context::waitinforeturn {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3234,6 +3334,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SHOWFORM
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct context::showform {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3248,6 +3349,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_FORMFLAG
     // type: unsigned int
+    // sesman <- proxy
     // value{0}
     struct context::formflag {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3262,6 +3364,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_MODULE
     // type: std::string
+    // sesman <-> proxy
     // value = "login"
     struct context::module {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3276,6 +3379,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_FORCEMODULE
     // type: bool
+    // sesman -> proxy
     // value{0}
     struct context::forcemodule {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3290,6 +3394,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_PROXY_OPT
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::proxy_opt {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3304,6 +3409,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_PATTERN_KILL
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::pattern_kill {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3318,6 +3424,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_PATTERN_NOTIFY
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::pattern_notify {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3332,6 +3439,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_OPT_MESSAGE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::opt_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3346,6 +3454,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::session_probe_outbound_connection_monitoring_rules {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3360,6 +3469,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::session_probe_process_monitoring_rules {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3374,6 +3484,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::session_probe_extra_system_processes {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3399,6 +3510,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_DISCONNECT_REASON
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::disconnect_reason {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3413,6 +3525,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
     // type: bool
+    // sesman <- proxy
     // value{0}
     struct context::disconnect_reason_ack {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3438,6 +3551,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_RECORDING_STARTED
     // type: bool
+    // sesman <- proxy
     // value{0}
     struct context::recording_started {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3474,6 +3588,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_command {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3488,6 +3603,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_NOTIFY
     // type: std::string
+    // sesman <- proxy
     // value{}
     struct context::auth_notify {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3502,6 +3618,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS
     // type: unsigned int
+    // sesman <- proxy
     // value{}
     struct context::auth_notify_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3516,6 +3633,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE
     // type: std::string
+    // sesman <- proxy
     // value{}
     struct context::auth_notify_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 0; }
@@ -3530,6 +3648,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT
     // type: unsigned int
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_exec_result {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3544,6 +3663,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS
     // type: unsigned int
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3558,6 +3678,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_original_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3572,6 +3693,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3586,6 +3708,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_working_dir {
         static constexpr bool is_sesman_to_proxy() { return 1; }
@@ -3600,6 +3723,7 @@ namespace cfg {
     };
     // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS
     // type: std::string
+    // sesman -> proxy
     // value{}
     struct context::auth_command_rail_exec_arguments {
         static constexpr bool is_sesman_to_proxy() { return 1; }
