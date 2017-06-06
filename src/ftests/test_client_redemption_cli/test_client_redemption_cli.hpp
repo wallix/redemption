@@ -232,6 +232,8 @@ public:
     bool                        _waiting_for_data;
     int                         _lindex;
     bool                        _running;
+    bool is_pipe_ok;
+    timeval connection_time;
 
 
 
@@ -263,6 +265,7 @@ public:
     , _info(info)
     , _callback(nullptr)
     , _running(false)
+    , is_pipe_ok(true)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -318,7 +321,10 @@ public:
     }
 
     virtual bool can_be_start_capture() override { return true; }
-    virtual bool must_be_stop_capture() override { return true; }
+    virtual bool must_be_stop_capture() override {
+        this->is_pipe_ok = false;
+        return true;
+    }
     virtual void begin_update() override {}
     virtual void end_update() override {}
 

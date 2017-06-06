@@ -36,7 +36,7 @@
 
 void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, struct timeval &, bool);
 void print_help();
-void disconnect(mod_api *, SocketTransport *);
+void disconnect(mod_api *, SocketTransport *, timeval &);
 
 ///////////////////////////////
 // APPLICATION
@@ -864,7 +864,7 @@ int main(int argc, char** argv){
 
             } catch (const std::exception &) { // TODO no throwing exception to SocketTransport ctor
                 std::cout << errorMsg << " Socket error. " << std::endl;
-                disconnect(nullptr, socket);
+                disconnect(nullptr, socket, front.connection_time);
                 exit(9);
             }
         } else {
@@ -903,6 +903,7 @@ int main(int argc, char** argv){
             }
 
             if (connection_succed) {
+
                 if (mod !=  nullptr) {
                     while (!mod->is_up_and_running()) {
                         try {
@@ -1101,18 +1102,22 @@ int main(int argc, char** argv){
                 }
 
                 if (!(input_connection_data_complete & TestClientCLI::LOG_COMPLETE) && quick_connection_test) {
-                    disconnect(mod, socket);
+                    disconnect(mod, socket, front.connection_time);
                 } else {
                     if (connection_succed) {
+                        front.connection_time = tvtime();
                         run_mod(mod, front, socket, eventList, quick_connection_test, time_out_response, time_set_connection_test);
+//                         std::cout << "RDP Headless end." <<  std::endl;
                     } else {
-                        disconnect(mod, socket);
+                        disconnect(mod, socket, front.connection_time);
                         exit(1);
                     }
                 }
             }
         }
     }
+
+
 
     return 0;
 }
@@ -1211,13 +1216,15 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 
     while (run_session) {
 
+        if (mod != nullptr && front.is_pipe_ok) {
+
         switch (mod->logged_on) {
             case mod_api::CLIENT_LOGGED:
                 mod->logged_on = 0;
 
                 std::cout << " RDP Session Log On." <<  std::endl;
                 if (quick_connection_test) {
-                    disconnect(mod, st_mod);
+                    disconnect(mod, st_mod, front.connection_time);
                     exit(0);
                 }
                 break;
@@ -1234,11 +1241,11 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 
                 if ( sec > time_out_response.tv_sec) {
                     //std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
-                    disconnect(mod, st_mod);
+                    disconnect(mod, st_mod, front.connection_time);
                     exit(8);
                 } else if (sec == time_out_response.tv_sec && usec > time_out_response.tv_usec) {
                     //std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
-                    disconnect(mod, st_mod);
+                    disconnect(mod, st_mod, front.connection_time);
                     exit(8);
                 }
             } else {
@@ -1262,17 +1269,18 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
             }
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-
-            LOG(LOG_INFO, "RDP CLIENT :: select num = %d\n", num);
+//             std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
 
             if (num < 0) {
                 if (errno == EINTR) {
                     continue;
                 }
 
-                LOG(LOG_INFO, "RDP CLIENT :: errno = %d\n", errno);
+                std::cout << "RDP CLIENT :: errno = " <<  errno << "\n";
                 break;
             }
+
+
 
             if (mod->get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
@@ -1286,24 +1294,38 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 //             }
 
         } catch (Error & e) {
-            LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %d!\n", e.id);
             std::cout << "RDP CLIENT :: Exception raised = " << e.id << "\n";
             run_session = false;
-        };
+        }
+    } else {
+        disconnect(mod, st_mod, front.connection_time);
+        exit(1);
+    }
+
     }
 
     return;
+
 }
 
-void disconnect(mod_api * mod, SocketTransport * socket) {
+void disconnect(mod_api * mod, SocketTransport * socket, timeval & connection_time) {
 
     if (mod !=  nullptr) {
         TimeSystem timeobj;
         mod->disconnect(timeobj.get_time().tv_sec);
         delete (mod);
         mod = nullptr;
-         std::cout << " Connection closed." << std::endl;
+
     }
+
+    if (socket != nullptr) {
+        delete (socket);
+        socket = nullptr;
+    }
+
+    timeval now = tvtime();
+    std::chrono::microseconds duration = difftimeval(now, connection_time);
+    std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
 
     delete (socket);
     socket = nullptr;
