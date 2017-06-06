@@ -118,7 +118,7 @@ public:
 
     } fileSystemData;
 
-
+    Inifile ini;
 
 
 
@@ -496,7 +496,7 @@ public:
 
     virtual mod_api * init_mod() override {
 
-        Inifile ini;
+
 
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -534,6 +534,7 @@ public:
                                 , mod_rdp_params
                                 , this->authentifier
                                 , this->reportMessage
+                                , this->ini
                                 );
 
         } catch (const Error &) {
@@ -2488,7 +2489,7 @@ public:
 
                 if (!(this->sound_qt->wave_data_to_vait)) {
 
-                    this->sound_qt->play();
+//                     this->sound_qt->play();
 
                     StaticOutStream<32> out_stream;
 
@@ -2509,9 +2510,9 @@ public:
                                                   );
 
                     LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
-                    msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-                    header_out.log();
-                    wc.log();
+//                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+//                     header_out.log();
+//                     wc.log();
                 }
 
             } else {
@@ -2526,8 +2527,8 @@ public:
 
                         rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                         safsvh.receive(chunk);
-                        header.log();
-                        safsvh.log();
+//                         header.log();
+//                         safsvh.log();
 
                         StaticOutStream<1024> out_stream;
 
@@ -2546,7 +2547,7 @@ public:
                         for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
                             rdpsnd::AudioFormat format;
                             format.receive(chunk);
-                            format.log();
+//                             format.log();
 
                             if (format.wFormatTag == rdpsnd::WAVE_FORMAT_PCM) {
                                 format.emit(out_stream);
@@ -2568,9 +2569,9 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
-                        msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-                        header_out.log();
-                        cafvh.log();
+//                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+//                         header_out.log();
+//                         cafvh.log();
 
                         StaticOutStream<32> quality_stream;
 
@@ -2590,9 +2591,9 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
-                        msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
-                        header_out.log();
-                        qm.log();
+//                         msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
+//                         header_out.log();
+//                         qm.log();
                         }
                         break;
 
@@ -2602,8 +2603,8 @@ public:
 
                         rdpsnd::TrainingPDU train;
                         train.receive(chunk);
-                        header.log();
-                        train.log();
+//                         header.log();
+//                         train.log();
 
                         StaticOutStream<32> out_stream;
 
@@ -2623,9 +2624,9 @@ public:
                                                       );
 
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
-                        msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-                        header_quality.log();
-                        train_conf.log();
+//                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
+//                         header_quality.log();
+//                         train_conf.log();
                         }
                         break;
 
@@ -2637,8 +2638,8 @@ public:
 
                         rdpsnd::WaveInfoPDU wi;
                         wi.receive(chunk);
-                        header.log();
-                        wi.log();
+//                         header.log();
+//                         wi.log();
 
                         this->sound_qt->last_wTimeStamp = wi.wTimeStamp;
                         this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;

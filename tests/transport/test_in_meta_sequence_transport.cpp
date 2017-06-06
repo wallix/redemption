@@ -230,11 +230,17 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
     // cleanup of possible previous test files
-    {
-        const char * file[] = {"/tmp/TESTOFS.mwrm", "TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
-        for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
-            ::unlink(file[i]);
-        }
+    const char * const files[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm",
+        // hash
+        "/tmp/TESTOFS.mwrm",
+        "/tmp/TESTOFS-000000.wrm",
+        "/tmp/TESTOFS-000001.wrm",
+    };
+    for (auto const & file : files) {
+        ::unlink(file);
     }
 
     RED_CHECK(true);
@@ -287,13 +293,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
 
-    const char * files[] = {
-        "/tmp/TESTOFS.mwrm", // hash
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm"
-    };
-    for (const char * file : files){
+    for (auto const & file : files) {
         RED_CHECK_MESSAGE(!::unlink(file), "failed to unlink " << file);
     }
 }
