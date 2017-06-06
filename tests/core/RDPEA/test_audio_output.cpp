@@ -24,6 +24,7 @@
 //#define LOGNULL
 #define LOGPRINT
 #include "core/RDPEA/audio_output.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 
 
 
@@ -52,7 +53,7 @@ RED_AUTO_TEST_CASE(RDPSNDPDUHeaderReceive)
     rdpsnd::RDPSNDPDUHeader ch;
     ch.receive(in_stream);
 
-    RED_CHECK_EQUAL(ch.msgType, rdpsnd::SNDC_FORMATS);
+    RED_CHECK_EQUAL(ch.msgType, underlying_cast(rdpsnd::SNDC_FORMATS));
     RED_CHECK_EQUAL(ch.BodySize, 38);
 }
 
@@ -115,7 +116,7 @@ RED_AUTO_TEST_CASE(AudioFormatReceive)
     rdpsnd::AudioFormat ch;
     ch.receive(in_stream);
 
-    RED_CHECK_EQUAL(ch.wFormatTag, rdpsnd::WAVE_FORMAT_PCM);
+    RED_CHECK_EQUAL(ch.wFormatTag, underlying_cast(rdpsnd::WAVE_FORMAT_PCM));
     RED_CHECK_EQUAL(ch.nChannels, 2);
     RED_CHECK_EQUAL(ch.nSamplesPerSec, 0x0000ac44);
     RED_CHECK_EQUAL(ch.nAvgBytesPerSec, 0x0002b110);
@@ -184,7 +185,7 @@ RED_AUTO_TEST_CASE(QualityModePDUReceive)
     rdpsnd::QualityModePDU ch;
     ch.receive(in_stream);
 
-    RED_CHECK_EQUAL(ch.wQualityMode, rdpsnd::MEDIUM_QUALITY);
+    RED_CHECK_EQUAL(ch.wQualityMode, underlying_cast(rdpsnd::MEDIUM_QUALITY));
 }
 
 RED_AUTO_TEST_CASE(TrainingPDUEmit)

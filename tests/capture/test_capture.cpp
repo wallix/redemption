@@ -53,7 +53,27 @@
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    RED_CHECK(true);
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"./capture-000000.wrm", 1646},
+        {"./capture-000001.wrm", 3508},
+        {"./capture-000002.wrm", 3463},
+        {"./capture-000003.wrm", -1},
+        {"./capture.mwrm", 165},
+        // hash
+        {"/tmp/capture-000000.wrm", 40},
+        {"/tmp/capture-000001.wrm", 40},
+        {"/tmp/capture-000002.wrm", 40},
+        {"/tmp/capture-000003.wrm", -1},
+        {"/tmp/capture.mwrm", 34},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
@@ -82,7 +102,14 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
-        Fstat fstat;
+        struct FakeFstat : Fstat
+        {
+            int stat(const char*, struct ::stat & stat) override
+            {
+                stat = {};
+                return 0;
+            }
+        } fstat;
         CryptoContext cctx;
 
         // TODO remove this after unifying capture interface
@@ -297,22 +324,13 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         RED_CHECK_EQUAL(false, file_exist(filename));
     }
 
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-        size_t altsize;
-    } fileinfo[] = {
-        {"./capture-000000.wrm", 1646, 0},
-        {"./capture-000001.wrm", 3508, 0},
-        {"./capture-000002.wrm", 3463, 0},
-        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
-        {"./capture.mwrm", 288, 285},
-    };
     for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        if (x.altsize != fsize){
-            RED_CHECK_EQUAL(x.size, fsize);
-        }
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
         ::unlink(x.filename);
     }
 }

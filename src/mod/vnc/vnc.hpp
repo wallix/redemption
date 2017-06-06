@@ -43,6 +43,7 @@
 #include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
+#include "configs/config.hpp" // TODO only for TR(trkeys::password)
 
 #include <cstdlib>
 

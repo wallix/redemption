@@ -69,7 +69,10 @@ inline uint8_t const * bytes(char const * p)
 
 RED_AUTO_TEST_CASE(TestRedCryptofile)
 {
-    const char * finalname = "./encrypted.txt";
+    const char * finalname = "encrypted.txt";
+    const char * hash_finalname = "hash_encrypted.txt";
+    ::unlink(finalname);
+    ::unlink(hash_finalname);
 
     // Writer
     {
@@ -78,7 +81,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
         auto * handle = redcryptofile_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
-        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
@@ -97,7 +100,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
     // Reader
     {
         auto handle = redcryptofile_reader_new(finalname, &hmac_fn, &trace_fn);
-        RED_CHECK_NE(redcryptofile_reader_open(handle, finalname), -1);
+        RED_CHECK_NE(redcryptofile_reader_open(handle, finalname, finalname), -1);
         RED_CHECK_NE(handle, nullptr);
 
         uint8_t buf[31];
@@ -122,11 +125,13 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
+    RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
 RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
 {
-    const char * finalname = "./encrypted.txt";
+    const char * finalname = "encrypted.txt";
+    const char * hash_finalname = "hash_encrypted.txt";
 
     HashHexArray qhash;
     HashHexArray fhash;
@@ -138,7 +143,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
 
         auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
-        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
@@ -157,6 +162,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
+    RED_CHECK_EQ(::unlink(hash_finalname), 0);
 
     // Writer with udev random
     {
@@ -165,7 +171,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
 
         auto * handle = redcryptofile_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn);
         RED_CHECK_NE(handle, nullptr);
-        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, 0), 0);
+        RED_CHECK_EQ(redcryptofile_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("We write, "), 10), 10);
         RED_CHECK_EQ(redcryptofile_writer_write(handle, bytes("and again, "), 11), 11);
@@ -184,16 +190,17 @@ RED_AUTO_TEST_CASE(TestRedCryptofileWriteUseRandom)
     }
 
     RED_CHECK_EQ(::unlink(finalname), 0);
+    RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
 RED_AUTO_TEST_CASE(TestRedCryptofileError)
 {
     auto handle_w = redcryptofile_writer_new(1, 1, "/", &hmac_fn, &trace_fn);
-    RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/", 0), -1);
+    RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/", "/", 0), -1);
     RED_CHECK_NE(redcryptofile_writer_error_message(handle_w), "No error");
 
     auto handle_r = redcryptofile_reader_new("/", &hmac_fn, &trace_fn);
-    RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/"), -1);
+    RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/", "/"), -1);
     RED_CHECK_NE(redcryptofile_reader_error_message(handle_r), "No error");
 
     RED_CHECK_EQ(redcryptofile_reader_hash(handle_r, "/"), -1);
