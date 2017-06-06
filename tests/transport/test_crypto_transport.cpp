@@ -31,6 +31,7 @@
 
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 namespace
 {
@@ -794,15 +795,6 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     RED_CHECK_MEM_AA(fhash2, expected_fhash);
     RED_CHECK_MEM_AA(qhash2, expected_qhash);
 }
-
-struct FakeFstat : Fstat
-{
-    int stat(const char*, struct ::stat & stat) override
-    {
-        stat = {};
-        return 0;
-    }
-};
 
 struct TestCryptoCtx
 {

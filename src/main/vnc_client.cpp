@@ -124,7 +124,7 @@ int main(int argc, char** argv)
       , client_info.width
       , client_info.height
       , font
-      , Translator(Translation::EN)
+      , "label message", "label pass"
       , Theme()
       , client_info.keylayout
       , 0             /* key_flags */
