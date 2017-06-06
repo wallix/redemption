@@ -28,6 +28,7 @@ project configs
 
 constant AUTOGENDIR : include/autogen/configs/autogen ;
 constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
+constant FILEGEN_CONF_FWD : $(AUTOGENDIR)/variables_configuration_fwd.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
 constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
@@ -35,6 +36,7 @@ constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 actions generate_cpp_configs {
     $(>[0]) \
         $(AUTOGENDIR)/authid.hpp \
+        $(FILEGEN_CONF_FWD) \
         $(FILEGEN_CONF) \
         $(AUTOGENDIR)/set_value.tcc
 }
