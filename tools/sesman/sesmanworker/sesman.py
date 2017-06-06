@@ -887,7 +887,7 @@ class Sesman():
         import re
         return re.sub(r'[^-A-Za-z0-9_@,.]', u"", path)
 
-    def load_video_recording(self):
+    def load_video_recording(self, user):
         Logger().info(u"Checking video")
 
         _status, _error = True, u''
@@ -1233,8 +1233,8 @@ class Sesman():
 
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
 
-            self.record_filebase = self.generate_record_filebase(
-                mdecode(self.engine.get_username()))
+            user = mdecode(self.engine.get_username())
+            self.record_filebase = self.generate_record_filebase(user)
 
             # Add connection to the observer
             session_id = self.engine.start_session(
@@ -1251,7 +1251,7 @@ class Sesman():
                 try:
                     _status, _error = self.create_record_path_directory()
                     if _status and extra_info.is_recorded:
-                        _status, _error = self.load_video_recording()
+                        _status, _error = self.load_video_recording(user)
                     if _status and is_log_redirected:
                         _status, _error = self.load_session_log_redirection()
                 except Exception, e:
