@@ -234,9 +234,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     template<unsigned N>
     void write_type(type_<types::fixed_string<N>>) { this->out() << "char[" << N+1 << "]"; }
 
-    template<unsigned N>
-    void write_type(type_<types::static_string<N>>) { this->out() << "char[" << N+1 << "]"; }
-
     template<class T, long min, long max>
     void write_type(type_<types::range<T, min, max>>) { this->out() << type_name<T>(); }
 
