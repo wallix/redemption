@@ -74,6 +74,10 @@ extern "C"
     char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
+    void redcryptofile_set_scheme(RedCryptoReaderHandle * handle, int old_encryption_scheme, int one_shot_encryption_scheme);
+
+
+    REDEMPTION_LIB_EXPORT
     int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
 
     // < 0: error, 0: eof, >0: length read
