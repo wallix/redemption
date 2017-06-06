@@ -48,6 +48,7 @@
 #include "transport/in_meta_sequence_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t height, bool has_checksum)
@@ -77,12 +78,12 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         {"./capture-000001.wrm", 3508},
         {"./capture-000002.wrm", 3463},
         {"./capture-000003.wrm", -1},
-        {"./capture.mwrm", 288},
-        {"/tmp/capture-000000.wrm", 81},
-        {"/tmp/capture-000001.wrm", 81},
-        {"/tmp/capture-000002.wrm", 81},
+        {"./capture.mwrm", 165},
+        {"/tmp/capture-000000.wrm", 40},
+        {"/tmp/capture-000001.wrm", 40},
+        {"/tmp/capture-000002.wrm", 40},
         {"/tmp/capture-000003.wrm", -1},
-        {"/tmp/capture.mwrm", 74},
+        {"/tmp/capture.mwrm", 34},
     };
     for (auto const & d : fileinfos) {
         unlink(d.filename);
@@ -97,7 +98,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
-        Fstat fstat;
+        FakeFstat fstat;
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
@@ -199,20 +200,16 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
-    struct CheckFiles1 {
-        const char * filename;
-        size_t size;
-        size_t altsize;
-    } fileinfo1[] = {
-        {"./capture-000000.wrm", 1646, 0},
-        {"./capture-000001.wrm", 3508, 0},
-        {"./capture-000002.wrm", 3463, 0},
-        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
-        {"./capture.mwrm", 676, 673},
-        {"/tmp/capture.mwrm", 676, 673},
+    const char * filesinfo[] = {
+        "./capture-000000.wrm",
+        "./capture-000001.wrm",
+        "./capture-000002.wrm",
+        "./capture-000003.wrm",
+        "./capture.mwrm",
+        "/tmp/capture.mwrm",
     };
-    for (auto x: fileinfo1) {
-        ::unlink(x.filename);
+    for (auto x: filesinfo) {
+        ::unlink(x);
     }
 
     {
@@ -224,7 +221,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         Rect scr(0, 0, 800, 600);
 
         LCGRandom rnd(0);
-        Fstat fstat;
+        FakeFstat fstat;
 
         CryptoContext cctx;
         cctx.set_master_key(cstr_array_view(
@@ -336,7 +333,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         {"./capture-000001.wrm", 3508, 0},
         {"./capture-000002.wrm", 3463, 0},
         {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
-        {"./capture.mwrm", 676, 673},
+        {"./capture.mwrm", 676, 553},
     };
     for (auto x: fileinfo) {
         size_t fsize = filesize(x.filename);
@@ -462,15 +459,6 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
     TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
 }
 
-struct TestFstat : Fstat
-{
-    int stat(const char *, struct stat & st) override
-    {
-        st = {};
-        return 0;
-    }
-};
-
 RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     ::unlink("./xxx-000000.wrm");
@@ -489,7 +477,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
         LCGRandom rnd(0);
-        TestFstat fstat;
+        FakeFstat fstat;
 
         timeval now;
         now.tv_sec = sec_start;
@@ -515,7 +503,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
     const char * meta_hash_path = "./hash-xxx.mwrm";
     meta_len_writer.len = 5; // header
     struct stat stat;
-    RED_CHECK(!TestFstat{}.stat(meta_path, stat));
+    RED_CHECK(!FakeFstat{}.stat(meta_path, stat));
 
     wrmcapture_write_filename(meta_len_writer, filename);
     meta_len_writer.len += 17; // " 0 0 0 0 0 0 0 0\n"
@@ -528,7 +516,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     wrmcapture_write_meta_headers(meta_len_writer, 800, 600, false);
 
-    TestFstat fstat;
+    FakeFstat fstat;
     const char * file1 = "./xxx-000000.wrm";
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
     RED_CHECK_EQUAL(10, filesize(file1));
@@ -564,7 +552,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
         LCGRandom rnd(0);
-        TestFstat fstat;
+        FakeFstat fstat;
 
         timeval now;
         now.tv_sec = sec_start;
@@ -588,7 +576,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
 
-    TestFstat fstat;
+    FakeFstat fstat;
 
 //    char file1[1024];
 //    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);

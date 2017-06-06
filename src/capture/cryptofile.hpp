@@ -85,6 +85,7 @@ class CryptoContext : noncopyable
 
 public:
     bool old_encryption_scheme = false;
+    bool one_shot_encryption_scheme = false;
 
 
 public:
@@ -203,20 +204,25 @@ public:
             //this->master_derivator.shrink_to_fit();
         }
 
-        uint8_t tmp[MD_HASH::DIGEST_LENGTH];
-        {
-            MD_HASH sha256;
-            sha256.update(derivator.data(), derivator.size());
-            sha256.final(tmp);
+        if (this->one_shot_encryption_scheme){
+            memcpy(trace_key, master_key, HMAC_KEY_LENGTH);
         }
-        {
-            MD_HASH sha256;
-            sha256.update(tmp, DERIVATOR_LENGTH);
-            sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
-            sha256.final(tmp);
+        else {
+            uint8_t tmp[MD_HASH::DIGEST_LENGTH];
+            {
+                MD_HASH sha256;
+                sha256.update(derivator.data(), derivator.size());
+                sha256.final(tmp);
+            }
+            {
+                MD_HASH sha256;
+                sha256.update(tmp, DERIVATOR_LENGTH);
+                sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
+                sha256.final(tmp);
+            }
+            static_assert(sizeof(trace_key) == sizeof(tmp), "");
+            memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
         }
-        static_assert(sizeof(trace_key) == sizeof(tmp), "");
-        memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }
 
     CryptoContext() = default;
