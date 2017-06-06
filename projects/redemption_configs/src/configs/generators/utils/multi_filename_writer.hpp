@@ -22,6 +22,7 @@
 #define REDEMPTION_SRC_GENERATOR_MULTI_FILENAME_WRITER_HPP
 
 #include <fstream>
+#include <cstring>
 
 template<class Arg>
 struct MultiFilenameWriter

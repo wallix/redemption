@@ -24,7 +24,6 @@
 #pragma once
 
 #include "configs/io.hpp"
-#include "configs/config_access.hpp"
 
 #include "core/authid.hpp"
 
@@ -44,6 +43,10 @@
 
 namespace configs
 {
+    template<class... Ts>
+    struct Pack : Ts...
+    { static const std::size_t size = sizeof...(Ts); };
+
     template<class Base, template<class> class Tpl, class Pack>
     struct PointerPackArray;
 
@@ -81,7 +84,19 @@ namespace configs
     {};
 }
 
-#include "configs/config_variables.hpp"
+// config members
+//@{
+#include "core/font.hpp"
+#include "utils/theme.hpp"
+#include "utils/redirection_info.hpp"
+#include <string>
+#include <chrono>
+//@}
+
+#include "configs/io.hpp"
+#include "configs/autogen/enums.hpp"
+#include "configs/autogen/variables_configuration_fwd.hpp"
+#include "configs/autogen/variables_configuration.hpp"
 
 #include "configs/autogen/enums_func_ini.hpp"
 
@@ -505,16 +520,6 @@ inline Translation::language_t language(Inifile const & ini)
     return static_cast<Translation::language_t>(
         ini.template get<cfg::translation::language>());
 }
-
-namespace vcfg
-{
-    template<class... Cfg>
-    Translation::language_t language(variables<Cfg...> const & vars) {
-        return ::language(vars.template get<cfg::translation::language>());
-    }
-}
-
-using vcfg::language;
 
 inline const char * Translation::translate(trkeys::TrKey_password k) const
 {

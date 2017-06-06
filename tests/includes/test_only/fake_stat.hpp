@@ -14,28 +14,22 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2013-2017
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-namespace configs
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+struct FakeFstat : Fstat
 {
-    template<class... Ts>
-    struct Pack : Ts...
-    { static const std::size_t size = sizeof...(Ts); };
-}
+    int stat(const char*, struct ::stat & stat) override
+    {
+        stat = {};
+        return 0;
+    }
+};
 
-// members
-//@{
-#include "core/font.hpp"
-#include "utils/theme.hpp"
-#include "utils/redirection_info.hpp"
-#include <string>
-#include <chrono>
-//@}
-
-#include "configs/io.hpp"
-#include "configs/autogen/enums.hpp"
-#include "configs/autogen/variables_configuration.hpp"

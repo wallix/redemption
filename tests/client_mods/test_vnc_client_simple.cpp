@@ -257,7 +257,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , info.width
         , info.height
         , font
-        , Translator(Translation::EN)
+        , "label message", "label pass"
         , Theme()
         , info.keylayout
         , 0             /* key_flags */

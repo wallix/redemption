@@ -36,14 +36,14 @@ GETTRACEKEY = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctyp
 
 def get_hmac_key(resbuf):
     sign_key = proxy.get_trace_sign_key()
-    libredrec.recmemcpy(resbuf, sign_key, 32)
+    ctypes.memmove(resbuf, sign_key, 32)
     return 0
 
 
 def get_trace_key(base, lg, resbuf, flag):
     name = base[:lg]
     trace_key = proxy.get_trace_encryption_key(name, flag==1)
-    libredrec.recmemcpy(resbuf, trace_key, 32)
+    ctypes.memmove(resbuf, trace_key, 32)
     return 0
 
 
@@ -68,9 +68,6 @@ if __name__ == '__main__':
         libredrec = ctypes.CDLL('/usr/lib/x86_64-linux-gnu/libredrec.so')
         libredrec.do_main.argtypes = [ctypes.c_uint, ctypes.POINTER(ctypes.c_char_p), GETHMACKEY, GETTRACEKEY]
         libredrec.do_main.restype = ctypes.c_int
-
-        libredrec.recmemcpy.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-        libredrec.recmemcpy.restype = ctypes.c_int
 
         argv = ["redrec"].extend(sys.argv)
 

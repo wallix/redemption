@@ -223,7 +223,7 @@ exe rdpproxy
 lib libredcryptofile
    :
        redcryptofile.o
-       $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
+       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
 
        openssl
        crypto
@@ -601,7 +601,6 @@ test-canonical core/RDP/capabilities/window.hpp ;
 ## Transport tests
 ## @{
 test-canonical transport/crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-#test-canonical transport/in_crypto_transport.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/mwrm_reader.hpp : <library>crypto <library>snappy <library>dl <library>z ;

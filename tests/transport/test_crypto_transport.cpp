@@ -31,6 +31,7 @@
 
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 namespace
 {
@@ -795,15 +796,6 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     RED_CHECK_MEM_AA(qhash2, expected_qhash);
 }
 
-struct FakeFstat : Fstat
-{
-    int stat(const char*, struct ::stat & stat) override
-    {
-        stat = {};
-        return 0;
-    }
-};
-
 struct TestCryptoCtx
 {
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
@@ -1044,8 +1036,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 0000000000000000000000000000000000000000000000000000000000000000\n");
+            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b"
+            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n");
     }
 
     RED_CHECK(::unlink(finalname) == 0);
@@ -1113,10 +1105,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
-        RED_CHECK_MEM_C(make_array_view(hash_buf, len),
+        hash_buf[len] = '\0';
+        RED_CHECK_EQ(hash_buf,
             "v2\n\n\nencrypted.txt 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 0000000000000000000000000000000000000000000000000000000000000000\n");
+            " 04521650db48e670363c68a9cddbeb60f92583bc0d2e093ff2c9375da69d7af0"
+            " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n");
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
     RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
@@ -1178,10 +1171,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto);
         ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
-        RED_CHECK_MEM_C(make_array_view(hash_buf, len),
+        hash_buf[len] = '\0';
+        RED_CHECK_EQ(hash_buf,
             "v2\n\n\nencrypted.txt 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 0000000000000000000000000000000000000000000000000000000000000000\n");
+            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5"
+            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n");
     }
 
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
@@ -1253,8 +1247,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 0000000000000000000000000000000000000000000000000000000000000000\n");
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
     RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
@@ -1316,8 +1310,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 00000000ffffffff000000000000000000000000000000000000000000000000\n");
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
     }
     RED_CHECK(::unlink(finalname) == 0); // finalname exists
     RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
@@ -1420,8 +1414,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         ct.close();
         RED_CHECK_EQ(hash_buf,
             "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
-            " 0000000000000000000000000000000000000000000000000000000000000000"
-            " 0000000000000000000000000000000000000000000000000000000000000000\n");
+            " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
+            " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
     }
 
     RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));

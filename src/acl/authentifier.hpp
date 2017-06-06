@@ -141,6 +141,7 @@ public:
                 );
             }
             this->buffered_log_params.clear();
+            this->buffered_log_params.shrink_to_fit();
             this->session_log_is_open = true;
         }
     }
