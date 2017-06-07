@@ -29,7 +29,7 @@
 
 template<class T, class U>
 constexpr auto is_callable_impl(U & x, int)
--> decltype(void(T(x)), std::true_type{})
+-> decltype((void)(T(x)), std::true_type{})
 { return 1; }
 
 template<class T, class U>

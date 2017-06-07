@@ -42,7 +42,7 @@
 #endif
 
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0188r1.pdf
-#if REDEMPTION_CXX_HAS_ATTRIBUTE(fallthrough)
+#if __cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(fallthrough)
 #  define REDEMPTION_CXX_FALLTHROUGH [[fallthrough]]
 #elif defined(__clang__)
 #  define REDEMPTION_CXX_FALLTHROUGH [[clang::fallthrough]]
@@ -51,7 +51,7 @@
 #endif
 
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0189r1.pdf
-#if REDEMPTION_CXX_HAS_ATTRIBUTE(nodiscard)
+#if __cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(nodiscard)
 #  define REDEMPTION_CXX_NODISCARD [[nodiscard]]
 #elif defined(__clang__) || defined(__GNUC__)
 #  define REDEMPTION_CXX_NODISCARD __attribute__((warn_unused_result))
@@ -62,7 +62,7 @@
 #endif
 
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0212r1.pdf
-#if REDEMPTION_CXX_HAS_ATTRIBUTE(maybe_unused)
+#if __cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(maybe_unused)
 #  define REDEMPTION_CXX_MAYBE_UNUSED [[maybe_unused]]
 #elif defined(__clang__) || defined(__GNUC__)
 #  define REDEMPTION_CXX_MAYBE_UNUSED __attribute__((unused))

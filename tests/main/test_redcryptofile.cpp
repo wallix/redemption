@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofile)
 
     // Reader
     {
-        auto handle = redcryptofile_reader_new(finalname, &hmac_fn, &trace_fn);
+        auto handle = redcryptofile_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
         RED_CHECK_NE(redcryptofile_reader_open(handle, finalname, finalname), -1);
         RED_CHECK_NE(handle, nullptr);
 
@@ -199,7 +199,7 @@ RED_AUTO_TEST_CASE(TestRedCryptofileError)
     RED_CHECK_EQ(redcryptofile_writer_open(handle_w, "/", "/", 0), -1);
     RED_CHECK_NE(redcryptofile_writer_error_message(handle_w), "No error");
 
-    auto handle_r = redcryptofile_reader_new("/", &hmac_fn, &trace_fn);
+    auto handle_r = redcryptofile_reader_new("/", &hmac_fn, &trace_fn, 0, 0);
     RED_CHECK_EQ(redcryptofile_reader_open(handle_r, "/", "/"), -1);
     RED_CHECK_NE(redcryptofile_reader_error_message(handle_r), "No error");
 

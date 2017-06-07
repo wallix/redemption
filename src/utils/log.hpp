@@ -279,7 +279,7 @@ namespace
     void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
     #if !defined(LOGPRINT) && defined(LOGNULL)
-        compiler_aux_::unused_variables(priority, format, (void(args), 1)...);
+        compiler_aux_::unused_variables(priority, format, ((void)(args), 1)...);
     #else
         int const pid = getpid();
         LOG__REDEMPTION__INTERNAL__IMPL(

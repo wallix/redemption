@@ -137,18 +137,16 @@ static void cookey(unsigned long *raw1)
 
 void rfbCPKey(unsigned long *into)
 {
-    unsigned long *from, *endp;
-
-    from = KnL, endp = &KnL[32];
+    unsigned long * from = KnL;
+    unsigned long * endp = &KnL[32];
     while ( from < endp ) *into++ = *from++;
     return;
 }
 
 void rfbUseKey(unsigned long *from)
 {
-    unsigned long *to, *endp;
-
-    to = KnL, endp = &KnL[32];
+    unsigned long * to = KnL;
+    unsigned long * endp = &KnL[32];
     while ( to < endp ) *to++ = *from++;
     return;
 }

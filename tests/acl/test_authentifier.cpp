@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     // Keep alive not received, disconnection
     acl_serial.check(sesman, sesman, mm, 10106, signal, front_signal,has_activity);
     RED_CHECK_EQUAL(true, has_activity);
-    has_activity = true;
+    //has_activity = true;
     RED_CHECK_EQUAL(mm.last_module, true);  // close box
 }
 

@@ -84,7 +84,6 @@ int main(int argc, const char** argv)
             {
                 new_argv[i+1] = argv[i];
             }
-            arg_used = 0;
             ++argc;
             argv = new_argv.data();
         }
