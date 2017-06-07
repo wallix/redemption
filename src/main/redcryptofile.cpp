@@ -217,8 +217,8 @@ struct RedCryptoReaderHandle
     RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
                         , get_hmac_key_prototype * hmac_fn
                         , get_trace_key_prototype * trace_fn
-                        , int old_encryption_scheme = false
-                        , int one_shot_encryption_scheme = false
+                        , int old_encryption_scheme = 0
+                        , int one_shot_encryption_scheme = 0
                         )
     : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
     , in_crypto_transport(cctxw.cctx, encryption)
@@ -345,12 +345,14 @@ char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
 
 RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
                                                 , get_hmac_key_prototype* hmac_fn
-                                                , get_trace_key_prototype* trace_fn)
+                                                , get_trace_key_prototype* trace_fn
+                                                , int old_scheme
+                                                , int one_shot)
 {
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
         auto handle = new (std::nothrow) RedCryptoReaderHandle(
-            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
+            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn, old_scheme, one_shot
         );
         handle->cctxw.set_master_derivator_from_file_name(derivator);
         return handle,

@@ -68,13 +68,10 @@ extern "C"
 
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+    RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle);
-
-    REDEMPTION_LIB_EXPORT
-    void redcryptofile_set_scheme(RedCryptoReaderHandle * handle, int old_encryption_scheme, int one_shot_encryption_scheme);
 
 
     REDEMPTION_LIB_EXPORT
