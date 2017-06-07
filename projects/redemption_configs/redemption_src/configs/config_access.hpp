@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 #define REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 
-#include "configs/config_variables.hpp"
+#include "configs/autogen/variables_configuration_fwd.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/translation.hpp"
 
@@ -111,6 +111,13 @@ public:
     }
 };
 
+template<class... Cfg>
+Translation::language_t language(variables<Cfg...> const & vars) {
+    return ::language(vars.template get<cfg::translation::language>());
 }
+
+}
+
+using vcfg::language;
 
 #endif

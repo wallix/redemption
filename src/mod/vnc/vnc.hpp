@@ -43,7 +43,6 @@
 #include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
-#include "configs/config.hpp" // TODO only for TR(trkeys::password)
 
 #include <cstdlib>
 
@@ -210,7 +209,8 @@ public:
            , uint16_t front_width
            , uint16_t front_height
            , Font const & font
-           , Translator const & tr
+           , const char * label_text_message
+           , const char * label_text_password
            , Theme const & theme
            , int keylayout
            , int key_flags
@@ -228,9 +228,7 @@ public:
     //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
-                "Redemption " VERSION, this->theme(),
-                tr(trkeys::authentication_required),
-                tr(trkeys::password),
+                "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
     , mod_name{0}
     , palette(BGRPalette::classic_332())

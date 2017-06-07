@@ -90,7 +90,6 @@ namespace types
     struct u32 : unsigned_base { u32(long long = 0) {} };
     struct u64 : unsigned_base { u64(long long = 0) {} };
 
-    template<unsigned Len> struct static_string {};
     template<unsigned Len> struct fixed_string {};
     template<unsigned Len> struct fixed_binary {};
 

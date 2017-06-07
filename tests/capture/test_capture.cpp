@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::globals::movie_path>("capture");
 
         LCGRandom rnd(0);
-        struct FakeFstat fstat;
+        FakeFstat fstat;
         CryptoContext cctx;
 
         // TODO remove this after unifying capture interface

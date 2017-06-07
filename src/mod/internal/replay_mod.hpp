@@ -310,9 +310,12 @@ public:
                             this->reader.interpret_order();
     //                         sleep(1);
                             } else {
-//                                 TimeSystem timeobj;
-//                                 this->disconnect(timeobj.get_time().tv_sec);
-                                //throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+                                TimeSystem timeobj;
+                                this->disconnect(timeobj.get_time().tv_sec);
+                                this->event.signal = BACK_EVENT_STOP;
+                                this->event.set(1);
+                                this->end_of_data = true;
+//                                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                             }
                         }
                 }
