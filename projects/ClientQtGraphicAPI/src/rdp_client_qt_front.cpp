@@ -2474,7 +2474,7 @@ public:
         } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
 
 
-        msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
+        //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
             if (this->sound_qt->wave_data_to_vait) {
                 LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
@@ -2826,7 +2826,7 @@ public:
                                                 , chunk
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                                flags
+                                                  flags
                                                 );
         }
     }
