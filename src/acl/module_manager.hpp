@@ -1174,7 +1174,7 @@ public:
                 }
 
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1241,7 +1241,7 @@ public:
                 //}
 
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1523,7 +1523,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
 
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1566,7 +1566,7 @@ public:
                         this->front.client_info.height,
                         this->ini.get<cfg::font>(),
                         TR(trkeys::authentication_required, language(this->ini)),
-                        TR(trkeys::password, language(this->ini)), 
+                        TR(trkeys::password, language(this->ini)),
                         this->ini.get<cfg::theme>(),
                         this->front.client_info.keylayout,
                         this->front.keymap.key_flags,

@@ -3472,6 +3472,17 @@ public:
 
                 case FastPath::UpdateType::PTR_POSITION:
                     {
+                        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                            LOG(LOG_INFO, "Process pointer position (Fast)");
+                        }
+
+                        const unsigned expected = 4; /* xPos(2) + yPos(2) */
+                        if (!stream.in_check_rem(expected)){
+                            LOG(LOG_ERR, "Truncated Fast-Path Pointer Position Update, need=%u remains=%zu",
+                                expected, stream.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+
                         uint16_t xPos = stream.in_uint16_le();
                         uint16_t yPos = stream.in_uint16_le();
                         this->front.update_pointer_position(xPos, yPos);
@@ -4666,8 +4677,16 @@ public:
         case RDP_POINTER_MOVE:
             {
                 if (bool(this->verbose & RDPVerbose::basic_trace3)) {
-                    LOG(LOG_INFO, "Process pointer move");
+                    LOG(LOG_INFO, "Process pointer position");
                 }
+
+                const unsigned expected = 4; /* xPos(2) + yPos(2) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Pointer Position Update, need=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 uint16_t xPos = stream.in_uint16_le();
                 uint16_t yPos = stream.in_uint16_le();
                 this->front.update_pointer_position(xPos, yPos);

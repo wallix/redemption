@@ -1415,9 +1415,10 @@ public:
                         this->client_info.height    = cs_core.desktopHeight;
                         this->client_info.keylayout = cs_core.keyboardLayout;
                         this->client_info.build     = cs_core.clientBuild;
-                        for (size_t i = 0; i < 16 ; i++) {
+                        for (size_t i = 0; i < 15 ; i++) {
                             this->client_info.hostname[i] = cs_core.clientName[i];
                         }
+                        this->client_info.hostname[15] = 0;
                         //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
                         this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth) {
