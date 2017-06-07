@@ -537,7 +537,7 @@ struct ShareData_Recv : private CheckShareData_Recv
               dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
                   this->compressedType, rdata, rlen);
 
-              return InStream(rdata, 0, rlen);
+              return InStream(rdata, rlen);
           }
           else {
               return InStream(stream.get_current(), stream.in_remain());
