@@ -108,9 +108,8 @@ public:
 
         // todo: we could read in clear_data, that would avoid some copying
         uint8_t data[40];
-        size_t avail = 0;
-        ::memcpy(&data[avail], &this->cdata[this->coffset], 40);
-        avail += 40; this->coffset += 40;
+        ::memcpy(data, &this->cdata[this->coffset], 40);
+        this->coffset += 40;
         const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
         this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
 
@@ -329,7 +328,6 @@ RED_AUTO_TEST_CASE(TestEncryption1)
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
-        offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 28);
         RED_CHECK_EQUAL(res2.consumed, 0);
     }
@@ -761,7 +759,6 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     {
         ocrypto::Result res2 = encrypter.close(qhash, fhash);
         memcpy(result + offset, res2.buf.data(), res2.buf.size());
-        offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 0);
         RED_CHECK_EQUAL(res2.consumed, 0);
     }

@@ -785,7 +785,7 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
             return SSH_ERROR;
         }
 
-        if (!this->flags & SSH_SESSION_FLAG_BLOCKING){
+        if (!(this->flags & SSH_SESSION_FLAG_BLOCKING)){
             break;
         }
     }

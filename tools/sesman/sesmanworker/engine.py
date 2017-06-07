@@ -589,8 +589,7 @@ class Engine(object):
             # Logger().debug("** CALL VALIDATOR DEVICE NAME Get_proxy_right target=%s **"
             #                % target_device)
             prights = self.get_proxy_user_rights(
-                protocols, target_device,
-                check_timeframes=bool(target_device))
+                protocols, target_device)
             # Logger().debug("** END VALIDATOR DEVICE NAME Get_proxy_right **")
         except Exception, e:
             # import traceback
@@ -789,14 +788,12 @@ class Engine(object):
         if filtered_subnet:
             self.displaytargets = filtered_subnet
 
-    def get_proxy_rights(self, protocols, target_device=None, check_timeframes=False,
-                         target_context=None):
+    def get_proxy_rights(self, protocols, target_device=None, target_context=None):
         if self.proxy_rights is None:
             try:
-                # Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device, check_timeframes))
+                # Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device))
                 self.proxy_rights = self.get_proxy_user_rights(
-                    protocols, target_device,
-                    check_timeframes=bool(target_device) or check_timeframes)
+                    protocols, target_device)
                 # Logger().debug("** END Get_proxy_right **")
             except Exception, e:
                 # import traceback
@@ -885,7 +882,6 @@ class Engine(object):
         # Logger().info(">>==GET_SELECTED_TARGET %s@%s:%s:%s" % (target_device, target_login, target_service, target_group))
         right = None
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
-                              check_timeframes=False,
                               target_context=target_context)
         return self._find_target_right(target_login, target_device, target_service,
                                       target_group)

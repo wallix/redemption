@@ -12,7 +12,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "capture_chunk"; }
-        static constexpr ::authid_t index() { return ::authid_t(0); }
+        static constexpr authid_t index() { return authid_t(0); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -27,7 +27,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "auth_user"; }
-        static constexpr ::authid_t index() { return ::authid_t(1); }
+        static constexpr authid_t index() { return authid_t(1); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -42,7 +42,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "host"; }
-        static constexpr ::authid_t index() { return ::authid_t(2); }
+        static constexpr authid_t index() { return authid_t(2); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -57,7 +57,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target"; }
-        static constexpr ::authid_t index() { return ::authid_t(3); }
+        static constexpr authid_t index() { return authid_t(3); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -72,7 +72,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target_device"; }
-        static constexpr ::authid_t index() { return ::authid_t(4); }
+        static constexpr authid_t index() { return authid_t(4); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -87,7 +87,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "device_id"; }
-        static constexpr ::authid_t index() { return ::authid_t(5); }
+        static constexpr authid_t index() { return authid_t(5); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -102,7 +102,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "primary_user_id"; }
-        static constexpr ::authid_t index() { return ::authid_t(6); }
+        static constexpr authid_t index() { return authid_t(6); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -117,7 +117,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target_user"; }
-        static constexpr ::authid_t index() { return ::authid_t(7); }
+        static constexpr authid_t index() { return authid_t(7); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -132,7 +132,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target_application"; }
-        static constexpr ::authid_t index() { return ::authid_t(8); }
+        static constexpr authid_t index() { return authid_t(8); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -147,7 +147,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target_application_account"; }
-        static constexpr ::authid_t index() { return ::authid_t(9); }
+        static constexpr authid_t index() { return authid_t(9); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -162,7 +162,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "target_application_password"; }
-        static constexpr ::authid_t index() { return ::authid_t(10); }
+        static constexpr authid_t index() { return authid_t(10); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -327,7 +327,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "trace_type"; }
-        static constexpr ::authid_t index() { return ::authid_t(11); }
+        static constexpr authid_t index() { return authid_t(11); }
         using type = TraceType;
         using sesman_and_spec_type = TraceType;
         using mapped_type = sesman_and_spec_type;
@@ -404,7 +404,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "is_rec"; }
-        static constexpr ::authid_t index() { return ::authid_t(12); }
+        static constexpr authid_t index() { return authid_t(12); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -419,7 +419,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "globals"; }
         static constexpr char const * name() { return "movie_path"; }
-        static constexpr ::authid_t index() { return ::authid_t(13); }
+        static constexpr authid_t index() { return authid_t(13); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -583,7 +583,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "session_log"; }
         static constexpr char const * name() { return "session_log_redirection"; }
-        static constexpr ::authid_t index() { return ::authid_t(14); }
+        static constexpr authid_t index() { return authid_t(14); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -598,7 +598,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "session_log"; }
         static constexpr char const * name() { return "log_path"; }
-        static constexpr ::authid_t index() { return ::authid_t(15); }
+        static constexpr authid_t index() { return authid_t(15); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -626,7 +626,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "client"; }
         static constexpr char const * name() { return "keyboard_layout"; }
-        static constexpr ::authid_t index() { return ::authid_t(16); }
+        static constexpr authid_t index() { return authid_t(16); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -771,7 +771,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "client"; }
         static constexpr char const * name() { return "disable_tsk_switch_shortcuts"; }
-        static constexpr ::authid_t index() { return ::authid_t(17); }
+        static constexpr authid_t index() { return authid_t(17); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1109,7 +1109,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "load_balance_info"; }
-        static constexpr ::authid_t index() { return ::authid_t(18); }
+        static constexpr authid_t index() { return authid_t(18); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -1125,7 +1125,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "bogus_sc_net_size"; }
-        static constexpr ::authid_t index() { return ::authid_t(19); }
+        static constexpr authid_t index() { return authid_t(19); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1152,7 +1152,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "proxy_managed_drives"; }
-        static constexpr ::authid_t index() { return ::authid_t(20); }
+        static constexpr authid_t index() { return authid_t(20); }
         using type = std::string;
         using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
         using mapped_type = sesman_and_spec_type;
@@ -1167,7 +1167,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "ignore_auth_channel"; }
-        static constexpr ::authid_t index() { return ::authid_t(21); }
+        static constexpr authid_t index() { return authid_t(21); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1195,7 +1195,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "alternate_shell"; }
-        static constexpr ::authid_t index() { return ::authid_t(22); }
+        static constexpr authid_t index() { return authid_t(22); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -1210,7 +1210,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "shell_arguments"; }
-        static constexpr ::authid_t index() { return ::authid_t(23); }
+        static constexpr authid_t index() { return authid_t(23); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -1225,7 +1225,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "shell_working_directory"; }
-        static constexpr ::authid_t index() { return ::authid_t(24); }
+        static constexpr authid_t index() { return authid_t(24); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -1240,7 +1240,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "use_client_provided_alternate_shell"; }
-        static constexpr ::authid_t index() { return ::authid_t(25); }
+        static constexpr authid_t index() { return authid_t(25); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1255,7 +1255,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "use_client_provided_remoteapp"; }
-        static constexpr ::authid_t index() { return ::authid_t(26); }
+        static constexpr authid_t index() { return authid_t(26); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1270,7 +1270,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "use_native_remoteapp_capability"; }
-        static constexpr ::authid_t index() { return ::authid_t(27); }
+        static constexpr authid_t index() { return authid_t(27); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1285,7 +1285,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "enable_session_probe"; }
-        static constexpr ::authid_t index() { return ::authid_t(28); }
+        static constexpr authid_t index() { return authid_t(28); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1302,7 +1302,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_use_clipboard_based_launcher"; }
-        static constexpr ::authid_t index() { return ::authid_t(29); }
+        static constexpr authid_t index() { return authid_t(29); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1317,7 +1317,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_enable_launch_mask"; }
-        static constexpr ::authid_t index() { return ::authid_t(30); }
+        static constexpr authid_t index() { return authid_t(30); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1332,7 +1332,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_on_launch_failure"; }
-        static constexpr ::authid_t index() { return ::authid_t(31); }
+        static constexpr authid_t index() { return authid_t(31); }
         using type = SessionProbeOnLaunchFailure;
         using sesman_and_spec_type = SessionProbeOnLaunchFailure;
         using mapped_type = sesman_and_spec_type;
@@ -1349,7 +1349,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_launch_timeout"; }
-        static constexpr ::authid_t index() { return ::authid_t(32); }
+        static constexpr authid_t index() { return authid_t(32); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1366,7 +1366,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_launch_fallback_timeout"; }
-        static constexpr ::authid_t index() { return ::authid_t(33); }
+        static constexpr authid_t index() { return authid_t(33); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1382,7 +1382,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_start_launch_timeout_timer_only_after_logon"; }
-        static constexpr ::authid_t index() { return ::authid_t(34); }
+        static constexpr authid_t index() { return authid_t(34); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1397,7 +1397,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_keepalive_timeout"; }
-        static constexpr ::authid_t index() { return ::authid_t(35); }
+        static constexpr authid_t index() { return authid_t(35); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1412,7 +1412,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_on_keepalive_timeout_disconnect_user"; }
-        static constexpr ::authid_t index() { return ::authid_t(36); }
+        static constexpr authid_t index() { return authid_t(36); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1428,7 +1428,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_end_disconnected_session"; }
-        static constexpr ::authid_t index() { return ::authid_t(37); }
+        static constexpr authid_t index() { return authid_t(37); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1455,7 +1455,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_enable_log"; }
-        static constexpr ::authid_t index() { return ::authid_t(38); }
+        static constexpr authid_t index() { return authid_t(38); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1472,7 +1472,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_disconnected_application_limit"; }
-        static constexpr ::authid_t index() { return ::authid_t(39); }
+        static constexpr authid_t index() { return authid_t(39); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1489,7 +1489,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_disconnected_session_limit"; }
-        static constexpr ::authid_t index() { return ::authid_t(40); }
+        static constexpr authid_t index() { return authid_t(40); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1506,7 +1506,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "session_probe_idle_session_limit"; }
-        static constexpr ::authid_t index() { return ::authid_t(41); }
+        static constexpr authid_t index() { return authid_t(41); }
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -1546,7 +1546,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_store"; }
-        static constexpr ::authid_t index() { return ::authid_t(42); }
+        static constexpr authid_t index() { return authid_t(42); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1561,7 +1561,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_check"; }
-        static constexpr ::authid_t index() { return ::authid_t(43); }
+        static constexpr authid_t index() { return authid_t(43); }
         using type = ServerCertCheck;
         using sesman_and_spec_type = ServerCertCheck;
         using mapped_type = sesman_and_spec_type;
@@ -1577,7 +1577,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_access_allowed_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(44); }
+        static constexpr authid_t index() { return authid_t(44); }
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1593,7 +1593,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_create_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(45); }
+        static constexpr authid_t index() { return authid_t(45); }
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1609,7 +1609,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_success_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(46); }
+        static constexpr authid_t index() { return authid_t(46); }
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1625,7 +1625,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_failure_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(47); }
+        static constexpr authid_t index() { return authid_t(47); }
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1641,7 +1641,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
         static constexpr char const * name() { return "server_cert_error_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(48); }
+        static constexpr authid_t index() { return authid_t(48); }
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1683,7 +1683,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_vnc"; }
         static constexpr char const * name() { return "clipboard_up"; }
-        static constexpr ::authid_t index() { return ::authid_t(49); }
+        static constexpr authid_t index() { return authid_t(49); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1699,7 +1699,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_vnc"; }
         static constexpr char const * name() { return "clipboard_down"; }
-        static constexpr ::authid_t index() { return ::authid_t(50); }
+        static constexpr authid_t index() { return authid_t(50); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1745,7 +1745,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_vnc"; }
         static constexpr char const * name() { return "server_clipboard_encoding_type"; }
-        static constexpr ::authid_t index() { return ::authid_t(51); }
+        static constexpr authid_t index() { return authid_t(51); }
         using type = ClipboardEncodingType;
         using sesman_and_spec_type = ClipboardEncodingType;
         using mapped_type = sesman_and_spec_type;
@@ -1760,7 +1760,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_vnc"; }
         static constexpr char const * name() { return "bogus_clipboard_infinite_loop"; }
-        static constexpr ::authid_t index() { return ::authid_t(52); }
+        static constexpr authid_t index() { return authid_t(52); }
         using type = VncBogusClipboardInfiniteLoop;
         using sesman_and_spec_type = VncBogusClipboardInfiniteLoop;
         using mapped_type = sesman_and_spec_type;
@@ -2028,7 +2028,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
         static constexpr char const * name() { return "rt_display"; }
-        static constexpr ::authid_t index() { return ::authid_t(53); }
+        static constexpr authid_t index() { return authid_t(53); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2274,7 +2274,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "crypto"; }
         static constexpr char const * name() { return "key0"; }
-        static constexpr ::authid_t index() { return ::authid_t(54); }
+        static constexpr authid_t index() { return authid_t(54); }
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
@@ -2289,7 +2289,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "crypto"; }
         static constexpr char const * name() { return "key1"; }
-        static constexpr ::authid_t index() { return ::authid_t(55); }
+        static constexpr authid_t index() { return authid_t(55); }
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
@@ -2331,7 +2331,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "remote_program"; }
         static constexpr char const * name() { return "allow_resize_hosted_desktop"; }
-        static constexpr ::authid_t index() { return ::authid_t(56); }
+        static constexpr authid_t index() { return authid_t(56); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2660,7 +2660,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "translation"; }
         static constexpr char const * name() { return "language"; }
-        static constexpr ::authid_t index() { return ::authid_t(57); }
+        static constexpr authid_t index() { return authid_t(57); }
         using type = Language;
         using sesman_and_spec_type = Language;
         using mapped_type = sesman_and_spec_type;
@@ -2675,7 +2675,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "translation"; }
         static constexpr char const * name() { return "password_en"; }
-        static constexpr ::authid_t index() { return ::authid_t(58); }
+        static constexpr authid_t index() { return authid_t(58); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2690,7 +2690,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "translation"; }
         static constexpr char const * name() { return "password_fr"; }
-        static constexpr ::authid_t index() { return ::authid_t(59); }
+        static constexpr authid_t index() { return authid_t(59); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2730,7 +2730,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_bitrate"; }
-        static constexpr ::authid_t index() { return ::authid_t(60); }
+        static constexpr authid_t index() { return authid_t(60); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2745,7 +2745,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_framerate"; }
-        static constexpr ::authid_t index() { return ::authid_t(61); }
+        static constexpr authid_t index() { return authid_t(61); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2760,7 +2760,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_qscale"; }
-        static constexpr ::authid_t index() { return ::authid_t(62); }
+        static constexpr authid_t index() { return authid_t(62); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2775,7 +2775,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_bpp"; }
-        static constexpr ::authid_t index() { return ::authid_t(63); }
+        static constexpr authid_t index() { return authid_t(63); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2790,7 +2790,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_height"; }
-        static constexpr ::authid_t index() { return ::authid_t(64); }
+        static constexpr authid_t index() { return authid_t(64); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2805,7 +2805,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_width"; }
-        static constexpr ::authid_t index() { return ::authid_t(65); }
+        static constexpr authid_t index() { return authid_t(65); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2831,7 +2831,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector"; }
-        static constexpr ::authid_t index() { return ::authid_t(66); }
+        static constexpr authid_t index() { return authid_t(66); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2846,7 +2846,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_current_page"; }
-        static constexpr ::authid_t index() { return ::authid_t(67); }
+        static constexpr authid_t index() { return authid_t(67); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2861,7 +2861,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_device_filter"; }
-        static constexpr ::authid_t index() { return ::authid_t(68); }
+        static constexpr authid_t index() { return authid_t(68); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2876,7 +2876,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_group_filter"; }
-        static constexpr ::authid_t index() { return ::authid_t(69); }
+        static constexpr authid_t index() { return authid_t(69); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2891,7 +2891,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_proto_filter"; }
-        static constexpr ::authid_t index() { return ::authid_t(70); }
+        static constexpr authid_t index() { return authid_t(70); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2906,7 +2906,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_lines_per_page"; }
-        static constexpr ::authid_t index() { return ::authid_t(71); }
+        static constexpr authid_t index() { return authid_t(71); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2921,7 +2921,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "selector_number_of_pages"; }
-        static constexpr ::authid_t index() { return ::authid_t(72); }
+        static constexpr authid_t index() { return authid_t(72); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -2936,7 +2936,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_password"; }
-        static constexpr ::authid_t index() { return ::authid_t(73); }
+        static constexpr authid_t index() { return authid_t(73); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2951,7 +2951,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_host"; }
-        static constexpr ::authid_t index() { return ::authid_t(74); }
+        static constexpr authid_t index() { return authid_t(74); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2966,7 +2966,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_str"; }
-        static constexpr ::authid_t index() { return ::authid_t(75); }
+        static constexpr authid_t index() { return authid_t(75); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2981,7 +2981,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_service"; }
-        static constexpr ::authid_t index() { return ::authid_t(76); }
+        static constexpr authid_t index() { return authid_t(76); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -2996,7 +2996,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_port"; }
-        static constexpr ::authid_t index() { return ::authid_t(77); }
+        static constexpr authid_t index() { return authid_t(77); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3011,7 +3011,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "target_protocol"; }
-        static constexpr ::authid_t index() { return ::authid_t(78); }
+        static constexpr authid_t index() { return authid_t(78); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3026,7 +3026,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "password"; }
-        static constexpr ::authid_t index() { return ::authid_t(79); }
+        static constexpr authid_t index() { return authid_t(79); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3041,7 +3041,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "reporting"; }
-        static constexpr ::authid_t index() { return ::authid_t(80); }
+        static constexpr authid_t index() { return authid_t(80); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3056,7 +3056,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_channel_answer"; }
-        static constexpr ::authid_t index() { return ::authid_t(81); }
+        static constexpr authid_t index() { return authid_t(81); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3071,7 +3071,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_channel_target"; }
-        static constexpr ::authid_t index() { return ::authid_t(82); }
+        static constexpr authid_t index() { return authid_t(82); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3086,7 +3086,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "message"; }
-        static constexpr ::authid_t index() { return ::authid_t(83); }
+        static constexpr authid_t index() { return authid_t(83); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3101,7 +3101,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "accept_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(84); }
+        static constexpr authid_t index() { return authid_t(84); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3116,7 +3116,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "display_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(85); }
+        static constexpr authid_t index() { return authid_t(85); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3131,7 +3131,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "rejected"; }
-        static constexpr ::authid_t index() { return ::authid_t(86); }
+        static constexpr authid_t index() { return authid_t(86); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3146,7 +3146,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "authenticated"; }
-        static constexpr ::authid_t index() { return ::authid_t(87); }
+        static constexpr authid_t index() { return authid_t(87); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3161,7 +3161,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "keepalive"; }
-        static constexpr ::authid_t index() { return ::authid_t(88); }
+        static constexpr authid_t index() { return authid_t(88); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3176,7 +3176,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "session_id"; }
-        static constexpr ::authid_t index() { return ::authid_t(89); }
+        static constexpr authid_t index() { return authid_t(89); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3191,7 +3191,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "end_date_cnx"; }
-        static constexpr ::authid_t index() { return ::authid_t(90); }
+        static constexpr authid_t index() { return authid_t(90); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3206,7 +3206,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "end_time"; }
-        static constexpr ::authid_t index() { return ::authid_t(91); }
+        static constexpr authid_t index() { return authid_t(91); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3221,7 +3221,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "mode_console"; }
-        static constexpr ::authid_t index() { return ::authid_t(92); }
+        static constexpr authid_t index() { return authid_t(92); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3236,7 +3236,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "timezone"; }
-        static constexpr ::authid_t index() { return ::authid_t(93); }
+        static constexpr authid_t index() { return authid_t(93); }
         using type = int;
         using sesman_and_spec_type = int;
         using mapped_type = sesman_and_spec_type;
@@ -3251,7 +3251,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "real_target_device"; }
-        static constexpr ::authid_t index() { return ::authid_t(94); }
+        static constexpr authid_t index() { return authid_t(94); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3266,7 +3266,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "authentication_challenge"; }
-        static constexpr ::authid_t index() { return ::authid_t(95); }
+        static constexpr authid_t index() { return authid_t(95); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3281,7 +3281,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "ticket"; }
-        static constexpr ::authid_t index() { return ::authid_t(96); }
+        static constexpr authid_t index() { return authid_t(96); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3296,7 +3296,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "comment"; }
-        static constexpr ::authid_t index() { return ::authid_t(97); }
+        static constexpr authid_t index() { return authid_t(97); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3311,7 +3311,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "duration"; }
-        static constexpr ::authid_t index() { return ::authid_t(98); }
+        static constexpr authid_t index() { return authid_t(98); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3326,7 +3326,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "waitinforeturn"; }
-        static constexpr ::authid_t index() { return ::authid_t(99); }
+        static constexpr authid_t index() { return authid_t(99); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3341,7 +3341,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "showform"; }
-        static constexpr ::authid_t index() { return ::authid_t(100); }
+        static constexpr authid_t index() { return authid_t(100); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3356,7 +3356,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "formflag"; }
-        static constexpr ::authid_t index() { return ::authid_t(101); }
+        static constexpr authid_t index() { return authid_t(101); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3371,7 +3371,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "module"; }
-        static constexpr ::authid_t index() { return ::authid_t(102); }
+        static constexpr authid_t index() { return authid_t(102); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3386,7 +3386,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "forcemodule"; }
-        static constexpr ::authid_t index() { return ::authid_t(103); }
+        static constexpr authid_t index() { return authid_t(103); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3401,7 +3401,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "proxy_opt"; }
-        static constexpr ::authid_t index() { return ::authid_t(104); }
+        static constexpr authid_t index() { return authid_t(104); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3416,7 +3416,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "pattern_kill"; }
-        static constexpr ::authid_t index() { return ::authid_t(105); }
+        static constexpr authid_t index() { return authid_t(105); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3431,7 +3431,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "pattern_notify"; }
-        static constexpr ::authid_t index() { return ::authid_t(106); }
+        static constexpr authid_t index() { return authid_t(106); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3446,7 +3446,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "opt_message"; }
-        static constexpr ::authid_t index() { return ::authid_t(107); }
+        static constexpr authid_t index() { return authid_t(107); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3461,7 +3461,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "session_probe_outbound_connection_monitoring_rules"; }
-        static constexpr ::authid_t index() { return ::authid_t(108); }
+        static constexpr authid_t index() { return authid_t(108); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3476,7 +3476,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "session_probe_process_monitoring_rules"; }
-        static constexpr ::authid_t index() { return ::authid_t(109); }
+        static constexpr authid_t index() { return authid_t(109); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3491,7 +3491,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "session_probe_extra_system_processes"; }
-        static constexpr ::authid_t index() { return ::authid_t(110); }
+        static constexpr authid_t index() { return authid_t(110); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3517,7 +3517,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "disconnect_reason"; }
-        static constexpr ::authid_t index() { return ::authid_t(111); }
+        static constexpr authid_t index() { return authid_t(111); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3532,7 +3532,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "disconnect_reason_ack"; }
-        static constexpr ::authid_t index() { return ::authid_t(112); }
+        static constexpr authid_t index() { return authid_t(112); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3558,7 +3558,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "recording_started"; }
-        static constexpr ::authid_t index() { return ::authid_t(113); }
+        static constexpr authid_t index() { return authid_t(113); }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3595,7 +3595,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command"; }
-        static constexpr ::authid_t index() { return ::authid_t(114); }
+        static constexpr authid_t index() { return authid_t(114); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3610,7 +3610,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_notify"; }
-        static constexpr ::authid_t index() { return ::authid_t(115); }
+        static constexpr authid_t index() { return authid_t(115); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3625,7 +3625,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_notify_rail_exec_flags"; }
-        static constexpr ::authid_t index() { return ::authid_t(116); }
+        static constexpr authid_t index() { return authid_t(116); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3640,7 +3640,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 1; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_notify_rail_exec_exe_or_file"; }
-        static constexpr ::authid_t index() { return ::authid_t(117); }
+        static constexpr authid_t index() { return authid_t(117); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3655,7 +3655,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_exec_result"; }
-        static constexpr ::authid_t index() { return ::authid_t(118); }
+        static constexpr authid_t index() { return authid_t(118); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3670,7 +3670,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_flags"; }
-        static constexpr ::authid_t index() { return ::authid_t(119); }
+        static constexpr authid_t index() { return authid_t(119); }
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3685,7 +3685,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_original_exe_or_file"; }
-        static constexpr ::authid_t index() { return ::authid_t(120); }
+        static constexpr authid_t index() { return authid_t(120); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3700,7 +3700,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_exe_or_file"; }
-        static constexpr ::authid_t index() { return ::authid_t(121); }
+        static constexpr authid_t index() { return authid_t(121); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3715,7 +3715,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_working_dir"; }
-        static constexpr ::authid_t index() { return ::authid_t(122); }
+        static constexpr authid_t index() { return authid_t(122); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3730,7 +3730,7 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "context"; }
         static constexpr char const * name() { return "auth_command_rail_exec_arguments"; }
-        static constexpr ::authid_t index() { return ::authid_t(123); }
+        static constexpr authid_t index() { return authid_t(123); }
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;

@@ -187,6 +187,7 @@ public:
         }
 
         if (!this->master_key_loaded){
+            LOG(LOG_ERR, "CryptoContext: loading master key");
             if (this->get_trace_key_cb == nullptr) {
                 LOG(LOG_ERR, "CryptoContext: undefined trace_key callback");
                 throw Error(ERR_WRM_INVALID_INIT_CRYPT);
@@ -205,7 +206,8 @@ public:
         }
 
         if (this->one_shot_encryption_scheme){
-            memcpy(trace_key, master_key, HMAC_KEY_LENGTH);
+            LOG(LOG_ERR, "CryptoContext: one shot encryption scheme");
+            memcpy(trace_key, this->master_key, HMAC_KEY_LENGTH);
         }
         else {
             uint8_t tmp[MD_HASH::DIGEST_LENGTH];

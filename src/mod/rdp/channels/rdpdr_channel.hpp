@@ -1103,6 +1103,8 @@ public:
                 }
             }
 
+            auto chunk_p = chunk.get_current();
+
             const uint16_t CapabilityType   = chunk.in_uint16_le();
             const uint16_t CapabilityLength = chunk.in_uint16_le();
             const uint32_t Version          = chunk.in_uint32_le();
@@ -1128,6 +1130,8 @@ public:
                         8 /* CapabilityType(2) + CapabilityLength(2) + Version(4) */);
                 break;
             }
+
+            chunk.in_skip_bytes(CapabilityLength - (chunk.get_current() - chunk_p));
 
             if ((CapabilityType == rdpdr::CAP_DRIVE_TYPE) &&
                 (Version == rdpdr::DRIVE_CAPABILITY_VERSION_02)) {
