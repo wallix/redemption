@@ -701,7 +701,6 @@ class Sesman():
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
                 self.engine.get_proxy_rights([u'RDP', u'VNC'],
-                                             check_timeframes=False,
                                              target_context=self.target_context)
                 selector_filters_case_sensitive = SESMANCONF[u'sesman'].get('selector_filters_case_sensitive', False)
                 services, item_filtered = self.engine.get_targets_list(
