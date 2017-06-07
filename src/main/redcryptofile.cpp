@@ -352,7 +352,7 @@ RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
         auto handle = new (std::nothrow) RedCryptoReaderHandle(
-            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn
+            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn, old_scheme, one_shot
         );
         handle->cctxw.set_master_derivator_from_file_name(derivator);
         return handle,
