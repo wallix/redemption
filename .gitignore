@@ -1,26 +1,38 @@
 #.gitignore
+
+# editor/IDE project
 *.kdev*
+
+# swap file
 *.kate-swp
 *.swp
+
+# temp file
+*~
+
+# package
+/debian
+
+# Jamroot
 /bin
-/build
-/coverage.summary
-/coverage
-/tools/coverage.summary
-/tools/redcryptofile/redcryptofile.so
-/tools/ocr/fonts/
-/tools/ocr/learning
 /projects/browser_client_JS/bin
 /projects/ClientQtGraphicAPI/bin
 /projects/js/bin
 /projects/redemption_configs/bin
-[#]*[#]
-.\#*
-password.py
-*.pyc
-/debian
+/coverage.summary
+/coverage
+
+# bin
 /tools/valgrind-filter/valgrind-filter
-*~
+/tools/redcryptofile/redcryptofile.so
+/tools/ocr/fonts/
+/tools/ocr/learning
+*.pyc
+
+# user depends
+password.py
+
+# gdb
 /.gdb_history
 
 # GNU global
