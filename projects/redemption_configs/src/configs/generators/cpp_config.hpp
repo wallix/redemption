@@ -144,7 +144,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
 
         if (bool(properties)) {
-            this->tab(); this->out() << "    static constexpr ::authid_t index() { return ::authid_t(" << this->index_authid++ << "); }\n";
+            this->tab(); this->out() << "    static constexpr authid_t index() { return authid_t(" << this->index_authid++ << "); }\n";
         }
 
         this->tab(); this->out() << "    using type = ";

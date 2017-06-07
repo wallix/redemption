@@ -139,4 +139,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::password, lang), std::string("pompidou"));
     lang = Translation::EN;
     RED_CHECK_EQUAL(TR(trkeys::password, lang), std::string("pouloup"));
+
+    // inhibit scan-build warn
+    TRANSLATIONCONF.set_ini(nullptr);
 }
