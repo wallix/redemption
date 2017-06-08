@@ -72,7 +72,7 @@ struct LocallyIntegrableMod : public InternalMod {
     , front_width(front_width)
     , front_height(front_height)
     , first_click_down_event_handler(*this)
-    , rail_enabled(front.get_channel_list().get_by_name(channel_names::rail) != nullptr) {}
+    , rail_enabled(client_execute.is_rail_enabled()) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset(true);

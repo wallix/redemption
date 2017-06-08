@@ -178,15 +178,18 @@ class ClientExecute : public windowing_api
         }
     } button_1_down_event_handler;
 
+    const bool rail_enabled;
+
     bool verbose;
 
 public:
-    ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
+    ClientExecute(bool rail_enabled, FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
     , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
     , button_1_down_event_handler(*this)
+    , rail_enabled(rail_enabled)
     , verbose(verbose)
     {
     }   // ClientExecute
@@ -217,7 +220,7 @@ public:
     }
 
     Rect adjust_rect(Rect rect) {
-        if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) {
+        if (!this->rail_enabled) {
             return rect;
         }
 
@@ -3089,7 +3092,11 @@ private:
     }
 
 public:
-    bool is_resizing_hosted_desktop_enabled() {
+    bool is_rail_enabled() const {
+        return this->rail_enabled;
+    }
+
+    bool is_resizing_hosted_desktop_enabled() const {
         if (this->allow_resize_hosted_desktop_ &&
             this->enable_resizing_hosted_desktop_) {
             return true;

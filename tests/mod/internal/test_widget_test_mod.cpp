@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    ClientExecute client_execute(false, front, window_list_caps, 0);
 
     Font font;
 
