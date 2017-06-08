@@ -3480,7 +3480,8 @@ public:
                         if (!stream.in_check_rem(expected)){
                             LOG(LOG_ERR, "Truncated Fast-Path Pointer Position Update, need=%u remains=%zu",
                                 expected, stream.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                            //throw Error(ERR_RDP_DATA_TRUNCATED);
+                            break;
                         }
 
                         uint16_t xPos = stream.in_uint16_le();
@@ -4684,7 +4685,8 @@ public:
                 if (!stream.in_check_rem(expected)){
                     LOG(LOG_ERR, "Truncated Pointer Position Update, need=%u remains=%zu",
                         expected, stream.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                    //throw Error(ERR_RDP_DATA_TRUNCATED);
+                    break;
                 }
 
                 uint16_t xPos = stream.in_uint16_le();
