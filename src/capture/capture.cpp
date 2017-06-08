@@ -248,39 +248,36 @@ public:
     }
 };
 
-
-template<class Utf8CharFn, class NoPrintableFn>
-void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+enum FilteringSlash{ No, Yes };
+using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
+using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
+template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
+void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn, FilterSlash filter_slash)
 {
-    constexpr struct {
-        uint32_t uchar;
-        array_view_const_char str;
-        // for std::sort and std::lower_bound
-        operator uint32_t () const { return this->uchar; }
-    } noprintable_table[] = {
-        {0x00000008, cstr_array_view("/<backspace>")},
-        {0x00000009, cstr_array_view("/<tab>")},
-        {0x0000000D, cstr_array_view("/<enter>")},
-        {0x0000001B, cstr_array_view("/<escape>")},
-        {0x0000007F, cstr_array_view("/<delete>")},
-        {0x00002190, cstr_array_view("/<left>")},
-        {0x00002191, cstr_array_view("/<up>")},
-        {0x00002192, cstr_array_view("/<right>")},
-        {0x00002193, cstr_array_view("/<down>")},
-        {0x00002196, cstr_array_view("/<home>")},
-        {0x00002198, cstr_array_view("/<end>")},
-    };
-    using std::begin;
-    using std::end;
-    // TODO used static_assert
-    assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
-
-    auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
-    if (p != end(noprintable_table) && *p == uchar) {
-        no_printable_fn(p->str);
-    }
-    else {
-        utf32_char_fn(uchar);
+    switch (uchar)
+    {
+        case '/':
+            if (filter_slash == FilteringSlash::Yes) {
+                no_printable_fn(cstr_array_view("//"));
+            }
+            else {
+                utf32_char_fn(uchar);
+            }
+            break;
+        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+        Case(0x00000008, "/<backspace>");
+        Case(0x00000009, "/<tab>");
+        Case(0x0000000D, "/<enter>");
+        Case(0x0000001B, "/<escape>");
+        Case(0x0000007F, "/<delete>");
+        Case(0x00002190, "/<left>");
+        Case(0x00002191, "/<up>");
+        Case(0x00002192, "/<right>");
+        Case(0x00002193, "/<down>");
+        Case(0x00002196, "/<home>");
+        Case(0x00002198, "/<end>");
+        #undef Case
+        default: utf32_char_fn(uchar);
     }
 }
 
@@ -333,7 +330,8 @@ public:
             [this](array_view_const_char const &) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
-            }
+            },
+            nofilter_slash{}
         );
 
         return can_be_sent_to_server;
@@ -386,16 +384,14 @@ private:
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
                 }
             },
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
-            }
+            },
+            filter_slash{}
         );
     }
 
@@ -498,16 +494,14 @@ class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
                 }
             },
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
-            }
+            },
+            filter_slash{}
         );
     }
 
@@ -922,16 +916,14 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
                 }
             },
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
-            }
+            },
+            filter_slash{}
         );
     }
 
