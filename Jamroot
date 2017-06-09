@@ -57,7 +57,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
-alias libs    : libredrec libredcryptofile ;
+alias libs    : libredrec libscytale ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 
@@ -220,7 +220,7 @@ exe rdpproxy
     ;
 
 # Maybe merge with libredrec ?
-lib libredcryptofile
+lib libscytale
    :
        redcryptofile.o
        $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
