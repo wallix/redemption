@@ -19,7 +19,7 @@
 
 */
 
-#include "main/redcryptofile.hpp"
+#include "main/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 
 #include <memory>
@@ -249,25 +249,25 @@ namespace
 }
 
 
-const char* redcryptofile_version() {
+const char* scytale_version() {
     return VERSION;
 }
 
 
 /// \return HashHexArray
-char const * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle) {
+char const * scytale_writer_qhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     return handle->qhashhex;
 }
 
 /// \return HashHexArray
-char const * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle) {
+char const * scytale_writer_fhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     return handle->fhashhex;
 }
 
 
-RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
+RedCryptoWriterHandle * scytale_writer_new(int with_encryption
                                                , int with_checksum
                                                , const char * derivator
                                                , get_hmac_key_prototype * hmac_fn
@@ -286,7 +286,7 @@ RedCryptoWriterHandle * redcryptofile_writer_new(int with_encryption
 }
 
 
-RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
+RedCryptoWriterHandle * scytale_writer_new_with_test_random(
     int with_encryption, int with_checksum, const char * derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn
 ) {
@@ -303,7 +303,7 @@ RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
     );
 }
 
-int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
+int scytale_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
@@ -312,7 +312,7 @@ int redcryptofile_writer_open(RedCryptoWriterHandle * handle, const char * path,
 }
 
 
-int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
+int scytale_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
@@ -320,7 +320,7 @@ int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * b
 }
 
 
-int redcryptofile_writer_close(RedCryptoWriterHandle * handle) {
+int scytale_writer_close(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     HashArray qhash;
@@ -332,18 +332,18 @@ int redcryptofile_writer_close(RedCryptoWriterHandle * handle) {
 }
 
 
-void redcryptofile_writer_delete(RedCryptoWriterHandle * handle) {
+void scytale_writer_delete(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     delete handle;
 }
 
-char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle)
+char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
 {
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
 
-RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
+RedCryptoReaderHandle * scytale_reader_new(const char * derivator
                                                 , get_hmac_key_prototype* hmac_fn
                                                 , get_trace_key_prototype* trace_fn
                                                 , int old_scheme
@@ -363,7 +363,7 @@ RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator
     ;
 }
 
-int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
+int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
@@ -375,31 +375,31 @@ int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path,
 
 
 // 0: if end of file, len: if data was read, negative number on error
-int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len) {
+int scytale_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(return int(handle->in_crypto_transport.partial_read(buffer, len)), ERR_TRANSPORT_READ_FAILED);
 }
 
 
-int redcryptofile_reader_close(RedCryptoReaderHandle * handle) {
+int scytale_reader_close(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->in_crypto_transport.close(), ERR_TRANSPORT_CLOSED);
     return 0;
 }
 
-void redcryptofile_reader_delete(RedCryptoReaderHandle * handle) {
+void scytale_reader_delete(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     delete handle;
 }
 
-char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle)
+char const * scytale_reader_error_message(RedCryptoReaderHandle * handle)
 {
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
-int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file) {
+int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file) {
     SCOPED_TRACE;
     try {
         InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
@@ -421,12 +421,12 @@ int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file)
 }
 
 
-const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle) {
+const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     return handle->qhashhex;
 }
 
-const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle) {
+const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
     return handle->fhashhex;
 }

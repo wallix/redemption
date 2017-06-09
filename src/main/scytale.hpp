@@ -30,69 +30,69 @@ extern "C"
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
     REDEMPTION_LIB_EXPORT
-    char const * redcryptofile_version();
+    char const * scytale_version();
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_writer_new(
+    RedCryptoWriterHandle * scytale_writer_new(
         int with_encryption, int with_checksum, const char * derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    RedCryptoWriterHandle * redcryptofile_writer_new_with_test_random(
+    RedCryptoWriterHandle * scytale_writer_new_with_test_random(
         int with_encryption, int with_checksum, const char * derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
 
     REDEMPTION_LIB_EXPORT
-    char const * redcryptofile_writer_error_message(RedCryptoWriterHandle * handle);
+    char const * scytale_writer_error_message(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_writer_open(RedCryptoWriterHandle * handle, char const * path, char const * hashpath, int groupid);
+    int scytale_writer_open(RedCryptoWriterHandle * handle, char const * path, char const * hashpath, int groupid);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
+    int scytale_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len);
 
     /// \return HashHexArray
     REDEMPTION_LIB_EXPORT
-    char const * redcryptofile_writer_qhashhex(RedCryptoWriterHandle * handle);
+    char const * scytale_writer_qhashhex(RedCryptoWriterHandle * handle);
 
     /// \return HashHexArray
     REDEMPTION_LIB_EXPORT
-    char const * redcryptofile_writer_fhashhex(RedCryptoWriterHandle * handle);
+    char const * scytale_writer_fhashhex(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_writer_close(RedCryptoWriterHandle * handle);
+    int scytale_writer_close(RedCryptoWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    void redcryptofile_writer_delete(RedCryptoWriterHandle * handle);
+    void scytale_writer_delete(RedCryptoWriterHandle * handle);
 
-
-
-    REDEMPTION_LIB_EXPORT
-    RedCryptoReaderHandle * redcryptofile_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
-
-    REDEMPTION_LIB_EXPORT
-    char const * redcryptofile_reader_error_message(RedCryptoReaderHandle * handle);
 
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
+    RedCryptoReaderHandle * scytale_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
+
+    REDEMPTION_LIB_EXPORT
+    char const * scytale_reader_error_message(RedCryptoReaderHandle * handle);
+
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
 
     // < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
+    int scytale_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_reader_close(RedCryptoReaderHandle * handle);
+    int scytale_reader_close(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    void redcryptofile_reader_delete(RedCryptoReaderHandle * handle);
+    void scytale_reader_delete(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int redcryptofile_reader_hash(RedCryptoReaderHandle * handle, const char * file);
+    int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file);
 
     REDEMPTION_LIB_EXPORT
-    const char * redcryptofile_reader_qhashhex(RedCryptoReaderHandle * handle);
+    const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    const char * redcryptofile_reader_fhashhex(RedCryptoReaderHandle * handle);
+    const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle);
 }
