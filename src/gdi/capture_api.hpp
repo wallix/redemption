@@ -29,7 +29,6 @@
 
 
 struct timeval;
-class Inifile;
 
 namespace gdi {
 
@@ -37,31 +36,45 @@ struct CaptureApi : private noncopyable
 {
     virtual ~CaptureApi() = default;
 
-    virtual std::chrono::microseconds periodic_snapshot(
+    // non_negative<std::chrono::microseconds>
+    struct Microseconds
+    {
+        Microseconds() = default;
+
+        Microseconds(std::chrono::microseconds const & ms)
+          : ms_(ms)
+        {
+            assert(ms_.count() >= 0);
+        }
+
+        template<class Rep, class Period>
+        Microseconds(std::chrono::duration<Rep, Period> const & duration)
+          : Microseconds(std::chrono::microseconds{duration})
+        {}
+
+        std::chrono::microseconds::rep count() const noexcept { return this->ms_.count(); }
+
+        std::chrono::microseconds const & ms() const noexcept { return this->ms_; }
+        operator std::chrono::microseconds const & () const noexcept { return this->ms_; }
+
+    private:
+        std::chrono::microseconds ms_;
+    };
+
+    virtual Microseconds periodic_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
-    ) {
-        // assert(now >= previous);
-        auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-        assert(next_duration.count() >= 0);
-        return next_duration;
-    }
+    ) = 0;
 
     virtual void frame_marker_event(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
-    ) 
+    )
     {
         this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
-
-    virtual std::chrono::microseconds do_snapshot(
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) = 0;
 };
 
 
@@ -72,6 +85,37 @@ struct ExternalCaptureApi : private noncopyable
 
     virtual ~ExternalCaptureApi() = default;
 };
+
+
+inline bool operator==(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() == b.count();
+}
+
+inline bool operator!=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() != b.count();
+}
+
+inline bool operator<(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() < b.count();
+}
+
+inline bool operator>(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() > b.count();
+}
+
+inline bool operator<=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() <= b.count();
+}
+
+inline bool operator>=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
+{
+    return a.count() >= b.count();
+}
 
 }
 

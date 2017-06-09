@@ -1060,8 +1060,7 @@ public:
             this->recorder.timestamp(now);
         }
 
-    private:
-        std::chrono::microseconds do_snapshot(
+        Microseconds periodic_snapshot(
             const timeval & now, int x, int y, bool ignore_frame_in_timeval
         ) override {
             (void)ignore_frame_in_timeval;
@@ -1137,7 +1136,7 @@ public:
         this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
     }
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);

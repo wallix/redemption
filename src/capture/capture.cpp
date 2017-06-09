@@ -439,7 +439,7 @@ public:
     }
 
 private:
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
         (void)cursor_x;
@@ -675,7 +675,7 @@ public:
         }
      }
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         (void)x;
@@ -748,7 +748,7 @@ public:
         this->clear_png_interval(num_start, num_start + 1);
     }
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         (void)x;
@@ -757,7 +757,7 @@ public:
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
-            return this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
+            return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
         return interval - duration % interval;
     }
@@ -966,14 +966,14 @@ public:
         this->previous_char_is_event_flush = true;
     }
 
-private:
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         this->last_time = now.tv_sec;
         return std::chrono::seconds{10};
     }
 
+private:
     void write_shadow_keys() {
         if (!this->kbd_stream.has_room(1)) {
             this->send_kbd();
@@ -1159,7 +1159,7 @@ public:
     }
 
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
@@ -1468,7 +1468,7 @@ void Capture::set_row(size_t rownum, const uint8_t * data)
     }
 }
 
-std::chrono::microseconds Capture::do_snapshot(
+Capture::Microseconds Capture::periodic_snapshot(
     timeval const & now,
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
@@ -1483,7 +1483,7 @@ std::chrono::microseconds Capture::do_snapshot(
     std::chrono::microseconds time = std::chrono::microseconds::max();
     if (!this->caps.empty()) {
         for (gdi::CaptureApi & cap : this->caps) {
-            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
         }
         this->capture_event.update(time.count());
     }

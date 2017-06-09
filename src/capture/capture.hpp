@@ -441,13 +441,13 @@ public:
         }
     }
 
-protected:
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override;
 
+protected:
     template<class... Ts>
     void draw_impl(const Ts & ... args) {
         if (this->capture_drawable) {
