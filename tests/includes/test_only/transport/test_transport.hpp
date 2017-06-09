@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "system/redemption_unit_tests.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 
@@ -42,6 +43,58 @@ struct RemainingError : std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
+
+namespace redemption_unit_test__
+{
+    struct hexdump
+    {
+        const_byte_array sig;
+
+        std::size_t size() const
+        {
+            return sig.size();
+        }
+
+        uint8_t const * data() const
+        {
+            return sig.data();
+        }
+    };
+
+    inline std::ostream & operator<<(std::ostream & out, hexdump const & x)
+    {
+        char buffer[2048];
+        for (size_t j = 0 ; j < x.size(); j += 16){
+            char * line = buffer;
+            line += std::sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
+            size_t i = 0;
+            for (i = 0; i < 16; i++){
+                if (j+i >= x.size()){ break; }
+                line += std::sprintf(line, "\\x%.2x", static_cast<unsigned>(x.data()[j+i]));
+            }
+            line += std::sprintf(line, "\"");
+            if (i < 16){
+                line += std::sprintf(line, "%*c", static_cast<int>((16-i)*4), ' ');
+            }
+            line += std::sprintf(line, " // ");
+            for (i = 0; i < 16; i++){
+                if (j+i >= x.size()){ break; }
+                unsigned char tmp = x.data()[j+i];
+                if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
+                    tmp = '.';
+                }
+                line += std::sprintf(line, "%c", tmp);
+            }
+
+            if (line != buffer){
+                line[0] = 0;
+                out << buffer << "\n";
+                buffer[0]=0;
+            }
+        }
+        return out;
+    }
+}
 
 struct GeneratorTransport : Transport
 {
@@ -71,8 +124,9 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            LOG(LOG_ERR, "=============== Expected ==========");
-            hexdump_c(this->data.get() + this->current, this->len - this->current);
+            RED_CHECK_MESSAGE(this->len == this->current, (redemption_unit_test__::hexdump{{
+                this->data.get() + this->current, this->len - this->current
+            }}));
             std::ostringstream out;
             out << "~GeneratorTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
@@ -109,6 +163,18 @@ private:
 };
 
 
+struct BufTransport : Transport
+{
+    std::string buf;
+
+private:
+    void do_send(const uint8_t * const data, size_t len) override
+    {
+        this->buf.append(reinterpret_cast<char const *>(data), len);
+    }
+};
+
+
 struct CheckTransport : Transport
 {
     CheckTransport(const char * data, size_t len)
@@ -135,8 +201,9 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            LOG(LOG_ERR, "=============== Expected ==========");
-            hexdump_c(this->data.get() + this->current, this->len - this->current);
+            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (redemption_unit_test__::hexdump{{
+                this->data.get() + this->current, this->len - this->current
+            }}));
             std::ostringstream out;
             out << "~CheckTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
@@ -154,12 +221,14 @@ private:
             while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
                 ++differs;
             }
-            LOG(LOG_ERR, "=============== Common Part =======");
-            hexdump_c(data, differs);
-            LOG(LOG_ERR, "=============== Expected ==========");
-            hexdump_c(this->data.get() + this->current + differs, available_len - differs);
-            LOG(LOG_ERR, "=============== Got ===============");
-            hexdump_c(data + differs, available_len - differs);
+            RED_CHECK_MESSAGE(false, "\n"
+                "=============== Common Part =======\n" <<
+                (redemption_unit_test__::hexdump{{data, differs}}) <<
+                "=============== Expected =======\n" <<
+                (redemption_unit_test__::hexdump{{this->data.get() + this->current + differs, available_len - differs}}) <<
+                "=============== Got =======\n" <<
+                (redemption_unit_test__::hexdump{{data + differs, available_len - differs}})
+            );
             this->data.reset();
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
@@ -168,11 +237,14 @@ private:
         this->current += available_len;
 
         if (available_len != len){
-            LOG(LOG_ERR, "Check transport out of reference data available=%zu len=%zu", available_len, len);
-            LOG(LOG_ERR, "=============== Common Part =======");
-            hexdump_c(data, available_len);
-            LOG(LOG_ERR, "=============== Got Unexpected Data ==========");
-            hexdump_c(data + available_len, len - available_len);
+            RED_CHECK_MESSAGE(available_len == len,
+                "check transport out of reference data available="
+                    << available_len << " len=" << len << " failed\n"
+                "=============== Common Part =======\n" <<
+                (redemption_unit_test__::hexdump{{data, available_len}}) <<
+                "=============== Got Unexpected Data =======\n" <<
+                (redemption_unit_test__::hexdump{{data + available_len, len - available_len}})
+            );
             this->data.reset();
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
