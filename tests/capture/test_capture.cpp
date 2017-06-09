@@ -558,20 +558,12 @@ RED_AUTO_TEST_CASE(TestPattern)
 
 RED_AUTO_TEST_CASE(TestSessionMeta)
 {
-    char const out_data[] =
-        "1970-01-01 01:16:40 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
-        "1970-01-01 01:16:49 - [Kbd]ABCD\n"
-        "1970-01-01 01:16:50 + Blah1\n"
-        "1970-01-01 01:16:51 + Blah2[Kbd]ABCDABCD\n"
-        "1970-01-01 01:16:54 + Blah3\n"
-    ;
-    CheckTransport trans(out_data, sizeof(out_data) - 1);
-
-    timeval now;
-    now.tv_sec  = 1000;
-    now.tv_usec = 0;
+    BufTransport trans;
 
     {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
         SessionMeta meta(now, trans);
 
         auto send_kbd = [&]{
@@ -579,46 +571,51 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
             meta.kbd_input(now, 'B');
             meta.kbd_input(now, 'C');
             meta.kbd_input(now, 'D');
+            now.tv_sec += 1;
         };
 
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
+        send_kbd();
         meta.periodic_snapshot(now, 0, 0, 0);
-        send_kbd(); now.tv_sec += 1;
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        send_kbd();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1"));
+        now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2"));
+        now.tv_sec += 1;
+        send_kbd();
+        send_kbd();
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3"));
+        now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
     }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:50 + Blah1\n"
+        "1970-01-01 01:16:51 + Blah2\n"
+        "1970-01-01 01:16:54 + Blah3\n"
+        "1970-01-01 01:16:55 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
+    );
 }
 
 
 RED_AUTO_TEST_CASE(TestSessionMeta2)
 {
-    char const out_data[] =
-        "1970-01-01 01:16:40 + Blah1\n"
-        "1970-01-01 01:16:41 + Blah2[Kbd]ABCDABCD\n"
-        "1970-01-01 01:16:44 + Blah3\n"
-        "1970-01-01 01:16:45 + (break)\n"
-    ;
-    CheckTransport trans(out_data, sizeof(out_data) - 1);
-
-    timeval now;
-    now.tv_sec  = 1000;
-    now.tv_usec = 0;
+    BufTransport trans;
 
     {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
         SessionMeta meta(now, trans);
 
         auto send_kbd = [&]{
@@ -638,26 +635,26 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.send_line(now.tv_sec, cstr_array_view("(break)"));
     }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 + Blah1\n"
+        "1970-01-01 01:16:41 + Blah2\n"
+        "1970-01-01 01:16:44 + Blah3\n"
+        "1970-01-01 01:16:45 + (break)\n"
+        "1970-01-01 01:16:45 - [Kbd]ABCDABCD\n"
+    );
 }
 
 
 RED_AUTO_TEST_CASE(TestSessionMeta3)
 {
-    char const out_data[] =
-        "1970-01-01 01:16:40 - [Kbd]ABCD\n"
-        "1970-01-01 01:16:41 + Blah1\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
-        "1970-01-01 01:16:43 + Blah2[Kbd]ABCDABCD\n"
-        "1970-01-01 01:16:46 + Blah3\n"
-        "1970-01-01 01:16:47 + (break)\n"
-    ;
-    CheckTransport trans(out_data, sizeof(out_data) - 1);
-
-    timeval now;
-    now.tv_sec  = 1000;
-    now.tv_usec = 0;
+    BufTransport trans;
 
     {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
         SessionMeta meta(now, trans);
 
         auto send_kbd = [&]{
@@ -682,27 +679,27 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.send_line(now.tv_sec, cstr_array_view("(break)"));
     }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:43 + Blah2\n"
+        "1970-01-01 01:16:46 + Blah3\n"
+        "1970-01-01 01:16:47 + (break)\n"
+        "1970-01-01 01:16:47 - [Kbd]ABCDABCDABCD\n"
+    );
 }
 
 
 RED_AUTO_TEST_CASE(TestSessionMeta4)
 {
-    char const out_data[] =
-        "1970-01-01 01:16:40 - [Kbd]ABCD\n"
-        "1970-01-01 01:16:41 + Blah1[Kbd]ABCD\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
-        "1970-01-01 01:16:42 - Blah1[Kbd]ABCD\n"
-        "1970-01-01 01:16:44 + Blah2[Kbd]ABCDABCD\n"
-        "1970-01-01 01:16:47 + Blah3\n"
-        "1970-01-01 01:16:48 + (break)\n"
-    ;
-    CheckTransport trans(out_data, sizeof(out_data) - 1);
-
-    timeval now;
-    now.tv_sec  = 1000;
-    now.tv_usec = 0;
+    BufTransport trans;
 
     {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
         SessionMeta meta(now, trans);
 
         auto send_kbd = [&]{
@@ -731,84 +728,103 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.send_line(now.tv_sec, cstr_array_view("(break)"));
     }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:44 + Blah2\n"
+        "1970-01-01 01:16:47 + Blah3\n"
+        "1970-01-01 01:16:48 + (break)\n"
+        "1970-01-01 01:16:48 - [Kbd]ABCDABCDABCDABCDABCD\n"
+    );
 }
+
+
+RED_AUTO_TEST_CASE(TestSessionMeta5)
+{
+    BufTransport trans;
+
+    {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans);
+
+        meta.kbd_input(now, 'A'); now.tv_sec += 1;
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+
+        meta.kbd_input(now, 'B');
+
+        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+
+        meta.kbd_input(now, 'C'); now.tv_sec += 1;
+
+        meta.possible_active_window_change();
+
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        meta.kbd_input(now, 'D'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, 'E'); now.tv_sec += 1;
+        meta.kbd_input(now, 'F'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, 'G'); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\t'); now.tv_sec += 1;
+        meta.kbd_input(now, 'H'); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.kbd_input(now, 'I'); now.tv_sec += 1;
+        meta.kbd_input(now, 'J'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'K'); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:43 - [Kbd]ABC\n"
+        "1970-01-01 01:16:44 + Blah2\n"
+        "1970-01-01 01:16:45 - [Kbd]D/<enter>\n"
+        "1970-01-01 01:16:48 - [Kbd]EF/<enter>\n"
+        "1970-01-01 01:16:52 + Blah3\n"
+        "1970-01-01 01:16:52 - [Kbd]/<enter>G/<enter>\n"
+        "1970-01-01 01:16:57 + (break)\n"
+        "1970-01-01 01:17:00 - [Kbd]/<enter>/<tab>HIK\n"
+    );
+}
+
 
 class DrawableToFile
 {
-protected:
     Transport & trans;
-    unsigned zoom_factor;
-    unsigned scaled_width;
-    unsigned scaled_height;
-
     const Drawable & drawable;
 
-private:
-    std::unique_ptr<uint8_t[]> scaled_buffer;
-
 public:
-    DrawableToFile(Transport & trans, const Drawable & drawable, unsigned zoom)
+    DrawableToFile(Transport & trans, const Drawable & drawable)
     : trans(trans)
-    , zoom_factor(std::min(zoom, 100u))
-    , scaled_width(drawable.width())
-    , scaled_height(drawable.height())
     , drawable(drawable)
     {
-        const unsigned zoom_width = (this->drawable.width() * this->zoom_factor) / 100;
-        const unsigned zoom_height = (this->drawable.height() * this->zoom_factor) / 100;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
     }
 
     ~DrawableToFile() = default;
-
-    /// \param  percent  0 to 100 or 100 if greater
-    void zoom(unsigned percent) {
-        percent = std::min(percent, 100u);
-        const unsigned zoom_width = (this->drawable.width() * percent) / 100;
-        const unsigned zoom_height = (this->drawable.height() * percent) / 100;
-        this->zoom_factor = percent;
-        this->scaled_width = (zoom_width + 3) & 0xFFC;
-        this->scaled_height = zoom_height;
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
-        }
-    }
 
     bool logical_frame_ended() const {
         return this->drawable.logical_frame_ended;
     }
 
     void flush() {
-        if (this->zoom_factor == 100) {
-            this->dump24();
-        }
-        else {
-            this->scale_dump24();
-        }
-    }
-
-private:
-    void dump24() const {
         ::transport_dump_png24(
             this->trans, this->drawable.data(),
             this->drawable.width(), this->drawable.height(),
             this->drawable.rowsize(), true);
-    }
-
-    void scale_dump24() const {
-        scale_data(
-            this->scaled_buffer.get(), this->drawable.data(),
-            this->scaled_width, this->drawable.width(),
-            this->scaled_height, this->drawable.height(),
-            this->drawable.rowsize());
-        ::transport_dump_png24(
-            this->trans, this->scaled_buffer.get(),
-            this->scaled_width, this->scaled_height,
-            this->scaled_width * 3, false);
     }
 };
 
@@ -1224,7 +1240,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
@@ -1370,7 +1386,7 @@ RED_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -1504,7 +1520,7 @@ RED_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -1597,7 +1613,7 @@ RED_AUTO_TEST_CASE(TestContinuationOrderStates)
     const FilenameGenerator * seq = out_png_trans.seqgen();
     RED_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -1925,7 +1941,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -1996,10 +2012,10 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, ReportError{});
-    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl(), 100);
+    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -2078,7 +2094,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
@@ -2227,7 +2243,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl(), 100);
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);

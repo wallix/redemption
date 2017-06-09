@@ -62,8 +62,14 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
-    // try exception
-    CheckTransport transexcpt("", 0);
+    struct ThrowTransport : Transport
+    {
+        void do_send(const uint8_t*, size_t) override
+        {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+    };
+    ThrowTransport transexcpt;
     AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");

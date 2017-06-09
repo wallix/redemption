@@ -886,61 +886,33 @@ namespace {
 /*
 * Format:
 *
-* $date ' - [Kbd]' $kbd
-* $date ' ' [+-] ' ' $title? '[Kbd]' $kbd
-* $date ' - ' $line
+* $date " - [Kbd]" $kbd
+* $date " + " $title
+* $date " - " $line
+* $date " + " (break)
+*
+* Info:
+*
+* + for new video file
 */
 
 class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
-    uint8_t kbd_buffer[1024];
-    timeval last_snapshot;
-    time_t last_flush;
+    uint8_t kbd_buffer[512];
+    time_t last_time;
     Transport & trans;
-    std::string title;
-    bool require_kbd = false;
-    char current_seperator = '-';
     bool is_probe_enabled_session = false;
-
-    void write_shadow_keys() {
-        if (!this->kbd_stream.has_room(1)) {
-            this->flush();
-        }
-        this->kbd_stream.out_uint8('*');
-    }
-
-    void write_keys(uint32_t uchar) {
-        filtering_kbd_input(
-            uchar,
-            [this](uint32_t uchar) {
-                uint8_t buf_char[5];
-                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
-                    this->copy_bytes({buf_char, char_len});
-                }
-            },
-            [this](array_view_const_char no_printable_str) {
-                this->copy_bytes(no_printable_str);
-            },
-            filter_slash{}
-        );
-    }
-
-    void copy_bytes(const_byte_array bytes) {
-        if (this->kbd_stream.tailroom() < bytes.size()) {
-            this->flush();
-        }
-        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
-    }
+    bool previous_char_is_event_flush = false;
+    std::size_t previous_char_size = 0;
 
 public:
     SessionMeta(const timeval & now, Transport & trans)
     : kbd_stream{
         this->kbd_buffer + session_meta_kbd_prefix().size(),
         sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()}
-    , last_snapshot(now)
-    , last_flush(now.tv_sec)
+    , last_time(now.tv_sec)
     , trans(trans)
     {
         OutStream(this->kbd_buffer).out_copy_bytes(session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
@@ -955,75 +927,94 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         if (this->keyboard_input_mask_enabled != enable) {
-            this->flush();
+            this->send_kbd();
             this->keyboard_input_mask_enabled = enable;
         }
     }
 
-    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+    bool kbd_input(const timeval& now, uint32_t uchar) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
                 this->write_shadow_keys();
+                this->send_kbd_if_special_char(uchar);
             }
         }
         else {
             this->write_keys(uchar);
+            this->send_kbd_if_special_char(uchar);
         }
+        this->last_time = now.tv_sec;
         return true;
     }
 
     void title_changed(time_t rawtime, array_view_const_char title) {
-        this->send_kbd();
-        this->send_date(rawtime, '+');
-        this->trans.send(title.data(), title.size());
-        this->last_flush = rawtime;
-
-        this->title.assign(title.data(), title.size());
-        this->require_kbd = true;
+        this->send_data(rawtime, title, '+');
     }
 
     void send_line(time_t rawtime, array_view_const_char line) {
-        this->send_kbd();
-        this->send_date(rawtime, '+');
-        this->trans.send(line.data(), line.size());
-        this->trans.send("\n", 1);
-        this->last_flush = rawtime;
+        this->send_data(rawtime, line, '+');
     }
 
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-
-        this->send_kbd();
-        this->send_date(now.tv_sec, '-');
-        this->trans.send(message.data(), message.size());
-        this->trans.send("\n", 1);
-        this->last_flush = now.tv_sec;
+        this->send_data(now.tv_sec, message, '-');
     }
 
     void possible_active_window_change() override {
+        this->send_kbd();
+        this->previous_char_is_event_flush = true;
     }
 
 private:
     std::chrono::microseconds do_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
-        std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
-
-        if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
-            return time_to_wait;
-        }
-
-        this->send_kbd();
-
-        this->last_snapshot = now;
-        this->last_flush = this->last_snapshot.tv_sec;
-
-        return time_to_wait;
+        this->last_time = now.tv_sec;
+        return std::chrono::seconds{10};
     }
 
-    void flush() {
-        this->send_kbd();
+    void write_shadow_keys() {
+        if (!this->kbd_stream.has_room(1)) {
+            this->send_kbd();
+        }
+        this->kbd_stream.out_uint8('*');
+    }
+
+    void write_keys(uint32_t uchar) {
+        if (uchar == 0x08) {
+            this->kbd_stream.rewind(this->kbd_stream.get_offset() - this->previous_char_size);
+            return ;
+        }
+
+        filtering_kbd_input(
+            uchar,
+            [this](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    this->copy_bytes({buf_char, char_len});
+                    this->previous_char_size = char_len;
+                }
+            },
+            [this](array_view_const_char no_printable_str) {
+                this->copy_bytes(no_printable_str);
+                this->previous_char_size = 0;
+            },
+            filter_slash{}
+        );
+    }
+
+    void copy_bytes(const_byte_array bytes) {
+        if (this->kbd_stream.tailroom() < bytes.size()) {
+            this->send_kbd();
+        }
+        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+    }
+
+    void send_data(time_t rawtime, array_view_const_char data, char sep) {
+        this->send_date(rawtime, sep);
+        this->trans.send(data.data(), data.size());
+        this->trans.send("\n", 1);
+        this->last_time = rawtime;
     }
 
     void send_date(time_t rawtime, char sep) {
@@ -1041,24 +1032,28 @@ private:
         this->trans.send(string_date, data_sz);
     }
 
+    void send_kbd_if_special_char(uint32_t uchar) {
+        if (uchar == '\r' || uchar == '\t') {
+            if (!this->previous_char_is_event_flush) {
+                this->send_kbd();
+            }
+        }
+        else {
+            this->previous_char_is_event_flush = false;
+        }
+    }
+
     void send_kbd() {
         if (this->kbd_stream.get_offset()) {
-            if (!this->require_kbd) {
-                this->send_date(this->last_flush, this->current_seperator);
-                this->trans.send(this->title.data(), this->title.size());
-            }
+            this->send_date(this->last_time, '-');
             auto end = this->kbd_stream.get_current();
             memcpy(end, session_meta_kbd_suffix().data(), session_meta_kbd_suffix().size());
             end += session_meta_kbd_suffix().size();
             this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
             this->kbd_stream.rewind();
-            this->require_kbd = false;
+            this->previous_char_is_event_flush = true;
+            this->previous_char_size = 0;
         }
-        else if (this->require_kbd) {
-            this->trans.send("\n", 1);
-            this->require_kbd = false;
-        }
-        this->current_seperator = '-';
     }
 };
 
@@ -1295,7 +1290,6 @@ Capture::Capture(
         }
 
         if (capture_flv) {
-
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (flv_capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
