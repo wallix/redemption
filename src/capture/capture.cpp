@@ -282,7 +282,7 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn
 }
 
 
-class PatternKbd : public gdi::KbdInputApi
+class PatternKbd final : public gdi::KbdInputApi
 {
     ReportMessageApi * report_message;
     PatternSearcher pattern_kill;
@@ -364,7 +364,7 @@ private:
 
 
 
-class SyslogKbd : public gdi::KbdInputApi, public gdi::CaptureApi
+class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
     uint8_t kbd_buffer[1024];
     OutStream kbd_stream;
@@ -466,7 +466,7 @@ namespace {
 }
 
 
-class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
+class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
@@ -605,15 +605,6 @@ private:
         }
     }
 };
-
-
-namespace gdi {
-    class GraphicApi;
-    class CaptureApi;
-    class CaptureProbeApi;
-    class KbdInputApi;
-    class ExternalCaptureApi;
-}
 
 
 class PngCapture : public gdi::CaptureApi
@@ -895,7 +886,6 @@ namespace {
 *
 * + for new video file
 */
-
 class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
