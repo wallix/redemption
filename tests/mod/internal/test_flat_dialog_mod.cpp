@@ -42,7 +42,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile             ini;
 
@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile             ini;
 
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 

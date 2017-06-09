@@ -42,7 +42,7 @@ RED_AUTO_TEST_CASE(TestWabCloseMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestWabCloseMod2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(false, front, window_list_caps, 0);
+    ClientExecute client_execute(front, window_list_caps, 0);
 
     Inifile ini;
 

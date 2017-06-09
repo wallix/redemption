@@ -178,24 +178,27 @@ class ClientExecute : public windowing_api
         }
     } button_1_down_event_handler;
 
-    const bool rail_enabled;
+    bool rail_enabled = false;
 
     bool verbose;
 
 public:
-    ClientExecute(bool rail_enabled, FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
+    ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
     : front_(&front)
     , wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
     , window_title(INTERNAL_MODULE_WINDOW_TITLE)
     , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
     , button_1_down_event_handler(*this)
-    , rail_enabled(rail_enabled)
     , verbose(verbose)
     {
     }   // ClientExecute
 
     ~ClientExecute() {
         this->reset(false);
+    }
+
+    void enable_remote_program(bool enable) {
+        this->rail_enabled = enable;
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
