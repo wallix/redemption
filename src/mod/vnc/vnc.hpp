@@ -2330,7 +2330,7 @@ private:
             return;
         }
 
-        if (!strcmp(front_channel_name, channel_names::cliprdr)) {
+        if (!::strcasecmp(front_channel_name, channel_names::cliprdr)) {
             this->clipboard_send_to_vnc(chunk, length, flags);
         }
         if (this->verbose) {

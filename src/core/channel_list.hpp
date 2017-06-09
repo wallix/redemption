@@ -122,7 +122,7 @@ namespace CHANNELS {
             const ChannelDef * channel = nullptr;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
-                if (strcmp(name, item.name) == 0) {
+                if (::strcasecmp(name, item.name) == 0) {
                     channel = &item;
                     break;
                 }

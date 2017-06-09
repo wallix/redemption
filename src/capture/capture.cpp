@@ -551,7 +551,7 @@ public:
     }
 
     void session_update(const timeval& /*now*/, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         this->flush();
     }
 
@@ -999,7 +999,7 @@ public:
     }
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
 
         this->send_kbd();
         this->send_date(now.tv_sec, '-');
@@ -1183,7 +1183,7 @@ public:
     }
 
     void session_update(timeval const & /*now*/, array_view_const_char message) override {
-        bool const enable_probe = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        bool const enable_probe = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
         }

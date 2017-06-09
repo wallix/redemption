@@ -1470,13 +1470,13 @@ public:
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
                             const auto & channel_def = cs_net.channelDefArray[index];
                             CHANNELS::ChannelDef channel_item;
-                            memcpy(channel_item.name, channel_def.name, 8);
+                            ::memcpy(channel_item.name, channel_def.name, 8);
                             channel_item.flags = channel_def.options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
                             this->channel_list.push_back(channel_item);
 
                             if (!this->rail_channel_id &&
-                                !strcmp(channel_item.name, channel_names::rail)) {
+                                !::strcasecmp(channel_item.name, channel_names::rail)) {
                                 this->rail_channel_id = channel_item.chanid;
                             }
                         }
