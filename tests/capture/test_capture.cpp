@@ -784,6 +784,36 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, 'J'); now.tv_sec += 1;
         meta.kbd_input(now, 0x08); now.tv_sec += 1;
         meta.kbd_input(now, 'K'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah4")); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'a'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'L'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah5")); now.tv_sec += 1;
+        meta.kbd_input(now, 'M'); now.tv_sec += 1;
+        meta.kbd_input(now, 'N'); now.tv_sec += 1;
+        meta.kbd_input(now, 'O'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'P'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah6")); now.tv_sec += 1;
+        meta.kbd_input(now, 'Q'); now.tv_sec += 1;
+        meta.kbd_input(now, 'R'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x2191); now.tv_sec += 1; // UP
+        meta.kbd_input(now, 'S'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'T'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, 'U'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'V'); now.tv_sec += 1;
     }
 
     RED_CHECK_EQ(
@@ -798,6 +828,12 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         "1970-01-01 01:16:52 - [Kbd]/<enter>G/<enter>\n"
         "1970-01-01 01:16:57 + (break)\n"
         "1970-01-01 01:17:00 - [Kbd]/<enter>/<tab>HIK\n"
+        "1970-01-01 01:17:01 + Blah4\n"
+        "1970-01-01 01:17:06 - [Kbd]/<backspace>/<backspace>L\n"
+        "1970-01-01 01:17:07 + Blah5\n"
+        "1970-01-01 01:17:13 - [Kbd]MP\n"
+        "1970-01-01 01:17:14 + Blah6\n"
+        "1970-01-01 01:17:27 - [Kbd]QR/<up>/<backspace>T//U//V\n"
     );
 }
 

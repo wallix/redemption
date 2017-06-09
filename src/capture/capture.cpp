@@ -901,21 +901,22 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
     uint8_t kbd_buffer[512];
+    static const std::size_t kbd_buffer_usable_char =
+        sizeof(kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size();
+    uint8_t kbd_chars_size[kbd_buffer_usable_char];
+    std::ptrdiff_t kbd_char_pos = 0;
     time_t last_time;
     Transport & trans;
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
-    std::size_t previous_char_size = 0;
 
 public:
     SessionMeta(const timeval & now, Transport & trans)
-    : kbd_stream{
-        this->kbd_buffer + session_meta_kbd_prefix().size(),
-        sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()}
+    : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
     , last_time(now.tv_sec)
     , trans(trans)
     {
-        OutStream(this->kbd_buffer).out_copy_bytes(session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
+        memcpy(this->kbd_buffer, session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
 
         // force file creation even if no text recognized
         this->trans.send("", 0);
@@ -981,23 +982,33 @@ private:
     }
 
     void write_keys(uint32_t uchar) {
-        if (uchar == 0x08) {
-            this->kbd_stream.rewind(this->kbd_stream.get_offset() - this->previous_char_size);
-            return ;
-        }
-
         filtering_kbd_input(
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
                 if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
-                    this->previous_char_size = char_len;
+                    this->kbd_chars_size[this->kbd_char_pos] = char_len;
+                    ++this->kbd_char_pos;
                 }
             },
-            [this](array_view_const_char no_printable_str) {
-                this->copy_bytes(no_printable_str);
-                this->previous_char_size = 0;
+            [this, uchar](array_view_const_char no_printable_str) {
+                if (uchar == 0x08 && this->kbd_char_pos) {
+                    --this->kbd_char_pos;
+                    this->kbd_stream.rewind(
+                        this->kbd_stream.get_offset()
+                      - this->kbd_chars_size[this->kbd_char_pos]
+                    );
+                }
+                else if (uchar == '/') {
+                    this->copy_bytes(no_printable_str);
+                    this->kbd_chars_size[this->kbd_char_pos] = no_printable_str.size();
+                    ++this->kbd_char_pos;
+                }
+                else {
+                    this->copy_bytes(no_printable_str);
+                    this->kbd_char_pos = 0;
+                }
             },
             filter_slash{}
         );
@@ -1052,7 +1063,7 @@ private:
             this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
             this->kbd_stream.rewind();
             this->previous_char_is_event_flush = true;
-            this->previous_char_size = 0;
+            this->kbd_char_pos = 0;
         }
     }
 };
