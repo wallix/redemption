@@ -791,6 +791,7 @@ public:
                             cfg::context::password::index() == authid ||
                             cfg::context::target_password::index() == authid ||
                             cfg::globals::target_application_password::index() == authid ||
+                            cfg::context::auth_command_rail_exec_password::index() == authid ||
                             (cfg::context::auth_channel_answer::index() == authid &&
                              strcasestr(val, "password") != nullptr)
                         ) {
