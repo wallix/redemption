@@ -25,14 +25,80 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-//#include "path/to/file.hpp"
 #include "utils/cfgloader.hpp"
 
 
 RED_AUTO_TEST_CASE(TestCfgloader)
 {
-    RED_CHECK(true);
+    struct : ConfigurationHolder
+    {
+        int i = 0;
+        void set_value(const char* section, const char* key, const char* value) override
+        {
+            switch (i++)
+            {
+                case 0:
+                    RED_CHECK_EQ(section, "abc");
+                    RED_CHECK_EQ(key, "abc");
+                    RED_CHECK_EQ(value, "abc");
+                    break;
+                case 1:
+                    RED_CHECK_EQ(section, "abc");
+                    RED_CHECK_EQ(key, "vv");
+                    RED_CHECK_EQ(value, "plop");
+                    break;
+                case 2:
+                    RED_CHECK_EQ(section, "s");
+                    RED_CHECK_EQ(key, "aaa");
+                    RED_CHECK_EQ(value, "bbb");
+                    break;
+                case 3:
+                    RED_CHECK_EQ(section, "ss");
+                    RED_CHECK_EQ(key, "bbb");
+                    RED_CHECK_EQ(value, "aaa");
+                    break;
+                case 4:
+                    RED_CHECK_EQ(section, "ss");
+                    RED_CHECK_EQ(key, "val2");
+                    RED_CHECK_EQ(value, "1");
+                    break;
+                case 5:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "v");
+                    RED_CHECK_EQ(value, "1");
+                    break;
+                default:
+                    RED_CHECK(false);
+            }
+        }
+    } cfg;
 
+    std::stringstream ss;
+    ss <<
+        "[abc]\n"
+        "abc=abc\n"
+        "\n"
+        "\n"
+        "vv=  plop\n"
+        "\n"
+        "[s]\n"
+        "aaa=bbb   \n"
+        "\n"
+        "[   ss  ]\n"
+        "  bbb=aaa   \n"
+        "\n"
+        "val="
+    ;
+    ss.width(1024);
+    ss.fill('x'); ss << "\n";
+    ss <<
+        "val2   =1\n"
+        "[ a  a ]\n"
+        "  v =  1 \n"
+    ;
+
+    ConfigurationLoader(cfg).cparse(cfg, ss);
+    RED_CHECK_EQ(cfg.i, 6);
 }
