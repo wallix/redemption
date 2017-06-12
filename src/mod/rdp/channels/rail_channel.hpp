@@ -1429,7 +1429,7 @@ public:
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
-            const char* arguments) override {
+            const char* arguments, const char* account, const char* password) override {
         if (bool(this->verbose & RDPVerbose::rail)) {
             LOG(LOG_INFO,
                 "RemoteProgramsVirtualChannel::auth_rail_exec: "
@@ -1437,12 +1437,28 @@ public:
                     "exe_or_file=\"%s\" "
                     "working_dir=\"%s\" "
                     "arguments=\"%s\" "
+                    "account=\"%s\" "
                     "flags=%u",
-                original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+                original_exe_or_file, exe_or_file, working_dir, arguments, account, flags);
         }
 
         launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
 
+        std::string arguments_(arguments);
+        if (account && *account) {
+            const char * user_marker = "${USER}";
+            size_t pos = arguments_.find(user_marker, 0);
+            if (pos != std::string::npos) {
+                arguments_.replace(pos, strlen(user_marker), account);
+            }
+        }
+        if (password && *password) {
+            const char * password_marker = "${PASSWORD}";
+            size_t pos = arguments_.find(password_marker, 0);
+            if (pos != std::string::npos) {
+                arguments_.replace(pos, strlen(password_marker), password);
+            }
+        }
 
         StaticOutStream<1024> out_s;
         RAILPDUHeader header;
@@ -1453,7 +1469,7 @@ public:
         cepdu.Flags(flags);
         cepdu.ExeOrFile(exe_or_file);
         cepdu.WorkingDir(working_dir);
-        cepdu.Arguments(arguments);
+        cepdu.Arguments(arguments_.c_str());
 
         cepdu.emit(out_s);
 

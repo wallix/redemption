@@ -559,6 +559,8 @@ public:
                         const char*    working_dir          = this->ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
                         const char*    arguments            = this->ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
                         const uint16_t exec_result          = this->ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+                        const char*    account              = this->ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
+                        const char*    password             = this->ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
 
                         rdp_api* rdpapi = mm.get_rdp_api();
 
@@ -573,7 +575,7 @@ public:
                             //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
 
                             if (rdpapi) {
-                                rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments);
+                                rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
                             }
                         }
                         else {
@@ -789,6 +791,7 @@ public:
                             cfg::context::password::index() == authid ||
                             cfg::context::target_password::index() == authid ||
                             cfg::globals::target_application_password::index() == authid ||
+                            cfg::context::auth_command_rail_exec_password::index() == authid ||
                             (cfg::context::auth_channel_answer::index() == authid &&
                              strcasestr(val, "password") != nullptr)
                         ) {

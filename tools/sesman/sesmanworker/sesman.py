@@ -1518,6 +1518,12 @@ class Sesman():
                                             (self.shared.get(u'auth_notify_rail_exec_flags'), \
                                              self.shared.get(u'auth_notify_rail_exec_exe_or_file')))
 
+                                        auth_command_kv = self.check_application(
+                                            physical_target,
+                                            self.shared.get(u'auth_notify_rail_exec_flags'),
+                                            self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
+                                        self.send_data(auth_command_kv)
+
                                         # self.send_data({
                                         #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
                                         #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
@@ -1855,6 +1861,56 @@ class Sesman():
             if self.shared.get("rt_display") != res:
                 Logger().info("sending rt_display=%s" % res)
                 self.send_data({ "rt_display": res })
+
+    def parse_app(self, value):
+        acc_name, sep, app_name = value.rpartition('@')
+        return acc_name, app_name
+
+    def check_application(self, effective_target, flags, exe_or_file):
+        kv = {
+            u'auth_command_rail_exec_flags': flags,
+            u'auth_command_rail_exec_original_exe_or_file': exe_or_file,
+            u'auth_command_rail_exec_exec_result': '3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
+            u'auth_command': 'rail_exec'
+        }
+        acc_name, app_name = self.parse_app(exe_or_file)
+        if not app_name or not acc_name:
+            return kv
+        app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
+        app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
+        app_params = None
+        app_right = None
+        for ar in app_rights:
+            _status, _error = self.engine.checkout_target(ar)
+            if not _status:
+                continue
+            app_params = self.engine.get_app_params(ar, effective_target)
+            if app_params is None:
+                self.engine.release_target(ar)
+                continue
+            app_right = ar
+            break
+        if app_params is None:
+            return kv
+        app_login_info = self.engine.get_target_login_info(app_right)
+
+        kv[u'auth_command_rail_exec_exe_or_file'] = app_params.program
+        kv[u'auth_command_rail_exec_arguments'] = app_params.params or ''
+        kv[u'auth_command_rail_exec_working_dir'] = app_params.workingdir
+        kv[u'auth_command_rail_exec_exec_result'] = '0' # RAIL_EXEC_S_OK
+        kv[u'auth_command_rail_exec_account'] = ''
+        kv[u'auth_command_rail_exec_password'] = ''
+        if app_params.params is not None:
+            if u'${USER}' in app_params.params:
+                kv[u'auth_command_rail_exec_account'] = \
+                    app_login_info.account_login
+            if u'${PASSWORD}' in app_params.params:
+                kv[u'auth_command_rail_exec_password'] = \
+                    self.engine.get_target_password(app_right) \
+                    or self.engine.get_primary_password(app_right) \
+                    or ''
+        return kv
+
 
 # END CLASS - Sesman
 

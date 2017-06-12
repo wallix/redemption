@@ -1225,15 +1225,12 @@ public:
         if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
             if (this->remote_program) {
                 if (this->enable_session_probe) {
-                    std::string alternate_shell(mod_rdp_params.alternate_shell);
+                    this->real_alternate_shell = "[None]";
 
-                    if (!shell_arguments.empty()) {
-                        alternate_shell += " ";
-                        alternate_shell += shell_arguments;
-                    }
-
-                    this->real_alternate_shell = std::move(alternate_shell);
-                    this->real_working_dir     = mod_rdp_params.shell_working_dir;
+                    this->real_client_execute_flags       = 0;
+                    this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
+                    this->real_client_execute_arguments   = shell_arguments.c_str();
+                    this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
 
                     this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
                     this->client_execute_arguments   = session_probe_arguments;
@@ -7639,13 +7636,13 @@ public:
 private:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
-            const char* arguments) override {
+            const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->get_remote_programs_virtual_channel();
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
-                working_dir, arguments);
+                working_dir, arguments, account, password);
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");

@@ -788,6 +788,12 @@ class Engine(object):
         if filtered_subnet:
             self.displaytargets = filtered_subnet
 
+    def filter_app_rights(self, app_rights, account_name, app_name):
+        _rs = [ r for r in app_rights if (
+            r['account_name'] == account_name
+            and r['application_cn'] == app_name) ]
+        return _rs
+
     def get_proxy_rights(self, protocols, target_device=None, target_context=None):
         if self.proxy_rights is None:
             try:

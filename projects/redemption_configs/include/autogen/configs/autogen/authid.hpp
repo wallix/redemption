@@ -129,6 +129,8 @@ enum authid_t : unsigned {
     AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE,
     AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR,
     AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS,
+    AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT,
+    AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -257,4 +259,6 @@ constexpr char const * const authstr[] = {
     "auth_command_rail_exec_exe_or_file",
     "auth_command_rail_exec_working_dir",
     "auth_command_rail_exec_arguments",
+    "auth_command_rail_exec_account",
+    "auth_command_rail_exec_password",
 };
