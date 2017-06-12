@@ -1521,7 +1521,7 @@ class Sesman():
                                         auth_command_kv = self.check_application(
                                             physical_target,
                                             self.shared.get(u'auth_notify_rail_exec_flags'),
-                                            self.shared.get(u'auth_notify_rail_original_exec_exe_or_file'))
+                                            self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
                                         self.send_data(auth_command_kv)
 
                                         # self.send_data({
@@ -1863,11 +1863,8 @@ class Sesman():
                 self.send_data({ "rt_display": res })
 
     def parse_app(self, value):
-        prefix, sep, app = value.rpartition(':')
-        if sep:
-            acc_name, sep, app_name = app.rpartition('@')
-            return acc_name, app_name
-        return None, None
+        acc_name, sep, app_name = value.rpartition('@')
+        return acc_name, app_name
 
     def check_application(self, effective_target, flags, exe_or_file):
         kv = {

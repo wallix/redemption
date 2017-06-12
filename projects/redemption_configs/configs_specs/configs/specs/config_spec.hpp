@@ -608,6 +608,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_exe_or_file");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_working_dir");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_arguments");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_account");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_password");
     });
 
     W.section("", [&]

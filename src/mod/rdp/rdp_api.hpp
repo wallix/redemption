@@ -23,7 +23,7 @@
 struct rdp_api {
     virtual void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
         const char* exe_or_file, const char* working_dir,
-        const char* arguments) = 0;
+        const char* arguments, const char* account, const char* password) = 0;
 
     virtual void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
         uint16_t exec_result) = 0;

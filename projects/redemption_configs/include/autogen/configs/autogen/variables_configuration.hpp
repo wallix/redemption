@@ -3984,6 +3984,40 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT
+    // type: std::string
+    // sesman -> proxy
+    // value{}
+    struct context::auth_command_rail_exec_account {
+        static constexpr bool is_sesman_to_proxy() { return 1; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "context"; }
+        static constexpr char const * name() { return "auth_command_rail_exec_account"; }
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index() { return authid_t(124); }
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD
+    // type: std::string
+    // sesman -> proxy
+    // value{}
+    struct context::auth_command_rail_exec_password {
+        static constexpr bool is_sesman_to_proxy() { return 1; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "context"; }
+        static constexpr char const * name() { return "auth_command_rail_exec_password"; }
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index() { return authid_t(125); }
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
     // type: Theme
     // value{}
@@ -4322,6 +4356,8 @@ struct context
 , cfg::context::auth_command_rail_exec_exe_or_file
 , cfg::context::auth_command_rail_exec_working_dir
 , cfg::context::auth_command_rail_exec_arguments
+, cfg::context::auth_command_rail_exec_account
+, cfg::context::auth_command_rail_exec_password
 { static constexpr bool is_section = true; };
 
 }
@@ -4471,5 +4507,7 @@ using VariablesAclPack = Pack<
 , cfg::context::auth_command_rail_exec_exe_or_file
 , cfg::context::auth_command_rail_exec_working_dir
 , cfg::context::auth_command_rail_exec_arguments
+, cfg::context::auth_command_rail_exec_account
+, cfg::context::auth_command_rail_exec_password
 >;
 }

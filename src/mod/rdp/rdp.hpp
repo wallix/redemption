@@ -7639,13 +7639,13 @@ public:
 private:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
-            const char* arguments) override {
+            const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->get_remote_programs_virtual_channel();
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
-                working_dir, arguments);
+                working_dir, arguments, account, password);
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
