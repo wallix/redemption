@@ -2758,9 +2758,7 @@ private:
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
                 if (!this->server_capabilities_filename.empty()) {
-                    GeneralCapsLoader generalcaps_loader(general_caps);
-
-                    ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(GeneralCapsLoader(general_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     general_caps.log("Sending to client");
@@ -2774,9 +2772,7 @@ private:
                 bitmap_caps.desktopHeight = this->client_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
                 if (!this->server_capabilities_filename.empty()) {
-                    BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
-
-                    ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(BitmapCapsLoader(bitmap_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     bitmap_caps.log("Sending to client");
@@ -2811,9 +2807,7 @@ private:
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
                 if (!this->server_capabilities_filename.empty()) {
-                    OrderCapsLoader ordercaps_loader(order_caps);
-
-                    ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(OrderCapsLoader(order_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     order_caps.log("Sending to client");

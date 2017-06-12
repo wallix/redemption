@@ -176,7 +176,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     int sock_len = sizeof(u);
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename); }
+    configuration_load(ini.configuration_holder(), config_filename);
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));

@@ -37,10 +37,12 @@ int main(int ac, char ** av)
     }
 
     if (std::ifstream inifile{ac == 2 ? av[1] : CFG_PATH "/" RDPPROXY_INI}) {
-        Inifile ini;
-        (void)ConfigurationLoader(ini.configuration_holder(), inifile);
+        bool const is_ok = configuration_load(Inifile().configuration_holder(), inifile);
         if (!inifile.eof()) {
             std::cerr << av[1] << ": " << strerror(errno) << std::endl;
+            return 3;
+        }
+        if (!is_ok) {
             return 3;
         }
     }

@@ -69,6 +69,11 @@ RED_AUTO_TEST_CASE(TestCfgloader)
                     RED_CHECK_EQ(key, "v");
                     RED_CHECK_EQ(value, "1");
                     break;
+                case 6:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "v3");
+                    RED_CHECK_EQ(value, "x");
+                    break;
                 default:
                     RED_CHECK(false);
             }
@@ -81,6 +86,7 @@ RED_AUTO_TEST_CASE(TestCfgloader)
         "abc=abc\n"
         "\n"
         "\n"
+        " #blah blah\n"
         "vv=  plop\n"
         "\n"
         "[s]\n"
@@ -97,8 +103,9 @@ RED_AUTO_TEST_CASE(TestCfgloader)
         "val2   =1\n"
         "[ a  a ]\n"
         "  v =  1 \n"
+        "v3=x"
     ;
 
-    ConfigurationLoader(cfg).cparse(cfg, ss);
-    RED_CHECK_EQ(cfg.i, 6);
+    configuration_load(cfg, ss);
+    RED_CHECK_EQ(cfg.i, 7);
 }

@@ -39,109 +39,115 @@ struct ConfigurationHolder : private noncopyable
     virtual ~ConfigurationHolder() = default;
 };
 
+bool configuration_load(ConfigurationHolder & configuration_holder, std::istream & inifile_stream);
 
-struct ConfigurationLoader {
-    ConfigurationLoader() = default;
+inline
+bool configuration_load(ConfigurationHolder & configuration_holder, const char * filename)
+{
+    std::ifstream inifile(filename);
+    return configuration_load(configuration_holder, inifile);
+}
 
-    explicit ConfigurationLoader(ConfigurationHolder &) {
-    }
+inline
+bool configuration_load(ConfigurationHolder & configuration_holder, std::string const & filename)
+{
+    return configuration_load(configuration_holder, filename.c_str());
+}
 
-    ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {
-        this->cparse(configuration_holder, filename);
-    }
+inline
+bool configuration_load(ConfigurationHolder && configuration_holder, std::istream & inifile_stream)
+{
+    return configuration_load(configuration_holder, inifile_stream);
+}
 
-    ConfigurationLoader(ConfigurationHolder & configuration_holder, std::string const & filename) {
-        this->cparse(configuration_holder, filename.c_str());
-    }
+inline
+bool configuration_load(ConfigurationHolder && configuration_holder, const char * filename)
+{
+    return configuration_load(configuration_holder, filename);
+}
 
-    ConfigurationLoader(ConfigurationHolder & configuration_holder, std::istream & Inifile_stream) {
-        this->cparse(configuration_holder, Inifile_stream);
-    }
+inline
+bool configuration_load(ConfigurationHolder && configuration_holder, std::string const & filename)
+{
+    return configuration_load(configuration_holder, filename);
+}
 
-    void cparse(ConfigurationHolder & configuration_holder, const char * filename) {
-        std::ifstream inifile(filename);
+inline
+bool configuration_load(ConfigurationHolder & configuration_holder, std::istream & ifs)
+{
+    const size_t maxlen = 1024;
+    char line[maxlen];
+    char context[512]; context[0] = 0;
+    char new_key[maxlen];
+    char new_value[maxlen];
+    bool truncated = false;
+    unsigned num_line = 0;
+    bool has_err = false;
 
-        this->cparse(configuration_holder, inifile);
-    }
-
-    void cparse(ConfigurationHolder & configuration_holder, std::string const & filename) {
-        this->cparse(configuration_holder, filename.c_str());
-    }
-
-    void cparse(ConfigurationHolder & configuration_holder, std::istream & ifs)
-    {
-        const size_t maxlen = 1024;
-        char line[maxlen];
-        char context[512] = { 0 };
-        bool truncated = false;
-        unsigned num_line = 0;
-        while (ifs.good()) {
-            ++num_line;
-            ifs.getline(line, maxlen);
-            if (ifs.fail() && ifs.gcount() == maxlen-1) {
-                if (!truncated) {
-                    LOG(LOG_INFO, "Line too long in configuration file at line %u", num_line);
-                    hexdump(line, maxlen-1);
-                }
-                ifs.clear();
-                truncated = true;
-                continue;
+    while (ifs.good()) {
+        ++num_line;
+        ifs.getline(line, maxlen);
+        if (ifs.fail() && ifs.gcount() == maxlen-1) {
+            if (!truncated) {
+                LOG(LOG_INFO, "Line too long in configuration file at line %u", num_line);
+                hexdump(line, maxlen-1);
+                has_err = true;
             }
-            if (truncated) {
-                truncated = false;
-                continue;
-            }
-
-            auto const len = ifs.gcount() - 1;
-            if (len <= 0) continue;
-            char * last_char_ptr = line + len;
-            char * first_char_line = ltrim(line, last_char_ptr);
-            if (*first_char_line == '#') continue;
-            last_char_ptr = rtrim(first_char_line, last_char_ptr);
-
-            array_view_const_char const line {first_char_line, last_char_ptr};
-            if (auto err_msg = this->parseline(configuration_holder, line, context)) {
-                LOG(LOG_INFO, "%s in configuration file at line %u", err_msg, num_line);
-                hexdump(line.data(), line.size());
-            }
-        };
-    }
-
-private:
-    char const * parseline(
-        ConfigurationHolder & configuration_holder,
-        array_view_const_char line,
-        char (&context)[512])
-    {
-        if (line.empty()) return nullptr;
-
-        if (line.front() == '[') {
-            if (line.back() != ']') return "missing ']'";
-            if (line.size() <= 2) return "Empty section";
-
-            auto new_context = trim(line.begin()+1, line.end()-1);
-            if (new_context.empty()) return "Empty section";
-            if (new_context.size() >= sizeof(context)) return "Section too long";
-
-            memcpy(context, new_context.begin(), new_context.size());
-            context[new_context.size()] = 0;
+            ifs.clear();
+            truncated = true;
+            continue;
         }
-        else {
-            const char * endkey = std::find(line.begin(), line.end(), '=');
-            if (endkey == line.end()) return "Bad line format";
-
-            array_view_const_char const key (line.begin(), rtrim(line.begin(), endkey));
-            array_view_const_char const value (ltrim(endkey+1, line.end()), line.end());
-            if (key.empty()) return "Empty Key";
-
-            char new_key[1024];
-            char new_value[1024];
-            memcpy(new_key, key.begin(), key.size()); new_key[key.size()] = 0;
-            memcpy(new_value, value.begin(), value.size()); new_value[value.size()] = 0;
-            configuration_holder.set_value(context, new_key, new_value);
+        if (truncated) {
+            truncated = false;
+            continue;
         }
 
-        return nullptr;
-    }
-};
+        auto const len = ifs.gcount() - 1;
+        if (len <= 0) continue;
+        char * last_char_ptr = line + len;
+        if (*last_char_ptr) ++last_char_ptr; // line without new line char
+        char * first_char_line = ltrim(line, last_char_ptr);
+        if (*first_char_line == '#') continue;
+        last_char_ptr = rtrim(first_char_line, last_char_ptr);
 
+        array_view_const_char const line {first_char_line, last_char_ptr};
+        auto err_msg = [&configuration_holder, &new_key, &new_value, &context, &line]() -> char const *
+        {
+            if (line.empty()) return nullptr;
+
+            if (line.front() == '[') {
+                if (line.back() != ']') return "missing ']'";
+                if (line.size() <= 2) return "Empty section";
+
+                auto new_context = trim(line.begin()+1, line.end()-1);
+                if (new_context.empty()) return "Empty section";
+                if (new_context.size() >= sizeof(context)) return "Section too long";
+
+                memcpy(context, new_context.begin(), new_context.size());
+                context[new_context.size()] = 0;
+            }
+            else {
+                const char * endkey = std::find(line.begin(), line.end(), '=');
+                if (endkey == line.end()) return "Bad line format";
+
+                array_view_const_char const key (line.begin(), rtrim(line.begin(), endkey));
+                array_view_const_char const value (ltrim(endkey+1, line.end()), line.end());
+                if (key.empty()) return "Empty Key";
+
+                memcpy(new_key, key.begin(), key.size()); new_key[key.size()] = 0;
+                memcpy(new_value, value.begin(), value.size()); new_value[value.size()] = 0;
+                configuration_holder.set_value(context, new_key, new_value);
+            }
+
+            return nullptr;
+        }();
+
+        if (err_msg) {
+            LOG(LOG_INFO, "%s in configuration file at line %u", err_msg, num_line);
+            hexdump(line.data(), line.size());
+            has_err = true;
+        }
+    }
+
+    return !has_err && ifs.eof();
+}

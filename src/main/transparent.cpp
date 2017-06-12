@@ -170,7 +170,7 @@ int main(int argc, char * argv[]) {
     listener.run();
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+    configuration_load(ini.configuration_holder(), config_filename);
     ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
 
     int nodelay = 1;

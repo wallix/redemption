@@ -57,8 +57,7 @@ RED_AUTO_TEST_CASE(TestColorFromFile)
     RED_CHECK_EQUAL((WHITE),          colors.selector_label.fgcolor);
 
 
-    ThemeHolder    theme_holder(colors);
-    ConfigurationLoader cfg_loader(theme_holder, FIXTURES_PATH "/rdpcolor.ini");
+    configuration_load(ThemeHolder(colors), FIXTURES_PATH "/rdpcolor.ini");
 
     RED_CHECK_EQUAL(BGRColor(0xdc8115),  colors.global.bgcolor);
     RED_CHECK_EQUAL((WHITE),              colors.global.fgcolor);
@@ -88,8 +87,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
     Theme          colors;
-    ThemeHolder    theme_holder(colors);
-    ConfigurationLoader cfg_loader(theme_holder, oss);
+    configuration_load(ThemeHolder(colors), oss);
 
     RED_CHECK_EQUAL((DARK_BLUE_BIS),  colors.global.bgcolor);
     RED_CHECK_EQUAL((WHITE),          colors.global.fgcolor);
@@ -131,8 +129,7 @@ RED_AUTO_TEST_CASE(TestConfigPartial)
                             );
     Theme          colors;
 
-    ThemeHolder    theme_holder(colors);
-    ConfigurationLoader cfg_loader(theme_holder, oss);
+    configuration_load(ThemeHolder(colors), oss);
     RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
     RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
     RED_CHECK_EQUAL((RED),                colors.global.separator_color);
@@ -161,8 +158,7 @@ RED_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
 
-    ThemeHolder    theme_holder(colors);
-    ConfigurationLoader cfg_loader(theme_holder, CFG_PATH "/themes/test_theme/theme.ini");
+    configuration_load(ThemeHolder(colors), CFG_PATH "/themes/test_theme/theme.ini");
     RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
     RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
     RED_CHECK_EQUAL((RED),                colors.global.separator_color);

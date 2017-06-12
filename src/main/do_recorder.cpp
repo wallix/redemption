@@ -2074,7 +2074,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     }
 
     if (options.count("config-file") > 0) {
-        ConfigurationLoader cfg_loader_full(ini.configuration_holder(), recorder.config_filename.c_str());
+        configuration_load(ini.configuration_holder(), recorder.config_filename);
     }
     else {
         recorder.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);

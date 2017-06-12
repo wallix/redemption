@@ -140,9 +140,7 @@ namespace configs
             snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, str.c_str());
             theme_path[sizeof(theme_path) - 1] = 0;
 
-            ConfigurationLoader theme_load;
-            ThemeHolder theme_holder(theme);
-            theme_load.cparse(theme_holder, theme_path);
+            configuration_load(ThemeHolder(theme), theme_path);
         }
 
         if (theme.global.logo) {
