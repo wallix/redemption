@@ -153,7 +153,7 @@ class NtlmAvPairList final
             hexdump8_c(this->data.get(), this->avLen);
         }
     };
-    AvPair list[AV_ID_MAX];
+    AvPair list[AV_ID_MAX]{{reinterpret_cast<uint8_t const*>(""), 0}};
 
 public:
     NtlmAvPairList() = default;
