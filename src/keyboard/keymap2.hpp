@@ -268,9 +268,9 @@ public:
                 this->keys_down[0x01];                                              // Escape
 
             this->is_application_switching_shortcut_pressed =
-                (ctrl ^ bool(this->keys_down[LEFT_ALT])) &&
+                (ctrl ^ bool(this->keys_down[LEFT_ALT])) &&                         // Ctrl xor Alt
                 !this->keys_down[RIGHT_ALT] &&
-                this->keys_down[0x0F];                                             // Tab
+                this->keys_down[0x0F];                                              // Tab
         }
 
         if (is_ctrl_pressed() && is_alt_pressed()

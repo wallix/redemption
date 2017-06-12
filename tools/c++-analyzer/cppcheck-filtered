@@ -2,6 +2,7 @@
 
 cmd="$1"
 [ -z "$cmd"] && cmd="$(dirname "$0")"/cppcheck
+[ $# -ge 1 ] && shift
 
 "$cmd" \
   --template='cppcheck [{file}:{line}]: ({severity}) [{id}] {message}' \
@@ -11,5 +12,10 @@ cmd="$1"
   --suppress=selfInitialization \
   --suppress=noExplicitConstructor \
   --suppress=CastIntegerToAddressAtReturn \
+  --suppress=obsoleteFunctionsindex \
+  --suppress=unmatchedSuppression \
+  --suppress=variableHidingEnum \
+  --suppress=unassignedVariable \
   --suppress=noConstructor \
-  --suppress=noCopyConstructor
+  --suppress=noCopyConstructor \
+  "$@"
