@@ -505,7 +505,7 @@ private:
 
             order.OwnerWindowId(0x0);
             order.Style(0x14EE0000);
-            order.ExtendedStyle(0x40310);
+            order.ExtendedStyle(0x40310 | 0x8);
             order.ShowState(5);
             order.TitleInfo("Dialog box");
             order.ClientOffsetX(this->protected_rect.x + 6);
