@@ -641,12 +641,14 @@ public:
 
     void set_clipboard_virtual_channel(
             BaseVirtualChannel* channel) override {
-        this->cliprdr_channel = static_cast<ClipboardVirtualChannel*>(channel);
+        this->cliprdr_channel = reinterpret_cast<ClipboardVirtualChannel*>(channel);
     }
+
+    void set_remote_programs_virtual_channel(BaseVirtualChannel*) override {}
 
     void set_session_probe_virtual_channel(
             BaseVirtualChannel* channel) override {
-        this->sesprob_channel = static_cast<SessionProbeVirtualChannel*>(channel);
+        this->sesprob_channel = reinterpret_cast<SessionProbeVirtualChannel*>(channel);
     }
 
     void stop(bool bLaunchSuccessful) override {
