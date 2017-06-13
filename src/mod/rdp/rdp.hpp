@@ -7615,6 +7615,9 @@ private:
 
                 rpvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
+
+                this->session_probe_launcher->set_remote_programs_virtual_channel(
+                    &rpvc);
             }
         }
     }

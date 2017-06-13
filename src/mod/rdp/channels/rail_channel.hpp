@@ -56,6 +56,9 @@ private:
 
     SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
 
+    bool exe_or_file_exec_ok = false;
+    bool session_probe_launch_confirmed = false;
+
     bool exe_or_file_2_sent = false;
 
     ModRdpVariables vars;
@@ -934,57 +937,28 @@ public:
             REDASSERT(!is_auth_application);
 
             if (this->session_probe_channel) {
+/*
                 if (this->session_probe_stop_launch_sequence_notifier) {
                     this->session_probe_stop_launch_sequence_notifier->stop(serpdu.ExecResult() == RAIL_EXEC_S_OK);
                     this->session_probe_stop_launch_sequence_notifier = nullptr;
                 }
+*/
 
                 if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
                     throw Error(ERR_SESSION_PROBE_LAUNCH);
+                }
+
+                if (!this->exe_or_file_2_sent &&
+                    !this->param_client_execute_exe_or_file_2.empty()) {
+                    this->exe_or_file_exec_ok = true;
+
+                    this->try_launch_application();
                 }
             }
             else {
                 if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
                     throw Error(ERR_RAIL_CLIENT_EXECUTE);
                 }
-            }
-
-            if (!this->exe_or_file_2_sent &&
-                !this->param_client_execute_exe_or_file_2.empty()) {
-                this->exe_or_file_2_sent = true;
-
-                StaticOutStream<16384> out_s;
-                RAILPDUHeader header;
-                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
-
-                ClientExecutePDU cepdu;
-
-                cepdu.Flags(this->param_client_execute_flags_2);
-                cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
-                cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
-                cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
-
-                cepdu.emit(out_s);
-
-                header.emit_end();
-
-                const size_t   length = out_s.get_offset();
-                const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
-                                        | CHANNELS::CHANNEL_FLAG_LAST;
-
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client, length, flags,
-                        out_s.get_data(), length);
-                }
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
-                        "Send to server - Client Execute PDU (2)");
-                cepdu.log(LOG_INFO);
-
-                this->send_message_to_server(length, flags, out_s.get_data(),
-                    length);
             }
 
             return (!this->session_probe_channel);
@@ -1539,6 +1513,60 @@ public:
         }
 
         this->send_message_to_client(length, flags_, out_s.get_data(),
+            length);
+    }
+
+    void confirm_session_probe_launch() {
+        if (!this->exe_or_file_2_sent &&
+            !this->param_client_execute_exe_or_file_2.empty()) {
+            this->session_probe_launch_confirmed = true;
+
+            this->try_launch_application();
+        }
+    }
+
+private:
+    void try_launch_application() {
+        if (!this->exe_or_file_exec_ok || !this->session_probe_launch_confirmed) {
+            return;
+        }
+
+        REDASSERT(!this->exe_or_file_2_sent &&
+            !this->param_client_execute_exe_or_file_2.empty());
+
+        this->exe_or_file_2_sent = true;
+
+        StaticOutStream<16384> out_s;
+        RAILPDUHeader header;
+        header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+
+        ClientExecutePDU cepdu;
+
+        cepdu.Flags(this->param_client_execute_flags_2);
+        cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
+        cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
+        cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
+
+        cepdu.emit(out_s);
+
+        header.emit_end();
+
+        const size_t   length = out_s.get_offset();
+        const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                | CHANNELS::CHANNEL_FLAG_LAST;
+
+        {
+            const bool send              = true;
+            const bool from_or_to_client = false;
+            ::msgdump_c(send, from_or_to_client, length, flags,
+                out_s.get_data(), length);
+        }
+        LOG(LOG_INFO,
+            "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                "Send to server - Client Execute PDU (2)");
+        cepdu.log(LOG_INFO);
+
+        this->send_message_to_server(length, flags, out_s.get_data(),
             length);
     }
 };

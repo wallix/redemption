@@ -21,12 +21,14 @@
 
 #pragma once
 
+#include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 
 class SessionProbeAlternateShellBasedLauncher : public SessionProbeLauncher {
 private:
-    SessionProbeVirtualChannel* channel = nullptr;
+    RemoteProgramsVirtualChannel* rail_channel = nullptr;
+    SessionProbeVirtualChannel*   sespro_channel = nullptr;
 
     bool drive_redirection_initialized = false;
 
@@ -57,8 +59,8 @@ public:
             return false;
         }
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sespro_channel) {
+            this->sespro_channel->give_additional_launch_time();
         }
 
         return false;
@@ -92,8 +94,8 @@ public:
 
         this->image_readed = true;
 
-        if (this->channel) {
-            this->channel->give_additional_launch_time();
+        if (this->sespro_channel) {
+            this->sespro_channel->give_additional_launch_time();
         }
 
         return false;
@@ -111,11 +113,14 @@ public:
         return true;
     }
 
-    void set_clipboard_virtual_channel(BaseVirtualChannel*) override {
+    void set_clipboard_virtual_channel(BaseVirtualChannel*) override {}
+
+    void set_remote_programs_virtual_channel(BaseVirtualChannel* channel) override {
+        this->rail_channel = reinterpret_cast<RemoteProgramsVirtualChannel*>(channel);
     }
 
     void set_session_probe_virtual_channel(BaseVirtualChannel* channel) override {
-        this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
+        this->sespro_channel = reinterpret_cast<SessionProbeVirtualChannel*>(channel);
     }
 
     void stop(bool bLaunchSuccessful) override {
@@ -126,7 +131,11 @@ public:
 
         this->stopped = true;
 
-        if (!bLaunchSuccessful) {
+        if (bLaunchSuccessful) {
+            if (this->rail_channel)
+                this->rail_channel->confirm_session_probe_launch();
+        }
+        else {
             if (!this->drive_redirection_initialized) {
                 LOG(LOG_ERR,
                     "SessionProbeAlternateShellBasedLauncher :=> "
