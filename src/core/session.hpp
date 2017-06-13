@@ -197,16 +197,12 @@ public:
                 event_handlers.clear();
                 mm.mod->get_event_handlers(event_handlers);
                 for (EventHandler& event_handler : event_handlers) {
-                    const wait_obj* event = event_handler.get_event();
-                    const int       fd    = event_handler.get_fd();
-
-                    if (event) {
-                        if (INVALID_SOCKET != fd) {
-                            event->wait_on_fd(fd, rfds, max, timeout);
-                        }
-                        else {
-                            event->wait_on_timeout(timeout);
-                        }
+                    const int fd = event_handler.get_fd();
+                    if (INVALID_SOCKET != fd) {
+                        event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
+                    }
+                    else {
+                        event_handler.get_event().wait_on_timeout(timeout);
                     }
                 }
 
@@ -279,15 +275,14 @@ public:
                                     break;
                                 }
 
-                                      wait_obj* event = event_handler.get_event();
-                                const int       fd    = event_handler.get_fd();
+                                wait_obj& event = event_handler.get_event();
 
-                                if (event && event->is_set(fd, rfds)) {
+                                if (event.is_set(event_handler.get_fd(), rfds)) {
                                     event_handler(now, mm.get_graphic_wrapper(*this->front));
 
-                                    if (BACK_EVENT_NONE != event->signal) {
-                                        signal = event->signal;
-                                        event->reset();
+                                    if (BACK_EVENT_NONE != event.signal) {
+                                        signal = event.signal;
+                                        event.reset();
                                     }
                                 }
                             }

@@ -1218,17 +1218,14 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
 
         if (mod != nullptr && front.is_pipe_ok) {
 
-        switch (mod->logged_on) {
-            case mod_api::CLIENT_LOGGED:
-                mod->logged_on = 0;
+        if (mod->logged_on == mod_api::CLIENT_LOGGED) {
+            mod->logged_on = mod_api::CLIENT_UNLOGGED;
 
-                std::cout << " RDP Session Log On." <<  std::endl;
-                if (quick_connection_test) {
-                    disconnect(mod, st_mod, front.connection_time);
-                    exit(0);
-                }
-                break;
-            default: break;
+            std::cout << " RDP Session Log On." <<  std::endl;
+            if (quick_connection_test) {
+                disconnect(mod, st_mod, front.connection_time);
+                exit(0);
+            }
         }
 
         if (time_set_connection_test) {

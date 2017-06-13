@@ -51,7 +51,7 @@ struct LocallyIntegrableMod : public InternalMod {
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_first_click_down_event(now, event, drawable);
         }
     } first_click_down_event_handler;
@@ -82,10 +82,10 @@ struct LocallyIntegrableMod : public InternalMod {
         if (this->rail_enabled) {
             if (this->first_click_down_event.object_and_time) {
                 out_event_handlers.emplace_back(
-                        &this->first_click_down_event,
-                        &this->first_click_down_event_handler,
-                        INVALID_SOCKET
-                    );
+                    &this->first_click_down_event,
+                    &this->first_click_down_event_handler,
+                    INVALID_SOCKET
+                );
             }
 
             this->client_execute.get_event_handlers(out_event_handlers);
@@ -94,7 +94,7 @@ struct LocallyIntegrableMod : public InternalMod {
         InternalMod::get_event_handlers(out_event_handlers);
     }
 
-    void process_first_click_down_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+    void process_first_click_down_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         REDASSERT(this->rail_enabled);
 
         if (this->first_click_down_event.object_and_time &&

@@ -49,7 +49,7 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi {
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_managed_mod_event(now, event, drawable);
         }
     } managed_mod_event_handler;
@@ -60,7 +60,7 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi {
 
     class DisconnectionReconnectionEventHandler : public EventHandler::CB {
     public:
-        void operator()(time_t/* now*/, wait_obj*/* event*/, gdi::GraphicApi&/* drawable*/) override {
+        void operator()(time_t/* now*/, wait_obj&/* event*/, gdi::GraphicApi&/* drawable*/) override {
             throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
         }
     } disconnection_reconnection_event_handler;
@@ -100,7 +100,7 @@ public:
 
     void notify(Widget2*, notify_event_t) override {}
 
-    void process_managed_mod_event(time_t now, wait_obj* /*event*/, gdi::GraphicApi& gapi) {
+    void process_managed_mod_event(time_t now, wait_obj& /*event*/, gdi::GraphicApi& gapi) {
         mod_api& mod = this->rail_module_host.get_managed_mod();
 
         mod.draw_event(now, gapi);
@@ -167,18 +167,18 @@ public:
         mod.get_event_handlers(out_event_handlers);
 
         out_event_handlers.emplace_back(
-                &mod.get_event(),
-                &this->managed_mod_event_handler,
-                mod.get_fd()
-            );
+            &mod.get_event(),
+            &this->managed_mod_event_handler,
+            mod.get_fd()
+        );
 
         if (this->disconnection_reconnection_required &&
             mod.is_auto_reconnectable()) {
             out_event_handlers.emplace_back(
-                    &this->disconnection_reconnection_event,
-                    &this->disconnection_reconnection_event_handler,
-                    INVALID_SOCKET
-                );
+                &this->disconnection_reconnection_event,
+                &this->disconnection_reconnection_event_handler,
+                INVALID_SOCKET
+            );
         }
 
         LocallyIntegrableMod::get_event_handlers(out_event_handlers);

@@ -696,7 +696,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_asynchronous_task_event(now, event, drawable);
         }
     } asynchronous_task_event_handler;
@@ -709,7 +709,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_session_probe_launcher_event(now, event, drawable);
         }
     } session_probe_launcher_event_handler;
@@ -722,7 +722,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_session_probe_virtual_channel_event(now, event, drawable);
         }
     } session_probe_virtual_channel_event_handler;
@@ -736,7 +736,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_remote_program_session_manager_event(now, event, drawable);
         }
     } remote_program_session_manager_event_handler;
@@ -1898,7 +1898,7 @@ public:
     }
 
 private:
-    void process_asynchronous_task_event(time_t, wait_obj* /* event*/, gdi::GraphicApi&) {
+    void process_asynchronous_task_event(time_t, wait_obj& /* event*/, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1911,13 +1911,13 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+    void process_session_probe_launcher_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
     }
 
-    void process_session_probe_virtual_channel_event(time_t, wait_obj* event, gdi::GraphicApi&) {
+    void process_session_probe_virtual_channel_event(time_t, wait_obj& event, gdi::GraphicApi&) {
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
         try{
             if (this->session_probe_virtual_channel_p) {
@@ -1934,14 +1934,12 @@ private:
             this->authentifier.disconnect_target();
             this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
-            if (event) {
-                event->signal = BACK_EVENT_NEXT;
-            }
+            event.signal = BACK_EVENT_NEXT;
         }
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
-    void process_remote_program_session_manager_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+    void process_remote_program_session_manager_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         if (this->remote_programs_session_manager) {
             this->remote_programs_session_manager->process_event();
         }
@@ -1951,41 +1949,38 @@ public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
             out_event_handlers.emplace_back(
-                    &this->asynchronous_task_event,
-                    &this->asynchronous_task_event_handler,
-                    this->asynchronous_tasks.front()->get_file_descriptor()
-                );
+                &this->asynchronous_task_event,
+                &this->asynchronous_task_event_handler,
+                this->asynchronous_tasks.front()->get_file_descriptor()
+            );
         }
 
         if (this->session_probe_launcher) {
-            wait_obj* event = this->session_probe_launcher->get_event();
-            if (event) {
+            if (wait_obj* event = this->session_probe_launcher->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->session_probe_launcher_event_handler,
-                        INVALID_SOCKET
-                    );
+                    event,
+                    &this->session_probe_launcher_event_handler,
+                    INVALID_SOCKET
+                );
             }
         }
 
         if (this->session_probe_virtual_channel_p) {
-            wait_obj* event = this->session_probe_virtual_channel_p->get_event();
-            if (event) {
+            if (wait_obj* event = this->session_probe_virtual_channel_p->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->session_probe_virtual_channel_event_handler,
-                        INVALID_SOCKET
+                    event,
+                    &this->session_probe_virtual_channel_event_handler,
+                    INVALID_SOCKET
                 );
             }
         }
 
         if (this->remote_programs_session_manager) {
-            wait_obj* event = this->remote_programs_session_manager->get_event();
-            if (event) {
+            if (wait_obj* event = this->remote_programs_session_manager->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->remote_program_session_manager_event_handler,
-                        INVALID_SOCKET
+                    event,
+                    &this->remote_program_session_manager_event_handler,
+                    INVALID_SOCKET
                 );
             }
         }

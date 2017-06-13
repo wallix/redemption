@@ -173,7 +173,7 @@ class ClientExecute : public windowing_api
         : client_execute_(client_execute)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj & event, gdi::GraphicApi& drawable) override {
             this->client_execute_.process_button_1_down_event(now, event, drawable);
         }
     } button_1_down_event_handler;
@@ -202,19 +202,17 @@ public:
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
-        if ((true == static_cast<bool>(*this)) &&
-            this->button_1_down_event.object_and_time) {
-
+        if (bool(*this) && this->button_1_down_event.object_and_time) {
             out_event_handlers.emplace_back(
-                    &this->button_1_down_event,
-                    &this->button_1_down_event_handler,
-                    INVALID_SOCKET
-                );
+                &this->button_1_down_event,
+                &this->button_1_down_event_handler,
+                INVALID_SOCKET
+            );
         }
     }
 
-    void process_button_1_down_event(time_t, wait_obj*, gdi::GraphicApi&) {
-        REDASSERT(true == static_cast<bool>(*this));
+    void process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&) {
+        REDASSERT(bool(*this));
 
         this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
             this->button_1_down);

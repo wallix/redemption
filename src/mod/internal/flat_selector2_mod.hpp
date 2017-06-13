@@ -223,7 +223,7 @@ public:
         }
     }
 
-    void refresh_context(Inifile&) override {
+    void refresh_context() override {
         char buffer[16];
 
         this->current_page = vars.get<cfg::context::selector_current_page>();
@@ -233,9 +233,6 @@ public:
         this->number_page = vars.get<cfg::context::selector_number_of_pages>();
         snprintf(buffer, sizeof(buffer), "%d", this->number_page);
         this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
-
-
-        // uint16_t cy = this->selector.selector_lines.cy();
 
         this->selector.selector_lines.clear();
 
