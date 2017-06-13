@@ -1444,7 +1444,9 @@ public:
                     front, *this, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
-                    mod_rdp_params.client_execute, this->verbose
+                    mod_rdp_params.client_execute,
+                    mod_rdp_params.rail_disconnect_message_delay,
+                    this->verbose
                 );
         }
     }   // mod_rdp

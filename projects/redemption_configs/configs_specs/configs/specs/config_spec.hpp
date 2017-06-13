@@ -610,6 +610,9 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_arguments");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_account");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_password");
+        W.sep();
+
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "rail_disconnect_message_delay", set(3000));
     });
 
     W.section("", [&]

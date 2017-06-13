@@ -170,6 +170,8 @@ struct ModRDPParams {
 
     const char * load_balance_info = "";
 
+    unsigned rail_disconnect_message_delay = 0;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -334,6 +336,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             large_pointer_support);
 
         RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
+
+        RDP_PARAMS_LOG("%d",     static_cast<unsigned>, rail_disconnect_message_delay);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

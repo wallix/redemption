@@ -320,6 +320,7 @@ namespace cfg {
         struct auth_command_rail_exec_arguments;
         struct auth_command_rail_exec_account;
         struct auth_command_rail_exec_password;
+        struct rail_disconnect_message_delay;
     };
 
     struct theme;

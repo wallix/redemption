@@ -1782,7 +1782,8 @@ class Sesman():
                 u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
                 u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
                 u'use_client_provided_remoteapp': 'use_client_provided_remoteapp',
-                u'load_balance_info': 'load_balance_info'
+                u'load_balance_info': 'load_balance_info',
+                u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',

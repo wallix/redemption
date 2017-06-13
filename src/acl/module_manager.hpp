@@ -1421,6 +1421,8 @@ public:
 
                 mod_rdp_params.load_balance_info                   = this->ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 
+                mod_rdp_params.rail_disconnect_message_delay       = this->ini.get<cfg::context::rail_disconnect_message_delay>();
+
                 try {
                     const char * const name = "RDP Target";
 

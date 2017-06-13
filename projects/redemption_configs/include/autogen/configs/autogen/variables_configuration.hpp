@@ -4018,6 +4018,23 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    // AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY
+    // type: unsigned int
+    // sesman -> proxy
+    // value{3000}
+    struct context::rail_disconnect_message_delay {
+        static constexpr bool is_sesman_to_proxy() { return 1; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "context"; }
+        static constexpr char const * name() { return "rail_disconnect_message_delay"; }
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index() { return authid_t(126); }
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{3000};
+    };
 
     // type: Theme
     // value{}
@@ -4358,6 +4375,7 @@ struct context
 , cfg::context::auth_command_rail_exec_arguments
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
+, cfg::context::rail_disconnect_message_delay
 { static constexpr bool is_section = true; };
 
 }
@@ -4509,5 +4527,6 @@ using VariablesAclPack = Pack<
 , cfg::context::auth_command_rail_exec_arguments
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
+, cfg::context::rail_disconnect_message_delay
 >;
 }
