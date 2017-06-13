@@ -37,5 +37,5 @@ http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 ## Options
 
 - Compile with -g and -fno-omit-frame-pointer
-- UBSAN_OPTIONS=print_stacktrace=1
-- Make sure llvm-symbolizer binary is in PATH (example: `ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-3.8/bin/llvm-symbolizer`).
+- `export UBSAN_OPTIONS=print_stacktrace=1`
+- Make sure llvm-symbolizer binary is in PATH (example: `export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-3.8/bin/llvm-symbolizer`).

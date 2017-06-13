@@ -364,7 +364,7 @@ static inline int app_proxy(
     }
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+    configuration_load(ini.configuration_holder(), config_filename);
 
     ScopedCryptoInit scoped_crypto;
 
