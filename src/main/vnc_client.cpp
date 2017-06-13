@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     // sock_trans.connect();
 
     SSL_library_init();
-    ClientFront front(false, false, info, verbose);
+    ClientFront front(info, verbose);
     //VncFront front(sock_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 
     const bool is_socket_transport = true;

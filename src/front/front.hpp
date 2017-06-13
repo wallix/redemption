@@ -124,6 +124,11 @@ class Front : public FrontAPI
     // for printf with %p
     using voidp = void const *;
 
+    bool nomouse;
+    int mouse_x = 0;
+    int mouse_y = 0;
+    wait_obj event;
+
 public:
     bool has_user_activity = true;
     Capture * capture;
@@ -629,7 +634,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , up_and_running(0)
@@ -733,7 +738,7 @@ public:
         delete this->capture;
     }
 
-    wait_obj& get_event() override {
+    wait_obj& get_event() {
         if (this->session_resized) {
             this->event.set(0);
             this->event.object_and_time = true;
@@ -1204,7 +1209,7 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->channel_list;
     }
 

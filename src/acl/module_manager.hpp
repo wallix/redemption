@@ -782,7 +782,7 @@ public:
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
-        , no_mod(this->front)
+        , no_mod()
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)

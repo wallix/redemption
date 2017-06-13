@@ -28,8 +28,8 @@
 
 class Bouncer2Mod : public InternalMod
 {
-    int speedx;
-    int speedy;
+    int speedx = 2;
+    int speedy = 2;
 
     Rect dancing_rect;
 
@@ -42,11 +42,7 @@ public:
     Bouncer2Mod(FrontAPI & front, uint16_t width, uint16_t height,
                 Font const & font, bool dont_resize)
     : InternalMod(front, width, height, font, Theme{}, dont_resize)
-    , speedx(10)
-    , speedy(10)
     , dancing_rect(0,0,100,100)
-    , mouse_x(front.mouse_x)
-    , mouse_y(front.mouse_y)
     {}
 
     ~Bouncer2Mod() override {

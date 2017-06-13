@@ -211,7 +211,7 @@ int main(int argc, char * argv[]) {
 
     Front front(front_trans, gen, ini, cctx, report_message,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft.get());
-    null_mod no_mod(front);
+    null_mod no_mod;
 
     while (front.up_and_running == 0) {
         now = time(nullptr);

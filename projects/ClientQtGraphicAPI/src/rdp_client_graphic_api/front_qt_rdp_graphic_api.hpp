@@ -60,16 +60,16 @@
 
 #include "Qt4/Qt.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-#pragma GCC diagnostic pop
-
 #endif
 
 #define REPLAY_PATH "/replay"
 #define LOGINS_PATH "/config/logins.config"
 #define WINODW_CONF_PATH "/config/windows_config.config"
 
+#ifndef MAIN_PATH
+# error "undefined MAIN_PATH macro"
+# define MAIN_PATH ""
+#endif
 
 
 // class DummyAuthentifier : public auth_api
@@ -199,8 +199,7 @@ public:
 
 
     Front_Qt_API( RDPVerbose verbose)
-    : FrontAPI(false, false)
-    , verbose(verbose)
+    : verbose(verbose)
     , info()
     , port(0)
     , local_IP("unknow_local_IP")
@@ -218,10 +217,10 @@ public:
     , cache_replay(nullptr)
     , socket(nullptr)
     , is_spanning(false)
-    , MAIN_DIR(std::string(MAIN_PATH))
-    , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
-    , USER_CONF_LOG(MAIN_DIR + std::string(LOGINS_PATH))
-    , WINDOWS_CONF(MAIN_DIR + std::string(WINODW_CONF_PATH))
+    , MAIN_DIR(MAIN_PATH)
+    , REPLAY_DIR(MAIN_PATH REPLAY_PATH)
+    , USER_CONF_LOG(MAIN_PATH LOGINS_PATH)
+    , WINDOWS_CONF(MAIN_PATH WINODW_CONF_PATH)
     , wab_diag_question(false)
     , asked_color(0)
     , windowsData(this)

@@ -85,7 +85,12 @@ class Session
     Inifile  & ini;
     int internal_state;
 
-    Front * front;
+    // optimized vtable
+    struct FinalFront final : Front
+    {
+        using Front::Front;
+    };
+    FinalFront * front;
 
     TimeSystem timeobj;
 
@@ -126,7 +131,7 @@ public:
             time_t now = time(nullptr);
 
             // TODO local variable
-            this->front = new Front(
+            this->front = new FinalFront(
                 front_trans, rnd, this->ini, cctx, authentifier,
                 this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
             );

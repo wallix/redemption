@@ -44,7 +44,7 @@ public:
     virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
+    virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
 
@@ -57,23 +57,6 @@ public:
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
 
     virtual void update_pointer_position(uint16_t, uint16_t) {}
-
-    int mouse_x;
-    int mouse_y;
-    bool notimestamp;
-    bool nomouse;
-
-protected:
-    wait_obj event;
-
-    FrontAPI(bool notimestamp, bool nomouse)
-        : mouse_x(0)
-        , mouse_y(0)
-        , notimestamp(notimestamp)
-        , nomouse(nomouse) {}
-
-public:
-    virtual wait_obj& get_event() { return this->event; }
 
     ////////////////////////////////
     // Used by transparent proxy.

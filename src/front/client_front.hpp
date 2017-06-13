@@ -41,17 +41,12 @@ class ClientFront : public FrontAPI
     CHANNELS::ChannelDefArray   cl;
 
 public:
-    ClientFront(bool notimestamp, bool nomouse, ClientInfo & info, bool verbose)
-    : FrontAPI(notimestamp, nomouse)
-    , verbose(verbose)
+    ClientFront(ClientInfo & info, bool verbose)
+    : verbose(verbose)
     , info(info)
     , mod_bpp(gdi::Depth::from_bpp(info.bpp))
     , mod_palette(BGRPalette::classic_332())
     , gd(info.width, info.height)
-    {}
-
-    ClientFront(ClientInfo & info, bool verbose)
-    : ClientFront(false, false, info, verbose)
     {}
 
     bool can_be_start_capture() override { return false; }

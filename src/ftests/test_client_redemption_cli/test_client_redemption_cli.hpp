@@ -75,13 +75,6 @@
 #include "core/client_info.hpp"
 #include "utils/word_identification.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-#pragma GCC diagnostic pop
-
-
-
-
 
 class TestClientCLI : public FrontAPI
 {
@@ -244,8 +237,7 @@ public:
     //------------------------
 
     TestClientCLI(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
-    : FrontAPI(false, false)
-    , _verbose(verbose)
+    : _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);
 
