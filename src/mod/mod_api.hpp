@@ -75,7 +75,7 @@ public:
         CLIENT_UNLOGGED,
         CLIENT_LOGGED
     };
-    bool logged_on = CLIENT_UNLOGGED;
+    bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
     mod_api()
     {
