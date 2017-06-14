@@ -3194,6 +3194,12 @@ int main(int argc, char** argv){
     // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
 
 
+
+    // ../packager/packager.py --version 1.0.0 --no-entry-changelog --build-package
+
+    // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
+
+
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;

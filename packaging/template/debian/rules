@@ -4,16 +4,20 @@ export DH_VERBOSE=10
 export DESTDIR=debian/buildtmp
 
 export PREFIX=%PREFIX%
+export LIB_PREFIX=%LIB_PREFIX%
 export ETC_PREFIX=%ETC_PREFIX%
 export CERT_PREFIX=%CERT_PREFIX%
 export RDPLICENSE_PATH=$CERT_PREFIX/rdplicense
-export RDPCERT_PATH=$CERT_PREFIX/rdp
+export RDPCERT_PATH=$CERT_PREFIX
 export RECORD_PATH=%RECORD_PATH%
 export RECORD_TMP_PATH=%RECORD_TMP_PATH%
-export HASH_PATH=/var/lib/hash
+export HASH_PATH=%HASH_PATH%
 export PERSISTENT_PATH=/var/lib/redemption/cache
+#export PERSISTENT_PATH=%PERSISTENT_PATH%
+export DRIVE_REDIRECTION_PATH=%DRIVE_REDIRECTION_PATH%
 
-BJAM_EXTRA_INSTALL=%DEBUG_OPT%
+
+BJAM_EXTRA_INSTALL=%BJAM_EXTRA% %DEBUG_OPT%
 
 clean:
 	# dh_testdir - test directory before building Debian package. It makes sure
@@ -21,12 +25,13 @@ clean:
 	dh_testdir Jamroot
 	dh_testroot
 	dh_clean
+	bjam clean
 
 build:
 	# dh_testdir - test directory before building Debian package. It makes sure
 	# that debian/control exists also check Jamroot for redemption project.
 	dh_testdir Jamroot
-	bjam -q $(BJAM_EXTRA_INSTALL) 
+	bjam -q $(BJAM_EXTRA_INSTALL) build
 
 install: build
 	dh_testdir Jamroot
@@ -38,7 +43,7 @@ binary-arch: build install
 	# dh_testdir - test directory before building Debian package. It makes sure
 	# that debian/control exists also check Jamroot for redemption project.
 	dh_testdir Jamroot
-	#dh_testroot - ensure that a package is built as root 
+	#dh_testroot - ensure that a package is built as root
 	#(use fakeroot as only file manipulation is involved, we don't really have to execute code as root)
 	dh_testroot
 	#dh_installchangelogs - install changelogs into package build directories
@@ -52,7 +57,7 @@ binary-arch: build install
 	#--list-missing or --fail-missing
 	# This option makes dh_install keep track of the files it installs, and
 	# then at the end, compare that list with the files in the source directory.
-	# If any of the files (and symlinks) in the source directory were not 
+	# If any of the files (and symlinks) in the source directory were not
 	# installed to somewhere, it will warn on stderr about that (or fail).
 	# --sourcedir=dir
 	# Look in the specified directory for files to be installed.

@@ -2,3 +2,5 @@
 %PREFIX%/bin/*
 %PREFIX%/share/rdpproxy/*
 %ETC_PREFIX%/themes/*
+
+%LIB_PREFIX%/libredrec.so
