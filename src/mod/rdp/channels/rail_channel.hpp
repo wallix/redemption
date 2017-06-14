@@ -1419,6 +1419,13 @@ public:
         launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
 
         std::string arguments_(arguments);
+        {
+            const char * appid_marker = "${APPID}";
+            size_t pos = arguments_.find(appid_marker, 0);
+            if (pos != std::string::npos) {
+                arguments_.replace(pos, strlen(appid_marker), original_exe_or_file);
+            }
+        }
         if (account && *account) {
             const char * user_marker = "${USER}";
             size_t pos = arguments_.find(user_marker, 0);

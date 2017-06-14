@@ -1361,6 +1361,7 @@ class Sesman():
                                 self.engine.get_target_password(selected_target) \
                                 or self.engine.get_primary_password(selected_target) \
                                 or ''
+                    self.target_app_rights[kv[u'target_application']] = selected_target
 
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
@@ -1525,23 +1526,6 @@ class Sesman():
                                             self.shared.get(u'auth_notify_rail_exec_flags'),
                                             self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
                                         self.send_data(auth_command_kv)
-
-                                        # self.send_data({
-                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
-                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
-                                        #         u'auth_command_rail_exec_exe_or_file':          u'||CMD',
-                                        #         u'auth_command_rail_exec_working_dir':          u'%HOMEDRIVE%%HOMEPATH%',
-                                        #         u'auth_command_rail_exec_arguments':            u'/K ping google.fr',
-                                        #         u'auth_command_rail_exec_exec_result':          u'0',   # RAIL_EXEC_S_OK
-                                        #         u'auth_command':                                u'rail_exec'
-                                        #     })
-
-                                        # self.send_data({
-                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
-                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
-                                        #         u'auth_command_rail_exec_exec_result':          u'3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
-                                        #         u'auth_command':                                u'rail_exec'
-                                        #     })
 
                                         self.shared[u'auth_notify_rail_exec_flags']       = u''
                                         self.shared[u'auth_notify_rail_exec_exe_or_file'] = u''
