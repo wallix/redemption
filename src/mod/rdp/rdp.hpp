@@ -155,10 +155,10 @@ protected:
         {
             if ((
                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && !strcmp(this->channel.name, channel_names::cliprdr)
+                && !::strcasecmp(this->channel.name, channel_names::cliprdr)
             ) || (
                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && !strcmp(this->channel.name, channel_names::rdpdr)
+                && !::strcasecmp(this->channel.name, channel_names::rdpdr)
             )) {
                 const bool send              = true;
                 const bool from_or_to_client = true;
@@ -213,10 +213,10 @@ protected:
 
             if ((
                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && !strcmp(this->channel_name, channel_names::cliprdr)
+                && !::strcasecmp(this->channel_name, channel_names::cliprdr)
             ) || (
                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && !strcmp(this->channel_name, channel_names::rdpdr)
+                && !::strcasecmp(this->channel_name, channel_names::rdpdr)
             )) {
                 const bool send              = true;
                 const bool from_or_to_client = false;
@@ -696,7 +696,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_asynchronous_task_event(now, event, drawable);
         }
     } asynchronous_task_event_handler;
@@ -709,7 +709,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_session_probe_launcher_event(now, event, drawable);
         }
     } session_probe_launcher_event_handler;
@@ -722,7 +722,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_session_probe_virtual_channel_event(now, event, drawable);
         }
     } session_probe_virtual_channel_event_handler;
@@ -736,7 +736,7 @@ protected:
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
             this->mod_.process_remote_program_session_manager_event(now, event, drawable);
         }
     } remote_program_session_manager_event_handler;
@@ -1096,6 +1096,15 @@ public:
         std::string shell_arguments;
         if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
             shell_arguments = mod_rdp_params.shell_arguments;
+
+            {
+                const char * appid_marker = "${APPID}";
+                size_t pos = shell_arguments.find(appid_marker, 0);
+                if (pos != std::string::npos) {
+                    shell_arguments.replace(pos, strlen(appid_marker), mod_rdp_params.target_application);
+                }
+            }
+
             if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
                 const char * user_marker = "${USER}";
                 size_t pos = shell_arguments.find(user_marker, 0);
@@ -1103,6 +1112,7 @@ public:
                     shell_arguments.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
                 }
             }
+
             if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
                 const char * password_marker = "${PASSWORD}";
                 size_t pos = shell_arguments.find(password_marker, 0);
@@ -1225,15 +1235,12 @@ public:
         if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
             if (this->remote_program) {
                 if (this->enable_session_probe) {
-                    std::string alternate_shell(mod_rdp_params.alternate_shell);
+                    this->real_alternate_shell = "[None]";
 
-                    if (!shell_arguments.empty()) {
-                        alternate_shell += " ";
-                        alternate_shell += shell_arguments;
-                    }
-
-                    this->real_alternate_shell = std::move(alternate_shell);
-                    this->real_working_dir     = mod_rdp_params.shell_working_dir;
+                    this->real_client_execute_flags       = 0;
+                    this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
+                    this->real_client_execute_arguments   = shell_arguments.c_str();
+                    this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
 
                     this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
                     this->client_execute_arguments   = session_probe_arguments;
@@ -1447,7 +1454,9 @@ public:
                     front, *this, this->lang, this->font,
                     mod_rdp_params.theme, this->authentifier,
                     session_probe_window_title,
-                    mod_rdp_params.client_execute, this->verbose
+                    mod_rdp_params.client_execute,
+                    mod_rdp_params.rail_disconnect_message_delay,
+                    this->verbose
                 );
         }
     }   // mod_rdp
@@ -1536,7 +1545,7 @@ protected:
                  GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
                 this->verbose);
 
-        if (strcmp(channel_name, channel_names::rdpdr)) {
+        if (::strcasecmp(channel_name, channel_names::rdpdr)) {
             return std::unique_ptr<VirtualChannelDataSender>(
                 std::move(to_server_sender));
         }
@@ -1899,7 +1908,7 @@ public:
     }
 
 private:
-    void process_asynchronous_task_event(time_t, wait_obj* /* event*/, gdi::GraphicApi&) {
+    void process_asynchronous_task_event(time_t, wait_obj& /* event*/, gdi::GraphicApi&) {
         if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
             this->asynchronous_tasks.pop_front();
         }
@@ -1912,13 +1921,13 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+    void process_session_probe_launcher_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
     }
 
-    void process_session_probe_virtual_channel_event(time_t, wait_obj* event, gdi::GraphicApi&) {
+    void process_session_probe_virtual_channel_event(time_t, wait_obj& event, gdi::GraphicApi&) {
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
         try{
             if (this->session_probe_virtual_channel_p) {
@@ -1935,14 +1944,12 @@ private:
             this->authentifier.disconnect_target();
             this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
-            if (event) {
-                event->signal = BACK_EVENT_NEXT;
-            }
+            event.signal = BACK_EVENT_NEXT;
         }
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
-    void process_remote_program_session_manager_event(time_t, wait_obj* /*event*/, gdi::GraphicApi&) {
+    void process_remote_program_session_manager_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         if (this->remote_programs_session_manager) {
             this->remote_programs_session_manager->process_event();
         }
@@ -1952,41 +1959,38 @@ public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
             out_event_handlers.emplace_back(
-                    &this->asynchronous_task_event,
-                    &this->asynchronous_task_event_handler,
-                    this->asynchronous_tasks.front()->get_file_descriptor()
-                );
+                &this->asynchronous_task_event,
+                &this->asynchronous_task_event_handler,
+                this->asynchronous_tasks.front()->get_file_descriptor()
+            );
         }
 
         if (this->session_probe_launcher) {
-            wait_obj* event = this->session_probe_launcher->get_event();
-            if (event) {
+            if (wait_obj* event = this->session_probe_launcher->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->session_probe_launcher_event_handler,
-                        INVALID_SOCKET
-                    );
+                    event,
+                    &this->session_probe_launcher_event_handler,
+                    INVALID_SOCKET
+                );
             }
         }
 
         if (this->session_probe_virtual_channel_p) {
-            wait_obj* event = this->session_probe_virtual_channel_p->get_event();
-            if (event) {
+            if (wait_obj* event = this->session_probe_virtual_channel_p->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->session_probe_virtual_channel_event_handler,
-                        INVALID_SOCKET
+                    event,
+                    &this->session_probe_virtual_channel_event_handler,
+                    INVALID_SOCKET
                 );
             }
         }
 
         if (this->remote_programs_session_manager) {
-            wait_obj* event = this->remote_programs_session_manager->get_event();
-            if (event) {
+            if (wait_obj* event = this->remote_programs_session_manager->get_event()) {
                 out_event_handlers.emplace_back(
-                        event,
-                        &this->remote_program_session_manager_event_handler,
-                        INVALID_SOCKET
+                    event,
+                    &this->remote_program_session_manager_event_handler,
+                    INVALID_SOCKET
                 );
             }
         }
@@ -2010,17 +2014,14 @@ public:
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
-        if (!strcmp(front_channel_name, channel_names::cliprdr)) {
+        if (!::strcasecmp(front_channel_name, channel_names::cliprdr)) {
             this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
         }
-        else if (!strcmp(front_channel_name, channel_names::rail)) {
+        else if (!::strcasecmp(front_channel_name, channel_names::rail)) {
             this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
         }
-        else if (!strcmp(front_channel_name, channel_names::rdpdr)) {
+        else if (!::strcasecmp(front_channel_name, channel_names::rdpdr)) {
             this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
-        }
-        else if (!strcmp(front_channel_name, channel_names::rdpsnd)) {
-            this->send_to_mod_rdpsnd_channel(mod_channel, chunk, length, flags);
         }
         else {
             this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
@@ -2077,45 +2078,6 @@ private:
             }
 
             this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
-            return;
-        }
-
-
-
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
-
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-    }
-
-        void send_to_mod_rdpsnd_channel(const CHANNELS::ChannelDef * rdpsnd_channel,
-                                   InStream & chunk, size_t length, uint32_t flags) {
-        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.HasManagedDrive()) {
-
-//             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-
-//                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
-//
-//                     LOG(LOG_INFO,
-//                         "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
-//                             "send Chunked Virtual Channel Data transparently.");
-//                 }
-
-//                 if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
-//                     const bool send              = false;
-//                     const bool from_or_to_client = false;
-//                     uint32_t total_length = length;
-//                     if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-//                         total_length = chunk.get_capacity() - chunk.get_offset();
-//                     }
-//                     ::msgdump_d(send, from_or_to_client, length, flags,
-//                     chunk.get_data(), total_length);
-//
-//                     rdpdr::streamLog(chunk, this->rdpdrLogStatus);
-//                 }
-//             }
-
-            this->send_to_channel(*rdpsnd_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
             return;
         }
 
@@ -2390,27 +2352,27 @@ public:
                             memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                 ((!strcmp(channel_item.name, channel_names::rdpdr) ||
-                                   !strcmp(channel_item.name, channel_names::rdpsnd)) &&
+                                 ((!::strcasecmp(channel_item.name, channel_names::rdpdr) ||
+                                   !::strcasecmp(channel_item.name, channel_names::rdpsnd)) &&
                                   this->file_system_drive_manager.HasManagedDrive())
                         ) {
-                            if (!strcmp(channel_item.name, channel_names::cliprdr)) {
+                            if (!::strcasecmp(channel_item.name, channel_names::cliprdr)) {
                                 has_cliprdr_channel = true;
                             }
-                            else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                            else if (!::strcasecmp(channel_item.name, channel_names::rdpdr)) {
                                 has_rdpdr_channel = true;
                             }
-                            else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
+                            else if (!::strcasecmp(channel_item.name, channel_names::rdpsnd)) {
                                 has_rdpsnd_channel = true;
                             }
-                            memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
+                            ::memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
                         }
                         else {
-                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
-                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                        ::memcpy(def.name, cs_net.channelDefArray[index].name, 8);
                         def.flags = channel_item.flags;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)) {
                             def.log(index);
@@ -3472,6 +3434,18 @@ public:
 
                 case FastPath::UpdateType::PTR_POSITION:
                     {
+                        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                            LOG(LOG_INFO, "Process pointer position (Fast)");
+                        }
+
+                        const unsigned expected = 4; /* xPos(2) + yPos(2) */
+                        if (!stream.in_check_rem(expected)){
+                            LOG(LOG_ERR, "Truncated Fast-Path Pointer Position Update, need=%u remains=%zu",
+                                expected, stream.in_remain());
+                            //throw Error(ERR_RDP_DATA_TRUNCATED);
+                            break;
+                        }
+
                         uint16_t xPos = stream.in_uint16_le();
                         uint16_t yPos = stream.in_uint16_le();
                         this->front.update_pointer_position(xPos, yPos);
@@ -3593,20 +3567,20 @@ public:
 
             // If channel name is our virtual channel, then don't send data to front
                  if (  this->enable_auth_channel
-                    && !strcmp(mod_channel.name, this->auth_channel)) {
+                    && !::strcasecmp(mod_channel.name, this->auth_channel)) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!strcmp(mod_channel.name, "sespro")) {
+            else if (!::strcasecmp(mod_channel.name, "sespro")) {
                 this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             // Clipboard is a Clipboard PDU
-            else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
+            else if (!::strcasecmp(mod_channel.name, channel_names::cliprdr)) {
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!strcmp(mod_channel.name, channel_names::rail)) {
+            else if (!::strcasecmp(mod_channel.name, channel_names::rail)) {
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!strcmp(mod_channel.name, channel_names::rdpdr)) {
+            else if (!::strcasecmp(mod_channel.name, channel_names::rdpdr)) {
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
@@ -4666,8 +4640,17 @@ public:
         case RDP_POINTER_MOVE:
             {
                 if (bool(this->verbose & RDPVerbose::basic_trace3)) {
-                    LOG(LOG_INFO, "Process pointer move");
+                    LOG(LOG_INFO, "Process pointer position");
                 }
+
+                const unsigned expected = 4; /* xPos(2) + yPos(2) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Pointer Position Update, need=%u remains=%zu",
+                        expected, stream.in_remain());
+                    //throw Error(ERR_RDP_DATA_TRUNCATED);
+                    break;
+                }
+
                 uint16_t xPos = stream.in_uint16_le();
                 uint16_t yPos = stream.in_uint16_le();
                 this->front.update_pointer_position(xPos, yPos);
@@ -5799,11 +5782,11 @@ public:
         //    domain_username_format_0, domain_username_format_0);
 
         if (this->disconnect_on_logon_user_change &&
-            ((strcasecmp(domain, this->domain) || strcasecmp(username, this->username)) &&
+            ((::strcasecmp(domain, this->domain) || ::strcasecmp(username, this->username)) &&
              (this->domain[0] ||
-              (strcasecmp(domain_username_format_0, this->username) &&
-               strcasecmp(domain_username_format_1, this->username) &&
-               strcasecmp(username, this->username))))) {
+              (::strcasecmp(domain_username_format_0, this->username) &&
+               ::strcasecmp(domain_username_format_1, this->username) &&
+               ::strcasecmp(username, this->username))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }
@@ -7637,6 +7620,9 @@ private:
 
                 rpvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
+
+                this->session_probe_launcher->set_remote_programs_virtual_channel(
+                    &rpvc);
             }
         }
     }
@@ -7660,13 +7646,13 @@ public:
 private:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
-            const char* arguments) override {
+            const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->get_remote_programs_virtual_channel();
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
-                working_dir, arguments);
+                working_dir, arguments, account, password);
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");

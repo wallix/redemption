@@ -27,13 +27,7 @@
 #include "core/callback.hpp"
 #include "core/wait_obj.hpp"
 #include "gdi/graphic_api.hpp"
-
-class Inifile;
-
-enum {
-    BUTTON_STATE_UP   = 0,
-    BUTTON_STATE_DOWN = 1
-};
+#include "utils/sugar/non_null_ptr.hpp"
 
 class EventHandler {
 public:
@@ -41,7 +35,7 @@ public:
     public:
         virtual ~CB() = default;
 
-        virtual void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) = 0;
+        virtual void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) = 0;
     };
 
 private:
@@ -52,22 +46,18 @@ private:
     int fd_;
 
 public:
-    EventHandler(wait_obj* event, CB* cb, int fd = INVALID_SOCKET)
-    : event_(event)
-    , cb_(cb)
-    , fd_(fd) {
-        REDASSERT(event_);
-        REDASSERT(cb_);
-    }
+    EventHandler(non_null_ptr<wait_obj> event, non_null_ptr<CB> cb, int fd = INVALID_SOCKET)
+    : event_(event.get())
+    , cb_(cb.get())
+    , fd_(fd)
+    {}
 
     void operator()(time_t now, gdi::GraphicApi& drawable) {
-        if (this->cb_) {
-            (*this->cb_)(now, this->event_, drawable);
-        }
+        (*this->cb_)(now, *this->event_, drawable);
     }
 
-    wait_obj* get_event() const {
-        return this->event_;
+    wait_obj & get_event() const {
+        return *this->event_;
     }
 
     int get_fd() const {
@@ -81,11 +71,11 @@ protected:
     wait_obj event;
 
 public:
-     enum : uint8_t {
-         CLIENT_UNLOGGED,
-         CLIENT_LOGGED
-     };
-    uint8_t logged_on = CLIENT_UNLOGGED;
+    enum : bool {
+        CLIENT_UNLOGGED,
+        CLIENT_LOGGED
+    };
+    bool logged_on = CLIENT_UNLOGGED;
 
     mod_api()
     {
@@ -112,7 +102,7 @@ public:
     // used when context changed to avoid creating a new module
     // it usually perform some task identical to what constructor does
     // henceforth it should often be called by constructors
-    virtual void refresh_context(Inifile &) {}
+    virtual void refresh_context() {}
 
     virtual bool is_up_and_running() { return false; }
 

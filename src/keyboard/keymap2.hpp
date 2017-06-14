@@ -255,19 +255,23 @@ public:
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
-        tsk_switch_shortcuts =
-            (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
-            (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&        // Alt
-            (this->keys_down[0xD3] || this->keys_down[0x53]);                   // Del (or Numpad del)
-        tsk_switch_shortcuts |=
-            (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
-            (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
-            this->keys_down[0x01];                                              // Escape
+        {
+            bool const ctrl = this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL];
 
-        this->is_application_switching_shortcut_pressed =
-            (!this->keys_down[LEFT_CTRL] && !this->keys_down[RIGHT_CTRL] &&
-             this->keys_down[LEFT_ALT] && !this->keys_down[RIGHT_ALT] &&
-             this->keys_down[0x0F]);                                            // Tab
+            tsk_switch_shortcuts =
+                ctrl &&                                                             // Ctrl
+                (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&        // Alt
+                (this->keys_down[0xD3] || this->keys_down[0x53]);                   // Del (or Numpad del)
+            tsk_switch_shortcuts |=
+                ctrl &&                                                             // Ctrl
+                (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
+                this->keys_down[0x01];                                              // Escape
+
+            this->is_application_switching_shortcut_pressed =
+                (ctrl ^ bool(this->keys_down[LEFT_ALT])) &&                         // Ctrl xor Alt
+                !this->keys_down[RIGHT_ALT] &&
+                this->keys_down[0x0F];                                              // Tab
+        }
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){

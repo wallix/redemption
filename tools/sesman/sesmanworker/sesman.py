@@ -187,6 +187,7 @@ class Sesman():
         self.allow_back_selector = SESMANCONF[u'sesman'].get('allow_back_to_selector',
                                                              True)
         self.back_selector = False
+        self.target_app_rights = {}
 
     def reset_session_var(self):
         self._full_user_device_account = u'Unknown'
@@ -201,6 +202,7 @@ class Sesman():
         self.target_service_name = None
         self.target_group = None
         self.internal_target = False
+        self.target_app_rights = {}
         # Should set context values back to default
         self.send_data({
             u"module": u'transitory',
@@ -1359,6 +1361,7 @@ class Sesman():
                                 self.engine.get_target_password(selected_target) \
                                 or self.engine.get_primary_password(selected_target) \
                                 or ''
+                    self.target_app_rights[kv[u'target_application']] = selected_target
 
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
@@ -1518,22 +1521,11 @@ class Sesman():
                                             (self.shared.get(u'auth_notify_rail_exec_flags'), \
                                              self.shared.get(u'auth_notify_rail_exec_exe_or_file')))
 
-                                        # self.send_data({
-                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
-                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
-                                        #         u'auth_command_rail_exec_exe_or_file':          u'||CMD',
-                                        #         u'auth_command_rail_exec_working_dir':          u'%HOMEDRIVE%%HOMEPATH%',
-                                        #         u'auth_command_rail_exec_arguments':            u'/K ping google.fr',
-                                        #         u'auth_command_rail_exec_exec_result':          u'0',   # RAIL_EXEC_S_OK
-                                        #         u'auth_command':                                u'rail_exec'
-                                        #     })
-
-                                        # self.send_data({
-                                        #         u'auth_command_rail_exec_flags':                self.shared.get(u'auth_notify_rail_exec_flags'),
-                                        #         u'auth_command_rail_exec_original_exe_or_file': self.shared.get(u'auth_notify_rail_exec_exe_or_file'),
-                                        #         u'auth_command_rail_exec_exec_result':          u'3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
-                                        #         u'auth_command':                                u'rail_exec'
-                                        #     })
+                                        auth_command_kv = self.check_application(
+                                            physical_target,
+                                            self.shared.get(u'auth_notify_rail_exec_flags'),
+                                            self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
+                                        self.send_data(auth_command_kv)
 
                                         self.shared[u'auth_notify_rail_exec_flags']       = u''
                                         self.shared[u'auth_notify_rail_exec_exe_or_file'] = u''
@@ -1635,12 +1627,18 @@ class Sesman():
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
-                                    if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        app_info = self.engine.get_target_login_info(selected_target)
+                                    if self.shared.get(u'auth_channel_target').startswith(u'GetWabSessionParameters'):
+                                        app_target = selected_target
+                                        _prefix, _sep, _val = self.shared.get(u'auth_channel_target').partition(':')
+                                        if _sep:
+                                            app_right_params = self.target_app_rights.get(_val)
+                                            if app_right_params is not None:
+                                                app_target, _app_param = app_right_params
+                                        app_info = self.engine.get_target_login_info(app_target)
                                         account_login = app_info.account_login
                                         application_password = \
-                                            self.engine.get_target_password(selected_target) \
-                                            or self.engine.get_primary_password(selected_target) \
+                                            self.engine.get_target_password(app_target) \
+                                            or self.engine.get_primary_password(app_target) \
                                             or ''
                                         _message = { 'user' : account_login, 'password' : application_password }
 
@@ -1776,7 +1774,8 @@ class Sesman():
                 u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
                 u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
                 u'use_client_provided_remoteapp': 'use_client_provided_remoteapp',
-                u'load_balance_info': 'load_balance_info'
+                u'load_balance_info': 'load_balance_info',
+                u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
@@ -1855,6 +1854,75 @@ class Sesman():
             if self.shared.get("rt_display") != res:
                 Logger().info("sending rt_display=%s" % res)
                 self.send_data({ "rt_display": res })
+
+    def parse_app(self, value):
+        acc_name, sep, app_name = value.rpartition('@')
+        return acc_name, app_name
+
+    def check_application(self, effective_target, flags, exe_or_file):
+        kv = {
+            u'auth_command_rail_exec_flags': flags,
+            u'auth_command_rail_exec_original_exe_or_file': exe_or_file,
+            u'auth_command_rail_exec_exec_result': '3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
+            u'auth_command': 'rail_exec'
+        }
+        app_right_params = self.target_app_rights.get(exe_or_file)
+        if app_right_params is not None:
+            app_right, app_params = app_right_params
+            kv = self._complete_app_infos(kv, app_right, app_params)
+            return kv
+        acc_name, app_name = self.parse_app(exe_or_file)
+        if not app_name or not acc_name:
+            return kv
+        app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
+        app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
+        app_params = None
+        app_right = None
+        for ar in app_rights:
+            _status, _infos = self.engine.check_target(ar, self.pid, None)
+            if _status != APPROVAL_ACCEPTED:
+                continue
+            _deconnection_time = _infos.get('deconnection_time')
+            if _deconnection_time != '-':
+                _tt = datetime.strptime(_deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                _timeclose = int(mktime(_tt))
+                if _timeclose != self.shared.get('timeclose'):
+                    continue
+            _status, _error = self.engine.checkout_target(ar)
+            if not _status:
+                continue
+            app_params = self.engine.get_app_params(ar, effective_target)
+            if app_params is None:
+                self.engine.release_target(ar)
+                continue
+            app_right = ar
+            break
+        if app_params is None:
+            return kv
+        self.target_app_rights[exe_or_file] = (app_right, app_params)
+        kv = self._complete_app_infos(kv, app_right, app_params)
+        return kv
+
+    def _complete_app_infos(self, kv, app_right, app_params):
+        app_login_info = self.engine.get_target_login_info(app_right)
+
+        kv[u'auth_command_rail_exec_exe_or_file'] = app_params.program
+        kv[u'auth_command_rail_exec_arguments'] = app_params.params or ''
+        kv[u'auth_command_rail_exec_working_dir'] = app_params.workingdir
+        kv[u'auth_command_rail_exec_exec_result'] = '0' # RAIL_EXEC_S_OK
+        kv[u'auth_command_rail_exec_account'] = ''
+        kv[u'auth_command_rail_exec_password'] = ''
+        if app_params.params is not None:
+            if u'${USER}' in app_params.params:
+                kv[u'auth_command_rail_exec_account'] = \
+                    app_login_info.account_login
+            if u'${PASSWORD}' in app_params.params:
+                kv[u'auth_command_rail_exec_password'] = \
+                    self.engine.get_target_password(app_right) \
+                    or self.engine.get_primary_password(app_right) \
+                    or ''
+        return kv
+
 
 # END CLASS - Sesman
 

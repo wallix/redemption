@@ -511,8 +511,7 @@ protected:
 
 public:
     Analyzer()
-    : FrontAPI(false, false)
-    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+    : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
     , scrblt(Rect(), 0, 0, 0)

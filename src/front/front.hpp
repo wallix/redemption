@@ -124,6 +124,11 @@ class Front : public FrontAPI
     // for printf with %p
     using voidp = void const *;
 
+    bool nomouse;
+    int mouse_x = 0;
+    int mouse_y = 0;
+    wait_obj event;
+
 public:
     bool has_user_activity = true;
     Capture * capture;
@@ -629,7 +634,7 @@ public:
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , up_and_running(0)
@@ -733,7 +738,7 @@ public:
         delete this->capture;
     }
 
-    wait_obj& get_event() override {
+    wait_obj& get_event() {
         if (this->session_resized) {
             this->event.set(0);
             this->event.object_and_time = true;
@@ -1205,7 +1210,7 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->channel_list;
     }
 
@@ -1416,9 +1421,10 @@ public:
                         this->client_info.height    = cs_core.desktopHeight;
                         this->client_info.keylayout = cs_core.keyboardLayout;
                         this->client_info.build     = cs_core.clientBuild;
-                        for (size_t i = 0; i < 16 ; i++) {
+                        for (size_t i = 0; i < 15 ; i++) {
                             this->client_info.hostname[i] = cs_core.clientName[i];
                         }
+                        this->client_info.hostname[15] = 0;
                         //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
                         this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth) {
@@ -1470,13 +1476,13 @@ public:
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
                             const auto & channel_def = cs_net.channelDefArray[index];
                             CHANNELS::ChannelDef channel_item;
-                            memcpy(channel_item.name, channel_def.name, 8);
+                            ::memcpy(channel_item.name, channel_def.name, 8);
                             channel_item.flags = channel_def.options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
                             this->channel_list.push_back(channel_item);
 
                             if (!this->rail_channel_id &&
-                                !strcmp(channel_item.name, channel_names::rail)) {
+                                !::strcasecmp(channel_item.name, channel_names::rail)) {
                                 this->rail_channel_id = channel_item.chanid;
                             }
                         }
@@ -2758,9 +2764,7 @@ private:
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
                 if (!this->server_capabilities_filename.empty()) {
-                    GeneralCapsLoader generalcaps_loader(general_caps);
-
-                    ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(GeneralCapsLoader(general_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     general_caps.log("Sending to client");
@@ -2774,9 +2778,7 @@ private:
                 bitmap_caps.desktopHeight = this->client_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
                 if (!this->server_capabilities_filename.empty()) {
-                    BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
-
-                    ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(BitmapCapsLoader(bitmap_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     bitmap_caps.log("Sending to client");
@@ -2811,9 +2813,7 @@ private:
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
                 if (!this->server_capabilities_filename.empty()) {
-                    OrderCapsLoader ordercaps_loader(order_caps);
-
-                    ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());
+                    configuration_load(OrderCapsLoader(order_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     order_caps.log("Sending to client");

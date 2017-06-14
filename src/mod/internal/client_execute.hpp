@@ -173,10 +173,12 @@ class ClientExecute : public windowing_api
         : client_execute_(client_execute)
         {}
 
-        void operator()(time_t now, wait_obj* event, gdi::GraphicApi& drawable) override {
+        void operator()(time_t now, wait_obj & event, gdi::GraphicApi& drawable) override {
             this->client_execute_.process_button_1_down_event(now, event, drawable);
         }
     } button_1_down_event_handler;
+
+    bool rail_enabled = false;
 
     bool verbose;
 
@@ -195,20 +197,22 @@ public:
         this->reset(false);
     }
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
-        if ((true == static_cast<bool>(*this)) &&
-            this->button_1_down_event.object_and_time) {
+    void enable_remote_program(bool enable) {
+        this->rail_enabled = enable;
+    }
 
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
+        if (bool(*this) && this->button_1_down_event.object_and_time) {
             out_event_handlers.emplace_back(
-                    &this->button_1_down_event,
-                    &this->button_1_down_event_handler,
-                    INVALID_SOCKET
-                );
+                &this->button_1_down_event,
+                &this->button_1_down_event_handler,
+                INVALID_SOCKET
+            );
         }
     }
 
-    void process_button_1_down_event(time_t, wait_obj*, gdi::GraphicApi&) {
-        REDASSERT(true == static_cast<bool>(*this));
+    void process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&) {
+        REDASSERT(bool(*this));
 
         this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
             this->button_1_down);
@@ -217,7 +221,7 @@ public:
     }
 
     Rect adjust_rect(Rect rect) {
-        if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) {
+        if (!this->rail_enabled) {
             return rect;
         }
 
@@ -3089,7 +3093,11 @@ private:
     }
 
 public:
-    bool is_resizing_hosted_desktop_enabled() {
+    bool is_rail_enabled() const {
+        return this->rail_enabled;
+    }
+
+    bool is_resizing_hosted_desktop_enabled() const {
         if (this->allow_resize_hosted_desktop_ &&
             this->enable_resizing_hosted_desktop_) {
             return true;

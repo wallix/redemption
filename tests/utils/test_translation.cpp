@@ -125,9 +125,6 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   std::string("Fermeture sur inactivité"));
     RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           std::string("Echec du service d'authentification"));
 
-    RED_CHECK_EQUAL(TRANSLATIONCONF.set_lang(static_cast<Translation::language_t>(10000)), false);
-    // Unknown language does not change current language.
-
     RED_CHECK_EQUAL(TR(trkeys::close, lang),      std::string("Fermer"));
     RED_CHECK_EQUAL(TR(trkeys::password, lang),   std::string("Mot de passe"));
 

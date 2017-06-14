@@ -86,6 +86,8 @@ class RemoteProgramsSessionManager
 
     bool currently_without_window = false;
 
+    unsigned rail_disconnect_message_delay = 0;
+
     wait_obj event;
 
 public:
@@ -115,7 +117,9 @@ public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  Font const & font, Theme const & theme, AuthApi & authentifier,
                                  char const * session_probe_window_title,
-                                 non_null_ptr<ClientExecute> client_execute, RDPVerbose verbose)
+                                 non_null_ptr<ClientExecute> client_execute,
+                                 unsigned rail_disconnect_message_delay,
+                                 RDPVerbose verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
@@ -125,6 +129,7 @@ public:
     , authentifier(authentifier)
     , session_probe_window_title(session_probe_window_title)
     , client_execute(client_execute)
+    , rail_disconnect_message_delay(rail_disconnect_message_delay)
     {}
 
     void begin_update() override
@@ -456,7 +461,7 @@ public:
 
             this->currently_without_window = true;
 
-            this->event.set(3000000);
+            this->event.set(rail_disconnect_message_delay * 1000);
         }
 
         if (has_window) {
@@ -505,7 +510,7 @@ private:
 
             order.OwnerWindowId(0x0);
             order.Style(0x14EE0000);
-            order.ExtendedStyle(0x40310);
+            order.ExtendedStyle(0x40310 | 0x8);
             order.ShowState(5);
             order.TitleInfo("Dialog box");
             order.ClientOffsetX(this->protected_rect.x + 6);

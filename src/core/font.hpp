@@ -41,7 +41,7 @@ struct FontChar
     uint16_t  width = 0;    // width of glyph actually containing pixels
     uint16_t  height = 0;   // height of glyph (in pixels)
     int16_t   incby = 0;    // width of glyph (in pixels) including leading and trailing whitespaces
-    std::unique_ptr<uint8_t[]> data;
+    std::unique_ptr<uint8_t[]> data; // PERF mini_vector<32>
 
     // TODO data really aligned ?
     FontChar(std::unique_ptr<uint8_t[]> data, int16_t offset, int16_t baseline, uint16_t width, uint16_t height, int16_t incby)

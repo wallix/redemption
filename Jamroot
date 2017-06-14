@@ -57,7 +57,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
-alias libs    : libredrec libredcryptofile ;
+alias libs    : libredrec libscytale ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 
@@ -164,8 +164,8 @@ obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj redcryptofile.o :
-    $(REDEMPTION_SRC_PATH)/main/redcryptofile.cpp
+obj scytale.o :
+    $(REDEMPTION_SRC_PATH)/main/scytale.cpp
     :
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
     $(OBJ_EXE_DEPENDENCIES)
@@ -175,7 +175,7 @@ obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIE
 
 obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj redcryptofile_test : $(REDEMPTION_SRC_PATH)/main/redcryptofile.cpp : $(OBJ_TEST_DEPENDENCIES) ;
+obj scytale_test : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 
 alias bitmap : bitmap.o bitmap_from_file.o png ;
 alias video_capture : video_capture.o ffmpeg ;
@@ -220,9 +220,9 @@ exe rdpproxy
     ;
 
 # Maybe merge with libredrec ?
-lib libredcryptofile
+lib libscytale
    :
-       redcryptofile.o
+       scytale.o
        $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
 
        openssl
@@ -502,10 +502,10 @@ exe tls_test_server
 
 ## RedCrypto tests
 ## @{
-test-run test_redcryptofile
-    : main/test_redcryptofile.cpp
+test-run test_scytale
+    : main/test_scytale.cpp
     :
-    : <library>openssl <library>crypto <library>snappy <library>redcryptofile_test ;
+    : <library>openssl <library>crypto <library>snappy <library>scytale_test ;
 ## @}
 
 ## Acl tests

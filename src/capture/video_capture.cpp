@@ -152,6 +152,7 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
 
 //@}
 
+using Microseconds = gdi::CaptureApi::Microseconds;
 
 // VideoCaptureCtx
 //@{
@@ -200,8 +201,9 @@ void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
     recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
 }
 
-std::chrono::microseconds
-VideoCaptureCtx::snapshot(video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/)
+Microseconds VideoCaptureCtx::snapshot(
+    video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/
+)
 {
     std::chrono::microseconds tick { difftimeval(now, this->start_video_capture) };
     std::chrono::microseconds const frame_interval = this->frame_interval;
@@ -364,18 +366,10 @@ void FullVideoCaptureImpl::frame_marker_event(
     this->video_cap_ctx.frame_marker_event(this->recorder);
 }
 
-std::chrono::microseconds FullVideoCaptureImpl::do_snapshot(
+Microseconds FullVideoCaptureImpl::periodic_snapshot(
     const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
 {
     return this->video_cap_ctx.snapshot(this->recorder, now, ignore_frame_in_timeval);
-}
-
-std::chrono::microseconds FullVideoCaptureImpl::periodic_snapshot(
-    const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
-{
-    auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    assert(next_duration.count() >= 0);
-    return next_duration;
 }
 
 void FullVideoCaptureImpl::encoding_video_frame()
@@ -449,18 +443,17 @@ void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data,
     this->VideoTransportBase::do_send(data, len);
 }
 
-
-std::chrono::microseconds  SequencedVideoCaptureImpl::do_snapshot(
+Microseconds SequencedVideoCaptureImpl::periodic_snapshot(
     timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
 {
-    this->vc.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     if (!this->ic_has_first_img) {
-        return this->first_image.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return this->first_image.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
-    return this->video_sequencer.do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    return this->video_sequencer.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
 }
 
-void  SequencedVideoCaptureImpl::frame_marker_event(
+void SequencedVideoCaptureImpl::frame_marker_event(
     timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
 {
     this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
@@ -472,35 +465,16 @@ void  SequencedVideoCaptureImpl::frame_marker_event(
     }
 }
 
-std::chrono::microseconds SequencedVideoCaptureImpl::periodic_snapshot(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
-{
-    this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    if (!this->ic_has_first_img) {
-        return this->first_image.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    }
-    return this->video_sequencer.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-}
-
-std::chrono::microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
-{
-    // assert(now >= previous);
-    auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    assert(next_duration.count() >= 0);
-    return next_duration;
-}
-
 void SequencedVideoCaptureImpl::FirstImage::frame_marker_event(
     timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
 {
     this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
 }
 
-std::chrono::microseconds SequencedVideoCaptureImpl::FirstImage::do_snapshot(
+Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
     const timeval& now, int x, int y, bool ignore_frame_in_timeval)
 {
-    std::chrono::microseconds ret;
+    Microseconds ret;
 
     auto const duration = difftimeval(now, this->first_image_start_capture);
     auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
@@ -588,19 +562,10 @@ void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event(
     this->video_cap_ctx.frame_marker_event(*this->recorder);
 }
 
-std::chrono::microseconds SequencedVideoCaptureImpl::VideoCapture::do_snapshot(
+Microseconds SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
     const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
 {
     return this->video_cap_ctx.snapshot(*this->recorder, now, ignore_frame_in_timeval);
-}
-
-std::chrono::microseconds SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
-{
-    // assert(now >= previous);
-    auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    assert(next_duration.count() >= 0);
-    return next_duration;
 }
 
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
@@ -653,7 +618,7 @@ void SequencedVideoCaptureImpl::VideoSequencer::reset_now(const timeval& now)
     this->start_break = now;
 }
 
-std::chrono::microseconds SequencedVideoCaptureImpl::VideoSequencer::do_snapshot(
+Microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
     const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     assert(this->break_interval.count());
@@ -663,15 +628,6 @@ std::chrono::microseconds SequencedVideoCaptureImpl::VideoSequencer::do_snapshot
         this->start_break = now;
     }
     return this->break_interval;
-}
-
-std::chrono::microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
-{
-    // assert(now >= previous);
-    auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-    assert(next_duration.count() >= 0);
-    return next_duration;
 }
 
 void SequencedVideoCaptureImpl::VideoSequencer::frame_marker_event(

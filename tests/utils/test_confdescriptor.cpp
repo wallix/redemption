@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile)
     GeneralCaps       generalcaps;
     GeneralCapsLoader generalcaps_loader(generalcaps);
 
-    ConfigurationLoader cfg_loader(generalcaps_loader, FIXTURES_PATH "/capsset.ini");
+    configuration_load(generalcaps_loader, FIXTURES_PATH "/capsset.ini");
 
     RED_CHECK_EQUAL(generalcaps.os_major,              1);
     RED_CHECK_EQUAL(generalcaps.os_minor,              3);
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile1)
     BitmapCaps       bitmapcaps;
     BitmapCapsLoader bitmapcaps_loader(bitmapcaps);
 
-    ConfigurationLoader cfg_loader(bitmapcaps_loader, FIXTURES_PATH "/capsset.ini");
+    configuration_load(bitmapcaps_loader, FIXTURES_PATH "/capsset.ini");
 
     RED_CHECK_EQUAL(bitmapcaps.preferredBitsPerPixel,    8);
     RED_CHECK_EQUAL(bitmapcaps.receive1BitPerPixel,      1);
@@ -71,7 +71,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile2)
     OrderCaps       ordercaps;
     OrderCapsLoader ordercaps_loader(ordercaps);
 
-    ConfigurationLoader cfg_loader(ordercaps_loader, FIXTURES_PATH "/capsset.ini");
+    configuration_load(ordercaps_loader, FIXTURES_PATH "/capsset.ini");
 
     RED_CHECK_EQUAL(ordercaps.desktopSaveXGranularity,                       1);
     RED_CHECK_EQUAL(ordercaps.desktopSaveYGranularity,                       20);
@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile3)
     GeneralCaps       generalcaps;
     GeneralCapsLoader generalcaps_loader(generalcaps);
 
-    ConfigurationLoader cfg_loader(generalcaps_loader, FIXTURES_PATH "/capsset1.ini");
+    configuration_load(generalcaps_loader, FIXTURES_PATH "/capsset1.ini");
 
     RED_CHECK_EQUAL(generalcaps.os_major,              2);
     RED_CHECK_EQUAL(generalcaps.os_minor,              7);
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile4)
     BitmapCaps       bitmapcaps;
     BitmapCapsLoader bitmapcaps_loader(bitmapcaps);
 
-    ConfigurationLoader cfg_loader(bitmapcaps_loader, FIXTURES_PATH "/capsset1.ini");
+    configuration_load(bitmapcaps_loader, FIXTURES_PATH "/capsset1.ini");
 
     RED_CHECK_EQUAL(bitmapcaps.preferredBitsPerPixel,    9);
     RED_CHECK_EQUAL(bitmapcaps.receive1BitPerPixel,      8);
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile5)
     OrderCaps       ordercaps;
     OrderCapsLoader ordercaps_loader(ordercaps);
 
-    ConfigurationLoader cfg_loader(ordercaps_loader, FIXTURES_PATH "/capsset1.ini");
+    configuration_load(ordercaps_loader, FIXTURES_PATH "/capsset1.ini");
 
     RED_CHECK_EQUAL(ordercaps.desktopSaveXGranularity,                       9);
     RED_CHECK_EQUAL(ordercaps.desktopSaveYGranularity,                       8);

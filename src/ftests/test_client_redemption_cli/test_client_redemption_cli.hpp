@@ -59,6 +59,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"
@@ -73,13 +74,6 @@
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
 #include "utils/word_identification.hpp"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-#pragma GCC diagnostic pop
-
-
-
 
 
 class TestClientCLI : public FrontAPI
@@ -245,8 +239,7 @@ public:
     //------------------------
 
     TestClientCLI(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
-    : FrontAPI(false, false)
-    , _verbose(verbose)
+    : _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);
 
@@ -1183,12 +1176,19 @@ class EventList
         }
     };
 
-public:
-    std::vector<EventConfig *> list;
+    template<class T, class... Args>
+    void setAction(Args&&... args) {
+        auto action = std::make_unique<T>(std::forward<Args>(args)...);
+        action->trigger_time = this->wait_time;
+        this->list.push_back(std::move(action));
+    }
+
+    std::vector<std::unique_ptr<EventConfig>> list;
     long start_time;
     long wait_time;
     size_t index;
 
+public:
     EventList()
       : start_time(0)
       , wait_time(0)
@@ -1198,45 +1198,27 @@ public:
         this->start_time = ms.count();
     }
 
-    ~EventList()
-    {
-        for (size_t i = 0; i < this->list.size(); i++) {
-            delete this->list[i];
-        }
-        this->list.clear();
-    }
-
-    void setAction(EventConfig * action) {
-        action->trigger_time = this->wait_time;
-        this->list.push_back(action);
-    }
-
     void setLoop(int jump_size, int count_steps) {
-        EventConfig * action = new Loop(this, jump_size, count_steps);
-        this->setAction(action);
+        this->setAction<Loop>(this, jump_size, count_steps);
     }
 
     void setClpbrd_change( TestClientCLI * front
                          , uint32_t * formatIDs
                          , std::string * formatListDataLongName
                          , size_t size) {
-        EventConfig * action = new ClipboardChange(front, formatIDs, formatListDataLongName, size);
-
-        this->setAction(action);
+        this->setAction<ClipboardChange>(front, formatIDs, formatListDataLongName, size);
     }
 
     void setKey_press( TestClientCLI * front
                      , uint32_t scanCode
                      , uint32_t flag) {
-        EventConfig * action = new KeyPressed(front, scanCode, flag);
-        this->setAction(action);
+        this->setAction<KeyPressed>(front, scanCode, flag);
     }
 
     void setKey_release( TestClientCLI * front
                        , uint32_t scanCode
                        , uint32_t flag) {
-        EventConfig * action = new KeyReleased(front, scanCode, flag);
-        this->setAction(action);
+        this->setAction<KeyReleased>(front, scanCode, flag);
     }
 
     void setMouse_button( TestClientCLI * front
@@ -1244,8 +1226,7 @@ public:
                         , uint32_t x
                         , uint32_t y
                         , bool isPressed) {
-        EventConfig * action = new MouseButton(front, button, x, y, isPressed);
-        this->setAction(action);
+        this->setAction<MouseButton>(front, button, x, y, isPressed);
     }
 
     void setKey( TestClientCLI * front

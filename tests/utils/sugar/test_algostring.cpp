@@ -48,17 +48,17 @@ RED_AUTO_TEST_CASE(Test_escape_delimiters)
     std::string s;
     char as[16]{};
     std::pair<char *, char const *> p;
-    #define CHECK(Escaped, S)                                          \
-        s.clear();                                                     \
-        append_escaped_delimiters(s, S);                                \
-        RED_CHECK_EQUAL(Escaped, s);                                 \
-        s.clear();                                                     \
-        append_escaped_delimiters(s, std::string(S));                   \
-        RED_CHECK_EQUAL(Escaped, s);                                 \
-        std::fill(std::begin(as), std::end(as), 0);                    \
-        p = append_escaped_delimiters(as, sizeof(as), S);               \
-        RED_CHECK_EQUAL(sizeof(Escaped)-1u, p.first - as);           \
-        RED_CHECK_EQUAL(sizeof(S)-1u, p.second - S);                 \
+    #define CHECK(Escaped, S)                              \
+        s.clear();                                         \
+        append_escaped_delimiters(s, S);                   \
+        RED_CHECK_EQUAL(Escaped, s);                       \
+        s.clear();                                         \
+        append_escaped_delimiters(s, std::string(S));      \
+        RED_CHECK_EQUAL(Escaped, s);                       \
+        std::fill(std::begin(as), std::end(as), 0);        \
+        p = append_escaped_delimiters(as, sizeof(as), S);  \
+        RED_CHECK_EQUAL(sizeof(Escaped)-1u, p.first - as); \
+        RED_CHECK_EQUAL(sizeof(S)-1u, p.second - S);       \
         RED_CHECK_EQUAL(Escaped, as)
     CHECK("", "");
     CHECK("\\\\", "\\");

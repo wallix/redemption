@@ -328,7 +328,7 @@ struct RdpNego
                 catch (Error const & e) {
                     if ((e.id == ERR_TRANSPORT_NO_MORE_DATA) ||
                         (e.id == ERR_TRANSPORT_WRITE_FAILED)) {
-                        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed");
+                        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
                         res = 1;
                         fallback = true;
                     }
@@ -338,8 +338,8 @@ struct RdpNego
                     }
                 }
                 if (res != 1) {
-                    LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");
-                    throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+                    LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed (2)");
+                    fallback = true;
                 }
                 else if (!fallback) {
                     this->state = NEGO_STATE_FINAL;

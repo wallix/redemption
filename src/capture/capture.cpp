@@ -248,44 +248,41 @@ public:
     }
 };
 
-
-template<class Utf8CharFn, class NoPrintableFn>
-void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn)
+enum FilteringSlash{ No, Yes };
+using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
+using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
+template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
+void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn, FilterSlash filter_slash)
 {
-    constexpr struct {
-        uint32_t uchar;
-        array_view_const_char str;
-        // for std::sort and std::lower_bound
-        operator uint32_t () const { return this->uchar; }
-    } noprintable_table[] = {
-        {0x00000008, cstr_array_view("/<backspace>")},
-        {0x00000009, cstr_array_view("/<tab>")},
-        {0x0000000D, cstr_array_view("/<enter>")},
-        {0x0000001B, cstr_array_view("/<escape>")},
-        {0x0000007F, cstr_array_view("/<delete>")},
-        {0x00002190, cstr_array_view("/<left>")},
-        {0x00002191, cstr_array_view("/<up>")},
-        {0x00002192, cstr_array_view("/<right>")},
-        {0x00002193, cstr_array_view("/<down>")},
-        {0x00002196, cstr_array_view("/<home>")},
-        {0x00002198, cstr_array_view("/<end>")},
-    };
-    using std::begin;
-    using std::end;
-    // TODO used static_assert
-    assert(std::is_sorted(begin(noprintable_table), end(noprintable_table)));
-
-    auto p = std::lower_bound(begin(noprintable_table), end(noprintable_table), uchar);
-    if (p != end(noprintable_table) && *p == uchar) {
-        no_printable_fn(p->str);
-    }
-    else {
-        utf32_char_fn(uchar);
+    switch (uchar)
+    {
+        case '/':
+            if (filter_slash == FilteringSlash::Yes) {
+                no_printable_fn(cstr_array_view("//"));
+            }
+            else {
+                utf32_char_fn(uchar);
+            }
+            break;
+        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+        Case(0x00000008, "/<backspace>");
+        Case(0x00000009, "/<tab>");
+        Case(0x0000000D, "/<enter>");
+        Case(0x0000001B, "/<escape>");
+        Case(0x0000007F, "/<delete>");
+        Case(0x00002190, "/<left>");
+        Case(0x00002191, "/<up>");
+        Case(0x00002192, "/<right>");
+        Case(0x00002193, "/<down>");
+        Case(0x00002196, "/<home>");
+        Case(0x00002198, "/<end>");
+        #undef Case
+        default: utf32_char_fn(uchar);
     }
 }
 
 
-class PatternKbd : public gdi::KbdInputApi
+class PatternKbd final : public gdi::KbdInputApi
 {
     ReportMessageApi * report_message;
     PatternSearcher pattern_kill;
@@ -333,7 +330,8 @@ public:
             [this](array_view_const_char const &) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
-            }
+            },
+            nofilter_slash{}
         );
 
         return can_be_sent_to_server;
@@ -366,7 +364,7 @@ private:
 
 
 
-class SyslogKbd : public gdi::KbdInputApi, public gdi::CaptureApi
+class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
     uint8_t kbd_buffer[1024];
     OutStream kbd_stream;
@@ -386,16 +384,14 @@ private:
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
                 }
             },
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
-            }
+            },
+            filter_slash{}
         );
     }
 
@@ -443,7 +439,7 @@ public:
     }
 
 private:
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
         (void)cursor_x;
@@ -470,7 +466,7 @@ namespace {
 }
 
 
-class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
+class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
@@ -498,16 +494,14 @@ class SessionLogKbd : public gdi::KbdInputApi, public gdi::CaptureProbeApi
             uchar,
             [this](uint32_t uchar) {
                 uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
                     this->copy_bytes({buf_char, char_len});
                 }
             },
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
-            }
+            },
+            filter_slash{}
         );
     }
 
@@ -551,7 +545,7 @@ public:
     }
 
     void session_update(const timeval& /*now*/, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         this->flush();
     }
 
@@ -613,15 +607,6 @@ private:
 };
 
 
-namespace gdi {
-    class GraphicApi;
-    class CaptureApi;
-    class CaptureProbeApi;
-    class KbdInputApi;
-    class ExternalCaptureApi;
-}
-
-
 class PngCapture : public gdi::CaptureApi
 {
 public:
@@ -681,7 +666,7 @@ public:
         }
      }
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         (void)x;
@@ -754,7 +739,7 @@ public:
         this->clear_png_interval(num_start, num_start + 1);
     }
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         (void)x;
@@ -763,7 +748,7 @@ public:
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
-            return this->PngCapture::do_snapshot(now, x, y, ignore_frame_in_timeval);
+            return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
         return interval - duration % interval;
     }
@@ -892,66 +877,36 @@ namespace {
 /*
 * Format:
 *
-* $date ' - [Kbd]' $kbd
-* $date ' ' [+-] ' ' $title? '[Kbd]' $kbd
-* $date ' - ' $line
+* $date " - [Kbd]" $kbd
+* $date " + " $title
+* $date " - " $line
+* $date " + " (break)
+*
+* Info:
+*
+* + for new video file
 */
-
 class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
-    uint8_t kbd_buffer[1024];
-    timeval last_snapshot;
-    time_t last_flush;
+    uint8_t kbd_buffer[512];
+    static const std::size_t kbd_buffer_usable_char =
+        sizeof(kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size();
+    uint8_t kbd_chars_size[kbd_buffer_usable_char];
+    std::ptrdiff_t kbd_char_pos = 0;
+    time_t last_time;
     Transport & trans;
-    std::string title;
-    bool require_kbd = false;
-    char current_seperator = '-';
     bool is_probe_enabled_session = false;
-
-    void write_shadow_keys() {
-        if (!this->kbd_stream.has_room(1)) {
-            this->flush();
-        }
-        this->kbd_stream.out_uint8('*');
-    }
-
-    void write_keys(uint32_t uchar) {
-        filtering_kbd_input(
-            uchar,
-            [this](uint32_t uchar) {
-                uint8_t buf_char[5];
-                if (uchar == '/') {
-                    this->copy_bytes({"//", 2});
-                }
-                else if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
-                    this->copy_bytes({buf_char, char_len});
-                }
-            },
-            [this](array_view_const_char no_printable_str) {
-                this->copy_bytes(no_printable_str);
-            }
-        );
-    }
-
-    void copy_bytes(const_byte_array bytes) {
-        if (this->kbd_stream.tailroom() < bytes.size()) {
-            this->flush();
-        }
-        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
-    }
+    bool previous_char_is_event_flush = false;
 
 public:
     SessionMeta(const timeval & now, Transport & trans)
-    : kbd_stream{
-        this->kbd_buffer + session_meta_kbd_prefix().size(),
-        sizeof(this->kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size()}
-    , last_snapshot(now)
-    , last_flush(now.tv_sec)
+    : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
+    , last_time(now.tv_sec)
     , trans(trans)
     {
-        OutStream(this->kbd_buffer).out_copy_bytes(session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
+        memcpy(this->kbd_buffer, session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
 
         // force file creation even if no text recognized
         this->trans.send("", 0);
@@ -963,75 +918,104 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         if (this->keyboard_input_mask_enabled != enable) {
-            this->flush();
+            this->send_kbd();
             this->keyboard_input_mask_enabled = enable;
         }
     }
 
-    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+    bool kbd_input(const timeval& now, uint32_t uchar) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
                 this->write_shadow_keys();
+                this->send_kbd_if_special_char(uchar);
             }
         }
         else {
             this->write_keys(uchar);
+            this->send_kbd_if_special_char(uchar);
         }
+        this->last_time = now.tv_sec;
         return true;
     }
 
     void title_changed(time_t rawtime, array_view_const_char title) {
-        this->send_kbd();
-        this->send_date(rawtime, '+');
-        this->trans.send(title.data(), title.size());
-        this->last_flush = rawtime;
-
-        this->title.assign(title.data(), title.size());
-        this->require_kbd = true;
+        this->send_data(rawtime, title, '+');
     }
 
     void send_line(time_t rawtime, array_view_const_char line) {
-        this->send_kbd();
-        this->send_date(rawtime, '+');
-        this->trans.send(line.data(), line.size());
-        this->trans.send("\n", 1);
-        this->last_flush = rawtime;
+        this->send_data(rawtime, line, '+');
     }
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
-
-        this->send_kbd();
-        this->send_date(now.tv_sec, '-');
-        this->trans.send(message.data(), message.size());
-        this->trans.send("\n", 1);
-        this->last_flush = now.tv_sec;
+        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
+        this->send_data(now.tv_sec, message, '-');
     }
 
     void possible_active_window_change() override {
+        this->send_kbd();
+        this->previous_char_is_event_flush = true;
+    }
+
+    Microseconds periodic_snapshot(
+        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    ) override {
+        this->last_time = now.tv_sec;
+        return std::chrono::seconds{10};
     }
 
 private:
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-    ) override {
-        std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
-        std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
-
-        if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
-            return time_to_wait;
+    void write_shadow_keys() {
+        if (!this->kbd_stream.has_room(1)) {
+            this->send_kbd();
         }
-
-        this->send_kbd();
-
-        this->last_snapshot = now;
-        this->last_flush = this->last_snapshot.tv_sec;
-
-        return time_to_wait;
+        this->kbd_stream.out_uint8('*');
     }
 
-    void flush() {
-        this->send_kbd();
+    void write_keys(uint32_t uchar) {
+        filtering_kbd_input(
+            uchar,
+            [this](uint32_t uchar) {
+                uint8_t buf_char[5];
+                if (size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char))) {
+                    this->copy_bytes({buf_char, char_len});
+                    this->kbd_chars_size[this->kbd_char_pos] = char_len;
+                    ++this->kbd_char_pos;
+                }
+            },
+            [this, uchar](array_view_const_char no_printable_str) {
+                if (uchar == 0x08 && this->kbd_char_pos) {
+                    --this->kbd_char_pos;
+                    this->kbd_stream.rewind(
+                        this->kbd_stream.get_offset()
+                      - this->kbd_chars_size[this->kbd_char_pos]
+                    );
+                }
+                else if (uchar == '/') {
+                    this->copy_bytes(no_printable_str);
+                    this->kbd_chars_size[this->kbd_char_pos] = no_printable_str.size();
+                    ++this->kbd_char_pos;
+                }
+                else {
+                    this->copy_bytes(no_printable_str);
+                    this->kbd_char_pos = 0;
+                }
+            },
+            filter_slash{}
+        );
+    }
+
+    void copy_bytes(const_byte_array bytes) {
+        if (this->kbd_stream.tailroom() < bytes.size()) {
+            this->send_kbd();
+        }
+        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+    }
+
+    void send_data(time_t rawtime, array_view_const_char data, char sep) {
+        this->send_date(rawtime, sep);
+        this->trans.send(data.data(), data.size());
+        this->trans.send("\n", 1);
+        this->last_time = rawtime;
     }
 
     void send_date(time_t rawtime, char sep) {
@@ -1049,24 +1033,28 @@ private:
         this->trans.send(string_date, data_sz);
     }
 
+    void send_kbd_if_special_char(uint32_t uchar) {
+        if (uchar == '\r' || uchar == '\t') {
+            if (!this->previous_char_is_event_flush) {
+                this->send_kbd();
+            }
+        }
+        else {
+            this->previous_char_is_event_flush = false;
+        }
+    }
+
     void send_kbd() {
         if (this->kbd_stream.get_offset()) {
-            if (!this->require_kbd) {
-                this->send_date(this->last_flush, this->current_seperator);
-                this->trans.send(this->title.data(), this->title.size());
-            }
+            this->send_date(this->last_time, '-');
             auto end = this->kbd_stream.get_current();
             memcpy(end, session_meta_kbd_suffix().data(), session_meta_kbd_suffix().size());
             end += session_meta_kbd_suffix().size();
             this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
             this->kbd_stream.rewind();
-            this->require_kbd = false;
+            this->previous_char_is_event_flush = true;
+            this->kbd_char_pos = 0;
         }
-        else if (this->require_kbd) {
-            this->trans.send("\n", 1);
-            this->require_kbd = false;
-        }
-        this->current_seperator = '-';
     }
 };
 
@@ -1161,7 +1149,7 @@ public:
     }
 
 
-    std::chrono::microseconds do_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
@@ -1183,7 +1171,7 @@ public:
     }
 
     void session_update(timeval const & /*now*/, array_view_const_char message) override {
-        bool const enable_probe = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
+        bool const enable_probe = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
         }
@@ -1303,7 +1291,6 @@ Capture::Capture(
         }
 
         if (capture_flv) {
-
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (flv_capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
@@ -1471,7 +1458,7 @@ void Capture::set_row(size_t rownum, const uint8_t * data)
     }
 }
 
-std::chrono::microseconds Capture::do_snapshot(
+Capture::Microseconds Capture::periodic_snapshot(
     timeval const & now,
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
@@ -1486,7 +1473,7 @@ std::chrono::microseconds Capture::do_snapshot(
     std::chrono::microseconds time = std::chrono::microseconds::max();
     if (!this->caps.empty()) {
         for (gdi::CaptureApi & cap : this->caps) {
-            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
         }
         this->capture_event.update(time.count());
     }

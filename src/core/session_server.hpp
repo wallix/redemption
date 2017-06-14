@@ -93,7 +93,7 @@ public:
                 Inifile ini;
                 ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
                 ini.set<cfg::debug::config>(this->debug_config);
-                { ConfigurationLoader cfg_loader(ini.configuration_holder(), this->config_filename.c_str()); }
+                configuration_load(ini.configuration_holder(), this->config_filename);
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

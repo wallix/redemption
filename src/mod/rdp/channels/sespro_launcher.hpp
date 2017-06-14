@@ -53,6 +53,9 @@ public:
     virtual void set_clipboard_virtual_channel(
         BaseVirtualChannel* channel) = 0;
 
+    virtual void set_remote_programs_virtual_channel(
+        BaseVirtualChannel* channel) = 0;
+
     virtual void set_session_probe_virtual_channel(
         BaseVirtualChannel* channel) = 0;
 

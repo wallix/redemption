@@ -74,7 +74,8 @@ struct VideoCaptureCtx : noncopyable
 
     void frame_marker_event(video_recorder &);
     void encoding_video_frame(video_recorder &);
-    std::chrono::microseconds snapshot(video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+    gdi::CaptureApi::Microseconds snapshot(
+        video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
 
 private:
     void preparing_video_frame(video_recorder &);
@@ -103,11 +104,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
         const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override;
 
-    std::chrono::microseconds do_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval
-    ) override;
-
-    std::chrono::microseconds periodic_snapshot(
+    Microseconds periodic_snapshot(
         const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override;
 
@@ -161,17 +158,11 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
     bool ic_has_first_img = false;
 
 public:
-    std::chrono::microseconds do_snapshot(
-        timeval const & now,
-        int cursor_x, int cursor_y,
-        bool ignore_frame_in_timeval
-    ) override;
-
     void frame_marker_event(
         timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override;
 
-    std::chrono::microseconds periodic_snapshot(
+    Microseconds periodic_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
@@ -190,17 +181,13 @@ public:
         , first_image_start_capture(now)
         {}
 
-        std::chrono::microseconds periodic_snapshot(
+        Microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
         );
 
         void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval);
-
-        std::chrono::microseconds do_snapshot(
-            const timeval& now, int x, int y, bool ignore_frame_in_timeval
-        );
     } first_image;
 
 public:
@@ -224,11 +211,7 @@ public:
 
         void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/);
 
-        std::chrono::microseconds do_snapshot(
-            const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval
-        );
-
-        std::chrono::microseconds periodic_snapshot(
+        Microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
@@ -262,7 +245,7 @@ public:
 
     void scale_dump24();
 
-    class VideoSequencer : public gdi::CaptureApi
+    class VideoSequencer
     {
         timeval start_break;
         std::chrono::microseconds break_interval;
@@ -284,19 +267,15 @@ public:
 
         void reset_now(const timeval& now);
 
-        std::chrono::microseconds do_snapshot(
-            const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
-        ) override;
-
-        std::chrono::microseconds periodic_snapshot(
+        Microseconds periodic_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
-        ) override;
+        );
 
         void frame_marker_event(
             timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
-        ) override;
+        );
     } video_sequencer;
 
     NotifyNextVideo & next_video_notifier;

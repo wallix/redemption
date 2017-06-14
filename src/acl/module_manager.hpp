@@ -594,8 +594,8 @@ private:
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
 
-        void refresh_context(Inifile & ini) override
-        { this->mm.internal_mod->refresh_context(ini); }
+        void refresh_context() override
+        { this->mm.internal_mod->refresh_context(); }
 
         bool is_up_and_running() override
         { return this->mm.internal_mod->is_up_and_running(); }
@@ -782,7 +782,7 @@ public:
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
-        , no_mod(this->front)
+        , no_mod()
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
@@ -830,6 +830,9 @@ public:
     {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
+
+        this->client_execute.enable_remote_program(this->front.client_info.remote_program);
+
         this->connected = false;
         if (this->old_target_module != target_module) {
             this->front.must_be_stop_capture();
@@ -1174,7 +1177,7 @@ public:
                 }
 
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1241,7 +1244,7 @@ public:
                 //}
 
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1418,6 +1421,8 @@ public:
 
                 mod_rdp_params.load_balance_info                   = this->ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 
+                mod_rdp_params.rail_disconnect_message_delay       = this->ini.get<cfg::context::rail_disconnect_message_delay>();
+
                 try {
                     const char * const name = "RDP Target";
 
@@ -1523,7 +1528,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
 
-                char ip_addr[256];
+                char ip_addr[256] {};
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
@@ -1566,7 +1571,7 @@ public:
                         this->front.client_info.height,
                         this->ini.get<cfg::font>(),
                         TR(trkeys::authentication_required, language(this->ini)),
-                        TR(trkeys::password, language(this->ini)), 
+                        TR(trkeys::password, language(this->ini)),
                         this->ini.get<cfg::theme>(),
                         this->front.client_info.keylayout,
                         this->front.keymap.key_flags,

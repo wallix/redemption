@@ -223,7 +223,7 @@ public:
         }
     }
 
-    void refresh_context(Inifile&) override {
+    void refresh_context() override {
         char buffer[16];
 
         this->current_page = vars.get<cfg::context::selector_current_page>();
@@ -233,9 +233,6 @@ public:
         this->number_page = vars.get<cfg::context::selector_number_of_pages>();
         snprintf(buffer, sizeof(buffer), "%d", this->number_page);
         this->selector.number_page.set_text(WidgetSelectorFlat2::temporary_number_of_page(buffer).buffer);
-
-
-        // uint16_t cy = this->selector.selector_lines.cy();
 
         this->selector.selector_lines.clear();
 
@@ -369,7 +366,7 @@ public:
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
         LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
 
-        if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
+        if (this->copy_paste && !::strcasecmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }

@@ -5,7 +5,7 @@ import ctypes
 import ctypes.util
 
 def usage():
-  print("%s: Usage [{rec|ver|dec}] library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
+  print("%s: Usage [{rec|ver|dec}] library.so [hex-hmac_key hex-key] lib-args" % sys.argv[0])
 
 
 role = 'redrec'
@@ -14,22 +14,24 @@ if len(sys.argv) > 1:
     if sys.argv[1] in ['rec','ver','dec']:
         role = 'red' + sys.argv[1]
     elif not sys.argv[1] in ['redrec','redver','reddec']:
-        new_argv=[sys.argv[0], 'rec']
+        new_argv=[sys.argv[0], role]
         new_argv.extend(sys.argv[1:])
         sys.argv = new_argv
+    else:
+        role = sys.argv[1]
 
-if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (len(sys.argv) > 5 and sys.argv[5] == '--')):
+if len(sys.argv) <= 3:
   usage()
   exit(1)
 
 pathlib = sys.argv[2]
 
-arg_consumed = 3
+arg_consumed = 2
 hmac_key_str = '\xe3\x8d\xa1\x5e\x50\x1e\x4f\x6a\x01\xef\xde\x6c\xd9\xb3\x3a\x3f\x2b\x41\x72\x13\x1e\x97\x5b\x4c\x39\x54\x23\x14\x43\xae\x22\xae'
 key_str = '\x01\xd2\x61\x17\xe8\x47\x92\x21\x55\x59\x50\xd9\x39\xa8\xd7\xa2\x9c\xb8\x61\xd7\x80\x3f\xd6\x8a\xf4\xa2\xd3\x6d\x25\x8c\x62\x62'
 #'\x56\x3e\xb6\xe8\x15\x8f\x0e\xed\x2e\x5f\xb6\xbc\x28\x93\xbc\x15\x27\x0d\x7e\x78\x15\xfa\x80\x4a\x72\x3e\xf4\xfb\x31\x5f\xf4\xb2'
 
-if sys.argv[3] != '--':
+if sys.argv[3][0] != '-':
     import binascii
     if len(sys.argv[3]) != 64 or len(sys.argv[4]) != 64:
         raise 'hmac_key or key len is not 64'

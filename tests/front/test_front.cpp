@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(TestFront)
         NullReportMessage report_message;
         MyFront front( front_trans, gen1, ini , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
-        null_mod no_mod(front);
+        null_mod no_mod;
 
         front.get_event().waked_up_by_time = true;
 
@@ -415,7 +415,7 @@ RED_AUTO_TEST_CASE(TestFront2)
         MyFront front( front_trans, gen1, ini
                      , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
-        null_mod no_mod(front);
+        null_mod no_mod;
 
         front.get_event().waked_up_by_time = true;
 
@@ -654,7 +654,7 @@ RED_AUTO_TEST_CASE(TestFront3)
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, report_message, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>());
-        null_mod no_mod(front);
+        null_mod no_mod;
 
         front.get_event().waked_up_by_time = true;
 

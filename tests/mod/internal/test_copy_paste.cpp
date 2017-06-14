@@ -42,7 +42,7 @@ struct CopyPasteFront : FakeFront
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
-        memcpy(def.name, channel_names::cliprdr, strlen(channel_names::cliprdr) + 1);
+        ::memcpy(def.name, channel_names::cliprdr, strlen(channel_names::cliprdr) + 1);
         this->channel_def_array.push_back(def);
     }
 
@@ -54,7 +54,7 @@ struct CopyPasteFront : FakeFront
     void send_to_channel(
         const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
     ) override {
-        RED_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
+        RED_REQUIRE(!::strcasecmp(channel.name, channel_names::cliprdr));
 
         InStream stream(data, length);
         RDPECLIP::RecvPredictor rp(stream);

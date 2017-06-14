@@ -855,12 +855,8 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     );
 
-    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_nocheck.qhash);
-    RED_CHECK_MEM_AC(
-        enc_nocheck.qhash,
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    );
+    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_check.fhash);
+    RED_CHECK_MEM_AA(enc_nocheck.qhash, enc_check.qhash);
 }
 
 

@@ -50,8 +50,6 @@ public:
     RDPDrawable gd;
 
 public:
-    using FrontAPI::FrontAPI;
-
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd);}
 
     void draw(RDPDestBlt          const & cmd, Rect clip) override {this->draw_impl(cmd, clip);}
@@ -280,8 +278,7 @@ public:
     }
 
     FakeFront(ClientInfo & info, uint32_t verbose)
-    : FrontAPI(false, false)
-    , verbose(verbose)
+    : verbose(verbose)
     , info(info)
     , mod_bpp(info.bpp)
     , mod_palette(BGRPalette::classic_332())

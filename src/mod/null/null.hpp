@@ -26,11 +26,9 @@
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 
-class FrontAPI;
-
 struct null_mod : public mod_api
 {
-    explicit null_mod(FrontAPI &)
+    explicit null_mod()
     {}
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
