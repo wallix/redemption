@@ -31,6 +31,11 @@
 "# (is in second)\n"
 "session_timeout = integer(min=0, default=900)\n\n"
 
+"# No traffic auto disconnection.\n"
+"# (is in second)\n"
+"#_hidden\n"
+"inactivity_timeout = integer(min=0, default=0)\n\n"
+
 "# Keepalive.\n"
 "# (is in second)\n"
 "#_advanced\n"

@@ -122,6 +122,22 @@ public:
         }
     }
 
+    void update_inactivity_timeout() override
+    {
+        if (this->connected_to_acl){
+            this->acl_serial->update_inactivity_timeout();
+        }
+    }
+
+    time_t get_inactivity_timeout() override
+    {
+        if (this->connected_to_acl){
+            return this->acl_serial->get_inactivity_timeout();
+        }
+        else
+            return 0;
+    }
+
     void start_mod() override
     {
         if (this->connected_to_acl){

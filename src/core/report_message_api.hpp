@@ -28,6 +28,10 @@ struct ReportMessageApi : noncopyable
 
     virtual void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) = 0;
 
+    virtual void update_inactivity_timeout() = 0;
+
+    virtual time_t get_inactivity_timeout() = 0;
+
     virtual ~ReportMessageApi() = default;
 };
 
@@ -44,5 +48,11 @@ struct NullReportMessage : ReportMessageApi
         (void)duplicate_with_pid;
         (void)type;
         (void)extra;
+    }
+
+    void update_inactivity_timeout() override { }
+
+    time_t get_inactivity_timeout() override {
+        return static_cast<time_t>(0);
     }
 };

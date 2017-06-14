@@ -115,6 +115,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::globals::session_timeout&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "inactivity_timeout")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::inactivity_timeout&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::inactivity_timeout&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "keepalive_grace_delay")) {
             ::configs::parse_and_log(
                 context, key,

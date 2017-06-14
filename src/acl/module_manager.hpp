@@ -928,6 +928,9 @@ public:
         case MODULE_INTERNAL_WIDGET2_SELECTOR:
         case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
+            if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
+                report_message.update_inactivity_timeout();
+            }
             this->set_mod(new FlatSelector2Mod(
                 this->ini,
                 this->front,
@@ -1502,6 +1505,9 @@ public:
                         // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
                         this->set_mod(managed_mod.release(), rdpapi, winapi);
                     }
+                    
+                    /* If provided by connection policy, session timeout update */
+                    report_message.update_inactivity_timeout();
                 }
                 catch (...) {
                     report_message.log4(false, "SESSION_CREATION_FAILED");
