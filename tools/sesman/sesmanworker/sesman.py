@@ -187,6 +187,7 @@ class Sesman():
         self.allow_back_selector = SESMANCONF[u'sesman'].get('allow_back_to_selector',
                                                              True)
         self.back_selector = False
+        self.target_app_rights = {}
 
     def reset_session_var(self):
         self._full_user_device_account = u'Unknown'
@@ -201,6 +202,7 @@ class Sesman():
         self.target_service_name = None
         self.target_group = None
         self.internal_target = False
+        self.target_app_rights = {}
         # Should set context values back to default
         self.send_data({
             u"module": u'transitory',
@@ -1641,12 +1643,18 @@ class Sesman():
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
-                                    if self.shared.get(u'auth_channel_target') == u'GetWabSessionParameters':
-                                        app_info = self.engine.get_target_login_info(selected_target)
+                                    if self.shared.get(u'auth_channel_target').startswith(u'GetWabSessionParameters'):
+                                        app_target = selected_target
+                                        _prefix, _sep, _val = self.shared.get(u'auth_channel_target').partition(':')
+                                        if _sep:
+                                            app_right_params = self.target_app_rights.get(_val)
+                                            if app_right_params is not None:
+                                                app_target, _app_param = app_right_params
+                                        app_info = self.engine.get_target_login_info(app_target)
                                         account_login = app_info.account_login
                                         application_password = \
-                                            self.engine.get_target_password(selected_target) \
-                                            or self.engine.get_primary_password(selected_target) \
+                                            self.engine.get_target_password(app_target) \
+                                            or self.engine.get_primary_password(app_target) \
                                             or ''
                                         _message = { 'user' : account_login, 'password' : application_password }
 
@@ -1874,6 +1882,11 @@ class Sesman():
             u'auth_command_rail_exec_exec_result': '3',   # RAIL_EXEC_E_NOT_IN_ALLOWLIST
             u'auth_command': 'rail_exec'
         }
+        app_right_params = self.target_app_rights.get(exe_or_file)
+        if app_right_params is not None:
+            app_right, app_params = app_right_params
+            kv = self._complete_app_infos(kv, app_right, app_params)
+            return kv
         acc_name, app_name = self.parse_app(exe_or_file)
         if not app_name or not acc_name:
             return kv
@@ -1902,6 +1915,11 @@ class Sesman():
             break
         if app_params is None:
             return kv
+        self.target_app_rights[exe_or_file] = (app_right, app_params)
+        kv = self._complete_app_infos(kv, app_right, app_params)
+        return kv
+
+    def _complete_app_infos(self, kv, app_right, app_params):
         app_login_info = self.engine.get_target_login_info(app_right)
 
         kv[u'auth_command_rail_exec_exe_or_file'] = app_params.program
