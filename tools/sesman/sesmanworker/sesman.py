@@ -1882,6 +1882,15 @@ class Sesman():
         app_params = None
         app_right = None
         for ar in app_rights:
+            _status, _infos = self.engine.check_target(ar, self.pid, None)
+            if _status != APPROVAL_ACCEPTED:
+                continue
+            _deconnection_time = _infos.get('deconnection_time')
+            if _deconnection_time != '-':
+                _tt = datetime.strptime(_deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+                _timeclose = int(mktime(_tt))
+                if _timeclose != self.shared.get('timeclose'):
+                    continue
             _status, _error = self.engine.checkout_target(ar)
             if not _status:
                 continue
