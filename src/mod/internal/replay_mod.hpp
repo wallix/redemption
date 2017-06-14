@@ -75,6 +75,7 @@ class ReplayMod : public InternalMod
     bool wait_for_escape;
 
     time_t balise_time_frame;
+    bool sync_setted;
 
 public:
     using Verbose = FileToGraphic::Verbose;
@@ -98,6 +99,7 @@ public:
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
     , balise_time_frame(0)
+    , sync_setted(false)
     {
         switch (this->front.server_resize( this->reader.info_width
                                          , this->reader.info_height
@@ -122,7 +124,7 @@ public:
         }
 
         this->reader.add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-        this->set_sync();
+        //this->set_sync();
 //         time_t begin_file_read = this->in_trans.get_meta_line().start_time - this->balise_time_frame;
 //         this->in_trans.set_begin_time(begin_file_read);
     }
@@ -296,6 +298,10 @@ public:
         (void)drawable;
         // TODO use system constants for sizes
         // TODO RZ: Support encrypted recorded file.
+        if (!(this->sync_setted)) {
+            this->sync_setted =  true;
+            this->reader.set_sync();
+        }
         if (!this->end_of_data) {
             try
             {
