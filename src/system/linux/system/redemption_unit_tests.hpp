@@ -105,28 +105,38 @@
 
 #endif
 
-# define RED_CHECK_EQUAL_RANGES(a_, b_)                   \
-    do {                                                  \
-        auto const & A__CHECK_RANGES = a_;                \
-        auto const & B__CHECK_RANGES = b_;                \
-        using std::begin;                                 \
-        using std::end;                                   \
-        RED_CHECK_EQUAL_COLLECTIONS(                      \
-            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
-            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
-        );                                                \
+# define RED_CHECK_EQUAL_RANGES(a, b)    \
+    do {                                 \
+        [](                              \
+            decltype(a) const & a__,     \
+            decltype(b) const & b__      \
+        ) {                              \
+            using std::begin;            \
+            using std::end;              \
+            RED_CHECK_EQUAL_COLLECTIONS( \
+                begin((void(#a), a__)),  \
+                  end((void(#a), a__)),  \
+                begin((void(#b), b__)),  \
+                  end((void(#b), b__))   \
+            );                           \
+        }(a, b);                         \
     } while (0)
 
-# define RED_REQUIRE_EQUAL_RANGES(a_, b_)                 \
-    do {                                                  \
-        auto const & A__CHECK_RANGES = a_;                \
-        auto const & B__CHECK_RANGES = b_;                \
-        using std::begin;                                 \
-        using std::end;                                   \
-        RED_REQUIRE_EQUAL_COLLECTIONS(                    \
-            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
-            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
-        );                                                \
+# define RED_REQUIRE_EQUAL_RANGES(a, b)    \
+    do {                                   \
+        [](                                \
+            decltype(a) const & a__,       \
+            decltype(b) const & b__        \
+        ) {                                \
+            using std::begin;              \
+            using std::end;                \
+            RED_REQUIRE_EQUAL_COLLECTIONS( \
+                begin((void(#a), a__)),    \
+                  end((void(#a), a__)),    \
+                begin((void(#b), b__)),    \
+                  end((void(#b), b__))     \
+            );                             \
+        }(a, b);                           \
     } while (0)
 
 namespace std
@@ -171,12 +181,29 @@ namespace redemption_unit_test__
     }
 }
 
-#define RED_CHECK_MEM(mem, memref)                        \
-    do {                                                  \
-        redemption_unit_test__::xarray mem__ {mem};       \
-        redemption_unit_test__::xarray memref__ {memref}; \
-        RED_CHECK_EQUAL(mem__.size(), memref__.size());   \
-        RED_CHECK_EQUAL(mem__, memref__);                 \
+#define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
+    RED_CHECK_MESSAGE(                                   \
+        (v1) op (v2),                                    \
+        "check " #src1 " " #op " " #src2 " failed ["     \
+        << v1 << " " #op " " << v2 << "]"                \
+    );
+
+#define RED_CHECK_MEM(mem, memref)                  \
+    do {                                            \
+        [](                                         \
+            redemption_unit_test__::xarray mem__,   \
+            redemption_unit_test__::xarray memref__ \
+        ){                                          \
+            RED_CHECK_OP_VAR_MESSAGE(               \
+                ==, mem__.size(), memref__.size(),  \
+                mem.size(), memref.size());         \
+            RED_CHECK_OP_VAR_MESSAGE(               \
+                ==, mem__, memref__,                \
+                mem, memref);                       \
+        }(                                          \
+            redemption_unit_test__::xarray{mem},    \
+            redemption_unit_test__::xarray{memref}  \
+        );                                          \
     } while (0)
 
 #ifdef IN_IDE_PARSER
