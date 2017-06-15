@@ -111,7 +111,7 @@ namespace channel_names
     DEF_NAME(drdynvc);
     DEF_NAME(rail);
     DEF_NAME(sespro);
-};
+}
 #undef DEF_NAME
 
 namespace CHANNELS {

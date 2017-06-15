@@ -18,94 +18,122 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-
 #pragma once
-
-#include "utils/sugar/movable_noncopyable.hpp"
-#include "utils/sugar/splitter.hpp"
-
-#include <algorithm>
-#include <cstring>
-#include <string>
-#include <array>
-#include <iosfwd>
 
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/channel_names.hpp"
 
+#include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
+#include "utils/sugar/movable_noncopyable.hpp"
 
-class AuthorizationChannels
-: public movable_noncopyable
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <array>
+
+#include <cassert>
+
+
+class AuthorizationChannels : public movable_noncopyable
 {
 public:
     AuthorizationChannels() = default;
 
-    AuthorizationChannels(std::string allow, std::string deny)
-    : allow_(std::move(allow))
-    , deny_(std::move(deny))
+    AuthorizationChannels(std::string const & allow, std::string const & deny)
     {
-        auto start_with_star = [](range<std::string::iterator> const & r) {
-            auto first = ltrim(begin(r), end(r));
-            return first != end(r) && *first == '*';
+        std::vector<CHANNELS::ChannelNameId> allow_ids;
+        std::vector<CHANNELS::ChannelNameId> deny_ids;
+        std::vector<array_view_const_char> allow_large_ids;
+        std::vector<array_view_const_char> deny_large_ids;
+
+        auto extract = [](
+            array_view_const_char list,
+            std::vector<CHANNELS::ChannelNameId> & ids,
+            std::vector<array_view_const_char> & large_ids
+        ) {
+            bool all = false;
+            for (auto && r : get_split(list.begin(), list.end(), ',')) {
+                auto trimmed = trim(begin(r), end(r));
+                if (trimmed.empty()) {
+                    continue;
+                }
+                else if (trimmed[0] == '*') {
+                    all = true;
+                }
+                else switch (trimmed.size()) {
+                    case 0: break;
+                    case 1: ids.emplace_back(c_array<1>(trimmed.begin())); break;
+                    case 2: ids.emplace_back(c_array<2>(trimmed.begin())); break;
+                    case 3: ids.emplace_back(c_array<3>(trimmed.begin())); break;
+                    case 4: ids.emplace_back(c_array<4>(trimmed.begin())); break;
+                    case 5: ids.emplace_back(c_array<5>(trimmed.begin())); break;
+                    case 6: ids.emplace_back(c_array<6>(trimmed.begin())); break;
+                    case 7: ids.emplace_back(c_array<7>(trimmed.begin())); break;
+                    default: large_ids.push_back({trimmed.begin(), trimmed.end()});
+                }
+            }
+            return all;
         };
 
-        for (auto && r : get_split(this->allow_, ',')) {
-            if (start_with_star(r)) {
-                this->all_allow_ = true;
-                this->rdpdr_restriction_.fill(true);
-                this->cliprdr_restriction_.fill(true);
-                this->rdpsnd_restriction_.fill(true);
-                break;
-            }
+        this->all_allow_ = extract(allow, allow_ids, allow_large_ids);
+        this->all_deny_ = extract(deny, deny_ids, deny_large_ids);
+
+        if (this->all_allow_ && !this->all_deny_) {
+            this->rdpdr_restriction_.fill(true);
+            this->cliprdr_restriction_.fill(true);
+            this->rdpsnd_restriction_.fill(true);
         }
 
-        for (auto && r : get_split(this->deny_, ',')) {
-            if (start_with_star(r)) {
-                this->all_deny_ = true;
-                if (this->all_allow_) {
-                    this->rdpdr_restriction_.fill(false);
-                    this->cliprdr_restriction_.fill(false);
-                    this->rdpsnd_restriction_.fill(false);
-                }
-                break;
-            }
-        }
+        this->normalize(true, allow_ids, allow_large_ids);
+        this->normalize(false, deny_ids, deny_large_ids);
 
-        this->normalize(this->allow_);
-        this->normalize(this->deny_);
-
-        auto normalize_channel = [this](const char * channel_name, bool is_allowed) {
+        auto normalize_channel = [&](CHANNELS::ChannelNameId channel_name, bool is_allowed) {
             if (is_allowed) {
-                if (this->allow_.length()) {
-                    this->allow_ += ",";
-                }
-                this->allow_ += channel_name;
+                allow_ids.emplace_back(channel_name);
             }
             else {
-                if (this->deny_.length()) {
-                    this->deny_ += ",";
-                }
-                this->deny_ += channel_name;
+                deny_ids.emplace_back(channel_name);
             }
         };
 
-        normalize_channel("cliprdr", (this->cliprdr_restriction_[0] || this->cliprdr_restriction_[1]));
-        bool is_allowed = (contains_true(this->rdpdr_restriction_) || contains_true(this->rdpsnd_restriction_));
-        normalize_channel("rdpdr", is_allowed);
-        normalize_channel("rdpsnd", is_allowed);
+        normalize_channel(
+            channel_names::cliprdr,
+            cliprdr_up_is_authorized() || cliprdr_down_is_authorized());
+        bool const is_allowed = (
+            contains_true(this->rdpdr_restriction_)
+         || contains_true(this->rdpsnd_restriction_));
+        normalize_channel(channel_names::rdpdr, is_allowed);
+        normalize_channel(channel_names::rdpsnd, is_allowed);
+
+        auto optimize = [](std::vector<CHANNELS::ChannelNameId> & ids) {
+            auto cmp = [](CHANNELS::ChannelNameId name1, CHANNELS::ChannelNameId name2){
+                return uint64_t(name1) < uint64_t(name2);
+            };
+            std::sort(ids.begin(), ids.end(), cmp);
+            ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+        };
+
+        optimize(allow_ids);
+        optimize(deny_ids);
+
+        this->allow_and_deny_.reserve(allow_ids.size() + deny_ids.size());
+        this->allow_and_deny_.insert(this->allow_and_deny_.end(), allow_ids.begin(), allow_ids.end());
+        this->allow_and_deny_.insert(this->allow_and_deny_.end(), deny_ids.begin(), deny_ids.end());
+        this->allow_and_deny_pivot_ = this->allow_and_deny_.data() + allow_ids.size();
     }
 
-    bool is_authorized(CHANNELS::ChannelNameId s) const noexcept {
+    bool is_authorized(CHANNELS::ChannelNameId id) const noexcept {
         if (this->all_deny_) {
-            return contains(this->allow_, s.c_str());
+            return contains(this->rng_allow(), id);
         }
         if (this->all_allow_) {
-            return !contains(this->deny_, s.c_str());
+            return !contains(this->rng_deny(), id);
         }
-        return !contains(this->deny_, s.c_str())
-            &&  contains(this->allow_, s.c_str());
+        return !contains(this->rng_deny(), id)
+            &&  contains(this->rng_allow(), id);
     }
 
     bool rdpdr_type_all_is_authorized() const noexcept {
@@ -162,7 +190,10 @@ public:
     }
 
     REDEMPTION_FRIEND_OSTREAM(out, AuthorizationChannels const & auth) {
-        auto p = [&](std::string const & s, bool all, bool val_ok, const char * name) {
+        auto p = [&](
+            std::vector<CHANNELS::ChannelNameId> const & ids,
+            bool all, bool val_ok, const char * name
+        ) {
             if (all) {
                 out << name << "=*\n";
             }
@@ -170,24 +201,28 @@ public:
                 out << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                     if (auth.cliprdr_restriction_[i] == val_ok) {
-                        out << cliprde_list()[i];
+                        out << cliprde_list()[i].data();
                     }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                     if (auth.rdpdr_restriction_[i] == val_ok) {
-                        out << rdpdr_list()[i];
+                        out << rdpdr_list()[i].data();
                     }
                 }
                 for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                     if (auth.rdpsnd_restriction_[i] == val_ok) {
-                        out << rdpdr_list()[i];
+                        out << rdpsnd_list()[i].data();
                     }
                 }
-                out << s << '\n';
+
+                for (auto && id : ids) {
+                    out << id << ',';
+                }
+                out << '\n';
             }
         };
-        p(auth.allow_, auth.all_allow_, true, "allow");
-        p(auth.deny_, auth.all_deny_, false, "deny");
+        p(auth.rng_allow(), auth.all_allow_, true, "allow");
+        p(auth.rng_deny(), auth.all_deny_, false, "deny");
         return out;
     }
 
@@ -234,13 +269,13 @@ public:
             remove(s, "rdpdr,");
             remove(s, "rdpsnd,");
             for (auto str : AuthorizationChannels::cliprde_list()) {
-                remove(s, str);
+                remove(s, str.data());
             }
             for (auto str : AuthorizationChannels::rdpdr_list()) {
-                remove(s, str);
+                remove(s, str.data());
             }
             for (auto str : AuthorizationChannels::rdpsnd_list()) {
-                remove(s, str);
+                remove(s, str.data());
             }
             if (!s.empty() && s.back() == ',') {
                 s.pop_back();
@@ -283,17 +318,33 @@ public:
     }
 
 private:
-    static constexpr const std::array<const char *, 3> cliprde_list() {
+    static constexpr const std::array<array_view_const_char, 3> cliprde_list() {
+        return {{
+            cstr_array_view("cliprdr_up,"),
+            cstr_array_view("cliprdr_down,"),
+            cstr_array_view("cliprdr_file,"),
+        }};
+    }
+    static constexpr const std::array<array_view_const_char, 5> rdpdr_list() {
+        return {{
+            cstr_array_view("rdpdr_printer,"),
+            cstr_array_view("rdpdr_port,"),
+            cstr_array_view("rdpdr_drive_read,"),
+            cstr_array_view("rdpdr_drive_write,"),
+            cstr_array_view("rdpdr_smartcard,"),
+        }};
+    }
+    static constexpr const std::array<array_view_const_char, 1> rdpsnd_list() {
+        return {{
+            cstr_array_view("rdpsnd_audio_output,"),
+        }};
+    }
 
-        return {{"cliprdr_up,", "cliprdr_down,", "cliprdr_file,"}};
+    template<std::size_t n>
+    static auto c_array(char const * p) -> char const(&)[n]
+    {
+        return reinterpret_cast<char const(&)[n]>(*p);
     }
-    static constexpr const std::array<const char *, 5> rdpdr_list() {
-        return {{"rdpdr_printer,", "rdpdr_port,", "rdpdr_drive_read,", "rdpdr_drive_write,", "rdpdr_smartcard,"}};
-    }
-    static constexpr const std::array<const char *, 1> rdpsnd_list() {
-        return {{"rdpsnd_audio_output,"}};
-    }
-
 
     template<class Cont>
     static bool contains_true(Cont const & cont) {
@@ -307,74 +358,71 @@ private:
 
     template<std::size_t N>
     void normalize(
-      std::string & s, bool set, std::array<bool, N> & values,
-      const char * channel_name, std::array<char const *, N> restriction_names
+        std::vector<CHANNELS::ChannelNameId> & ids,
+        std::vector<array_view_const_char> & large_ids,
+        CHANNELS::ChannelNameId channel_name,
+        bool set,
+        std::array<bool, N> & values,
+        std::array<array_view_const_char, N> restriction_names
     ) {
-        auto pos = s.find(channel_name);
-        if (pos != std::string::npos) {
-            s.erase(pos, strlen(channel_name));
+        auto p = std::remove(ids.begin(), ids.end(), channel_name);
+        if (p != ids.end()) {
+            ids.erase(p, ids.end());
             values.fill(set);
+            return;
+        }
+
+        if (large_ids.empty()) {
             return;
         }
 
         auto first = values.begin();
         for (auto name : restriction_names) {
-            pos = s.find(name);
-            if (pos != std::string::npos) {
-                s.erase(pos, strlen(name));
-                *first = set;
+            assert(name.back() == ',');
+            name = {name.data(), name.size()-1u};
+            for (auto && av : large_ids) {
+                if (av.size() == name.size() && std::equal(av.begin(), av.end(), name.begin())) {
+                    *first = set;
+                    break;
+                }
             }
             ++first;
         }
     }
 
-    void normalize(std::string & s) {
-        const bool set = (&s == &this->allow_);
-        if (!s.empty()) {
-            s += ',';
-            this->normalize(s, set, this->cliprdr_restriction_, "cliprdr,", cliprde_list());
-            this->normalize(s, set, this->rdpdr_restriction_, "rdpdr,", rdpdr_list());
-            this->normalize(s, set, this->rdpsnd_restriction_, "rdpsnd,", rdpsnd_list());
-            if (!s.empty() && s.front() == ',') {
-                s.erase(0, 1);
-            }
-        }
-        if (!s.empty() && s.back() == ',') {
-            s.pop_back();
-        }
+    void normalize(
+        bool set,
+        std::vector<CHANNELS::ChannelNameId> & ids,
+        std::vector<array_view_const_char> & large_ids
+    ) {
+        this->normalize(ids, large_ids, channel_names::cliprdr, set, this->cliprdr_restriction_, cliprde_list());
+        this->normalize(ids, large_ids, channel_names::rdpdr, set, this->rdpdr_restriction_, rdpdr_list());
+        this->normalize(ids, large_ids, channel_names::rdpsnd, set, this->rdpsnd_restriction_, rdpsnd_list());
     }
 
-    static bool contains(std::string const & s, const char * search) noexcept {
-        for (auto && r : get_split(s, ',')) {
-            auto const trimmed_range = trim(r);
-            auto first = begin(trimmed_range);
-            auto last = end(trimmed_range);
-
-            char const * s2 = search;
-            while (*s2 == *first && *s2 && first != last) {
-                ++first;
-                ++s2;
-            }
-            if (!*s2 && first == last) {
-                return true;
-            }
-        }
-        return false;
+    static bool contains(
+        array_view<CHANNELS::ChannelNameId const> ids,
+        CHANNELS::ChannelNameId id
+    ) noexcept {
+        return std::find(ids.begin(), ids.end(), id) != ids.end();
     }
 
-    // TODO sorted ChannelName{ uint64_t internal_name; };
-    std::string allow_;
-    // TODO sorted ChannelName{ uint64_t internal_name; };
-    std::string deny_;
+    array_view<CHANNELS::ChannelNameId const> rng_allow() const
+    {
+        return {this->allow_and_deny_.data(), this->allow_and_deny_pivot_};
+    }
+
+    array_view<CHANNELS::ChannelNameId const> rng_deny() const
+    {
+        return {this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
+    }
+
+    std::vector<CHANNELS::ChannelNameId> allow_and_deny_;
+    CHANNELS::ChannelNameId const * allow_and_deny_pivot_;
     bool all_allow_ = false;
     bool all_deny_ = false;
-    std::array<bool, 5> rdpdr_restriction_ {{}};
-    std::array<bool, 3> cliprdr_restriction_ {{}};
-    std::array<bool, 1> rdpsnd_restriction_ {{}};
-
-
+    std::array<bool, decltype(rdpdr_list())().size()> rdpdr_restriction_ {{}};
+    std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
+    std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};
 };
-
-
-
 
