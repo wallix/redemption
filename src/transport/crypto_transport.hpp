@@ -793,10 +793,10 @@ public:
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
         ReportError report_error = ReportError()
     ) noexcept
-    : encrypter(with_encryption, with_encryption || with_checksum, cctx, rnd)
+    : encrypter(with_encryption, with_checksum, cctx, rnd)
     , out_file(invalid_fd(), std::move(report_error))
     , with_encryption(with_encryption)
-    , with_checksum(with_encryption || with_checksum)
+    , with_checksum(with_checksum)
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)
