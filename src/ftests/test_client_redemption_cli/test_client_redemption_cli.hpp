@@ -228,6 +228,8 @@ public:
     bool                        _running;
     bool is_pipe_ok;
     timeval connection_time;
+    timeval start_session_time;
+    std::string out_path;
 
 
 
@@ -309,6 +311,39 @@ public:
 
 
 
+    void disconnect(mod_api * mod, SocketTransport * socket) {
+
+        if (mod !=  nullptr) {
+            TimeSystem timeobj;
+            mod->disconnect(timeobj.get_time().tv_sec);
+            delete (mod);
+            mod = nullptr;
+        }
+
+        if (socket != nullptr) {
+            delete (socket);
+            socket = nullptr;
+        }
+
+        timeval now = tvtime();
+        std::chrono::microseconds duration = difftimeval(now, this->start_session_time);
+
+        //     std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
+        std::cout << "movie_length = " << duration.count() / 1000 <<  std::endl;
+
+        if (this->out_path != std::string("")) {
+            std::string out_path_movie = this->out_path + std::string("_movie_length");
+            std::ofstream file_movie(out_path_movie.c_str() , std::ios::app | std::ios::out);
+            if (file_movie) {
+                file_movie << duration.count() / 1000 << "\n";
+                file_movie.close();
+            }
+        }
+
+        delete (socket);
+        socket = nullptr;
+    }
+
     bool is_running() {
         return this->_running;
     }
@@ -343,6 +378,22 @@ public:
         this->_info.bpp = bpp;
         this->_info.width = width;
         this->_info.height = height;
+
+        this->start_session_time = tvtime();
+
+        std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
+
+        std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
+
+        if (this->out_path != std::string("")) {
+            std::string out_path_movie = this->out_path + std::string("_nego_length");
+            std::ofstream file_movie(out_path_movie.c_str() , std::ios::app | std::ios::out);
+            if (file_movie) {
+                file_movie << duration.count() / 1000 << "\n";
+                file_movie.close();
+            }
+        }
+
 
         return ResizeResult::done;
     }
@@ -960,6 +1011,8 @@ public:
             this->_callback->rdp_input_scancode(scanCode, 0, flag | KBD_FLAG_UP, this->_timer, &(this->_keymap));
         }
     }
+
+
 };
 
 
@@ -1228,6 +1281,9 @@ public:
             i++;
         }
     }
+
+
+
 };
 
 

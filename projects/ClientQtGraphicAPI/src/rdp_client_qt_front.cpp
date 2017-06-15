@@ -2474,7 +2474,7 @@ public:
         } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
 
 
-        msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
+        //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
             if (this->sound_qt->wave_data_to_vait) {
                 LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
@@ -2826,7 +2826,7 @@ public:
                                                 , chunk
                                                 , total_length
                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                                flags
+                                                  flags
                                                 );
         }
     }
@@ -3192,6 +3192,12 @@ int main(int argc, char** argv){
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
     // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
+
+
+
+    // ../packager/packager.py --version 1.0.0 --no-entry-changelog --build-package
+
+    // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
 
 
     QApplication app(argc, argv);

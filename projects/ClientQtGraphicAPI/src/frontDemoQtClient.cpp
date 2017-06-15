@@ -36,7 +36,7 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 
     // VNC
     Inifile    ini;
-    Translator translator;
+    //Translator translator;
     Theme      theme;
 
     bool is_apple;
@@ -45,7 +45,7 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
-      , translator(Translation::language_t::FR)
+      //, translator(Translation::language_t::FR)
     {
         this->is_apple = true;
     }
@@ -63,7 +63,9 @@ public:
                                    , this->info.width
                                    , this->info.height
                                    , this->ini.get<cfg::font>()
-                                   , this->translator
+                                   , nullptr
+                                   , nullptr
+                                   //, this->translator
                                    , this->theme
                                    , this->info.keylayout
                                    , 0
@@ -97,7 +99,7 @@ public:
     virtual void options() override {
         FrontQtRDPGraphicAPI::options();
     }
-    
+
 };
 
 

@@ -28,6 +28,7 @@ namespace cfg {
         struct authfile;
         struct handshake_timeout;
         struct session_timeout;
+        struct inactivity_timeout;
         struct keepalive_grace_delay;
         struct authentication_timeout;
         struct close_timeout;

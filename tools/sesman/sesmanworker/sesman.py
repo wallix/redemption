@@ -256,6 +256,7 @@ class Sesman():
 
             u'auth_notify': u'',
 
+            u'inactivity_timeout': 900,
             u'load_balance_info': u''
             })
         self.engine.reset_proxy_rights()
@@ -1804,6 +1805,9 @@ class Sesman():
                 u'server_cert_success_message' : 'server_cert_success_message',
                 u'server_cert_failure_message' : 'server_cert_failure_message',
                 u'server_cert_error_message' : 'server_cert_error_message'
+            },
+            'session': {
+                u'inactivity_timeout': 'inactivity_timeout'
             }
         }
 
