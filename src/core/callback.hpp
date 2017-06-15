@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/rect.hpp"
@@ -113,7 +114,7 @@ struct RdpInput : noncopyable
 
 struct Callback : RdpInput
 {
-    virtual void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags)
+    virtual void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags)
     {
         (void)front_channel_name;
         (void)chunk;

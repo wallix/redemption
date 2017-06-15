@@ -38,7 +38,7 @@ struct TestDraw : mod_api
     void rdp_input_mouse(int, int, int, Keymap2*) override {}
     void rdp_input_scancode(long, long, long, long, Keymap2*) override {}
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-    void send_to_front_channel(const char * const, const uint8_t*, size_t, size_t, int) override {}
+    void send_to_front_channel(CHANNELS::ChannelNameId, const uint8_t*, size_t, size_t, int) override {}
 
     void refresh(Rect) override {}
 

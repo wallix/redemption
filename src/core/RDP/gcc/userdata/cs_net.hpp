@@ -127,9 +127,7 @@ struct CSNet {
     };
 
     struct {
-        // one char padding at end of name to hold zero terminator if needed
-        // (and make stack based attacks harder...)
-        char name[9];
+        char name[8];
         uint32_t options;
     } channelDefArray[32];
 
@@ -184,7 +182,9 @@ struct CSNet {
         }
 
         for (size_t i = 0; i < this->channelCount ; i++){
-            stream.in_copy_bytes(this->channelDefArray[i].name, 8);
+            stream.in_copy_bytes(this->channelDefArray[i].name, 7);
+            this->channelDefArray[i].name[7] = '\0';
+            stream.in_skip_bytes(1);
             this->channelDefArray[i].options = stream.in_uint32_le();
         }
     }

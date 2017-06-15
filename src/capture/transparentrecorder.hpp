@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/channel_names.hpp"
 #include "transport/transport.hpp"
 #include "transparentchunk.hpp"
 #include "utils/stream.hpp"
@@ -56,12 +57,12 @@ public:
         this->t->send(data.get_data(), data.get_capacity());
     }
 
-    void send_to_front_channel( const char * const mod_channel_name
+    void send_to_front_channel( CHANNELS::ChannelNameId mod_channel_name
                               , uint8_t const * data, size_t length
                               , size_t chunk_size, int flags) {
         constexpr unsigned payload_size = 9;
         StaticOutStream<TRANSPARENT_CHUNK_HEADER_SIZE + payload_size> header;
-        uint8_t mod_channel_name_length = strlen(mod_channel_name);
+        uint8_t mod_channel_name_length = strlen(mod_channel_name.c_str());
 
         this->make_chunk_header(header, CHUNK_TYPE_FRONTCHANNEL, payload_size + mod_channel_name_length + length);
         header.out_uint8(mod_channel_name_length);
@@ -71,7 +72,7 @@ public:
 
         assert(header.get_offset() == header.get_capacity());
         this->t->send(header.get_data(), header.get_offset());
-        this->t->send(mod_channel_name, mod_channel_name_length);
+        this->t->send(mod_channel_name.c_str(), mod_channel_name_length);
         this->t->send(data, length);
     }
 

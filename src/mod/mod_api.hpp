@@ -90,7 +90,7 @@ public:
 
     virtual void get_event_handlers(std::vector<EventHandler>&/* out_event_handlers*/) {}
 
-    virtual void send_to_front_channel(const char * const mod_channel_name,
+    virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;
 
     // draw_event is run when mod socket received some data (drawing order)

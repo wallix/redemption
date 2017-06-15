@@ -281,7 +281,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
             mod_rdp_params.persistent_key_list_transport       = persistent_key_list_ift.get();
             mod_rdp_params.transparent_recorder_transport      = record_oft.get();
-            mod_rdp_params.auth_channel                        = ini.get<cfg::mod_rdp::auth_channel>();
+            mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
             mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
             mod_rdp_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();

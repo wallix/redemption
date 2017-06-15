@@ -178,6 +178,7 @@ char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 
 #else
 #  define LOG(priority, ...)                                     \
+    using ::log_value;                                           \
     LOGCHECK__REDEMPTION__INTERNAL((                             \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                \
         LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- "     \

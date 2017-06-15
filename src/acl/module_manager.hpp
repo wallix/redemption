@@ -576,7 +576,7 @@ private:
         }
 
         void send_to_mod_channel(
-            const char * const front_channel_name, InStream & chunk,
+            CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
             std::size_t length, uint32_t flags
         ) override
         { this->mm.internal_mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
@@ -590,7 +590,7 @@ private:
         void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
         { return this->mm.internal_mod->get_event_handlers(out_event_handlers); }
 
-        void send_to_front_channel(const char * const mod_channel_name,
+        void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
 
@@ -1349,7 +1349,7 @@ public:
                 mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
 
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
-                mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
+                mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
                 mod_rdp_params.shell_arguments                     = this->ini.get<cfg::mod_rdp::shell_arguments>().c_str();
                 mod_rdp_params.shell_working_dir                   = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();

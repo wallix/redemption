@@ -31,6 +31,7 @@
 #include <iosfwd>
 
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/channel_names.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
@@ -96,15 +97,15 @@ public:
         normalize_channel("rdpsnd", is_allowed);
     }
 
-    bool is_authorized(const char * s) const noexcept {
+    bool is_authorized(CHANNELS::ChannelNameId s) const noexcept {
         if (this->all_deny_) {
-            return contains(this->allow_, s);
+            return contains(this->allow_, s.c_str());
         }
         if (this->all_allow_) {
-            return !contains(this->deny_, s);
+            return !contains(this->deny_, s.c_str());
         }
-        return !contains(this->deny_, s)
-            &&  contains(this->allow_, s);
+        return !contains(this->deny_, s.c_str())
+            &&  contains(this->allow_, s.c_str());
     }
 
     bool rdpdr_type_all_is_authorized() const noexcept {

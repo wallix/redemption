@@ -19,10 +19,22 @@
 
 */
 
-#define RED_TEST_MODULE TestXXX
+#define RED_TEST_MODULE TestChannelList
 #include "system/redemption_unit_tests.hpp"
 
+#define LOGNULL
 
-RED_AUTO_TEST_CASE(TestXXX)
+#include "core/channel_list.hpp"
+
+RED_AUTO_TEST_CASE(TestChannelDefArray)
 {
+    CHANNELS::ChannelDefArray channels;
+    channels.push_back({CHANNELS::ChannelNameId("abc"), 0, 0});
+    channels.push_back({CHANNELS::ChannelNameId("def"), 0, 1});
+    CHANNELS::ChannelDef const * channel = channels.get_by_id(1);
+    RED_REQUIRE(channel);
+    RED_CHECK_EQ(channel->name.c_str(), "def");
+    channel = channels.get_by_name(CHANNELS::ChannelNameId("abc"));
+    RED_REQUIRE(channel);
+    RED_CHECK_EQ(channel->name.c_str(), "abc");
 }
