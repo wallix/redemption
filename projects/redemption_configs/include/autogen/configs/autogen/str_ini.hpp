@@ -1,3 +1,5 @@
+#include "config_variant.hpp"
+
 #define CONFIG_PP_STRINGIZE_I(x) #x
 #define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)
 

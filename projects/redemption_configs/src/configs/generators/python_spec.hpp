@@ -57,6 +57,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     : out_file_(filename)
     {
         this->out_file_ <<
+            "#include \"config_variant.hpp\"\n\n"
             "#define CONFIG_PP_STRINGIZE_I(x) #x\n"
             "#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)\n\n\n"
             "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
