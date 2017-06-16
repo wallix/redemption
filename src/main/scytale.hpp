@@ -88,7 +88,10 @@ extern "C"
     void scytale_reader_delete(RedCryptoReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file);
+    int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file);
 
     REDEMPTION_LIB_EXPORT
     const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle);

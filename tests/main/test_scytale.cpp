@@ -116,7 +116,8 @@ RED_AUTO_TEST_CASE(Testscytale)
 
         RED_CHECK_EQ(scytale_reader_error_message(handle), "No error");
 
-        RED_CHECK_EQ(scytale_reader_hash(handle, finalname), 0);
+        RED_CHECK_EQ(scytale_reader_qhash(handle, finalname), 0);
+        RED_CHECK_EQ(scytale_reader_fhash(handle, finalname), 0);
 
         RED_CHECK_EQ(scytale_reader_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
         RED_CHECK_EQ(scytale_reader_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
@@ -203,7 +204,8 @@ RED_AUTO_TEST_CASE(TestscytaleError)
     RED_CHECK_EQ(scytale_reader_open(handle_r, "/", "/"), -1);
     RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error");
 
-    RED_CHECK_EQ(scytale_reader_hash(handle_r, "/"), -1);
+    RED_CHECK_EQ(scytale_reader_qhash(handle_r, "/"), -1);
+    RED_CHECK_EQ(scytale_reader_fhash(handle_r, "/"), -1);
     RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error");
 
     scytale_writer_delete(handle_w);
