@@ -56,7 +56,20 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     PythonSpecWriterBase(char const * filename)
     : out_file_(filename)
     {
-        this->out_file_ << "\"## Config file for RDP proxy.\\n\\n\\n\"\n";
+        this->out_file_ <<
+            "#include \"config_variant.hpp\"\n\n"
+            "#define CONFIG_PP_STRINGIZE_I(x) #x\n"
+            "#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)\n\n\n"
+            "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
+        ;
+    }
+
+    void do_finish()
+    {
+        this->out_file_ <<
+            "#undef CONFIG_PP_STRINGIZE_I\n"
+            "#undef CONFIG_PP_STRINGIZE\n"
+        ;
     }
 
     void do_stop_section(std::string const & section_name)
@@ -96,35 +109,62 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         }, infos);
     }
 
+
     struct macroio {
         const char * name;
         friend std::ostream & operator << (std::ostream & os, macroio const & mio) {
             return os << "\" " << mio.name << " \"";
         }
     };
-    macroio get_value(cpp::macro const & m) { return {m.name}; }
-    int get_value(types::integer_base) { return 0; }
-    int get_value(types::u32) { return 0; }
-    int get_value(types::u64) { return 0; }
-    template<class T> T const & get_value(T const & x) { return x; }
-    template<class T> enable_if_enum_t<T, T const &> get_value(T const & x) { return x; }
-    template<class Int, long min, long max, class T> T get_value(types::range<Int, min, max>)
-    { static_assert(!min, "unspecified value but 'min' isn't 0"); return {}; }
+    static macroio quoted2(cpp::macro m) { return {m.name}; }
+    template<class T> static io_quoted2 quoted2(T const & s) { return s; }
+    template<class T> static char const * quoted2(types::list<T> const &) { return ""; }
 
 
-    macroio quoted2(macroio m) { return m; }
-    template<class T> io_quoted2 quoted2(T const & s) { return s; }
-    template<class T> char const * quoted2(types::list<T> const &) { return ""; }
+    template<class T>
+    static char const * get_string(T const & s) { return s.c_str(); }
 
 
-    io_prefix_lines comment(char const * s) {
+    static char const * stringize_integral(bool x) = delete;
+    static char const * stringize_integral(types::integer_base) { return "0"; }
+    static char const * stringize_integral(types::u32) { return "0"; }
+    static char const * stringize_integral(types::u64) { return "0"; }
+    template<class T> static T const & stringize_integral(T const & x) { return x; }
+
+    template<class Int, long min, long max, class T>
+    static T stringize_integral(types::range<Int, min, max>)
+    {
+        static_assert(!min, "unspecified value but 'min' isn't 0");
+        return {};
+    }
+
+    static std::string stringize_integral(cpp::macro x)
+    {
+        std::ostringstream out;
+        out << "CONFIG_PP_STRINGIZE(" << x.name << ")";
+        return out.str();
+    }
+
+
+    static std::string stringize_bool(bool x)
+    {
+        return bool(x) ? "True" : "False";
+    }
+
+    static std::string stringize_bool(cpp::macro x)
+    {
+        return stringize_integral(x);
+    }
+
+
+    static io_prefix_lines comment(char const * s) {
         return io_prefix_lines{s, "\"# ", "\\n\"", 0};
     }
 
 
     template<class T, class Pack>
     void write_description(std::true_type, type_<T>, Pack const & pack)
-    { this->out() << this->comment(pack_get<desc>(pack).value.c_str()); }
+    { this->out() << comment(pack_get<desc>(pack).value.c_str()); }
 
     template<class T, class Pack>
     disable_if_enum_t<T>
@@ -137,7 +177,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     {
         apply_enumeration_for<T>(this->enums, [this](auto const & e) {
             if (e.desc) {
-                this->out() << this->comment(e.desc);
+                this->out() << comment(e.desc);
             }
         });
     }
@@ -230,7 +270,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         apply_enumeration_for<T>(this->enums, [this, &pack](auto const & e) {
             this->write_desc_value(e, this->get_prefix(pack_contains<prefix_value>(pack), pack));
             if (e.info) {
-                this->out() << this->comment(e.info);
+                this->out() << comment(e.info);
             }
         });
     }
@@ -239,10 +279,9 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     void write_enumeration_value_description(std::integral_constant<bool, HasPrefix>, T, Pack const &)
     { static_assert(!HasPrefix, "prefix_value only with enums type"); }
 
-
     template<class T>
     void write_type(type_<bool>, T x)
-    { this->out() << "boolean(default=" << (bool(x) ? "True" : "False") << ")"; }
+    { this->out() << "boolean(default=" << stringize_bool(x) << ")"; }
 
     template<class T>
     void write_type(type_<std::string>, T const & s)
@@ -260,40 +299,41 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         if (std::is_unsigned<Int>::value || std::is_base_of<types::unsigned_base, Int>::value) {
             this->out() << "min=0, ";
         }
-        this->out() << "default=" << this->get_value(i) << ")";
+        this->out() << "default=" << stringize_integral(i) << ")";
     }
 
     template<class Int, long min, long max, class T>
     void write_type(type_<types::range<Int, min, max>>, T i)
-    { this->out() << "integer(min=" << min << ", max=" << max << ", default=" << this->get_value(i) << ")"; }
+    { this->out() << "integer(min=" << min << ", max=" << max << ", default=" << stringize_integral(i) << ")"; }
 
 
     template<class T, class Ratio, class U>
     void write_type(type_<std::chrono::duration<T, Ratio>>, U i)
-    { this->out() << "integer(min=0, default=" << this->get_value(i) << ")"; }
+    { this->out() << "integer(min=0, default=" << stringize_integral(i) << ")"; }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_binary<N>>, T const & x)
     {
         this->out() << "string(min=" << N*2 << ", max=" << N*2 << ", default='"
-          << io_hexkey{this->get_value(x).c_str(), N} << "')";
+          << io_hexkey{get_string(x), N} << "')";
     }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_string<N>>, T const & x)
     {
-        this->out() << "string(max=" << N <<  ", default='"
-          << quoted2(this->get_value(x)) << "')";
+        this->out() << "string(max=" << N <<  ", default='" << quoted2(x) << "')";
     }
 
     template<class T>
     void write_type(type_<types::dirpath>, T const & x)
-    { this->write_type(type_<typename types::dirpath::fixed_type>{}, x); }
+    {
+        this->write_type(type_<typename types::dirpath::fixed_type>{}, x);
+    }
 
     template<class T>
     void write_type(type_<types::ip_string>, T const & x)
     {
-        this->out() << "ip_addr(default='" << this->get_value(x) << "')";
+        this->out() << "ip_addr(default='" << quoted2(x) << "')";
     }
 
     template<class T, class L>
@@ -303,7 +343,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
             this->out() << "string_list(default=list())";
         }
         else {
-            this->out() << "string_list(default=list('" << quoted2(this->get_value(s)) << "'))";
+            this->out() << "string_list(default=list('" << quoted2(s) << "'))";
         }
     }
 

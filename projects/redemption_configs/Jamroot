@@ -2,6 +2,7 @@ REDEMPTION_CONFIG_SPECS_PATH ?= ./configs_specs ;
 REDEMPTION_CONFIG_PATH ?= . ;
 REDEMPTION_ROOT_PATH ?= ../.. ;
 REDEMPTION_SRC_PATH ?= $(REDEMPTION_ROOT_PATH)/src ;
+REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_ROOT_PATH)/include ;
 SYSTEM_TYPE ?= linux ;
 SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 
@@ -13,6 +14,7 @@ project configs
     <include>$(REDEMPTION_CONFIG_PATH)/src
     <include>$(REDEMPTION_CONFIG_PATH)/include/autogen
     <include>$(REDEMPTION_CONFIG_SPECS_PATH)
+    <include>$(REDEMPTION_INCLUDE_PATH)
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(SYSTEM_SRC_PATH)
 

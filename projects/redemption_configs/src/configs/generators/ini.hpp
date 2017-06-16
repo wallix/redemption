@@ -150,10 +150,20 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
 
+    static std::string stringize_bool(bool x)
+    {
+        return bool(x) ? "1" : "0";
+    }
+
+    static std::string stringize_bool(cpp::macro x)
+    {
+        return base_type_::stringize_integral(x);
+    }
+
 
     template<class T>
     void write_type(type_<bool>, T x)
-    { this->out() << bool(x); }
+    { this->out() << stringize_bool(x); }
 
     template<class T>
     void write_type(type_<std::string>, T const & s)
@@ -166,24 +176,24 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
         std::is_integral<Int>::value
     >
     write_type(type_<Int>, T i)
-    { this->out() << this->get_value(i); }
+    { this->out() << this->stringize_integral(i); }
 
     template<class Int, long min, long max, class T>
     void write_type(type_<types::range<Int, min, max>>, T i)
-    { this->out() << this->get_value(i); }
+    { this->out() << this->stringize_integral(i); }
 
 
     template<class T, class Ratio, class U>
     void write_type(type_<std::chrono::duration<T, Ratio>>, U i)
-    { this->out() << this->get_value(i); }
+    { this->out() << this->stringize_integral(i); }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_binary<N>>, T const & x)
-    { this->out() << io_hexkey{this->get_value(x).c_str(), N}; }
+    { this->out() << io_hexkey{this->get_string(x), N}; }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_string<N>>, T const & x)
-    { this->out() << this->quoted2(this->get_value(x)); }
+    { this->out() << this->quoted2(x); }
 
     template<class T>
     void write_type(type_<types::dirpath>, T const & x)
@@ -191,13 +201,13 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
 
     template<class T>
     void write_type(type_<types::ip_string>, T const & x)
-    { this->out() << this->get_value(x); }
+    { this->out() << this->quoted2(x); }
 
     template<class T, class L>
     void write_type(type_<types::list<T>>, L const & s)
     {
         if (!is_empty(s)) {
-            this->out() << this->quoted2(this->get_value(s));
+            this->out() << this->quoted2(s);
         }
     }
 

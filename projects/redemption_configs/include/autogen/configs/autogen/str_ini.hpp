@@ -1,3 +1,9 @@
+#include "config_variant.hpp"
+
+#define CONFIG_PP_STRINGIZE_I(x) #x
+#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)
+
+
 "## Config file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
@@ -21,7 +27,7 @@
 "#encryptionLevel = low\n\n"
 
 "#_advanced\n"
-"#authfile = /tmp/redemption-sesman-sock\n\n"
+"#authfile = " REDEMPTION_CONFIG_AUTHFILE "\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
@@ -97,7 +103,7 @@
 "#persistent_path = " PERSISTENT_PATH "\n\n"
 
 "#_hidden\n"
-"#enable_wab_integration = 0\n\n"
+"#enable_wab_integration = CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION)\n\n"
 
 "#allow_using_multiple_monitors = 0\n\n"
 
@@ -399,7 +405,7 @@
 "#session_probe_exe_or_file = ||CMD\n\n"
 
 "#_hidden\n"
-"#session_probe_arguments = /K\n\n"
+"#session_probe_arguments = " REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "\n\n"
 
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
@@ -682,10 +688,6 @@
 "#_advanced\n"
 "#session_log_with_checksum = 0\n\n"
 
-"[remote_program]\n\n"
-
-"#allow_resize_hosted_desktop = 1\n\n"
-
 "[debug]\n\n"
 
 "#_advanced\n"
@@ -766,6 +768,10 @@
 "#_advanced\n"
 "#config = 1\n\n"
 
+"[remote_program]\n\n"
+
+"#allow_resize_hosted_desktop = 1\n\n"
+
 "[translation]\n\n"
 
 "#_advanced\n"
@@ -782,3 +788,5 @@
 "#_advanced\n"
 "#load_theme = \n\n"
 
+#undef CONFIG_PP_STRINGIZE_I
+#undef CONFIG_PP_STRINGIZE
