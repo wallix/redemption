@@ -26,9 +26,9 @@
 
 struct FakeFstat : Fstat
 {
-    int stat(const char*, struct ::stat & stat) override
+    virtual int stat(const char * filename, struct stat & stat)
     {
-        stat = {};
+        memset(&stat, 0, sizeof(stat));
         return 0;
     }
 };
