@@ -51,6 +51,12 @@ constant PID_PATH : [ setvar PID_PATH : $(PID_PATH_DEFAULT) ] ;
 
 constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
 
+## Config {
+CONFIG_AUTHFILE ?= /tmp/redemption-sesman-sock ;
+CONFIG_WAB_INTEGRATION ?= 0 ;
+CONFIG_SESSION_PROBE_ARGUMENTS ?= /K ;
+## }
+
 rule defines ( properties * )
 {
     local defs ;
@@ -66,6 +72,9 @@ rule defines ( properties * )
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
     defs += <define>PID_PATH='\"$(PID_PATH)\"' ;
+    defs += <define>REDEMPTION_CONFIG_AUTHFILE='\"$(CONFIG_AUTHFILE)\"' ;
+    defs += <define>REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS='\"$(CONFIG_SESSION_PROBE_ARGUMENTS)\"' ;
+    defs += <define>REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION=$(CONFIG_WAB_INTEGRATION) ;
     return $(defs) ;
 }
 

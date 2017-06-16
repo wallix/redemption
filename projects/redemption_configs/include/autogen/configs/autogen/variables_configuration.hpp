@@ -264,7 +264,7 @@ namespace cfg {
         type value{static_cast<type>(0)};
     };
     // type: std::string
-    // value = "/tmp/redemption-sesman-sock"
+    // value = REDEMPTION_CONFIG_AUTHFILE
     struct globals::authfile {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -273,7 +273,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "/tmp/redemption-sesman-sock";
+        type value = REDEMPTION_CONFIG_AUTHFILE;
     };
     // Time out during RDP handshake stage.
     // type: std::chrono::seconds
@@ -534,7 +534,7 @@ namespace cfg {
         type value = PERSISTENT_PATH;
     };
     // type: bool
-    // value{0}
+    // value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION
     struct globals::enable_wab_integration {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -543,7 +543,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION;
     };
     // type: bool
     // value{0}
@@ -1627,7 +1627,7 @@ namespace cfg {
         type value = "||CMD";
     };
     // type: char[512]
-    // value = "/K"
+    // value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS
     struct mod_rdp::session_probe_arguments {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1636,7 +1636,7 @@ namespace cfg {
         using type = char[512];
         using sesman_and_spec_type = ::configs::spec_types::fixed_string;
         using mapped_type = sesman_and_spec_type;
-        type value = "/K";
+        type value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS;
     };
     // Keep known server certificates on WAB
     // AUTHID_MOD_RDP_SERVER_CERT_STORE
@@ -2452,24 +2452,6 @@ namespace cfg {
         type value{0};
     };
 
-    // AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP
-    // type: bool
-    // sesman -> proxy
-    // value{1}
-    struct remote_program::allow_resize_hosted_desktop {
-        static constexpr bool is_sesman_to_proxy() { return 1; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "remote_program"; }
-        static constexpr char const * name() { return "allow_resize_hosted_desktop"; }
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index() { return authid_t(57); }
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{1};
-    };
-
     // type: uint32_t
     // value{}
     struct debug::x224 {
@@ -2781,6 +2763,24 @@ namespace cfg {
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{2};
+    };
+
+    // AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP
+    // type: bool
+    // sesman -> proxy
+    // value{1}
+    struct remote_program::allow_resize_hosted_desktop {
+        static constexpr bool is_sesman_to_proxy() { return 1; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "remote_program"; }
+        static constexpr char const * name() { return "allow_resize_hosted_desktop"; }
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index() { return authid_t(57); }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
     };
 
     // AUTHID_TRANSLATION_LANGUAGE
@@ -4278,10 +4278,6 @@ struct crypto
 , cfg::crypto::session_log_with_checksum
 { static constexpr bool is_section = true; };
 
-struct remote_program
-: cfg::remote_program::allow_resize_hosted_desktop
-{ static constexpr bool is_section = true; };
-
 struct debug
 : cfg::debug::x224
 , cfg::debug::mcs
@@ -4309,6 +4305,10 @@ struct debug
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
 , cfg::debug::config
+{ static constexpr bool is_section = true; };
+
+struct remote_program
+: cfg::remote_program::allow_resize_hosted_desktop
 { static constexpr bool is_section = true; };
 
 struct translation
@@ -4410,8 +4410,8 @@ struct VariablesConfiguration
 , cfg_section::ocr
 , cfg_section::video
 , cfg_section::crypto
-, cfg_section::remote_program
 , cfg_section::debug
+, cfg_section::remote_program
 , cfg_section::translation
 , cfg_section::internal_mod
 , cfg_section::context
