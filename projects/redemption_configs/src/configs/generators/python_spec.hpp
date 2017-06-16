@@ -141,7 +141,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     static std::string stringize_integral(cpp::macro x)
     {
         std::ostringstream out;
-        out << "CONFIG_PP_STRINGIZE(" << x.name << ")";
+        out << "\" CONFIG_PP_STRINGIZE(" << x.name << ") \"";
         return out.str();
     }
 

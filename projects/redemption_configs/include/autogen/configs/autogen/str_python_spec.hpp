@@ -103,7 +103,7 @@
 "persistent_path = string(max=4096, default='" PERSISTENT_PATH "')\n\n"
 
 "#_hidden\n"
-"enable_wab_integration = boolean(default=CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))\n\n"
+"enable_wab_integration = boolean(default=" CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) ")\n\n"
 
 "allow_using_multiple_monitors = boolean(default=False)\n\n"
 

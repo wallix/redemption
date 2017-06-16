@@ -103,7 +103,7 @@
 "#persistent_path = " PERSISTENT_PATH "\n\n"
 
 "#_hidden\n"
-"#enable_wab_integration = CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION)\n\n"
+"#enable_wab_integration = " CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) "\n\n"
 
 "#allow_using_multiple_monitors = 0\n\n"
 
