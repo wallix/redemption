@@ -23,10 +23,41 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_uid’
+
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_mode’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::__pad0’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_size’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_ctim’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::__glibc_reserved’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_rdev’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_dev’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_blksize’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_ino’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_gid’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_atim’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_mtim’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_blocks’
+//fake_stat.hpp:31, gcc/clang warning, Priority: Normal
+//missing initializer for member ‘stat::st_nlink’
 
 struct FakeFstat : Fstat
 {
-    int stat(const char*, struct ::stat & stat) override
+    virtual int stat(const char * filename, struct stat & stat)
     {
         stat = {};
         return 0;
