@@ -220,6 +220,7 @@ RED_AUTO_TEST_CASE(TestEncryption2)
 //    RED_CHECK_EQUAL(res2, 4);
     RED_CHECK_MEM_C(make_array_view(clear, 4), "toto");
 
+    RED_CHECK(0 == ::unlink("./tmp.enc"));
 }
 
 
@@ -354,6 +355,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     RED_CHECK_MEM_AA(fhash, expected_fhash);
     RED_CHECK_MEM_AA(qhash2, expected_qhash);
     RED_CHECK_MEM_AA(fhash2, expected_fhash);
+
+    RED_CHECK(0 == ::unlink("./tmp1.enc"));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -1045,27 +1048,15 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
 
-        #if SNAPPY_VERSION < (1<<16|1<<8|4)
-            auto expected_qhash = cstr_array_view(
-                "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-                "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-                );
+        auto expected_qhash = cstr_array_view(
+            "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
+            );
 
-            auto expected_fhash = cstr_array_view(
-                "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-                "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-                );
-        #else
-            auto expected_qhash = cstr_array_view(
-                "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-                "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-                );
-
-            auto expected_fhash = cstr_array_view(
-                "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-                "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-                );
-        #endif
+        auto expected_fhash = cstr_array_view(
+            "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
+            );
         RED_CHECK_MEM_AA(qhash, expected_qhash);
         RED_CHECK_MEM_AA(fhash, expected_fhash);
         RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
