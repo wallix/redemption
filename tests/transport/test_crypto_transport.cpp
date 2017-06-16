@@ -209,14 +209,14 @@ RED_AUTO_TEST_CASE(TestEncryption2)
 //    decrypter.open(derivator, sizeof(derivator));
 
 //    size_t res2 = decrypter.read(clear, sizeof(clear));
-    
+
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Auto);
     decrypter.open("./tmp.enc", { derivator, sizeof(derivator)});
     BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
     BOOST_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
     decrypter.close();
-    
-    
+
+
 //    RED_CHECK_EQUAL(res2, 4);
     RED_CHECK_MEM_C(make_array_view(clear, 4), "toto");
 
@@ -286,7 +286,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 8);
         RED_CHECK_EQUAL(res2.consumed, 0);
-        
+
     }
     RED_CHECK_EQUAL(offset, 8660);
 
@@ -299,13 +299,13 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     }
 
     char clear[sizeof(randomSample)+sizeof(randomSample)] = {};
-    
+
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Encrypted);
     decrypter.open("./tmp1.enc", { derivator, sizeof(derivator)});
     BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, sizeof(clear)));
     BOOST_CHECK_EQUAL(0, decrypter.partial_read(clear, 1));
     decrypter.close();
-    
+
 
     RED_CHECK_MEM_AA(make_array_view(clear, sizeof(randomSample)), randomSample);
     RED_CHECK_MEM_AA(make_array_view(clear + sizeof(randomSample),  sizeof(randomSample)), randomSample);
@@ -330,8 +330,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac2.update(result, 4096);
     hmac2.final(qhash2);
 
-
-    if (SNAPPY_VERSION < (1<<16|1<<8|4)) {
+    #if SNAPPY_VERSION < (1<<16|1<<8|4)
         auto expected_qhash = cstr_array_view(
             "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee"
             "\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2"
@@ -341,27 +340,20 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
             "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c"
             "\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35"
             );
-
-        RED_CHECK_MEM_AA(qhash, expected_qhash);
-        RED_CHECK_MEM_AA(fhash, expected_fhash);
-        RED_CHECK_MEM_AA(qhash2, expected_qhash);
-        RED_CHECK_MEM_AA(fhash2, expected_fhash);
-    }
-    else {
+    #else
         auto expected_qhash = cstr_array_view(
-        "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
+            "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
             );
 
         auto expected_fhash = cstr_array_view(
-        "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
+            "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
             );
+    #endif
 
-        RED_CHECK_MEM_AA(qhash, expected_qhash);
-        RED_CHECK_MEM_AA(fhash, expected_fhash);
-        RED_CHECK_MEM_AA(qhash2, expected_qhash);
-        RED_CHECK_MEM_AA(fhash2, expected_fhash);
-    }
-
+    RED_CHECK_MEM_AA(qhash, expected_qhash);
+    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK_MEM_AA(qhash2, expected_qhash);
+    RED_CHECK_MEM_AA(fhash2, expected_fhash);
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -1053,7 +1045,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
 
-        if (SNAPPY_VERSION < (1<<16|1<<8|4)) {
+        #if SNAPPY_VERSION < (1<<16|1<<8|4)
             auto expected_qhash = cstr_array_view(
                 "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
                 "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
@@ -1063,12 +1055,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
                 "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
                 "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
                 );
-            RED_CHECK_MEM_AA(qhash, expected_qhash);
-            RED_CHECK_MEM_AA(fhash, expected_fhash);
-            RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
-            RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
-        }
-        else {
+        #else
             auto expected_qhash = cstr_array_view(
                 "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
                 "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
@@ -1078,13 +1065,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
                 "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
                 "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
                 );
-            RED_CHECK_MEM_AA(qhash, expected_qhash);
-            RED_CHECK_MEM_AA(fhash, expected_fhash);
-            auto qh = ct.qhash(finalname);
-            auto fh = ct.fhash(finalname);
-            RED_CHECK_MEM_AA(qh.hash, expected_qhash);
-            RED_CHECK_MEM_AA(fh.hash, expected_fhash);
-        }
+        #endif
+        RED_CHECK_MEM_AA(qhash, expected_qhash);
+        RED_CHECK_MEM_AA(fhash, expected_fhash);
+        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
 
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
@@ -1257,19 +1242,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();
-        
-        if (SNAPPY_VERSION < ((1<<16)|(1<<8)|4)) {
+
+        #if SNAPPY_VERSION < (1<<16|1<<8|4)
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
                 " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
-        }
-        else {
+        #else
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
                 " f79f3df59b22338f876b0a084b5c55f7a894c97b4fbf197b3afbfae0e951d862\n");
-        }
+        #endif
     }
 
     RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));
