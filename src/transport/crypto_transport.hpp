@@ -824,6 +824,7 @@ public:
             return;
         }
         try {
+            LOG(LOG_INFO, "Out Crypto Transport: delete before close");
             uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
             uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
             this->close(qhash, fhash);
@@ -914,6 +915,10 @@ public:
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+        LOG(LOG_INFO, "Out Crypto Transport: clean close");
+        hexdump(qhash, MD_HASH::DIGEST_LENGTH);
+        hexdump(fhash, MD_HASH::DIGEST_LENGTH);
+
         // This should avoid double closes, we do not want that
         if (!this->out_file.is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::close error (double close error)");
