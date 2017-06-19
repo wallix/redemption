@@ -930,6 +930,7 @@ public:
             throw Error(ERR_TRANSPORT_CLOSED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
+        LOG(LOG_ERR, "OutCryptoTransport::hashes after calls to encrypter close");
         hexdump(qhash, MD_HASH::DIGEST_LENGTH);
         hexdump(fhash, MD_HASH::DIGEST_LENGTH);
 
