@@ -655,8 +655,6 @@ public:
             LOG(LOG_INFO, "final checksum");
             this->hm.final(fhash);
             this->hm4k.final(qhash);
-            hexdump(qhash, MD_HASH::DIGEST_LENGTH);
-            hexdump(fhash, MD_HASH::DIGEST_LENGTH);
         }
         return Result{{this->result_buffer, towrite}, 0u};
 
@@ -920,7 +918,7 @@ public:
     {
         LOG(LOG_INFO, "Out Crypto Transport: close (%s h=%s)", this->finalname, this->hash_filename);
         memset(qhash,0, sizeof(qhash));
-        memset(qhash,0, sizeof(fhash));
+        memset(fhash,0, sizeof(fhash));
         LOG(LOG_ERR, "OutCryptoTransport::Quick hash noinit");
         hexdump(qhash, MD_HASH::DIGEST_LENGTH);
         LOG(LOG_ERR, "OutCryptoTransport::Full hash noinit");
