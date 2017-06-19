@@ -820,6 +820,7 @@ public:
 
     ~OutCryptoTransport()
     {
+        LOG(LOG_INFO, "Out Crypto Transport: destructor");
         if (not this->is_open()) {
             return;
         }
@@ -863,6 +864,8 @@ public:
 
     void open(const char * const finalname, const char * const hash_filename, int groupid, const_byte_array derivator)
     {
+        LOG(LOG_INFO, "OutCrypto Transport open file %s (hash=%s)", finalname, hash_filename);
+    
         // This should avoid double open, we do not want that
         if (this->is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::open (double open error) %s", finalname);
@@ -875,7 +878,7 @@ public:
         }
         // basic compare filename
         if (0 == strcmp(finalname, hash_filename)){
-            LOG(LOG_ERR, "OutCryptoTransport::open finalname and hash_filename are same");
+            LOG(LOG_ERR, "OutCryptoTransport::open finalname and hash_filename are identical");
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
@@ -915,7 +918,7 @@ public:
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
-        LOG(LOG_INFO, "Out Crypto Transport: clean close");
+        LOG(LOG_INFO, "Out Crypto Transport: close (%s h=%s)", this->finalname, this->hash_filename);
         hexdump(qhash, MD_HASH::DIGEST_LENGTH);
         hexdump(fhash, MD_HASH::DIGEST_LENGTH);
 
