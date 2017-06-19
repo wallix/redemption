@@ -921,7 +921,9 @@ public:
         LOG(LOG_INFO, "Out Crypto Transport: close (%s h=%s)", this->finalname, this->hash_filename);
         memset(qhash,0, sizeof(qhash));
         memset(qhash,0, sizeof(fhash));
+        LOG(LOG_ERR, "OutCryptoTransport::Quick hash noinit");
         hexdump(qhash, MD_HASH::DIGEST_LENGTH);
+        LOG(LOG_ERR, "OutCryptoTransport::Full hash noinit");
         hexdump(fhash, MD_HASH::DIGEST_LENGTH);
 
         // This should avoid double closes, we do not want that
