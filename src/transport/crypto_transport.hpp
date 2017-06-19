@@ -626,6 +626,7 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
+        LOG(LOG_INFO, "Ocrypto close");
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
