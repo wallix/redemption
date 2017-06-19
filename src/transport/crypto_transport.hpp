@@ -651,9 +651,11 @@ public:
         }
 
         if (this->checksum) {
+            LOG(LOG_INFO, "final checksum");
             this->hm.final(fhash);
             this->hm4k.final(qhash);
-
+            hexdump(qhash, MD_HASH::DIGEST_LENGTH);
+            hexdump(fhash, MD_HASH::DIGEST_LENGTH);
         }
         return Result{{this->result_buffer, towrite}, 0u};
 
@@ -917,6 +919,7 @@ public:
             throw Error(ERR_TRANSPORT_CLOSED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
+
         this->out_file.send(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
@@ -941,6 +944,7 @@ public:
             this->hash_filename.c_str(),
             O_WRONLY | O_CREAT,
             this->groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)));
+
         if (!hash_out_file.is_open()){
             int const err = errno;
             LOG(LOG_ERR, "OutCryptoTransport::open: open failed hash file %s: %s", this->hash_filename, strerror(err));
