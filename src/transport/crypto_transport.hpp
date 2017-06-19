@@ -919,6 +919,8 @@ public:
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         LOG(LOG_INFO, "Out Crypto Transport: close (%s h=%s)", this->finalname, this->hash_filename);
+        memset(qhash,0, sizeof(qhash));
+        memset(qhash,0, sizeof(fhash));
         hexdump(qhash, MD_HASH::DIGEST_LENGTH);
         hexdump(fhash, MD_HASH::DIGEST_LENGTH);
 
@@ -928,6 +930,8 @@ public:
             throw Error(ERR_TRANSPORT_CLOSED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
+        hexdump(qhash, MD_HASH::DIGEST_LENGTH);
+        hexdump(fhash, MD_HASH::DIGEST_LENGTH);
 
         this->out_file.send(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
