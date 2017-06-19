@@ -626,7 +626,6 @@ public:
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
-        LOG(LOG_INFO, "Ocrypto close");
         size_t towrite = 0;
         if (this->encryption) {
             size_t buflen = sizeof(this->result_buffer);
@@ -652,9 +651,9 @@ public:
         }
 
         if (this->checksum) {
-            LOG(LOG_INFO, "final checksum");
             this->hm.final(fhash);
             this->hm4k.final(qhash);
+
         }
         return Result{{this->result_buffer, towrite}, 0u};
 
@@ -818,12 +817,10 @@ public:
 
     ~OutCryptoTransport()
     {
-        LOG(LOG_INFO, "Out Crypto Transport: destructor");
         if (not this->is_open()) {
             return;
         }
         try {
-            LOG(LOG_INFO, "Out Crypto Transport: delete before close");
             uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
             uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
             this->close(qhash, fhash);
@@ -862,8 +859,6 @@ public:
 
     void open(const char * const finalname, const char * const hash_filename, int groupid, const_byte_array derivator)
     {
-        LOG(LOG_INFO, "OutCrypto Transport open file %s (hash=%s)", finalname, hash_filename);
-    
         // This should avoid double open, we do not want that
         if (this->is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::open (double open error) %s", finalname);
@@ -876,7 +871,7 @@ public:
         }
         // basic compare filename
         if (0 == strcmp(finalname, hash_filename)){
-            LOG(LOG_ERR, "OutCryptoTransport::open finalname and hash_filename are identical");
+            LOG(LOG_ERR, "OutCryptoTransport::open finalname and hash_filename are same");
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         snprintf(this->tmpname, sizeof(this->tmpname), "%sred-XXXXXX.tmp", finalname);
@@ -915,25 +910,18 @@ public:
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {
-        LOG(LOG_INFO, "Out Crypto Transport: close (%s h=%s)", this->finalname, this->hash_filename);
-        memset(qhash,0, sizeof(qhash));
-        memset(fhash,0, sizeof(fhash));
-        LOG(LOG_ERR, "OutCryptoTransport::Quick hash noinit");
-        hexdump(qhash, MD_HASH::DIGEST_LENGTH);
-        LOG(LOG_ERR, "OutCryptoTransport::Full hash noinit");
-        hexdump(fhash, MD_HASH::DIGEST_LENGTH);
-
+    {   
+        // Force hash result if no checksum asked
+        if (!this->with_checksum){
+            memset(qhash, 0xFF, sizeof(qhash));
+            memset(fhash, 0xFF, sizeof(fhash));
+        }
         // This should avoid double closes, we do not want that
         if (!this->out_file.is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::close error (double close error)");
             throw Error(ERR_TRANSPORT_CLOSED);
         }
         const ocrypto::Result res = this->encrypter.close(qhash, fhash);
-        LOG(LOG_ERR, "OutCryptoTransport::hashes after calls to encrypter close");
-        hexdump(qhash, MD_HASH::DIGEST_LENGTH);
-        hexdump(fhash, MD_HASH::DIGEST_LENGTH);
-
         this->out_file.send(res.buf.data(), res.buf.size());
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
@@ -958,7 +946,6 @@ public:
             this->hash_filename.c_str(),
             O_WRONLY | O_CREAT,
             this->groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR)));
-
         if (!hash_out_file.is_open()){
             int const err = errno;
             LOG(LOG_ERR, "OutCryptoTransport::open: open failed hash file %s: %s", this->hash_filename, strerror(err));

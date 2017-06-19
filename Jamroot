@@ -223,7 +223,7 @@ exe rdpproxy
 lib libscytale
    :
        scytale.o
-       $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
+       $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
 
        openssl
        crypto

@@ -165,7 +165,12 @@ struct RedCryptoWriterHandle
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn)
     , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd, fstat)
-    {}
+    {
+        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
+        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
+        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
+        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
+    }
 
 private:
     struct RandomWrapper
@@ -222,7 +227,12 @@ struct RedCryptoReaderHandle
                         )
     : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
     , in_crypto_transport(cctxw.cctx, encryption)
-    {}
+    {
+        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
+        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
+        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
+        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
+    }
 
     CryptoContextWrapper cctxw;
 
@@ -306,7 +316,27 @@ RedCryptoWriterHandle * scytale_writer_new_with_test_random(
 int scytale_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    handle->error_ctx.set_error(Error(NO_ERROR));
+    handle->error_ctx.set_error(Err    def test_reader_clear(self):
+        pass
+        test_text = b"We write, and \0again, and so on."
+        test_file = "./clear3.txt"
+        derivator = test_file
+
+        checksums = []
+        with CryptoWriter(0, 0, test_file, derivator, checksums) as x:
+            to_send = test_text
+            while to_send:
+                res = x.write(to_send)
+                to_send = to_send[res:]
+            self.assertEqual(len(to_send), 0)
+
+        data = ""
+        with CryptoReader(test_file) as cr:
+            data = "".join(line for line in cr.readall())
+        os.unlink(test_file)
+        os.unlink('/var/wab/hash/%s' % os.path.basename(test_file))
+
+        self.assertEqual(data, test_text)or(NO_ERROR));
     CHECK_NOTHROW(handle->out_crypto_transport.open(path, hashpath, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
