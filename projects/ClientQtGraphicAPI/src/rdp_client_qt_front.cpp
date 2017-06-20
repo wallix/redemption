@@ -706,18 +706,18 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
-        CHANNELS::ChannelDef channel_WabDiag { "WabDiag"
-                                           , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                             GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                           , CHANNELS::CHANNEL_CHUNK_LENGTH+3
-                                           };
+        CHANNELS::ChannelDef channel_WabDiag { channel_names::WabDiag
+                                             , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                               GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                             , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                             };
         this->cl.push_back(channel_WabDiag);
 
         CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+4
                                                  };
         this->cl.push_back(channel_audio_output);
 
@@ -748,7 +748,7 @@ public:
 
         InStream chunk_series = chunk.clone();
 
-        if (!strcmp(channel.name, channel_names::cliprdr)) {
+        if (channel.name == channel_names::cliprdr) {
             //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
@@ -1209,7 +1209,7 @@ public:
 
 
 
-        } else if (!strcmp(channel.name, channel_names::rdpdr)) {
+        } else if (channel.name == channel_names::rdpdr) {
 
             if (this->fileSystemData.writeData_to_wait) {
 
@@ -2471,7 +2471,7 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
-        } else  if (!strcmp(channel.name, channel_names::rdpsnd)) {
+        } else  if (channel.name == channel_names::rdpsnd) {
 
 
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
@@ -2689,7 +2689,7 @@ public:
 
 
 
-        } else if (!strcmp(channel.name, "WabDiag")) {
+        } else if (channel.name == channel_names::WabDiag) {
 
             int len = chunk.in_uint32_le();
             std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
@@ -2715,7 +2715,7 @@ public:
 
 
 
-    void process_client_clipboard_out_data(const char * const front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
+    void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
 
         // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
