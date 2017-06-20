@@ -155,10 +155,10 @@ protected:
         {
             if ((
                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && !::strcasecmp(this->channel.name, channel_names::cliprdr)
+                && this->channel.name == channel_names::cliprdr
             ) || (
                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && !::strcasecmp(this->channel.name, channel_names::rdpdr)
+                && this->channel.name == channel_names::rdpdr
             )) {
                 const bool send              = true;
                 const bool from_or_to_client = true;
@@ -177,7 +177,7 @@ protected:
         CryptContext&   encrypt;
         int             encryption_level;
         uint16_t        user_id;
-        const char *    channel_name;
+        CHANNELS::ChannelNameId channel_name;
         uint16_t        channel_id;
         bool            show_protocol;
 
@@ -188,7 +188,7 @@ protected:
                        CryptContext& encrypt,
                        int encryption_level,
                        uint16_t user_id,
-                       const char * channel_name,
+                       CHANNELS::ChannelNameId channel_name,
                        uint16_t channel_id,
                        bool show_protocol,
                        RDPVerbose verbose)
@@ -213,10 +213,10 @@ protected:
 
             if ((
                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && !::strcasecmp(this->channel_name, channel_names::cliprdr)
+                && this->channel_name == channel_names::cliprdr
             ) || (
                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && !::strcasecmp(this->channel_name, channel_names::rdpdr)
+                && this->channel_name == channel_names::rdpdr
             )) {
                 const bool send              = true;
                 const bool from_or_to_client = false;
@@ -302,7 +302,7 @@ protected:
 
     const bool enable_auth_channel;
 
-    char auth_channel[8];
+    CHANNELS::ChannelNameId auth_channel;
     int  auth_channel_flags;
     int  auth_channel_chanid;
 
@@ -983,12 +983,14 @@ public:
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
-        memset(this->auth_channel, 0, sizeof(this->auth_channel));
-        strncpy(this->auth_channel,
-                ((!(*mod_rdp_params.auth_channel) ||
-                  !strncmp(mod_rdp_params.auth_channel, "*", 2)) ? "wablnch"
-                                                               : mod_rdp_params.auth_channel),
-                sizeof(this->auth_channel) - 1);
+        switch (mod_rdp_params.auth_channel) {
+            case CHANNELS::ChannelNameId():
+            case CHANNELS::ChannelNameId("*"):
+                this->auth_channel = CHANNELS::ChannelNameId("wablnch");
+                break;
+            default:
+                this->auth_channel = mod_rdp_params.auth_channel;
+        }
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
@@ -1498,7 +1500,7 @@ public:
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-            const char* channel_name) const
+        CHANNELS::ChannelNameId channel_name) const
     {
         if (!this->authorization_channels.is_authorized(channel_name))
         {
@@ -1524,7 +1526,7 @@ protected:
     }
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            const char* channel_name)
+        CHANNELS::ChannelNameId channel_name)
     {
         const CHANNELS::ChannelDef* channel =
             this->mod_channel_list.get_by_name(channel_name);
@@ -1545,7 +1547,7 @@ protected:
                  GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
                 this->verbose);
 
-        if (::strcasecmp(channel_name, channel_names::rdpdr)) {
+        if (channel_name == channel_names::rdpdr) {
             return std::unique_ptr<VirtualChannelDataSender>(
                 std::move(to_server_sender));
         }
@@ -1894,7 +1896,7 @@ public:
         }
     }
 
-    void send_to_front_channel( const char * const mod_channel_name, uint8_t const * data
+    void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data
                               , size_t length, size_t chunk_size, int flags) override {
         if (this->transparent_recorder) {
             this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
@@ -1996,10 +1998,10 @@ public:
         }
     }
 
-    void send_to_mod_channel( const char * const front_channel_name
-                                    , InStream & chunk
-                                    , size_t length
-                                    , uint32_t flags) override {
+    void send_to_mod_channel(
+        CHANNELS::ChannelNameId front_channel_name,
+        InStream & chunk, size_t length, uint32_t flags
+    ) override {
         if (bool(this->verbose & RDPVerbose::basic_trace7)) {
             LOG(LOG_INFO,
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
@@ -2014,17 +2016,18 @@ public:
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
-        if (!::strcasecmp(front_channel_name, channel_names::cliprdr)) {
-            this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
-        }
-        else if (!::strcasecmp(front_channel_name, channel_names::rail)) {
-            this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
-        }
-        else if (!::strcasecmp(front_channel_name, channel_names::rdpdr)) {
-            this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
-        }
-        else {
-            this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
+        switch (front_channel_name) {
+            case channel_names::cliprdr:
+                this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
+                break;
+            case channel_names::rail:
+                this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
+                break;
+            case channel_names::rdpdr:
+                this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
+                break;
+            default:
+                this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
 
@@ -2347,32 +2350,27 @@ public:
                     bool has_rdpsnd_channel  = false;
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                        if (!this->remote_program &&
-                            !::strncmp(channel_item.name, "rail", 4)) {
+                        if (!this->remote_program && channel_item.name == channel_names::rail) {
                             memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                 ((!::strcasecmp(channel_item.name, channel_names::rdpdr) ||
-                                   !::strcasecmp(channel_item.name, channel_names::rdpsnd)) &&
+                                 ((channel_item.name == channel_names::rdpdr ||
+                                   channel_item.name == channel_names::rdpsnd) &&
                                   this->file_system_drive_manager.HasManagedDrive())
                         ) {
-                            if (!::strcasecmp(channel_item.name, channel_names::cliprdr)) {
-                                has_cliprdr_channel = true;
+                            switch (channel_item.name) {
+                                case channel_names::cliprdr: has_cliprdr_channel = true; break;
+                                case channel_names::rdpdr:   has_rdpdr_channel = true; break;
+                                case channel_names::rdpsnd:  has_rdpsnd_channel = true; break;
                             }
-                            else if (!::strcasecmp(channel_item.name, channel_names::rdpdr)) {
-                                has_rdpdr_channel = true;
-                            }
-                            else if (!::strcasecmp(channel_item.name, channel_names::rdpsnd)) {
-                                has_rdpsnd_channel = true;
-                            }
-                            ::memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
+                            ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                         }
                         else {
                             ::memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
-                        ::memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                        def.name = CHANNELS::ChannelNameId(cs_net.channelDefArray[index].name);
                         def.flags = channel_item.flags;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)) {
                             def.log(index);
@@ -2384,12 +2382,12 @@ public:
                     if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                "%s", channel_names::rdpdr);
+                                "%s", channel_names::rdpdr.c_str());
                         cs_net.channelDefArray[cs_net.channelCount].options =
                               GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                         CHANNELS::ChannelDef def;
-                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
+                        def.name = channel_names::rdpdr;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)){
                             def.log(cs_net.channelCount);
@@ -2402,13 +2400,13 @@ public:
                     if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                "%s", channel_names::cliprdr);
+                                "%s", channel_names::cliprdr.c_str());
                         cs_net.channelDefArray[cs_net.channelCount].options =
                               GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                             | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
                         CHANNELS::ChannelDef def;
-                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
+                        def.name = channel_names::cliprdr;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)){
                             def.log(cs_net.channelCount);
@@ -2423,12 +2421,12 @@ public:
                         this->file_system_drive_manager.HasManagedDrive()) {
                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                "%s", channel_names::rdpsnd);
+                                "%s", channel_names::rdpsnd.c_str());
                         cs_net.channelDefArray[cs_net.channelCount].options =
                               GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                         CHANNELS::ChannelDef def;
-                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
+                        def.name = channel_names::rdpsnd;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)){
                             def.log(cs_net.channelCount);
@@ -2439,12 +2437,12 @@ public:
 
                     // Inject a new channel for auth_channel virtual channel (wablauncher)
                     if (this->enable_auth_channel) {
-                        REDASSERT(this->auth_channel[0]);
-                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
+                        REDASSERT(this->auth_channel.c_str()[0]);
+                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel.c_str(), 8);
                         cs_net.channelDefArray[cs_net.channelCount].options =
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                         CHANNELS::ChannelDef def;
-                        memcpy(def.name, this->auth_channel, 8);
+                        def.name = this->auth_channel;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)){
                             def.log(cs_net.channelCount);
@@ -2454,12 +2452,11 @@ public:
                     }
 
                     if (this->enable_session_probe) {
-                        const char * session_probe_channel_name = "sespro\0\0";
-                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, session_probe_channel_name, 8);
+                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::sespro.c_str(), 8);
                         cs_net.channelDefArray[cs_net.channelCount].options =
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                         CHANNELS::ChannelDef def;
-                        memcpy(def.name, session_probe_channel_name, 8);
+                        def.name = channel_names::sespro;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::basic_trace7)){
                             def.log(cs_net.channelCount);
@@ -3566,21 +3563,20 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-                 if (  this->enable_auth_channel
-                    && !::strcasecmp(mod_channel.name, this->auth_channel)) {
+                 if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!::strcasecmp(mod_channel.name, "sespro")) {
+            else if (mod_channel.name == channel_names::sespro) {
                 this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             // Clipboard is a Clipboard PDU
-            else if (!::strcasecmp(mod_channel.name, channel_names::cliprdr)) {
+            else if (mod_channel.name == channel_names::cliprdr) {
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!::strcasecmp(mod_channel.name, channel_names::rail)) {
+            else if (mod_channel.name == channel_names::rail) {
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (!::strcasecmp(mod_channel.name, channel_names::rdpdr)) {
+            else if (mod_channel.name == channel_names::rdpdr) {
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {

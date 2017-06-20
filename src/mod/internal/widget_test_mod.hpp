@@ -108,7 +108,7 @@ public:
 
     // Callback
 
-    void send_to_mod_channel(const char* front_channel_name,
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                              InStream& chunk, size_t length,
                              uint32_t flags) override
     {

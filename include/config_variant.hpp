@@ -14,22 +14,12 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2016
+*   Copyright (C) Wallix 2013-2017
 *   Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-struct FakeFstat : Fstat
-{
-    virtual int stat(const char * filename, struct stat & stat)
-    {
-        memset(&stat, 0, sizeof(stat));
-        return 0;
-    }
-};
-
+#define REDEMPTION_CONFIG_AUTHFILE "/tmp/redemption-sesman-sock"
+#define REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION 0
+#define REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "/K"

@@ -182,6 +182,15 @@ public:
         }
         return false;
     }
+
+    void update_inactivity_timeout(time_t inactivity_timeout) {
+        this->inactivity_timeout = inactivity_timeout;
+    }
+
+    time_t get_inactivity_timeout() {
+        return this->inactivity_timeout;
+    }
+
 };
 
 class AclSerializer : ReportMessageApi
@@ -294,6 +303,19 @@ public:
                 this->ini.set_acl<cfg::context::rejected>(
                     this->ini.get<cfg::context::manager_disconnect_reason>());
                 this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
+            }
+        }
+    }
+
+    time_t get_inactivity_timeout() override {
+        return this->inactivity.get_inactivity_timeout();
+    }
+
+    void update_inactivity_timeout() override {
+        time_t conn_opts_inactivity_timeout = this->ini.get<cfg::globals::inactivity_timeout>().count();
+        if (conn_opts_inactivity_timeout > 0) {
+            if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
+                this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
             }
         }
     }

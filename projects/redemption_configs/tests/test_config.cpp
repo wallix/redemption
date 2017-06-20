@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestConfigFromFile)
           "persistent_path = tmp/raw/persistent\n"
         ;
     }
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), "/tmp/tmp-rdpproxy.ini");
+    configuration_load(ini.configuration_holder(), "/tmp/tmp-rdpproxy.ini");
     RED_CHECK_EQUAL("/tmp/raw/movie/",       ini.get<cfg::globals::wrm_path>());
     RED_CHECK_EQUAL("./tmp/raw/persistent/", ini.get<cfg::globals::persistent_path>());
 }
@@ -387,7 +387,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
@@ -610,7 +610,7 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -804,7 +804,7 @@ RED_AUTO_TEST_CASE(TestConfig2)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1002,7 +1002,7 @@ RED_AUTO_TEST_CASE(TestConfig3)
 
     ini.set<cfg::mod_rdp::shell_working_directory>("C:\\");
 
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1173,7 +1173,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
                           );
 
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1345,7 +1345,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
                            "compression=0x3\n"
                            "cache=0\n"
                            );
-    cfg_loader.cparse(ini.configuration_holder(), oss2);
+    configuration_load(ini.configuration_holder(), oss2);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1500,7 +1500,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     // - unrecognized lines are ignored
     // - every characters following # are ignored until end of line (comments)
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1663,7 +1662,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
                            "bitmap_compression=no\n"
                            );
 
-    cfg_loader.cparse(ini.configuration_holder(), ifs2);
+    configuration_load(ini.configuration_holder(), ifs2);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1888,7 +1887,6 @@ RED_AUTO_TEST_CASE(TestConfigTools)
 RED_AUTO_TEST_CASE(TestContextSetValue)
 {
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder());
 
     // bitrate, framerate, qscale
     ini.get_acl_field(AUTHID_CONTEXT_OPT_BITRATE).set(cstr_array_view("80000"));

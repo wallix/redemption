@@ -468,7 +468,7 @@ public:
         }
 
 
-        if (!strcmp(channel.name, channel_names::cliprdr)) {
+        if (channel.name == channel_names::cliprdr) {
             //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             const uint16_t server_message_type = chunk.in_uint16_le();
@@ -555,7 +555,8 @@ public:
                         break;
                 }
             }
-        } else if (!strcmp(channel.name, channel_names::rdpdr)) {
+        }
+        else if (channel.name == channel_names::rdpdr) {
 
             uint16_t component = chunk.in_uint16_le();
             uint16_t packetId  = chunk.in_uint16_le();

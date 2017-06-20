@@ -20,17 +20,25 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE TestXXXXXXXXXX
+#define RED_TEST_MODULE TestChannelNames
 #include "system/redemption_unit_tests.hpp"
 
-
-#define LOGNULL
+//#define LOGNULL
 //#define LOGPRINT
-#include "utils/log.hpp"
+#include "core/channel_names.hpp"
 
-//#include "path/to/file.hpp"
-
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestChannelName)
 {
-    RED_CHECK(true);
+    switch (CHANNELS::ChannelNameId("ABc"))
+    {
+        case CHANNELS::ChannelNameId("abc"):
+            break;
+        case CHANNELS::ChannelNameId("abcdef"):
+        default:
+            RED_CHECK(false);
+    }
+
+    RED_CHECK_EQ(CHANNELS::ChannelNameId("abcdefg").c_str(), "abcdefg");
+    RED_CHECK_EQ(CHANNELS::ChannelNameId("aBC").c_str(), "abc");
+    RED_CHECK_EQ(channel_names::rdpdr.c_str(), "rdpdr");
 }

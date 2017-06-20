@@ -165,7 +165,12 @@ struct RedCryptoWriterHandle
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn)
     , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd, fstat)
-    {}
+    {
+        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
+        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
+        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
+        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
+    }
 
 private:
     struct RandomWrapper
@@ -222,7 +227,12 @@ struct RedCryptoReaderHandle
                         )
     : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
     , in_crypto_transport(cctxw.cctx, encryption)
-    {}
+    {
+        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
+        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
+        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
+        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
+    }
 
     CryptoContextWrapper cctxw;
 
@@ -399,13 +409,30 @@ char const * scytale_reader_error_message(RedCryptoReaderHandle * handle)
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
-int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file) {
+int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file) {
+    SCOPED_TRACE;
+    try {
+        InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
+        hash_to_hashhex(fhash.hash, handle->fhashhex);
+    }
+    catch (Error const& err) {
+        EXIT_ON_ERROR(err);
+        handle->error_ctx.set_error(err);
+        return -1;
+    }
+    catch (...) {
+        EXIT_ON_EXCEPTION();
+        handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED});
+        return -1;
+    }
+    return 0;
+}
+
+int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file) {
     SCOPED_TRACE;
     try {
         InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
         hash_to_hashhex(qhash.hash, handle->qhashhex);
-        InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
-        hash_to_hashhex(fhash.hash, handle->fhashhex);
     }
     catch (Error const& err) {
         EXIT_ON_ERROR(err);

@@ -42,7 +42,7 @@ struct CopyPasteFront : FakeFront
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
-        ::memcpy(def.name, channel_names::cliprdr, strlen(channel_names::cliprdr) + 1);
+        def.name = channel_names::cliprdr;
         this->channel_def_array.push_back(def);
     }
 
@@ -54,7 +54,7 @@ struct CopyPasteFront : FakeFront
     void send_to_channel(
         const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
     ) override {
-        RED_REQUIRE(!::strcasecmp(channel.name, channel_names::cliprdr));
+        RED_REQUIRE(channel.name == channel_names::cliprdr);
 
         InStream stream(data, length);
         RDPECLIP::RecvPredictor rp(stream);
@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE(TestPaste)
     #define edit_paste(s, sig) {                                   \
         keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
         copy_paste.paste(edit);                                    \
-        RED_CHECK_EQUAL(s, edit.get_text());                     \
+        RED_CHECK_EQUAL(s, edit.get_text());                       \
                                                                    \
         edit.rdp_input_invalidate(edit.get_rect());                \
                                                                    \
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestPaste)
         /*sprintf(filename, "test_copy_paste_%d.png", __LINE__);*/ \
         /*mod.save_to_png(filename);*/                             \
                                                                    \
-        RED_CHECK_SIG(mod.gd.impl(), sig);                             \
+        RED_CHECK_SIG(mod.gd.impl(), sig);                         \
     }
     edit_paste("",
         "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c");

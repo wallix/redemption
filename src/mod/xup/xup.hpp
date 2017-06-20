@@ -342,7 +342,7 @@ enum {
         }
     }
 
-    void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
+    void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
         // TODO xup_mod::send_to_front_channel: unimplemented
         (void)mod_channel_name;
         (void)data;

@@ -2202,7 +2202,7 @@ private:
     } // lib_open_clip_channel
 
     //==============================================================================================================
-    const CHANNELS::ChannelDef * get_channel_by_name(const char * channel_name) const {
+    const CHANNELS::ChannelDef * get_channel_by_name(CHANNELS::ChannelNameId channel_name) const {
     //==============================================================================================================
         return this->front.get_channel_list().get_by_name(channel_name);
     } // get_channel_by_name
@@ -2316,12 +2316,12 @@ private:
         }
     } // lib_clip_data
 
-    //==============================================================================================================
-    void send_to_mod_channel( const char * const front_channel_name
-                                    , InStream & chunk
-                                    , size_t length
-                                    , uint32_t flags) override {
-    //==============================================================================================================
+    void send_to_mod_channel(
+        CHANNELS::ChannelNameId front_channel_name,
+        InStream & chunk,
+        size_t length,
+        uint32_t flags
+    ) override {
         if (this->verbose) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
@@ -2330,7 +2330,7 @@ private:
             return;
         }
 
-        if (!::strcasecmp(front_channel_name, channel_names::cliprdr)) {
+        if (front_channel_name == channel_names::cliprdr) {
             this->clipboard_send_to_vnc(chunk, length, flags);
         }
         if (this->verbose) {

@@ -138,14 +138,14 @@ public:
 
     // Callback
 
-    void send_to_mod_channel(const char* front_channel_name,
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                              InStream& chunk, size_t length,
                              uint32_t flags) override
     {
         LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk,
             length, flags);
 
-        if (!::strncmp(front_channel_name, "rail", 4)) { return; }
+        if (front_channel_name == channel_names::rail) { return; }
 
         mod_api& mod = this->rail_module_host.get_managed_mod();
 

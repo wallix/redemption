@@ -88,15 +88,21 @@ public:
                         uint16_t chunk_size              = payload.in_uint16_le();
                         uint32_t flags                   = payload.in_uint32_le();
 
-                        char mod_channel_name[256];
-                        payload.in_copy_bytes(mod_channel_name, mod_channel_name_length);
-                        mod_channel_name[mod_channel_name_length] = 0;
+                        if (mod_channel_name_length > 8) {
+                            payload.in_skip_bytes(mod_channel_name_length);
+                        }
+                        else {
+                            char mod_channel_name[8]{};
+                            payload.in_copy_bytes(mod_channel_name, mod_channel_name_length);
+                            mod_channel_name[mod_channel_name_length] = 0;
 
-                        const CHANNELS::ChannelDef * front_channel =
-                            this->consumer->get_channel_list().get_by_name(mod_channel_name);
-                        if (front_channel) {
-                            this->consumer->send_to_channel(*front_channel,
-                                payload.in_uint8p(length), length, chunk_size, flags);
+                            const CHANNELS::ChannelDef * front_channel =
+                                this->consumer->get_channel_list().get_by_name(
+                                    CHANNELS::ChannelNameId(mod_channel_name));
+                            if (front_channel) {
+                                this->consumer->send_to_channel(*front_channel,
+                                    payload.in_uint8p(length), length, chunk_size, flags);
+                            }
                         }
                     }
                     break;

@@ -531,22 +531,22 @@ public:
     void InitializeVirtualChannelList() {
         CHANNELS::ChannelDef channel_item;
 
-        strcpy(channel_item.name, "rdpdr");
+        channel_item.name = channel_names::rdpdr;
         channel_item.flags  = 0x80800000;
         channel_item.chanid = 1004;
         this->channel_list.push_back(channel_item);
 
-        strcpy(channel_item.name, "rdpsnd");
+        channel_item.name = channel_names::rdpsnd;
         channel_item.flags  = 0xc0000000;
         channel_item.chanid = 1005;
         this->channel_list.push_back(channel_item);
 
-        strcpy(channel_item.name, "drdynvc");
+        channel_item.name = channel_names::drdynvc;
         channel_item.flags  = 0xc0800000;
         channel_item.chanid = 1006;
         this->channel_list.push_back(channel_item);
 
-        strcpy(channel_item.name, "cliprdr");
+        channel_item.name = channel_names::cliprdr;
         channel_item.flags  = 0xc0a00000;
         channel_item.chanid = 1007;
         this->channel_list.push_back(channel_item);

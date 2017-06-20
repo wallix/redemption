@@ -28,6 +28,7 @@ namespace cfg {
         struct authfile;
         struct handshake_timeout;
         struct session_timeout;
+        struct inactivity_timeout;
         struct keepalive_grace_delay;
         struct authentication_timeout;
         struct close_timeout;
@@ -204,10 +205,6 @@ namespace cfg {
         struct session_log_with_checksum;
     };
 
-    struct remote_program {
-        struct allow_resize_hosted_desktop;
-    };
-
     struct debug {
         struct x224;
         struct mcs;
@@ -235,6 +232,10 @@ namespace cfg {
         struct ocr;
         struct ffmpeg;
         struct config;
+    };
+
+    struct remote_program {
+        struct allow_resize_hosted_desktop;
     };
 
     struct translation {

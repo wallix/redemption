@@ -156,10 +156,10 @@ public:
 
     bool is_up_and_running() override { return true; }
 
-    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
         LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
 
-        if (this->copy_paste && !::strcasecmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
+        if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }

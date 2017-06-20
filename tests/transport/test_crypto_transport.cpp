@@ -22,12 +22,14 @@
 #define RED_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGPRINT
-#define LOGNULL
+#define LOGPRINT
+//#define LOGNULL
 #include "utils/log.hpp"
 
 #include "transport/crypto_transport.hpp"
 #include "utils/parse.hpp"
+
+#include <snappy.h> // for SNAPPY_VERSION
 
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
@@ -51,245 +53,6 @@ namespace
         ));
     }
 }
-
-// TODO should be a subclass of InCryptoTransport
-class read_encrypted
-{
-public:
-    CryptoContext & cctx;
-    char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
-                                          // or already decrypted/decompressed data
-    uint32_t clear_pos;                   // current position in clear_data buf
-    uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
-
-    EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
-    uint32_t state;                       // enum crypto_file_state
-    unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-    int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
-    bool encrypted;
-    uint8_t * cdata;
-    size_t cdata_size;
-    size_t coffset;
-
-public:
-    explicit read_encrypted(CryptoContext & cctx, int encryption, uint8_t * cdata, size_t cdata_size)
-    : cctx(cctx)
-    , clear_data{}
-    , clear_pos(0)
-    , raw_size(0)
-    , state(0)
-    , MAX_CIPHERED_SIZE(0)
-    , encryption(encryption)
-    , encrypted(false)
-    , cdata(cdata)
-    , cdata_size(cdata_size)
-    , coffset(0)
-    {
-    }
-
-    ~read_encrypted()
-    {
-        EVP_CIPHER_CTX_cleanup(&this->ectx);
-    }
-
-    int open(uint8_t * derivator, size_t derivator_len)
-    {
-        size_t base_len = derivator_len;
-        const uint8_t * base = derivator;
-
-        ::memset(this->clear_data, 0, sizeof(this->clear_data));
-        ::memset(&this->ectx, 0, sizeof(this->ectx));
-        this->clear_pos = 0;
-        this->raw_size = 0;
-        this->state = 0;
-
-        const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-        this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
-        // todo: we could read in clear_data, that would avoid some copying
-        uint8_t data[40];
-        ::memcpy(data, &this->cdata[this->coffset], 40);
-        this->coffset += 40;
-        const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
-        this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
-
-        // Encrypted/Compressed file header (40 bytes)
-        // -------------------------------------------
-        // MAGIC: 4 bytes
-        // 0x57 0x43 0x46 0x4D (WCFM)
-        // VERSION: 4 bytes
-        // 0x01 0x00 0x00 0x00
-        // IV: 32 bytes
-        // (random)
-
-
-        Parse p(data+4);
-        // check version
-        {
-            const uint32_t version = p.in_uint32_le();
-            if (version > WABCRYPTOFILE_VERSION) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                    ::getpid(), version, WABCRYPTOFILE_VERSION);
-                errno = EINVAL;
-                return -1;
-            }
-        }
-
-        // TODO: replace p.p with some array view of 32 bytes ?
-        const uint8_t * const iv = p.p;
-        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-        const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
-        const int          nrounds = 5;
-        unsigned char      key[32];
-
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-        cctx.get_derived_key(trace_key, {base, base_len});
-
-        int evp_bytes_to_key_res = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-        if (32 != evp_bytes_to_key_res){
-            // TODO: add true error management
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-            errno = EINVAL;
-            return -1;
-        }
-
-        ::EVP_CIPHER_CTX_init(&this->ectx);
-        if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-            // TODO: add error management
-            errno = EINVAL;
-            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-            return -1;
-        }
-        return 0;
-    }
-
-    ssize_t read(char * data, size_t len)
-    {
-        if (this->encrypted){
-            if (this->state & CF_EOF) {
-                return 0;
-            }
-
-            unsigned int requested_size = len;
-
-            while (requested_size > 0) {
-                // Check how much we have already decoded
-                if (!this->raw_size) {
-                    uint8_t hlen[4] = {};
-                    ::memcpy(&hlen[0], &this->cdata[this->coffset], 4);
-                    this->coffset += 4;
-
-                    Parse p(hlen);
-                    uint32_t ciphered_buf_size = p.in_uint32_le();
-                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                        this->state = CF_EOF;
-                        this->clear_pos = 0;
-                        this->raw_size = 0;
-                        break;
-                    }
-
-                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                        return -1;
-                    }
-
-                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-
-                    //char ciphered_buf[ciphered_buf_size];
-                    unsigned char ciphered_buf[65536];
-                    //char compressed_buf[compressed_buf_size];
-                    unsigned char compressed_buf[65536];
-                    ::memcpy(&ciphered_buf[0], &this->cdata[this->coffset], ciphered_buf_size);
-                    this->coffset += ciphered_buf_size;
-
-                    int safe_size = compressed_buf_size;
-                    int remaining_size = 0;
-
-                    /* allows reusing of ectx for multiple encryption cycles */
-                    if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                        return -1;
-                    }
-                    if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                        return -1;
-                    }
-                    if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                        return -1;
-                    }
-                    compressed_buf_size = safe_size + remaining_size;
-
-                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                    const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<const char *>(compressed_buf),
-                            compressed_buf_size, this->clear_data, &chunk_size);
-
-                    switch (status)
-                    {
-                        case SNAPPY_OK:
-                            break;
-                        case SNAPPY_INVALID_INPUT:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                            return -1;
-                        case SNAPPY_BUFFER_TOO_SMALL:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                            return -1;
-                        default:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                            return -1;
-                    }
-
-                    this->clear_pos = 0;
-                    // When reading, raw_size represent the current chunk size
-                    this->raw_size = chunk_size;
-
-                    if (!this->raw_size) { // end of file reached
-                        break;
-                    }
-                }
-                // remaining_size is the amount of data available in decoded buffer
-                unsigned int remaining_size = this->raw_size - this->clear_pos;
-                // Check how much we can copy
-                unsigned int copiable_size = std::min(remaining_size, requested_size);
-                // Copy buffer to caller
-                ::memcpy(&data[len - requested_size], this->clear_data + this->clear_pos, copiable_size);
-                this->clear_pos      += copiable_size;
-                requested_size -= copiable_size;
-                // Check if we reach the end
-                if (this->raw_size == this->clear_pos) {
-                    this->raw_size = 0;
-                }
-            }
-            return len - requested_size;
-        }
-        else {
-            unsigned int requested_size = len;
-            if (this->raw_size){
-                unsigned int remaining_size = this->raw_size - this->clear_pos;
-                // Check how much we can copy
-                unsigned int copiable_size = std::min(remaining_size, requested_size);
-                // Copy buffer to caller
-                ::memcpy(&data[len - requested_size], this->clear_data + this->clear_pos, copiable_size);
-                this->clear_pos      += copiable_size;
-                requested_size -= copiable_size;
-                if (this->raw_size == this->clear_pos) {
-                    this->raw_size = 0;
-                    this->clear_pos = 0;
-                }
-                // if we have data in buffer, returning it is OK
-                return len - requested_size;
-            }
-            // for non encrypted file, returning partial read is OK
-            ::memcpy(&data[0], &this->cdata[this->coffset], len);
-            this->coffset += len;
-        }
-        // TODO: should never be reached
-        return -1;
-    }
-};
-
 
 RED_AUTO_TEST_CASE(TestEncryption1)
 {
@@ -425,6 +188,14 @@ RED_AUTO_TEST_CASE(TestEncryption2)
                                   };
     RED_CHECK_MEM_AA(make_array_view(result, 68), expected_result);
 
+    {
+        ::unlink("./tmp.enc");
+        int fd = open("./tmp.enc", O_CREAT|O_TRUNC|O_WRONLY, S_IRWXU);
+        int res = write(fd, &result[0], offset);
+        BOOST_CHECK_EQUAL(res, 68);
+        close(fd);
+    }
+
     auto expected_hash = cstr_array_view(
         "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
         "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
@@ -434,13 +205,22 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     RED_CHECK_MEM_AA(fhash, expected_hash);
 
     char clear[8192] = {};
-    read_encrypted decrypter(cctx, 1, result, offset);
-    decrypter.open(derivator, sizeof(derivator));
+//    read_encrypted decrypter(cctx, 1, result, offset);
+//    decrypter.open(derivator, sizeof(derivator));
 
-    size_t res2 = decrypter.read(clear, sizeof(clear));
-    RED_CHECK_EQUAL(res2, 4);
+//    size_t res2 = decrypter.read(clear, sizeof(clear));
+
+    InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Auto);
+    decrypter.open("./tmp.enc", { derivator, sizeof(derivator)});
+    BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
+    BOOST_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
+    decrypter.close();
+
+
+//    RED_CHECK_EQUAL(res2, 4);
     RED_CHECK_MEM_C(make_array_view(clear, 4), "toto");
 
+    RED_CHECK(0 == ::unlink("./tmp.enc"));
 }
 
 
@@ -456,7 +236,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     CryptoContext cctx;
     init_keys(cctx);
 
-    uint8_t result[16384];
+    uint8_t result[16384] = {};
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
@@ -507,26 +287,30 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
         offset += res2.buf.size();
         RED_CHECK_EQUAL(res2.buf.size(), 8);
         RED_CHECK_EQUAL(res2.consumed, 0);
+
     }
     RED_CHECK_EQUAL(offset, 8660);
 
-    char clear[sizeof(randomSample)] = {};
-    read_encrypted decrypter(cctx, 1, result, offset);
-    decrypter.open(derivator, sizeof(derivator));
+    {
+        ::unlink("./tmp1.enc");
+        int fd = open("./tmp1.enc", O_CREAT|O_TRUNC|O_WRONLY,S_IRWXU);
+        int res = write(fd, &result[0], offset);
+        BOOST_CHECK_EQUAL(res, 8660);
+        close(fd);
+    }
 
-    size_t res2 = decrypter.read(clear, sizeof(clear));
-    RED_CHECK_EQUAL(res2, sizeof(randomSample));
-    RED_CHECK_MEM_AA(clear, randomSample);
+    char clear[sizeof(randomSample)+sizeof(randomSample)] = {};
 
-    auto expected_qhash = cstr_array_view(
-        "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee"
-        "\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2");
-    auto expected_fhash = cstr_array_view(
-        "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c"
-        "\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35");
+    InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Encrypted);
+    decrypter.open("./tmp1.enc", { derivator, sizeof(derivator)});
+    BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, sizeof(clear)));
+    BOOST_CHECK_EQUAL(0, decrypter.partial_read(clear, 1));
+    decrypter.close();
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+
+    RED_CHECK_MEM_AA(make_array_view(clear, sizeof(randomSample)), randomSample);
+    RED_CHECK_MEM_AA(make_array_view(clear + sizeof(randomSample),  sizeof(randomSample)), randomSample);
+
 
     unsigned char fhash2[MD_HASH::DIGEST_LENGTH];
 
@@ -535,7 +319,10 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac.update(result, offset);
     hmac.final(fhash2);
 
-    RED_CHECK_MEM_AA(fhash2, expected_fhash);
+    InCryptoTransport::HASH fh = decrypter.fhash("./tmp1.enc");
+    RED_CHECK_MEM_AA(fh.hash, fhash);
+    RED_CHECK_MEM_AA(fh.hash, fhash2);
+
 
     unsigned char qhash2[MD_HASH::DIGEST_LENGTH];
 
@@ -544,7 +331,32 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac2.update(result, 4096);
     hmac2.final(qhash2);
 
+    #if SNAPPY_VERSION < (1<<16|1<<8|4)
+        auto expected_qhash = cstr_array_view(
+            "\x88\x80\x2e\x37\x08\xca\x43\x30\xed\xd2\x72\x27\x2d\x05\x5d\xee"
+            "\x01\x71\x4a\x12\xa5\xd9\x72\x84\xec\x0e\xd5\xaa\x47\x9e\xc3\xc2"
+            );
+
+        auto expected_fhash = cstr_array_view(
+            "\x62\x96\xe9\xa2\x20\x4f\x39\x21\x06\x4d\x1a\xcf\xf8\x6e\x34\x9c"
+            "\xd6\xae\x6c\x44\xd4\x55\x57\xd5\x29\x04\xde\x58\x7f\x1d\x0b\x35"
+            );
+    #else
+        auto expected_qhash = cstr_array_view(
+            "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
+            );
+
+        auto expected_fhash = cstr_array_view(
+            "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
+            );
+    #endif
+
+    RED_CHECK_MEM_AA(qhash, expected_qhash);
+    RED_CHECK_MEM_AA(fhash, expected_fhash);
     RED_CHECK_MEM_AA(qhash2, expected_qhash);
+    RED_CHECK_MEM_AA(fhash2, expected_fhash);
+
+    RED_CHECK(0 == ::unlink("./tmp1.enc"));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -848,15 +660,21 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b"
     );
 
+    // hash return FFFFFFF when value is read but was not computed
+
     RED_CHECK_MEM_AA(noenc_nocheck.fhash, noenc_nocheck.qhash);
     RED_CHECK_MEM_AC(
         noenc_nocheck.qhash,
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
+        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
     );
 
-    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_check.fhash);
-    RED_CHECK_MEM_AA(enc_nocheck.qhash, enc_check.qhash);
+    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_nocheck.qhash);
+    RED_CHECK_MEM_AC(
+        enc_nocheck.qhash,
+        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
+        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
+    );
 }
 
 
@@ -1023,8 +841,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
 
-        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_hash);
-        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_hash);
+        auto qh = ct.qhash(finalname);
+        auto fh = ct.qhash(finalname);
+
+        RED_CHECK_MEM_AA(qh.hash, expected_hash);
+        RED_CHECK_MEM_AA(fh.hash, expected_hash);
 
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
@@ -1089,8 +910,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(randomSample, sizeof(randomSample)));
 
-        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
-        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
+        auto qh = ct.qhash(finalname);
+        auto fh = ct.fhash(finalname);
+
+        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
+        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
     }
     {
         char hash_buf[512];
@@ -1206,15 +1030,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         ct.close(qhash, fhash);
     }
 
-    auto expected_qhash = cstr_array_view(
-        "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-        );
 
-    auto expected_fhash = cstr_array_view("\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-        );
-
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
 
     RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
 
@@ -1234,6 +1050,17 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
 
+        auto expected_qhash = cstr_array_view(
+            "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
+            );
+
+        auto expected_fhash = cstr_array_view(
+            "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
+            );
+        RED_CHECK_MEM_AA(qhash, expected_qhash);
+        RED_CHECK_MEM_AA(fhash, expected_fhash);
         RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
         RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
 
@@ -1297,8 +1124,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
                          make_array_view(clearSample, sizeof(clearSample)));
 
-        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
-        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
+        auto qh = ct.qhash(finalname);
+        auto fh = ct.fhash(finalname);
+
+        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
+        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
 
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
@@ -1405,10 +1235,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();
-        RED_CHECK_EQ(hash_buf,
-            "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
-            " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
-            " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
+
+        #if SNAPPY_VERSION < (1<<16|1<<8|4)
+            RED_CHECK_EQ(hash_buf,
+                "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
+                " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
+                " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
+        #else
+            RED_CHECK_EQ(hash_buf,
+                "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
+                " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
+                " f79f3df59b22338f876b0a084b5c55f7a894c97b4fbf197b3afbfae0e951d862\n");
+        #endif
     }
 
     RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));

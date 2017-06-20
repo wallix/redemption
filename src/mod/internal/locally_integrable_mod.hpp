@@ -236,9 +236,9 @@ struct LocallyIntegrableMod : public InternalMod {
         }
     }
 
-    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
         if (this->rail_enabled && this->client_execute &&
-            !::strcasecmp(front_channel_name, CHANNELS::channel_names::rail)) {
+            front_channel_name == CHANNELS::channel_names::rail) {
 
             this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }

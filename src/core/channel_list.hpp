@@ -24,8 +24,10 @@
 
 #pragma once
 
+#include "core/channel_names.hpp"
 #include "utils/stream.hpp"
 #include "transport/transport.hpp"
+#include "cxx/cxx.hpp"
 
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/sec.hpp"
@@ -58,28 +60,20 @@ namespace CHANNELS {
     {
         static const size_t max_size_name = 7;
 
-        // TODO ChannelName{ uint64_t internal_name; };
-        char     name[max_size_name+1];
+        ChannelNameId name;
         uint32_t flags;
         int      chanid;
 
         ChannelDef()
         : flags(0)
         , chanid(0)
-        {
-            this->name[0] = 0;
-        }
+        {}
 
-        ChannelDef(const char * name, uint32_t flags, int chanid)
-        : flags(flags)
+        ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
+        : name(name)
+        , flags(flags)
         , chanid(chanid)
-        {
-            size_t i = 0;
-            for (; i < max_size_name && name[i]; i++) {
-                this->name[i] = name[i];
-            }
-            this->name[i] = 0;
-        }
+        {}
 
         void log(unsigned index) const {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = 0x%8X, chanid = %u)",
@@ -118,11 +112,11 @@ namespace CHANNELS {
             this->channelCount++;
         }
 
-        const ChannelDef * get_by_name(const char * const name) const {
+        const ChannelDef * get_by_name(ChannelNameId name) const {
             const ChannelDef * channel = nullptr;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
-                if (::strcasecmp(name, item.name) == 0) {
+                if (name == item.name) {
                     channel = &item;
                     break;
                 }

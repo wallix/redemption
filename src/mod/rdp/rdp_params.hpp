@@ -23,6 +23,7 @@
 
 #include "configs/config_access.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
+#include "core/channel_names.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
@@ -93,7 +94,7 @@ struct ModRDPParams {
     const char * session_probe_process_monitoring_rules             = "";
 
     bool         ignore_auth_channel = false;
-    const char * auth_channel = "";
+    CHANNELS::ChannelNameId auth_channel;
 
     // Application WAB
     const char * alternate_shell = "";
@@ -261,7 +262,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_process_monitoring_rules);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_arguments);

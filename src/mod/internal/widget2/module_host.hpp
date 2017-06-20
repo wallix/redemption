@@ -59,18 +59,18 @@ private:
         }
 
         // Callback
-        void send_to_mod_channel(const char* front_channel_name,
+        void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                                  InStream& chunk, size_t length,
                                  uint32_t flags) override
         {
             if (this->managed_mod)
             {
                 return this->managed_mod->send_to_mod_channel(
-                        front_channel_name,
-                        chunk,
-                        length,
-                        flags
-                    );
+                    front_channel_name,
+                    chunk,
+                    length,
+                    flags
+                );
             }
         }
 
@@ -136,7 +136,7 @@ private:
             return false;
         }
 
-        void send_to_front_channel(const char* const mod_channel_name,
+        void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
                                    const uint8_t* data, size_t length,
                                    size_t chunk_size, int flags) override
         {

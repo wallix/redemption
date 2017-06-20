@@ -368,10 +368,14 @@ public:
     , height_(height)
     , rowsize_(width * Bpp)
     , data_([this]{
-        if (!(this->rowsize_ * this->height_)) {
+        size_t sz = this->rowsize_ * this->height_;
+        if (sz == 0) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
-        uint8_t * data = new (std::nothrow) uint8_t[this->rowsize_ * this->height_] {};
+        uint8_t * data = new (std::nothrow) uint8_t[sz];
+        // done this way because otherwise clang raise a zero-size-array is an extension warning
+        memset(data, 0, sz);
+
         if (nullptr == data) {
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }

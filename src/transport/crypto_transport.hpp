@@ -793,10 +793,10 @@ public:
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
         ReportError report_error = ReportError()
     ) noexcept
-    : encrypter(with_encryption, with_encryption || with_checksum, cctx, rnd)
+    : encrypter(with_encryption, with_checksum, cctx, rnd)
     , out_file(invalid_fd(), std::move(report_error))
     , with_encryption(with_encryption)
-    , with_checksum(with_encryption || with_checksum)
+    , with_checksum(with_checksum)
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)
@@ -910,7 +910,12 @@ public:
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {
+    {   
+        // Force hash result if no checksum asked
+        if (!this->with_checksum){
+            memset(qhash, 0xFF, sizeof(qhash));
+            memset(fhash, 0xFF, sizeof(fhash));
+        }
         // This should avoid double closes, we do not want that
         if (!this->out_file.is_open()){
             LOG(LOG_ERR, "OutCryptoTransport::close error (double close error)");

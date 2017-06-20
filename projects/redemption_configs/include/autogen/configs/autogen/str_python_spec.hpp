@@ -1,3 +1,9 @@
+#include "config_variant.hpp"
+
+#define CONFIG_PP_STRINGIZE_I(x) #x
+#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)
+
+
 "## Config file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
@@ -21,7 +27,7 @@
 "encryptionLevel = option('low', 'medium', 'high', default='low')\n\n"
 
 "#_advanced\n"
-"authfile = string(default='/tmp/redemption-sesman-sock')\n\n"
+"authfile = string(default='" REDEMPTION_CONFIG_AUTHFILE "')\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
@@ -30,6 +36,11 @@
 "# No traffic auto disconnection.\n"
 "# (is in second)\n"
 "session_timeout = integer(min=0, default=900)\n\n"
+
+"# No traffic auto disconnection.\n"
+"# (is in second)\n"
+"#_hidden\n"
+"inactivity_timeout = integer(min=0, default=0)\n\n"
 
 "# Keepalive.\n"
 "# (is in second)\n"
@@ -92,7 +103,7 @@
 "persistent_path = string(max=4096, default='" PERSISTENT_PATH "')\n\n"
 
 "#_hidden\n"
-"enable_wab_integration = boolean(default=False)\n\n"
+"enable_wab_integration = boolean(default=" CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) ")\n\n"
 
 "allow_using_multiple_monitors = boolean(default=False)\n\n"
 
@@ -394,7 +405,7 @@
 "session_probe_exe_or_file = string(max=511, default='||CMD')\n\n"
 
 "#_hidden\n"
-"session_probe_arguments = string(max=511, default='/K')\n\n"
+"session_probe_arguments = string(max=511, default='" REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "')\n\n"
 
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
@@ -677,10 +688,6 @@
 "#_advanced\n"
 "session_log_with_checksum = boolean(default=False)\n\n"
 
-"[remote_program]\n\n"
-
-"allow_resize_hosted_desktop = boolean(default=True)\n\n"
-
 "[debug]\n\n"
 
 "#_advanced\n"
@@ -761,6 +768,10 @@
 "#_advanced\n"
 "config = boolean(default=True)\n\n"
 
+"[remote_program]\n\n"
+
+"allow_resize_hosted_desktop = boolean(default=True)\n\n"
+
 "[translation]\n\n"
 
 "#_advanced\n"
@@ -777,3 +788,5 @@
 "#_advanced\n"
 "load_theme = string(default='')\n\n"
 
+#undef CONFIG_PP_STRINGIZE_I
+#undef CONFIG_PP_STRINGIZE

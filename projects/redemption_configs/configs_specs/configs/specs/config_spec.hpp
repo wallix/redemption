@@ -84,6 +84,26 @@ void config_spec_definition(Writer && W)
     } W;
 #endif
 
+    // force ordering section
+    {
+        char const * sections_name[] = {
+            "globals",
+            "session_log",
+            "client",
+            "mod_rdp",
+            "mod_vnc",
+            "mod_replay",
+            "ocr",
+            "video",
+            "crypto",
+            "debug",
+        };
+        for (char const * section : sections_name) {
+            W.section(section, [&]{});
+        }
+    }
+
+
     spec_attr_t<spec::attr::no_ini_no_gui>    const no_ini_no_gui{};
     spec_attr_t<spec::attr::ini_and_gui>      const ini_and_gui{};
     spec_attr_t<spec::attr::hidden_in_gui>    const hidden_in_gui{};
@@ -120,10 +140,11 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "notimestamp", set(false));
         W.member(advanced_in_gui, no_sesman, type_<Level>(), "encryptionLevel", set(Level::low));
-        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "authfile", set("/tmp/redemption-sesman-sock"));
+        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "authfile", set(CPP_MACRO(REDEMPTION_CONFIG_AUTHFILE)));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection."}, sesman::name{"inactivity_timeout"}, set(0));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "keepalive_grace_delay", desc{"Keepalive."}, set(30));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
@@ -149,7 +170,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "persistent_path", set(CPP_MACRO(PERSISTENT_PATH)));
         W.sep();
-        W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set(false));
+        W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set((CPP_MACRO(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "allow_using_multiple_monitors", set(false));
         W.sep();
@@ -319,7 +340,7 @@ void config_spec_definition(Writer && W)
         }, set(0));
 
         W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("||CMD"));
-        W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_arguments", set("/K"));
+        W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_MACRO(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
         W.sep();
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));

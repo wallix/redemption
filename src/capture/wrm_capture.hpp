@@ -1096,7 +1096,8 @@ public:
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , out((wrm_params.trace_type == TraceType::cryptofile),
-          (wrm_params.trace_type == TraceType::localfile_hashed),
+            (wrm_params.trace_type == TraceType::localfile_hashed)
+          ||(wrm_params.trace_type == TraceType::cryptofile),
            wrm_params.cctx,
            wrm_params.rnd,
            wrm_params.fstat,

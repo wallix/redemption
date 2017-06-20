@@ -93,6 +93,8 @@ namespace configs
 #include <chrono>
 //@}
 
+#include "config_variant.hpp"
+
 #include "configs/io.hpp"
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/variables_configuration_fwd.hpp"
