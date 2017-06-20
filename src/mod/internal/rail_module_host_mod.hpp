@@ -152,6 +152,12 @@ public:
         mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
+    void send_auth_channel_data(const char * string_data) override {
+        mod_api& mod = this->rail_module_host.get_managed_mod();
+
+        mod.send_auth_channel_data(string_data);
+    }
+
     // mod_api
 
     void draw_event(time_t now, gdi::GraphicApi& gapi) override
