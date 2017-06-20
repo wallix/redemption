@@ -416,6 +416,7 @@ public:
         this->_buttonDelConfProfil.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDelConfProfil) , SIGNAL (pressed()) , this, SLOT (deleteCurrentProtile()));
 
+
         this->_layoutConnection->addRow(&(this->_buttonRestorConfig), &(this->_buttonDelConfProfil));
 
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
@@ -430,6 +431,7 @@ public:
         this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
         this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
 
+
         this->_tlsBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
 
@@ -438,7 +440,6 @@ public:
 
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
-
 
 
         // VIEW TAB
@@ -458,9 +459,11 @@ public:
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
 
+
         this->_spanCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
         this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
+
 
         for (int i = 1; i <= Front_RDP_Qt_API::MAX_MONITOR_COUNT; i++) {
             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
@@ -468,11 +471,12 @@ public:
         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
         this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
+
+
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
 
         this->_viewTab->setLayout(this->_layoutView);
         this->_tabs->addTab(this->_viewTab, strView);
-
 
 
         // Services tab
@@ -500,7 +504,6 @@ public:
         this->_tabs->addTab(this->_servicesTab, strServices);
 
 
-
         // Keyboard tab
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
@@ -521,13 +524,16 @@ public:
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
 
+
         for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
             this->addRow();
             this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
                                this->_front->keyCustomDefinitions[i].scanCode,
                                this->_front->keyCustomDefinitions[i].ASCII8,
                                this->_front->keyCustomDefinitions[i].extended);
+
         }
+
 
 //         std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
 //         if(ifichier) {
@@ -570,6 +576,7 @@ public:
         this->addRow();
 
 
+
         this->_layoutKeyboard->addRow(this->_tableKeySetting);
 
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
@@ -584,13 +591,13 @@ public:
         this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
         this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
 
+
         this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
         QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
         this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
         this->_buttonDeleteKey->setGeometry(rectDeleteKey);
         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
         this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
-        //this->QObject::connect(this->_buttonDeleteKey , SIGNAL (released()), this, SLOT (deleteReleased()));
 
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
 

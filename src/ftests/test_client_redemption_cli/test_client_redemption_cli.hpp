@@ -383,7 +383,7 @@ public:
 
         std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
 
-        std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
+        //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
 
         if (this->out_path != std::string("")) {
             std::string out_path_movie = this->out_path + std::string("_nego_length");

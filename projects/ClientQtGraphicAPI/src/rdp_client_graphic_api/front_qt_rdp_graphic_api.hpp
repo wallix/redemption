@@ -1493,7 +1493,7 @@ class FrontQtRDPGraphicAPI : public Front_Qt_API
 
         Snapshoter(FrontQtRDPGraphicAPI & front) : front(front) {}
 
-        std::chrono::microseconds do_snapshot(
+        Microseconds periodic_snapshot(
             const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
         ) override {
             this->front.update_pointer_position(cursor_x, cursor_y);
