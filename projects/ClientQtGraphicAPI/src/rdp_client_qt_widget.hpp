@@ -525,14 +525,14 @@ public:
         this->_tableKeySetting->setColumnWidth(3 ,74);
 
 
-//         for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-//             this->addRow();
-//             this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
-//                                this->_front->keyCustomDefinitions[i].scanCode,
-//                                this->_front->keyCustomDefinitions[i].ASCII8,
-//                                this->_front->keyCustomDefinitions[i].extended);
-//
-//         }
+        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
+            this->addRow();
+            this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
+                               this->_front->keyCustomDefinitions[i].scanCode,
+                               this->_front->keyCustomDefinitions[i].ASCII8,
+                               this->_front->keyCustomDefinitions[i].extended);
+
+        }
 
 
 //         std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
