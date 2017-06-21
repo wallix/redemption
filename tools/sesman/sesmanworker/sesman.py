@@ -1362,7 +1362,7 @@ class Sesman():
                                 self.engine.get_target_password(selected_target) \
                                 or self.engine.get_primary_password(selected_target) \
                                 or ''
-                    self.target_app_rights[kv[u'target_application']] = selected_target
+                    self.target_app_rights[kv[u'target_application']] = (selected_target, app_params)
 
                     # kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
@@ -1444,16 +1444,6 @@ class Sesman():
                             ctime(),
                             None
                             )
-
-                    # if not trace_written:
-                    #     # write mwrm path to rdptrc (allow real time display)
-                    #     trace_written = True
-                    #     _status, _error = self.engine.write_trace(self.full_path)
-                    #     if not _status:
-                    #         _error = TR("Trace writer failed for %s") % self.full_path
-                    #         Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
-                    #         self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                    #         break
 
                     update_args = { "is_application": bool(application),
                                     "target_host": self._physical_target_host }
