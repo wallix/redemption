@@ -1103,6 +1103,7 @@ class Sesman():
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag
+            tosend["duration_max"] = infos.get("duration_max") or 0
         else:
             tosend["showform"] = False
         self.send_data(tosend)
@@ -1221,7 +1222,8 @@ class Sesman():
 
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
-                self.send_data({u'rejected': _error or TR(u"start_session_failed")})
+                self.send_data({
+                    u'rejected': mdecode(_error) or TR(u"start_session_failed")})
 
         if _status:
             kv['password'] = 'pass'
