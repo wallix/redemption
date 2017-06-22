@@ -779,7 +779,7 @@ private Q_SLOTS:
     void connexionReleased() {
 
         this->_front->connexionReleased();
-        if (this->_front->connected) {
+        if (this->_front->connected && this->_front->mod !=  nullptr) {
             bool alreadySet = false;
             this->_pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
 
@@ -794,7 +794,7 @@ private Q_SLOTS:
                     this->_accountData[i].port = this->get_portField();
                 }
             }
-            if (!alreadySet) {
+            if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
                 LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = this->get_IPField();
@@ -802,12 +802,11 @@ private Q_SLOTS:
                 this->_accountData[this->_accountNB].pwd   = this->get_PWDField();
                 this->_accountData[this->_accountNB].port  = this->get_portField();
                 this->_accountNB++;
-                this->_lastTargetIndex = this->_accountNB;
+
                 if (this->_accountNB > MAX_ACCOUNT_DATA) {
                     this->_accountNB = MAX_ACCOUNT_DATA;
                 }
-
-                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
+                this->_lastTargetIndex = this->_accountNB;
             }
 
             std::ofstream ofichier(this->_front->USER_CONF_LOG, std::ios::out | std::ios::trunc);

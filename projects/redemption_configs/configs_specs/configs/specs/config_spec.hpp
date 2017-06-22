@@ -590,9 +590,10 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "ticket");
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "comment");
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "duration");
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "duration_max", set(0));
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "waitinforeturn");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "showform", set(false));
-        W.member(no_ini_no_gui, proxy_to_sesman, type_<unsigned>(), "formflag", set(0));
+        W.member(no_ini_no_gui, sesman_rw, type_<unsigned>(), "formflag", set(0));
         W.sep();
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "module", set("login"));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "forcemodule", set(false));
