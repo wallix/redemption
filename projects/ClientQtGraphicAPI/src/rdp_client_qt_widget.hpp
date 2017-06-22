@@ -573,7 +573,7 @@ public:
 //
 //             ifichier.close();
 //         }
-        this->addRow();
+         this->addRow();
 
 
 
@@ -861,20 +861,22 @@ public Q_SLOTS:
 
             ofichier << "Key Setting" << std::endl << std::endl;
 
-            for (int i = 0; i < this->_tableKeySetting->rowCount(); i++) {
+            const int row_count = this->_tableKeySetting->rowCount();
 
+            for (int i = 0; i < row_count; i++) {
                 int qtKeyID(0);
-                if (this->_tableKeySetting->item(i, 0)) {
+                if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
                 }
 
+
                 if (qtKeyID != 0) {
                     int scanCode(0);
-                    if (this->_tableKeySetting->item(i, 0)) {
+                    if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
                         scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
                     }
                     int ASCII8(0);
-                    if (this->_tableKeySetting->item(i, 0)) {
+                    if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
                         ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
                     }
                     int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
@@ -908,6 +910,19 @@ public Q_SLOTS:
         combo->addItem("No" , 0);
         combo->addItem("Yes", 1);
         this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
+
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 1, item2);
+
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 2, item3);
+
 
         this->updateKeySetting();
     }
