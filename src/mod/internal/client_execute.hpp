@@ -71,6 +71,8 @@ class ClientExecute : public windowing_api
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
+    bool should_ignore_first_client_execute_ = true;
+
     bool server_execute_result_sent = false;
 
     Rect task_bar_rect;
@@ -1711,7 +1713,7 @@ public:
 
         this->update_rects();
 
-        Rect rect =  this->window_rect;
+        Rect rect = this->window_rect;
         rect.cy = TITLE_BAR_HEIGHT;
 
         this->input_invalidate(rect);
@@ -1972,6 +1974,8 @@ protected:
             this->client_execute_working_dir = cepdu.WorkingDir();
             this->client_execute_arguments   = cepdu.Arguments();
         }
+
+        this->should_ignore_first_client_execute_ = false;
     }   // process_client_execute_pdu
 
     void process_client_get_application_id_pdu(uint32_t total_length,
@@ -2989,6 +2993,8 @@ public:
     const char * WorkingDir() const { return this->client_execute_working_dir.c_str(); }
 
     const char * Arguments() const { return this->client_execute_arguments.c_str(); }
+
+    bool should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
 
     void create_auxiliary_window(Rect const window_rect) override {
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;

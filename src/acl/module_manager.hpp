@@ -1409,6 +1409,8 @@ public:
                 mod_rdp_params.client_execute_working_dir          = this->client_execute.WorkingDir();
                 mod_rdp_params.client_execute_arguments            = this->client_execute.Arguments();
 
+                mod_rdp_params.should_ignore_first_client_execute  = this->client_execute.should_ignore_first_client_execute();
+
                 mod_rdp_params.remote_program                      = (client_info.remote_program &&
                                                                       this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() &&
                                                                       ((mod_rdp_params.target_application &&

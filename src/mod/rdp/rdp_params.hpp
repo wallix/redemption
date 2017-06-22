@@ -157,6 +157,7 @@ struct ModRDPParams {
     const char * client_execute_arguments = "";
 
     bool         use_client_provided_remoteapp = false;
+    bool         should_ignore_first_client_execute = false;
 
     bool remote_program = false;
 
@@ -329,6 +330,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_remoteapp);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             should_ignore_first_client_execute);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
 
