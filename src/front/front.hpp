@@ -637,6 +637,7 @@ public:
     : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
+    , keymap(1)
     , up_and_running(0)
     , share_id(65538)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
@@ -994,7 +995,7 @@ public:
         bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
              != ::KeyboardInputMaskingLevel::fully_masked;
         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
-        
+
 
         this->capture = new Capture(
                                       capture_wrm, wrm_params
