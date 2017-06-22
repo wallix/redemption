@@ -1283,7 +1283,9 @@ class Sesman():
             if not deconnection_time:
                 Logger().error("No timeframe available, Timeframe has not been checked !")
                 _status = False
-            if _status and deconnection_time == u"-":
+            if (deconnection_time == u"-"
+                or deconnection_time[0:4] >= u"2034"):
+                deconnection_time = u"2034-12-31 23:59:59"
                 self.infinite_connection = True
 
             now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
@@ -1882,7 +1884,8 @@ class Sesman():
                 Logger().debug("check_application: approval not accepted")
                 continue
             _deconnection_time = _infos.get('deconnection_time')
-            if _deconnection_time != '-' and not self.infinite_connection:
+            if (deconnection_time != u"-"
+                and deconnection_time[0:4] < u"2034"):
                 _tt = datetime.strptime(_deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
