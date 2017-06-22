@@ -50,6 +50,10 @@ private:
 
     RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
+    bool param_should_ignore_first_client_execute;
+
+    bool first_client_execute_ignored = false;
+
     bool client_execute_pdu_sent = false;
 
     SessionProbeVirtualChannel * session_probe_channel = nullptr;
@@ -105,6 +109,8 @@ public:
 
         RemoteProgramsSessionManager * rail_session_manager;
 
+        bool should_ignore_first_client_execute;
+
         Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
@@ -126,6 +132,7 @@ public:
     , param_client_execute_working_dir_2(params.client_execute_working_dir_2)
     , param_client_execute_arguments_2(params.client_execute_arguments_2)
     , param_rail_session_manager(params.rail_session_manager)
+    , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
     , vars(vars) {}
 
 protected:
@@ -269,6 +276,19 @@ private:
 
         if (bool(this->verbose & RDPVerbose::rail)) {
             cepdu.log(LOG_INFO);
+        }
+
+        if (this->param_should_ignore_first_client_execute &&
+            !this->first_client_execute_ignored) {
+            this->first_client_execute_ignored = true;
+
+            if (bool(this->verbose & RDPVerbose::rail)) {
+                LOG(LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
+                        "First Client Execute PDU ignored.");
+            }
+
+            return false;
         }
 
         const char* exe_of_file = cepdu.ExeOrFile();

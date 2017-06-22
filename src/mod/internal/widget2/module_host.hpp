@@ -74,6 +74,13 @@ private:
             }
         }
 
+        void send_auth_channel_data(const char * string_data) override {
+            if (this->managed_mod)
+            {
+                this->managed_mod->send_auth_channel_data(string_data);
+            }
+        }
+
         // mod_api
 
         void draw_event(time_t now, gdi::GraphicApi& drawable) override

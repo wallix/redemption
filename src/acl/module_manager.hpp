@@ -1449,6 +1449,12 @@ public:
                         ::memset(&client_info.cs_monitor, 0, sizeof(client_info.cs_monitor));
                     }
                     else {
+                        this->client_execute.adjust_rect(get_widget_rect(
+                                client_info.width,
+                                client_info.height,
+                                this->front.client_info.cs_monitor
+                            ));
+
                         this->client_execute.reset(false);
                     }
 
@@ -1505,7 +1511,7 @@ public:
                         // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
                         this->set_mod(managed_mod.release(), rdpapi, winapi);
                     }
-                    
+
                     /* If provided by connection policy, session timeout update */
                     report_message.update_inactivity_timeout();
                 }
