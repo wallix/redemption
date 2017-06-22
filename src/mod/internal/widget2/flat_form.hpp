@@ -51,6 +51,7 @@ public:
     WidgetFlatButton confirm;
 
     int flags;
+    int duration_max;
 
     enum {
         NONE               = 0x00,
@@ -74,7 +75,7 @@ public:
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             int flags = 0)
+             int flags = 0, int duration_max = 0)
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
@@ -101,6 +102,7 @@ public:
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
+        , duration_max(duration_max)
         , generic_warning(TR(trkeys::fmt_field_required, lang))
         , format_warning(TR(trkeys::fmt_invalid_format, lang))
         , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
@@ -145,12 +147,15 @@ public:
         this->add_widget(&this->confirm);
 
         this->move_size_widget(left, top, width, height);
+        if (this->duration_max == 0) {
+            this->duration_max = 600000;
+        }
     }
 
     FlatForm(gdi::GraphicApi& drawable,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             int flags = 0)
+             int flags = 0, int duration_max = 0)
         : WidgetParent(drawable, parent, notifier, group_id)
         , warning_msg(drawable, *this, nullptr, "", group_id,
                       theme.global.error_color, theme.global.bgcolor, font)
@@ -177,6 +182,7 @@ public:
                   theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                   6, 2)
         , flags(flags)
+        , duration_max(duration_max)
         , generic_warning(TR(trkeys::fmt_field_required, lang))
         , format_warning(TR(trkeys::fmt_invalid_format, lang))
         , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
@@ -219,6 +225,9 @@ public:
         }
 
         this->add_widget(&this->confirm);
+        if (this->duration_max == 0) {
+            this->duration_max = 600000;
+        }
     }
 
     ~FlatForm() override {
@@ -338,6 +347,16 @@ public:
         this->warning_msg.set_text(this->warning_buffer);
     }
 
+    void set_warning_buffer_duration(const char * field, int duration,
+                                     const char * format) {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+            std::sprintf(this->warning_buffer, format, field, duration);
+        REDEMPTION_DIAGNOSTIC_POP
+        this->warning_msg.set_text(this->warning_buffer);
+    }
+
+
     unsigned long check_duration(const char * duration) {
         unsigned long res = 0;
         unsigned long hours = 0;
@@ -390,13 +409,16 @@ public:
             (this->duration_edit.num_chars != 0)) {
             long res = this->check_duration(this->duration_edit.get_text());
             // res is duration in hours.
-            if ((res <= 0) || (res >= 600000)) {
+            if ((res <= 0) || (res > this->duration_max)) {
                 if (res <= 0) {
                     this->duration_edit.set_text("");
                     this->set_warning_buffer(this->field_duration, this->format_warning);
                 }
                 else {
-                    this->set_warning_buffer(this->field_duration, this->toohigh_warning);
+                    this->set_warning_buffer_duration(
+                        this->field_duration,
+                        this->duration_max,
+                        this->toohigh_warning);
                 }
                 this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
                 this->rdp_input_invalidate(this->get_rect());

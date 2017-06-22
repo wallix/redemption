@@ -1658,4 +1658,3 @@ public:
         return this->rdpapi;
     }
 };
-

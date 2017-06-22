@@ -38,6 +38,7 @@ using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::context::duration,                   vcfg::accessmode::set>,
     vcfg::var<cfg::context::ticket,                     vcfg::accessmode::set>,
     vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
+    vcfg::var<cfg::context::duration_max,               vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
@@ -65,7 +66,8 @@ public:
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
                       language(vars),
-                      showform, flag)
+                      showform, flag, vars.get<cfg::context::duration_max>()
+                      )
         , vars(vars)
         , timeout(now, 600)
         , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)

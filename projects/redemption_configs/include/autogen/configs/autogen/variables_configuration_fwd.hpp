@@ -290,6 +290,7 @@ namespace cfg {
         struct ticket;
         struct comment;
         struct duration;
+        struct duration_max;
         struct waitinforeturn;
         struct showform;
         struct formflag;
