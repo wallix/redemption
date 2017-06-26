@@ -1883,10 +1883,14 @@ class Sesman():
             if _status != APPROVAL_ACCEPTED:
                 Logger().debug("check_application: approval not accepted")
                 continue
+            if not self.engine.check_effective_target(ar, effective_target):
+                Logger().debug("check_application: jump server not compatible")
+                continue
             _deconnection_time = _infos.get('deconnection_time')
-            if (deconnection_time != u"-"
-                and deconnection_time[0:4] < u"2034"):
-                _tt = datetime.strptime(_deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+            if (_deconnection_time != u"-"
+                and _deconnection_time[0:4] < u"2034"):
+                _tt = datetime.strptime(_deconnection_time,
+                                        "%Y-%m-%d %H:%M:%S").timetuple()
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
                     Logger().debug("check_application: timeclose different")
