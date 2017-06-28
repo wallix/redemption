@@ -24,6 +24,8 @@
 
 #pragma once
 
+#define LOG_SIEM syslog
+
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
 
 // -Wnull-dereference and clang++
