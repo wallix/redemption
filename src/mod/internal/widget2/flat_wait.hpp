@@ -59,13 +59,13 @@ public:
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             bool showform = false, int required = FlatForm::NONE)
+             bool showform = false, int required = FlatForm::NONE, int duration_max = 0)
         : WidgetParent(drawable, parent, notifier, group_id)
         , groupbox(drawable, *this, nullptr, caption,
                    theme.global.fgcolor, theme.global.bgcolor, font)
         , dialog(drawable, this->groupbox, nullptr, text, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-        , form(drawable, *this, this, -20, font, theme, lang, required)
+        , form(drawable, *this, this, -20, font, theme, lang, required, duration_max)
         , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, 2, font, 6, 2)

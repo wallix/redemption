@@ -918,6 +918,7 @@ public:
                          )
         , cs_monitor(info.cs_monitor)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
+        , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
         , asynchronous_task_event_handler(*this)
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
@@ -1260,10 +1261,6 @@ public:
                     this->client_execute_working_dir = mod_rdp_params.shell_working_dir;
                     this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
                 }
-
-                this->should_ignore_first_client_execute =
-                    (!mod_rdp_params.client_execute_exe_or_file ||
-                     !(*mod_rdp_params.client_execute_exe_or_file));
             }
             else {
                 if (this->enable_session_probe) {

@@ -130,8 +130,8 @@ namespace trkeys
         "Error: %s invalid format.",
         "Erreur: format %s invalide.");
     TR_KV(fmt_toohigh_duration,
-        "Error: %s is too high (must be < 10000 h).",
-        "Erreur: %s trop haute (doit être < 10000 h).");
+        "Error: %s is too high (max: %d minutes).",
+        "Erreur: %s trop haute (max: %d minutes).");
     TR_KV(information, "Information", "Information");
     TR_KV(authentication_required,  "Authentication Required", "Authentification Requise");
     TR_KV(target_info_required, "Target Information Required", "Informations Cible Requises");

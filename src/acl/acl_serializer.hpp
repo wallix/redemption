@@ -359,7 +359,7 @@ public:
             LOG(LOG_INFO, "type='%s'%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
         }
         if (session_log) {
-            LOG(
+            LOG_SIEM(
                 LOG_INFO
               , "[%s Session] "
                 "type='%s' "

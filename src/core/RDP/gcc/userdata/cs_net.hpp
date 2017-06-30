@@ -185,6 +185,9 @@ struct CSNet {
             stream.in_copy_bytes(this->channelDefArray[i].name, 7);
             this->channelDefArray[i].name[7] = '\0';
             stream.in_skip_bytes(1);
+            const size_t name_length = ::strlen(this->channelDefArray[i].name);
+            ::memset(this->channelDefArray[i].name + name_length, 0,
+                sizeof(this->channelDefArray[i].name) - name_length);
             this->channelDefArray[i].options = stream.in_uint32_le();
         }
     }

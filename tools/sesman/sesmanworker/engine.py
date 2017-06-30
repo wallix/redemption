@@ -1363,6 +1363,13 @@ class Engine(object):
             # update deconnection_time in right
         return status, infos
 
+    def check_effective_target(self, app_right, effective_target):
+        target_uid = effective_target['target_uid']
+        for r in self.get_effective_target(app_right):
+            if r['target_uid'] == target_uid:
+                return True
+        return False
+
     def get_application(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:

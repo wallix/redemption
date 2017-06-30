@@ -1103,6 +1103,7 @@ class Sesman():
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag
+            tosend["duration_max"] = infos.get("duration_max") or 0
         else:
             tosend["showform"] = False
         self.send_data(tosend)
@@ -1221,7 +1222,8 @@ class Sesman():
 
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
-                self.send_data({u'rejected': _error or TR(u"start_session_failed")})
+                self.send_data({
+                    u'rejected': mdecode(_error) or TR(u"start_session_failed")})
 
         if _status:
             kv['password'] = 'pass'
@@ -1281,7 +1283,9 @@ class Sesman():
             if not deconnection_time:
                 Logger().error("No timeframe available, Timeframe has not been checked !")
                 _status = False
-            if _status and deconnection_time == u"-":
+            if (deconnection_time == u"-"
+                or deconnection_time[0:4] >= u"2034"):
+                deconnection_time = u"2034-12-31 23:59:59"
                 self.infinite_connection = True
 
             now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
@@ -1867,27 +1871,38 @@ class Sesman():
             return kv
         acc_name, app_name = self.parse_app(exe_or_file)
         if not app_name or not acc_name:
+            Logger().debug("check_application: Parsing failed")
             return kv
         app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
         app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
         app_params = None
         app_right = None
+        Logger().debug("check_application: app rights len = %s" % len(app_rights))
         for ar in app_rights:
             _status, _infos = self.engine.check_target(ar, self.pid, None)
             if _status != APPROVAL_ACCEPTED:
+                Logger().debug("check_application: approval not accepted")
+                continue
+            if not self.engine.check_effective_target(ar, effective_target):
+                Logger().debug("check_application: jump server not compatible")
                 continue
             _deconnection_time = _infos.get('deconnection_time')
-            if _deconnection_time != '-':
-                _tt = datetime.strptime(_deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
+            if (_deconnection_time != u"-"
+                and _deconnection_time[0:4] < u"2034"):
+                _tt = datetime.strptime(_deconnection_time,
+                                        "%Y-%m-%d %H:%M:%S").timetuple()
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
+                    Logger().debug("check_application: timeclose different")
                     continue
             _status, _error = self.engine.checkout_target(ar)
             if not _status:
+                Logger().debug("check_application: Checkout target failed")
                 continue
             app_params = self.engine.get_app_params(ar, effective_target)
             if app_params is None:
                 self.engine.release_target(ar)
+                Logger().debug("check_application: Get app params failed")
                 continue
             app_right = ar
             break
