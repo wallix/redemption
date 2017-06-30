@@ -373,7 +373,9 @@ public:
     }
 
     virtual ResizeResult server_resize(int width, int height, int bpp) override {
-        //std::cout << "server_resize width=" << width << " height=" << height << " bpp=" << bpp << std::endl;
+        if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
+            std::cout << "server_resize width=" << width << " height=" << height << " bpp=" << bpp << std::endl;
+        }
         this->mod_bpp = bpp;
         this->_info.bpp = bpp;
         this->_info.width = width;

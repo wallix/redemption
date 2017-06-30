@@ -922,7 +922,7 @@ int main(int argc, char** argv){
                             mod->draw_event(time(nullptr), front);
                          } catch (const Error & e) {
                             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-                            exit(1);
+                            exit(2);
                         }
                     }
                     if (connection_succed) {

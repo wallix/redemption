@@ -211,7 +211,7 @@ public:
             ClipboardVirtualChannel::Params params(reportMessage);
 
             params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-            params.verbose = to_verbose_flags(0xfffffff);
+            params.verbose = to_verbose_flags(0);
 
             params.clipboard_down_authorized = true;
             params.clipboard_up_authorized = true;
@@ -446,9 +446,9 @@ public:
         const QString strView("View");
         this->_layoutView = new QFormLayout(this->_viewTab);
 
-        this->_bppComboBox.addItem("24", 24);
-        this->_bppComboBox.addItem("16", 16);
         this->_bppComboBox.addItem("15", 15);
+        this->_bppComboBox.addItem("16", 16);
+        this->_bppComboBox.addItem("24", 24);
         this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
 
@@ -789,7 +789,6 @@ public Q_SLOTS:
         }
 
         if (new_profil) {
-
             this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
             this->_front->current_user_profil = this->_front->userProfils.size()-1;
         } else {
@@ -852,7 +851,6 @@ public Q_SLOTS:
 
         this->_front->writeClientInfo();
 
-
         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
         this->_front->qtRDPKeymap.clearCustomKeyCode();
 
@@ -868,7 +866,6 @@ public Q_SLOTS:
                 if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
                 }
-
 
                 if (qtKeyID != 0) {
                     int scanCode(0);

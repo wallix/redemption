@@ -111,7 +111,7 @@ namespace channel_names
     DEF_NAME(drdynvc);
     DEF_NAME(rail);
     DEF_NAME(sespro);
-    DEF_NAME(WabDiag);
+    DEF_NAME(wabdiag);
 }
 #undef DEF_NAME
 

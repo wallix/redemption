@@ -351,7 +351,7 @@ public:
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
                 new_ofile << "console_session "       << this->info.console_session         << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                new_ofile << "bpp "                   << this->mod_bpp                      << "\n";
+                new_ofile << "bpp "                   << this->info.bpp                     << "\n";
                 new_ofile << "width "                 << this->info.width                   << "\n";
                 new_ofile << "height "                << this->info.height                  << "\n";
                 new_ofile << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
@@ -373,7 +373,7 @@ public:
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
                 ofichier << "console_session "       << this->info.console_session         << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                ofichier << "bpp "                   << this->mod_bpp                      << "\n";
+                ofichier << "bpp "                   << this->info.bpp                       << "\n";
                 ofichier << "width "                 << this->info.width                   << "\n";
                 ofichier << "height "                << this->info.height                  << "\n";
                 ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
@@ -708,7 +708,7 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
-        CHANNELS::ChannelDef channel_WabDiag { channel_names::WabDiag
+        CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
                                              , CHANNELS::CHANNEL_CHUNK_LENGTH+3
@@ -721,7 +721,7 @@ public:
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                  , CHANNELS::CHANNEL_CHUNK_LENGTH+4
                                                  };
-        this->cl.push_back(channel_audio_output);
+        //this->cl.push_back(channel_audio_output);
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -989,22 +989,24 @@ public:
                                             first_part_data_size = PASTE_PIC_CONTENT_SIZE;
                                         }
                                         total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
-                                        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr( this->clipboard_qt->_cliboard_data_length
-                                                                                    , this->clipboard_qt->_bufferImage->width()
-                                                                                    , this->clipboard_qt->_bufferImage->height()
-                                                                                    , this->clipboard_qt->_bufferImage->depth()
-                                                                                    , this->clipbrdFormatsList.ARBITRARY_SCALE
-                                                                                    );
+                                        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
+                                                                      this->clipboard_qt->_cliboard_data_length
+                                                                    , this->clipboard_qt->_bufferImage->width()
+                                                                    , this->clipboard_qt->_bufferImage->height()
+                                                                    , this->clipboard_qt->_bufferImage->depth()
+                                                                    , this->clipbrdFormatsList.ARBITRARY_SCALE
+                                                                                       );
                                         fdr.emit(out_stream_first_part);
 
-                                        this->process_client_clipboard_out_data( channel_names::cliprdr
+                                        this->process_client_clipboard_out_data(
+                                                                              channel_names::cliprdr
                                                                             , total_length
                                                                             , out_stream_first_part
                                                                             , first_part_data_size
                                                                             , this->clipboard_qt->_chunk.get()
                                                                             , this->clipboard_qt->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
                                                                             , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                            );
+                                                                               );
                                     }
                                     break;
 
@@ -1243,8 +1245,9 @@ public:
                     switch (packetId) {
                         case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                             {
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
+                            }
 
                             uint16_t versionMajor = chunk.in_uint16_le();
                             uint16_t versionMinor = chunk.in_uint16_le();
@@ -1265,13 +1268,14 @@ public:
                             InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
                             this->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                , chunk_to_send
-                                                                , total_length
-                                                                , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                CHANNELS::CHANNEL_FLAG_FIRST
-                                                                );
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                                          , chunk_to_send
+                                                          , total_length
+                                                          , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                          );
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
+                            }
                             }
 
                             {
@@ -1296,8 +1300,9 @@ public:
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                 );
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
+                            }
                             }
                             break;
 
@@ -1330,8 +1335,9 @@ public:
                             break;
 
                         case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
+                            }
                             //this->show_in_stream(0, chunk_series, chunk_size);
                             {
                             StaticOutStream<1024> out_stream;
@@ -1389,8 +1395,9 @@ public:
                                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                 );
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
+                            }
                             }
 
                             {
@@ -1436,8 +1443,9 @@ public:
                                                           , CHANNELS::CHANNEL_FLAG_LAST  |
                                                             CHANNELS::CHANNEL_FLAG_FIRST
                                                           );
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
+                            }
                             }
                             break;
 
@@ -1452,14 +1460,16 @@ public:
                                 this->fileSystemData.drives_created = false;
                                 LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
+                            }
                             }
                             break;
 
                         case rdpdr::PAKID_CORE_USER_LOGGEDON:
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
+                            }
                             break;
 
                         case rdpdr::PAKID_CORE_DEVICE_IOREQUEST:
@@ -1499,8 +1509,9 @@ public:
                                     break;
 
                                 case rdpdr::IRP_MJ_CREATE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
+                                    }
                                     {
                                     rdpdr::DeviceCreateRequest request;
                                     request.receive(chunk);
@@ -1560,8 +1571,9 @@ public:
                                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
 
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
+                                    }
                                     }
                                     break;
 
@@ -1573,8 +1585,9 @@ public:
                                     switch (sdqir.FsInformationClass()) {
 
                                         case rdpdr::FileBasicInformation:
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
+                                            }
                                             {
 
                                             std::string file_to_request = this->fileSystemData.paths.at(id);
@@ -1612,14 +1625,16 @@ public:
                                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                                 );
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
+                                            }
                                             }
                                             break;
 
                                         case rdpdr::FileStandardInformation:
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
+                                            }
                                             {
                                             deviceIOResponse.emit(out_stream);
 
@@ -1654,14 +1669,16 @@ public:
                                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                                 );
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
+                                            }
                                             }
                                             break;
 
                                         case rdpdr::FileAttributeTagInformation:
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
+                                            }
                                             {
                                                 std::string file_to_request = this->fileSystemData.paths.at(id);
 
@@ -1696,8 +1713,9 @@ public:
                                                                                     );
 
 
-                                                if (bool(this->verbose & RDPVerbose::rdpdr))
+                                                if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
+                                                }
                                             }
                                             break;
 
@@ -1709,8 +1727,9 @@ public:
                                     break;
 
                                 case rdpdr::IRP_MJ_CLOSE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
+                                    }
                                     {
 
                                     this->fileSystemData.paths.erase(id);
@@ -1727,14 +1746,16 @@ public:
                                                                         , CHANNELS::CHANNEL_FLAG_LAST  |
                                                                           CHANNELS::CHANNEL_FLAG_FIRST
                                                                         );
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
+                                    }
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_READ:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
+                                    }
                                     {
                                     rdpdr::DeviceReadRequest drr;
                                     drr.receive(chunk);
@@ -1777,8 +1798,9 @@ public:
                                                                         , ReadData.get() + offset
                                                                         , file_size
                                                                         , 0);
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
+                                    }
                                     }
                                     break;
 
@@ -1787,8 +1809,9 @@ public:
                                     switch (deviceIORequest.MinorFunction()) {
 
                                         case rdpdr::IRP_MN_QUERY_DIRECTORY:
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
+                                            }
                                             {
                                             std::string slash("/");
                                             std::string asterix("*");
@@ -1973,14 +1996,16 @@ public:
                                                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                                                   CHANNELS::CHANNEL_FLAG_FIRST
                                                                                 );
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
+                                            }
                                             }
                                             break;
 
                                         case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-                                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
+                                            }
                                             {
                                                 rdpdr::ServerDriveNotifyChangeDirectoryRequest sdncdr;
                                                 sdncdr.receive(chunk);
@@ -2001,8 +2026,9 @@ public:
     //                                                                                       CHANNELS::CHANNEL_FLAG_FIRST
     //                                                                                     );
 
-                                                    //if (bool(this->verbose & RDPVerbose::rdpdr))
+                                                    //if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                     LOG(LOG_WARNING, "CLIENT >> RDPDR: Device I/O Must Send Notify Change Directory Response");
+                                                //}
                                                 }
 
 
@@ -2015,8 +2041,9 @@ public:
                                     break;
 
                                 case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Request");
+                                    }
                                     {
                                         rdpdr::ServerDriveQueryVolumeInformationRequest sdqvir;
                                         sdqvir.receive(chunk);
@@ -2143,15 +2170,17 @@ public:
                                                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                                                               CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-                                        if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
+                                        }
 
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_WRITE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Request");
+                                    }
                                     {
                                         rdpdr::DeviceWriteRequest dwr;
                                         dwr.receive(chunk);
@@ -2188,15 +2217,17 @@ public:
                                                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-                                        if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
+                                        }
                                     }
 
                                     break;
 
                                 case rdpdr::IRP_MJ_SET_INFORMATION:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Server Drive Set Information Request");
+                                    }
                                     {
                                         rdpdr::ServerDriveSetInformationRequest sdsir;
                                         sdsir.receive(chunk);
@@ -2281,15 +2312,17 @@ public:
                                                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                                                             CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
-                                        if (bool(this->verbose & RDPVerbose::rdpdr))
+                                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
+                                        }
                                     }
 
                                     break;
 
                                 case rdpdr::IRP_MJ_DEVICE_CONTROL:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Response");
+                                    }
                                     {
                                         rdpdr::DeviceControlRequest dcr;
                                         dcr.receive(chunk);
@@ -2343,8 +2376,9 @@ public:
                                                                             CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                     }
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
+                                    }
                                     break;
 
                                 default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
@@ -2366,8 +2400,9 @@ public:
                     switch (packetId) {
                         case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Announce Request ");
+                            }
                         }
                             break;
 
@@ -2397,8 +2432,9 @@ public:
                             break;
 
                         case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server User Logged On");
+                            }
                             break;
 
                         case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
@@ -2412,8 +2448,9 @@ public:
                                 this->fileSystemData.drives_created = false;
                                 LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
-                            if (bool(this->verbose & RDPVerbose::rdpdr))
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
+                            }
                         }
                             break;
 
@@ -2441,18 +2478,21 @@ public:
                             switch (deviceIORequest.MajorFunction()) {
 
                                 case rdpdr::IRP_MJ_CREATE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
+                                    }
                                     break;
 
                                 case rdpdr::IRP_MJ_READ:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
+                                    }
                                     break;
 
                                 case rdpdr::IRP_MJ_CLOSE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr))
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
+                                    }
                                     break;
 
                                 default:
@@ -2652,7 +2692,7 @@ public:
                         break;
 
                     case rdpsnd::SNDC_CLOSE:
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
+                        //LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
                         break;
 
 //                     case rdpsnd::SNDC_SETVOLUME:
@@ -2691,7 +2731,7 @@ public:
 
 
 
-        } else if (channel.name == channel_names::WabDiag) {
+        } else if (channel.name == channel_names::wabdiag) {
 
             int len = chunk.in_uint32_le();
             std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
@@ -2707,7 +2747,7 @@ public:
                 this->asked_color = 0xff000000;
             } else {
                 //if (msg.substr(0, 8) == std::string("Duration=")) {
-                    LOG(LOG_INFO, "SERVER >> WabDiag %s", msg.c_str());
+                    LOG(LOG_INFO, "SERVER >> wabdiag %s", msg.c_str());
                 //}
             }
         }
@@ -3068,8 +3108,9 @@ public:
                                             , CHANNELS::CHANNEL_FLAG_LAST  |
                                             CHANNELS::CHANNEL_FLAG_FIRST
                                             );
-        if (bool(this->verbose & RDPVerbose::rdpdr))
+        if (bool(this->verbose & RDPVerbose::rdpdr)) {
             LOG(LOG_INFO, "CLIENT >> RDPDR: Client Drive Device List Remove");
+        }
     }
 
     void send_textBuffer_to_clipboard() {
@@ -3205,7 +3246,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;                  //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::cliprdr;                  //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

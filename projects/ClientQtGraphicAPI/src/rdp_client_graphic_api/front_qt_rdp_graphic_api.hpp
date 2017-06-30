@@ -1637,11 +1637,11 @@ public:
     }
 
     virtual ResizeResult server_resize(int width, int height, int bpp) override{
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        //if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
-        }
+        //}
 
         if (width == 0 || height == 0) {
             return ResizeResult::fail;
@@ -1709,7 +1709,7 @@ public:
         } else {
             this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
 
-            if (this->is_recording) {
+            if (this->is_recording && !this->is_replaying) {
                 this->graph_capture->set_pointer(cursor);
                 struct timeval time;
                 gettimeofday(&time, nullptr);
@@ -3060,7 +3060,8 @@ public:
                     ini.set<cfg::globals::movie_path>(movie_name.c_str());
                     ini.set<cfg::globals::trace_type>(TraceType::localfile);
                     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-                    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
+                    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(1));
+                    ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
 
                 UdevRandom gen;
                 CryptoContext cctx;
@@ -3093,7 +3094,7 @@ public:
                     , movie_name.c_str()
                     , ini.get<cfg::video::capture_groupid>()
                     , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
-                    , std::chrono::seconds{1}
+                    , ini.get<cfg::video::break_interval>()
                     , WrmCompressionAlgorithm::no_compression
                     , 0
                 );

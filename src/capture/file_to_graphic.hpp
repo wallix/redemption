@@ -294,6 +294,11 @@ public:
         this->start_synctime_now = {now.tv_sec + this->begin_capture.tv_sec, now.tv_usec};
     }
 
+    void reinit() {
+        this->remaining_order_count = 0;
+        this->total_orders_count = 0;
+    }
+
     /* order count set this->stream.p to the beginning of the next order.
      * Most of the times it means not changing it, except when it must read next chunk
      * when remaining order count is 0.
