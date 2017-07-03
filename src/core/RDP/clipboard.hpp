@@ -1046,18 +1046,22 @@ struct FormatListPDU_LongName : public FormatListPDU {
                                    , std::string const * formatListDataName
                                    , std::size_t formatListDataSize)
         : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
-    {}
-
-    void emit(OutStream & stream) /* TODO const*/ {
+    {
         if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
             this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
         }
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {
             /* formatId(4) + formatName(variable) */
-            this->header.dataLen_ = this->header.dataLen() + formatListDataName[i].size() + 4;
+            this->header.dataLen_ += formatListDataName[i].size() + 4;
         }
-        REDASSERT(this->header.dataLen() <= 1024);
+
+         REDASSERT(this->header.dataLen() <= 1024);
+    }
+
+    void emit(OutStream & stream) {
+
+
         this->header.emit(stream);
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {
@@ -1069,11 +1073,12 @@ struct FormatListPDU_LongName : public FormatListPDU {
 
     void log() const {
         this->header.log();
-        LOG(LOG_INFO, "     Format List PDU Long Name:");
-        LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
+//         LOG(LOG_INFO, "     Format List PDU Long Name:");
+//         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
         for (size_t i = 0; i < this->formatListDataSize; i++) {
-        LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i]);
-        LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
+            LOG(LOG_INFO, "     Short Format Name");
+            LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i].c_str());
+            LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
         }
     }
 
@@ -1085,14 +1090,16 @@ struct FormatListPDU_ShortName : public FormatListPDU {
                                     , std::string const * formatListDataName
                                     , std::size_t formatListDataSize)
         : FormatListPDU(formatListDataIDs, formatListDataName, formatListDataSize)
-    {}
-
-    void emit(OutStream & stream) /* TODO const*/ {
+    {
         if (this->formatListDataSize > FORMAT_LIST_MAX_SIZE) {
             this->formatListDataSize = FORMAT_LIST_MAX_SIZE;
         }
 
         this->header.dataLen_ = this->formatListDataSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+    }
+
+    void emit(OutStream & stream) {
+
         this->header.emit(stream);
 
         for (std::size_t i = 0; i < this->formatListDataSize; i++) {

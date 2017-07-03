@@ -508,7 +508,7 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   , to_verbose_flags(0)
+                                   , this->verbose          //to_verbose_flags(0)
                                    //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                    );
 
@@ -677,7 +677,7 @@ public:
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+1
+                                                 , 1601
                                                  };
             this->_to_client_sender._channel = channel_cliprdr;
             this->cl.push_back(channel_cliprdr);
@@ -750,7 +750,7 @@ public:
 
         InStream chunk_series = chunk.clone();
 
-        if (channel.name == channel_names::cliprdr) {
+        if (channel.chanid == 1601) {
             //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
@@ -816,20 +816,17 @@ public:
                         }
                         {
                             this->send_FormatListPDU(this->clipbrdFormatsList.IDs, this->clipbrdFormatsList.names, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
-
                         }
 
                     break;
 
                     case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_WARNING, "SERVER >> CB Channel: Format List Response PDU FAILED");
-                        } else {
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
+                                LOG(LOG_WARNING, "SERVER >> CB Channel: Format List Response PDU FAILED");
+                            } else {
                                 LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
                             }
-                        }
                         }
 
                     break;
@@ -3173,6 +3170,7 @@ public:
 
         StaticOutStream<1024> out_stream;
         RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
+        format_list_pdu_long.log();
         format_list_pdu_long.emit(out_stream);
         const uint32_t total_length = out_stream.get_offset();
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
@@ -3181,7 +3179,7 @@ public:
                                             , chunk
                                             , total_length
                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
@@ -3246,7 +3244,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::cliprdr;                  //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::cliprdr_dump | RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
