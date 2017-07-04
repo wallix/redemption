@@ -867,18 +867,18 @@ public:
 
         const uint32_t DesiredAccess     = device_create_request.DesiredAccess();
         const uint32_t CreateDisposition = device_create_request.CreateDisposition();
-        
+
         const erref::NTSTATUS IoStatus = [&] () {
-            if (((drive_access_mode != O_RDWR) 
-                && (drive_access_mode != O_RDONLY) 
-                && smb2::read_access_is_required(DesiredAccess, /*strict_check = */false)) 
-            ||  ((drive_access_mode != O_RDWR) 
-                && (drive_access_mode != O_WRONLY) 
+            if (((drive_access_mode != O_RDWR)
+                && (drive_access_mode != O_RDONLY)
+                && smb2::read_access_is_required(DesiredAccess, /*strict_check = */false))
+            ||  ((drive_access_mode != O_RDWR)
+                && (drive_access_mode != O_WRONLY)
                 && smb2::write_access_is_required(DesiredAccess, /*strict_check = */false))) {
                 return erref::NTSTATUS::STATUS_ACCESS_DENIED;
             }
 
-            if ((::access(full_path.c_str(), F_OK) != 0) 
+            if ((::access(full_path.c_str(), F_OK) != 0)
             && (CreateDisposition == smb2::FILE_CREATE)) {
                 if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
                     return erref::NTSTATUS::STATUS_ACCESS_DENIED;
@@ -2243,6 +2243,20 @@ public:
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
                 "FileSystemDriveManager::DisableSessionProbeDrive: Remove request sent.");
+        }
+
+        auto iter = this->find_drive_by_id(old_session_probe_drive_id);
+        if (iter != this->managed_drives.end()) {
+            if(iter + 1 != this->managed_drives.end()) {
+                this->managed_drives[
+                    iter - this->managed_drives.begin()
+                ] = std::move(this->managed_drives.back());
+            }
+            this->managed_drives.pop_back();
+            if (bool(verbose & RDPVerbose::fsdrvmgr)) {
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::DisableSessionProbeDrive: Drive removed.");
+            }
         }
     }
 
