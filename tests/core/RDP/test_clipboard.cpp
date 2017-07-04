@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2016
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
 #define RED_TEST_MODULE TestGCC
@@ -426,7 +426,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
     // Init stream format list PDU long name
     StaticOutStream<1024> out_stream;
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long(IDs, names, size);
-    format_list_pdu_long.emit(out_stream);
+    format_list_pdu_long.emit_LongName(out_stream);
 
     const char exp_data[] =
         "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.

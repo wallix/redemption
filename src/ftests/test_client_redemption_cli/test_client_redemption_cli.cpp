@@ -746,6 +746,12 @@ int main(int argc, char** argv){
                     i++;
                 }
                 break;
+            case 73:
+                if (i+1 < argc) {
+                    out_path = std::string(argv[i+1]);
+                    i++;
+                }
+                break;
         }
 
     }

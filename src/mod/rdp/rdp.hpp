@@ -16,7 +16,7 @@
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages,
-             Raphael Zhou, Meng Tan
+             Raphael Zhou, Meng Tan, Clément Moroldo
   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
   rdp module main header file
@@ -473,6 +473,7 @@ protected:
             this->asynchronous_tasks.push_back(std::move(asynchronous_task));
         }
     };
+
 
     inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
         if (!this->clipboard_virtual_channel) {
@@ -2037,7 +2038,7 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef *,
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
                                      InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
@@ -2048,6 +2049,7 @@ private:
         }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        this->send_to_channel(*cliprdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
@@ -2158,6 +2160,8 @@ private:
                     std::min<size_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+                LOG(LOG_INFO, "send to server");
 
                 virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
                                                   , this->userid, channel.chanid, length

@@ -292,7 +292,6 @@ public:
         }
         char * end_chars_end = end_chars;
         time_t end = strtoll(end_chars, &end_chars_end, 10);
-        LOG(LOG_INFO, "start = %d end=%d", int(start), int(end));
 
         return (end - start);
     }
