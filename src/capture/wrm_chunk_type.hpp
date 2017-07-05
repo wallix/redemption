@@ -39,5 +39,7 @@ enum class WrmChunkType : uint16_t
     RESET_CHUNK         = 0x1003,   // 4099
     SESSION_UPDATE      = 0x1004,
 
+    POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
+
     INVALID_CHUNK       = 0x8000
 };
