@@ -37,7 +37,7 @@
 #include <sstream>
 #include <cinttypes> // PRId64, ...
 
-class SessionProbeVirtualChannel : public BaseVirtualChannel
+class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
 private:
     bool session_probe_ending_in_progress  = false;

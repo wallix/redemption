@@ -29,7 +29,7 @@
 
 class FrontAPI;
 
-class RemoteProgramsVirtualChannel : public BaseVirtualChannel,
+class RemoteProgramsVirtualChannel final : public BaseVirtualChannel,
     public rdp_api
 {
 private:

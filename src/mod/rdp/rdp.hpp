@@ -2040,7 +2040,7 @@ public:
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
                                      InStream & chunk, size_t length, uint32_t flags) {
-        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         if (this->session_probe_launcher) {
             if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
@@ -2054,7 +2054,7 @@ private:
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
                                   InStream & chunk, size_t length, uint32_t flags) {
-        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }   // send_to_mod_rail_channel
@@ -2093,7 +2093,7 @@ private:
 
 
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -7474,7 +7474,7 @@ private:
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)session_probe_channel;
-        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
+        SessionProbeVirtualChannel& channel = this->get_session_probe_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7489,7 +7489,7 @@ private:
         uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)cliprdr_channel;
-        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7502,7 +7502,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7541,7 +7541,7 @@ private:
             return;
         }
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 

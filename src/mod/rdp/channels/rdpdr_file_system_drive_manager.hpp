@@ -813,7 +813,7 @@ public:
     }
 };  // ManagedFileSystemObject
 
-class ManagedDirectory : public ManagedFileSystemObject {
+class ManagedDirectory final : public ManagedFileSystemObject {
     DIR * dir = nullptr;
 
     std::string pattern;
@@ -1200,7 +1200,7 @@ public:
     }
 };  // ManagedDirectory
 
-class ManagedFile : public ManagedFileSystemObject {
+class ManagedFile final : public ManagedFileSystemObject {
     bool is_session_probe_image = false;
 
 public:

@@ -58,7 +58,7 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
     return len - remaining_len;
 }
 
-class RdpdrDriveReadTask : public AsynchronousTask
+class RdpdrDriveReadTask final : public AsynchronousTask
 {
     const int file_descriptor;
 
@@ -181,7 +181,7 @@ public:
     }
 };  // RdpdrDriveReadTask
 
-class RdpdrSendDriveIOResponseTask : public AsynchronousTask {
+class RdpdrSendDriveIOResponseTask final : public AsynchronousTask {
     const uint32_t flags;
     std::unique_ptr<uint8_t[]> data;
     const size_t data_length;
@@ -248,7 +248,7 @@ public:
     }
 };
 
-class RdpdrSendClientMessageTask : public AsynchronousTask {
+class RdpdrSendClientMessageTask final : public AsynchronousTask {
     const size_t total_length;
     const uint32_t flags;
     std::unique_ptr<uint8_t[]> chunked_data;

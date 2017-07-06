@@ -30,7 +30,7 @@
 
 #include <deque>
 
-class FileSystemVirtualChannel : public BaseVirtualChannel
+class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
     VirtualChannelDataSender& to_server_sender;
 

@@ -29,7 +29,7 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "core/channel_names.hpp"
 
-class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
+class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     enum class State {
         START,                          // 0
         RUN,
