@@ -462,6 +462,8 @@ protected:
                     *(this->to_server_synchronous_sender.get()),
                     this->verbose);
 
+                    //LOG(LOG_INFO, "asynchronous_task !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
             if (this->asynchronous_tasks.empty()) {
                 this->asynchronous_task_event.~wait_obj();
                 new (&this->asynchronous_task_event) wait_obj();
@@ -2049,7 +2051,7 @@ private:
         }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-        this->send_to_channel(*cliprdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
+        //this->send_to_channel(*cliprdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,

@@ -115,7 +115,6 @@ public:
         {
             (*this->to_server_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
-                LOG(LOG_INFO,  "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
     }
 

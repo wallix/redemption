@@ -530,21 +530,22 @@ public:
         mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
+        mod_rdp_params.deny_channels = nullptr;
         //mod_rdp_params.verbose = to_verbose_flags(0);
 
 
         try {
             this->mod = new mod_rdp( *(this->socket)
-                                , *(this)
-                                , this->info
-                                , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                , this->gen
-                                , this->timeSystem
-                                , mod_rdp_params
-                                , this->authentifier
-                                , this->reportMessage
-                                , this->ini
-                                );
+                                    , *(this)
+                                    , this->info
+                                    , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                    , this->gen
+                                    , this->timeSystem
+                                    , mod_rdp_params
+                                    , this->authentifier
+                                    , this->reportMessage
+                                    , this->ini
+                                    );
 
         } catch (const Error &) {
             return nullptr;

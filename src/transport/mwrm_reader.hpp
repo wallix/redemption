@@ -63,8 +63,8 @@ struct MetaLine
     time_t  stop_time;
     uint8_t hash1[MD_HASH::DIGEST_LENGTH];
     uint8_t hash2[MD_HASH::DIGEST_LENGTH];
-    
-    MetaLine() 
+
+    MetaLine()
     : filename{}
     , size(0)
     , mode(0)
@@ -419,6 +419,7 @@ private:
         err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+
         if (has_start_and_stop_time) {
             err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
