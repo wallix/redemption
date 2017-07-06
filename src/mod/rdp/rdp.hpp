@@ -153,18 +153,18 @@ protected:
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
-//             if ((
-//                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-//                 && this->channel.name == channel_names::cliprdr
-//             ) || (
-//                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-//                 && this->channel.name == channel_names::rdpdr
-//             )) {
-//                 const bool send              = true;
-//                 const bool from_or_to_client = true;
-//                 ::msgdump_c(send, from_or_to_client, total_length, flags,
-//                     chunk_data, chunk_data_length);
-//             }
+            if ((
+                bool(this->verbose & RDPVerbose::cliprdr_dump)
+                && this->channel.name == channel_names::cliprdr
+            ) || (
+                bool(this->verbose & RDPVerbose::rdpdr_dump)
+                && this->channel.name == channel_names::rdpdr
+            )) {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
 
             this->front.send_to_channel(this->channel,
                 chunk_data, total_length, chunk_data_length, flags);
@@ -211,18 +211,18 @@ protected:
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
             }
 
-//             if ((
-//                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-//                 && this->channel_name == channel_names::cliprdr
-//             ) || (
-//                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-//                 && this->channel_name == channel_names::rdpdr
-//             )) {
-//                 const bool send              = true;
-//                 const bool from_or_to_client = false;
-//                 ::msgdump_c(send, from_or_to_client, total_length, flags,
-//                     chunk_data, chunk_data_length);
-//             }
+            if ((
+                bool(this->verbose & RDPVerbose::cliprdr_dump)
+                && this->channel_name == channel_names::cliprdr
+            ) || (
+                bool(this->verbose & RDPVerbose::rdpdr_dump)
+                && this->channel_name == channel_names::rdpdr
+            )) {
+                const bool send              = true;
+                const bool from_or_to_client = false;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
 
             virtual_channel_pdu.send_to_server(this->transport,
                 this->encrypt, this->encryption_level, this->user_id,
