@@ -465,8 +465,7 @@ protected:
                     //LOG(LOG_INFO, "asynchronous_task !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
             if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.~wait_obj();
-                new (&this->asynchronous_task_event) wait_obj();
+                this->asynchronous_task_event.full_reset();
 
                 asynchronous_task->configure_wait_object(
                     this->asynchronous_task_event);
@@ -1921,8 +1920,7 @@ private:
             this->asynchronous_tasks.pop_front();
         }
 
-        this->asynchronous_task_event.~wait_obj();
-        new (&this->asynchronous_task_event) wait_obj();
+        this->asynchronous_task_event.full_reset();
 
         if (!this->asynchronous_tasks.empty()) {
             this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
@@ -7550,8 +7548,7 @@ private:
 
         if (out_asynchronous_task) {
             if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.~wait_obj();
-                new (&this->asynchronous_task_event) wait_obj();
+                this->asynchronous_task_event.full_reset();
 
                 out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
             }

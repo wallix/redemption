@@ -26,7 +26,6 @@
 #pragma once
 
 #include "utils/difftimeval.hpp"
-#include "utils/sugar/noncopyable.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/select.hpp"
 
@@ -40,7 +39,7 @@ enum BackEvent_t {
 };
 
 
-class wait_obj : noncopyable
+class wait_obj
 {
 public:
     bool        set_state;
@@ -56,6 +55,18 @@ public:
     , waked_up_by_time(false)
     {
         this->trigger_time = tvtime();
+    }
+
+private:
+    wait_obj(wait_obj&&) = delete;
+    wait_obj(const wait_obj&) = delete;
+    wait_obj& operator=(const wait_obj&) = delete;
+    wait_obj& operator=(wait_obj&&) = default; // for full_reset()
+
+public:
+    void full_reset()
+    {
+        *this = wait_obj();
     }
 
     void reset()
