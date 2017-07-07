@@ -95,46 +95,10 @@ public:
              , Font const & font
              , bool wait_for_escape
              , Verbose debug_capture)
-    : InternalMod(front, width, height, font, Theme{}, false)
-    , auth_error_message(auth_error_message)
-    , movie_path(replay_path, movie)
-    //, in_trans(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted)
-    //, reader(this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
-    , end_of_data(false)
-    , wait_for_escape(wait_for_escape)
-    , balise_time_frame(0)
-    , sync_setted(false)
-    , loop_on_movie(false)
+    : ReplayMod(
+        front, replay_path, movie, width, height, auth_error_message,
+        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, debug_capture)
     {
-        this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted);
-        this->reader =  std::make_unique<FileToGraphic>(*(this->in_trans.get()), timeval({0, 0}), timeval({0, 0}), true, debug_capture);
-
-        switch (this->front.server_resize( this->reader.get()->info_width
-                                         , this->reader.get()->info_height
-                                         , this->reader.get()->info_bpp)) {
-        case FrontAPI::ResizeResult::no_need:
-            // no resizing needed
-            break;
-        case FrontAPI::ResizeResult::instant_done:
-        case FrontAPI::ResizeResult::done:
-            // resizing done
-            this->front_width  = this->reader.get()->info_width;
-            this->front_height = this->reader.get()->info_height;
-
-            this->screen.set_wh(this->reader.get()->info_width, this->reader.get()->info_height);
-
-            break;
-        case FrontAPI::ResizeResult::fail:
-            // resizing failed
-            // thow an Error ?
-            LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-            throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
-        }
-
-        this->reader.get()->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-        //this->set_sync();
-//         time_t begin_file_read = this->in_trans.get()->get_meta_line().start_time - this->balise_time_frame;
-//         this->in_trans.get()->set_begin_time(begin_file_read);
     }
 
     ReplayMod( FrontAPI & front
@@ -145,8 +109,8 @@ public:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
-             , timeval & begin_read
-             , timeval & end_read
+             , timeval const & begin_read
+             , timeval const & end_read
              , time_t balise_time_frame
              , Verbose debug_capture)
     : InternalMod(front, width, height, font, Theme{}, false)
@@ -187,6 +151,7 @@ public:
         this->reader.get()->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
         time_t begin_file_read = begin_read.tv_sec+this->in_trans.get()->get_meta_line().start_time - this->balise_time_frame;
         this->in_trans.get()->set_begin_time(begin_file_read);
+        this->front.can_be_start_capture();
     }
 
     void add_consumer(
