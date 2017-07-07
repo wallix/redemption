@@ -63,6 +63,13 @@ public:
       , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
     };
 
+    enum : int {
+        CHANID_CLIPDRD = 1601,
+        CHANID_RDPDR   = 1602,
+        CHANID_WABDIAG = 1603,
+        CHANID_RDPSND  = 1604
+    };
+
 
     struct MouseData {
         QImage cursor_image;
@@ -523,21 +530,22 @@ public:
         mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
+        mod_rdp_params.deny_channels = nullptr;
         //mod_rdp_params.verbose = to_verbose_flags(0);
 
 
         try {
             this->mod = new mod_rdp( *(this->socket)
-                                , *(this)
-                                , this->info
-                                , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                , this->gen
-                                , this->timeSystem
-                                , mod_rdp_params
-                                , this->authentifier
-                                , this->reportMessage
-                                , this->ini
-                                );
+                                    , *(this)
+                                    , this->info
+                                    , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                    , this->gen
+                                    , this->timeSystem
+                                    , mod_rdp_params
+                                    , this->authentifier
+                                    , this->reportMessage
+                                    , this->ini
+                                    );
 
         } catch (const Error &) {
             return nullptr;
@@ -677,7 +685,7 @@ public:
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , 1601
+                                                 , CHANID_CLIPDRD
                                                  };
             this->_to_client_sender._channel = channel_cliprdr;
             this->cl.push_back(channel_cliprdr);
@@ -703,7 +711,7 @@ public:
             CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                               , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                 GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                              , CHANNELS::CHANNEL_CHUNK_LENGTH+2
+                                              , CHANID_RDPDR
                                               };
             this->cl.push_back(channel_rdpdr);
         }
@@ -711,7 +719,7 @@ public:
         CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                             , CHANNELS::CHANNEL_CHUNK_LENGTH+3
+                                             , CHANID_WABDIAG
                                              };
         this->cl.push_back(channel_WabDiag);
 
@@ -719,7 +727,7 @@ public:
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANNELS::CHANNEL_CHUNK_LENGTH+4
+                                                 , CHANID_RDPSND
                                                  };
         //this->cl.push_back(channel_audio_output);
 
@@ -750,7 +758,7 @@ public:
 
         InStream chunk_series = chunk.clone();
 
-        if (channel.chanid == 1601) {
+        if (channel.chanid == CHANID_CLIPDRD) {
             //std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
@@ -1087,10 +1095,10 @@ public:
                                                                     );
 
                                             this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                                                , chunk_next_part
-                                                                                , total_length
-                                                                                , flag_next
-                                                                                );
+                                                                          , chunk_next_part
+                                                                          , total_length
+                                                                          , flag_next
+                                                                          );
 
                                             data_sent += RDPECLIP::FileDescriptor::size();
                                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1131,11 +1139,11 @@ public:
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
                                     this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                                        , chunk_to_send
-                                                                        , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                        );
+                                                                  , chunk_to_send
+                                                                  , out_stream.get_offset()
+                                                                  , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                    CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                  );
 
                                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                         LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
@@ -1210,7 +1218,7 @@ public:
 
 
 
-        } else if (channel.name == channel_names::rdpdr) {
+        } else if (channel.chanid == CHANID_RDPDR) {
 
             if (this->fileSystemData.writeData_to_wait) {
 
@@ -2028,7 +2036,6 @@ public:
                                                 //}
                                                 }
 
-
                                             //
                                             }
                                             break;
@@ -2510,7 +2517,7 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
-        } else  if (channel.name == channel_names::rdpsnd) {
+        } else  if (channel.chanid == CHANID_RDPSND) {
 
 
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
@@ -2728,7 +2735,7 @@ public:
 
 
 
-        } else if (channel.name == channel_names::wabdiag) {
+        } else if (channel.chanid == CHANID_WABDIAG) {
 
             int len = chunk.in_uint32_le();
             std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
@@ -3171,16 +3178,15 @@ public:
         StaticOutStream<1024> out_stream;
         RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
         format_list_pdu_long.log();
-        format_list_pdu_long.emit(out_stream);
-        const uint32_t total_length = out_stream.get_offset();
+        format_list_pdu_long.emit_LongName(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
         this->mod->send_to_mod_channel( channel_names::cliprdr
-                                            , chunk
-                                            , total_length
-                                            , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                            );
+                                      , chunk
+                                      , out_stream.get_offset()
+                                      , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                      );
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
         }
