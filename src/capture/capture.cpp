@@ -1336,6 +1336,7 @@ Capture::Capture(
 
         if (capture_wrm) {
             this->gds.push_back(*this->wrm_capture_obj);
+            this->kbds.push_back(*this->wrm_capture_obj);
             this->caps.push_back(*this->wrm_capture_obj);
             this->objs.push_back(*this->wrm_capture_obj);
             this->probes.push_back(*this->wrm_capture_obj);
