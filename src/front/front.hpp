@@ -145,6 +145,7 @@ public:
         channel         = 1 << 7,
         global_channel  = 1 << 13,
         sec_decrypted   = 1 << 14,
+        keymap          = 1 << 15,
 
         // RDPSerializer
         bmp_cache        = 1 << 8,
@@ -637,7 +638,7 @@ public:
     : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
-    , keymap(1)
+    , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
     , up_and_running(0)
     , share_id(65538)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
