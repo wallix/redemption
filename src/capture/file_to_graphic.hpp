@@ -1041,6 +1041,11 @@ public:
                 }
             }
         break;
+        case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
+            for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                cap_probe->possible_active_window_change();
+            }
+        break;
         default:
             LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
             throw Error(ERR_WRM);

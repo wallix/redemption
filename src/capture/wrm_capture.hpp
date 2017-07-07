@@ -837,7 +837,9 @@ public:
         this->last_sent_timer = this->timer;
     }
 
-    void possible_active_window_change() override {}
+    void possible_active_window_change() override {
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
+    }
 
     using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
