@@ -1059,7 +1059,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
          REDASSERT(this->header.dataLen() <= 1024);
     }
 
-    void emit(OutStream & stream) {
+    void emit_LongName(OutStream & stream) {
 
 
         this->header.emit(stream);
@@ -1074,11 +1074,17 @@ struct FormatListPDU_LongName : public FormatListPDU {
     void log() const {
         this->header.log();
 //         LOG(LOG_INFO, "     Format List PDU Long Name:");
-//         LOG(LOG_INFO, "          * formatListDataSize = %d (4 bytes)", int(this->formatListDataSize));
         for (size_t i = 0; i < this->formatListDataSize; i++) {
-            LOG(LOG_INFO, "     Short Format Name");
-            LOG(LOG_INFO, "          * formatListDataName = %s", this->formatListDataName[i].c_str());
+            LOG(LOG_INFO, "     Long Format Name");
+            uint8_t utf8_string[520];
+                ::memset(utf8_string, 0, sizeof(utf8_string));
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    reinterpret_cast<const uint8_t *>(this->formatListDataName[i].data()),
+                    this->formatListDataName[i].size(),
+                    utf8_string,
+                    this->formatListDataName[i].size()/2);
             LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
+            LOG(LOG_INFO, "          * formatListDataName = \"%s\"", reinterpret_cast<char *>(utf8_string));
         }
     }
 

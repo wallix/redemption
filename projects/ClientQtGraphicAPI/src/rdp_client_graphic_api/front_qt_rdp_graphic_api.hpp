@@ -1637,11 +1637,11 @@ public:
     }
 
     virtual ResizeResult server_resize(int width, int height, int bpp) override{
-        //if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
-        //}
+        }
 
         if (width == 0 || height == 0) {
             return ResizeResult::fail;
