@@ -40,6 +40,9 @@ class ReplayMod : public InternalMod
         char extension[128];
         char prefix[4096];
 
+        //TODO: should be generalized to some wide use FilePath object
+        // with basename, path, ext, etc. methods and use it for passing
+        // around all of redemption pathes.
         TemporaryCtxPath(const char * replay_path, const char * movie)
         {
             char path_movie[1024];
