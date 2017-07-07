@@ -1552,7 +1552,7 @@ protected:
                  GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
                 this->verbose);
 
-        if (channel_name == channel_names::rdpdr) {
+        if (channel_name != channel_names::rdpdr) {
             return std::unique_ptr<VirtualChannelDataSender>(
                 std::move(to_server_sender));
         }
@@ -1581,14 +1581,12 @@ protected:
             this->max_clipboard_data;
         clipboard_virtual_channel_params.verbose                         =
             this->verbose;
-
         clipboard_virtual_channel_params.clipboard_down_authorized       =
             this->authorization_channels.cliprdr_down_is_authorized();
         clipboard_virtual_channel_params.clipboard_up_authorized         =
             this->authorization_channels.cliprdr_up_is_authorized();
         clipboard_virtual_channel_params.clipboard_file_authorized       =
             this->authorization_channels.cliprdr_file_is_authorized();
-
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
