@@ -1428,6 +1428,9 @@ public:
 
                 mod_rdp_params.rail_disconnect_message_delay       = this->ini.get<cfg::context::rail_disconnect_message_delay>();
 
+                mod_rdp_params.use_session_probe_to_launch_remote_program
+                                                                   = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+
                 try {
                     const char * const name = "RDP Target";
 

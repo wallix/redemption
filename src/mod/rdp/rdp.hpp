@@ -344,6 +344,8 @@ protected:
     const bool                        session_probe_use_clipboard_based_launcher;
     const bool                        session_probe_enable_log;
 
+    const bool                        use_session_probe_to_launch_remote_program;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -533,6 +535,7 @@ protected:
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
                     this->front,
+                    *this,
                     *this,
                     file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
@@ -864,6 +867,7 @@ public:
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
+        , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -1241,12 +1245,25 @@ public:
         if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
             if (this->remote_program) {
                 if (this->enable_session_probe) {
-                    this->real_alternate_shell = "[None]";
+                    if (this->use_session_probe_to_launch_remote_program) {
+                        std::string alternate_shell(mod_rdp_params.alternate_shell);
 
-                    this->real_client_execute_flags       = 0;
-                    this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
-                    this->real_client_execute_arguments   = shell_arguments.c_str();
-                    this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
+                        if (!shell_arguments.empty()) {
+                            alternate_shell += " ";
+                            alternate_shell += shell_arguments;
+                        }
+
+                        this->real_alternate_shell = std::move(alternate_shell);
+                        this->real_working_dir     = mod_rdp_params.shell_working_dir;
+                    }
+                    else {
+                        this->real_alternate_shell = "[None]";
+
+                        this->real_client_execute_flags       = 0;
+                        this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
+                        this->real_client_execute_arguments   = shell_arguments.c_str();
+                        this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
+                    }
 
                     this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
                     this->client_execute_arguments   = session_probe_arguments;
@@ -1736,6 +1753,10 @@ protected:
 
         remote_programs_virtual_channel_params.should_ignore_first_client_execute =
             this->should_ignore_first_client_execute;
+
+        remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
+            this->use_session_probe_to_launch_remote_program;
+
 
         return remote_programs_virtual_channel_params;
     }
@@ -7671,6 +7692,19 @@ private:
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+        }
+    }
+
+    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
+        uint16_t exec_result, uint32_t raw_result) override {
+        if (this->remote_program) {
+            RemoteProgramsVirtualChannel& rpvc =
+                this->get_remote_programs_virtual_channel();
+
+            rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
+        }
+        else {
+            LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
         }
     }
 };

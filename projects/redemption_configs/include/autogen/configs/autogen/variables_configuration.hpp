@@ -4070,6 +4070,23 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
+    // AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM
+    // type: bool
+    // sesman -> proxy
+    // value{1}
+    struct context::use_session_probe_to_launch_remote_program {
+        static constexpr bool is_sesman_to_proxy() { return 1; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "context"; }
+        static constexpr char const * name() { return "use_session_probe_to_launch_remote_program"; }
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index() { return authid_t(129); }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
+    };
 
     // type: Theme
     // value{}
@@ -4413,6 +4430,7 @@ struct context
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
 , cfg::context::rail_disconnect_message_delay
+, cfg::context::use_session_probe_to_launch_remote_program
 { static constexpr bool is_section = true; };
 
 }
@@ -4567,5 +4585,6 @@ using VariablesAclPack = Pack<
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
 , cfg::context::rail_disconnect_message_delay
+, cfg::context::use_session_probe_to_launch_remote_program
 >;
 }

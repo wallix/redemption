@@ -635,6 +635,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "rail_disconnect_message_delay", set(3000));
+        W.sep();
+
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));
     });
 
     W.section("", [&]
