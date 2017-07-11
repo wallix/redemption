@@ -276,15 +276,12 @@ struct RdpNego
         bool server_cert_store,
         ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
-        const char * certif_path)
+        const char * certif_path,
+        cbyte_array pdu_buf)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
-        constexpr size_t array_size = AUTOSIZE;
-        uint8_t array[array_size];
-        uint8_t * end = array;
-        X224::RecvFactory f(this->trans, &end, array_size);
-        InStream stream(array, end - array);
+        InStream stream(pdu_buf);
         X224::CC_TPDU_Recv x224(stream);
 
         if (x224.rdp_neg_type == X224::RDP_NEG_NONE){

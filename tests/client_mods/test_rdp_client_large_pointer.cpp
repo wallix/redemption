@@ -30,7 +30,7 @@
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 70) break;
+        if (count++ >= 72) break;
         mod.draw_event(time(nullptr), front);
     }
 
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 70) break;
+        if (count++ >= 72) break;
         mod.draw_event(time(nullptr), front);
     }
 

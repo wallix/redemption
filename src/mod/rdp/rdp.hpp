@@ -273,10 +273,11 @@ protected:
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
-    enum {
+    enum ModState {
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
+        , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER_CONT
         , MOD_RDP_GET_LICENSE
         , MOD_RDP_CONNECTED
     };
@@ -290,7 +291,7 @@ protected:
         UP_AND_RUNNING
     } connection_finalization_state;
 
-    int state;
+    ModState state;
     Pointer cursors[32];
     const bool console_session;
     const uint8_t front_bpp;
@@ -2521,7 +2522,7 @@ public:
         this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
     }
 
-    void early_tls_security_exchange()
+    void early_tls_security_exchange(cbyte_array pdu_buf)
     {
         if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
@@ -2543,7 +2544,8 @@ public:
                     this->server_cert_store,
                     this->server_cert_check,
                     this->server_notifier,
-                    this->certif_path.get()
+                    this->certif_path.get(),
+                    pdu_buf
                 );
                 if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
                     this->send_connectInitialPDUwithGccConferenceCreateRequest();
@@ -2559,21 +2561,14 @@ public:
         }
     }
 
-    void basic_settings_exchange()
+    void basic_settings_exchange(cbyte_array pdu_buf)
     {
         if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
         }
 
         {
-            constexpr std::size_t array_size = 65536;
-
-            uint8_t array[array_size];
-
-            uint8_t * end = array;
-
-            X224::RecvFactory f(this->nego.trans, &end, array_size);
-            InStream x224_data(array, end - array);
+            InStream x224_data(pdu_buf);
 
             X224::DT_TPDU_Recv x224(x224_data);
 
@@ -2862,13 +2857,9 @@ public:
     }
 
 
-    void AttachUserConfirm()
+    void AttachUserConfirm(cbyte_array pdu_buf)
     {
-        constexpr size_t array_size = AUTOSIZE;
-        uint8_t array[array_size];
-        uint8_t * end = array;
-        X224::RecvFactory f(this->nego.trans, &end, array_size);
-        InStream stream(array, end - array);
+        InStream stream(pdu_buf);
         X224::DT_TPDU_Recv x224(stream);
         InStream & mcs_cjcf_data = x224.payload;
         MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
@@ -2877,127 +2868,134 @@ public:
         }
     }
 
-    void channel_connection_attach_user(time_t now)
+    uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+    size_t num_channels_id;
+    size_t index_channels_id;
+    void channel_connection_attach_user(time_t now, cbyte_array pdu_buf)
     {
         if (bool(this->verbose & RDPVerbose::channels)){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
-        {
-            this->AttachUserConfirm();
-            {
-                size_t num_channels = this->mod_channel_list.size();
 
-                uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
-                channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
-                channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
-                for (size_t index = 0; index < num_channels; index++){
-                    channels_id[index+2] = this->mod_channel_list[index].chanid;
-                }
+        if (this->state == MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER) {
+            this->AttachUserConfirm(pdu_buf);
 
-                for (size_t index = 0; index < num_channels+2; index++) {
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
-                    }
-                    write_packets(
-                        this->nego.trans,
-                        [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
-                            MCS::ChannelJoinRequest_Send mcs(
-                                mcs_cjrq_data, this->userid,
-                                channels_id[index], MCS::PER_ENCODING
-                            );
-                            (void)mcs;
-                        },
-                        write_x224_dt_tpdu_fn{}
-                    );
-                    LOG(LOG_INFO, "Waiting for Channel Join Confirm");
-                    constexpr size_t array_size = AUTOSIZE;
-                    uint8_t array[array_size];
-                    uint8_t * end = array;
-                    X224::RecvFactory f(this->nego.trans, &end, array_size);
-                    InStream x224_data(array, end - array);
-                    X224::DT_TPDU_Recv x224(x224_data);
-                    InStream & mcs_cjcf_data = x224.payload;
-                    MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                    // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
-                    }
-                }
-            }
-            if (bool(this->verbose & RDPVerbose::channels)){
-                LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
+            this->num_channels_id = this->mod_channel_list.size();
+
+            channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+            channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+            for (size_t index = 0; index < this->num_channels_id; index++){
+                channels_id[index+2] = this->mod_channel_list[index].chanid;
             }
 
-            // RDP Security Commencement
-            // -------------------------
-
-            // RDP Security Commencement: If standard RDP security methods are being
-            // employed and encryption is in force (this is determined by examining the data
-            // embedded in the GCC Conference Create Response packet) then the client sends
-            // a Security Exchange PDU containing an encrypted 32-byte random number to the
-            // server. This random number is encrypted with the public key of the server
-            // (the server's public key, as well as a 32-byte server-generated random
-            // number, are both obtained from the data embedded in the GCC Conference Create
-            //  Response packet).
-
-            // The client and server then utilize the two 32-byte random numbers to generate
-            // session keys which are used to encrypt and validate the integrity of
-            // subsequent RDP traffic.
-
-            // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is include " with the data if encryption is in force (the Client Info
-            // and licensing PDUs are an exception in that they always have a security
-            // header). The Security Header follows the X.224 and MCS Headers and indicates
-            // whether the attached data is encrypted.
-
-            // Even if encryption is in force server-to-client traffic may not always be
-            // encrypted, while client-to-server traffic will always be encrypted by
-            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-            // however).
-
-            // Client                                                     Server
-            //    |------Security Exchange PDU ---------------------------> |
-            if (bool(this->verbose & RDPVerbose::security)){
-                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-            }
-
-            if (this->encryptionLevel){
-                if (bool(this->verbose & RDPVerbose::security)){
-                    LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
-                        this->server_public_key_len);
-                }
-
-                this->send_data_request(
-                    GCC::MCS_GLOBAL_CHANNEL,
-                    dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
-                        SEC::SecExchangePacket_Send mcs(
-                            stream, this->client_crypt_random, this->server_public_key_len
-                        );
-                        (void)mcs;
-                    })
-                );
-            }
-
-            // Secure Settings Exchange
-            // ------------------------
-
-            // Secure Settings Exchange: Secure client data (such as the username,
-            // password and auto-reconnect cookie) is sent to the server using the Client
-            // Info PDU.
-
-            // Client                                                     Server
-            //    |------ Client Info PDU      ---------------------------> |
-
-            if (bool(this->verbose & RDPVerbose::security)){
-                LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
-            }
-
-            this->send_client_info_pdu(now);
-            this->state = MOD_RDP_GET_LICENSE;
+            this->index_channels_id = 0;
         }
+        else {
+            LOG(LOG_INFO, "Waiting for Channel Join Confirm");
+            InStream x224_data(pdu_buf);
+            X224::DT_TPDU_Recv x224(x224_data);
+            InStream & mcs_cjcf_data = x224.payload;
+            MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+            // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
+            if (bool(this->verbose & RDPVerbose::channels)){
+                LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, this->index_channels_id, mcs.channelId);
+            }
+            this->index_channels_id++;
+        }
+
+        if (this->index_channels_id < this->num_channels_id+2) {
+            if (bool(this->verbose & RDPVerbose::channels)){
+                LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, this->index_channels_id, channels_id[this->index_channels_id]);
+            }
+            write_packets(
+                this->nego.trans,
+                [this](StreamSize<256>, OutStream & mcs_cjrq_data){
+                    MCS::ChannelJoinRequest_Send mcs(
+                        mcs_cjrq_data, this->userid,
+                        this->channels_id[this->index_channels_id], MCS::PER_ENCODING
+                    );
+                    (void)mcs;
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+
+            this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER_CONT;
+            return ;
+        }
+
+        if (bool(this->verbose & RDPVerbose::basic_trace)){
+            LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
+        }
+
+        // RDP Security Commencement
+        // -------------------------
+
+        // RDP Security Commencement: If standard RDP security methods are being
+        // employed and encryption is in force (this is determined by examining the data
+        // embedded in the GCC Conference Create Response packet) then the client sends
+        // a Security Exchange PDU containing an encrypted 32-byte random number to the
+        // server. This random number is encrypted with the public key of the server
+        // (the server's public key, as well as a 32-byte server-generated random
+        // number, are both obtained from the data embedded in the GCC Conference Create
+        //  Response packet).
+
+        // The client and server then utilize the two 32-byte random numbers to generate
+        // session keys which are used to encrypt and validate the integrity of
+        // subsequent RDP traffic.
+
+        // From this point, all subsequent RDP traffic can be encrypted and a security
+        // header is include " with the data if encryption is in force (the Client Info
+        // and licensing PDUs are an exception in that they always have a security
+        // header). The Security Header follows the X.224 and MCS Headers and indicates
+        // whether the attached data is encrypted.
+
+        // Even if encryption is in force server-to-client traffic may not always be
+        // encrypted, while client-to-server traffic will always be encrypted by
+        // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+        // however).
+
+        // Client                                                     Server
+        //    |------Security Exchange PDU ---------------------------> |
+        if (bool(this->verbose & RDPVerbose::basic_trace)){
+            LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+        }
+
+        if (this->encryptionLevel){
+            if (bool(this->verbose & RDPVerbose::basic_trace)){
+                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                    this->server_public_key_len);
+            }
+
+            this->send_data_request(
+                GCC::MCS_GLOBAL_CHANNEL,
+                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                    SEC::SecExchangePacket_Send mcs(
+                        stream, this->client_crypt_random, this->server_public_key_len
+                    );
+                    (void)mcs;
+                })
+            );
+        }
+
+        // Secure Settings Exchange
+        // ------------------------
+
+        // Secure Settings Exchange: Secure client data (such as the username,
+        // password and auto-reconnect cookie) is sent to the server using the Client
+        // Info PDU.
+
+        // Client                                                     Server
+        //    |------ Client Info PDU      ---------------------------> |
+
+        if (bool(this->verbose & RDPVerbose::basic_trace)){
+            LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
+        }
+
+        this->send_client_info_pdu(now);
+        this->state = MOD_RDP_GET_LICENSE;
     }
 
-    void get_license()
+    void get_license(cbyte_array pdu_buf)
     {
         if (bool(this->verbose & RDPVerbose::license)){
             LOG(LOG_INFO, "mod_rdp::Licensing");
@@ -3090,11 +3088,7 @@ public:
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
-            constexpr size_t array_size = AUTOSIZE;
-            uint8_t array[array_size];
-            uint8_t * end = array;
-            X224::RecvFactory f(this->nego.trans, &end, array_size);
-            InStream stream(array, end - array);
+            InStream stream(pdu_buf);
             X224::DT_TPDU_Recv x224(stream);
             // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
             //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -3336,20 +3330,16 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void connected(time_t now, gdi::GraphicApi & drawable)
+    void connected(time_t now, gdi::GraphicApi & drawable, byte_array pdu_buf, bool has_fast_path)
     {
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
         // Detect fast-path PDU
-        constexpr std::size_t array_size = 65536;
-        uint8_t array[array_size];
-        uint8_t * end = array;
-        X224::RecvFactory fx224(this->nego.trans, &end, array_size, true);
-        InStream stream(array, end - array);
+        InStream stream(pdu_buf);
 
-        if (fx224.fast_path) {
-            FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array);
+        if (has_fast_path) {
+            FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, pdu_buf.to_u8p());
             if (this->enable_transparent_mode) {
                 //total_data_received += su.payload.size();
                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
@@ -4031,8 +4021,20 @@ public:
         }
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable_) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable_) override
+    {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
+        constexpr size_t pdu_full_packet = AUTOSIZE;
+        uint8_t array[pdu_full_packet];
+        uint8_t * end = array;
+        bool has_fast_path = false;
+        if (this->state != MOD_RDP_NEGO || this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE) {
+            X224::RecvFactory f(
+                this->nego.trans, &end, pdu_full_packet,
+                this->state == MOD_RDP_CONNECTED);
+            has_fast_path = f.fast_path;
+        }
+        byte_array pdu_buf{array, end};
 
         if (this->remote_programs_session_manager) {
             this->remote_programs_session_manager->set_drawable(&drawable_);
@@ -4046,19 +4048,20 @@ public:
                 //LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                 switch (this->state){
                 case MOD_RDP_NEGO:
-                    this->early_tls_security_exchange();
+                    this->early_tls_security_exchange(pdu_buf);
                     break;
 
                 case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                    this->basic_settings_exchange();
+                    this->basic_settings_exchange(pdu_buf);
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                    this->channel_connection_attach_user(now);
+                case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER_CONT:
+                    this->channel_connection_attach_user(now, pdu_buf);
                     break;
 
                 case MOD_RDP_GET_LICENSE:
-                    this->get_license();
+                    this->get_license(pdu_buf);
                     break;
 
                 case MOD_RDP_CONNECTED:
@@ -4069,7 +4072,7 @@ public:
                             ? gdi::null_gd()
                             : drawable_
                         ));
-                    this->connected(now, drawable);
+                    this->connected(now, drawable, pdu_buf, has_fast_path);
                     break;
                 }
             }
@@ -4147,6 +4150,7 @@ public:
                         CASE(RDP_NEGO);
                         CASE(RDP_BASIC_SETTINGS_EXCHANGE);
                         CASE(RDP_CHANNEL_CONNECTION_ATTACH_USER);
+                        CASE(RDP_CHANNEL_CONNECTION_ATTACH_USER_CONT);
                         CASE(RDP_GET_LICENSE);
                         CASE(RDP_CONNECTED);
                         #undef CASE

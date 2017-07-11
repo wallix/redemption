@@ -119,12 +119,17 @@ RED_AUTO_TEST_CASE(TestNego)
 
     const bool server_cert_store = true;
 
+    constexpr size_t pdu_full_packet = AUTOSIZE;
+    uint8_t array[pdu_full_packet];
+    uint8_t * end = array;
+    X224::RecvFactory f(nego.trans, &end, pdu_full_packet);
     nego.recv_connection_confirm(
         server_cert_store,
         ServerCertCheck::always_succeed,
         null_server_notifier,
-        "/tmp/certif"
-        );
+        "/tmp/certif",
+        byte_array{array, end}
+    );
 
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
