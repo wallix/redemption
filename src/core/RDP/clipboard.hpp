@@ -1078,7 +1078,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
             LOG(LOG_INFO, "     Long Format Name");
             uint8_t utf8_string[520];
                 ::memset(utf8_string, 0, sizeof(utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                /*const size_t length_of_utf8_string =*/ ::UTF16toUTF8(
                     reinterpret_cast<const uint8_t *>(this->formatListDataName[i].data()),
                     this->formatListDataName[i].size(),
                     utf8_string,
