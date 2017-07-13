@@ -404,7 +404,7 @@ private:
 
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG( LOG_ERR
+            LOG( LOG_INFO
                , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
                , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), this->bpp);

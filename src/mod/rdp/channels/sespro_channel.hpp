@@ -756,7 +756,7 @@ public:
                         if (!this->param_show_maximized) {
                             out_s.out_uint8('\x01');
 
-                            const char cstr[] = "Minimized";
+                            const char cstr[] = "Normal";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
                     }
