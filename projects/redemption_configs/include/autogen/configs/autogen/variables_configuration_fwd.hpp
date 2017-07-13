@@ -201,8 +201,6 @@ namespace cfg {
     struct crypto {
         struct key0;
         struct key1;
-        struct session_log_with_encryption;
-        struct session_log_with_checksum;
     };
 
     struct debug {

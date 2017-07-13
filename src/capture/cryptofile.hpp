@@ -87,6 +87,8 @@ public:
     bool old_encryption_scheme = false;
     bool one_shot_encryption_scheme = false;
 
+    bool with_encryption = false;
+    bool with_checksum = false;
 
 public:
     auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
@@ -125,6 +127,21 @@ public:
         this->master_derivator.assign(derivator.begin(), derivator.end());
     }
 
+    void set_with_encryption (bool encryption) {
+        this->with_encryption = encryption;
+    }
+
+    void set_with_checksum (bool checksum) {
+        this->with_checksum = checksum;
+    }
+
+    bool get_with_encryption () {
+        return this->with_encryption;
+    }
+
+    bool get_with_checksum () {
+        return this->with_checksum;
+    }
 private:
     // force extension to "mwrm" if it's .log
     static array_view_const_u8 get_normalized_derivator(

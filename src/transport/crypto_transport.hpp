@@ -581,6 +581,14 @@ public:
     {
     }
 
+    ocrypto(CryptoContext & cctx, Random & rnd)
+        : cctx(cctx)
+        , rnd(rnd)
+        , encryption(cctx.get_with_encryption())
+        , checksum(cctx.get_with_checksum())
+    {
+    }
+
     ~ocrypto() = default;
 
     Result open(const_byte_array derivator)
@@ -803,6 +811,23 @@ public:
     {
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
+    }
+
+    explicit OutCryptoTransport(
+        CryptoContext & cctx, Random & rnd, Fstat & fstat,
+        ReportError report_error = ReportError()
+    ) noexcept
+    : encrypter(cctx, rnd)
+    , out_file(invalid_fd(), std::move(report_error))
+    , with_encryption(cctx.get_with_encryption())
+    , with_checksum(cctx.get_with_encryption() || cctx.get_with_checksum())
+    , cctx(cctx)
+    , rnd(rnd)
+    , fstat(fstat)
+    {
+        this->tmpname[0] = 0;
+        this->finalname[0] = 0;
+
     }
 
     const char * get_tmp() const

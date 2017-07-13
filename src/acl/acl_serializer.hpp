@@ -233,10 +233,7 @@ public:
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
-        , ct(
-            ini.get<cfg::crypto::session_log_with_encryption>(),
-            ini.get<cfg::crypto::session_log_with_checksum>(),
-            cctx, rnd, fstat, report_error_from_reporter(*this))
+        , ct(cctx, rnd, fstat, report_error_from_reporter(*this))
         , remote_answer(false)
         , keepalive(
             ini.get<cfg::globals::keepalive_grace_delay>(),
@@ -351,7 +348,7 @@ public:
                 ct.send(" ", 1);
                 ct.send(extra, strlen(extra));
             }
-            ct.send("\"\n", 1);
+            ct.send("\"\n", 2);
         }
 
         /* Log to syslog */

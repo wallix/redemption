@@ -2425,32 +2425,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
-    // Use encryption for session log file.
-    // type: bool
-    // value{0}
-    struct crypto::session_log_with_encryption {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "crypto"; }
-        static constexpr char const * name() { return "session_log_with_encryption"; }
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{0};
-    };
-    // Use checksum for session log file.
-    // type: bool
-    // value{0}
-    struct crypto::session_log_with_checksum {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "crypto"; }
-        static constexpr char const * name() { return "session_log_with_checksum"; }
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{0};
-    };
 
     // type: uint32_t
     // value{}
@@ -4308,8 +4282,6 @@ struct video
 struct crypto
 : cfg::crypto::key0
 , cfg::crypto::key1
-, cfg::crypto::session_log_with_encryption
-, cfg::crypto::session_log_with_checksum
 { static constexpr bool is_section = true; };
 
 struct debug
