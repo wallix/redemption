@@ -2057,7 +2057,7 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
@@ -2068,7 +2068,6 @@ private:
         }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-        //this->send_to_channel(*cliprdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
