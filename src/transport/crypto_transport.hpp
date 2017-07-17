@@ -62,6 +62,37 @@ private:
     EncryptionMode encryption_mode;
     bool encrypted;
 
+    struct EncryptedBufferHandle
+    {
+        void allocate(std::size_t n)
+        {
+            assert(!this->size || n == this->size);
+            // [enc_buf] [dec_buf]
+            this->full_buf = std::make_unique<uint8_t[]>(n + n + AES_BLOCK_SIZE);
+            this->size = n;
+        }
+
+        uint8_t* raw_buffer(std::size_t encrypted_len)
+        {
+            (void)encrypted_len;
+            assert(this->full_buf);
+            assert(encrypted_len <= this->size);
+            return this->full_buf.get();
+        }
+
+        uint8_t* decrypted_buffer(std::size_t encrypted_len)
+        {
+            assert(this->full_buf);
+            assert(encrypted_len <= this->size);
+            return this->full_buf.get() + encrypted_len;
+        }
+
+    private:
+        std::unique_ptr<uint8_t[]> full_buf;
+        std::size_t size = 0;
+    };
+    EncryptedBufferHandle enc_buffer_handle;
+
 public:
     explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
     : fd(-1)
@@ -193,6 +224,7 @@ public:
 
         const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
         this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+        this->enc_buffer_handle.allocate(this->MAX_CIPHERED_SIZE);
 
         // todo: we could read in clear_data, that would avoid some copying
         uint8_t data[40];
@@ -357,8 +389,7 @@ private:
                 uint8_t hlen[4] = {};
                 this->raw_read(hlen, 4);
 
-                Parse p(hlen);
-                uint32_t enc_len = p.in_uint32_le();
+                const uint32_t enc_len = Parse(hlen).in_uint32_le();
                 if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                     this->state = CF_EOF;
                     this->clear_pos = 0;
@@ -371,17 +402,15 @@ private:
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
-                // PERF allocation in loop
-                std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
-                this->raw_read(&enc_buf[0], enc_len);
+                auto * raw_buf = this->enc_buffer_handle.raw_buffer(enc_len);
+                auto * dec_buf = this->enc_buffer_handle.decrypted_buffer(enc_len);
 
-                // PERF allocation in loop
-                std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
-                size_t pack_buf_size = this->ectx.decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
+                this->raw_read(raw_buf, enc_len);
+                const size_t pack_buf_size = this->ectx.decrypt(raw_buf, enc_len, dec_buf);
 
                 size_t chunk_size = CRYPTO_BUFFER_SIZE;
                 const snappy_status status = snappy_uncompress(
-                        reinterpret_cast<char *>(&pack_buf[0]),
+                        reinterpret_cast<char *>(dec_buf),
                         pack_buf_size, this->clear_data, &chunk_size);
 
                 switch (status)
@@ -935,7 +964,7 @@ public:
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {   
+    {
         // Force hash result if no checksum asked
         if (!this->with_checksum){
             memset(qhash, 0xFF, sizeof(qhash));
