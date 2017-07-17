@@ -7402,7 +7402,6 @@ public:
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
-private:
     void disconnect(time_t now) override {
         if (this->is_up_and_running()) {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
@@ -7425,6 +7424,7 @@ private:
         }
     }
 
+private:
     //void send_shutdown_request() {
     //    LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
     //
