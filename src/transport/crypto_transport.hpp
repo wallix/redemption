@@ -138,7 +138,7 @@ public:
         {
             int fd = ::open(pathname, O_RDONLY);
             if (fd < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
             unique_fd auto_close(fd);
 
@@ -168,7 +168,7 @@ public:
         {
             int fd = ::open(pathname, O_RDONLY);
             if (fd < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
             unique_fd auto_close(fd);
 
@@ -210,7 +210,7 @@ public:
 
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
         this->eof = false;
@@ -230,30 +230,34 @@ public:
         uint8_t data[40];
         size_t avail = 0;
         while (avail != 40) {
-            ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+            const ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
             if (ret < 0 && errno == EINTR){
                 continue;
             }
-            if (ret <= 0){
-                // Either read error or EOF: in both cases we are in trouble
-                if (ret == 0) {
-                    // if we have less than magic followed by encryption header
-                    // then our file is necessarilly not encrypted.
-                    this->encrypted = false;
-                    // encryption requested but no encryption
-                    if (this->encryption_mode == EncryptionMode::Encrypted){
-                        this->close();
-                        throw Error(ERR_TRANSPORT_READ_FAILED);
-                    }
-                    // copy what we have, it's not encrypted
-                    this->raw_size = avail;
-                    this->clear_pos = 0;
-                    ::memcpy(this->clear_data, data, avail);
-                    this->file_len = this->get_file_len(pathname);
-                    return;
+            // Either read error or EOF: in both cases we are in trouble
+            if (ret == 0) {
+                // if we have less than magic followed by encryption header
+                // then our file is necessarilly not encrypted.
+                this->encrypted = false;
+
+                // encryption requested but no encryption
+                if (this->encryption_mode == EncryptionMode::Encrypted){
+                    this->close();
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
+
+                // copy what we have, it's not encrypted
+                this->raw_size = avail;
+                this->clear_pos = 0;
+                ::memcpy(this->clear_data, data, avail);
+                this->file_len = this->get_file_len(pathname);
+
+                return;
+            }
+            if (ret <= 0) {
+                int const err = errno;
                 this->close();
-                throw Error(ERR_TRANSPORT_READ_FAILED);
+                throw Error(ERR_TRANSPORT_READ_FAILED, err);
             }
             avail += ret;
         }
@@ -365,8 +369,9 @@ private:
                 if (ret != 0 && errno == EINTR){
                     continue;
                 }
+                int const err = errno;
                 this->close();
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                throw Error(ERR_TRANSPORT_READ_FAILED, err);
             }
             rlen -= ret;
         }
@@ -473,7 +478,7 @@ private:
                     if (errno == EINTR){
                         continue;
                     }
-                    throw Error(ERR_TRANSPORT_READ_FAILED, res);
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
                 remaining_len -= res;
             };
@@ -498,17 +503,19 @@ private:
         }
         total += res;
         if (res != 0 && total != len) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         return total == len ? Read::Ok : Read::Eof;
     }
 
     std::size_t get_file_len(char const * pathname)
     {
+        // TODO used Fstat
         struct stat sb;
-        if (int err = ::stat(pathname, &sb)) {
+        if (0 != ::stat(pathname, &sb)) {
+            int const err = errno;
             LOG(LOG_ERR, "crypto: stat error %d", err);
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_TRANSPORT_READ_FAILED, err);
         }
         return sb.st_size;
     }
@@ -1007,11 +1014,11 @@ public:
         }
 
         struct stat stat;
-        int err = this->fstat.stat(this->finalname, stat);
-        if (err) {
+        if (0 != this->fstat.stat(this->finalname, stat)) {
+            int const err = errno;
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                 this->hash_filename, err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
 
         // open
