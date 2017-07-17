@@ -1198,7 +1198,7 @@ public:
       MIN_SIZE = 93
     };
 
-    uint32_t total_size() {
+    uint32_t total_size() const {
         return this->file_name.length() + MIN_SIZE;
     }
 
