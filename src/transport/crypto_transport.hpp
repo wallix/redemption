@@ -37,6 +37,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+// "MFCW"
+constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
+constexpr uint32_t WABCRYPTOFILE_EOF_MAGIC = 0x5743464D;
+constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
+
+
+constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
+
 
 class InCryptoTransport : public Transport //, public PartialIO
 {
@@ -56,8 +64,6 @@ private:
     uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
     DecryptContext ectx;
-    // TODO: state to remove ? Seems to duplicate eof flag
-    uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
     EncryptionMode encryption_mode;
     bool encrypted;
@@ -103,7 +109,6 @@ public:
     , clear_data{}
     , clear_pos(0)
     , raw_size(0)
-    , state(0)
     , MAX_CIPHERED_SIZE(0)
     , encryption_mode(encryption_mode)
     , encrypted(false)
@@ -220,7 +225,6 @@ public:
 
         this->clear_pos = 0;
         this->raw_size = 0;
-        this->state = 0;
 
         const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
         this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
@@ -383,10 +387,6 @@ private:
             return 0;
         }
         if (this->encrypted){
-            if (this->state & CF_EOF) {
-                return 0;
-            }
-
             // If we do not have any clear data available read some
             if (!this->raw_size) {
 
@@ -396,7 +396,6 @@ private:
 
                 const uint32_t enc_len = Parse(hlen).in_uint32_le();
                 if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                    this->state = CF_EOF;
                     this->clear_pos = 0;
                     this->raw_size = 0;
                     this->eof = true;
@@ -863,7 +862,6 @@ public:
     {
         this->tmpname[0] = 0;
         this->finalname[0] = 0;
-
     }
 
     const char * get_tmp() const

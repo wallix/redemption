@@ -42,23 +42,9 @@
 
 using MD_HASH = SslSha256;
 
-enum crypto_file_state {
-    CF_READY = 0, // Crypto File Reading
-    CF_EOF = 1,   // Crypto File reached EOF
-    CF_INIT = 2,  // Crypto File nor yet initialised
-};
-
-// "MFCW"
-constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
-constexpr uint32_t WABCRYPTOFILE_EOF_MAGIC = 0x5743464D;
-constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
-
 enum {
     DERIVATOR_LENGTH = 8
 };
-
-
-constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 extern "C" {
     typedef int get_hmac_key_prototype(uint8_t * buffer);
