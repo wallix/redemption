@@ -436,9 +436,10 @@ public:
 
         const char request_hello[] = "Request=Hello";
 
-        const char ExtraInfo[]   = "ExtraInfo=";
-        const char version[]     = "Version=";
+        const char ExtraInfo[]     = "ExtraInfo=";
+        const char Version[]       = "Version=";
         const char ExecuteResult[] = "ExecuteResult=";
+        const char Log[]           = "Log=";
 
         if (!this->server_message.compare(request_hello)) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
@@ -850,10 +851,10 @@ public:
         }
         else if (!this->server_message.compare(
                      0,
-                     sizeof(version) - 1,
-                     version)) {
+                     sizeof(Version) - 1,
+                     Version)) {
             const char * subitems          =
-                (this->server_message.c_str() + sizeof(version) - 1);
+                (this->server_message.c_str() + sizeof(Version) - 1);
             const char * subitem_separator =
                 ::strchr(subitems, '\x01');
 
@@ -870,6 +871,14 @@ public:
                         unsigned(major), unsigned(minor));
                 }
             }
+        }
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(Log) - 1,
+                     Log)) {
+            const char * log_string =
+                (this->server_message.c_str() + sizeof(Log) - 1);
+            LOG(LOG_INFO, "SessionProbe: %s", log_string);
         }
         else if (!this->server_message.compare(
                      0,
