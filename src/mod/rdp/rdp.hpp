@@ -7477,6 +7477,13 @@ private:
         (void)chunk_size;
         REDASSERT(stream.in_remain() == chunk_size);
 
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
@@ -7484,7 +7491,17 @@ private:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        this->authentifier.set_auth_channel_target(auth_channel_message.c_str());
+        const char Log[] = "Log=";
+
+        if (!auth_channel_message.compare(0, sizeof(Log) - 1, Log)) {
+            const char * log_string =
+                (auth_channel_message.c_str() + sizeof(Log) - 1);
+            LOG(LOG_INFO, "WABLauncher: %s", log_string);
+        }
+        else {
+            this->authentifier.set_auth_channel_target(
+                auth_channel_message.c_str());
+        }
     }
 
     void process_session_probe_event(
