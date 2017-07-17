@@ -29,6 +29,8 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "mod/internal/internal_mod.hpp"
 
+#include <ctime>
+
 
 class ReplayMod : public InternalMod
 {
@@ -125,22 +127,32 @@ public:
     , balise_time_frame(balise_time_frame)
     , loop_on_movie(false)
     {
-        this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted, this->fstat);
-        this->reader =  std::make_unique<FileToGraphic>(*(this->in_trans.get()), begin_read, end_read, true, debug_capture);
+        this->in_trans = std::make_unique<InMetaSequenceTransport>(
+            this->cctx,
+            this->movie_path.prefix,
+            this->movie_path.extension,
+            InCryptoTransport::EncryptionMode::NotEncrypted,
+            this->fstat);
+        this->reader =  std::make_unique<FileToGraphic>(
+            *this->in_trans,
+            begin_read,
+            end_read,
+            true,
+            debug_capture);
 
-        switch (this->front.server_resize( this->reader.get()->info_width
-                                         , this->reader.get()->info_height
-                                         , this->reader.get()->info_bpp)) {
+        switch (this->front.server_resize( this->reader->info_width
+                                         , this->reader->info_height
+                                         , this->reader->info_bpp)) {
         case FrontAPI::ResizeResult::no_need:
             // no resizing needed
             break;
         case FrontAPI::ResizeResult::instant_done:
         case FrontAPI::ResizeResult::done:
             // resizing done;
-            this->front_width  = this->reader.get()->info_width;
-            this->front_height = this->reader.get()->info_height;
+            this->front_width  = this->reader->info_width;
+            this->front_height = this->reader->info_height;
 
-            this->screen.set_wh(this->reader.get()->info_width, this->reader.get()->info_height);
+            this->screen.set_wh(this->reader->info_width, this->reader->info_height);
 
             break;
         case FrontAPI::ResizeResult::fail:
@@ -150,9 +162,9 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader.get()->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-        time_t begin_file_read = begin_read.tv_sec+this->in_trans.get()->get_meta_line().start_time - this->balise_time_frame;
-        this->in_trans.get()->set_begin_time(begin_file_read);
+        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+        time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
+        this->in_trans->set_begin_time(begin_file_read);
         this->front.can_be_start_capture();
     }
 
@@ -163,7 +175,7 @@ public:
         gdi::CaptureProbeApi * capture_probe_ptr,
         gdi::ExternalCaptureApi * external_event_ptr
     ) {
-        this->reader.get()->add_consumer(
+        this->reader->add_consumer(
             graphic_ptr,
             capture_ptr,
             kbd_input_ptr,
@@ -173,7 +185,7 @@ public:
     }
 
     void play() {
-        this->reader.get()->play(false);
+        this->reader->play(false);
     }
 
     FileToGraphic * get_reader() {
@@ -181,19 +193,19 @@ public:
     }
 
     bool play_client() {
-        return this->reader.get()->play_client();
+        return this->reader->play_client();
     }
 
     void set_sync() {
-        this->reader.get()->set_sync();
+        this->reader->set_sync();
     }
 
     WrmVersion get_wrm_version() {
-        return this->in_trans.get()->get_wrm_version();
+        return this->in_trans->get_wrm_version();
     }
 
     bool get_break_privplay_client() {
-        return this->reader.get()->break_privplay_client;
+        return this->reader->break_privplay_client;
     }
 
     ~ReplayMod() override {
@@ -201,7 +213,7 @@ public:
     }
 
     void instant_play_client(std::chrono::microseconds endin_frame) {
-            this->reader.get()->instant_play_client(endin_frame);
+            this->reader->instant_play_client(endin_frame);
     }
 
     void rdp_input_invalidate(Rect /*rect*/) override {}
@@ -222,19 +234,19 @@ public:
     }
 
     void set_pause(timeval & time) {
-        this->reader.get()->set_pause_client(time);
+        this->reader->set_pause_client(time);
     }
 
     void set_wait_after_load_client(timeval & time) {
-        this->reader.get()->set_wait_after_load_client(time);
+        this->reader->set_wait_after_load_client(time);
     }
 
     time_t get_real_time_movie_begin() {
-        return this->in_trans.get()->get_meta_line().start_time;
+        return this->in_trans->get_meta_line().start_time;
     }
 
     time_t get_movie_time_length() {
-        time_t start = this->in_trans.get()->get_meta_line().start_time;
+        time_t start = this->in_trans->get_meta_line().start_time;
 
         std::string movie_path_str(this->movie_path.prefix);
         movie_path_str += std::string(".mwrm");
@@ -280,68 +292,86 @@ public:
         (void)drawable;
         // TODO use system constants for sizes
         // TODO RZ: Support encrypted recorded file.
-        if (!(this->sync_setted)) {
-            this->sync_setted =  true;
-            this->reader.get()->set_sync();
+        if (!this->sync_setted) {
+            this->sync_setted = true;
+            this->reader->set_sync();
         }
-        if (!this->end_of_data) {
-            try
-            {
 
-                int i;
-                for (i = 0; i < 500; i++) {
+        if (this->end_of_data) {
+            return;
+        }
 
-                    struct timeval now                = tvtime();
-                    std::chrono::microseconds elapsed = difftimeval(now, this->reader.get()->start_synctime_now) ;
-                    if (elapsed >= this->reader.get()->movie_elapsed_client) {
-                        if (this->reader.get()->next_order()) {
-                            this->reader.get()->interpret_order();
-    //                         sleep(1);
-                        } else {
-                            if (this->loop_on_movie) {
-                                this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted, this->fstat);
-                                this->reader =  std::make_unique<FileToGraphic>(*(this->in_trans.get()), timeval({0, 0}), timeval({0, 0}), true, FileToGraphic::Verbose::none);
+        try
+        {
+            int i;
+            for (i = 0; i < 500; i++) {
+                const std::chrono::microseconds elapsed
+                  = difftimeval(tvtime(), this->reader->start_synctime_now);
 
-                                //this->reader.get()->reinit();
-                                this->reader.get()->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+                if (elapsed < this->reader->movie_elapsed_client) {
+                    using std::chrono::duration_cast;
+                    auto const diff_time = this->reader->movie_elapsed_client - elapsed;
+                    auto const sec_diff = duration_cast<std::chrono::seconds>(diff_time);
+                    auto const microsec_diff = diff_time - sec_diff;
+                    auto const nano_diff = duration_cast<std::chrono::nanoseconds>(microsec_diff);
 
-//                                 if (this->reader.get()->next_order()) {
-//                                     this->reader.get()->interpret_order();
-//
-//                                 }
-
-                            } else {
-                                TimeSystem timeobj;
-                                this->disconnect(timeobj.get_time().tv_sec);
-                                this->event.signal = BACK_EVENT_STOP;
-                                this->event.set(1);
-                                this->end_of_data = true;
-                            }
-                        }
+                    timespec wtime = {sec_diff.count(), nano_diff.count()};
+                    timespec wtime_rem = { 0, 0 };
+                    while (nanosleep(&wtime, &wtime_rem) == -1 && errno == EINTR) {
+                        wtime = wtime_rem;
                     }
                 }
-                if (i == 500) {
-                    this->event.set(1);
-                } else {
-                    this->front.sync();
 
-                    if (!this->wait_for_escape) {
-                        this->event.signal = BACK_EVENT_STOP;
-                        this->event.set(1);
-                    }
-                    this->end_of_data = true;
+                if (this->reader->next_order()) {
+                    this->reader->interpret_order();
                 }
-            }
-            catch (Error const & e) {
-                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                    this->auth_error_message = "The recorded file is inaccessible or corrupted!";
+                else if (this->loop_on_movie) {
+                    this->in_trans = std::make_unique<InMetaSequenceTransport>(
+                        this->cctx,
+                        this->movie_path.prefix,
+                        this->movie_path.extension,
+                        InCryptoTransport::EncryptionMode::NotEncrypted,
+                        this->fstat);
+                    this->reader = std::make_unique<FileToGraphic>(
+                        *this->in_trans,
+                        timeval({0, 0}),
+                        timeval({0, 0}),
+                        true,
+                        FileToGraphic::Verbose::none);
 
-                    this->event.signal = BACK_EVENT_NEXT;
-                    this->event.set(1);
+                    //this->reader->reinit();
+                    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
                 }
                 else {
-                    throw;
+                    break;
                 }
+            }
+
+            if (i == 500) {
+                this->event.set(1);
+            }
+            else {
+                this->end_of_data = true;
+                this->disconnect(tvtime().tv_sec);
+                this->front.sync();
+
+                if (!this->wait_for_escape) {
+                    this->event.signal = BACK_EVENT_STOP;
+                    this->event.set(std::chrono::seconds(1));
+                    timespec wtime = {1, 0};
+                    nanosleep(&wtime, nullptr);
+                }
+            }
+        }
+        catch (Error const & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                this->auth_error_message = "The recorded file is inaccessible or corrupted!";
+
+                this->event.signal = BACK_EVENT_NEXT;
+                this->event.set(1);
+            }
+            else {
+                throw;
             }
         }
     }
