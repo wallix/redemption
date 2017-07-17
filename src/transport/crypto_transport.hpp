@@ -30,12 +30,10 @@
 #include "utils/parse.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/genfstat.hpp"
 
 #include <memory>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 // "MFCW"
 constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
@@ -98,9 +96,10 @@ private:
         std::size_t size = 0;
     };
     EncryptedBufferHandle enc_buffer_handle;
+    Fstat & fsats;
 
 public:
-    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
+    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fsats) noexcept
     : fd(-1)
     , eof(true)
     , file_len(0)
@@ -112,6 +111,7 @@ public:
     , MAX_CIPHERED_SIZE(0)
     , encryption_mode(encryption_mode)
     , encrypted(false)
+    , fsats(fsats)
     {
     }
 
@@ -509,10 +509,11 @@ private:
 
     std::size_t get_file_len(char const * pathname)
     {
-        // TODO used Fstat
         struct stat sb;
-        if (0 != ::stat(pathname, &sb)) {
-            int const err = errno;
+        if (int err = this->fsats.stat(pathname, sb)) {
+            if (err == -1 && errno != 0) {
+                err = errno;
+            }
             LOG(LOG_ERR, "crypto: stat error %d", err);
             throw Error(ERR_TRANSPORT_READ_FAILED, err);
         }

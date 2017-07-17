@@ -158,7 +158,8 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
 
     const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
     if (magic == WABCRYPTOFILE_MAGIC) {
-        InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted);
+        Fstat fstat;
+        InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
         in_test.open(full_filename.c_str());
         char mem[4096];
         try {
@@ -790,9 +791,9 @@ inline void load_hash(
     MetaLine & hash_line,
     const std::string & full_hash_path, const std::string & input_filename,
     WrmVersion infile_version, bool infile_is_checksumed,
-    CryptoContext & cctx, bool infile_is_encrypted, int verbose
+    CryptoContext & cctx, Fstat & fstat, bool infile_is_encrypted, int verbose
 ) {
-    InCryptoTransport in_hash_fb(cctx, infile_is_encrypted ? EncryptionMode::Encrypted : EncryptionMode::NotEncrypted);
+    InCryptoTransport in_hash_fb(cctx, infile_is_encrypted ? EncryptionMode::Encrypted : EncryptionMode::NotEncrypted, fstat);
 
     try {
         in_hash_fb.open(full_hash_path.c_str());
@@ -971,12 +972,13 @@ static inline int check_encrypted_or_checksumed(
     bool quick_check,
     bool ignore_stat_info,
     bool update_stat_info,
-    uint32_t verbose,
-    CryptoContext & cctx
+    CryptoContext & cctx,
+    Fstat & fstat,
+    uint32_t verbose
 ) {
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-    InCryptoTransport ibuf(cctx, EncryptionMode::Auto);
+    InCryptoTransport ibuf(cctx, EncryptionMode::Auto, fstat);
 
     try {
         ibuf.open(full_mwrm_filename.c_str());
@@ -1011,7 +1013,7 @@ static inline int check_encrypted_or_checksumed(
 
     // if reading hash fails
     try {
-        load_hash(hash_line, full_hash_path, input_filename, reader.get_header().version, reader.get_header().has_checksum, cctx, infile_is_encrypted, verbose);
+        load_hash(hash_line, full_hash_path, input_filename, reader.get_header().version, reader.get_header().has_checksum, cctx, fstat, infile_is_encrypted, verbose);
     }
     catch (...) {
         std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"\n" << std::endl;
@@ -1126,7 +1128,7 @@ static inline int check_encrypted_or_checksumed(
 
         // copy mwrm headers
         {
-            InCryptoTransport mwrm_file(cctx, EncryptionMode::NotEncrypted);
+            InCryptoTransport mwrm_file(cctx, EncryptionMode::NotEncrypted, fstat);
             mwrm_file.open(full_mwrm_filename.c_str());
             LineReader line_reader(mwrm_file);
 
@@ -1571,7 +1573,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             cctx,
             infile_prefix,
             infile_extension.c_str(),
-            encryption_mode);
+            encryption_mode,
+            fstat);
         file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
     }
     catch (const Error & e) {
@@ -1589,7 +1592,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     InMetaSequenceTransport in_wrm_trans(
         cctx, infile_prefix,
         infile_extension.c_str(),
-        encryption_mode
+        encryption_mode,
+        fstat
     );
 
     timeval begin_capture = {begin_cap, 0};
@@ -1914,7 +1918,8 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
             cctx,
             infile_prefix,
             infile_extension.c_str(),
-            encryption_mode);
+            encryption_mode,
+            fstat);
 
         remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                     , input_basename.c_str(), infile_extension.c_str()
@@ -2451,12 +2456,12 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-
                 encryption_type(rp.full_path, cctx);
 
                 res = check_encrypted_or_checksumed(
                     rp.input_filename, rp.mwrm_path, rp.hash_path,
-                    rp.quick_check, rp.ignore_stat_info, rp.update_stat_info, verbose, cctx
+                    rp.quick_check, rp.ignore_stat_info, rp.update_stat_info,
+                    cctx, fstat, verbose
                 );
                 std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
             } catch (const Error & e) {
@@ -2479,7 +2484,8 @@ extern "C" {
                     return 0;
                 }
 
-                InCryptoTransport in_t(cctx, EncryptionMode::Encrypted);
+                Fstat fstat;
+                InCryptoTransport in_t(cctx, EncryptionMode::Encrypted, fstat);
 
                 size_t res = -1ull;
                 unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);

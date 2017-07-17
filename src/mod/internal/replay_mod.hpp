@@ -34,7 +34,9 @@ class ReplayMod : public InternalMod
 {
     std::string & auth_error_message;
 
-    CryptoContext           cctx;
+    CryptoContext cctx;
+    Fstat         fstat;
+
     struct TemporaryCtxPath
     {
         char extension[128];
@@ -123,7 +125,7 @@ public:
     , balise_time_frame(balise_time_frame)
     , loop_on_movie(false)
     {
-        this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted);
+        this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted, this->fstat);
         this->reader =  std::make_unique<FileToGraphic>(*(this->in_trans.get()), begin_read, end_read, true, debug_capture);
 
         switch (this->front.server_resize( this->reader.get()->info_width
@@ -297,7 +299,7 @@ public:
     //                         sleep(1);
                         } else {
                             if (this->loop_on_movie) {
-                                this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted);
+                                this->in_trans = std::make_unique<InMetaSequenceTransport>(this->cctx, movie_path.prefix, movie_path.extension, InCryptoTransport::EncryptionMode::NotEncrypted, this->fstat);
                                 this->reader =  std::make_unique<FileToGraphic>(*(this->in_trans.get()), timeval({0, 0}), timeval({0, 0}), true, FileToGraphic::Verbose::none);
 
                                 //this->reader.get()->reinit();
