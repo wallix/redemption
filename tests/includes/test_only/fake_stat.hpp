@@ -20,13 +20,14 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "utils/genfstat.hpp"
+
+#include <cstring>
+
 
 struct FakeFstat : Fstat
 {
-    virtual int stat(const char * filename, struct stat & stat)
+    int stat(const char * /*filename*/, struct stat & stat) override
     {
         memset(&stat, 0, sizeof(stat));
         return 0;

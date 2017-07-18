@@ -67,8 +67,6 @@ private:
 
     bool exe_or_file_2_sent = false;
 
-    bool launch_application_using_session_probe = true;
-
     ModRdpVariables vars;
 
     class LaunchPendingApp {
