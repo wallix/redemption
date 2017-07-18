@@ -369,8 +369,8 @@ public:
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
         , _labelCaptureFreq("Capture per second :", this)
-        , _labelClipboard("Active Shared Clipboard :", this)
-        , _labelShare("Active Shared Virtual Disk :", this)
+        , _labelClipboard("Shared Clipboard :", this)
+        , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
@@ -1262,7 +1262,6 @@ public Q_SLOTS:
                         this->send_FormatListPDU();
                 //==========================================================================
                     }
-
                 }
             }
         }

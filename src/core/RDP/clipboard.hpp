@@ -1082,7 +1082,7 @@ struct FormatListPDU_LongName : public FormatListPDU {
                     reinterpret_cast<const uint8_t *>(this->formatListDataName[i].data()),
                     this->formatListDataName[i].size(),
                     utf8_string,
-                    this->formatListDataName[i].size()/2);
+                    length_of_utf8_string);
             LOG(LOG_INFO, "          * formatListDataIDs  = 0x%08x (4 bytes)", this->formatListDataIDs[i]);
             LOG(LOG_INFO, "          * formatListDataName = \"%s\"", reinterpret_cast<char *>(utf8_string));
         }

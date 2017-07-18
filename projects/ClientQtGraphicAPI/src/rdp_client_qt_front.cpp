@@ -127,6 +127,8 @@ public:
 
     Inifile ini;
 
+    timeval paste_data_request_time;
+    long paste_data_len = 0;
 
 
     virtual void options() override {
@@ -515,7 +517,7 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   , this->verbose          //to_verbose_flags(0)
+                                   , to_verbose_flags(0)    // this->verbose
                                    //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                    );
 
@@ -891,15 +893,14 @@ public:
                                 InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
                                 this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                                    , chunk
-                                                                    , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
+                                                              , chunk
+                                                              , out_stream.get_offset()
+                                                              , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              );
                                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
                                 }
-
 
                                 RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
                                 StaticOutStream<32> out_stream_lock;
@@ -907,11 +908,11 @@ public:
                                 InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
 
                                 this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                                    , chunk_lock
-                                                                    , out_stream_lock.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
+                                                              , chunk_lock
+                                                              , out_stream_lock.get_offset()
+                                                              , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              );
                                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
                                 }
@@ -922,14 +923,16 @@ public:
                                 InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
                                 this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                                    , chunkRequest
-                                                                    , out_streamRequest.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
+                                                              , chunkRequest
+                                                              , out_streamRequest.get_offset()
+                                                              , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                              );
                                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
                                 }
+
+                                this->paste_data_request_time = tvtime();
                             }
                         }
                     break;
@@ -1206,6 +1209,8 @@ public:
                             LOG(LOG_INFO, "Process sever next part PDU data");
                         }
                         this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->clipboard_qt);
+
+
                     break;
                 }
 
@@ -2938,6 +2943,7 @@ public:
 
             case RDPECLIP::CF_METAFILEPICT:
 
+
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
                     RDPECLIP::MetaFilePicDescriptor mfpd;
@@ -2948,12 +2954,19 @@ public:
                     cb_buffers.pic_bpp    = mfpd.bpp;
                     cb_buffers.sizeTotal  = mfpd.imageSize;
                     cb_buffers.data       = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
+
+                    this->paste_data_len = mfpd.imageSize;
                 }
 
                 this->send_to_clipboard_Buffer(chunk);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                     this->send_imageBuffer_to_clipboard();
+
+                    std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                    long duration = time.count();;
+                    LOG(LOG_INFO, "RDPECLIP::CF_METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
+
                 }
             break;
 
@@ -2978,6 +2991,7 @@ public:
                         fd.receive(stream);
                         CB_FilesList::CB_in_Files file;
                         file.size = fd.file_size();
+                        this->paste_data_len = file.size;
                         file.name = fd.fileName();
                         cb_filesList.itemslist.push_back(file);
                     }
@@ -2993,12 +3007,12 @@ public:
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
                     this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                        , chunkRequest
-                                                        , total_length_FormatDataRequestPDU
-                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST |
-                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                        );
+                                                  , chunkRequest
+                                                  , total_length_FormatDataRequestPDU
+                                                  , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                    CHANNELS::CHANNEL_FLAG_FIRST |
+                                                    CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                  );
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
                         LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
                     }
@@ -3018,9 +3032,9 @@ public:
                 }
 
                 clipboard_qt->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
-                                                    , chunk.get_current()
-                                                    , chunk.in_remain()
-                                                    );
+                                                       , chunk.get_current()
+                                                       , chunk.in_remain()
+                                                       );
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                     this->_waiting_for_data = false;
@@ -3039,11 +3053,11 @@ public:
                         InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
                         this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunk_unlock
-                                                            , out_stream_unlock.get_offset()
-                                                            , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
-                                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                            );
+                                                      , chunk_unlock
+                                                      , out_stream_unlock.get_offset()
+                                                      , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
+                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                      );
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
                             LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
                         }
@@ -3062,16 +3076,22 @@ public:
                         InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
                         this->mod->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunkRequest
-                                                            , total_length_FormatDataRequestPDU
-                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                            CHANNELS::CHANNEL_FLAG_FIRST |
-                                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                            );
+                                                      , chunkRequest
+                                                      , total_length_FormatDataRequestPDU
+                                                      , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                        CHANNELS::CHANNEL_FLAG_FIRST |
+                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                      );
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
                             LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU FILECONTENTS_RANGE");
                         }
                     }
+
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                            long duration = time.count();;
+                            LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len*3, duration);
+                        }
 
                     this->empty_buffer();
                 }
@@ -3177,7 +3197,6 @@ public:
 
         StaticOutStream<1024> out_stream;
         RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
-        format_list_pdu_long.log();
         format_list_pdu_long.emit_LongName(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -3250,7 +3269,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::cliprdr_dump | RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

@@ -5903,8 +5903,6 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
             }
 
-            LOG(LOG_INFO, "INFOTYPE_LOGON_EXTENDED_INFO OutStream emitted");
-
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
 
@@ -5922,7 +5920,6 @@ public:
                     throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
                 }
             }
-            LOG(LOG_INFO, "INFOTYPE_LOGON_EXTENDED_INFO case ended");
         }
         break;
         }
