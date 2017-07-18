@@ -34,7 +34,7 @@
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
-class ClipboardVirtualChannel : public BaseVirtualChannel
+class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
     uint16_t client_message_type = 0;

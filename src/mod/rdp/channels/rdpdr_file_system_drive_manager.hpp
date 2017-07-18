@@ -813,7 +813,7 @@ public:
     }
 };  // ManagedFileSystemObject
 
-class ManagedDirectory : public ManagedFileSystemObject {
+class ManagedDirectory final : public ManagedFileSystemObject {
     DIR * dir = nullptr;
 
     std::string pattern;
@@ -1141,7 +1141,7 @@ public:
                         file_both_directory_information.log(LOG_INFO);
                     }
 
-                    out_stream.out_uint32_le(file_both_directory_information.size());   // Length(4)
+                    out_stream.out_uint32_le(file_both_directory_information.total_size());   // Length(4)
 
                     file_both_directory_information.emit(out_stream);
                 }
@@ -1200,7 +1200,7 @@ public:
     }
 };  // ManagedDirectory
 
-class ManagedFile : public ManagedFileSystemObject {
+class ManagedFile final : public ManagedFileSystemObject {
     bool is_session_probe_image = false;
 
 public:

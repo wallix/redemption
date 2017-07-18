@@ -153,18 +153,18 @@ protected:
             const uint8_t* chunk_data, uint32_t chunk_data_length)
                 override
         {
-//             if ((
-//                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-//                 && this->channel.name == channel_names::cliprdr
-//             ) || (
-//                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-//                 && this->channel.name == channel_names::rdpdr
-//             )) {
-//                 const bool send              = true;
-//                 const bool from_or_to_client = true;
-//                 ::msgdump_c(send, from_or_to_client, total_length, flags,
-//                     chunk_data, chunk_data_length);
-//             }
+            if ((
+                bool(this->verbose & RDPVerbose::cliprdr_dump)
+                && this->channel.name == channel_names::cliprdr
+            ) || (
+                bool(this->verbose & RDPVerbose::rdpdr_dump)
+                && this->channel.name == channel_names::rdpdr
+            )) {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
 
             this->front.send_to_channel(this->channel,
                 chunk_data, total_length, chunk_data_length, flags);
@@ -211,18 +211,18 @@ protected:
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
             }
 
-//             if ((
-//                 bool(this->verbose & RDPVerbose::cliprdr_dump)
-//                 && this->channel_name == channel_names::cliprdr
-//             ) || (
-//                 bool(this->verbose & RDPVerbose::rdpdr_dump)
-//                 && this->channel_name == channel_names::rdpdr
-//             )) {
-//                 const bool send              = true;
-//                 const bool from_or_to_client = false;
-//                 ::msgdump_c(send, from_or_to_client, total_length, flags,
-//                     chunk_data, chunk_data_length);
-//             }
+            if ((
+                bool(this->verbose & RDPVerbose::cliprdr_dump)
+                && this->channel_name == channel_names::cliprdr
+            ) || (
+                bool(this->verbose & RDPVerbose::rdpdr_dump)
+                && this->channel_name == channel_names::rdpdr
+            )) {
+                const bool send              = true;
+                const bool from_or_to_client = false;
+                ::msgdump_c(send, from_or_to_client, total_length, flags,
+                    chunk_data, chunk_data_length);
+            }
 
             virtual_channel_pdu.send_to_server(this->transport,
                 this->encrypt, this->encryption_level, this->user_id,
@@ -343,6 +343,8 @@ protected:
     const std::chrono::milliseconds   session_probe_idle_session_limit;
     const bool                        session_probe_use_clipboard_based_launcher;
     const bool                        session_probe_enable_log;
+
+    const bool                        use_session_probe_to_launch_remote_program;
 
     std::string session_probe_target_informations;
 
@@ -465,8 +467,7 @@ protected:
                     //LOG(LOG_INFO, "asynchronous_task !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
             if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.~wait_obj();
-                new (&this->asynchronous_task_event) wait_obj();
+                this->asynchronous_task_event.full_reset();
 
                 asynchronous_task->configure_wait_object(
                     this->asynchronous_task_event);
@@ -534,6 +535,7 @@ protected:
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_probe_to_server_sender.get(),
                     this->front,
+                    *this,
                     *this,
                     file_system_virtual_channel,
                     this->get_session_probe_virtual_channel_params());
@@ -865,6 +867,7 @@ public:
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
+        , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -1242,12 +1245,25 @@ public:
         if (mod_rdp_params.target_application && (*mod_rdp_params.target_application)) {
             if (this->remote_program) {
                 if (this->enable_session_probe) {
-                    this->real_alternate_shell = "[None]";
+                    if (this->use_session_probe_to_launch_remote_program) {
+                        std::string alternate_shell(mod_rdp_params.alternate_shell);
 
-                    this->real_client_execute_flags       = 0;
-                    this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
-                    this->real_client_execute_arguments   = shell_arguments.c_str();
-                    this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
+                        if (!shell_arguments.empty()) {
+                            alternate_shell += " ";
+                            alternate_shell += shell_arguments;
+                        }
+
+                        this->real_alternate_shell = std::move(alternate_shell);
+                        this->real_working_dir     = mod_rdp_params.shell_working_dir;
+                    }
+                    else {
+                        this->real_alternate_shell = "[None]";
+
+                        this->real_client_execute_flags       = 0;
+                        this->real_client_execute_exe_or_file = mod_rdp_params.alternate_shell;
+                        this->real_client_execute_arguments   = shell_arguments.c_str();
+                        this->real_client_execute_working_dir = mod_rdp_params.shell_working_dir;
+                    }
 
                     this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
                     this->client_execute_arguments   = session_probe_arguments;
@@ -1738,6 +1754,10 @@ protected:
         remote_programs_virtual_channel_params.should_ignore_first_client_execute =
             this->should_ignore_first_client_execute;
 
+        remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
+            this->use_session_probe_to_launch_remote_program;
+
+
         return remote_programs_virtual_channel_params;
     }
 
@@ -1921,8 +1941,7 @@ private:
             this->asynchronous_tasks.pop_front();
         }
 
-        this->asynchronous_task_event.~wait_obj();
-        new (&this->asynchronous_task_event) wait_obj();
+        this->asynchronous_task_event.full_reset();
 
         if (!this->asynchronous_tasks.empty()) {
             this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
@@ -2038,9 +2057,9 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
-        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         if (this->session_probe_launcher) {
             if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
@@ -2049,12 +2068,11 @@ private:
         }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-        //this->send_to_channel(*cliprdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
                                   InStream & chunk, size_t length, uint32_t flags) {
-        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }   // send_to_mod_rail_channel
@@ -2093,7 +2111,7 @@ private:
 
 
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -7381,7 +7399,6 @@ public:
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
-private:
     void disconnect(time_t now) override {
         if (this->is_up_and_running()) {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
@@ -7404,6 +7421,7 @@ private:
         }
     }
 
+private:
     //void send_shutdown_request() {
     //    LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
     //
@@ -7456,6 +7474,13 @@ private:
         (void)chunk_size;
         REDASSERT(stream.in_remain() == chunk_size);
 
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
@@ -7463,7 +7488,17 @@ private:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        this->authentifier.set_auth_channel_target(auth_channel_message.c_str());
+        const char Log[] = "Log=";
+
+        if (!auth_channel_message.compare(0, sizeof(Log) - 1, Log)) {
+            const char * log_string =
+                (auth_channel_message.c_str() + sizeof(Log) - 1);
+            LOG(LOG_INFO, "WABLauncher: %s", log_string);
+        }
+        else {
+            this->authentifier.set_auth_channel_target(
+                auth_channel_message.c_str());
+        }
     }
 
     void process_session_probe_event(
@@ -7471,7 +7506,7 @@ private:
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)session_probe_channel;
-        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
+        SessionProbeVirtualChannel& channel = this->get_session_probe_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7486,7 +7521,7 @@ private:
         uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)cliprdr_channel;
-        BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7499,7 +7534,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7538,7 +7573,7 @@ private:
             return;
         }
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -7547,8 +7582,7 @@ private:
 
         if (out_asynchronous_task) {
             if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.~wait_obj();
-                new (&this->asynchronous_task_event) wait_obj();
+                this->asynchronous_task_event.full_reset();
 
                 out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
             }
@@ -7671,6 +7705,19 @@ private:
         }
         else {
             LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+        }
+    }
+
+    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
+        uint16_t exec_result, uint32_t raw_result) override {
+        if (this->remote_program) {
+            RemoteProgramsVirtualChannel& rpvc =
+                this->get_remote_programs_virtual_channel();
+
+            rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
+        }
+        else {
+            LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
         }
     }
 };

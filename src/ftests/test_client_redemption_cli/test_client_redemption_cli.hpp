@@ -309,39 +309,19 @@ public:
 
     ~TestClientCLI() {}
 
-
-
-    void disconnect(mod_api * mod, SocketTransport * socket) {
-
-        if (mod !=  nullptr) {
-            TimeSystem timeobj;
-            mod->disconnect(timeobj.get_time().tv_sec);
-            delete (mod);
-            mod = nullptr;
-        }
-
-        if (socket != nullptr) {
-            delete (socket);
-            socket = nullptr;
-        }
-
+    void disconnect() {
         timeval now = tvtime();
         std::chrono::microseconds duration = difftimeval(now, this->start_session_time);
 
         //     std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
         std::cout << "movie_length = " << duration.count() / 1000 <<  std::endl;
 
-        if (this->out_path != std::string("")) {
-            std::string out_path_movie = this->out_path + std::string("_movie_length");
-            std::ofstream file_movie(out_path_movie.c_str() , std::ios::app | std::ios::out);
+        if (!this->out_path.empty()) {
+            std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
             if (file_movie) {
                 file_movie << duration.count() / 1000 << "\n";
-                file_movie.close();
             }
         }
-
-        delete (socket);
-        socket = nullptr;
     }
 
     bool is_running() {
@@ -387,12 +367,10 @@ public:
 
         //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
 
-        if (this->out_path != std::string("")) {
-            std::string out_path_movie = this->out_path + std::string("_nego_length");
-            std::ofstream file_movie(out_path_movie.c_str() , std::ios::app | std::ios::out);
+        if (!this->out_path.empty()) {
+            std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
             if (file_movie) {
                 file_movie << duration.count() / 1000 << "\n";
-                file_movie.close();
             }
         }
 
@@ -400,7 +378,7 @@ public:
         return ResizeResult::done;
     }
 
-    void printClpbrdPDUExchange(std::string str, uint16_t valid) {
+    void printClpbrdPDUExchange(std::string const & str, uint16_t valid) {
         if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
             std::cout << str;
             if (valid == RDPECLIP::CB_RESPONSE_FAIL) {
@@ -412,22 +390,8 @@ public:
     }
 
     void show_out_stream(int flags, OutStream & chunk, size_t length) {
-        uint8_t * data = chunk.get_data();
-        std::cout <<  std::hex << "     flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
-        std::cout << "      \"";
-        for (size_t i = 0; i < length; i++) {
-            int byte(data[i]);
-            if ((i % 16) == 0 && i != 0) {
-                std::cout << "\"" << std::endl << "      \"";
-            }
-
-            std::cout << "\\x";
-            if (byte < 0x10) {
-                std::cout << "0";
-            }
-            std::cout  <<  byte;
-        }
-        std::cout << "\"" << std::dec << std::endl;
+        InStream in(chunk.get_data(), chunk.get_capacity());
+        this->show_in_stream(flags, in, length);
     }
 
     void show_in_stream(int flags, InStream & chunk, size_t length) {

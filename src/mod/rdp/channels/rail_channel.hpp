@@ -29,7 +29,7 @@
 
 class FrontAPI;
 
-class RemoteProgramsVirtualChannel : public BaseVirtualChannel,
+class RemoteProgramsVirtualChannel final : public BaseVirtualChannel,
     public rdp_api
 {
 private:
@@ -51,6 +51,8 @@ private:
     RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
     bool param_should_ignore_first_client_execute;
+
+    bool param_use_session_probe_to_launch_remote_program;
 
     bool first_client_execute_ignored = false;
 
@@ -111,6 +113,8 @@ public:
 
         bool should_ignore_first_client_execute;
 
+        bool use_session_probe_to_launch_remote_program;
+
         Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
@@ -133,6 +137,7 @@ public:
     , param_client_execute_arguments_2(params.client_execute_arguments_2)
     , param_rail_session_manager(params.rail_session_manager)
     , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
+    , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
     , vars(vars) {}
 
 protected:
@@ -1461,40 +1466,57 @@ public:
             }
         }
 
-        StaticOutStream<1024> out_s;
-        RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
-
-        ClientExecutePDU cepdu;
-
-        cepdu.Flags(flags);
-        cepdu.ExeOrFile(exe_or_file);
-        cepdu.WorkingDir(working_dir);
-        cepdu.Arguments(arguments_.c_str());
-
-        cepdu.emit(out_s);
-
-        header.emit_end();
-
-        const size_t   length = out_s.get_offset();
-        const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
-                                | CHANNELS::CHANNEL_FLAG_LAST;
-
-        {
-            const bool send              = true;
-            const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, length, flags_,
-                out_s.get_data(), length);
+        if (this->param_use_session_probe_to_launch_remote_program &&
+            this->session_probe_channel) {
+                this->session_probe_channel->rail_exec(
+                        exe_or_file,
+                        arguments_.c_str(),
+                        working_dir,
+                        false,  // Show maximized
+                        flags
+                    );
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::auth_rail_exec: "
+                            "Send to Session Probe - Execure");
+                }
         }
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::auth_rail_exec: "
-                    "Send to server - Client Execute PDU (3)");
-            cepdu.log(LOG_INFO);
-        }
+        else {
+            StaticOutStream<1024> out_s;
+            RAILPDUHeader header;
+            header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
 
-        this->send_message_to_server(length, flags_, out_s.get_data(),
-            length);
+            ClientExecutePDU cepdu;
+
+            cepdu.Flags(flags);
+            cepdu.ExeOrFile(exe_or_file);
+            cepdu.WorkingDir(working_dir);
+            cepdu.Arguments(arguments_.c_str());
+
+            cepdu.emit(out_s);
+
+            header.emit_end();
+
+            const size_t   length = out_s.get_offset();
+            const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                    | CHANNELS::CHANNEL_FLAG_LAST;
+
+            {
+                const bool send              = true;
+                const bool from_or_to_client = false;
+                ::msgdump_c(send, from_or_to_client, length, flags_,
+                    out_s.get_data(), length);
+            }
+            if (bool(this->verbose & RDPVerbose::rail)) {
+                LOG(LOG_INFO,
+                    "RemoteProgramsVirtualChannel::auth_rail_exec: "
+                        "Send to server - Client Execute PDU");
+                cepdu.log(LOG_INFO);
+            }
+
+            this->send_message_to_server(length, flags_, out_s.get_data(),
+                length);
+        }
     }
 
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
@@ -1516,7 +1538,7 @@ public:
 
         serpdu.Flags(flags);
         serpdu.ExecResult(exec_result);
-        serpdu.RawResult(0xFFFF);
+        serpdu.RawResult(0xFFFFFFFF);
         serpdu.ExeOrFile(original_exe_or_file);
 
         serpdu.emit(out_s);
@@ -1535,7 +1557,54 @@ public:
         if (bool(this->verbose & RDPVerbose::rail)) {
             LOG(LOG_INFO,
                 "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
-                    "Send to client - Server Execute Result PDU (2)");
+                    "Send to client - Server Execute Result PDU");
+            serpdu.log(LOG_INFO);
+        }
+
+        this->send_message_to_client(length, flags_, out_s.get_data(),
+            length);
+    }
+
+    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
+        uint16_t exec_result, uint32_t raw_result) override {
+        if (bool(this->verbose & RDPVerbose::rail)) {
+            LOG(LOG_INFO,
+                "RemoteProgramsVirtualChannel::sespro_rail_exec_result: "
+                    "exec_result=%u "
+                    "raw_result=%u "
+                    "exe_or_file=\"%s\" "
+                    "flags=%u",
+                exec_result, raw_result, exe_or_file, flags);
+        }
+
+        StaticOutStream<1024> out_s;
+        RAILPDUHeader header;
+        header.emit_begin(out_s, TS_RAIL_ORDER_EXEC_RESULT);
+
+        ServerExecuteResultPDU serpdu;
+
+        serpdu.Flags(flags);
+        serpdu.ExecResult(exec_result);
+        serpdu.RawResult(raw_result);
+        serpdu.ExeOrFile(exe_or_file);
+
+        serpdu.emit(out_s);
+
+        header.emit_end();
+
+        const size_t   length = out_s.get_offset();
+        const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                | CHANNELS::CHANNEL_FLAG_LAST;
+        {
+            const bool send              = true;
+            const bool from_or_to_client = true;
+            ::msgdump_c(send, from_or_to_client, length, flags_,
+                out_s.get_data(), length);
+        }
+        if (bool(this->verbose & RDPVerbose::rail)) {
+            LOG(LOG_INFO,
+                "RemoteProgramsVirtualChannel::sespro_rail_exec_result: "
+                    "Send to client - Server Execute Result PDU");
             serpdu.log(LOG_INFO);
         }
 

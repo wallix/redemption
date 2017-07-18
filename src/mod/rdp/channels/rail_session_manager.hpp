@@ -39,7 +39,7 @@
 
 #include <string>
 
-class RemoteProgramsSessionManager
+class RemoteProgramsSessionManager final
 : public gdi::GraphicApi
 , public RemoteProgramsWindowIdManager
 , public windowing_api

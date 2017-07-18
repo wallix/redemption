@@ -42,23 +42,9 @@
 
 using MD_HASH = SslSha256;
 
-enum crypto_file_state {
-    CF_READY = 0, // Crypto File Reading
-    CF_EOF = 1,   // Crypto File reached EOF
-    CF_INIT = 2,  // Crypto File nor yet initialised
-};
-
-// "MFCW"
-constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
-constexpr uint32_t WABCRYPTOFILE_EOF_MAGIC = 0x5743464D;
-constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
-
 enum {
     DERIVATOR_LENGTH = 8
 };
-
-
-constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 extern "C" {
     typedef int get_hmac_key_prototype(uint8_t * buffer);
@@ -87,6 +73,8 @@ public:
     bool old_encryption_scheme = false;
     bool one_shot_encryption_scheme = false;
 
+    bool with_encryption = false;
+    bool with_checksum = false;
 
 public:
     auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
@@ -125,6 +113,21 @@ public:
         this->master_derivator.assign(derivator.begin(), derivator.end());
     }
 
+    void set_with_encryption (bool encryption) {
+        this->with_encryption = encryption;
+    }
+
+    void set_with_checksum (bool checksum) {
+        this->with_checksum = checksum;
+    }
+
+    bool get_with_encryption () {
+        return this->with_encryption;
+    }
+
+    bool get_with_checksum () {
+        return this->with_checksum;
+    }
 private:
     // force extension to "mwrm" if it's .log
     static array_view_const_u8 get_normalized_derivator(

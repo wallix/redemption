@@ -25,7 +25,7 @@
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 
-class SessionProbeAlternateShellBasedLauncher : public SessionProbeLauncher {
+class SessionProbeAlternateShellBasedLauncher final : public SessionProbeLauncher {
 private:
     RemoteProgramsVirtualChannel* rail_channel = nullptr;
     SessionProbeVirtualChannel*   sespro_channel = nullptr;

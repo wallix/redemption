@@ -23,6 +23,7 @@
 #include "configs/config.hpp"
 
 #include "test_client_redemption_cli.hpp"
+#include "utils/timeval_ops.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -34,14 +35,13 @@
 
 
 
-void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &, bool, struct timeval &, bool);
+int run_mod(mod_api &, TestClientCLI &, int, EventList &, bool, std::chrono::milliseconds, bool);
 void print_help();
 
 ///////////////////////////////
 // APPLICATION
-int main(int argc, char** argv){
-
-
+int main(int argc, char** argv)
+{
     //================================
     //         Default config
     //================================
@@ -52,9 +52,9 @@ int main(int argc, char** argv){
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
-                                 | PERF_DISABLE_FULLWINDOWDRAG
-                                 | PERF_DISABLE_MENUANIMATIONS;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER
+                               | PERF_DISABLE_FULLWINDOWDRAG
+                               | PERF_DISABLE_MENUANIMATIONS;
     info.cs_monitor.monitorCount = 1;
     //info.encryptionLevel = 1;
     int verbose(0);
@@ -69,7 +69,7 @@ int main(int argc, char** argv){
     bool time_set_connection_test = false;
     std::string script_file_path;
     uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG |           GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
-    struct timeval time_out_response = { TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE / 1000, TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE % 1000 };
+    std::chrono::milliseconds time_out_response(TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
     bool script_on(false);
     std::string out_path;
     //=========================================================
@@ -96,25 +96,25 @@ int main(int argc, char** argv){
         //================================
         if (       word == "--user") {
             if (i+1 < argc) {
-                userName = std::string(argv[i+1]);
+                userName = argv[i+1];
                 input_connection_data_complete |= TestClientCLI::NAME;
                 i++;
             }
         } else if (word == "--pwd" || word == "--password") {
             if (i+1 < argc) {
-                userPwd = std::string(argv[i+1]);
+                userPwd = argv[i+1];
                 input_connection_data_complete |= TestClientCLI::PWD;
                 i++;
             }
         } else if (word == "--ip") {
             if (i+1 < argc) {
-                ip = std::string(argv[i+1]);
+                ip = argv[i+1];
                 input_connection_data_complete |= TestClientCLI::IP;
                 i++;
             }
         } else if (word == "--local_ip") {
             if (i+1 < argc) {
-                localIP = std::string(argv[i+1]);
+                localIP = argv[i+1];
                 i++;
             }
         }
@@ -235,7 +235,7 @@ int main(int argc, char** argv){
             case 0:
             default:
                 std::cout << "Unknow key word: \'" << argv[i] << "\'" <<  std::endl;
-                exit(11);
+                return 11;
 
             case 1:
             case 2:
@@ -248,31 +248,31 @@ int main(int argc, char** argv){
 
             case 6:                                         // --port
                 if (i+1 < argc) {
-                    port = std::stoi(std::string(argv[i+1]));
+                    port = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
             case 7:                                         // --keylayout
                 if (i+1 < argc) {
-                    info.keylayout = std::stoi(std::string(argv[i+1]));
+                    info.keylayout = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
             case 8:                                         // --bpp
                 if (i+1 < argc) {
-                    info.bpp = std::stoi(std::string(argv[i+1]));
+                    info.bpp = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
             case 9:                                         // --width
                 if (i+1 < argc) {
-                    info.width = std::stoi(std::string(argv[i+1]));
+                    info.width = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
             case 10:                                        // --height
                 if (i+1 < argc) {
-                    info.height = std::stoi(std::string(argv[i+1]));
+                    info.height = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
@@ -291,7 +291,7 @@ int main(int argc, char** argv){
                 break;
             case 15:                                        // --mon_count
                 if (i+1 < argc) {
-                    info.cs_monitor.monitorCount = std::stoi(std::string(argv[i+1]));
+                    info.cs_monitor.monitorCount = std::stoi(argv[i+1]);
                     i++;
                 }
                 break;
@@ -374,8 +374,8 @@ int main(int argc, char** argv){
                 if (i+1 < argc) {
                     time_set_connection_test = true;
                     quick_connection_test = false;
-                    long time = std::stol(std::string(argv[i+1]));
-                    time_out_response = { time/1000, time % 1000 };
+                    long time = std::stol(argv[i+1]);
+                    time_out_response = std::chrono::seconds(time);
                     i++;
                 }
                 break;
@@ -383,17 +383,17 @@ int main(int argc, char** argv){
                 if (i+1 < argc) {
                     quick_connection_test = false;
                     time_set_connection_test = false;
-                    script_file_path = std::string(argv[i+1]);
+                    script_file_path = argv[i+1];
                     script_on = true;
                     i++;
                 }
                 break;
             case 39:                                        // --tls
                 if (i+1 < argc) {
-                    if (       std::string(argv[i+1]) ==  "on") {
+                    if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_tls = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_tls = false;
                         i++;
                     }
@@ -401,10 +401,10 @@ int main(int argc, char** argv){
                 break;
             case 40:                                        // --nla
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                    if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_nla = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_nla = false;
                         i++;
                     }
@@ -412,10 +412,10 @@ int main(int argc, char** argv){
                 break;
             case 41:                                        // --fastpath
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_fastpath = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_fastpath = false;
                         i++;
                     }
@@ -423,10 +423,10 @@ int main(int argc, char** argv){
                 break;
             case 42:                                        // --mem3blt
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_mem3blt = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_mem3blt = false;
                         i++;
                     }
@@ -434,10 +434,10 @@ int main(int argc, char** argv){
                 break;
             case 43:                                        // --new_pointer
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_new_pointer = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_new_pointer = false;
                         i++;
                     }
@@ -445,10 +445,10 @@ int main(int argc, char** argv){
                 break;
             case 44:                                        // --serv_red
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.server_redirection_support = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.server_redirection_support = false;
                         i++;
                     }
@@ -456,10 +456,10 @@ int main(int argc, char** argv){
                 break;
             case 45:                                        // --krb
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_krb = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_krb = false;
                         i++;
                     }
@@ -467,10 +467,10 @@ int main(int argc, char** argv){
                 break;
             case 46:                                        // --glph_cache
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_glyph_cache = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_glyph_cache = false;
                         i++;
                     }
@@ -478,10 +478,10 @@ int main(int argc, char** argv){
                 break;
             case 47:                                        // --sess_prb
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_session_probe = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_session_probe = false;
                         i++;
                     }
@@ -489,10 +489,10 @@ int main(int argc, char** argv){
                 break;
             case 48:                                        // --sess_prb_lnch_mask
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_enable_launch_mask = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_enable_launch_mask = false;
                         i++;
                     }
@@ -500,10 +500,10 @@ int main(int argc, char** argv){
                 break;
             case 49:                                        // --disable_cb_log_sys
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.disable_clipboard_log_syslog = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.disable_clipboard_log_syslog = false;
                         i++;
                     }
@@ -511,10 +511,10 @@ int main(int argc, char** argv){
                 break;
             case 50:                                        // --disable_cb_log_wrm
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.disable_clipboard_log_wrm = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.disable_clipboard_log_wrm = false;
                         i++;
                     }
@@ -522,10 +522,10 @@ int main(int argc, char** argv){
                 break;
             case 51:                                        // --disable_file_syslog
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.disable_file_system_log_syslog = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.disable_file_system_log_syslog = false;
                         i++;
                     }
@@ -533,10 +533,10 @@ int main(int argc, char** argv){
                 break;
             case 52:                                        // --disable_file_wrm
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.disable_file_system_log_wrm = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.disable_file_system_log_wrm = false;
                         i++;
                     }
@@ -544,10 +544,10 @@ int main(int argc, char** argv){
                 break;
             case 53:                                        // --sess_prb_cb_based_lnch
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_use_clipboard_based_launcher = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_use_clipboard_based_launcher = false;
                         i++;
                     }
@@ -555,10 +555,10 @@ int main(int argc, char** argv){
                 break;
             case 54:                                        // --sess_prb_slttoal
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon = false;
                         i++;
                     }
@@ -566,10 +566,10 @@ int main(int argc, char** argv){
                 break;
             case 55:                                        // --sess_prob_oktdu
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user = false;
                         i++;
                     }
@@ -577,10 +577,10 @@ int main(int argc, char** argv){
                 break;
             case 56:                                        // --sess_prb_eds
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_end_disconnected_session = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_end_disconnected_session = false;
                         i++;
                     }
@@ -588,10 +588,10 @@ int main(int argc, char** argv){
                 break;
             case 57:                                        // --sess_prb_custom_exe
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.session_probe_customize_executable_name = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.session_probe_customize_executable_name = false;
                         i++;
                     }
@@ -599,10 +599,10 @@ int main(int argc, char** argv){
                 break;
             case 58:                                        // --transp_mode
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_transparent_mode = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_transparent_mode = false;
                         i++;
                     }
@@ -610,10 +610,10 @@ int main(int argc, char** argv){
                 break;
             case 59:                                        // --ignore_auth_channel
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.ignore_auth_channel = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.ignore_auth_channel = false;
                         i++;
                     }
@@ -621,10 +621,10 @@ int main(int argc, char** argv){
                 break;
             case 60:                                        // --use_client_as
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.use_client_provided_alternate_shell = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.use_client_provided_alternate_shell = false;
                         i++;
                     }
@@ -632,10 +632,10 @@ int main(int argc, char** argv){
                 break;
             case 61:                                        // --disconn_oluc
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.disconnect_on_logon_user_change = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.disconnect_on_logon_user_change = false;
                         i++;
                     }
@@ -643,10 +643,10 @@ int main(int argc, char** argv){
                 break;
             case 62:                                        // --cert_store
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.server_cert_store = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.server_cert_store = false;
                         i++;
                     }
@@ -654,10 +654,10 @@ int main(int argc, char** argv){
                 break;
             case 63:                                        // --hide_name
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.hide_client_name = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.hide_client_name = false;
                         i++;
                     }
@@ -665,10 +665,10 @@ int main(int argc, char** argv){
                 break;
             case 64:                                        // --persist_bmp_cache
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_persistent_disk_bitmap_cache = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_persistent_disk_bitmap_cache = false;
                         i++;
                     }
@@ -676,10 +676,10 @@ int main(int argc, char** argv){
                 break;
             case 65:                                        // --cache_wait_list
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.enable_cache_waiting_list = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.enable_cache_waiting_list = false;
                         i++;
                     }
@@ -687,10 +687,10 @@ int main(int argc, char** argv){
                 break;
             case 66:                                        // --serv_redir_supp
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.persist_bitmap_cache_on_disk = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.persist_bitmap_cache_on_disk = false;
                         i++;
                     }
@@ -698,10 +698,10 @@ int main(int argc, char** argv){
                 break;
             case 67:                                        // --bogus_size
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.bogus_sc_net_size = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.bogus_sc_net_size = false;
                         i++;
                     }
@@ -709,10 +709,10 @@ int main(int argc, char** argv){
                 break;
             case 68:                                        // --bogus_rectc
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.bogus_refresh_rect = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.bogus_refresh_rect = false;
                         i++;
                     }
@@ -720,10 +720,10 @@ int main(int argc, char** argv){
                 break;
             case 69:                                        // --multi_mon
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.allow_using_multiple_monitors = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.allow_using_multiple_monitors = false;
                         i++;
                     }
@@ -731,24 +731,19 @@ int main(int argc, char** argv){
                 break;
             case 71:                                        // --adj_perf_rec
                 if (i+1 < argc) {
-                     if (       std::string(argv[i+1]) ==  "on") {
+                     if (      0 == strcmp(argv[i+1], "on")) {
                         mod_rdp_params.adjust_performance_flags_for_recording = true;
                         i++;
-                    } else if (std::string(argv[i+1]) ==  "off") {
+                    } else if (0 == strcmp(argv[i+1], "off")) {
                         mod_rdp_params.adjust_performance_flags_for_recording = false;
                         i++;
                     }
                 }
                 break;
             case 72:
-                if (i+1 < argc) {
-                    out_path = std::string(argv[i+1]);
-                    i++;
-                }
-                break;
             case 73:
                 if (i+1 < argc) {
-                    out_path = std::string(argv[i+1]);
+                    out_path = argv[i+1];
                     i++;
                 }
                 break;
@@ -850,291 +845,289 @@ int main(int argc, char** argv){
     NullReportMessage report_message;
     TestClientCLI front(info, report_message, verbose);
     front.out_path = out_path;
+    int main_return = 40;
 
     if (input_connection_data_complete & TestClientCLI::IP) {
-        int sck(0);
-        SocketTransport * socket(nullptr);
-        std::string error_message;
-        bool connection_succed(false);
-        const char * name(userName.c_str());
-        const char * targetIP(ip.c_str());
-        const std::string errorMsg(" Cannot connect to [" + ip +  "].");
+        // std::cout << " ================================" << "\n";
+        // std::cout << " ======= Connection steps =======" << "\n";
+        // std::cout << " ================================" << "\n";
 
-//         std::cout << " ================================" << "\n";
-//         std::cout << " ======= Connection steps =======" << "\n";
-//         std::cout << " ================================" << "\n";
-
-        sck = ip_connect(targetIP, port, nbTry, retryDelay);
-
-        if (sck > 0) {
+        // Exception handler (pretty message)
+        static std::terminate_handler old_terminate_handler =
+        std::set_terminate([]{
+            auto eptr = std::current_exception();
             try {
-                socket = new SocketTransport( name
-                                            , sck
-                                            , targetIP
-                                            , port
-                                            , to_verbose_flags(verbose)
-                                            , &error_message
-                                            );
-                connection_succed = true;
-                std::cout << " Connected to [" << targetIP <<  "]." << std::endl;
-
-            } catch (const std::exception &) { // TODO no throwing exception to SocketTransport ctor
-                std::cout << errorMsg << " Socket error. " << std::endl;
-                front.disconnect(nullptr, socket);
-                exit(9);
+                if (eptr) {
+                    std::rethrow_exception(eptr);
+                }
+            } catch(const Error& e) {
+                std::cerr << e.errmsg() << "\n";
+            } catch(...) {
             }
-        } else {
-            std::cout << errorMsg << " ip_connect error." << std::endl;
+            old_terminate_handler();
+        });
+
+        // Signal handler (SIGPIPE)
+        {
+            struct sigaction sa;
+            sa.sa_flags = 0;
+            sigaddset(&sa.sa_mask, SIGPIPE);
+            sa.sa_handler = [](int sig){
+                std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
+            };
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+            sigaction(SIGPIPE, &sa, nullptr);
+            REDEMPTION_DIAGNOSTIC_POP
         }
 
-        if (connection_succed) {
 
-            mod_rdp * mod(nullptr);
+        int const sck = ip_connect(ip.c_str(), port, nbTry, retryDelay);
+        if (sck <= 0) {
+            std::cerr << "ip_connect: Cannot connect to [" << ip << "]." << std::endl;
+            return 1;
+        }
 
-            LCGRandom gen(0); // To always get the same client random, in tests
-            TimeSystem timeSystem;
+        unique_fd auto_close_sck{sck};
 
+        std::string error_message; // TODO actually not use
+        SocketTransport socket(
+            userName.c_str()
+          , sck
+          , ip.c_str()
+          , port
+          , to_verbose_flags(verbose)
+          , &error_message
+        );
+
+        std::cout << " Connected to [" << ip <<  "]." << std::endl;
+
+        LCGRandom gen(0); // To always get the same client random, in tests
+        TimeSystem timeSystem;
+
+        front.connection_time = tvtime();
+        struct : NullReportMessage {
+            void report(const char* reason, const char* /*message*/) override
+            {
+                // std::cout << "report_message: " << message << "  reason:" << reason << std::endl;
+                if (!strcmp(reason, "CLOSE_SESSION_SUCCESSFUL")) {
+                    this->is_closed = true;
+                }
+            }
+
+            bool is_closed = false;
+        } report_message;
+        mod_rdp mod(
+            socket
+          , front
+          , info
+          , ini.get_ref<cfg::mod_rdp::redir_info>()
+          , gen
+          , timeSystem
+          , mod_rdp_params
+          , authentifier
+          , report_message
+          , ini
+        );
+
+        front._to_server_sender._callback = &mod;
+        front._callback = &mod;
+        GCC::UserData::CSSecurity & cs_security = mod.cs_security;
+        cs_security.encryptionMethods = encryptionMethods;
+
+        try {
+            while (!mod.is_up_and_running()) {
+                // std::cout <<  " Early negociations... " <<"\n";
+                mod.draw_event(time(nullptr), front);
+            }
+        } catch (const Error & e) {
+            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
+            if (error_message.size()) {
+                std::cout << " Error tls: " << error_message << "\n";
+            }
+            return 2;
+        }
+        std::cout << " Early negociations completes.\n";
+
+
+        if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
+            std::cout << " ================================" << "\n";
+            std::cout << " ======= Server Core Info =======" << "\n";
+            std::cout << " ================================" << "\n";
+            GCC::UserData::SCCore sc_core = mod.sc_core;
+            std::cout << " userDataType = " << sc_core.userDataType << "\n";
+            std::cout << " length = " << sc_core.length << "\n";
+            std::cout << " version = " << sc_core.version << "\n";
+            std::cout << " clientRequestedProtocols = " << sc_core.clientRequestedProtocols << "\n";
+            std::cout << " earlyCapabilityFlags = " << sc_core.earlyCapabilityFlags << "\n";
+            std::cout << std::endl;
+        }
+
+        if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
+            std::cout << " ================================" << "\n";
+            std::cout << " ===== Server Security Info =====" << "\n";
+            std::cout << " ================================" << "\n";
+            GCC::UserData::SCSecurity & sc_sec1 = mod.sc_sec1;
+            std::cout << " userDataType = " << sc_sec1.userDataType << "\n";
+            std::cout << " length = " << sc_sec1.length << "\n";
+            std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << "\n";
+            std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << "\n";
+            std::cout << " serverRandomLen = " << sc_sec1.serverRandomLen << "\n";
+            std::cout << " serverCertLen = " << sc_sec1.serverCertLen << "\n";
+            std::cout << " dwVersion = " << sc_sec1.dwVersion << "\n";
+            std::cout << " temporary = " << sc_sec1.temporary << "\n";
+
+            auto print_hex_data = [&sc_sec1](array_view_const_u8 av){
+                for (size_t i = 0; i < av.size(); i++) {
+                    if ((i % 16) == 0 && i != 0) {
+                        std::cout << "\n                ";
+                    }
+                    std::cout <<"0x";
+                    if (av[i] < 0x10) {
+                        std::cout << "0";
+                    }
+                    std::cout << std::hex << int(sc_sec1.serverRandom[i]) << std::dec << " ";
+                }
+                std::cout << "\n";
+                std::cout << "\n";
+            };
+
+            std::cout << " serverRandom : "; print_hex_data(sc_sec1.serverRandom);
+            std::cout << " pri_exp : "; print_hex_data(sc_sec1.pri_exp);
+            std::cout << " pub_sig : "; print_hex_data(sc_sec1.pub_sig);
+
+            std::cout << " proprietaryCertificate : " << "\n";
+            std::cout << "     dwSigAlgId = " << sc_sec1.proprietaryCertificate.dwSigAlgId << "\n";
+            std::cout << "     dwKeyAlgId = " << sc_sec1.proprietaryCertificate.dwKeyAlgId << "\n";
+            std::cout << "     wPublicKeyBlobType = " << sc_sec1.proprietaryCertificate.wPublicKeyBlobType << "\n";
+            std::cout << "     wPublicKeyBlobLen = " << sc_sec1.proprietaryCertificate.wPublicKeyBlobLen << "\n";
+            std::cout << "\n";
+            std::cout << "     RSAPK : " << "\n";
+            std::cout << "        magic = " << sc_sec1.proprietaryCertificate.RSAPK.magic << "\n";
+            std::cout << "\n" << std::endl;
+
+        }
+
+
+        //===========================================
+        //             Scripted Events
+        //===========================================
+        EventList eventList;
+        if (script_on) {
+            std::ifstream ifichier(script_file_path);
+            if(ifichier) {
+                std::string ligne;
+                std::string delimiter = " ";
+
+                while(std::getline(ifichier, ligne)) {
+                    auto pos(ligne.find(delimiter));
+                    std::string tag  = ligne.substr(0, pos);
+                    std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                    if (       tag == "wait") {
+                        eventList.wait(std::stoi(info));
+
+                    } else if (tag == "key_press") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setKey_press(&front, scanCode, flag);
+
+                    } else if (tag == "key_release") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setKey_release(&front, scanCode, flag);
+
+                    } else if (tag == "mouse_press") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setMouse_button(&front, button, x, y, true);
+
+                    } else if (tag == "mouse_release") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setMouse_button(&front, button, x, y, false);
+
+                    } else if (tag == "clpbrd_change") {
+                        // TODO dynamique data and format injection
+                        uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                        std::string formatListDataLongName("\0\0", 2);
+
+                        // TODO { formatListDataLongName, 1 } -> array_view
+                        // TODO { formatIDs, 1 } -> array_view
+                        eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
+
+                    } else if (tag == "click") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setClick(&front, button, x, y);
+
+                    } else if (tag == "double_click") {
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setDouble_click(&front, x, y);
+
+                    } else if (tag == "key") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setKey(&front, scanCode, flag);
+
+                    } else if (tag == "loop") {
+                        pos = info.find(delimiter);
+                        uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                        uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                        eventList.setLoop(jump_size, count_steps);
+                    }
+                }
+            } else {
+                std::cerr <<  "Can't find " << script_file_path << "\n";
+            }
+        }
+
+        if ((input_connection_data_complete & TestClientCLI::LOG_COMPLETE) || quick_connection_test) {
             try {
-                front.connection_time = tvtime();
-                mod = new mod_rdp( *(socket)
-                                 , front
-                                 , info
-                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                 , gen
-                                 , timeSystem
-                                 , mod_rdp_params
-                                 , authentifier
-                                 , report_message
-                                 , ini
-                                 );
-
-                front._to_server_sender._callback = mod;
-                front._callback = mod;
-                GCC::UserData::CSSecurity & cs_security = mod->cs_security;
-                cs_security.encryptionMethods = encryptionMethods;
-
-
-            } catch (const Error & e) {
-                std::cout << " Error: RDP Initialization failed. " << e.errmsg() << std::endl;
-                connection_succed = false;
+                main_return = run_mod(mod, front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
+                // std::cout << "RDP Headless end." <<  std::endl;
             }
-
-            if (connection_succed) {
-
-                if (mod !=  nullptr) {
-                    while (!mod->is_up_and_running()) {
-                        try {
-//                              std::cout <<  " Early negociations... " <<"\n";
-                            mod->draw_event(time(nullptr), front);
-                         } catch (const Error & e) {
-                            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-                            exit(2);
-                        }
-                    }
-                    if (connection_succed) {
-                        std::cout << " Early negociations completes." <<  "\n";
-                    }
-//                     std::cout << std::endl;
-                }
-
-
-                if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
-                    std::cout << " ================================" << "\n";
-                    std::cout << " ======= Server Core Info =======" << "\n";
-                    std::cout << " ================================" << "\n";
-                    GCC::UserData::SCCore sc_core = mod->sc_core;
-                    std::cout << " userDataType = " << int(sc_core.userDataType) << "\n";
-                    std::cout << " length = " << int(sc_core.length) << "\n";
-                    std::cout << " version = " << int(sc_core.version) << "\n";
-                    std::cout << " clientRequestedProtocols = " << int(sc_core.clientRequestedProtocols) << "\n";
-                    std::cout << " earlyCapabilityFlags = " << int(sc_core.earlyCapabilityFlags) << "\n";
-                    std::cout << std::endl;
-                }
-
-                if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
-                    std::cout << " ================================" << "\n";
-                    std::cout << " ===== Server Security Info =====" << "\n";
-                    std::cout << " ================================" << "\n";
-                    GCC::UserData::SCSecurity & sc_sec1 = mod->sc_sec1;
-                    std::cout << " userDataType = " << int(sc_sec1.userDataType) << "\n";
-                    std::cout << " length = " << int(sc_sec1.length) << "\n";
-                    std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << "\n";
-                    std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << "\n";
-                    std::cout << " serverRandomLen = " << int(sc_sec1.serverRandomLen) << "\n";
-                    std::cout << " serverCertLen = " << int(sc_sec1.serverCertLen) << "\n";
-                    std::cout << " dwVersion = " << int(sc_sec1.dwVersion) << "\n";
-                    std::cout << " temporary = " << sc_sec1.temporary << "\n";
-                    std::cout << " serverRandom : ";
-                    // TODO Code duplicated (1)
-                    for (size_t i = 0; i < SEC_RANDOM_SIZE; i++) {
-                        if ((i % 16) == 0 && i != 0) {
-                            std::cout << "\n" << "                ";
-                        }
-                        std::string space;
-                        if (sc_sec1.serverRandom[i] < 0x10) {
-                            space = "0";
-                        }
-                        std::cout <<"0x" << space << std::hex << int(sc_sec1.serverRandom[i]) << std::dec << " ";
-                    }
-                    std::cout << "\n";
-                    std::cout << "\n";
-                    std::cout << " pri_exp : ";
-                    // TODO Code duplicated (2)
-                    for (size_t i = 0; i < 64; i++) {
-                        if ((i % 16) == 0 && i != 0) {
-                            std::cout << "\n" << "           ";
-                        }
-                        std::string space;
-                        if (sc_sec1.pri_exp[i] < 0x10) {
-                            space = "0";
-                        }
-                        std::cout <<"0x" << space << std::hex << int(sc_sec1.pri_exp[i]) <<  std::dec << " ";
-                    }
-                    std::cout << "\n";
-                    std::cout << "\n";
-                    std::cout << " pub_sig : ";
-                    // TODO Code duplicated (3)
-                    for (size_t i = 0; i < 64; i++) {
-                        if ((i % 16) == 0 && i != 0) {
-                            std::cout << "\n" << "           ";
-                        }
-                        std::string space;
-                        if (sc_sec1.pub_sig[i] < 0x10) {
-                            space = "0";
-                        }
-                        std::cout <<"0x" << space << std::hex << int(sc_sec1.pub_sig[i]) << std::dec << " ";
-                    }
-
-                    std::cout << "\n";
-                    std::cout << "\n";
-                    std::cout << " proprietaryCertificate : " << "\n";
-                    std::cout << "     dwSigAlgId = " << int(sc_sec1.proprietaryCertificate.dwSigAlgId) << "\n";
-                    std::cout << "     dwKeyAlgId = " << int(sc_sec1.proprietaryCertificate.dwKeyAlgId) << "\n";
-                    std::cout << "     wPublicKeyBlobType = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobType) << "\n";
-                    std::cout << "     wPublicKeyBlobLen = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobLen) << "\n";
-                    std::cout << "\n";
-                    std::cout << "     RSAPK : " << "\n";
-                    std::cout << "        magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << "\n";
-                    std::cout << "\n" << std::endl;
-
-                }
-
-
-                //===========================================
-                //             Scripted Events
-                //===========================================
-                EventList eventList;
-                if (script_on) {
-                    std::ifstream ifichier(script_file_path);
-                    if(ifichier) {
-                        std::string ligne;
-                        std::string delimiter = " ";
-
-                        while(std::getline(ifichier, ligne)) {
-                            auto pos(ligne.find(delimiter));
-                            std::string tag  = ligne.substr(0, pos);
-                            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-                            if (       tag == "wait") {
-                                eventList.wait(std::stoi(info));
-
-                            } else if (tag == "key_press") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey_press(&front, scanCode, flag);
-
-                            } else if (tag == "key_release") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey_release(&front, scanCode, flag);
-
-                            } else if (tag == "mouse_press") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setMouse_button(&front, button, x, y, true);
-
-                            } else if (tag == "mouse_release") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setMouse_button(&front, button, x, y, false);
-
-                            } else if (tag == "clpbrd_change") {
-                                // TODO dynamique data and format injection
-                                uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
-                                std::string formatListDataLongName("\0\0", 2);
-
-                                // TODO { formatListDataLongName, 1 } -> array_view
-                                // TODO { formatIDs, 1 } -> array_view
-                                eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
-
-                            } else if (tag == "click") {
-                                pos = info.find(delimiter);
-                                uint8_t button(std::stoi(info.substr(0, pos)));
-                                info = info.substr(pos + delimiter.length(), info.length());
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setClick(&front, button, x, y);
-
-                            } else if (tag == "double_click") {
-                                pos = info.find(delimiter);
-                                uint32_t x(std::stoi(info.substr(0, pos)));
-                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setDouble_click(&front, x, y);
-
-                            } else if (tag ==  "key") {
-                                pos = info.find(delimiter);
-                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setKey(&front, scanCode, flag);
-
-                            } else if (tag == "loop") {
-                                pos = info.find(delimiter);
-                                uint32_t jump_size(std::stoi(info.substr(0, pos)));
-                                uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                                eventList.setLoop(jump_size, count_steps);
-                            }
-                        }
-                    } else {
-                        std::cout <<  "Can't find " << script_file_path << "\n";
-                    }
-                }
-
-                if (!(input_connection_data_complete & TestClientCLI::LOG_COMPLETE) && quick_connection_test) {
-                    front.disconnect(mod, socket);
-                } else {
-                    if (connection_succed) {
-                        run_mod(mod, front, socket, eventList, quick_connection_test, time_out_response, time_set_connection_test);
-//                         std::cout << "RDP Headless end." <<  std::endl;
-                    } else {
-                        front.disconnect(mod, socket);
-                    }
+            catch (Error const &)
+            {
+                if (report_message.is_closed) {
+                    main_return = 0;
                 }
             }
+        }
+
+        front.disconnect();
+        if (!report_message.is_closed) {
+            mod.disconnect(tvtime().tv_sec);
         }
     }
 
-
-
-    return 0;
+    return main_return;
 }
 
 
@@ -1222,100 +1215,65 @@ void print_help() {
 
 
 
-void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al, bool quick_connection_test, struct timeval &  time_out_response, bool time_set_connection_test) {
-    struct timeval time_start;
-    gettimeofday(&time_start, nullptr);
-    struct      timeval time_mark = { 0, 50000 };
-    bool        run_session       = true;
+int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+    const timeval time_stop = addusectimeval(time_out_response, tvtime());
+    const timeval time_mark = { 0, 50000 };
 
+    while (front.is_pipe_ok)
+    {
+        if (mod.logged_on == mod_api::CLIENT_LOGGED) {
+            mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
-    while (run_session) {
-
-        if (mod != nullptr && front.is_pipe_ok) {
-
-            if (mod->logged_on == mod_api::CLIENT_LOGGED) {
-                mod->logged_on = mod_api::CLIENT_UNLOGGED;
-
-                std::cout << " RDP Session Log On." <<  std::endl;
-                if (quick_connection_test) {
-                    front.disconnect(mod, st_mod);
-                    exit(0);
-                }
-                break;
+            std::cout << " RDP Session Log On." << std::endl;
+            if (quick_connection_test) {
+                return 0;
             }
+            break;
+        }
 
         if (time_set_connection_test) {
-
-            struct timeval time;
-            if (!gettimeofday(&time, nullptr)) {
-
-                long usec(time.tv_usec - time_start.tv_usec);
-                long sec(time.tv_sec - time_start.tv_sec);
-
-                if ( sec > time_out_response.tv_sec) {
-                    //std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
-                    front.disconnect(mod, st_mod);
-                    exit(8);
-                } else if (sec == time_out_response.tv_sec && usec > time_out_response.tv_usec) {
-                    //std::cout <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
-                    front.disconnect(mod, st_mod);
-                    exit(8);
-                }
-            } else {
-                std::cout << "error usec = " << time.tv_usec - time_start.tv_usec << std::endl;
+            if (time_stop > tvtime()) {
+                //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                return 8;
             }
         }
-        try {
-            unsigned max = 0;
-            fd_set   rfds;
-            fd_set   wfds;
 
-            io_fd_zero(rfds);
-            io_fd_zero(wfds);
-            struct timeval timeout = time_mark;
+        unsigned max = 0;
+        fd_set   rfds;
+        fd_set   wfds;
 
-            mod->get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+        io_fd_zero(rfds);
+        io_fd_zero(wfds);
+        timeval timeout = time_mark;
 
-            if (mod->get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                timeout.tv_sec  = 2;
-                timeout.tv_usec = 0;
-            }
+        mod.get_event().wait_on_fd(sck, rfds, max, timeout);
 
-            int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-//             std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
-
-            if (num < 0) {
-                if (errno == EINTR) {
-                    continue;
-                }
-
-                std::cout << "RDP CLIENT :: errno = " <<  errno << "\n";
-                break;
-            }
-
-            if (mod->get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                //std::cout << "RDP CLIENT :: draw_event" << "\n";
-                if (mod != nullptr) {
-                    mod->draw_event(time(nullptr), front);
-                }
-            }
-
-//             if (front.is_running()) {
-//                 al.emit();
-//             }
-
-        } catch (Error & e) {
-            std::cout << "RDP CLIENT :: Exception raised = " << e.id << "\n";
-            run_session = false;
+        if (mod.get_event().is_set(sck, rfds)) {
+            timeout.tv_sec  = 2;
+            timeout.tv_usec = 0;
         }
-    } else {
-        front.disconnect(mod, st_mod);
-        exit(1);
+
+        int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
+        // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            std::cerr << "RDP CLIENT :: errno = " <<  errno << "\n";
+            return 9;
+        }
+
+        if (mod.get_event().is_set(sck, rfds)) {
+            //std::cout << "RDP CLIENT :: draw_event" << "\n";
+            mod.draw_event(time(nullptr), front);
+        }
+
+        // if (front.is_running()) {
+        //     al.emit();
+        // }
     }
 
-    }
-
-    return;
-
+    return 0;
 }
-

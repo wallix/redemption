@@ -396,6 +396,25 @@ public:
                                                     , to_verbose_flags(ini.get<cfg::debug::auth>())
                                                     );
 
+                                    bool encryption, checksum;
+                                    TraceType trace_type = ini.get<cfg::globals::trace_type>();
+                                    switch(trace_type) {
+                                        case TraceType::localfile :
+                                                encryption = false;
+                                                checksum = false;
+                                                break;
+                                        case TraceType::cryptofile :
+                                                encryption = true;
+                                                checksum = true;
+                                                break;
+                                        default : /* localfile_hashed */
+                                                encryption = false;
+                                                checksum = true;
+                                                break;      
+                                    }
+                                    cctx.set_with_encryption(encryption);
+                                    cctx.set_with_checksum(checksum);
+
                                     // now is authentifier start time
                                     this->acl_serial = new AclSerializer(
                                         ini, now, *this->auth_trans, cctx, rnd, fstat,

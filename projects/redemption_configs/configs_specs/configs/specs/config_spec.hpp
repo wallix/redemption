@@ -470,8 +470,6 @@ void config_spec_definition(Writer && W)
             cpp::name{"key0"}, set(default_key));
         W.member(hidden_in_gui, sesman_to_proxy, type_<types::fixed_binary<32>>(), "sign_key",
             cpp::name{"key1"}, set(default_key));
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_log_with_encryption", desc{"Use encryption for session log file."}, set(false));
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_log_with_checksum", desc{"Use checksum for session log file."}, set(false));
     });
 
     W.section("remote_program", [&]
@@ -635,6 +633,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "rail_disconnect_message_delay", set(3000));
+        W.sep();
+
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));
     });
 
     W.section("", [&]

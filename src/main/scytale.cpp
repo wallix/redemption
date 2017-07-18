@@ -226,7 +226,7 @@ struct RedCryptoReaderHandle
                         , int one_shot_encryption_scheme = 0
                         )
     : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
-    , in_crypto_transport(cctxw.cctx, encryption)
+    , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
     {
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
         this->qhashhex[sizeof(this->qhashhex)-1] = 0;
@@ -235,6 +235,7 @@ struct RedCryptoReaderHandle
     }
 
     CryptoContextWrapper cctxw;
+    Fstat fstat;
 
     InCryptoTransport in_crypto_transport;
     RedCryptoErrorContext error_ctx;

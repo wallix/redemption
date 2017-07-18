@@ -22,6 +22,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "utils/extra_system_processes.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
@@ -37,7 +38,7 @@
 #include <sstream>
 #include <cinttypes> // PRId64, ...
 
-class SessionProbeVirtualChannel : public BaseVirtualChannel
+class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
 private:
     bool session_probe_ending_in_progress  = false;
@@ -78,6 +79,7 @@ private:
     FrontAPI& front;
 
     mod_api& mod;
+    rdp_api& rdp;
 
     FileSystemVirtualChannel& file_system_virtual_channel;
 
@@ -144,6 +146,7 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         mod_api& mod,
+        rdp_api& rdp,
         FileSystemVirtualChannel& file_system_virtual_channel,
         const Params& params)
     : BaseVirtualChannel(nullptr,
@@ -180,6 +183,7 @@ public:
     , param_show_maximized(params.show_maximized)
     , front(front)
     , mod(mod)
+    , rdp(rdp)
     , file_system_virtual_channel(file_system_virtual_channel)
     , extra_system_processes(params.session_probe_extra_system_processes)
     , outbound_connection_monitor_rules(
@@ -432,8 +436,10 @@ public:
 
         const char request_hello[] = "Request=Hello";
 
-        const char ExtraInfo[] = "ExtraInfo=";
-        const char version[]   = "Version=";
+        const char ExtraInfo[]     = "ExtraInfo=";
+        const char Version[]       = "Version=";
+        const char ExecuteResult[] = "ExecuteResult=";
+        const char Log[]           = "Log=";
 
         if (!this->server_message.compare(request_hello)) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
@@ -751,7 +757,7 @@ public:
                         if (!this->param_show_maximized) {
                             out_s.out_uint8('\x01');
 
-                            const char cstr[] = "Minimized";
+                            const char cstr[] = "Normal";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
                     }
@@ -806,6 +812,31 @@ public:
         }
         else if (!this->server_message.compare(
                      0,
+                     sizeof(ExecuteResult) - 1,
+                     ExecuteResult)) {
+
+            std::vector<std::string> parameters;
+
+            {
+                std::istringstream ss(this->server_message.c_str() + sizeof(ExecuteResult) - 1);
+                std::string        parameter;
+
+                while (std::getline(ss, parameter, '\x01')) {
+                    parameters.push_back(std::move(parameter));
+                }
+            }
+
+            if (4 <= parameters.size()) {
+                this->rdp.sespro_rail_exec_result(
+                        ::atoi(parameters[3].c_str()),
+                        parameters[0].c_str(),
+                        ::atoi(parameters[1].c_str()),
+                        ::atoi(parameters[2].c_str())
+                    );
+            }
+        }
+        else if (!this->server_message.compare(
+                     0,
                      sizeof(ExtraInfo) - 1,
                      ExtraInfo)) {
             const char * session_probe_pid =
@@ -820,10 +851,10 @@ public:
         }
         else if (!this->server_message.compare(
                      0,
-                     sizeof(version) - 1,
-                     version)) {
+                     sizeof(Version) - 1,
+                     Version)) {
             const char * subitems          =
-                (this->server_message.c_str() + sizeof(version) - 1);
+                (this->server_message.c_str() + sizeof(Version) - 1);
             const char * subitem_separator =
                 ::strchr(subitems, '\x01');
 
@@ -840,6 +871,14 @@ public:
                         unsigned(major), unsigned(minor));
                 }
             }
+        }
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(Log) - 1,
+                     Log)) {
+            const char * log_string =
+                (this->server_message.c_str() + sizeof(Log) - 1);
+            LOG(LOG_INFO, "SessionProbe: %s", log_string);
         }
         else if (!this->server_message.compare(
                      0,
@@ -1357,6 +1396,64 @@ public:
         {
             const char cstr[] = "[None]";
             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        out_s.out_clear_bytes(1);   // Null-terminator.
+
+        out_s.set_out_uint16_le(
+            out_s.get_offset() - message_length_offset -
+                sizeof(uint16_t),
+            message_length_offset);
+
+        this->send_message_to_server(out_s.get_offset(),
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            out_s.get_data(), out_s.get_offset());
+    }
+
+    void rail_exec(const char* application_name, const char* command_line,
+        const char* current_directory, bool show_maximized, uint16_t flags) {
+        StaticOutStream<8192> out_s;
+
+        const size_t message_length_offset = out_s.get_offset();
+        out_s.out_skip_bytes(sizeof(uint16_t));
+
+        {
+            const char cstr[] = "Execute=";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        if (application_name && *application_name) {
+            out_s.out_copy_bytes(application_name, ::strlen(application_name));
+        }
+
+        out_s.out_uint8('\x01');
+        if (command_line && *command_line) {
+            out_s.out_copy_bytes(command_line, ::strlen(command_line));
+        }
+
+        out_s.out_uint8('\x01');
+        if (current_directory && *current_directory) {
+            out_s.out_copy_bytes(current_directory, ::strlen(current_directory));
+        }
+
+        out_s.out_uint8('\x01');
+        if (show_maximized) {
+            const char cstr[] = "Minimized";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+        else {
+            const char cstr[] = "Normal";
+            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+        }
+
+        out_s.out_uint8('\x01');
+        {
+            std::ostringstream oss;
+            oss << flags;
+
+            std::string s = oss.str();
+
+            out_s.out_copy_bytes(s.c_str(), s.length());
         }
 
         out_s.out_clear_bytes(1);   // Null-terminator.

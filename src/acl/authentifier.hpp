@@ -107,7 +107,9 @@ public:
     }
 
     void disconnect_target() override {
-        if (this->connected_to_acl){
+        if (this->connected_to_acl &&
+            // Call disconnect_target >>> Show Close Box (with back to selector)
+            this->acl_serial->ini.get<cfg::globals::enable_close_box>()) {
             this->acl_serial->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
         }
     }

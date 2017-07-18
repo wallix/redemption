@@ -957,9 +957,9 @@ public:
 
     void ExecResult(uint16_t ExecResult_) { this->ExecResult_ = ExecResult_; }
 
-    uint16_t RawResult() const { return this->RawResult_; }
+    uint32_t RawResult() const { return this->RawResult_; }
 
-    void RawResult(uint16_t RawResult_) { this->RawResult_ = RawResult_; }
+    void RawResult(uint32_t RawResult_) { this->RawResult_ = RawResult_; }
 
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
 

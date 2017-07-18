@@ -201,8 +201,6 @@ namespace cfg {
     struct crypto {
         struct key0;
         struct key1;
-        struct session_log_with_encryption;
-        struct session_log_with_checksum;
     };
 
     struct debug {
@@ -323,6 +321,7 @@ namespace cfg {
         struct auth_command_rail_exec_account;
         struct auth_command_rail_exec_password;
         struct rail_disconnect_message_delay;
+        struct use_session_probe_to_launch_remote_program;
     };
 
     struct theme;

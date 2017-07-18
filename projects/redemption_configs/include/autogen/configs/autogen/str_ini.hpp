@@ -680,14 +680,6 @@
 "#_hidden\n"
 "#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\n\n"
 
-"# Use encryption for session log file.\n"
-"#_advanced\n"
-"#session_log_with_encryption = 0\n\n"
-
-"# Use checksum for session log file.\n"
-"#_advanced\n"
-"#session_log_with_checksum = 0\n\n"
-
 "[debug]\n\n"
 
 "#_advanced\n"

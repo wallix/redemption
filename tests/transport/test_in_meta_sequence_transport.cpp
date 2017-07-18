@@ -44,8 +44,9 @@ inline void read_sample_files(char const * filename)
 
     using Read = Transport::Read;
     Read status;
+    Fstat fstat;
     CryptoContext cctx;
-    InMetaSequenceTransport wrm_trans(cctx, filename, ".mwrm", is_not_encrypted);
+    InMetaSequenceTransport wrm_trans(cctx, filename, ".mwrm", is_not_encrypted, fstat);
     for (size_t const file_total : sizes) {
         for (size_t i = 0; i < file_total / buf_sz; ++i) {
             RED_CHECK_NO_THROW(status = wrm_trans.atomic_read(buffer, buf_sz));
@@ -80,8 +81,9 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 
     // This is what we are actually testing, chaining of several files content
     {
+        Fstat fstat;
         CryptoContext cctx;
-        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted);
+        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted, fstat);
         RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -106,8 +108,9 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     }
 
     // check we can do it two times
+    Fstat fstat;
     CryptoContext cctx;
-    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted);
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted, fstat);
 
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -140,8 +143,9 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 //        FIXTURES_PATH "/sample2.wrm 1352304930 1352304990\n",
 
     // This is what we are actually testing, chaining of several files content
+    Fstat fstat;
     CryptoContext cctx;
-    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted);
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted, fstat);
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
     mwrm_trans.next();
@@ -177,8 +181,9 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     // This is what we are actually testing, chaining of several files content
 
     {
+        Fstat fstat;
         CryptoContext cctx;
-        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted);
+        InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted, fstat);
         RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
@@ -203,8 +208,9 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     }
 
     // check we can do it two times
+    Fstat fstat;
     CryptoContext cctx;
-    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted);
+    InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted, fstat);
 
     RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
@@ -276,13 +282,15 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     }
 
     {
-        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
+        Fstat fstat;
+        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted, fstat);
         char buffer[15];
         // 5 + 10
         RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_NO_MORE_DATA);
     }
     {
-        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted);
+        Fstat fstat;
+        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted, fstat);
 
         char buffer[15];
 
@@ -300,6 +308,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
 RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
 {
+    Fstat fstat;
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -309,5 +318,5 @@ RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(cctx, "TESTOFSXXX", ".mwrm", is_encrypted), ERR_TRANSPORT_OPEN_FAILED);
+    RED_CHECK_EXCEPTION_ERROR_ID(InMetaSequenceTransport(cctx, "TESTOFSXXX", ".mwrm", is_encrypted, fstat), ERR_TRANSPORT_OPEN_FAILED);
 }

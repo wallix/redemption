@@ -177,7 +177,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     {
         apply_enumeration_for<T>(this->enums, [this](auto const & e) {
             if (e.desc) {
-                this->out() << comment(e.desc);
+                this->out() << this->comment(e.desc);
             }
         });
     }
@@ -270,7 +270,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         apply_enumeration_for<T>(this->enums, [this, &pack](auto const & e) {
             this->write_desc_value(e, this->get_prefix(pack_contains<prefix_value>(pack), pack));
             if (e.info) {
-                this->out() << comment(e.info);
+                this->out() << this->comment(e.info);
             }
         });
     }

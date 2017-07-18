@@ -36,10 +36,11 @@ public:
         CryptoContext & cctx,
         const char * filename,
         const char * extension,
-        EncryptionMode encryption)
-    : cfb(cctx, encryption)
+        EncryptionMode encryption,
+        Fstat & fsats)
+    : cfb(cctx, encryption, fsats)
     , begin_time(0)
-    , buf_meta(cctx, encryption)
+    , buf_meta(cctx, encryption, fsats)
     , mwrm_reader(this->buf_meta)
     {
         char meta_filename[1024];

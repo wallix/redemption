@@ -30,12 +30,18 @@
 #include "utils/parse.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/genfstat.hpp"
 
 #include <memory>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
+// "MFCW"
+constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;
+constexpr uint32_t WABCRYPTOFILE_EOF_MAGIC = 0x5743464D;
+constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
+
+
+constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
 
 class InCryptoTransport : public Transport //, public PartialIO
@@ -56,14 +62,44 @@ private:
     uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
     DecryptContext ectx;
-    // TODO: state to remove ? Seems to duplicate eof flag
-    uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
     EncryptionMode encryption_mode;
     bool encrypted;
 
+    struct EncryptedBufferHandle
+    {
+        void allocate(std::size_t n)
+        {
+            assert(!this->size || n == this->size);
+            // [enc_buf] [dec_buf]
+            this->full_buf = std::make_unique<uint8_t[]>(n + n + AES_BLOCK_SIZE);
+            this->size = n;
+        }
+
+        uint8_t* raw_buffer(std::size_t encrypted_len)
+        {
+            (void)encrypted_len;
+            assert(this->full_buf);
+            assert(encrypted_len <= this->size);
+            return this->full_buf.get();
+        }
+
+        uint8_t* decrypted_buffer(std::size_t encrypted_len)
+        {
+            assert(this->full_buf);
+            assert(encrypted_len <= this->size);
+            return this->full_buf.get() + encrypted_len;
+        }
+
+    private:
+        std::unique_ptr<uint8_t[]> full_buf;
+        std::size_t size = 0;
+    };
+    EncryptedBufferHandle enc_buffer_handle;
+    Fstat & fsats;
+
 public:
-    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
+    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fsats) noexcept
     : fd(-1)
     , eof(true)
     , file_len(0)
@@ -72,10 +108,10 @@ public:
     , clear_data{}
     , clear_pos(0)
     , raw_size(0)
-    , state(0)
     , MAX_CIPHERED_SIZE(0)
     , encryption_mode(encryption_mode)
     , encrypted(false)
+    , fsats(fsats)
     {
     }
 
@@ -107,7 +143,7 @@ public:
         {
             int fd = ::open(pathname, O_RDONLY);
             if (fd < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
             unique_fd auto_close(fd);
 
@@ -137,7 +173,7 @@ public:
         {
             int fd = ::open(pathname, O_RDONLY);
             if (fd < 0) {
-                throw Error(ERR_TRANSPORT_OPEN_FAILED);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
             unique_fd auto_close(fd);
 
@@ -179,7 +215,7 @@ public:
 
         this->fd = ::open(pathname, O_RDONLY);
         if (this->fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
 
         this->eof = false;
@@ -189,39 +225,43 @@ public:
 
         this->clear_pos = 0;
         this->raw_size = 0;
-        this->state = 0;
 
         const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
         this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+        this->enc_buffer_handle.allocate(this->MAX_CIPHERED_SIZE);
 
         // todo: we could read in clear_data, that would avoid some copying
         uint8_t data[40];
         size_t avail = 0;
         while (avail != 40) {
-            ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+            const ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
             if (ret < 0 && errno == EINTR){
                 continue;
             }
-            if (ret <= 0){
-                // Either read error or EOF: in both cases we are in trouble
-                if (ret == 0) {
-                    // if we have less than magic followed by encryption header
-                    // then our file is necessarilly not encrypted.
-                    this->encrypted = false;
-                    // encryption requested but no encryption
-                    if (this->encryption_mode == EncryptionMode::Encrypted){
-                        this->close();
-                        throw Error(ERR_TRANSPORT_READ_FAILED);
-                    }
-                    // copy what we have, it's not encrypted
-                    this->raw_size = avail;
-                    this->clear_pos = 0;
-                    ::memcpy(this->clear_data, data, avail);
-                    this->file_len = this->get_file_len(pathname);
-                    return;
+            // Either read error or EOF: in both cases we are in trouble
+            if (ret == 0) {
+                // if we have less than magic followed by encryption header
+                // then our file is necessarilly not encrypted.
+                this->encrypted = false;
+
+                // encryption requested but no encryption
+                if (this->encryption_mode == EncryptionMode::Encrypted){
+                    this->close();
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
+
+                // copy what we have, it's not encrypted
+                this->raw_size = avail;
+                this->clear_pos = 0;
+                ::memcpy(this->clear_data, data, avail);
+                this->file_len = this->get_file_len(pathname);
+
+                return;
+            }
+            if (ret <= 0) {
+                int const err = errno;
                 this->close();
-                throw Error(ERR_TRANSPORT_READ_FAILED);
+                throw Error(ERR_TRANSPORT_READ_FAILED, err);
             }
             avail += ret;
         }
@@ -333,8 +373,9 @@ private:
                 if (ret != 0 && errno == EINTR){
                     continue;
                 }
+                int const err = errno;
                 this->close();
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                throw Error(ERR_TRANSPORT_READ_FAILED, err);
             }
             rlen -= ret;
         }
@@ -346,10 +387,6 @@ private:
             return 0;
         }
         if (this->encrypted){
-            if (this->state & CF_EOF) {
-                return 0;
-            }
-
             // If we do not have any clear data available read some
             if (!this->raw_size) {
 
@@ -357,10 +394,8 @@ private:
                 uint8_t hlen[4] = {};
                 this->raw_read(hlen, 4);
 
-                Parse p(hlen);
-                uint32_t enc_len = p.in_uint32_le();
+                const uint32_t enc_len = Parse(hlen).in_uint32_le();
                 if (enc_len == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                    this->state = CF_EOF;
                     this->clear_pos = 0;
                     this->raw_size = 0;
                     this->eof = true;
@@ -371,17 +406,15 @@ private:
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
-                // PERF allocation in loop
-                std::unique_ptr<uint8_t []> enc_buf(new uint8_t[enc_len]);
-                this->raw_read(&enc_buf[0], enc_len);
+                auto * raw_buf = this->enc_buffer_handle.raw_buffer(enc_len);
+                auto * dec_buf = this->enc_buffer_handle.decrypted_buffer(enc_len);
 
-                // PERF allocation in loop
-                std::unique_ptr<uint8_t []> pack_buf(new uint8_t[enc_len + AES_BLOCK_SIZE]);
-                size_t pack_buf_size = this->ectx.decrypt(&enc_buf[0], enc_len, &pack_buf[0]);
+                this->raw_read(raw_buf, enc_len);
+                const size_t pack_buf_size = this->ectx.decrypt(raw_buf, enc_len, dec_buf);
 
                 size_t chunk_size = CRYPTO_BUFFER_SIZE;
                 const snappy_status status = snappy_uncompress(
-                        reinterpret_cast<char *>(&pack_buf[0]),
+                        reinterpret_cast<char *>(dec_buf),
                         pack_buf_size, this->clear_data, &chunk_size);
 
                 switch (status)
@@ -444,7 +477,7 @@ private:
                     if (errno == EINTR){
                         continue;
                     }
-                    throw Error(ERR_TRANSPORT_READ_FAILED, res);
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
                 remaining_len -= res;
             };
@@ -469,7 +502,7 @@ private:
         }
         total += res;
         if (res != 0 && total != len) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
         return total == len ? Read::Ok : Read::Eof;
     }
@@ -477,9 +510,12 @@ private:
     std::size_t get_file_len(char const * pathname)
     {
         struct stat sb;
-        if (int err = ::stat(pathname, &sb)) {
+        if (int err = this->fsats.stat(pathname, sb)) {
+            if (err == -1 && errno != 0) {
+                err = errno;
+            }
             LOG(LOG_ERR, "crypto: stat error %d", err);
-            throw Error(ERR_TRANSPORT_READ_FAILED);
+            throw Error(ERR_TRANSPORT_READ_FAILED, err);
         }
         return sb.st_size;
     }
@@ -578,6 +614,14 @@ public:
         , rnd(rnd)
         , encryption(encryption)
         , checksum(checksum)
+    {
+    }
+
+    ocrypto(CryptoContext & cctx, Random & rnd)
+        : cctx(cctx)
+        , rnd(rnd)
+        , encryption(cctx.get_with_encryption())
+        , checksum(cctx.get_with_checksum())
     {
     }
 
@@ -805,6 +849,22 @@ public:
         this->finalname[0] = 0;
     }
 
+    explicit OutCryptoTransport(
+        CryptoContext & cctx, Random & rnd, Fstat & fstat,
+        ReportError report_error = ReportError()
+    ) noexcept
+    : encrypter(cctx, rnd)
+    , out_file(invalid_fd(), std::move(report_error))
+    , with_encryption(cctx.get_with_encryption())
+    , with_checksum(cctx.get_with_encryption() || cctx.get_with_checksum())
+    , cctx(cctx)
+    , rnd(rnd)
+    , fstat(fstat)
+    {
+        this->tmpname[0] = 0;
+        this->finalname[0] = 0;
+    }
+
     const char * get_tmp() const
     {
         return &this->tmpname[0];
@@ -910,7 +970,7 @@ public:
     }
 
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
-    {   
+    {
         // Force hash result if no checksum asked
         if (!this->with_checksum){
             memset(qhash, 0xFF, sizeof(qhash));
@@ -953,11 +1013,11 @@ public:
         }
 
         struct stat stat;
-        int err = this->fstat.stat(this->finalname, stat);
-        if (err) {
+        if (0 != this->fstat.stat(this->finalname, stat)) {
+            int const err = errno;
             LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
                 this->hash_filename, err);
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
 
         // open

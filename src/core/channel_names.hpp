@@ -39,21 +39,21 @@ namespace CHANNELS
         constexpr explicit ChannelNameId(char const (&channel_name)[n])
           : id(Id(
             #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-                (n > 0 ? (lower(channel_name[0]) << 0 ) : uint64_t{})
-              | (n > 1 ? (lower(channel_name[1]) << 8 ) : uint64_t{})
-              | (n > 2 ? (lower(channel_name[2]) << 16) : uint64_t{})
-              | (n > 3 ? (lower(channel_name[3]) << 24) : uint64_t{})
-              | (n > 4 ? (lower(channel_name[4]) << 32) : uint64_t{})
-              | (n > 5 ? (lower(channel_name[5]) << 40) : uint64_t{})
-              | (n > 6 ? (lower(channel_name[6]) << 48) : uint64_t{})
+                (n > 0 ? (lower<0>(channel_name) << 0 ) : uint64_t{})
+              | (n > 1 ? (lower<1>(channel_name) << 8 ) : uint64_t{})
+              | (n > 2 ? (lower<2>(channel_name) << 16) : uint64_t{})
+              | (n > 3 ? (lower<3>(channel_name) << 24) : uint64_t{})
+              | (n > 4 ? (lower<4>(channel_name) << 32) : uint64_t{})
+              | (n > 5 ? (lower<5>(channel_name) << 40) : uint64_t{})
+              | (n > 6 ? (lower<6>(channel_name) << 48) : uint64_t{})
             #else
-                (n > 0 ? (lower(channel_name[0]) << 55) : uint64_t{})
-              | (n > 1 ? (lower(channel_name[1]) << 48) : uint64_t{})
-              | (n > 2 ? (lower(channel_name[2]) << 40) : uint64_t{})
-              | (n > 3 ? (lower(channel_name[3]) << 32) : uint64_t{})
-              | (n > 4 ? (lower(channel_name[4]) << 24) : uint64_t{})
-              | (n > 5 ? (lower(channel_name[5]) << 16) : uint64_t{})
-              | (n > 6 ? (lower(channel_name[6]) << 8 ) : uint64_t{})
+                (n > 0 ? (lower<0>(channel_name) << 55) : uint64_t{})
+              | (n > 1 ? (lower<1>(channel_name) << 48) : uint64_t{})
+              | (n > 2 ? (lower<2>(channel_name) << 40) : uint64_t{})
+              | (n > 3 ? (lower<3>(channel_name) << 32) : uint64_t{})
+              | (n > 4 ? (lower<4>(channel_name) << 24) : uint64_t{})
+              | (n > 5 ? (lower<5>(channel_name) << 16) : uint64_t{})
+              | (n > 6 ? (lower<6>(channel_name) << 8 ) : uint64_t{})
             #endif
           ))
         {}
@@ -85,9 +85,10 @@ namespace CHANNELS
     private:
         Id id;
 
-        static constexpr uint64_t lower(char c)
+        template<std::size_t i>
+        static constexpr uint64_t lower(char const * s)
         {
-            return uint64_t(('A' <= c && c <= 'Z') ? c - 'A' + 'a' : c);
+            return uint64_t(('A' <= s[i] && s[i] <= 'Z') ? s[i] - 'A' + 'a' : s[i]);
         }
     };
 

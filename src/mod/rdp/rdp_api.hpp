@@ -28,5 +28,8 @@ struct rdp_api {
     virtual void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
         uint16_t exec_result) = 0;
 
+    virtual void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
+        uint16_t exec_result, uint32_t raw_result) = 0;
+
     virtual ~rdp_api() = default;
 };
