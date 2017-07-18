@@ -125,8 +125,10 @@ public:
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
     , balise_time_frame(balise_time_frame)
+    , sync_setted(false)
     , loop_on_movie(false)
     {
+        // TODO RZ: Support encrypted recorded file.
         this->in_trans = std::make_unique<InMetaSequenceTransport>(
             this->cctx,
             this->movie_path.prefix,
@@ -291,20 +293,22 @@ public:
         (void)now;
         (void)drawable;
         // TODO use system constants for sizes
-        // TODO RZ: Support encrypted recorded file.
         if (!this->sync_setted) {
             this->sync_setted = true;
             this->reader->set_sync();
         }
 
         if (this->end_of_data) {
+            timespec wtime = {1, 0};
+            nanosleep(&wtime, nullptr);
+            this->event.set(std::chrono::seconds(1));
             return;
         }
 
         try
         {
-            int i;
-            for (i = 0; i < 500; i++) {
+            // unnecessary loop
+            for (int i = 0; i < 500; i++) {
                 const std::chrono::microseconds elapsed
                   = difftimeval(tvtime(), this->reader->start_synctime_now);
 
@@ -326,6 +330,7 @@ public:
                     this->reader->interpret_order();
                 }
                 else if (this->loop_on_movie) {
+                    // TODO RZ: Support encrypted recorded file.
                     this->in_trans = std::make_unique<InMetaSequenceTransport>(
                         this->cctx,
                         this->movie_path.prefix,
@@ -343,25 +348,19 @@ public:
                     this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
                 }
                 else {
+                    this->end_of_data = true;
+                    this->disconnect(tvtime().tv_sec);
+                    this->front.sync();
+
+                    if (!this->wait_for_escape) {
+                        this->event.signal = BACK_EVENT_STOP;
+                    }
+
                     break;
                 }
             }
 
-            if (i == 500) {
-                this->event.set(1);
-            }
-            else {
-                this->end_of_data = true;
-                this->disconnect(tvtime().tv_sec);
-                this->front.sync();
-
-                if (!this->wait_for_escape) {
-                    this->event.signal = BACK_EVENT_STOP;
-                    this->event.set(std::chrono::seconds(1));
-                    timespec wtime = {1, 0};
-                    nanosleep(&wtime, nullptr);
-                }
-            }
+            this->event.set(1);
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
