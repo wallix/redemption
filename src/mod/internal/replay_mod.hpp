@@ -247,37 +247,11 @@ public:
         return this->in_trans->get_meta_line().start_time;
     }
 
-    time_t get_movie_time_length() {
-        time_t start = this->in_trans->get_meta_line().start_time;
-
+    std::string get_mwrm_path() const
+    {
         std::string movie_path_str(this->movie_path.prefix);
-        movie_path_str += std::string(".mwrm");
-
-        std::ifstream file(movie_path_str.c_str());
-        std::string line;
-        std::string last_line;
-        if (file.good()) {
-            while(!file.eof()) {
-                last_line = line;
-                getline(file,line);
-            }
-        }
-
-        size_t pos = last_line.find(".wrm ");
-        last_line = last_line.substr(pos+5, last_line.length());
-        while (pos != last_line.length()) {
-            pos = last_line.find(" ");
-            last_line = last_line.substr(pos+1, last_line.length());
-        }
-
-        char end_chars[10] = {0};
-        for (size_t i = 0; i < last_line.length();i++) {
-            end_chars[i] = last_line.c_str()[i];
-        }
-        char * end_chars_end = end_chars;
-        time_t end = strtoll(end_chars, &end_chars_end, 10);
-
-        return (end - start);
+        movie_path_str += ".mwrm";
+        return movie_path_str;
     }
 
     void refresh(Rect /*rect*/) override {}
