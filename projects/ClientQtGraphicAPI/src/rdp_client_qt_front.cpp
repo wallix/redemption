@@ -517,8 +517,8 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   , to_verbose_flags(0)    // this->verbose
-                                   //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
+                                   //, to_verbose_flags(0)   // this->verbose
+                                   , RDPVerbose::connection | RDPVerbose::graphics | RDPVerbose::graphics_pointer | RDPVerbose::asynchronous_task | RDPVerbose::license | RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
                                    );
 
         mod_rdp_params.device_id                       = "device_id";

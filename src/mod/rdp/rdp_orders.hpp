@@ -216,7 +216,7 @@ public:
             InFileTransport ift(unique_fd{fd});
 
             try {
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::graphics)) {
                     LOG(LOG_INFO, "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
                 }
                 BmpCachePersister::load_all_from_disk(

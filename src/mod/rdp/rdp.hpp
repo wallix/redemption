@@ -1434,7 +1434,7 @@ public:
                                 this->password,
                                 this->hostname);
 
-        if (bool(this->verbose & RDPVerbose::basic_trace4)){
+        if (bool(this->verbose & RDPVerbose::connection)){
             this->redir_info.log(LOG_INFO, "Init with Redir_info");
             LOG(LOG_INFO, "ServerRedirectionSupport=%s",
                 this->server_redirection_support ? "true" : "false");
@@ -1791,66 +1791,66 @@ public:
             p != end;
             order_number = std::strtol(p, &end, 0))
         {
-            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+            if (bool(this->verbose & RDPVerbose::capabilities)) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
             switch (order_number) {
             case RDP::MULTIDSTBLT:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
                 }
                 this->enable_multidstblt = true;
                 break;
             case RDP::MULTIOPAQUERECT:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=MultiOpaqueRect");
                 }
                 this->enable_multiopaquerect = true;
                 break;
             case RDP::MULTIPATBLT:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=MultiPatBlt");
                 }
                 this->enable_multipatblt = true;
                 break;
             case RDP::MULTISCRBLT:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=MultiScrBlt");
                 }
                 this->enable_multiscrblt = true;
                 break;
             case RDP::POLYGONSC:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=PolygonSC");
                 }
                 this->enable_polygonsc = true;
                 break;
             case RDP::POLYGONCB:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=PolygonCB");
                 }
                 this->enable_polygoncb = true;
                 break;
             case RDP::POLYLINE:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=Polyline");
                 }
                 this->enable_polyline = true;
                 break;
             case RDP::ELLIPSESC:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=EllipseSC");
                 }
                 this->enable_ellipsesc = true;
                 break;
             case RDP::ELLIPSECB:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Extra orders=EllipseCB");
                 }
                 this->enable_ellipsecb = true;
                 break;
             default:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_INFO, "RDP Unknown Extra orders");
                 }
                 break;
@@ -1864,7 +1864,7 @@ public:
     }   // configure_extra_orders
 
     void configure_proxy_managed_drives(const char * proxy_managed_drives) {
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+        if (bool(this->verbose & RDPVerbose::connection)) {
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
@@ -1876,7 +1876,7 @@ public:
 
             drive.assign(begin(trimmed_range), end(trimmed_range));
 
-            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+            if (bool(this->verbose & RDPVerbose::connection)) {
                 LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
@@ -2027,7 +2027,7 @@ public:
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags
     ) override {
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::channels)) {
             LOG(LOG_INFO,
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
                 front_channel_name);
@@ -2037,7 +2037,7 @@ public:
         if (!mod_channel) {
             return;
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::channels)) {
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
@@ -2141,7 +2141,7 @@ private:
         uint8_t const * chunk, std::size_t chunk_size,
         size_t length, uint32_t flags
     ) {
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
         }
@@ -2192,14 +2192,14 @@ private:
             while (remaining_data_length);
         }
 
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::channels)) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
         }
     }
 
     template<class... WriterData>
     void send_data_request(uint16_t channelId, WriterData... writer_data) {
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "send data request");
         }
 
@@ -2220,7 +2220,7 @@ private:
             },
             write_x224_dt_tpdu_fn{}
         );
-        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+        if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "send data request done");
         }
     }
@@ -2308,7 +2308,7 @@ public:
                 if (this->nego.tls){
                     cs_core.serverSelectedProtocol = this->nego.selected_protocol;
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::security)) {
                     cs_core.log("Sending to Server");
                 }
                 LOG(LOG_INFO, "before cs_core.emit(stream);");
@@ -2351,13 +2351,13 @@ public:
                 //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
                 //     }
                 // }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::security)) {
                     cs_cluster.log("Sending to server");
                 }
                 cs_cluster.emit(stream);
                 // ------------------------------------------------------------
 
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::security)) {
                     this->cs_security.log("Sending to server");
                 }
                 cs_security.emit(stream);
@@ -2399,7 +2399,7 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = CHANNELS::ChannelNameId(cs_net.channelDefArray[index].name);
                         def.flags = channel_item.flags;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+                        if (bool(this->verbose & RDPVerbose::channels)) {
                             def.log(index);
                         }
                         this->mod_channel_list.push_back(def);
@@ -2416,7 +2416,7 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = channel_names::rdpdr;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
                         }
                         this->mod_channel_list.push_back(def);
@@ -2435,7 +2435,7 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = channel_names::cliprdr;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
                         }
                         this->mod_channel_list.push_back(def);
@@ -2455,7 +2455,7 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = channel_names::rdpsnd;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
                         }
                         this->mod_channel_list.push_back(def);
@@ -2471,7 +2471,7 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = this->auth_channel;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
                         }
                         this->mod_channel_list.push_back(def);
@@ -2485,21 +2485,21 @@ public:
                         CHANNELS::ChannelDef def;
                         def.name = channel_names::sespro;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
                         }
                         this->mod_channel_list.push_back(def);
                         cs_net.channelCount++;
                     }
 
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::security)) {
                         cs_net.log("Sending to server");
                     }
                     cs_net.emit(stream);
                 }
 
                 if (!single_monitor) {
-                    //if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    //if (bool(this->verbose & RDPVerbose::security)) {
                         this->cs_monitor.log("Sending to server");
                     //}
                     this->cs_monitor.emit(stream);
@@ -2523,7 +2523,7 @@ public:
 
     void early_tls_security_exchange()
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
         }
 
@@ -2554,14 +2554,14 @@ public:
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_FINAL");
             break;
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange end");
         }
     }
 
     void basic_settings_exchange()
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
         }
 
@@ -2587,7 +2587,7 @@ public:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
                     {
                         this->sc_core.recv(f.payload);
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                        if (bool(this->verbose & RDPVerbose::connection)) {
                             sc_core.log("Received from server");
                         }
                         if (0x0080001 == sc_core.version){ // can't use rdp5
@@ -2600,7 +2600,7 @@ public:
                     {
                         this->sc_sec1.recv(f.payload);
 
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                        if (bool(this->verbose & RDPVerbose::security)) {
                             this->sc_sec1.log("Received from server");
                         }
 
@@ -2706,7 +2706,7 @@ public:
 
                             /* Generate a client random, and determine encryption keys */
                             this->gen.random(this->client_random, SEC_RANDOM_SIZE);
-                            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                            if (bool(this->verbose & RDPVerbose::security)) {
                                 LOG(LOG_INFO, "mod_rdp: Generate client random");
                             }
 
@@ -2762,18 +2762,18 @@ public:
                         /* We assume that the channel_id array is confirmed in the same order
                            that it has been sent. If there are any channels not confirmed, they're
                            going to be the last channels on the array sent in MCS Connect Initial */
-                        if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                        if (bool(this->verbose & RDPVerbose::channels)){
                             LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
                                 sc_net.channelCount,
                                 mod_channel_list.size());
                         }
                         for (uint32_t index = 0; index < sc_net.channelCount; index++) {
-                            if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                            if (bool(this->verbose & RDPVerbose::channels)){
                                 this->mod_channel_list[index].log(index);
                             }
                             this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                         }
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                        if (bool(this->verbose & RDPVerbose::channels)) {
                             sc_net.log("Received from server");
                         }
                     }
@@ -2790,7 +2790,7 @@ public:
             }
         }
 
-        if (bool(this->verbose & (RDPVerbose::basic_trace | RDPVerbose::basic_trace6))) {
+        if (bool(this->verbose & RDPVerbose::connection)) {
             LOG(LOG_INFO, "mod_rdp::Channel Connection");
         }
 
@@ -2829,7 +2829,7 @@ public:
         //    |-------MCS Channel Join Request PDU--------------------> |
         //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::connection)){
             LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
         }
         write_packets(
@@ -2844,7 +2844,7 @@ public:
             write_x224_dt_tpdu_fn{}
         );
 
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::connection)){
             LOG(LOG_INFO, "Send MCS::AttachUserRequest");
         }
         write_packets(
@@ -2856,7 +2856,7 @@ public:
             write_x224_dt_tpdu_fn{}
         );
         this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::connection)){
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
         }
     }
@@ -2879,7 +2879,7 @@ public:
 
     void channel_connection_attach_user(time_t now)
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::channels)){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
         {
@@ -2895,7 +2895,7 @@ public:
                 }
 
                 for (size_t index = 0; index < num_channels+2; index++) {
-                    if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                    if (bool(this->verbose & RDPVerbose::channels)){
                         LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
                     }
                     write_packets(
@@ -2919,12 +2919,12 @@ public:
                     InStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                     // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
-                    if (bool(this->verbose & RDPVerbose::basic_trace7)){
+                    if (bool(this->verbose & RDPVerbose::channels)){
                         LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                     }
                 }
             }
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
+            if (bool(this->verbose & RDPVerbose::channels)){
                 LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
             }
 
@@ -2957,12 +2957,12 @@ public:
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
+            if (bool(this->verbose & RDPVerbose::security)){
                 LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
             }
 
             if (this->encryptionLevel){
-                if (bool(this->verbose & RDPVerbose::basic_trace)){
+                if (bool(this->verbose & RDPVerbose::security)){
                     LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
                         this->server_public_key_len);
                 }
@@ -2988,7 +2988,7 @@ public:
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
+            if (bool(this->verbose & RDPVerbose::security)){
                 LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
             }
 
@@ -2999,7 +2999,7 @@ public:
 
     void get_license()
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace2)){
+        if (bool(this->verbose & RDPVerbose::license)){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
         // Licensing
@@ -3107,7 +3107,7 @@ public:
 
                 switch (flic.tag) {
                 case LIC::LICENSE_REQUEST:
-                    if (bool(this->verbose & RDPVerbose::basic_trace2)) {
+                    if (bool(this->verbose & RDPVerbose::license)) {
                         LOG(LOG_INFO, "Rdp::License Request");
                     }
                     {
@@ -3168,7 +3168,7 @@ public:
                     );
                     break;
                 case LIC::PLATFORM_CHALLENGE:
-                    if (bool(this->verbose & RDPVerbose::basic_trace2)){
+                    if (bool(this->verbose & RDPVerbose::license)){
                         LOG(LOG_INFO, "Rdp::Platform Challenge");
                     }
                     {
@@ -3226,7 +3226,7 @@ public:
                     break;
                 case LIC::NEW_LICENSE:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace2)){
+                        if (bool(this->verbose & RDPVerbose::license)){
                             LOG(LOG_INFO, "Rdp::New License");
                         }
 
@@ -3240,7 +3240,7 @@ public:
                     break;
                 case LIC::UPGRADE_LICENSE:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace2)){
+                        if (bool(this->verbose & RDPVerbose::license)){
                             LOG(LOG_INFO, "Rdp::Upgrade License");
                         }
                         LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
@@ -3250,7 +3250,7 @@ public:
                     break;
                 case LIC::ERROR_ALERT:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace2)){
+                        if (bool(this->verbose & RDPVerbose::license)){
                             LOG(LOG_INFO, "Rdp::Get license status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
@@ -3365,7 +3365,7 @@ public:
                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
                 using FU = FastPath::UpdateType;
-                if (bool(this->verbose & RDPVerbose::basic_trace4)) {
+                if (bool(this->verbose & RDPVerbose::connection)) {
                     const char * m = "UNKNOWN ORDER";
                     switch (static_cast<FastPath::UpdateType>(upd.updateCode))
                     {
@@ -3438,7 +3438,7 @@ public:
 
                 case FastPath::UpdateType::PTR_NULL:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                             LOG(LOG_INFO, "Process pointer null (Fast)");
                         }
                         Pointer cursor;
@@ -3448,7 +3448,7 @@ public:
 
                 case FastPath::UpdateType::PTR_DEFAULT:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                             LOG(LOG_INFO, "Process pointer default (Fast)");
                         }
                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
@@ -3458,7 +3458,7 @@ public:
 
                 case FastPath::UpdateType::PTR_POSITION:
                     {
-                        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                             LOG(LOG_INFO, "Process pointer position (Fast)");
                         }
 
@@ -3499,21 +3499,21 @@ public:
 
 
                 case FastPath::UpdateType::COLOR:
-                    if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                    if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                         LOG(LOG_INFO, "Process pointer color (Fast)");
                     }
                     this->process_color_pointer_pdu(stream, drawable);
                     break;
 
                 case FastPath::UpdateType::CACHED:
-                    if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                    if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                         LOG(LOG_INFO, "Process pointer cached (Fast)");
                     }
                     this->process_cached_pointer_pdu(stream, drawable);
                     break;
 
                 case FastPath::UpdateType::POINTER:
-                    if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                    if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                         LOG(LOG_INFO, "Process pointer new (Fast)");
                     }
                     this->process_new_pointer_pdu(stream, drawable);
@@ -3570,7 +3570,7 @@ public:
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
-            if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+            if (bool(this->verbose & RDPVerbose::channels)) {
                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
             }
 
@@ -3581,7 +3581,7 @@ public:
             }
 
             const CHANNELS::ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
-            if (bool(this->verbose & RDPVerbose::basic_trace7)) {
+            if (bool(this->verbose & RDPVerbose::channels)) {
                 mod_channel.log(num_channel_src);
             }
 
@@ -3624,7 +3624,7 @@ public:
                 uint8_t const * current_packet = next_packet;
 
                 if  (peekFlowPDU(sec.payload)){
-                    if (bool(this->verbose & RDPVerbose::basic_trace4)) {
+                    if (bool(this->verbose & RDPVerbose::connection)) {
                         LOG(LOG_WARNING, "FlowPDU TYPE");
                     }
                     ShareFlow_Recv sflow(sec.payload);
@@ -3640,13 +3640,13 @@ public:
                     ShareControl_Recv sctrl(sec.payload);
                     next_packet += sctrl.totalLength;
 
-                    if (bool(this->verbose & RDPVerbose::basic_trace4)) {
+                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
                         LOG(LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
                     }
 
                     switch (sctrl.pduType) {
                     case PDUTYPE_DATAPDU:
-                        if (bool(this->verbose & RDPVerbose::basic_trace4)) {
+                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
                             LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                         }
                         switch (this->connection_finalization_state){
@@ -3657,7 +3657,7 @@ public:
 
                             if (sdata.pdutype2 == PDUTYPE2_SET_ERROR_INFO_PDU)
                             {
-                                if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
                                 this->process_disconnect_pdu(sdata.payload);
                             }
 
@@ -3800,7 +3800,9 @@ public:
                                 switch (sdata.pdutype2) {
                                 case PDUTYPE2_UPDATE:
                                     {
-                                        if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_UPDATE"); }
+                                        if (bool(this->verbose & RDPVerbose::basic_trace)){
+                                            LOG(LOG_INFO, "PDUTYPE2_UPDATE");
+                                        }
                                         // MS-RDPBCGR: 1.3.6
                                         // -----------------
                                         // The most fundamental output that a server can send to a connected client
@@ -3812,72 +3814,72 @@ public:
                                         SlowPath::GraphicsUpdate_Recv gur(sdata.payload);
                                         switch (gur.update_type) {
                                         case RDP_UPDATE_ORDERS:
-                                            if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
+                                            if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
                                                 drawable, this->front_width, this->front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
-                                            if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
+                                            if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                             this->front.begin_update();
                                             this->process_bitmap_updates(sdata.payload, false, drawable);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_PALETTE:
-                                            if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
+                                            if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
                                             this->front.begin_update();
                                             this->process_palette(sdata.payload, false);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_SYNCHRONIZE:
-                                            if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
+                                            if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
                                             sdata.payload.in_skip_bytes(2);
                                             break;
                                         default:
-                                            if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_WARNING, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");}
+                                            if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_WARNING, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");}
                                             break;
                                         }
                                     }
                                     break;
                                 case PDUTYPE2_CONTROL:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
+                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
                                     // TODO CGR: Data should actually be consumed
                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_SYNCHRONIZE:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
+                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
                                     // TODO CGR: Data should actually be consumed
                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_POINTER:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
+                                    if (bool(this->verbose & RDPVerbose::graphics_pointer)){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                     this->process_pointer_pdu(sdata.payload, drawable);
                                     // TODO CGR: Data should actually be consumed
                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_PLAY_SOUND:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
+                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
                                     // TODO CGR: Data should actually be consumed
                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_SAVE_SESSION_INFO:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
+                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
                                     // TODO CGR: Data should actually be consumed
                                     this->process_save_session_info(sdata.payload);
                                     break;
                                 case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                    if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
                                     this->process_disconnect_pdu(sdata.payload);
                                     break;
                                 case PDUTYPE2_SHUTDOWN_DENIED:
-                                    //if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
+                                    //if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
                                     LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED Received");
                                     break;
 
                                 case PDUTYPE2_SET_KEYBOARD_INDICATORS:
                                     {
-                                        if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");}
+                                        if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");}
 
                                         sdata.payload.in_skip_bytes(2); // UnitId(2)
 
@@ -3901,7 +3903,7 @@ public:
                         break;
                     case PDUTYPE_DEMANDACTIVEPDU:
                         {
-                            if (bool(this->verbose & RDPVerbose::basic_trace4)){
+                            if (bool(this->verbose & RDPVerbose::connection)){
                                  LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
                             }
 
@@ -3990,7 +3992,7 @@ public:
                         }
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
-                        if (bool(this->verbose & RDPVerbose::basic_trace4)){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
+                        if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                         LOG(LOG_INFO, "Deactivate All PDU");
                         this->deactivation_reactivation_in_progress = true;
                         // TODO CGR: Data should actually be consumed
@@ -3999,7 +4001,7 @@ public:
                         break;
                     case PDUTYPE_SERVER_REDIR_PKT:
                         {
-                            if (bool(this->verbose & RDPVerbose::basic_trace4)){
+                            if (bool(this->verbose & RDPVerbose::connection)){
                                 LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT");
                             }
                             sctrl.payload.in_skip_bytes(2);
@@ -4008,7 +4010,7 @@ public:
                             sctrl.payload.in_skip_bytes(1);
                             server_redirect.export_to_redirection_info(this->redir_info);
                             this->server_redirection_packet_received = true;
-                            if (bool(this->verbose & RDPVerbose::basic_trace4)){
+                            if (bool(this->verbose & RDPVerbose::connection)){
                                 server_redirect.log(LOG_INFO, "Got Packet");
                                 this->redir_info.log(LOG_INFO, "RInfo Ini");
                             }
@@ -4250,7 +4252,7 @@ public:
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
     void send_confirm_active() {
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
         this->send_data_request_ex(
@@ -4275,7 +4277,7 @@ public:
                 if (this->enable_transparent_mode) {
                     general_caps = this->client_general_caps;
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     general_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(general_caps);
@@ -4292,7 +4294,7 @@ public:
                 if (this->enable_transparent_mode) {
                     bitmap_caps = this->client_bitmap_caps;
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     bitmap_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(bitmap_caps);
@@ -4370,7 +4372,7 @@ public:
                     order_caps.orderSupport[idx] &= this->client_order_caps.orderSupport[idx];
                 }
 
-                if (bool(this->verbose & RDPVerbose::basic_trace) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
+                if (bool(this->verbose & RDPVerbose::capabilities) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
 
@@ -4381,7 +4383,7 @@ public:
                 if (this->enable_transparent_mode) {
                     order_caps = this->client_order_caps;
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     order_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(order_caps);
@@ -4417,7 +4419,7 @@ public:
                 }
 
                 if (use_bitmapcache_rev2) {
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bmpcache2_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(bmpcache2_caps);
@@ -4432,7 +4434,7 @@ public:
                     }
                 }
                 else {
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bmpcache_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(bmpcache_caps);
@@ -4448,19 +4450,19 @@ public:
                 }
 
                 ColorCacheCaps colorcache_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     colorcache_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(colorcache_caps);
 
                 ActivationCaps activation_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     activation_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(activation_caps);
 
                 ControlCaps control_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     control_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(control_caps);
@@ -4473,31 +4475,31 @@ public:
                     pointer_caps.len                   = 8;
                     REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     pointer_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(pointer_caps);
 
                 ShareCaps share_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     share_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(share_caps);
 
                 InputCaps input_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     input_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(input_caps);
 
                 SoundCaps sound_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     sound_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(sound_caps);
 
                 FontCaps font_caps;
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     font_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(font_caps);
@@ -4509,7 +4511,7 @@ public:
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
                     glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
                 }
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     glyphcache_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
@@ -4517,12 +4519,12 @@ public:
                 if (this->remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         this->client_window_list_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
@@ -4530,7 +4532,7 @@ public:
 
                 if (this->large_pointer_support &&
                     this->client_large_pointer_caps.largePointerSupportFlags) {
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         this->client_large_pointer_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(this->client_large_pointer_caps);
@@ -4543,7 +4545,7 @@ public:
                         if (multi_fragment_update_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
                             multi_fragment_update_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
                         }
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                        if (bool(this->verbose & RDPVerbose::capabilities)) {
                             multi_fragment_update_caps.log("Sending to server");
                         }
                         confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
@@ -4561,7 +4563,7 @@ public:
             }
         );
 
-        if (bool(this->verbose & RDPVerbose::basic_trace)){
+        if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
             LOG(LOG_INFO, "Waiting for answer to confirm active");
         }
@@ -4595,7 +4597,7 @@ public:
 
     void process_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
         }
 
@@ -4604,45 +4606,45 @@ public:
         switch (message_type) {
         // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer cached");
             }
             this->process_cached_pointer_pdu(stream, drawable);
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer cached done");
             }
             break;
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer color");
             }
             this->process_color_pointer_pdu(stream, drawable);
-            if (bool(this->verbose & RDPVerbose::basic_trace3)){
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)){
                 LOG(LOG_INFO, "Process pointer color done");
             }
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
                 this->process_new_pointer_pdu(stream, drawable); // Pointer with arbitrary color depth
             }
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
         // System Pointer Update (section 2.2.9.1.1.4.3)
         case RDP_POINTER_SYSTEM:
         {
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
             this->process_system_pointer_pdu(stream, drawable);
-            if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer system done");
             }
         }
@@ -4662,7 +4664,7 @@ public:
         // containing the new x-coordinates and y-coordinates of the pointer.
         case RDP_POINTER_MOVE:
             {
-                if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer position");
                 }
 
@@ -4682,20 +4684,20 @@ public:
         default:
             break;
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu done");
         }
     }
 
     void process_palette(InStream & stream, bool fast_path) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "mod_rdp::process_palette");
         }
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
         this->front.set_palette(this->orders.global_palette);
 
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "mod_rdp::process_palette done");
         }
     }
@@ -5949,7 +5951,7 @@ public:
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
         (void)len;
-        if (bool(this->verbose & RDPVerbose::basic_trace5)){
+        if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
@@ -6003,7 +6005,7 @@ public:
                 {
                     GeneralCaps general_caps;
                     general_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         general_caps.log("Received from server");
                     }
                     if (output_file) {
@@ -6015,7 +6017,7 @@ public:
                 {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_caps.log("Received from server");
                     }
                     if (output_file) {
@@ -6030,7 +6032,7 @@ public:
                 {
                     OrderCaps order_caps;
                     order_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         order_caps.log("Received from server");
                     }
                     if (output_file) {
@@ -6042,7 +6044,7 @@ public:
                 {
                     InputCaps input_caps;
                     input_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         input_caps.log("Received from server");
                     }
 
@@ -6054,7 +6056,7 @@ public:
                 {
                     RailCaps rail_caps;
                     rail_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         rail_caps.log("Received from server");
                     }
                 }
@@ -6063,7 +6065,7 @@ public:
                 {
                     WindowListCaps window_list_caps;
                     window_list_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         window_list_caps.log("Received from server");
                     }
                 }
@@ -6072,7 +6074,7 @@ public:
                 {
                     PointerCaps pointer_caps;
                     pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         pointer_caps.log("Receiving from server");
                     }
                 }
@@ -6081,7 +6083,7 @@ public:
                 {
                     MultiFragmentUpdateCaps multifrag_caps;
                     multifrag_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         multifrag_caps.log("Receiving from server");
                     }
                 }
@@ -6090,13 +6092,13 @@ public:
                 {
                     LargePointerCaps large_pointer_caps;
                     large_pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
                         large_pointer_caps.log("Receiving from server");
                     }
                 }
                 break;
             default:
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_WARNING,
                         "Unprocessed Capability Set is encountered. capabilitySetType=%s(%u)",
                         ::get_capabilitySetType_name(capset_type),
@@ -6107,7 +6109,7 @@ public:
             stream.in_skip_bytes(next - stream.get_current());
         }
 
-        if (bool(this->verbose & RDPVerbose::basic_trace5)){
+        if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::process_server_caps done");
         }
     }   // process_server_caps
@@ -6357,7 +6359,7 @@ public:
     }
 
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
 
@@ -6375,14 +6377,14 @@ public:
             }
         );
 
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
         }
     }
 
     void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
         (void)time;
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::input)) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
 
@@ -6420,7 +6422,7 @@ public:
             }
         );
 
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::input)) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
         }
     }
@@ -6435,7 +6437,7 @@ public:
     }
 
     void rdp_input_invalidate(Rect r) override {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
         if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -6451,13 +6453,13 @@ public:
             }
         }
         //this->draw_event(time(nullptr), this->front);
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
     }
 
     void rdp_input_invalidate2(array_view<Rect const> vr) override {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
         if ((UP_AND_RUNNING == this->connection_finalization_state)
@@ -6473,8 +6475,8 @@ public:
             }
             rrpdu.emit(this->nego.trans);
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
+        if (bool(this->verbose & RDPVerbose::input)){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
         }
     }
 
@@ -6573,7 +6575,7 @@ public:
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
     void process_color_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
         unsigned pointer_cache_idx = stream.in_uint16_le();
@@ -6661,7 +6663,7 @@ public:
         cursor.update_bw();
 
         drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
     }
@@ -6682,7 +6684,7 @@ public:
 
     void process_cached_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
@@ -6705,7 +6707,7 @@ public:
             Pointer cursor(Pointer::POINTER_NORMAL);
             drawable.set_pointer(cursor);
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
     }
@@ -6726,14 +6728,14 @@ public:
 
     void process_system_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
         int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
                 Pointer cursor;
@@ -6743,7 +6745,7 @@ public:
             break;
         default:
             {
-                if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
                 Pointer cursor(Pointer::POINTER_NORMAL);
@@ -6751,13 +6753,13 @@ public:
             }
             break;
         }
-        if (bool(this->verbose & RDPVerbose::basic_trace3)){
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
         }
     }
 
     void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * mask) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
 
@@ -6787,13 +6789,13 @@ public:
         break;
         }
 
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
     }
 
     void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * data) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         switch (bpp) {
@@ -6880,7 +6882,7 @@ public:
             break;
         }
 
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
@@ -6904,13 +6906,13 @@ public:
     //  contains one palette index; for 4 bpp, there are two palette indices per byte).
 
     void process_new_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO,
                 "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
                 data_bpp, pointer_idx);
@@ -7087,7 +7089,7 @@ public:
         //printf("\n");
 
         drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::basic_trace3)) {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }   // process_new_pointer_pdu
@@ -7346,7 +7348,7 @@ private:
             out_s.out_uint32_le(1);     // Version(4)
             out_s.out_uint32_le(server_auto_reconnect_packet.LogonId);  // LogonId(4)
             out_s.out_copy_bytes(digest, sizeof(digest));
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
+            if (bool(this->verbose & RDPVerbose::security)){
                 LOG(LOG_INFO, "Client Security Verifier");
                 hexdump(digest, sizeof(digest));
             }

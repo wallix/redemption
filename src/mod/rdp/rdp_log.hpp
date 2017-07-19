@@ -28,25 +28,37 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
 {
     none,
 
-    basic_trace         = 0x00000001,
-    basic_trace2        = 0x00000002,
-    basic_trace3        = 0x00000004,
-    basic_trace4        = 0x00000008,
-    basic_trace5        = 0x00000020,
-    basic_trace6        = 0x00000010,
-    graphics            = 0x00000040,
-    basic_trace7        = 0x00000080,
-    credssp             = 0x00000400,
+    basic_trace         = 0x00000001,  // unspecific RDP loop events log
 
-    cache_persister     = 0x00000100,
+
+    connection          = 0x00000002,  // regroup connection log events which don't concern
+                                       // directly license, security, channels or capabilities
+
+
+    security            = 0x00000004,
+    capabilities        = 0x00000008,
+    license             = 0x00000010,
+
+    asynchronous_task   = 0x00000020,
+
+
+    graphics_pointer    = 0x00000040,
+    graphics            = 0x00000080,
+    input               = 0x00000100,
+
 
     rail_order          = 0x00000200,
+    credssp             = 0x00000400,
+    cache_persister     = 0x00000800,
+
 
     fsdrvmgr            = 0x00002000,
     sesprobe_launcher   = 0x00004000,
     sesprobe_repetitive = 0x00008000,
 
-    asynchronous_task   = 0x00800000,
+
+    channels            = 0x00800000,
+
     rail                = 0x01000000,
     sesprobe            = 0x02000000,
     cliprdr             = 0x04000000,
@@ -56,5 +68,6 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     sesprobe_dump       = 0x20000000,
     cliprdr_dump        = 0x40000000,
     rdpdr_dump          = 0x80000000,
+
 };
 
