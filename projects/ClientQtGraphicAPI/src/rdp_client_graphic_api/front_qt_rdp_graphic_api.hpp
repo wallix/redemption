@@ -907,7 +907,8 @@ private:
     {
         // TODO RZ: Support encrypted recorded file.
         CryptoContext cctx;
-        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted);
+        Fstat fsats;
+        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
         MwrmReader mwrm_reader(trans);
         MetaLine meta_line;
 
@@ -927,7 +928,7 @@ private:
             }
         }
 
-        return start_time - start_time;
+        return stop_time - start_time;
     }
 
 public:
