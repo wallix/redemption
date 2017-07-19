@@ -258,7 +258,7 @@ public:
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
 
-        ssize_t res = (this->tls) ? this->tls->privrecv_tls(buffer, len) : this->privrecv(buffer, len);
+        ssize_t res = this->privrecv(buffer, len);
         //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
 
         // we properly reached end of file on a block boundary
@@ -331,6 +331,38 @@ private:
             this->recv_buf_index += buf_remaining;
         }
 
+        if (this->tls) {
+            while (remaining_len > 0) {
+                ssize_t const res = this->tls->privpartial_recv_tls(
+                    this->recv_buf, sizeof(this->recv_buf));
+
+                if (res <= 0) {
+                    if (res == 0) {
+                        if (len != remaining_len) {
+                            LOG(LOG_WARNING, "TLS receive for %zu bytes, ZERO RETURN got %zu",
+                                len, len - remaining_len);
+                        }
+                        return remaining_len - len;
+                    }
+                    return res;
+                }
+
+                if (remaining_len <= size_t(res)) {
+                    memcpy(data, this->recv_buf, remaining_len);
+                    this->recv_buf_size = res;
+                    this->recv_buf_index = remaining_len;
+                    remaining_len = 0;
+                }
+                else {
+                    memcpy(data, this->recv_buf, res);
+                    remaining_len -= res;
+                    data += res;
+                }
+            }
+
+            return len;
+        }
+
         while (remaining_len > 0) {
             ssize_t res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0);
             switch (res) {
@@ -377,6 +409,7 @@ private:
                 break;
             }
         }
+
         return len;
     }
 

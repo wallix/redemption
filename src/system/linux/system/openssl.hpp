@@ -32,7 +32,6 @@
 #include "utils/fileutils.hpp"
 #include <memory>
 
-// TODO -Wold-style-cast is ignored
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
@@ -1118,18 +1117,14 @@ struct TLSContext
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
 
-    ssize_t privrecv_tls(uint8_t * data, size_t len)
+    ssize_t privpartial_recv_tls(uint8_t * data, size_t len)
     {
-        char * pbuffer = reinterpret_cast<char*>(data);
-        size_t remaining_len = len;
-        while (remaining_len > 0) {
-            ssize_t rcvd = ::SSL_read(this->io, pbuffer, remaining_len);
+        for (;;) {
+            ssize_t rcvd = ::SSL_read(this->io, data, len);
             unsigned long error = SSL_get_error(this->io, rcvd);
             switch (error) {
                 case SSL_ERROR_NONE:
-                    pbuffer += rcvd;
-                    remaining_len -= rcvd;
-                    break;
+                    return rcvd;
 
                 case SSL_ERROR_WANT_READ:
                     LOG(LOG_INFO, "recv_tls WANT READ");
@@ -1152,29 +1147,21 @@ struct TLSContext
                     continue;
 
                 case SSL_ERROR_ZERO_RETURN:
-                    if (remaining_len - len){
-                        LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
-                            unsigned(len), unsigned(remaining_len - len));
-                    }
-                    return remaining_len - len;
+                    return 0;
+
                 default:
                 {
-                    uint32_t errcount = 0;
-                    errcount++;
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
-                    while ((error = ERR_get_error()) != 0){
-                        errcount++;
+                    do {
                         LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
-                    }
+                    } while ((error = ERR_get_error()) != 0);
+
                     // TODO if recv fail with partial read we should return the amount of data received, close socket and store some delayed error value that will be sent back next call
                     // TODO replace this with actual error management, EOF is not even an option for sockets
                     // TODO Manage actual errors, check possible values
                     return -1;
                 }
-                break;
             }
         }
-        return len;
     }
 
     ssize_t privsend_tls(const uint8_t * data, size_t len)
