@@ -30,6 +30,7 @@
 
 #include "system/openssl.hpp"
 #include "core/defines.hpp"
+#include "core/wait_obj.hpp"
 #include "transport/transport.hpp"
 #include "utils/netutils.hpp"
 #include "utils/fileutils.hpp"
@@ -50,7 +51,7 @@ class SocketTransport
 
 public:
     int sck;
-    int sck_closed;
+    int sck_closed; // TODO replaced by sck == -1 ?
     const char * name;
 
     char ip_address[128];
@@ -102,6 +103,19 @@ public:
                , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
                , this->name, this->sck, this->total_received, this->total_sent);
         }
+    }
+
+    bool is_set(wait_obj & obj, fd_set & rfds) const
+    {
+        return this->has_pending_data() || obj.is_set(this->sck, rfds);
+    }
+
+    bool has_pending_data() const
+    {
+        if (this->recv_buf_size - this->recv_buf_index) {
+            return true;
+        }
+        return this->tls && SSL_pending(this->tls->allocated_ssl);
     }
 
     int get_fd() const override { return this->sck; }
@@ -295,12 +309,30 @@ public:
     }
 
 private:
-    ssize_t privrecv(uint8_t * data, size_t len)
+    uint8_t recv_buf[64 * 1024];
+    size_t recv_buf_size = 0;
+    size_t recv_buf_index = 0;
+
+    ssize_t privrecv(uint8_t * data, size_t const len)
     {
+        size_t buf_remaining = this->recv_buf_size - this->recv_buf_index;
+        if (len <= buf_remaining) {
+            memcpy(data, this->recv_buf + this->recv_buf_index, len);
+            this->recv_buf_index += len;
+            return len;
+        }
+
         size_t remaining_len = len;
 
+        if (buf_remaining) {
+            memcpy(data, this->recv_buf + this->recv_buf_index, buf_remaining);
+            remaining_len -= buf_remaining;
+            data += buf_remaining;
+            this->recv_buf_index += buf_remaining;
+        }
+
         while (remaining_len > 0) {
-            ssize_t res = ::recv(this->sck, data, remaining_len, 0);
+            ssize_t res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0);
             switch (res) {
                 case -1: /* error, maybe EAGAIN */
                     if (try_again(errno)) {
@@ -321,9 +353,17 @@ private:
                     // not need to process the received data as it will end badly
                     return -1;
                 default: /* some data received */
-                    data += res;
-                    remaining_len -= res;
-                    if (remaining_len > 0) {
+                    if (remaining_len <= size_t(res)) {
+                        memcpy(data, this->recv_buf, remaining_len);
+                        this->recv_buf_size = res;
+                        this->recv_buf_index = remaining_len;
+                        remaining_len = 0;
+                    }
+                    else {
+                        memcpy(data, this->recv_buf, res);
+                        remaining_len -= res;
+                        data += res;
+
                         fd_set fds;
                         struct timeval time = { 1, 0 };
                         io_fd_zero(fds);

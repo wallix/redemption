@@ -119,7 +119,7 @@ public:
         // TODO: And what exactly means that set_state state variable in wait_obj ?
         // if it means 'already triggered' it's one more reason to wake up fast...
         if (this->set_state) {
-            struct timeval now = tvtime();
+            timeval now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
             if (lessthantimeval(remain, timeout)) {
                 timeout = remain;
@@ -136,13 +136,8 @@ public:
             io_fd_set(fd, rfds);
             max = (static_cast<unsigned>(fd) > max) ? fd : max;
         }
-        if ((fd <= INVALID_SOCKET || this->object_and_time) && this->set_state) {
-            struct timeval now;
-            now = tvtime();
-            timeval remain = how_long_to_wait(this->trigger_time, now);
-            if (lessthantimeval(remain, timeout)) {
-                timeout = remain;
-            }
+        if (fd <= INVALID_SOCKET || this->object_and_time) {
+            this->wait_on_timeout(timeout);
         }
     }
 

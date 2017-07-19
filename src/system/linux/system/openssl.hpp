@@ -1120,12 +1120,7 @@ struct TLSContext
 
     ssize_t privrecv_tls(uint8_t * data, size_t len)
     {
-        return this->privrecv_tls(reinterpret_cast<char *>(data), len);
-    }
-
-    ssize_t privrecv_tls(char * data, size_t len)
-    {
-        char * pbuffer = data;
+        char * pbuffer = reinterpret_cast<char*>(data);
         size_t remaining_len = len;
         while (remaining_len > 0) {
             ssize_t rcvd = ::SSL_read(this->io, pbuffer, remaining_len);
