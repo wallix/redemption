@@ -4627,8 +4627,7 @@ private:
 
     void update_hiden_key_markers_state() {
       if (this->capture) {
-            //this->capture->hide_key_markers(ini.get<cfg::session_log::hide_non_printable_kbd_input>());
-            this->capture->hide_key_markers(true);
+            this->capture->hide_key_markers(ini.get<cfg::session_log::hide_non_printable_kbd_input>());
       }
     }
 };
