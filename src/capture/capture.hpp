@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
               Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan,
-              Clément Moroldo
+              Clément Moroldo, Jennifer Inthavong
 */
 
 #pragma once
@@ -362,6 +362,7 @@ private:
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
 
     bool capture_drawable = false;
+    bool key_markers_hidden;
 
 
 public:
@@ -428,6 +429,12 @@ public:
     void enable_kbd_input_mask(bool enable) override {
         for (gdi::KbdInputApi & kbd : this->kbds) {
             kbd.enable_kbd_input_mask(enable);
+        }
+    }
+
+    void hide_key_markers(bool hide_state) {
+        for (gdi::KbdInputApi & kbd : this->kbds) {
+            kbd.hide_key_markers(hide_state);
         }
     }
 

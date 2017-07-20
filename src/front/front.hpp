@@ -16,7 +16,8 @@
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2013
     Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-               Dominique Lafages, Raphael Zhou, Meng Tan
+               Dominique Lafages, Raphael Zhou, Meng Tan,
+               Jennifer Inthavong
     Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
     Front object (server), used to communicate with RDP client
@@ -912,6 +913,8 @@ public:
 
         cctx.set_master_key(ini.get<cfg::crypto::key0>());
         cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+        
+
 
         if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
             LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
@@ -1039,6 +1042,7 @@ public:
         }
 
         this->update_keyboard_input_mask_state();
+        this->update_hiden_key_markers_state();
 
         if (capture_wrm) {
             this->ini.set_acl<cfg::context::recording_started>(true);
@@ -4619,6 +4623,13 @@ private:
                     this->consent_ui_is_visible || mask_unidentified_data
                 );
         }
+    }
+
+    void update_hiden_key_markers_state() {
+      if (this->capture) {
+            //this->capture->hide_key_markers(ini.get<cfg::session_log::hide_non_printable_kbd_input>());
+            this->capture->hide_key_markers(true);
+      }
     }
 };
 

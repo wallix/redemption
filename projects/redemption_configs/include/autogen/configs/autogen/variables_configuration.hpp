@@ -666,6 +666,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(3)};
     };
+    // type: bool
+    // value{0}
+    struct session_log::hide_non_printable_kbd_input {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "session_log"; }
+        static constexpr char const * name() { return "hide_non_printable_kbd_input"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
 
     // AUTHID_CLIENT_KEYBOARD_LAYOUT
     // type: unsigned int
@@ -4139,6 +4151,7 @@ struct session_log
 , cfg::session_log::session_log_redirection
 , cfg::session_log::log_path
 , cfg::session_log::keyboard_input_masking_level
+, cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
 
 struct client
