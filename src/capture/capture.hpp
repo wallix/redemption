@@ -432,7 +432,7 @@ public:
         }
     }
 
-    void hide_key_markers(bool hide_state) {
+    void hide_key_markers(bool hide_state) override {
         for (gdi::KbdInputApi & kbd : this->kbds) {
             kbd.hide_key_markers(hide_state);
         }
