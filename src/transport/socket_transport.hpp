@@ -233,6 +233,10 @@ public:
 
     bool can_recv()
     {
+        if (this->recv_buf_size - this->recv_buf_index) {
+            return true;
+        }
+
         int rv = 0;
         fd_set rfds;
 
