@@ -120,6 +120,9 @@ class SesmanConfig(object):
             , u'pattern_kill' : u'Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_launch_failed' : u'Impossible de lancer Session Probe, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_keepalive_missed' : u'Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_outbound_connection_blocking_failed' : u'Connexion sortante potentiellement indésirable detectée, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_process_blocking_failed' : u'Processus potentiellement indésirable détecté, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_failed_to_run_startup_application' : u"Echec de lancement d'application de démarrage, le gestionnaire de session a coupé la connexion."
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -207,6 +210,9 @@ class SesmanConfig(object):
             , u'pattern_kill' : u'Forbidden pattern detected, connection closed by manager.'
             , u'session_probe_launch_failed' : u'Could not launch Session Probe, connection closed by manager.'
             , u'session_probe_keepalive_missed' : u'Session Probe keepalive missed, connection closed by manager.'
+            , u'session_probe_outbound_connection_blocking_failed' : u'Potentially undesirable outbound connection detected, connection closed by manager.'
+            , u'session_probe_process_blocking_failed' : u'Potentially undesirable process detected, connection closed by manager.'
+            , u'session_probe_failed_to_run_startup_application' : u'Startup application launch failed, connection closed by manager.'
             }
         }
 

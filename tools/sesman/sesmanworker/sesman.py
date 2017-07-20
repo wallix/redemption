@@ -1,9 +1,9 @@
 #!/usr/bin/python -O
 # -*- coding: utf-8 -*-
 ##
-# Copyright (c) 2010-2014 WALLIX, SARL. All rights reserved.
+# Copyright (c) 2017 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
-# Product name: WALLIX Admin Bastion V 2.x
+# Product Name: WALLIX Bastion v6.0
 # Author(s): Olivier Hervieu, Christophe Grosjean, Raphael Zhou, Meng Tan
 # Id: $Id$
 # URL: $URL$
@@ -1131,7 +1131,7 @@ class Sesman():
             tries = tries - 1
             if _status is None and tries > 0:
                 Logger().info(
-                    u"Wab user '%s' authentication from %s failed [%u tries remains]"  %
+                    u"Bastion user '%s' authentication from %s failed [%u tries remains]"  %
                     (mundane(self.shared.get(u'login')) , mundane(self.shared.get(u'ip_client')), tries)
                 )
 
@@ -1161,7 +1161,7 @@ class Sesman():
 
             if _status:
                 tries = 5
-                Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
+                Logger().info(u"Bastion user '%s' authentication succeeded" % mundane(self.shared.get(u'login')))
                 if not self.engine.check_license():
                     _status, _error = False, "License 'sm' not available"
                     break
@@ -1486,7 +1486,7 @@ class Sesman():
                         ###########
                         self.send_data(kv)
 
-                        Logger().info(u"Added connection to active WAB services")
+                        Logger().info(u"Added connection to active Bastion services")
 
                         # Looping on keepalived socket
                         while True:
@@ -1615,6 +1615,12 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to run startup application')
+                                        release_reason = u'Interrupt: Session Probe failed to run startup application'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_failed_to_run_startup_application")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -1746,6 +1752,8 @@ class Sesman():
         elif reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
             pass
         elif reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+            pass
+        elif reason == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED':
             pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')
