@@ -362,7 +362,6 @@ private:
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
 
     bool capture_drawable = false;
-    bool key_markers_hidden;
 
 
 public:

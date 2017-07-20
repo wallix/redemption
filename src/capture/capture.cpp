@@ -1280,7 +1280,6 @@ Capture::Capture(
 , mouse_info{now, width / 2, height / 2}
 , capture_event{}
 , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
-, key_markers_hidden(false)
 {
    //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
