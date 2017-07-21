@@ -1515,9 +1515,9 @@ public:
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes)
     {
-        size_t file_name_tmp_size = sizeof(FileName);
-        REDASSERT(file_name_tmp_size <=  500);
-        std::memcpy(this->FileName, FileName, file_name_tmp_size);
+//         size_t file_name_tmp_size = sizeof(FileName);
+//         REDASSERT(file_name_tmp_size <=  500);
+        std::memcpy(this->FileName, FileName, 500);
     }
 
     void emit(OutStream & stream) const {
@@ -1803,9 +1803,9 @@ struct FileFsLabelInformation {
 
     FileFsLabelInformation(char * VolumeLabel)
     {
-          size_t VolumeLabel_tmp_size = sizeof(VolumeLabel);
-          REDASSERT(VolumeLabel_tmp_size <= 65536/2);
-          std::memcpy(this->VolumeLabel, VolumeLabel, VolumeLabel_tmp_size);
+//           size_t VolumeLabel_tmp_size = sizeof(VolumeLabel);
+//           REDASSERT(VolumeLabel_tmp_size <= 65536/2);
+          std::memcpy(this->VolumeLabel, VolumeLabel, 65536/2);
     }
 
     void emit(OutStream & stream) const {
@@ -2028,9 +2028,9 @@ public:
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
     {
-        size_t file_name_tmp_size = sizeof(file_name);
-        REDASSERT(file_name_tmp_size <=  500);
-        std::memcpy(this->FileName, file_name, file_name_tmp_size);
+//         size_t file_name_tmp_size = sizeof(file_name);
+//         REDASSERT(file_name_tmp_size <=  500);
+        std::memcpy(this->FileName, file_name, 500);
     }
 
     inline void emit(OutStream & stream) const {
@@ -2252,9 +2252,9 @@ public:
 
     explicit FileNamesInformation(const char * file_name)
     {
-        size_t file_name_tmp_size = sizeof(file_name);
-        REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, file_name, file_name_tmp_size);
+//         size_t file_name_tmp_size = sizeof(file_name);
+//         REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, file_name, 500);
     }
 
     inline void emit(OutStream & stream) const {
@@ -2433,9 +2433,9 @@ struct FileRenameInformation {
       : ReplaceIfExists(ReplaceIfExists)
       , RootDirectory(RootDirectory)
     {
-          const size_t file_name_tmp_size = sizeof(FileName);
-          REDASSERT(file_name_tmp_size <=  500);
-          std::memcpy(this->FileName, FileName, file_name_tmp_size);
+//           const size_t file_name_tmp_size = sizeof(FileName);
+//           REDASSERT(file_name_tmp_size <=  500);
+          std::memcpy(this->FileName, FileName, 500);
     }
 
     void emit(OutStream & stream) const {
@@ -2820,9 +2820,9 @@ public:
     : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
-        const size_t FileSystemName_tmp_size = sizeof(file_system_name);
-        REDASSERT(FileSystemName_tmp_size <= 12);
-        std::memcpy(this->FileSystemName, file_system_name, FileSystemName_tmp_size);
+//         const size_t FileSystemName_tmp_size = sizeof(file_system_name);
+//         REDASSERT(FileSystemName_tmp_size <= 12);
+        std::memcpy(this->FileSystemName, file_system_name, 12);
     }
 
     inline void emit(OutStream & stream) const {
@@ -3330,9 +3330,9 @@ public:
     , VolumeSerialNumber(VolumeSerialNumber)
     , SupportsObjects(SupportsObjects)
     {
-        const size_t VolumeLabel_tmp_size = sizeof(volume_label);
-        REDASSERT(VolumeLabel_tmp_size <= 500);
-        std::memcpy(this->VolumeLabel, volume_label, VolumeLabel_tmp_size);
+//         const size_t VolumeLabel_tmp_size = sizeof(volume_label);
+//         REDASSERT(VolumeLabel_tmp_size <= 500);
+        std::memcpy(this->VolumeLabel, volume_label, 500);
     }
 
     inline void emit(OutStream & stream) const {
@@ -3802,9 +3802,9 @@ struct FileNotifyInformation {
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
     {
-        const size_t file_name_tmp_size = sizeof(FileName);
-        REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, FileName, file_name_tmp_size);
+//         const size_t file_name_tmp_size = sizeof(FileName);
+//         REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, FileName, 500);
     }
 
     void emit(OutStream & stream) const {

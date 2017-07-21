@@ -633,8 +633,7 @@ public:
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data{device_data_p, device_data_size} {
-        memcpy(
-            this->PreferredDosName_, preferred_dos_name,
+        memcpy(this->PreferredDosName_, preferred_dos_name,
             strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
@@ -2924,18 +2923,17 @@ public:
     ClientNameRequest() = default;
 
     explicit ClientNameRequest(const char * computer_name)
-      : ComputerNameLen(sizeof(computer_name))
     {
-        REDASSERT(this->ComputerNameLen <= (65536/2)-1);
-        std::memcpy(this->ComputerName, computer_name, this->ComputerNameLen);
+//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+        std::memcpy(this->ComputerName, computer_name,  65536/2);
     }
 
     explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
     : UnicodeFlag(unicodeFlag)
     , ComputerNameLen(sizeof(computer_name))
     {
-        REDASSERT(this->ComputerNameLen <= (65536/2)-1);
-        std::memcpy(this->ComputerName, computer_name, this->ComputerNameLen);
+//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+        std::memcpy(this->ComputerName, computer_name, 65536/2);
     }
 
 
