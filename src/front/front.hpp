@@ -913,7 +913,7 @@ public:
 
         cctx.set_master_key(ini.get<cfg::crypto::key0>());
         cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-        
+
 
 
         if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
@@ -2303,7 +2303,7 @@ public:
             constexpr std::size_t array_size = 65536;
             uint8_t array[array_size];
             uint8_t * end = array;
-            X224::RecvFactory fx224(this->trans, &end, array_size, true);
+            X224::RecvFactory fx224(this->trans, &end, array_size);
             InStream stream(array, end - array);
 
             if (fx224.fast_path) {

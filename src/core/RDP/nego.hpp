@@ -277,11 +277,10 @@ struct RdpNego
         ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
         const char * certif_path,
-        cbyte_array pdu_buf)
+        InStream & stream)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
-        InStream stream(pdu_buf);
         X224::CC_TPDU_Recv x224(stream);
 
         if (x224.rdp_neg_type == X224::RDP_NEG_NONE){

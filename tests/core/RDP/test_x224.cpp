@@ -68,18 +68,6 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
 }
 
-
-RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
-{
-    GeneratorTransport t("\x04\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
-
-    constexpr size_t array_size = AUTOSIZE;
-    uint8_t array[array_size];
-    uint8_t * end = array;
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), ERR_X224);
-    t.disable_remaining_error();
-}
-
 RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
 {
     GeneratorTransport t("\x03\x00\x00\x02\x06\x10\x00\x00\x00\x00\x00", 11);
