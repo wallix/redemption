@@ -508,7 +508,6 @@ public:
     virtual mod_api * init_mod() override {
 
 
-
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
                                    , this->target_IP.c_str()
@@ -517,8 +516,9 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   //, to_verbose_flags(0)   // this->verbose
-                                   , RDPVerbose::connection | RDPVerbose::asynchronous_task | RDPVerbose::license | RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
+                                  //, to_verbose_flags(0)   // this->verbose
+                                   //RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | //RDPVerbose::channels
+                                    , RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -3268,7 +3268,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::none;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

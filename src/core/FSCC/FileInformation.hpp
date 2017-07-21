@@ -1198,10 +1198,14 @@ public:
       MIN_SIZE = 93
     };
 
-//     uint32_t total_size() const {
-//         std::string s(this->FileName);
-//         return s.size() + MIN_SIZE;
-//     }
+    uint32_t total_size() const {
+        uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
+
+        return MIN_SIZE + size_of_unicode_data;
+    }
 
     FileBothDirectoryInformation() = default;
 
@@ -1218,11 +1222,11 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    , FileNameLength(sizeof(file_name))
     {
-        size_t file_name_tmp_size = sizeof(file_name);
-        REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, file_name, file_name_tmp_size);
+//         size_t file_name_tmp_size = sizeof(file_name);
+//         LOG(LOG_INFO, "!!!!!!!!! %zu", file_name_tmp_size);
+//         REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, file_name, 500);
     }
 
 
@@ -1489,7 +1493,12 @@ public:
     };
 
     uint32_t total_size() {
-        return this->FileNameLength + MIN_SIZE;
+                uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
+
+        return MIN_SIZE + size_of_unicode_data;
     }
 
     FileDirectoryInformation() = default;
@@ -1497,7 +1506,7 @@ public:
     FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
                              uint64_t CreationTime, uint64_t LastAccessTime,
                              uint64_t LastWriteTime, uint64_t ChangeTime,
-                             uint32_t FileAttributes, char * FileName)
+                             uint32_t FileAttributes, const char * FileName)
     : NextEntryOffset(NextEntryOffset)
     , FileIndex(FileIndex)
     , CreationTime(CreationTime)
@@ -1995,7 +2004,12 @@ public:
     };
 
     uint32_t total_size() {
-        return this->FileNameLength + MIN_SIZE;
+                uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
+
+        return MIN_SIZE + size_of_unicode_data;
     }
 
     FileFullDirectoryInformation() = default;
@@ -2226,7 +2240,12 @@ public:
     };
 
     uint32_t total_size() {
-        return this->FileNameLength + MIN_SIZE;
+                uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
+
+        return MIN_SIZE + size_of_unicode_data;
     }
 
     FileNamesInformation() = default;
@@ -2234,7 +2253,7 @@ public:
     explicit FileNamesInformation(const char * file_name)
     {
         size_t file_name_tmp_size = sizeof(file_name);
-        REDASSERT(file_name <= 500);
+        REDASSERT(file_name_tmp_size <= 500);
         std::memcpy(this->FileName, file_name, file_name_tmp_size);
     }
 

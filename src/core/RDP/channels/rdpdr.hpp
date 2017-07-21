@@ -1367,7 +1367,7 @@ class DeviceCreateRequest {
     uint32_t CreateOptions_     = 0;
 
     size_t PathLength_UTF8 = 0;
-    uint8_t path_UTF8[65536/2];
+    uint8_t Path_[65536/2] = {0};
 
 public:
     void emit(OutStream & stream) const {
@@ -1380,14 +1380,14 @@ public:
 
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            this->path_UTF8,
+            this->Path_,
             Path_unicode_data,
-            this->PathLength_UTF8*2);
+            sizeof(Path_unicode_data));
 
         REDASSERT(size_of_Path_unicode_data <= 65534);
 
         // Writes null terminator.
-        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data    ] = 0;
         Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
         size_of_Path_unicode_data += 2;
 
@@ -1427,7 +1427,6 @@ public:
         this->CreateOptions_     = stream.in_uint32_le();
 
         const uint16_t PathLength_UTF16 = stream.in_uint32_le();
-        REDASSERT(PathLength_UTF16 <= 65536);
         this->PathLength_UTF8 = PathLength_UTF16/2;
 
         if (PathLength_UTF16) {
@@ -1444,14 +1443,14 @@ public:
 
             uint8_t const * const Path_unicode_data = stream.get_current();
 
-            const size_t path_UTF8_len = ::UTF16toUTF8(Path_unicode_data, PathLength_UTF16, this->path_UTF8,
+            const size_t path_UTF8_len = ::UTF16toUTF8(Path_unicode_data, PathLength_UTF16, this->Path_,
                 this->PathLength_UTF8);
 
-            this->path_UTF8[path_UTF8_len] = '\0';
+            this->Path_[path_UTF8_len] = '\0';
 
             for (size_t i = 0; i < this->PathLength_UTF8; i++) {
-                if ('\\' == this->path_UTF8[i]) {
-                    this->path_UTF8[i] = '/';
+                if ('\\' == this->Path_[i]) {
+                    this->Path_[i] = '/';
                 }
             }
 
@@ -1471,7 +1470,7 @@ public:
 
     uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    const char * Path() const { return reinterpret_cast<const char *>(this->path_UTF8); }
+    const char * Path() const { return reinterpret_cast<const char *>(this->Path_); }
 
     size_t PathLength() const { return PathLength_UTF8*2; }
 
@@ -1483,7 +1482,7 @@ private:
                 "CreateOptions=0x%X Path=\"%s\"",
             this->DesiredAccess_, this->AllocationSize_, this->FileAttributes_,
             this->SharedAccess_, this->CreateDisposition_, this->CreateOptions_,
-            reinterpret_cast<const char *>(this->path_UTF8));
+            reinterpret_cast<const char *>(this->Path_));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1509,7 +1508,7 @@ public:
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(2*this->PathLength_UTF8));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", reinterpret_cast<const char *>(this->path_UTF8), int(2*this->PathLength_UTF8));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", reinterpret_cast<const char *>(this->Path_), int(2*this->PathLength_UTF8));
     }
 
 };  // DeviceCreateRequest
