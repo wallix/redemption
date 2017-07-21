@@ -1167,6 +1167,26 @@ public:
                         message_format_invalid = true;
                     }
                 }
+                else if (!order.compare("STARTUP_APPLICATION_FAIL_TO_RUN")) {
+                    if (parameters.size() == 2) {
+                        std::string info;
+                        info += "application_name=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" RawResult=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
+                        this->report_message.log4(
+                            bool(this->verbose & RDPVerbose::sesprobe),
+                            order.c_str(), info.c_str());
+
+                        LOG(LOG_ERR,
+                            "Session Probe failed to run startup application \"%s\"! RawResult=%s",
+                            parameters[0].c_str(), parameters[1].c_str());
+                        this->report_message.report(
+                            "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
                 else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED") ||
                          !order.compare("OUTBOUND_CONNECTION_DETECTED")) {
                     bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED"));

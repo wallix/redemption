@@ -647,10 +647,12 @@ private:
         , authentifier(authentifier)
         {
             this->authentifier.start_mod();
+            this->mm.socket_transport = this;
         }
 
         ~ModWithSocket()
         {
+            this->mm.socket_transport = nullptr;
             this->authentifier.stop_mod();
         }
 
@@ -776,9 +778,13 @@ public:
         new_mod = 0x1,
     };
 
+private:
     rdp_api*       rdpapi = nullptr;
     windowing_api* winapi = nullptr;
 
+    SocketTransport * socket_transport = nullptr;
+
+public:
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
@@ -792,6 +798,20 @@ public:
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
+    }
+
+    bool has_pending_data() const
+    {
+        return this->socket_transport && this->socket_transport->has_pending_data();
+    }
+
+    bool is_set_event(fd_set & rfds) const
+    {
+        wait_obj & obj = this->mod->get_event();
+        if (this->socket_transport) {
+            return this->socket_transport->is_set(obj, rfds);
+        }
+        return obj.is_set(INVALID_SOCKET, rfds);
     }
 
     void remove_mod() override {

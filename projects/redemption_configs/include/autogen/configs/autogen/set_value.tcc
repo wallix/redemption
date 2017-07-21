@@ -434,6 +434,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "hide_non_printable_kbd_input")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

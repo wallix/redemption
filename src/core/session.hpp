@@ -183,32 +183,24 @@ public:
                         this->front->capture->get_capture_event().wait_on_timeout(timeout);
                     }
                 }
+
                 if (this->auth_event && this->auth_trans && (INVALID_SOCKET != this->auth_trans->sck)) {
                     this->auth_event->wait_on_fd(this->auth_trans->sck, rfds, max, timeout);
                 }
 
-                {
-                    const int fd = mm.mod->get_fd();
-                    (INVALID_SOCKET != fd)
-                        ? mm.mod->get_event().wait_on_fd(fd, rfds, max, timeout)
-                        : mm.mod->get_event().wait_on_timeout(timeout);
-                }
+                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
 
                 event_handlers.clear();
                 mm.mod->get_event_handlers(event_handlers);
                 for (EventHandler& event_handler : event_handlers) {
                     const int fd = event_handler.get_fd();
-                    if (INVALID_SOCKET != fd) {
-                        event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
-                    }
-                    else {
-                        event_handler.get_event().wait_on_timeout(timeout);
-                    }
+                    event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
                 }
 
-                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
-                if (has_pending_data){
-                    memset(&timeout, 0, sizeof(timeout));
+                if (front_trans.has_pending_data()
+                 || mm.has_pending_data()
+                 || (this->auth_trans && this->auth_trans->has_pending_data())) {
+                    timeout = {0, 0};
                 }
 
                 int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
@@ -232,7 +224,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (this->front->get_event().is_set(front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
+                if (front_trans.is_set(this->front->get_event(), rfds)) {
                     try {
                         this->front->incoming(mm.get_callback(), now);
                     } catch (Error & e) {
@@ -288,8 +280,7 @@ public:
                             }
 
                             // Process incoming module trafic
-                            if ((BACK_EVENT_NONE == signal) &&
-                                mm.mod->get_event().is_set(mm.mod->get_fd(), rfds)) {
+                            if ((BACK_EVENT_NONE == signal) && mm.is_set_event(rfds)) {
                                 mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
@@ -410,7 +401,7 @@ public:
                                         default : /* localfile_hashed */
                                                 encryption = false;
                                                 checksum = true;
-                                                break;      
+                                                break;
                                     }
                                     cctx.set_with_encryption(encryption);
                                     cctx.set_with_checksum(checksum);
@@ -433,7 +424,7 @@ public:
                             && this->auth_event
                             && this->auth_trans
                             && (INVALID_SOCKET != this->auth_trans->sck)
-                            && this->auth_event->is_set(this->auth_trans->sck, rfds)) {
+                            && this->auth_trans->is_set(*this->auth_event, rfds)) {
                                 // authentifier received updated values
                                 this->acl_serial->receive();
                             }

@@ -26,10 +26,12 @@
 #include "transport/socket_transport.hpp"
 #include "core/listen.hpp"
 #include "core/server.hpp"
+#include "cxx/diagnostic.hpp"
+#include "cxx/cxx.hpp"
 
-// TODO "-Wold-style-cast is ignored"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code")
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected
@@ -70,10 +72,10 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     int client_sck = socket(PF_INET, SOCK_STREAM, 0);
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+      sockaddr s;
+      sockaddr_storage ss;
+      sockaddr_in s4;
+      sockaddr_in6 s6;
     } ucs;
     memset(&ucs, 0, sizeof(ucs));
     ucs.s4.sin_family = AF_INET;
@@ -113,7 +115,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         fd_set wfds;
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
-        struct timeval timeout;
+        timeval timeout;
         timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
@@ -126,6 +128,9 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 max = recv_sck[i];
             }
             FD_SET(recv_sck[i], &rfds);
+            if (sck_trans[i]->has_pending_data()) {
+                timeout.tv_sec = 0;
+            }
         }
 
         if (((client_trans != nullptr) && (data_sent == 0))
@@ -141,8 +146,11 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
 
         switch (num) {
         case 0:
-            LOG(LOG_INFO, "woke up on timeout\n");
-        break;
+            if (timeout.tv_sec) {
+                LOG(LOG_INFO, "woke up on timeout\n");
+                RED_REQUIRE_MESSAGE(false, "woke up on timeout");
+            }
+            REDEMPTION_CXX_FALLTHROUGH;
         default:
         {
             if (FD_ISSET(client_sck, &wfds)){
@@ -159,7 +167,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             }
 
             for (int i = 0 ; i < nb_recv_sck ; i++){
-                if (FD_ISSET(recv_sck[i], & rfds)){
+                if (FD_ISSET(recv_sck[i], & rfds) || sck_trans[i]->has_pending_data()){
                     LOG(LOG_INFO, "activity on %d", recv_sck[i]);
                     sck_trans[i]->recv_boom(p, 5);
                     p += 5;
@@ -175,10 +183,10 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 char ip_source[128];
                 union
                 {
-                  struct sockaddr s;
-                  struct sockaddr_storage ss;
-                  struct sockaddr_in s4;
-                  struct sockaddr_in6 s6;
+                  sockaddr s;
+                  sockaddr_storage ss;
+                  sockaddr_in s4;
+                  sockaddr_in6 s6;
                 } u;
                 memset(&u, 0, sizeof(u));
                 u.s4.sin_family = AF_INET;
@@ -213,4 +221,4 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     delete client_trans;
 }
 
-#pragma GCC diagnostic pop
+REDEMPTION_DIAGNOSTIC_POP

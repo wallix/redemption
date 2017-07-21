@@ -58,6 +58,7 @@ namespace cfg {
         struct session_log_redirection;
         struct log_path;
         struct keyboard_input_masking_level;
+        struct hide_non_printable_kbd_input;
     };
 
     struct client {

@@ -16,7 +16,8 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-              Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan
+              Martin Potier, Jonatan Poelen, Raphael Zhou, Meng Tan,
+              Jennifer Inthavong
 */
 
 #include <algorithm>
@@ -248,11 +249,18 @@ public:
     }
 };
 
+
+enum KeyMarkersHideState {
+    key_markers_not_hidden = false,
+    key_markers_hiden = true,
+};
 enum FilteringSlash{ No, Yes };
 using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
 using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
 template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
-void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn no_printable_fn, FilterSlash filter_slash)
+void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
+                         NoPrintableFn no_printable_fn, FilterSlash filter_slash,
+                         bool key_markers_hidden_state)
 {
     switch (uchar)
     {
@@ -264,7 +272,10 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn
                 utf32_char_fn(uchar);
             }
             break;
-        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+        #define Case(i, s) case i: if(key_markers_hidden_state == KeyMarkersHideState::key_markers_not_hidden) \
+                                        { no_printable_fn(cstr_array_view(s));}  \
+                                   else {no_printable_fn(cstr_array_view("")); } \
+                                break
         Case(0x00000008, "/<backspace>");
         Case(0x00000009, "/<tab>");
         Case(0x0000000D, "/<enter>");
@@ -331,7 +342,8 @@ public:
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             },
-            nofilter_slash{}
+            nofilter_slash{},
+            key_markers_not_hidden
         );
 
         return can_be_sent_to_server;
@@ -339,6 +351,8 @@ public:
 
     void enable_kbd_input_mask(bool /*enable*/) override {
     }
+
+    void hide_key_markers(bool) override {}
 
 private:
     bool test_pattern(
@@ -391,7 +405,8 @@ private:
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
-            filter_slash{}
+            filter_slash{},
+            key_markers_not_hidden
         );
     }
 
@@ -418,6 +433,8 @@ public:
             this->keyboard_input_mask_enabled = enable;
         }
     }
+
+    void hide_key_markers(bool) override {}
 
     bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
         if (this->keyboard_input_mask_enabled) {
@@ -501,7 +518,8 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
-            filter_slash{}
+            filter_slash{},
+            key_markers_not_hidden
         );
     }
 
@@ -535,6 +553,8 @@ public:
             this->keyboard_input_mask_enabled = enable;
         }
     }
+
+    void hide_key_markers(bool) override {}
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
@@ -899,6 +919,7 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     Transport & trans;
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
+    bool key_markers_hidden_state = false;
 
 public:
     SessionMeta(const timeval & now, Transport & trans)
@@ -920,6 +941,13 @@ public:
         if (this->keyboard_input_mask_enabled != enable) {
             this->send_kbd();
             this->keyboard_input_mask_enabled = enable;
+        }
+    }
+
+    void hide_key_markers(bool hide) override {
+        if(this->key_markers_hidden_state != hide) {
+            this->send_kbd();
+            this->key_markers_hidden_state = hide;
         }
     }
 
@@ -1000,7 +1028,8 @@ private:
                     this->kbd_char_pos = 0;
                 }
             },
-            filter_slash{}
+            filter_slash{},
+            this->key_markers_hidden_state
         );
     }
 
