@@ -518,7 +518,7 @@ public:
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
                                    //, to_verbose_flags(0)   // this->verbose
-                                   , RDPVerbose::connection | RDPVerbose::graphics | RDPVerbose::graphics_pointer | RDPVerbose::asynchronous_task | RDPVerbose::license | RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
+                                   , RDPVerbose::connection | RDPVerbose::asynchronous_task | RDPVerbose::license | RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -1220,7 +1220,6 @@ public:
                 }
                 this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->clipboard_qt);
             }
-
 
 
         } else if (channel.chanid == CHANID_RDPDR) {
@@ -1943,13 +1942,13 @@ public:
                                                 case rdpdr::FileDirectoryInformation:
                                                 {
                                                     fscc::FileDirectoryInformation fbdi(CreationTime,
-                                                                                            LastAccessTime,
-                                                                                            LastWriteTime,
-                                                                                            ChangeTime,
-                                                                                            EndOfFile,
-                                                                                            AllocationSize,
-                                                                                            FileAttributes,
-                                                                                            str_file_name.c_str());
+                                                                                        LastAccessTime,
+                                                                                        LastWriteTime,
+                                                                                        ChangeTime,
+                                                                                        EndOfFile,
+                                                                                        AllocationSize,
+                                                                                        FileAttributes,
+                                                                                        str_file_name.c_str());
 
                                                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
                                                     cdqdr.emit(out_stream);

@@ -38,7 +38,16 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 
     device_create_request.receive(in_stream);
 
-    //device_create_request.log(LOG_INFO);
+    RED_CHECK_EQUAL(device_create_request.DesiredAccess(), 0x00100081);
+    RED_CHECK_EQUAL(device_create_request.AllocationSize(), 0);
+    RED_CHECK_EQUAL(device_create_request.FileAttributes(), 0);
+    RED_CHECK_EQUAL(device_create_request.SharedAccess(), 7);
+    RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
+    RED_CHECK_EQUAL(device_create_request.CreateOptions(), 32);
+    RED_CHECK_EQUAL(device_create_request.PathLength(), 14);
+    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path(), "/.cpan", (device_create_request.PathLength()/2)-1));
+
+    //device_create_request.log();
 
     char out_data[sizeof(in_data)];
 
@@ -68,7 +77,16 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
 
     device_create_request.receive(in_stream);
 
-    //device_create_request.log(LOG_INFO);
+    RED_CHECK_EQUAL(device_create_request.DesiredAccess(), 0x00120089);
+    RED_CHECK_EQUAL(device_create_request.AllocationSize(), 0);
+    RED_CHECK_EQUAL(device_create_request.FileAttributes(), 0);
+    RED_CHECK_EQUAL(device_create_request.SharedAccess(), 7);
+    RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
+    RED_CHECK_EQUAL(device_create_request.CreateOptions(), 0x00000060);
+    RED_CHECK_EQUAL(device_create_request.PathLength(), 54);
+    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path(), "/Program Files/desktop.ini", (device_create_request.PathLength()/2)-1));
+
+    //device_create_request.log();
 
     char out_data[sizeof(in_data)];
 
