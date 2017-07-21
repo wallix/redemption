@@ -80,6 +80,7 @@
 #include "capture/video_capture.hpp"
 
 #include "utils/apps/recording_progress.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 
 
 class PatternSearcher
@@ -250,17 +251,12 @@ public:
 };
 
 
-enum KeyMarkersHideState {
-    key_markers_not_hidden = false,
-    key_markers_hiden = true,
-};
-enum FilteringSlash{ No, Yes };
+enum class FilteringSlash{ No, Yes };
 using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
 using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
 template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
 void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
-                         NoPrintableFn no_printable_fn, FilterSlash filter_slash,
-                         bool key_markers_hidden_state)
+                         NoPrintableFn no_printable_fn, FilterSlash filter_slash)
 {
     switch (uchar)
     {
@@ -272,10 +268,7 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
                 utf32_char_fn(uchar);
             }
             break;
-        #define Case(i, s) case i: if(key_markers_hidden_state == KeyMarkersHideState::key_markers_not_hidden) \
-                                        { no_printable_fn(cstr_array_view(s));}  \
-                                   else {no_printable_fn(cstr_array_view("")); } \
-                                break
+        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
         Case(0x00000008, "/<backspace>");
         Case(0x00000009, "/<tab>");
         Case(0x0000000D, "/<enter>");
@@ -342,8 +335,7 @@ public:
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             },
-            nofilter_slash{},
-            key_markers_not_hidden
+            nofilter_slash{}
         );
 
         return can_be_sent_to_server;
@@ -351,8 +343,6 @@ public:
 
     void enable_kbd_input_mask(bool /*enable*/) override {
     }
-
-    void hide_key_markers(bool) override {}
 
 private:
     bool test_pattern(
@@ -405,8 +395,7 @@ private:
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
-            filter_slash{},
-            key_markers_not_hidden
+            filter_slash{}
         );
     }
 
@@ -433,8 +422,6 @@ public:
             this->keyboard_input_mask_enabled = enable;
         }
     }
-
-    void hide_key_markers(bool) override {}
 
     bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
         if (this->keyboard_input_mask_enabled) {
@@ -518,8 +505,7 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
             [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
-            filter_slash{},
-            key_markers_not_hidden
+            filter_slash{}
         );
     }
 
@@ -553,8 +539,6 @@ public:
             this->keyboard_input_mask_enabled = enable;
         }
     }
-
-    void hide_key_markers(bool) override {}
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
@@ -919,13 +903,14 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     Transport & trans;
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
-    bool key_markers_hidden_state = false;
+    const bool key_markers_hidden_state;
 
 public:
-    SessionMeta(const timeval & now, Transport & trans)
+    SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state)
     : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
     , last_time(now.tv_sec)
     , trans(trans)
+    , key_markers_hidden_state(key_markers_hidden_state)
     {
         memcpy(this->kbd_buffer, session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
 
@@ -941,13 +926,6 @@ public:
         if (this->keyboard_input_mask_enabled != enable) {
             this->send_kbd();
             this->keyboard_input_mask_enabled = enable;
-        }
-    }
-
-    void hide_key_markers(bool hide) override {
-        if(this->key_markers_hidden_state != hide) {
-            this->send_kbd();
-            this->key_markers_hidden_state = hide;
         }
     }
 
@@ -1018,6 +996,17 @@ private:
                       - this->kbd_chars_size[this->kbd_char_pos]
                     );
                 }
+                else if (this->key_markers_hidden_state) {
+                    if (uchar == '/') {
+                        auto const single_slash = cstr_array_view("/");
+                        this->copy_bytes(single_slash);
+                        this->kbd_chars_size[this->kbd_char_pos] = single_slash.size();
+                        ++this->kbd_char_pos;
+                    }
+                    else {
+                        this->kbd_char_pos = 0;
+                    }
+                }
                 else if (uchar == '/') {
                     this->copy_bytes(no_printable_str);
                     this->kbd_chars_size[this->kbd_char_pos] = no_printable_str.size();
@@ -1028,8 +1017,7 @@ private:
                     this->kbd_char_pos = 0;
                 }
             },
-            filter_slash{},
-            this->key_markers_hidden_state
+            filter_slash{}
         );
     }
 
@@ -1037,7 +1025,7 @@ private:
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->send_kbd();
         }
-        this->kbd_stream.out_copy_bytes(bytes.data(), std::min(this->kbd_stream.tailroom(), bytes.size()));
+        this->kbd_stream.out_copy_bytes(bytes.data(), bytes.size());
     }
 
     void send_data(time_t rawtime, array_view_const_char data, char sep) {
@@ -1119,9 +1107,9 @@ public:
 
     MetaCaptureImpl(
         const timeval & now,
+        MetaParams meta_params,
         std::string record_path,
         const char * const basename,
-        bool enable_agent,
         ReportError report_error)
     : meta_trans(unique_fd{[&](){
         record_path.append(basename).append(".meta");
@@ -1133,9 +1121,9 @@ public:
         }
         return fd;
     }()}, std::move(report_error))
-    , meta(now, this->meta_trans)
+    , meta(now, this->meta_trans, underlying_cast(meta_params.hide_non_printable))
     , session_log_agent(this->meta)
-    , enable_agent(enable_agent)
+    , enable_agent(underlying_cast(meta_params.enable_session_log))
     {
     }
 
@@ -1249,7 +1237,7 @@ Capture::Capture(
     bool capture_ocr, const OcrParams ocr_params,
     bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
     bool capture_flv_full, const FullVideoParams /*full_video_params*/,
-    bool capture_meta, const MetaParams /*meta_params*/,
+    bool capture_meta, const MetaParams meta_params,
     bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
     const char * basename,
     const timeval & now,
@@ -1266,7 +1254,6 @@ Capture::Capture(
     const char * pattern_notify,
     int debug_capture,
     bool flv_capture_chunk,
-    bool meta_enable_session_log,
     const std::chrono::duration<long int> flv_break_interval,
     bool syslog_keyboard_log,
     bool rt_display,
@@ -1313,8 +1300,7 @@ Capture::Capture(
 
         if (capture_meta) {
             this->meta_capture_obj.reset(new MetaCaptureImpl(
-                now, record_tmp_path, basename,
-                meta_enable_session_log,
+                now, meta_params, record_tmp_path, basename,
                 report_error_from_reporter(report_message)
             ));
         }

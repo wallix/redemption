@@ -22,4 +22,6 @@
 
 struct MetaParams
 {
+    enum class EnableSessionLog : bool { No, Yes } enable_session_log;
+    enum class HideNonPrintable : bool { No, Yes } hide_non_printable;
 };

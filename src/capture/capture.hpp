@@ -389,7 +389,6 @@ public:
         const char * pattern_notify,
         int debug_capture,
         bool flv_capture_chunk,
-        bool meta_enable_session_log,
         const std::chrono::duration<long int> flv_break_interval,
         bool syslog_keyboard_log,
         bool rt_display,
@@ -428,12 +427,6 @@ public:
     void enable_kbd_input_mask(bool enable) override {
         for (gdi::KbdInputApi & kbd : this->kbds) {
             kbd.enable_kbd_input_mask(enable);
-        }
-    }
-
-    void hide_key_markers(bool hide_state) override {
-        for (gdi::KbdInputApi & kbd : this->kbds) {
-            kbd.hide_key_markers(hide_state);
         }
     }
 
