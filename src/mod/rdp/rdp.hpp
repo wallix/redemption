@@ -273,7 +273,7 @@ protected:
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
-    enum : uint8_t {
+    enum ModState : uint8_t {
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
@@ -291,7 +291,7 @@ protected:
         UP_AND_RUNNING
     } connection_finalization_state;
 
-    int state;
+    ModState state;
     Pointer cursors[32];
     const bool console_session;
     const uint8_t front_bpp;
@@ -3094,7 +3094,6 @@ public:
         // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
         SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
         if (sec.flags & SEC::SEC_LICENSE_PKT) {
@@ -4012,7 +4011,8 @@ public:
         }
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable_) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable_) override
+    {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
