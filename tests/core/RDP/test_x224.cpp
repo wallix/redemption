@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     RED_CHECK_EQUAL(0x50, x224.tpdu_hdr.LI);
 
-    RED_CHECK_EQUAL(0, strcmp("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie));
+    RED_CHECK_EQUAL("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CORRELATION_INFO_PRESENT), x224.rdp_neg_flags);
     RED_CHECK_EQUAL(8, x224.rdp_neg_length);
@@ -259,7 +259,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     RED_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
-    RED_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
+    RED_CHECK_EQUAL("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
     RED_CHECK_EQUAL(0, x224.rdp_neg_flags);
     RED_CHECK_EQUAL(8, x224.rdp_neg_length);

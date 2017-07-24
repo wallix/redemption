@@ -881,7 +881,7 @@ namespace FastPath {
 // |                                     | MUST be 0x03).                      |
 // +-------------------------------------+-------------------------------------+
 
-    enum {
+    enum FASTPATH_OUTPUT {
           FASTPATH_OUTPUT_ACTION_FASTPATH = 0x0
         , FASTPATH_OUTPUT_ACTION_X224     = 0x3
     };
