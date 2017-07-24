@@ -2408,7 +2408,7 @@ public:
                     switch (packetId) {
                         case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Announce Request ");
                             }
                         }
@@ -2429,7 +2429,7 @@ public:
                                 }
                             }
 
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 if (driveEnable) {
                                     LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Capability Enable");
                                 } else {
@@ -2440,7 +2440,7 @@ public:
                             break;
 
                         case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server User Logged On");
                             }
                             break;
@@ -2456,7 +2456,7 @@ public:
                                 this->fileSystemData.drives_created = false;
                                 LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
                         }
@@ -2464,7 +2464,9 @@ public:
 
                         case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
                         {
-                            LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
+                            if (bool(this->verbose & RDPVerbose::printer)) {
+                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
+                            }
                         }
                             break;
 
@@ -2486,19 +2488,19 @@ public:
                             switch (deviceIORequest.MajorFunction()) {
 
                                 case rdpdr::IRP_MJ_CREATE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_READ:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_CLOSE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
                                     }
                                     break;
