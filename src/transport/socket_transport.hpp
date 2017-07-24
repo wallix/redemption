@@ -257,26 +257,26 @@ public:
         return rv;
     }
 
-//     size_t do_partial_read(uint8_t * buffer, size_t len)
-//     {
-//         if (bool(this->verbose & Verbose::dump)) {
-//             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
-//         }
-//
-//         ssize_t const res = this->privrecv(buffer, len);
-//
-//         if (res >= 0) {
-//             this->total_received += res;
-//
-//             if (bool(this->verbose & Verbose::dump)) {
-//                 LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, res);
-//                 hexdump_c(buffer, res);
-//                 LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, res);
-//             }
-//         }
-//
-//         return res;
-//     }
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
+    {
+        if (bool(this->verbose & Verbose::dump)) {
+            LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
+        }
+
+        ssize_t const res = this->privrecv(buffer, len);
+
+        if (res >= 0) {
+            this->total_received += res;
+
+            if (bool(this->verbose & Verbose::dump)) {
+                LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, res);
+                hexdump_c(buffer, res);
+                LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, res);
+            }
+        }
+
+        return res;
+    }
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override {
         if (bool(this->verbose & Verbose::dump)) {

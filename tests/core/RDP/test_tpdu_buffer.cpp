@@ -28,7 +28,7 @@
 // #define LOGPRINT
 #include "core/RDP/tdpu_buffer.hpp"
 
-struct BlockTransport : FakeTransport
+struct BlockTransport : Transport
 {
     BlockTransport(cbyte_array data, std::size_t n_by_bloc)
       : data(data)

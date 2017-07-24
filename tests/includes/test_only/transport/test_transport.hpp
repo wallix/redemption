@@ -149,6 +149,18 @@ private:
         return Read::Ok;
     }
 
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        size_t const remaining = this->len - this->current;
+        if (!remaining) {
+            return 0;
+        }
+        len = std::min(len, remaining);
+        memcpy(buffer, this->data.get() + this->current, len);
+        this->current += len;
+        return len;
+    }
+
     void do_send(const uint8_t * const buffer, size_t len) override
     {
         LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
@@ -297,6 +309,11 @@ private:
         return this->gen.atomic_read(buffer, len);
     }
 
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        return this->gen.partial_read(buffer, len);
+    }
+
     void do_send(const uint8_t * const buffer, size_t len) override
     {
         this->check.send(buffer, len);
@@ -362,6 +379,18 @@ private:
         }
         this->in_stream.in_copy_bytes(buffer, len);
         return Read::Ok;
+    }
+
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        auto const in_offset = this->in_stream.get_offset();
+        auto const out_offset = this->out_stream.get_offset();
+        if (in_offset == out_offset){
+            return 0;
+        }
+        len = std::min(out_offset - out_offset, len);
+        this->in_stream.in_copy_bytes(buffer, len);
+        return len;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override

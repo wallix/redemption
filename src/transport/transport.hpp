@@ -32,6 +32,7 @@
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -93,16 +94,11 @@ public:
     /// recv_boom read len bytes into buffer or throw an Error
     /// if EOF is encountered at that point it's also an error and
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
-    void recv_boom(uint8_t * buffer, size_t len)
+    void recv_boom(byte_ptr buffer, size_t len)
     {
         if (Read::Eof == this->atomic_read(buffer, len)){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-    }
-
-    void recv_boom(char * buffer, size_t len)
-    {
-        this->recv_boom(reinterpret_cast<uint8_t*>(buffer), len);
     }
 
     /// atomic_read either read len bytes into buffer or throw an Error
@@ -110,15 +106,15 @@ public:
     /// or false if nothing was read (End of File reached at block frontier)
     /// if an exception is thrown buffer is dirty and may have been modified.
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(uint8_t * buffer, size_t len)
+    Read atomic_read(byte_ptr buffer, size_t len)
     {
-        return this->do_atomic_read(buffer, len);
+        return this->do_atomic_read(buffer.to_u8p(), len);
     }
 
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(char * buffer, size_t len)
+    size_t partial_read(byte_ptr buffer, size_t len)
     {
-        return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
+        return this->do_partial_read(buffer.to_u8p(), len);
     }
 
     void send(const uint8_t * const buffer, size_t len)
@@ -145,6 +141,12 @@ private:
     /// Atomic read read exactly the amount of data requested or return an error
     /// @see atomic_read
     virtual Read do_atomic_read(uint8_t * buffer, size_t len) {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+    }
+
+    virtual size_t do_partial_read(uint8_t * buffer, size_t len) {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);

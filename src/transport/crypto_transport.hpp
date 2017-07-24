@@ -192,18 +192,6 @@ public:
         return fhash;
     }
 
-    REDEMPTION_CXX_NODISCARD
-    size_t partial_read(uint8_t * buffer, size_t len)
-    {
-        return this->do_partial_read(buffer, len);
-    }
-
-    REDEMPTION_CXX_NODISCARD
-    size_t partial_read(char * buffer, size_t len)
-    {
-        return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
-    }
-
     void open(const char * const pathname, const_byte_array derivator)
     {
         if (this->is_open()){
@@ -378,7 +366,7 @@ private:
         }
     }
 
-    size_t do_partial_read(uint8_t * buffer, size_t len)
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
     {
         if (this->eof){
             return 0;

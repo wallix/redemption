@@ -20,28 +20,13 @@
 
 #pragma once
 
-// #include "transport/transport.hpp"
+#include "transport/transport.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/parse.hpp"
 #include "cxx/cxx.hpp"
 #include "x224.hpp"
 
 #include <cstring>
-
-struct FakeTransport
-{
-    virtual ~FakeTransport() = default;
-
-    REDEMPTION_CXX_NODISCARD
-    size_t partial_read(byte_ptr buffer, size_t len)
-    {
-        return this->do_partial_read(buffer.to_u8p(), len);
-    }
-
-private:
-    virtual size_t do_partial_read(uint8_t * buffer, size_t len) = 0;
-};
-
 
 class TpduBuffer
 {
@@ -54,7 +39,7 @@ class TpduBuffer
 public:
     TpduBuffer() = default;
 
-    void load_data(FakeTransport & trans)
+    void load_data(Transport & trans)
     {
         this->buf.read_data(trans);
     }
@@ -194,7 +179,7 @@ private:
             this->idx += n;
         }
 
-        void read_data(FakeTransport & trans)
+        void read_data(Transport & trans)
         {
             if (this->idx == this->len) {
                 this->len = trans.partial_read(this->buf, max_len);
