@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <cstddef>
 
+#include "cxx/cxx.hpp"
 #include "core/error.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -108,12 +109,14 @@ public:
     /// returned value is either true is read was successful
     /// or false if nothing was read (End of File reached at block frontier)
     /// if an exception is thrown buffer is dirty and may have been modified.
-    Read atomic_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    REDEMPTION_CXX_NODISCARD
+    Read atomic_read(uint8_t * buffer, size_t len)
     {
         return this->do_atomic_read(buffer, len);
     }
 
-    Read atomic_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    REDEMPTION_CXX_NODISCARD
+    Read atomic_read(char * buffer, size_t len)
     {
         return this->do_atomic_read(reinterpret_cast<uint8_t*>(buffer), len);
     }

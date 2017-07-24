@@ -32,7 +32,7 @@ struct FakeTransport
 {
     virtual ~FakeTransport() = default;
 
-    __attribute__ ((warn_unused_result))
+    REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.to_u8p(), len);

@@ -192,17 +192,14 @@ public:
         return fhash;
     }
 
-//    void hash(const char * pathname)
-//    {
-//        this->open(pathname);
-//    }
-
-    size_t partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
+    REDEMPTION_CXX_NODISCARD
+    size_t partial_read(uint8_t * buffer, size_t len)
     {
         return this->do_partial_read(buffer, len);
     }
 
-    size_t partial_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
+    REDEMPTION_CXX_NODISCARD
+    size_t partial_read(char * buffer, size_t len)
     {
         return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
     }
