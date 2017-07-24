@@ -57,6 +57,7 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     sesprobe_repetitive = 0x00008000,
 
 
+    rdpsnd              = 0x00400000,
     channels            = 0x00800000,
 
     rail                = 0x01000000,

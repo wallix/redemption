@@ -516,9 +516,9 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                  //, to_verbose_flags(0)   // this->verbose
-                                   //RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | //RDPVerbose::channels
-                                    , RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump
+                                   , to_verbose_flags(0)    // this->verbose
+                                  // , RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
+                                    //, RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -731,7 +731,7 @@ public:
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                  , CHANID_RDPSND
                                                  };
-        //this->cl.push_back(channel_audio_output);
+        this->cl.push_back(channel_audio_output);
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -2527,7 +2527,9 @@ public:
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
             if (this->sound_qt->wave_data_to_vait) {
-                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                }
                 this->sound_qt->wave_data_to_vait -= chunk.in_remain();
                 if (this->sound_qt->wave_data_to_vait < 0) {
                     this->sound_qt->wave_data_to_vait = 0;
@@ -2558,8 +2560,9 @@ public:
                                                   , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST
                                                   );
-
-                    LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                    if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                        LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                    }
 //                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                     header_out.log();
 //                     wc.log();
@@ -2573,7 +2576,9 @@ public:
 
                     case rdpsnd::SNDC_FORMATS:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                        }
 
                         rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                         safsvh.receive(chunk);
@@ -2618,7 +2623,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+                        }
 //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                         header_out.log();
 //                         cafvh.log();
@@ -2640,7 +2647,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        }
 //                         msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
 //                         header_out.log();
 //                         qm.log();
@@ -2649,7 +2658,9 @@ public:
 
                     case rdpsnd::SNDC_TRAINING:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+                        }
 
                         rdpsnd::TrainingPDU train;
                         train.receive(chunk);
@@ -2673,7 +2684,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        }
 //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                         header_quality.log();
 //                         train_conf.log();
@@ -2682,7 +2695,9 @@ public:
 
                     case rdpsnd::SNDC_WAVE:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
+                        }
 
                         this->sound_qt->wave_data_to_vait = header.BodySize - (header.BodySize/400);
 
@@ -2954,7 +2969,7 @@ public:
                     cb_buffers.sizeTotal  = mfpd.imageSize;
                     cb_buffers.data       = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
 
-                    this->paste_data_len = mfpd.imageSize;
+                    this->paste_data_len = mfpd.height * mfpd.width * (mfpd.bpp/8);
                 }
 
                 this->send_to_clipboard_Buffer(chunk);
@@ -2964,7 +2979,7 @@ public:
 
                     std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
                     long duration = time.count();;
-                    LOG(LOG_INFO, "RDPECLIP::CF_METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
+                    LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 
                 }
             break;
@@ -3086,11 +3101,9 @@ public:
                         }
                     }
 
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
-                            long duration = time.count();;
-                            LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len*3, duration);
-                        }
+                    std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                    long duration = time.count();;
+                    LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len*3, duration);
 
                     this->empty_buffer();
                 }
@@ -3268,7 +3281,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
