@@ -470,6 +470,9 @@ public:
                 case RDP::GLYPHINDEX:
                     this->statistics.GlyphIndex++;
                     this->ssc.glyphindex.receive(this->stream, header);
+                    if (bool(this->verbose & Verbose::rdp_orders)){
+                        this->ssc.glyphindex.log(LOG_INFO, clip);
+                    }
                     if (this->begin_to_elapse <= this->movie_elapsed_client) {
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->draw(this->ssc.glyphindex, clip, gdi::ColorCtx::from_bpp(this->info_bpp, this->palette), this->gly_cache);
@@ -706,13 +709,12 @@ public:
                 }
 
                 if (bool(this->verbose & Verbose::timestamp)) {
-                    for (auto data = input_data, end = data + input_len/4; data != end; data += 4) {
+                    for (auto data = input_data, end = data + input_len/4*4; data != end; data += 4) {
                         uint8_t         key8[6];
-                        const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
+                        const size_t    len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
                         key8[len] = 0;
 
-                        LOG( LOG_INFO, "TIMESTAMP keyboard '%s'"
-                            , key8);
+                        LOG(LOG_INFO, "TIMESTAMP keyboard '%s'", key8);
                     }
                 }
             }
@@ -904,7 +906,11 @@ public:
         break;
         case WrmChunkType::POINTER:
         {
-            uint8_t          cache_idx;
+            if (bool(this->verbose & Verbose::rdp_orders)){
+                LOG(LOG_INFO, "POINTER2");
+            }
+
+            uint8_t cache_idx;
 
             this->mouse_x = this->stream.in_uint16_le();
             this->mouse_y = this->stream.in_uint16_le();
@@ -946,6 +952,10 @@ public:
         break;
         case WrmChunkType::POINTER2:
         {
+            if (bool(this->verbose & Verbose::rdp_orders)){
+                LOG(LOG_INFO, "POINTER2");
+            }
+
             uint8_t cache_idx;
 
             this->mouse_x = this->stream.in_uint16_le();
@@ -975,7 +985,6 @@ public:
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-
                 gd->set_pointer(cursor);
             }
         }
