@@ -28,14 +28,6 @@
 
 #include "test_only/lcg_random.hpp"
 
-// RED_AUTO_TEST_CASE(TestNla)
-// {
-//     LogTransport logtrans;
-//     rdpCredssp credssp(logtrans);
-
-//     credssp.credssp_client_authenticate();
-// }
-
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
     const char client[65000] =
@@ -107,8 +99,47 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
-    int res = credssp.credssp_client_authenticate();
-    RED_CHECK_EQUAL(res, 1);
+    RED_CHECK(credssp.credssp_client_authenticate_init());
+
+    rdpCredssp::State st;
+    do {
+        uint8_t head[4] = {};
+        uint8_t * point = head;
+        size_t length = 0;
+        logtrans.recv_boom(point, 2);
+        point += 2;
+        uint8_t byte = head[1];
+        if (byte & 0x80) {
+            byte &= ~(0x80);
+
+            if (byte == 1) {
+                logtrans.recv_boom(point, byte);
+                length = head[2];
+            }
+            else if (byte == 2) {
+                logtrans.recv_boom(point, byte);
+                length = (head[2] << 8) | head[3];
+                if (length > 0xFFFF - 4) {
+                    RED_CHECK(false);
+                }
+            }
+            else {
+                RED_CHECK(false);
+            }
+        }
+        else {
+            length = byte;
+            byte = 0;
+        }
+
+        uint8_t buffer[65536];
+        OutStream ts_request_received(buffer, 2 + byte + length);
+        ts_request_received.out_copy_bytes(head, 2 + byte);
+        logtrans.recv_boom(ts_request_received.get_current(), length);
+        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
+        st = credssp.credssp_client_authenticate_next(in_stream);
+    } while (rdpCredssp::State::Cont == st);
+    RED_CHECK_EQUAL(st, rdpCredssp::State::Finish);
 }
 
 
