@@ -199,10 +199,11 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        play        = 8,
-        timestamp   = 16,
-        rdp_orders  = 32,
-        probe       = 64,
+        play            = 8,
+        timestamp       = 16,
+        rdp_orders      = 32,
+        probe           = 64,
+        frame_marker    = 128
     };
 
     FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, Verbose verbose)
@@ -393,7 +394,7 @@ public:
                         RDP::FrameMarker order;
 
                         order.receive(stream, header);
-                        if (bool(this->verbose & Verbose::rdp_orders)){
+                        if (bool(this->verbose & Verbose::frame_marker)){
                             order.log(LOG_INFO);
                         }
                         if (this->begin_to_elapse <= this->movie_elapsed_client) {
@@ -710,9 +711,7 @@ public:
                         const size_t    len = UTF32toUTF8(data, 4, key8, sizeof(key8)-1);
                         key8[len] = 0;
 
-                        LOG( LOG_INFO, "TIMESTAMP %lu.%lu keyboard '%s'"
-                            , static_cast<unsigned long>(this->record_now.tv_sec)
-                            , static_cast<unsigned long>(this->record_now.tv_usec)
+                        LOG( LOG_INFO, "TIMESTAMP keyboard '%s'"
                             , key8);
                     }
                 }
