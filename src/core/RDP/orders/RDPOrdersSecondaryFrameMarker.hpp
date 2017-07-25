@@ -92,7 +92,7 @@ public:
                              , sz
                              , "RDPFrameMarker(action=%s(%u))\n"
                              , (  (this->action == FrameStart)
-                                ? "TS_FRAME_START"
+                                ? "FrameStart"
                                 : (  (this->action == FrameEnd)
                                    ? "FrameEnd"
                                    : "<Unexpected>"

@@ -353,20 +353,20 @@ public:
 
         /* Log to syslog */
         if (duplicate_with_pid) {
-            LOG(LOG_INFO, "type='%s'%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
+            LOG(LOG_INFO, "type=\"%s\"%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
         }
         if (session_log) {
             LOG_SIEM(
                 LOG_INFO
               , "[%s Session] "
-                "type='%s' "
-                "session_id='%s' "
-                "client_ip='%s' "
-                "target_ip='%s' "
-                "user='%s' "
-                "device='%s' "
-                "service='%s' "
-                "account='%s'"
+                "type=\"%s\" "
+                "session_id=\"%s\" "
+                "client_ip=\"%s\" "
+                "target_ip=\"%s\" "
+                "user=\"%s\" "
+                "device=\"%s\" "
+                "service=\"%s\" "
+                "account=\"%s\""
                 "%s%s"
               , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
               , type
