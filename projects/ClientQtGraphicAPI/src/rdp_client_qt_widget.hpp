@@ -1279,9 +1279,6 @@ Q_OBJECT
     Phonon::MediaObject * media;
     Phonon::AudioOutput * audioOutput;
 
-//     std::unique_ptr<char[]> data;
-//     int filled_data_len;
-
 public:
     int wave_data_to_wait;
     int last_wTimeStamp;
@@ -1319,9 +1316,6 @@ public:
 
         std::size_t total_size = raw_total_size;
 
-//         this->data = std::make_unique<char[]>(total_size+1);
-//         this->filled_data_len = 0;
-
         StaticOutStream<64> out_stream;
         std::ofstream file("current.wav", std::ios::out| std::ios::binary);
 
@@ -1338,8 +1332,6 @@ public:
         out_stream.out_copy_bytes("data", 4);
         out_stream.out_uint32_le(total_size);
 
-//         out_stream.out_clear_bytes(44);
-
         file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
 
         file.close();
@@ -1352,43 +1344,9 @@ public:
             file.write(reinterpret_cast<const char *>(data), size);
             file.close();
         }
-//         for (size_t i = 0; i < size; i++) {
-//             this->data.get()[i+this->filled_data_len] = char(data[i]);
-//         }
-//         this->filled_data_len += size;
-//         this->data.get()[this->filled_data_len] = '\0';
     }
 
     void play() {
-//         QByteArray qByteArray(this->data.get());
-//         QIODevice * buff = new QBuffer(&qByteArray, this);
-
-//         StaticOutStream<64> out_stream;
-//         std::ofstream file("current.wav", std::ios::out| std::ios::binary);
-//
-//         std::size_t total_size = file.tellp();
-//
-//         out_stream.out_copy_bytes("RIFF", 4);
-//         out_stream.out_uint32_be(total_size-8);
-//         out_stream.out_copy_bytes("WAVEfmt ", 8);
-//         out_stream.out_uint32_be(16);
-//         out_stream.out_uint16_be(1);
-//         out_stream.out_uint16_be(this->n_channels);
-//         out_stream.out_uint32_be(this->sample_per_sec);
-//         out_stream.out_uint32_be(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
-//         out_stream.out_uint16_be(this->block_size);
-//         out_stream.out_uint16_be(this->bit_per_sample);
-//         out_stream.out_copy_bytes("data", 4);
-//         out_stream.out_uint32_le(total_size-44);
-//
-//         file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
-//
-//         file.close();
-
-        std::ifstream file("current.wav", std::ios::in| std::ios::binary);
-        /*LOG(LOG_INFO, "tellg = %d", file.tellg())*/;
-        file.close();
-
         Phonon::MediaSource sources(QUrl("current.wav"));
         this->media->setCurrentSource(sources);
         this->media->play();

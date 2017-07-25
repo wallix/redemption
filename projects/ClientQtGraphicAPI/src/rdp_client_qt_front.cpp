@@ -1950,7 +1950,7 @@ public:
                                                                                         FileAttributes,
                                                                                         str_file_name.c_str());
 
-                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
+                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
                                                     cdqdr.emit(out_stream);
 
                                                     fbdi.emit(out_stream);
@@ -1967,7 +1967,7 @@ public:
                                                                                             FileAttributes,
                                                                                             str_file_name.c_str());
 
-                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffdi.total_size());
+                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffdi.size());
                                                     cdqdr.emit(out_stream);
 
                                                     ffdi.emit(out_stream);
@@ -1977,7 +1977,7 @@ public:
                                                 {
                                                     fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
 
-                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
+                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
                                                     cdqdr.emit(out_stream);
 
                                                     fbdi.emit(out_stream);
@@ -1987,7 +1987,7 @@ public:
                                                 {
                                                     fscc::FileNamesInformation ffi(str_file_name.c_str());
 
-                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffi.total_size());
+                                                    rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffi.size());
                                                     cdqdr.emit(out_stream);
 
                                                     ffi.emit(out_stream);
@@ -2315,16 +2315,15 @@ public:
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                         this->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
-                                                                            );
+                                                                      , chunk_to_send
+                                                                      , out_stream.get_offset()
+                                                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                      );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
                                         }
                                     }
-
                                     break;
 
                                 case rdpdr::IRP_MJ_DEVICE_CONTROL:
@@ -2547,6 +2546,8 @@ public:
                 this->sound_qt->setData(chunk.get_current(), chunk.in_remain());
 
                 if (!(this->sound_qt->wave_data_to_wait)) {
+
+                    //this->sound_qt->setData(uint8_t('\0'), 1);
 
                     this->sound_qt->play();
 
@@ -3290,7 +3291,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::rdpsnd;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

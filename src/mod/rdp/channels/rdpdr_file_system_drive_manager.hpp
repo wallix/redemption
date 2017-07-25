@@ -1141,7 +1141,7 @@ public:
                         file_both_directory_information.log(LOG_INFO);
                     }
 
-                    out_stream.out_uint32_le(file_both_directory_information.total_size());   // Length(4)
+                    out_stream.out_uint32_le(file_both_directory_information.size());   // Length(4)
 
                     file_both_directory_information.emit(out_stream);
                 }
