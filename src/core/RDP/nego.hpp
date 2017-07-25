@@ -64,7 +64,8 @@ struct RdpNego
         NEGO_STATE_INITIAL,
         NEGO_STATE_NEGOCIATE,
         // NEGO_STATE_FAIL, // Negotiation failure */
-        NEGO_STATE_FINAL
+        NEGO_STATE_FINAL,
+        NEGO_STATE_CREDSSP
     } state;
 
 //    int tcp_connected;
@@ -78,7 +79,7 @@ struct RdpNego
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
     char username[128];
-    Transport & trans;
+    OutTransport trans;
 
     uint8_t hostname[16];
     uint8_t user[128];
@@ -272,6 +273,24 @@ struct RdpNego
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
+    std::unique_ptr<rdpCredssp> credssp;
+
+    void recv_credssp(InStream & stream)
+    {
+        switch (this->credssp->credssp_client_authenticate_next(stream))
+        {
+            case rdpCredssp::State::Cont:
+                break;
+            case rdpCredssp::State::Err:
+                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
+                REDEMPTION_CXX_FALLTHROUGH;
+            case rdpCredssp::State::Finish:
+                this->state = NEGO_STATE_FINAL;
+                this->credssp.reset();
+                break;
+        }
+    }
+
     void recv_connection_confirm(
         bool server_cert_store,
         ServerCertCheck server_cert_check,
@@ -308,51 +327,41 @@ struct RdpNego
                     );
 
                 LOG(LOG_INFO, "activating CREDSSP");
-                rdpCredssp credssp(this->trans, this->user,
-//                                   this->domain, this->password,
-                                   this->domain, this->current_password,
-                                   this->hostname, this->target_host,
-                                   this->krb, this->restricted_admin_mode,
-                                   this->rand, this->timeobj,
-                                   bool(this->verbose & Verbose::credssp));
+                this->credssp.reset(new rdpCredssp(
+                    this->trans, this->user,
+                    // this->domain, this->password,
+                    this->domain, this->current_password,
+                    this->hostname, this->target_host,
+                    this->krb, this->restricted_admin_mode,
+                    this->rand, this->timeobj,
+                    bool(this->verbose & Verbose::credssp)
+                ));
 
-                int res = 0;
-                bool fallback = false;
-                try {
-                    res = credssp.credssp_client_authenticate();
-                }
-                catch (Error const & e) {
-                    if ((e.id == ERR_TRANSPORT_NO_MORE_DATA) ||
-                        (e.id == ERR_TRANSPORT_WRITE_FAILED)) {
-                        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-                        res = 1;
-                        fallback = true;
-                    }
-                    else {
-                        LOG(LOG_ERR, "Unknown Exception thrown");
-                        throw ;
-                    }
-                }
-                if (res != 1) {
-                    LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed (2)");
-                    fallback = true;
-                }
-                else if (!fallback) {
+                if (!this->credssp->credssp_client_authenticate_init()) {
+                    LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
                     this->state = NEGO_STATE_FINAL;
-                    return;
+                    this->credssp.reset();
                 }
+                else {
+                    this->state = NEGO_STATE_CREDSSP;
+                }
+                return ;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
                 return;
             }
+
             this->trans.disconnect();
+
             if (!this->trans.connect()){
                 LOG(LOG_ERR, "Failed to disconnect transport");
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
+
             this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
+
             if (*this->current_password) {
                 LOG(LOG_INFO, "try next password");
                 this->send_negotiation_request();

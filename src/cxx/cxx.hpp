@@ -70,6 +70,26 @@
 #  define REDEMPTION_CXX_MAYBE_UNUSED
 #endif
 
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3760.html
+#if !defined(REDEMPTION_DISABLE_DEPRECATED_WARNINGS)
+# if __cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(deprecated)
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED [[deprecated]]
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED_MSG(msg) [[deprecated(msg)]]
+# elif defined(__GNUC__) || defined(__clang__)
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED __attribute__((deprecated("deprecated")))
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+# elif defined(_MSC_VER)
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED __declspec(deprecated("deprecated"))
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED_MSG(msg) __declspec(deprecated(msg))
+# else
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED
+#  define REDEMPTION_ATTRIBUTE_DEPRECATED_MSG(msg)
+# endif
+#else
+# define REDEMPTION_ATTRIBUTE_DEPRECATED
+# define REDEMPTION_ATTRIBUTE_DEPRECATED_MSG(msg)
+#endif
+
 
 #if defined(__clang__)
 #  define REDEMPTION_CXX_ANNOTATION_ATTRIBUTE_GCC_CLANG_(x)     __attribute__((x))

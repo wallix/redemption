@@ -122,7 +122,7 @@ RED_AUTO_TEST_CASE(TestNego)
     constexpr std::size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    const X224::RecvFactory fx224(nego.trans, &end, array_size);
+    const X224::RecvFactory fx224(nego.trans.get_transport(), &end, array_size);
     InStream x224_data(array, end - array);
 
     nego.recv_connection_confirm(
@@ -131,7 +131,47 @@ RED_AUTO_TEST_CASE(TestNego)
         null_server_notifier,
         "/tmp/certif",
         x224_data
-        );
+    );
+
+    RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_CREDSSP);
+
+    while (nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+        uint8_t head[4] = {};
+        uint8_t * point = head;
+        size_t length = 0;
+        nego.trans.get_transport().recv_boom(point, 2);
+        point += 2;
+        uint8_t byte = head[1];
+        if (byte & 0x80) {
+            byte &= ~(0x80);
+
+            if (byte == 1) {
+                nego.trans.get_transport().recv_boom(point, byte);
+                length = head[2];
+            }
+            else if (byte == 2) {
+                nego.trans.get_transport().recv_boom(point, byte);
+                length = (head[2] << 8) | head[3];
+                if (length > 0xFFFF - 4) {
+                    RED_CHECK(false);
+                }
+            }
+            else {
+                RED_CHECK(false);
+            }
+        }
+        else {
+            length = byte;
+            byte = 0;
+        }
+
+        uint8_t buffer[65536];
+        OutStream ts_request_received(buffer, 2 + byte + length);
+        ts_request_received.out_copy_bytes(head, 2 + byte);
+        nego.trans.get_transport().recv_boom(ts_request_received.get_current(), length);
+        InStream credssp_data(ts_request_received.get_data(), ts_request_received.get_capacity());
+        nego.recv_credssp(credssp_data);
+    }
 
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }

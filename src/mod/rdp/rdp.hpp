@@ -1559,7 +1559,7 @@ protected:
 
         std::unique_ptr<ToServerSender> to_server_sender =
             std::make_unique<ToServerSender>(
-                this->nego.trans,
+                this->nego.trans.get_transport(),
                 this->encrypt,
                 this->encryptionLevel,
                 this->userid,
@@ -2128,7 +2128,7 @@ public:
 
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+        virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
                             , this->userid, this->auth_channel_chanid
                             , stream_data.get_offset()
                             , this->auth_channel_flags
@@ -2154,7 +2154,7 @@ private:
         if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-            virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+            virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
                                               , this->userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
@@ -2182,7 +2182,7 @@ private:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+                virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
                                                   , this->userid, channel.chanid, length
                                                   , get_channel_control_flags(flags, length, remaining_data_length, virtual_channel_data_length)
                                                   , virtual_channel_data, virtual_channel_data_length);
@@ -4019,22 +4019,69 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        if (this->state == MOD_RDP_NEGO && this->nego.state != RdpNego::NEGO_STATE_NEGOCIATE) {
-            InStream x224_data;
-            this->early_tls_security_exchange(x224_data);
+        if (this->state == MOD_RDP_NEGO) {
+            if (this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE) {
+                constexpr std::size_t array_size = AUTOSIZE;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                const X224::RecvFactory fx224(this->nego.trans.get_transport(), &end, array_size);
+                InStream x224_data(array, end - array);
+                this->early_tls_security_exchange(x224_data);
+            }
+            else if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+                uint8_t head[4] = {};
+                uint8_t * point = head;
+                size_t length = 0;
+                this->nego.trans.get_transport().recv_boom(point, 2);
+                point += 2;
+                uint8_t byte = head[1];
+                if (byte & 0x80) {
+                    byte &= ~(0x80);
+
+                    if (byte == 1) {
+                        this->nego.trans.get_transport().recv_boom(point, byte);
+                        length = head[2];
+                    }
+                    else if (byte == 2) {
+                        this->nego.trans.get_transport().recv_boom(point, byte);
+                        length = (head[2] << 8) | head[3];
+                        if (length > 0xFFFF - 4) {
+                            return ;
+                        }
+                    }
+                    else {
+                        return ;
+                    }
+                }
+                else {
+                    length = byte;
+                    byte = 0;
+                }
+
+                uint8_t buffer[65536];
+                OutStream ts_request_received(buffer, 2 + byte + length);
+                ts_request_received.out_copy_bytes(head, 2 + byte);
+                this->nego.trans.get_transport().recv_boom(ts_request_received.get_current(), length);
+                InStream credssp_data(ts_request_received.get_data(), ts_request_received.get_capacity());
+                this->nego.recv_credssp(credssp_data);
+            }
+            else {
+                InStream x224_data;
+                this->early_tls_security_exchange(x224_data);
+            }
         }
         else if (!this->event.waked_up_by_time) {
             constexpr std::size_t array_size = AUTOSIZE;
             uint8_t array[array_size];
             uint8_t * end = array;
-            const X224::RecvFactory fx224(this->nego.trans, &end, array_size);
+            const X224::RecvFactory fx224(this->nego.trans.get_transport(), &end, array_size);
             InStream x224_data(array, end - array);
 
             try{
                 //LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                 switch (this->state){
                 case MOD_RDP_NEGO:
-                    this->early_tls_security_exchange(x224_data);
+                    assert(false);
                     break;
 
                 case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
@@ -6447,7 +6494,7 @@ public:
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emit(this->nego.trans);
+                rrpdu.emit(this->nego.trans.get_transport());
             }
         }
         //this->draw_event(time(nullptr), this->front);
@@ -6471,7 +6518,7 @@ public:
                     rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
-            rrpdu.emit(this->nego.trans);
+            rrpdu.emit(this->nego.trans.get_transport());
         }
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");

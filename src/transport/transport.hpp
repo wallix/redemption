@@ -117,14 +117,9 @@ public:
         return this->do_partial_read(buffer.to_u8p(), len);
     }
 
-    void send(const uint8_t * const buffer, size_t len)
+    void send(cbyte_ptr buffer, size_t len)
     {
-        this->do_send(buffer, len);
-    }
-
-    void send(const char * const buffer, size_t len)
-    {
-        this->do_send(reinterpret_cast<const uint8_t*>(buffer), len);
+        this->do_send(buffer.to_u8p(), len);
     }
 
     virtual void flush()
@@ -194,3 +189,93 @@ REDEMPTION_OSTREAM(out, Transport::Read status)
 {
     return out << (status == Transport::Read::Ok ? "Read::Ok" : "Read::Eof");
 }
+
+struct InTransport
+{
+    InTransport(Transport & t)
+      : t(t)
+    {}
+
+    void recv_boom(byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
+
+    REDEMPTION_CXX_NODISCARD
+    Transport::Read atomic_read(byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
+
+    REDEMPTION_CXX_NODISCARD
+    size_t partial_read(byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
+
+    uint32_t get_seqno() const { return this->t.get_seqno(); }
+
+    void enable_client_tls(
+        bool server_cert_store,
+        ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier,
+        const char * certif_path
+    )
+    {
+        return this->t.enable_client_tls(
+            server_cert_store, server_cert_check, server_notifier, certif_path
+        );
+    }
+
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
+
+    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
+    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+
+    void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
+    bool disconnect() { return this->t.disconnect(); }
+    bool connect() { return this->t.connect(); }
+    void timestamp(timeval now) { this->t.timestamp(now); }
+    bool next() { return this->t.next(); }
+    int get_fd() const { return this->t.get_fd(); }
+
+    REDEMPTION_ATTRIBUTE_DEPRECATED
+    Transport & get_transport() const { return this->t; }
+
+private:
+    Transport & t;
+};
+
+struct OutTransport
+{
+    OutTransport(Transport & t)
+      : t(t)
+    {}
+
+    void send(cbyte_ptr buffer, size_t len) { this->t.send(buffer, len); }
+
+    uint32_t get_seqno() const { return this->t.get_seqno(); }
+
+    void enable_client_tls(
+        bool server_cert_store,
+        ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier,
+        const char * certif_path
+    )
+    {
+        return this->t.enable_client_tls(
+            server_cert_store, server_cert_check, server_notifier, certif_path
+        );
+    }
+
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
+
+    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
+    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+
+    void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
+    bool disconnect() { return this->t.disconnect(); }
+    bool connect() { return this->t.connect(); }
+    void timestamp(timeval now) { this->t.timestamp(now); }
+    bool next() { return this->t.next(); }
+    int get_fd() const { return this->t.get_fd(); }
+
+    REDEMPTION_ATTRIBUTE_DEPRECATED
+    Transport & get_transport() const { return this->t; }
+
+private:
+    Transport & t;
+};
