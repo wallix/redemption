@@ -508,7 +508,6 @@ public:
     virtual mod_api * init_mod() override {
 
 
-
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
                                    , this->target_IP.c_str()
@@ -517,8 +516,9 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   //, to_verbose_flags(0)   // this->verbose
-                                   , RDPVerbose::connection | RDPVerbose::graphics | RDPVerbose::graphics_pointer | RDPVerbose::asynchronous_task | RDPVerbose::license | RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
+                                   , to_verbose_flags(0)    // this->verbose
+                                  // , RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
+                                    //, RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -731,7 +731,7 @@ public:
                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                  , CHANID_RDPSND
                                                  };
-        //this->cl.push_back(channel_audio_output);
+        this->cl.push_back(channel_audio_output);
 
         return FrontQtRDPGraphicAPI::connect();
     }
@@ -1220,7 +1220,6 @@ public:
                 }
                 this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList, this->clipboard_qt);
             }
-
 
 
         } else if (channel.chanid == CHANID_RDPDR) {
@@ -1943,13 +1942,13 @@ public:
                                                 case rdpdr::FileDirectoryInformation:
                                                 {
                                                     fscc::FileDirectoryInformation fbdi(CreationTime,
-                                                                                            LastAccessTime,
-                                                                                            LastWriteTime,
-                                                                                            ChangeTime,
-                                                                                            EndOfFile,
-                                                                                            AllocationSize,
-                                                                                            FileAttributes,
-                                                                                            str_file_name.c_str());
+                                                                                        LastAccessTime,
+                                                                                        LastWriteTime,
+                                                                                        ChangeTime,
+                                                                                        EndOfFile,
+                                                                                        AllocationSize,
+                                                                                        FileAttributes,
+                                                                                        str_file_name.c_str());
 
                                                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.total_size());
                                                     cdqdr.emit(out_stream);
@@ -2409,7 +2408,7 @@ public:
                     switch (packetId) {
                         case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Announce Request ");
                             }
                         }
@@ -2430,7 +2429,7 @@ public:
                                 }
                             }
 
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 if (driveEnable) {
                                     LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Capability Enable");
                                 } else {
@@ -2441,7 +2440,7 @@ public:
                             break;
 
                         case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server User Logged On");
                             }
                             break;
@@ -2457,7 +2456,7 @@ public:
                                 this->fileSystemData.drives_created = false;
                                 LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                            if (bool(this->verbose & RDPVerbose::printer)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                             }
                         }
@@ -2465,7 +2464,9 @@ public:
 
                         case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
                         {
-                            LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
+                            if (bool(this->verbose & RDPVerbose::printer)) {
+                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
+                            }
                         }
                             break;
 
@@ -2487,19 +2488,19 @@ public:
                             switch (deviceIORequest.MajorFunction()) {
 
                                 case rdpdr::IRP_MJ_CREATE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_READ:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
                                     }
                                     break;
 
                                 case rdpdr::IRP_MJ_CLOSE:
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    if (bool(this->verbose & RDPVerbose::printer)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
                                     }
                                     break;
@@ -2528,7 +2529,9 @@ public:
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
             if (this->sound_qt->wave_data_to_vait) {
-                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                }
                 this->sound_qt->wave_data_to_vait -= chunk.in_remain();
                 if (this->sound_qt->wave_data_to_vait < 0) {
                     this->sound_qt->wave_data_to_vait = 0;
@@ -2559,8 +2562,9 @@ public:
                                                   , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST
                                                   );
-
-                    LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                    if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                        LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                    }
 //                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                     header_out.log();
 //                     wc.log();
@@ -2574,7 +2578,9 @@ public:
 
                     case rdpsnd::SNDC_FORMATS:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
+                        }
 
                         rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                         safsvh.receive(chunk);
@@ -2619,7 +2625,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
+                        }
 //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                         header_out.log();
 //                         cafvh.log();
@@ -2641,7 +2649,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
+                        }
 //                         msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
 //                         header_out.log();
 //                         qm.log();
@@ -2650,7 +2660,9 @@ public:
 
                     case rdpsnd::SNDC_TRAINING:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
+                        }
 
                         rdpsnd::TrainingPDU train;
                         train.receive(chunk);
@@ -2674,7 +2686,9 @@ public:
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       );
 
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
+                        }
 //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                         header_quality.log();
 //                         train_conf.log();
@@ -2683,7 +2697,9 @@ public:
 
                     case rdpsnd::SNDC_WAVE:
                         {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
+                        }
 
                         this->sound_qt->wave_data_to_vait = header.BodySize - (header.BodySize/400);
 
@@ -2955,7 +2971,7 @@ public:
                     cb_buffers.sizeTotal  = mfpd.imageSize;
                     cb_buffers.data       = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
 
-                    this->paste_data_len = mfpd.imageSize;
+                    this->paste_data_len = mfpd.height * mfpd.width * (mfpd.bpp/8);
                 }
 
                 this->send_to_clipboard_Buffer(chunk);
@@ -2965,7 +2981,7 @@ public:
 
                     std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
                     long duration = time.count();;
-                    LOG(LOG_INFO, "RDPECLIP::CF_METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
+                    LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 
                 }
             break;
@@ -3087,11 +3103,9 @@ public:
                         }
                     }
 
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
-                            long duration = time.count();;
-                            LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len*3, duration);
-                        }
+                    std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                    long duration = time.count();;
+                    LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len*3, duration);
 
                     this->empty_buffer();
                 }

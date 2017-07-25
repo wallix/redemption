@@ -633,8 +633,7 @@ public:
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data{device_data_p, device_data_size} {
-        memcpy(
-            this->PreferredDosName_, preferred_dos_name,
+        memcpy(this->PreferredDosName_, preferred_dos_name,
             strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
@@ -1360,29 +1359,34 @@ public:
 
 class DeviceCreateRequest {
     uint32_t DesiredAccess_     = 0;
-    uint64_t AllocationSize     = 0LLU;
-    uint32_t FileAttributes     = 0;
-    uint32_t SharedAccess       = 0;
+    uint64_t AllocationSize_    = 0LLU;
+    uint32_t FileAttributes_    = 0;
+    uint32_t SharedAccess_      = 0;
     uint32_t CreateDisposition_ = 0;
     uint32_t CreateOptions_     = 0;
 
-    std::string path;
+    size_t PathLength_UTF8 = 0;
+    uint8_t Path_[65536/2] = {0};
 
 public:
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
-        stream.out_uint64_le(this->AllocationSize);
-        stream.out_uint32_le(this->FileAttributes);
-        stream.out_uint32_le(this->SharedAccess);
+        stream.out_uint64_le(this->AllocationSize_);
+        stream.out_uint32_le(this->FileAttributes_);
+        stream.out_uint32_le(this->SharedAccess_);
         stream.out_uint32_le(this->CreateDisposition_);
         stream.out_uint32_le(this->CreateOptions_);
 
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()),
-            Path_unicode_data, sizeof(Path_unicode_data));
+            this->Path_,
+            Path_unicode_data,
+            sizeof(Path_unicode_data));
+
+        REDASSERT(size_of_Path_unicode_data <= 65534);
+
         // Writes null terminator.
-        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data    ] = 0;
         Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
         size_of_Path_unicode_data += 2;
 
@@ -1415,17 +1419,18 @@ public:
         }
 
         this->DesiredAccess_     = stream.in_uint32_le();
-        this->AllocationSize     = stream.in_uint64_le();
-        this->FileAttributes     = stream.in_uint32_le();
-        this->SharedAccess       = stream.in_uint32_le();
+        this->AllocationSize_    = stream.in_uint64_le();
+        this->FileAttributes_    = stream.in_uint32_le();
+        this->SharedAccess_      = stream.in_uint32_le();
         this->CreateDisposition_ = stream.in_uint32_le();
         this->CreateOptions_     = stream.in_uint32_le();
 
-        const uint16_t PathLength = stream.in_uint32_le();
+        const uint16_t PathLength_UTF16 = stream.in_uint32_le();
+        this->PathLength_UTF8 = PathLength_UTF16/2;
 
-        if (PathLength) {
+        if (PathLength_UTF16) {
             {
-                const unsigned expected = PathLength;   // Path(variable)
+                const unsigned expected = PathLength_UTF16;   // Path(variable)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -1436,21 +1441,27 @@ public:
             }
 
             uint8_t const * const Path_unicode_data = stream.get_current();
-            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
-                sizeof(Path_utf8_string));
-            // The null-terminator is included.
-            this->path = ::char_ptr_cast(Path_utf8_string);
+            const size_t path_UTF8_len = ::UTF16toUTF8(Path_unicode_data, PathLength_UTF16, this->Path_,
+                this->PathLength_UTF8);
 
-            stream.in_skip_bytes(PathLength);
+            this->Path_[path_UTF8_len] = '\0';
 
-            std::replace(this->path.begin(), this->path.end(), '\\', '/');
-        }
-        else {
-            this->path.clear();
+            for (size_t i = 0; i < this->PathLength_UTF8; i++) {
+                if ('\\' == this->Path_[i]) {
+                    this->Path_[i] = '/';
+                }
+            }
+
+            stream.in_skip_bytes(PathLength_UTF16);
         }
     }
+
+    uint64_t AllocationSize() const { return this->AllocationSize_; }
+
+    uint32_t FileAttributes() const { return this->FileAttributes_; }
+
+    uint32_t SharedAccess() const { return this->SharedAccess_; }
 
     uint32_t DesiredAccess() const { return this->DesiredAccess_; }
 
@@ -1458,7 +1469,9 @@ public:
 
     uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    const char * Path() const { return this->path.c_str(); }
+    const char * Path() const { return reinterpret_cast<const char *>(this->Path_); }
+
+    size_t PathLength() const { return PathLength_UTF8*2; }
 
 private:
     size_t str(char * buffer, size_t size) const {
@@ -1466,9 +1479,9 @@ private:
             "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
                 "CreateOptions=0x%X Path=\"%s\"",
-            this->DesiredAccess_, this->AllocationSize, this->FileAttributes,
-            this->SharedAccess, this->CreateDisposition_, this->CreateOptions_,
-            this->path.c_str());
+            this->DesiredAccess_, this->AllocationSize_, this->FileAttributes_,
+            this->SharedAccess_, this->CreateDisposition_, this->CreateOptions_,
+            reinterpret_cast<const char *>(this->Path_));
         return ((length < size) ? length : size - 1);
     }
 
@@ -1488,13 +1501,13 @@ public:
         } else {
             LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
         }
-        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes, fscc::get_FileAttributes_name(this->FileAttributes));
-        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess,  smb2::get_ShareAccess_name(this->SharedAccess));
+        LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize_);
+        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes_, fscc::get_FileAttributes_name(this->FileAttributes_));
+        LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess_,  smb2::get_ShareAccess_name(this->SharedAccess_));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
-        LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->path.size()));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", this->path, int(2*this->path.size()));
+        LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(2*this->PathLength_UTF8));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", reinterpret_cast<const char *>(this->Path_), int(2*this->PathLength_UTF8));
     }
 
 };  // DeviceCreateRequest
@@ -2902,21 +2915,29 @@ class ClientNameRequest {
     uint32_t UnicodeFlag = 0x000007ff /* ComputerName is in Unicode characters. */;
     uint32_t CodePage    = 0;
 
-    std::string computer_name;
+    size_t ComputerNameLen = 0;
+
+    char ComputerName[65536/2];
 
 public:
     ClientNameRequest() = default;
 
     explicit ClientNameRequest(const char * computer_name)
-    : computer_name(computer_name) {}
+    {
+//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+        std::memcpy(this->ComputerName, computer_name,  65536/2);
+    }
 
     explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
     : UnicodeFlag(unicodeFlag)
-    , computer_name(computer_name)
-    {}
+    , ComputerNameLen(sizeof(computer_name))
+    {
+//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+        std::memcpy(this->ComputerName, computer_name, 65536/2);
+    }
 
 
-    void emit(OutStream & stream) const {
+    void emit(OutStream & stream)  {
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
@@ -2926,7 +2947,7 @@ public:
             // The null-terminator is included.
             uint8_t ComputerName_unicode_data[65536];
             size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
-                reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
+                reinterpret_cast<const uint8_t *>(this->ComputerName),
                 ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
             ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
@@ -2936,14 +2957,12 @@ public:
             stream.out_uint32_le(size_of_ComputerName_unicode_data);
 
             stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
-        }
-        else {
+        } else {
             // The null-terminator is included.
-            const uint32_t ComputerNameLen = this->computer_name.length() + 1;
-
-            stream.out_uint32_le(ComputerNameLen);
-
-            stream.out_copy_bytes(this->computer_name.c_str(), ComputerNameLen);
+            this->ComputerName[this->ComputerNameLen] = '\0';
+            this->ComputerNameLen += 1;
+            stream.out_uint32_le(this->ComputerNameLen);
+            stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ComputerName), this->ComputerNameLen);
         }
     }
 
@@ -2963,8 +2982,8 @@ public:
         this->UnicodeFlag = stream.in_uint32_le();
         this->CodePage    = stream.in_uint32_le();
 
-        const uint32_t ComputerNameLen = stream.in_uint32_le();
-        if (ComputerNameLen) {
+        this->ComputerNameLen = stream.in_uint32_le();
+        if (this->ComputerNameLen) {
             {
                 const unsigned expected = ComputerNameLen;  // ComputerName(variable)
 
@@ -2982,21 +3001,21 @@ public:
             if (this->UnicodeFlag & 0x00000001) {
                 // ComputerName is in Unicode characters.
 
-                uint8_t const * const ComputerName_unicode_data = stream.get_current();
-                uint8_t ComputerName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+                uint8_t const * ComputerName_unicode_data = stream.get_current();
 
-                ::UTF16toUTF8(ComputerName_unicode_data, ComputerNameLen / 2, ComputerName_utf8_string, sizeof(ComputerName_utf8_string));
-                // The null-terminator is included.
-                this->computer_name = ::char_ptr_cast(ComputerName_utf8_string);
+                const size_t ComputerName_utf8_len = ::UTF16toUTF8(
+                    ComputerName_unicode_data,
+                    this->ComputerNameLen,
+                    reinterpret_cast<uint8_t *>(this->ComputerName),
+                    sizeof(this->ComputerName));
+
+                this->ComputerName[ComputerName_utf8_len] = '\0';
 
                 stream.in_skip_bytes(ComputerNameLen);
             } else {
                 // The null-terminator is included.
-                this->computer_name = ::char_ptr_cast(stream.get_current());
+                std::memcpy(this->ComputerName, stream.get_current(), this->ComputerNameLen);
             }
-        }
-        else {
-            this->computer_name.clear();
         }
     }
 
@@ -3004,7 +3023,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
-            this->UnicodeFlag, this->CodePage, this->computer_name.c_str());
+            this->UnicodeFlag, this->CodePage, this->ComputerName);
         return ((length < size) ? length : size - 1);
     }
 
@@ -3020,8 +3039,8 @@ public:
         LOG(LOG_INFO, "     Client Name Request:");
         LOG(LOG_INFO, "          * UnicodeFlag     = 0x%08x (4 bytes)", this->UnicodeFlag);
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
-        LOG(LOG_INFO, "          * ComputerNameLen = %zu (4 bytes)", this->computer_name.size());
-        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%zu byte(s))", this->computer_name, this->computer_name.size());
+        LOG(LOG_INFO, "          * ComputerNameLen = %zu (4 bytes)", this->ComputerNameLen);
+        LOG(LOG_INFO, "          * ComputerName    = \"%s\" (%zu byte(s))", this->ComputerName, this->ComputerNameLen);
     }
 
 };  // ClientNameRequest
@@ -4165,16 +4184,18 @@ class RDPFileRenameInformation {
     bool     replace_if_exists_ = false;
     uint8_t  RootDirectory_     = 0;
 
-    std::string file_name;
+    size_t FileNameLength = 0;
+
+    char FileName_[500];
 
 public:
     void emit(OutStream & stream) const {
         stream.out_uint8(this->replace_if_exists_ ? static_cast<uint8_t>(-1) : static_cast<uint8_t>(0));
         stream.out_uint8(this->RootDirectory_);
 
-        uint8_t FileName_unicode_data[65536];
+        uint8_t FileName_unicode_data[1000];
         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            reinterpret_cast<const uint8_t *>(this->FileName_),
             FileName_unicode_data, sizeof(FileName_unicode_data));
 
         uint8_t * temp_p = FileName_unicode_data;
@@ -4207,11 +4228,11 @@ public:
         this->replace_if_exists_ = (stream.in_uint8() != 0);
         this->RootDirectory_     = stream.in_uint8();
 
-        const uint32_t FileNameLength = stream.in_uint32_le();
+        this->FileNameLength = stream.in_uint32_le();
 
-        if (FileNameLength) {
+        if (this->FileNameLength) {
             {
-                const unsigned expected = FileNameLength;  // FileName(variable)
+                const unsigned expected = this->FileNameLength;  // FileName(variable)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -4222,19 +4243,23 @@ public:
             }
 
             uint8_t const * const FileName_unicode_data = stream.get_current();
-            uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-            const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-                FileName_unicode_data, FileNameLength / 2,
-                FileName_utf8_string, sizeof(FileName_utf8_string));
-            this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
-                length_of_FileName_utf8_string);
 
-            stream.in_skip_bytes(FileNameLength);
+            const size_t FileName_utf8_len = ::UTF16toUTF8(
+                FileName_unicode_data,
+                this->FileNameLength / 2,
+                reinterpret_cast<uint8_t *> (this->FileName_),
+                sizeof(this->FileName_));
 
-            std::replace(this->file_name.begin(), this->file_name.end(), '\\', '/');
-        }
-        else {
-            this->file_name.clear();
+            this->FileName_[FileName_utf8_len] = '\0';
+
+
+            for (size_t i = 0; i < this->FileNameLength/2; i++) {
+                if ('\\' == this->FileName_[i]) {
+                    this->FileName_[i] = '/';
+                }
+            }
+
+            stream.in_skip_bytes(this->FileNameLength);
         }
     }
 
@@ -4242,14 +4267,14 @@ public:
 
     uint8_t RootDirectory() const { return this->RootDirectory_; }
 
-    const char * FileName() const { return this->file_name.c_str(); }
+    const char * FileName() const { return this->FileName_; }
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
             (this->replace_if_exists_ ? "yes" : "no"),
-            unsigned(this->RootDirectory_), this->file_name.c_str());
+            unsigned(this->RootDirectory_), this->FileName_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -4265,8 +4290,8 @@ public:
         LOG(LOG_INFO, "     File Rename Information:");
         LOG(LOG_INFO, "          * ReplaceIfExists = %d (1 byte)", this->replace_if_exists_);
         LOG(LOG_INFO, "          * RootDirectory   = %02x (1 byte)", this->RootDirectory_);
-        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->file_name.size());
-        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu byte(s)", this->file_name.c_str(), this->file_name.size());
+        LOG(LOG_INFO, "          * FileNameLength  = %zu (4 bytes)", this->FileNameLength);
+        LOG(LOG_INFO, "          * VolumeLabel     = \"%s\" (%zu byte(s)", this->FileName_, this->FileNameLength);
     }
 };
 
@@ -4373,7 +4398,10 @@ class ServerDriveQueryDirectoryRequest {
     uint32_t FsInformationClass_ = 0;
     uint8_t  InitialQuery_       = 0;
 
-    std::string path;
+    size_t PathLength = 0;
+
+    char Path_[65536];
+
 
 public:
     void emit(OutStream & stream) const {
@@ -4383,8 +4411,10 @@ public:
         // The null-terminator is included.
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()),
+            reinterpret_cast<const uint8_t *>(this->Path_),
             Path_unicode_data, sizeof(Path_unicode_data));
+
+        REDASSERT(size_of_Path_unicode_data <= 65534);
         // Writes null terminator.
         Path_unicode_data[size_of_Path_unicode_data    ] =
         Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
@@ -4421,13 +4451,13 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
         this->InitialQuery_       = stream.in_uint8();
 
-        const uint32_t PathLength = stream.in_uint32_le();
+        this->PathLength = stream.in_uint32_le();
 
         stream.in_skip_bytes(23);   // Padding(23)
 
-        if (PathLength) {
+        if (this->PathLength) {
             {
-                const unsigned expected = PathLength;   // Path(variable)
+                const unsigned expected = this->PathLength;   // Path(variable)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -4439,17 +4469,21 @@ public:
             }
 
             uint8_t const * const Path_unicode_data = stream.get_current();
-            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
-                sizeof(Path_utf8_string));
-            // The null-terminator is included.
-            this->path = ::char_ptr_cast(Path_utf8_string);
 
-            stream.in_skip_bytes(PathLength);
+            const size_t path_utf8_len = ::UTF16toUTF8(Path_unicode_data,
+                this->PathLength / 2,
+                reinterpret_cast<uint8_t *>(this->Path_),
+                sizeof(this->Path_));
 
-            std::replace(this->path.begin(), this->path.end(), '\\', '/');
-        } else {
-            this->path.clear();
+            this->Path_[path_utf8_len] = '\0';
+
+            for (size_t i = 0; i < this->PathLength/2; i++) {
+                if ('\\' == this->Path_[i]) {
+                    this->Path_[i] = '/';
+                }
+            }
+
+            stream.in_skip_bytes(this->PathLength);
         }
     }
 
@@ -4457,7 +4491,7 @@ public:
 
     uint8_t  InitialQuery() const { return this->InitialQuery_; }
 
-    const char * Path() const { return this->path.c_str(); }
+    const char * Path() const { return this->Path_; }
 
     static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
@@ -4476,7 +4510,7 @@ private:
             "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
                 "InitialQuery=%u Path=\"%s\"",
             this->get_FsInformationClass_name(this->FsInformationClass_),
-            this->FsInformationClass_, unsigned(this->InitialQuery_), this->path.c_str());
+            this->FsInformationClass_, unsigned(this->InitialQuery_), this->Path_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -4492,9 +4526,9 @@ public:
         LOG(LOG_INFO, "     Server Drive Query Directory Request:");
         LOG(LOG_INFO, "          * FsInformationClass = 0x%08x (4 bytes): %s", this->FsInformationClass_, this->get_FsInformationClass_name(this->FsInformationClass_));
         LOG(LOG_INFO, "          * InitialQuery       = 0x%02x (1 byte)", this->InitialQuery_);
-        LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->path.size());
+        LOG(LOG_INFO, "          * PathLength         = %zu (4 bytes)", this->PathLength);
         LOG(LOG_INFO, "          * Padding - (23 byte) NOT USED");
-        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->path.c_str(), this->path.size());
+        LOG(LOG_INFO, "          * path               = \"%s\" (%zu byte(s))", this->Path_, this->PathLength);
     }
 };  // ServerDriveQueryDirectoryRequest
 
