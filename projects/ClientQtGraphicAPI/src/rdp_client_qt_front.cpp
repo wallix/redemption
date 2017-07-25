@@ -2523,27 +2523,32 @@ public:
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                     break;
             }
-        } else  if (channel.chanid == CHANID_RDPSND) {
 
+
+
+        } else  if (channel.chanid == CHANID_RDPSND) {
 
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
-            if (this->sound_qt->wave_data_to_vait) {
+            if (this->sound_qt->wave_data_to_wait) {
                 if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
+                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %zu",  chunk_size);
                 }
-                this->sound_qt->wave_data_to_vait -= chunk.in_remain();
-                if (this->sound_qt->wave_data_to_vait < 0) {
-                    this->sound_qt->wave_data_to_vait = 0;
+                this->sound_qt->wave_data_to_wait -= chunk.in_remain();
+                if (this->sound_qt->wave_data_to_wait < 0) {
+                    this->sound_qt->wave_data_to_wait = 0;
                 }
 
-                chunk.in_skip_bytes(4);
+                if (this->sound_qt->last_PDU_is_WaveInfo) {
+                    chunk.in_skip_bytes(4);
+                    this->sound_qt->last_PDU_is_WaveInfo = false;
+                }
 
-                this->sound_qt->setData(chunk.get_data()+4, chunk.get_offset());
+                this->sound_qt->setData(chunk.get_current(), chunk.in_remain());
 
-                if (!(this->sound_qt->wave_data_to_vait)) {
+                if (!(this->sound_qt->wave_data_to_wait)) {
 
-//                     this->sound_qt->play();
+                    this->sound_qt->play();
 
                     StaticOutStream<32> out_stream;
 
@@ -2701,7 +2706,7 @@ public:
                             LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
                         }
 
-                        this->sound_qt->wave_data_to_vait = header.BodySize - (header.BodySize/400);
+                        this->sound_qt->wave_data_to_wait = header.BodySize - 8;
 
                         rdpsnd::WaveInfoPDU wi;
                         wi.receive(chunk);
@@ -2712,7 +2717,9 @@ public:
                         this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;
 
                         this->sound_qt->init(header.BodySize);
-                        this->sound_qt->setData(chunk.get_data()+4, chunk.get_offset()+8);
+                        this->sound_qt->setData(wi.Data, 4);
+
+                        this->sound_qt->last_PDU_is_WaveInfo = true;
                         }
                         break;
 
@@ -2749,7 +2756,7 @@ public:
 //                         break;
 
 
-                    default: LOG(LOG_INFO, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
+                    default: LOG(LOG_WARNING, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
                         break;
                 }
             }
@@ -3283,12 +3290,15 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::cliprdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::none;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
 
     app.exec();
+
+    // scp -P 22 -r cmoroldo@10.10.43.46:/home/cmoroldo/Bureau/redemption_test_charge/movie.wrm /home/qa/Desktop/movie_sample_data/
+
 
     //  xfreerdp /u:x /p: /port:3389 /v:10.10.43.46 /multimon /monitors:2
 }

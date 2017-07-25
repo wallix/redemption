@@ -147,6 +147,7 @@ constant OBJ_TEST_DEPENDENCIES :
     <define>CERTIF_PATH='\"/tmp/redemption_cert\"'
     <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"'
     <define>PID_PATH='\"/tmp/redemption_pid\"'
+    #<define>CFG_THEMES_PATH='\"$(ETC_PREFIX)/themes\"'
 ;
 
 constant TEST_DEPENDENCIES :

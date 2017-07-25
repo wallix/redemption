@@ -21,8 +21,8 @@
 #define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "core/FSCC/FileInformation.hpp"
 

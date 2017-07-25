@@ -854,9 +854,9 @@ struct TrainingConfirmPDU {
 // |                              Header                           |
 // +-------------------------------+-------------------------------+
 // |          wTimeStamp           |           wFormatNo           |
-// +---------------+---------------+---------------+---------------+
+// +---------------+---------------+-------------------------------+
 // |cLastBlockConf |                     bPad                      |
-// +---------------+-------------------------------+---------------+
+// +---------------+-----------------------------------------------+
 // |                             Data                              |
 // +---------------------------------------------------------------+
 
@@ -877,6 +877,7 @@ struct WaveInfoPDU {
     uint16_t wTimeStamp;
     uint16_t wFormatNo;
     uint8_t  cBlockNo;
+    uint8_t  Data[4];
 
     WaveInfoPDU() = default;
 
@@ -892,6 +893,7 @@ struct WaveInfoPDU {
         stream.out_uint16_le(this->wFormatNo);
         stream.out_uint8(this->cBlockNo);
         stream.out_clear_bytes(3);
+        stream.out_copy_bytes(this->Data, 4);
     }
 
     void receive(InStream & stream) {
@@ -906,14 +908,17 @@ struct WaveInfoPDU {
         this->wFormatNo = stream.in_uint16_le();
         this->cBlockNo = stream.in_uint8();
         stream.in_skip_bytes(3);
+        stream.in_copy_bytes(this->Data, 4);
     }
 
     void log() {
         LOG(LOG_INFO, "     Wave Info PDU:");
         LOG(LOG_INFO, "          * wTimeStamp = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * wFormatNo  = 0x%04x (2 bytes)", this->wFormatNo);
-        LOG(LOG_INFO, "          * wFormatNo  = 0x%02x (1 byte)", this->cBlockNo);
+        LOG(LOG_INFO, "          * cBlockNo   = 0x%02x (1 byte)", this->cBlockNo);
         LOG(LOG_INFO, "          * bPad - (3 bytes)  NOT USED");
+        LOG(LOG_INFO, "          * Data       = \"0x%02x0x%02x0x%02x0x%02x\" (4 byte)",
+                        this->Data[0], this->Data[1], this->Data[2], this->Data[3]);
     }
 };
 

@@ -53,27 +53,33 @@ static CheckFileList user_check_file_list[] =
 
 static CheckFileList euser_check_file_list[] =
 {
-    { LOGIN_LOGO24,             SHARE_PATH,      true,  false, false, false },
-    { CURSOR0,                  SHARE_PATH,      true,  false, false, false },
-    { CURSOR1,                  SHARE_PATH,      true,  false, false, false },
+    // Directories.
+    { "",                       CERTIF_PATH,            false, true,  false, false },
+    { "",                       RECORD_PATH,            false, true,  false, false },
+    { "",                       RECORD_TMP_PATH,        false, true,  false, false },
+    { "",                       HASH_PATH,              false, true,  false, false },
+    { "",                       FLV_PATH,               false, true,  false, false },
+    { "",                       OCR_PATH,               false, true,  false, false },
+    { "",                       PNG_PATH,               false, true,  false, false },
+    { "",                       LICENSE_PATH,           false, true,  false, false },
+    { "",                       CERTIF_PATH,            false, true,  false, false },
+    { "",                       PERSISTENT_PATH,        false, true,  false, false },
+    { "",                       DRIVE_REDIRECTION_PATH, false, true,  false, false },
+    { "",                       PID_PATH,               false, true,  false, false },
+
+    //  Files
     { DEFAULT_FONT_NAME,        SHARE_PATH,      true,  false, false, false },
     { REDEMPTION_LOGO24,        SHARE_PATH,      true,  false, false, false },
-    { "Philips_PM5544_640.png", SHARE_PATH,      true,  false, false, false },
-    { "ad8b.png",               SHARE_PATH,      true,  false, false, false },
-
-    // Directory.
-    { "",                       CERTIF_PATH,     false, true,  false, false },
-
-    // Directory.
-    { "",                       RECORD_PATH,     false, true,  false, false },
-
-    // Directory.
-//    { "",                       RECORD_TMP_PATH, false, true,  false, false },
-
+    { LOGIN_WAB_BLUE,           SHARE_PATH,      true,  false, false, false },
+    { LOCKFILE,                 PID_PATH,        true,  false, false, false },
     { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
+//     { LOGO_PNG,                 CFG_THEMES_PATH, true,  false, false, false },
+//     { LOGO_BMP,                 CFG_THEMES_PATH, true,  false, false, false },
+//     { THEME_INI,                CFG_THEMES_PATH, true,  false, false, false },
     { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
     { RDPPROXY_CRT,             CFG_PATH,        true,  false, false, false },
-    { DH1024_PEM,               CFG_PATH,        true,  false, false, false },
+    { DH2048_PEM,               CFG_PATH,        true,  false, false, false },
+
 
     // End of list.
     { nullptr,              nullptr,            false, false, false, false }

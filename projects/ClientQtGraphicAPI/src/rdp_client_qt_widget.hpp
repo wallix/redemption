@@ -1283,7 +1283,7 @@ Q_OBJECT
 //     int filled_data_len;
 
 public:
-    int wave_data_to_vait;
+    int wave_data_to_wait;
     int last_wTimeStamp;
     int last_cConfirmedBlockNo;
 
@@ -1292,20 +1292,22 @@ public:
     int n_channels;
     int block_size;
 
+    bool last_PDU_is_WaveInfo;
+
 
 
     Sound_Qt(QWidget * parent)
       : QObject(parent)
       , media(nullptr)
       , audioOutput(nullptr)
-//       , filled_data_len(0)
-      , wave_data_to_vait(0)
+      , wave_data_to_wait(0)
       , last_wTimeStamp(0)
       , last_cConfirmedBlockNo(0)
       , sample_per_sec(0)
       , bit_per_sample(0)
       , n_channels(0)
       , block_size(0)
+      , last_PDU_is_WaveInfo(false)
     {
         this->media = new Phonon::MediaObject(this);
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
@@ -1315,7 +1317,7 @@ public:
     void init(size_t raw_total_size) {
         this->media->stop();
 
-        std::size_t total_size = raw_total_size - (raw_total_size/400);
+        std::size_t total_size = raw_total_size;
 
 //         this->data = std::make_unique<char[]>(total_size+1);
 //         this->filled_data_len = 0;
@@ -1324,17 +1326,17 @@ public:
         std::ofstream file("current.wav", std::ios::out| std::ios::binary);
 
         out_stream.out_copy_bytes("RIFF", 4);
-        out_stream.out_uint32_be(36+total_size);
+        out_stream.out_uint32_le(36+total_size);
         out_stream.out_copy_bytes("WAVEfmt ", 8);
-        out_stream.out_uint32_be(16);
-        out_stream.out_uint16_be(1);
-        out_stream.out_uint16_be(this->n_channels);
-        out_stream.out_uint32_be(this->sample_per_sec);
-        out_stream.out_uint32_be(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
-        out_stream.out_uint16_be(this->block_size);
-        out_stream.out_uint16_be(this->bit_per_sample);
+        out_stream.out_uint32_le(16);
+        out_stream.out_uint16_le(1);
+        out_stream.out_uint16_le(this->n_channels);
+        out_stream.out_uint32_le(this->sample_per_sec);
+        out_stream.out_uint32_le(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
+        out_stream.out_uint16_le(this->block_size);
+        out_stream.out_uint16_le(this->bit_per_sample);
         out_stream.out_copy_bytes("data", 4);
-        out_stream.out_uint32_be(total_size);
+        out_stream.out_uint32_le(total_size);
 
 //         out_stream.out_clear_bytes(44);
 
@@ -1346,8 +1348,10 @@ public:
     void setData(const uint8_t * data, size_t size) {
 
         std::ofstream file("current.wav", std::ios::app | std::ios::out| std::ios::binary);
-        file.write(reinterpret_cast<const char *>(data), size);
-        file.close();
+        if (file) {
+            file.write(reinterpret_cast<const char *>(data), size);
+            file.close();
+        }
 //         for (size_t i = 0; i < size; i++) {
 //             this->data.get()[i+this->filled_data_len] = char(data[i]);
 //         }
