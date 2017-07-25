@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     while (!mod.is_up_and_running())
             mod.draw_event(now, front);
 
-    for (int count = 0; count < 1; ++count) {
+    for (int count = 0; count < 8; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
         mod.draw_event(time(nullptr), front);
     }
