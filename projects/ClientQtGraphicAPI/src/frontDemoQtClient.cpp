@@ -65,7 +65,6 @@ public:
                                    , this->ini.get<cfg::font>()
                                    , nullptr
                                    , nullptr
-                                   //, this->translator
                                    , this->theme
                                    , this->info.keylayout
                                    , 0

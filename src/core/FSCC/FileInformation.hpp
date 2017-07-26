@@ -1198,14 +1198,6 @@ public:
       MIN_SIZE = 93
     };
 
-//     uint32_t total_size() const {
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
 
     FileBothDirectoryInformation() = default;
 
@@ -1222,8 +1214,8 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
-    , ShortNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
+//     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
+//     , ShortNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
         size_t file_name_tmp_size = std::strlen(file_name);
         REDASSERT(file_name_tmp_size <= 500);
@@ -1496,14 +1488,6 @@ public:
         MIN_SIZE = 64
     };
 
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
 
     uint32_t size() {
         uint8_t  FileName_unicode_data[2000] = {0};
@@ -1527,7 +1511,7 @@ public:
     , LastWriteTime_(LastWriteTime)
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes)
-    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
+//     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
         size_t file_name_tmp_size = std::strlen(FileName);
         REDASSERT(file_name_tmp_size <=  500);
@@ -2016,14 +2000,6 @@ public:
       MIN_SIZE = 68
     };
 
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
 
     FileFullDirectoryInformation() = default;
 
@@ -2040,7 +2016,7 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
+//     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
         size_t file_name_tmp_size = std::strlen(file_name);
         REDASSERT(file_name_tmp_size <=  500);
@@ -2257,19 +2233,11 @@ public:
         MIN_SIZE = 12
     };
 
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
 
     FileNamesInformation() = default;
 
     explicit FileNamesInformation(const char * file_name)
-      : FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
+//       : FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
         size_t file_name_tmp_size = std::strlen(file_name);
         REDASSERT(file_name_tmp_size <= 500);
@@ -2426,15 +2394,28 @@ public:
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate that if a file with the given name already exists, it SHOULD be replaced with the given file. Set to FALSE to indicate that the rename operation MUST fail if a file with the given name already exists.
+//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate
+// that if a file with the given name already exists, it SHOULD be replaced with the given
+// file. Set to FALSE to indicate that the rename operation MUST fail if a file with the
+// given name already exists.
 
-//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value and MUST be ignored.
+//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value
+// and MUST be ignored.
 
-//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for the directory to which the new name of the file is relative. For network operations, this value MUST always be zero.
+//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for
+// the directory to which the new name of the file is relative. For network operations,
+// this value MUST always be zero.
 
-//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName field.
+//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in
+// bytes, of the file name contained within the FileName field.
 
-//  FileName (variable):  A sequence of Unicode characters containing the new name of the file. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. If the RootDirectory field is zero, this member MUST specify a full pathname to be assigned to the file. For network operations, this pathname is relative to the root of the share. If the RootDirectory field is not zero, this field MUST specify a pathname, relative to RootDirectory, for the new name of the file.
+//  FileName (variable):  A sequence of Unicode characters containing the new name of
+// the file. When working with this field, use FileNameLength to determine the length
+// of the file name rather than assuming the presence of a trailing null delimiter. If
+// the RootDirectory field is zero, this member MUST specify a full pathname to be
+// assigned to the file. For network operations, this pathname is relative to the root
+// of the share. If the RootDirectory field is not zero, this field MUST specify a
+// pathname, relative to RootDirectory, for the new name of the file.
 
 struct FileRenameInformation {
 
@@ -2451,7 +2432,7 @@ struct FileRenameInformation {
                          , const char * FileName)
       : ReplaceIfExists(ReplaceIfExists)
       , RootDirectory(RootDirectory)
-    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
+//     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
           const size_t file_name_tmp_size = std::strlen(FileName);
           REDASSERT(file_name_tmp_size <=  500);
@@ -3821,7 +3802,7 @@ struct FileNotifyInformation {
     FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, const char * FileName)
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
-      , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
+//       , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
         const size_t file_name_tmp_size = std::strlen(FileName);
         REDASSERT(file_name_tmp_size <= 500);

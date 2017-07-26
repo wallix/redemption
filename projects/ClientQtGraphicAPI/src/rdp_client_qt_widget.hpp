@@ -1317,7 +1317,7 @@ public:
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
         Phonon::createPath(this->media, this->audioOutput);
 
-         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
+        this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
     }
 
     void init() {
