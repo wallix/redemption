@@ -190,6 +190,7 @@
     f(ERR_RDP_OPEN_SESSION_TIMEOUT)                              \
     f(ERR_RDP_HANDSHAKE_TIMEOUT)                                 \
     f(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)                        \
+    f(ERR_RDP_INTERNAL)                                          \
                                                                  \
     fv(ERR_WM_PASSWORD, 9000)                                    \
     f(ERR_WM_USERNAME)                                           \
