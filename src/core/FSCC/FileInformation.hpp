@@ -606,7 +606,7 @@ struct ReparseGUIDDataBuffer {
     , ReparseDataLength(ReparseDataLength)
     {
         std::memcpy(this->ReparseGuid, ReparseGuid, GUID_SIZE);
-        //REDASSERT(ReparseDataLength <=  65536);
+        REDASSERT(ReparseDataLength <=  65536);
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 
@@ -1188,7 +1188,7 @@ class FileBothDirectoryInformation {
     uint32_t EaSize          = 0;
     size_t   ShortNameLength = 0;
 
-    char ShortName[12] = { 0 };
+    char ShortName[24] = { 0 };
     char FileName[500] = { 0 };
 
 
@@ -1225,10 +1225,9 @@ public:
     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     , ShortNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         LOG(LOG_INFO, "!!!!!!!!! %zu", file_name_tmp_size);
-//         REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, file_name, 500);
+        size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(file_name));
+        REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, file_name, file_name_tmp_size);
         if (this->ShortNameLength > 24) {
             this->ShortNameLength = 24;
         }
@@ -1308,7 +1307,7 @@ public:
         stream.in_copy_bytes(ShortName_utf16, 24);
         ::UTF16toUTF8(ShortName_utf16,
                       this->ShortNameLength / 2,
-                      reinterpret_cast<uint8_t *>(this->ShortName), 12);
+                      reinterpret_cast<uint8_t *>(this->ShortName), 24);
 
         {
             const unsigned expected = this->FileNameLength; // FileName(variable)
@@ -1530,9 +1529,9 @@ public:
     , FileAttributes_(FileAttributes)
     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         size_t file_name_tmp_size = sizeof(FileName);
-//         REDASSERT(file_name_tmp_size <=  500);
-        std::memcpy(this->FileName, FileName, 500);
+        size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(FileName));
+        REDASSERT(file_name_tmp_size <=  500);
+        std::memcpy(this->FileName, FileName, file_name_tmp_size);
     }
 
     void emit(OutStream & stream) const {
@@ -1818,9 +1817,9 @@ struct FileFsLabelInformation {
 
     FileFsLabelInformation(char * VolumeLabel)
     {
-//           size_t VolumeLabel_tmp_size = sizeof(VolumeLabel);
-//           REDASSERT(VolumeLabel_tmp_size <= 65536/2);
-          std::memcpy(this->VolumeLabel, VolumeLabel, 65536/2);
+          size_t VolumeLabel_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(VolumeLabel));
+          REDASSERT(VolumeLabel_tmp_size <= 65536/2);
+          std::memcpy(this->VolumeLabel, VolumeLabel, VolumeLabel_tmp_size);
     }
 
     void emit(OutStream & stream) const {
@@ -2043,9 +2042,9 @@ public:
     , FileAttributes(FileAttributes)
     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         REDASSERT(file_name_tmp_size <=  500);
-        std::memcpy(this->FileName, file_name, 500);
+        size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(file_name));
+        REDASSERT(file_name_tmp_size <=  500);
+        std::memcpy(this->FileName, file_name, file_name_tmp_size);
     }
 
     inline void emit(OutStream & stream) const {
@@ -2272,9 +2271,9 @@ public:
     explicit FileNamesInformation(const char * file_name)
       : FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, file_name, 500);
+        size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(file_name));
+        REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, file_name, file_name_tmp_size);
     }
 
     inline void emit(OutStream & stream) const {
@@ -2454,9 +2453,9 @@ struct FileRenameInformation {
       , RootDirectory(RootDirectory)
     , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//           const size_t file_name_tmp_size = sizeof(FileName);
-//           REDASSERT(file_name_tmp_size <=  500);
-          std::memcpy(this->FileName, FileName, 500);
+          const size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(FileName));
+          REDASSERT(file_name_tmp_size <=  500);
+          std::memcpy(this->FileName, FileName, file_name_tmp_size);
     }
 
     void emit(OutStream & stream) const {
@@ -2830,7 +2829,7 @@ class FileFsAttributeInformation {
     uint32_t FileSystemAttributes_      = 0;
     uint32_t MaximumComponentNameLength = 0;
     size_t   FileSystemNameLength       = 0;
-    char FileSystemName[12] = { 0 };
+    char FileSystemName[24] = { 0 };
 
 public:
     FileFsAttributeInformation() = default;
@@ -2841,9 +2840,9 @@ public:
     : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
-//         const size_t FileSystemName_tmp_size = sizeof(file_system_name);
-//         REDASSERT(FileSystemName_tmp_size <= 12);
-        std::memcpy(this->FileSystemName, file_system_name, 12);
+        const size_t FileSystemName_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(file_system_name));
+        REDASSERT(FileSystemName_tmp_size <= 24);
+        std::memcpy(this->FileSystemName, file_system_name, FileSystemName_tmp_size);
     }
 
     inline void emit(OutStream & stream) const {
@@ -3351,9 +3350,9 @@ public:
     , VolumeSerialNumber(VolumeSerialNumber)
     , SupportsObjects(SupportsObjects)
     {
-//         const size_t VolumeLabel_tmp_size = sizeof(volume_label);
-//         REDASSERT(VolumeLabel_tmp_size <= 500);
-        std::memcpy(this->VolumeLabel, volume_label, 500);
+        const size_t VolumeLabel_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(volume_label));
+        REDASSERT(VolumeLabel_tmp_size <= 500);
+        std::memcpy(this->VolumeLabel, volume_label, VolumeLabel_tmp_size);
     }
 
     inline void emit(OutStream & stream) const {
@@ -3410,7 +3409,7 @@ public:
         stream.in_copy_bytes(VolumeLabel_unicode_data, this->VolumeLabelLength);
         const size_t length_of_VolumeLabel_utf8_string = ::UTF16toUTF8(VolumeLabel_unicode_data,
             this->VolumeLabelLength / 2,
-            reinterpret_cast<uint8_t *>(this->VolumeLabel), 12);
+            reinterpret_cast<uint8_t *>(this->VolumeLabel), 48);
 
         this->VolumeLabel[length_of_VolumeLabel_utf8_string] = '\0';
         for (uint8_t * c =
@@ -3824,9 +3823,9 @@ struct FileNotifyInformation {
       , Action(Action)
       , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         const size_t file_name_tmp_size = sizeof(FileName);
-//         REDASSERT(file_name_tmp_size <= 500);
-        std::memcpy(this->FileName, FileName, 500);
+        const size_t file_name_tmp_size = ::UTF8Len(reinterpret_cast<const uint8_t *>(FileName));
+        REDASSERT(file_name_tmp_size <= 500);
+        std::memcpy(this->FileName, FileName, file_name_tmp_size);
     }
 
     void emit(OutStream & stream) const {
