@@ -574,7 +574,7 @@ public:
         , _waiting_for_data(false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
-        this->sound_qt     = new Sound_Qt(this->form);
+        this->sound_qt     = new Sound_Qt(this->form, this);
 
 
         this->setDefaultConfig();
@@ -2035,12 +2035,8 @@ public:
     //                                                                                       CHANNELS::CHANNEL_FLAG_FIRST
     //                                                                                     );
 
-                                                    //if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                     LOG(LOG_WARNING, "CLIENT >> RDPDR: Device I/O Must Send Notify Change Directory Response");
-                                                //}
                                                 }
-
-                                            //
                                             }
                                             break;
 
@@ -2307,7 +2303,7 @@ public:
                                             }
                                                 break;
 
-                                            default:  LOG(LOG_INFO, "SERVER >> RDPDR: unknow FsInformationClass = 0x%x", sdsir.FsInformationClass());
+                                            default:  LOG(LOG_WARNING, "SERVER >> RDPDR: unknow FsInformationClass = 0x%x", sdsir.FsInformationClass());
 
                                                 break;
                                         }
@@ -2530,9 +2526,9 @@ public:
         //msgdump_c(false, false, chunk.get_offset(), 0, chunk.get_data(), chunk_size);
 
             if (this->sound_qt->wave_data_to_wait) {
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %zu",  chunk_size);
-                }
+//                 if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+//                     LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %zu",  chunk_size);
+//                 }
                 this->sound_qt->wave_data_to_wait -= chunk.in_remain();
                 if (this->sound_qt->wave_data_to_wait < 0) {
                     this->sound_qt->wave_data_to_wait = 0;
@@ -2547,30 +2543,13 @@ public:
 
                 if (!(this->sound_qt->wave_data_to_wait)) {
 
+                    if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %d",  this->sound_qt->raw_total_size);
+                    }
                     //this->sound_qt->setData(uint8_t('\0'), 1);
 
                     this->sound_qt->play();
 
-                    StaticOutStream<32> out_stream;
-
-                    rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
-                    header_out.emit(out_stream);
-
-                    rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
-                                             , this->sound_qt->last_cConfirmedBlockNo);
-                    wc.emit(out_stream);
-
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                    this->mod->send_to_mod_channel( channel_names::rdpsnd
-                                                  , chunk_to_send
-                                                  , out_stream.get_offset()
-                                                  , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
-                                                  );
-                    if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                        LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
-                    }
 //                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
 //                     header_out.log();
 //                     wc.log();
@@ -2708,6 +2687,7 @@ public:
                         }
 
                         this->sound_qt->wave_data_to_wait = header.BodySize - 8;
+                        this->sound_qt->raw_total_size    = header.BodySize - 12;
 
                         rdpsnd::WaveInfoPDU wi;
                         wi.receive(chunk);
@@ -2717,7 +2697,7 @@ public:
                         this->sound_qt->last_wTimeStamp = wi.wTimeStamp;
                         this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;
 
-                        this->sound_qt->init(header.BodySize);
+                        this->sound_qt->init();
                         this->sound_qt->setData(wi.Data, 4);
 
                         this->sound_qt->last_PDU_is_WaveInfo = true;
@@ -2731,15 +2711,15 @@ public:
 //                     case rdpsnd::SNDC_SETVOLUME:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
 //                         break;
-//
+
 //                     case rdpsnd::SNDC_SETPITCH:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETPITCH PDU");
 //                         break;
-//
+
 //                     case rdpsnd::SNDC_CRYPTKEY:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_CRYPTKEY PDU");
 //                         break;
-//
+
 //                     case rdpsnd::SNDC_WAVEENCRYPT:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVEENCRYPT PDU");
 //                         break;
@@ -2787,7 +2767,28 @@ public:
     }
 
 
+    void send_WaveConfirmPDU() override {
+        StaticOutStream<32> out_stream;
 
+        rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
+        header_out.emit(out_stream);
+
+        rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
+                                 , this->sound_qt->last_cConfirmedBlockNo);
+        wc.emit(out_stream);
+
+        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+        this->mod->send_to_mod_channel( channel_names::rdpsnd
+                                      , chunk_to_send
+                                      , out_stream.get_offset()
+                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                      );
+        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+            LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+        }
+    }
 
 
     void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){

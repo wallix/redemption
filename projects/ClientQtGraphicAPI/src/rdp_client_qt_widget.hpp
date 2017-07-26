@@ -248,6 +248,8 @@ public:
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual void emptyLocalBuffer() = 0;
+    virtual void send_WaveConfirmPDU() = 0;
+
 };
 
 
@@ -1288,12 +1290,15 @@ public:
     int bit_per_sample;
     int n_channels;
     int block_size;
+    int raw_total_size;
 
     bool last_PDU_is_WaveInfo;
 
+    Front_RDP_Qt_API * front;
 
 
-    Sound_Qt(QWidget * parent)
+
+    Sound_Qt(QWidget * parent, Front_RDP_Qt_API * front)
       : QObject(parent)
       , media(nullptr)
       , audioOutput(nullptr)
@@ -1304,52 +1309,64 @@ public:
       , bit_per_sample(0)
       , n_channels(0)
       , block_size(0)
+      , raw_total_size(0)
       , last_PDU_is_WaveInfo(false)
+      , front(front)
     {
         this->media = new Phonon::MediaObject(this);
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
         Phonon::createPath(this->media, this->audioOutput);
+
+         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
     }
 
-    void init(size_t raw_total_size) {
-        this->media->stop();
+    void init() {
+//         if (this->media->state() == Phonon::StoppedState) {
+            this->media->stop();
 
-        std::size_t total_size = raw_total_size;
+            std::size_t total_size = raw_total_size;
 
-        StaticOutStream<64> out_stream;
-        std::ofstream file("current.wav", std::ios::out| std::ios::binary);
+            StaticOutStream<64> out_stream;
+            std::ofstream file("current.wav", std::ios::out| std::ios::binary);
 
-        out_stream.out_copy_bytes("RIFF", 4);
-        out_stream.out_uint32_le(36+total_size);
-        out_stream.out_copy_bytes("WAVEfmt ", 8);
-        out_stream.out_uint32_le(16);
-        out_stream.out_uint16_le(1);
-        out_stream.out_uint16_le(this->n_channels);
-        out_stream.out_uint32_le(this->sample_per_sec);
-        out_stream.out_uint32_le(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
-        out_stream.out_uint16_le(this->block_size);
-        out_stream.out_uint16_le(this->bit_per_sample);
-        out_stream.out_copy_bytes("data", 4);
-        out_stream.out_uint32_le(total_size);
+            out_stream.out_copy_bytes("RIFF", 4);
+            out_stream.out_uint32_le(this->raw_total_size + 36);
+            out_stream.out_copy_bytes("WAVEfmt ", 8);
+            out_stream.out_uint32_le(16);
+            out_stream.out_uint16_le(1);
+            out_stream.out_uint16_le(this->n_channels);
+            out_stream.out_uint32_le(this->sample_per_sec);
+            out_stream.out_uint32_le(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
+            out_stream.out_uint16_le(this->block_size);
+            out_stream.out_uint16_le(this->bit_per_sample);
+            out_stream.out_copy_bytes("data", 4);
+            out_stream.out_uint32_le(this->raw_total_size);
 
-        file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
+            file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
 
-        file.close();
+            file.close();
+//         }
     }
 
     void setData(const uint8_t * data, size_t size) {
-
-        std::ofstream file("current.wav", std::ios::app | std::ios::out| std::ios::binary);
-        if (file) {
-            file.write(reinterpret_cast<const char *>(data), size);
-            file.close();
-        }
+//         if (this->media->state() == Phonon::StoppedState) {
+            std::ofstream file("current.wav", std::ios::app | std::ios::out| std::ios::binary);
+            if (file) {
+                file.write(reinterpret_cast<const char *>(data), size);
+                file.close();
+            }
+//         }
     }
 
     void play() {
         Phonon::MediaSource sources(QUrl("current.wav"));
         this->media->setCurrentSource(sources);
         this->media->play();
+    }
+
+private Q_SLOTS:
+    void call_playback_over() {
+        this->front->send_WaveConfirmPDU();
     }
 
 };

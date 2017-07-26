@@ -611,7 +611,7 @@ struct ReparseGUIDDataBuffer {
     }
 
     inline static size_t size() {
-        return 22;   /* ReparseTag(4) + ReparseDataLength(2) + */
+        return 22 + this->ReparseDataLength;   /* ReparseTag(4) + ReparseDataLength(2) + */
     }                /* ReparseGuid(16)*/
 
     void emit(OutStream & stream) const {
@@ -1340,12 +1340,12 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        uint8_t unicode_data[65536];
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->FileName),
-            unicode_data, sizeof(unicode_data));
+//         uint8_t unicode_data[65536];
+//         size_t size_of_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->FileName),
+//             unicode_data, sizeof(unicode_data));
 
-        return size + size_of_unicode_data;
+        return size + this->FileNameLength;
     }
 
 
@@ -2891,12 +2891,12 @@ public:
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
 
-        uint8_t unicode_data[65536];
-        const size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->FileSystemName),
-            unicode_data, sizeof(unicode_data));
+//         uint8_t unicode_data[65536];
+//         const size_t size_of_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->FileSystemName),
+//             unicode_data, sizeof(unicode_data));
 
-        return size + size_of_unicode_data;
+        return size + this->FileSystemNameLength;
     }
 
     uint32_t FileSystemAttributes() const { return this->FileSystemAttributes_; }
@@ -3340,6 +3340,7 @@ public:
                          uint8_t SupportsObjects, const char * volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
+    , VolumeLabelLength(::UTF8Len(reinterpret_cast<const uint8_t *>(volume_label)))
     , SupportsObjects(SupportsObjects)
     {
 //         const size_t VolumeLabel_tmp_size = sizeof(volume_label);
@@ -3418,12 +3419,12 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        uint8_t unicode_data[65536];
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->VolumeLabel),
-            unicode_data, sizeof(unicode_data));
+//         uint8_t unicode_data[65536];
+//         size_t size_of_unicode_data = ::UTF8toUTF16(
+//             reinterpret_cast<const uint8_t *>(this->VolumeLabel),
+//             unicode_data, sizeof(unicode_data));
 
-        return size + size_of_unicode_data;
+        return size + this->VolumeLabelLength;
     }
 
 private:
