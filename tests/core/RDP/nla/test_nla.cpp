@@ -23,6 +23,7 @@
 
 #define LOGNULL
 #include "core/RDP/nla/nla.hpp"
+#include "core/RDP/tdpu_buffer.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 
@@ -30,7 +31,7 @@
 
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
-    const char client[65000] =
+    const char client[] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
 /* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........
@@ -69,7 +70,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0050 */ "\xd5\xf3\xa7\xb5\x33\xd5\x62\x8d\x93\x18\x54\x39\x8a\xe7"         //....3.b...T9..
         ;
 
-    const char server[65000] =
+    const char server[] =
         // challenge
 /* 0000 */ "\x30\x81\x88\xa0\x03\x02\x01\x02\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|.
 /* 0010 */ "\x7a\x04\x78\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00" //z.xNTLMSSP......
@@ -90,7 +91,6 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
     TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
@@ -101,44 +101,16 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     RED_CHECK(credssp.credssp_client_authenticate_init());
 
-    rdpCredssp::State st;
-    do {
-        uint8_t head[4] = {};
-        uint8_t * point = head;
-        size_t length = 0;
-        logtrans.recv_boom(point, 2);
-        point += 2;
-        uint8_t byte = head[1];
-        if (byte & 0x80) {
-            byte &= ~(0x80);
-
-            if (byte == 1) {
-                logtrans.recv_boom(point, byte);
-                length = head[2];
-            }
-            else if (byte == 2) {
-                logtrans.recv_boom(point, byte);
-                length = (head[2] << 8) | head[3];
-                if (length > 0xFFFF - 4) {
-                    RED_CHECK(false);
-                }
-            }
-            else {
-                RED_CHECK(false);
-            }
+    rdpCredssp::State st = rdpCredssp::State::Cont;
+    TpduBuffer buf;
+    while (rdpCredssp::State::Cont == st) {
+        buf.load_data(logtrans);
+        while (buf.next_credssp() && rdpCredssp::State::Cont == st) {
+            InStream in_stream(buf.current_pdu_buffer());
+            st = credssp.credssp_client_authenticate_next(in_stream);
         }
-        else {
-            length = byte;
-            byte = 0;
-        }
-
-        uint8_t buffer[65536];
-        OutStream ts_request_received(buffer, 2 + byte + length);
-        ts_request_received.out_copy_bytes(head, 2 + byte);
-        logtrans.recv_boom(ts_request_received.get_current(), length);
-        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
-        st = credssp.credssp_client_authenticate_next(in_stream);
-    } while (rdpCredssp::State::Cont == st);
+    }
+    RED_CHECK_EQUAL(0, buf.remaining());
     RED_CHECK_EQUAL(st, rdpCredssp::State::Finish);
 }
 
@@ -147,7 +119,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 RED_AUTO_TEST_CASE(TestNlaserver)
 {
 
-    const char client[65000] =
+    const char client[] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
 /* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........
@@ -187,7 +159,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
         ;
 
-    const char server[65000] =
+    const char server[] =
         // challenge
 /* 0000 */ "\x30\x81\x88\xa0\x03\x02\x01\x02\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|.
 /* 0010 */ "\x7a\x04\x78\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00" //z.xNTLMSSP......
@@ -206,7 +178,6 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
-    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";

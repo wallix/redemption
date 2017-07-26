@@ -88,14 +88,7 @@ RED_AUTO_TEST_CASE(Test1Read1)
     BlockTransport t(data1, 1);
     TpduBuffer buf;
 
-    // header
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-
-    // data
-    for (int i = 0; i < 80; ++i) {
+    for (int i = 0; i < 84; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
     }
     buf.load_data(t); RED_CHECK(buf.next_pdu());

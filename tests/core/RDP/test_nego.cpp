@@ -27,6 +27,7 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/nego.hpp"
+#include "core/RDP/tdpu_buffer.hpp"
 #include "core/server_notifier_api.hpp"
 #include "test_only/transport/test_transport.hpp"
 
@@ -135,44 +136,15 @@ RED_AUTO_TEST_CASE(TestNego)
 
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_CREDSSP);
 
+    TpduBuffer buf;
     while (nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-        uint8_t head[4] = {};
-        uint8_t * point = head;
-        size_t length = 0;
-        nego.trans.get_transport().recv_boom(point, 2);
-        point += 2;
-        uint8_t byte = head[1];
-        if (byte & 0x80) {
-            byte &= ~(0x80);
-
-            if (byte == 1) {
-                nego.trans.get_transport().recv_boom(point, byte);
-                length = head[2];
-            }
-            else if (byte == 2) {
-                nego.trans.get_transport().recv_boom(point, byte);
-                length = (head[2] << 8) | head[3];
-                if (length > 0xFFFF - 4) {
-                    RED_CHECK(false);
-                }
-            }
-            else {
-                RED_CHECK(false);
-            }
+        buf.load_data(logtrans);
+        while (buf.next_credssp() && nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+            InStream in_stream(buf.current_pdu_buffer());
+            nego.recv_credssp(in_stream);
         }
-        else {
-            length = byte;
-            byte = 0;
-        }
-
-        uint8_t buffer[65536];
-        OutStream ts_request_received(buffer, 2 + byte + length);
-        ts_request_received.out_copy_bytes(head, 2 + byte);
-        nego.trans.get_transport().recv_boom(ts_request_received.get_current(), length);
-        InStream credssp_data(ts_request_received.get_data(), ts_request_received.get_capacity());
-        nego.recv_credssp(credssp_data);
     }
-
+    RED_CHECK_EQUAL(0, buf.remaining());
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
 

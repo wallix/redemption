@@ -52,12 +52,30 @@ namespace redemption_unit_test__
 
         std::size_t size() const
         {
-            return sig.size();
+            return this->sig.size();
         }
 
         uint8_t const * data() const
         {
-            return sig.data();
+            return this->sig.data();
+        }
+    };
+
+    struct hexdump_with_remaining
+    {
+        char const * type;
+        uint8_t const * p;
+        std::size_t cur;
+        std::size_t len;
+
+        std::size_t size() const
+        {
+            return this->len - this->cur;
+        }
+
+        uint8_t const * data() const
+        {
+            return p;
         }
     };
 
@@ -94,6 +112,14 @@ namespace redemption_unit_test__
         }
         return out;
     }
+
+    inline std::ostream & operator<<(std::ostream & out, hexdump_with_remaining const & x)
+    {
+        return out
+            << hexdump{{x.data(), x.size()}} << '\n'
+            << "~" << x.type << "() remaining=" << x.size() << " len=" << x.len
+        ;
+    }
 }
 
 struct GeneratorTransport : Transport
@@ -124,9 +150,11 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, (redemption_unit_test__::hexdump{{
-                this->data.get() + this->current, this->len - this->current
-            }}));
+            RED_CHECK_MESSAGE(this->len == this->current, (
+                redemption_unit_test__::hexdump_with_remaining{
+                    "GeneratorTransport", this->data.get(), this->current, this->len
+                })
+            );
             std::ostringstream out;
             out << "~GeneratorTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
@@ -213,9 +241,11 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (redemption_unit_test__::hexdump{{
-                this->data.get() + this->current, this->len - this->current
-            }}));
+            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (
+                redemption_unit_test__::hexdump_with_remaining{
+                    "CheckTransport", this->data.get(), this->current, this->len
+                })
+            );
             std::ostringstream out;
             out << "~CheckTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
