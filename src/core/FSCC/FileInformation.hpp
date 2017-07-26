@@ -610,7 +610,7 @@ struct ReparseGUIDDataBuffer {
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 
-    inline static size_t size() {
+    inline size_t size() {
         return 22 + this->ReparseDataLength;   /* ReparseTag(4) + ReparseDataLength(2) + */
     }                /* ReparseGuid(16)*/
 
