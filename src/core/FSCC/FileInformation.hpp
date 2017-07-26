@@ -1340,12 +1340,12 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
+        uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
 
-        return size + this->FileNameLength;
+        return size + size_of_unicode_data;
     }
 
 
@@ -1507,7 +1507,12 @@ public:
 //     }
 
     uint32_t size() {
-        return MIN_SIZE + this->FileNameLength;
+        uint8_t  FileName_unicode_data[2000] = {0};
+        const size_t FileName_unicode_size = ::UTF8toUTF16(
+                reinterpret_cast<const uint8_t *>(this->FileName),
+                FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        return MIN_SIZE + FileName_unicode_size;
     }
 
     FileDirectoryInformation() = default;
@@ -2125,7 +2130,11 @@ public:
                             //     FileAttributes(4) + FileNameLength(4) +
                             //     EaSize(4)
 
-        return size + this->FileNameLength;
+        uint8_t FileName_unicode_data[2000];
+        const size_t FileName_unicode_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(this->FileName),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
+
+        return size + FileName_unicode_size;
     }
 
 private:
@@ -2316,12 +2325,12 @@ public:
     inline size_t size() const {
         size_t size = 12;    // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
 
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-//             unicode_data, sizeof(unicode_data));
+        uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileName),
+            unicode_data, sizeof(unicode_data));
 
-        return size + this->FileNameLength;
+        return size + size_of_unicode_data;
     }
 
 private:
@@ -2891,12 +2900,12 @@ public:
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
 
-//         uint8_t unicode_data[65536];
-//         const size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileSystemName),
-//             unicode_data, sizeof(unicode_data));
+        uint8_t unicode_data[65536];
+        const size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->FileSystemName),
+            unicode_data, sizeof(unicode_data));
 
-        return size + this->FileSystemNameLength;
+        return size + size_of_unicode_data;
     }
 
     uint32_t FileSystemAttributes() const { return this->FileSystemAttributes_; }
@@ -3340,7 +3349,6 @@ public:
                          uint8_t SupportsObjects, const char * volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
-    , VolumeLabelLength(::UTF8Len(reinterpret_cast<const uint8_t *>(volume_label)))
     , SupportsObjects(SupportsObjects)
     {
 //         const size_t VolumeLabel_tmp_size = sizeof(volume_label);
@@ -3419,12 +3427,12 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->VolumeLabel),
-//             unicode_data, sizeof(unicode_data));
+        uint8_t unicode_data[65536];
+        size_t size_of_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->VolumeLabel),
+            unicode_data, sizeof(unicode_data));
 
-        return size + this->VolumeLabelLength;
+        return size + size_of_unicode_data;
     }
 
 private:
