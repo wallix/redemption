@@ -443,20 +443,10 @@ public:
             return false;
         }
 
-
-
         return true;
     }
 
-//     void prog_draw_event_timer(int time_to_wake) {
-//         LOG(LOG_INFO, "prog_draw_event_timer");
-//         if (!this->timer.isActive()) {
-//
-// //             this->timer.start( time_to_wake );
-// //             LOG(LOG_INFO, "prog_draw_event_timer::time_to_wake");
-//         }
-//     }
-
+    
 
 public Q_SLOTS:
     void call_draw_event() {

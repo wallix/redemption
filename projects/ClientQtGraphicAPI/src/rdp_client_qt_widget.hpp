@@ -1317,18 +1317,14 @@ public:
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
         Phonon::createPath(this->media, this->audioOutput);
 
-         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
+        this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
     }
 
     void init() {
 //         if (this->media->state() == Phonon::StoppedState) {
             this->media->stop();
 
-            std::size_t total_size = raw_total_size;
-
             StaticOutStream<64> out_stream;
-            std::ofstream file("current.wav", std::ios::out| std::ios::binary);
-
             out_stream.out_copy_bytes("RIFF", 4);
             out_stream.out_uint32_le(this->raw_total_size + 36);
             out_stream.out_copy_bytes("WAVEfmt ", 8);
@@ -1342,9 +1338,12 @@ public:
             out_stream.out_copy_bytes("data", 4);
             out_stream.out_uint32_le(this->raw_total_size);
 
-            file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
+            std::ofstream file("current.wav", std::ios::out| std::ios::binary);
+            if (file.is_open()) {
+                file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
 
-            file.close();
+                file.close();
+            }
 //         }
     }
 

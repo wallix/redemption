@@ -3891,7 +3891,8 @@ public:
 
 // 2.2.3.4.6 Client Drive Query Volume Information Response (DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP)
 
-// This message is sent by the client as a response to the Server Drive Query Volume Information Request (section 2.2.3.3.6).
+// This message is sent by the client as a response to the Server Drive Query
+// Volume Information Request (section 2.2.3.3.6).
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -3912,13 +3913,25 @@ public:
 // |                       Padding (optional)                      |
 // +---------------------------------------------------------------+
 
-// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_QUERY_VOLUME_INFORMATION.
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header.
+// The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a
+// Device I/O Request (section 2.2.1.4) that has the MajorFunction field set
+// to IRP_MJ_QUERY_VOLUME_INFORMATION.
 
-// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number
+// of bytes in the Buffer field.
 
-// Buffer (variable): A variable-length array of bytes whose size is specified by the Length field. The content of this field is based on the value of the FsInformationClass field in the Server Drive Query Volume Information Request message, which determines the different structures that MUST be contained in the Buffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.5. The "File system information class" table defines all the possible values for the FsInformationClass field.
+// Buffer (variable): A variable-length array of bytes whose size is specified
+// by the Length field. The content of this field is based on the value of the
+// FsInformationClass field in the Server Drive Query Volume Information Request
+// message, which determines the different structures that MUST be contained in
+// the Buffer field. For a complete list of these structures, refer to [MS-FSCC]
+// section 2.5. The "File system information class" table defines all the possible
+// values for the FsInformationClass field.
 
-// Padding (1 byte): An optional, 8-bit unsigned integer that is intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+// Padding (1 byte): An optional, 8-bit unsigned integer that is intended to allow
+// the client minor flexibility in determining the overall packet length. This field
+// is unused and MUST be ignored.
 
 struct ClientDriveQueryVolumeInformationResponse {
 
@@ -4557,13 +4570,22 @@ public:
 // |Padding(option)|                                               |
 // +---------------+-----------------------------------------------+
 
-// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_DIRECTORY_CONTROL and the MinorFunction field set to IRP_MN_QUERY_DIRECTORY.
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header.
+// The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request
+// (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_DIRECTORY_CONTROL
+// and the MinorFunction field set to IRP_MN_QUERY_DIRECTORY.
 
 // Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
 
-// Buffer (variable): A variable-length array of bytes, in which the number of bytes is specified in the Length field. The content of this field is based on the value of the FsInformationClass field in the Server Drive Query Directory Request message, which determines the different structures that MUST be contained in the Buffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.4. The "File information class" table defines all the possible values for the FsInformationClass field.
+// Buffer (variable): A variable-length array of bytes, in which the number of bytes is specified
+// in the Length field. The content of this field is based on the value of the FsInformationClass
+// field in the Server Drive Query Directory Request message, which determines the different structures
+// that MUST be contained in the Buffer field. For a complete list of these structures, refer
+// to [MS-FSCC] section 2.4. The "File information class" table defines all the possible values
+// for the FsInformationClass field.
 
-// Padding (1 byte):  An optional, 8-bit unsigned integer intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+// Padding (1 byte):  An optional, 8-bit unsigned integer intended to allow the client minor
+// flexibility in determining the overall packet length. This field is unused and MUST be ignored.
 
 struct ClientDriveQueryDirectoryResponse {
 
@@ -4724,9 +4746,12 @@ struct ClientDriveQueryInformationResponse {
 // |                            Length                             |
 // +---------------------------------------------------------------+
 
-// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_SET_VOLUME_INFORMATION.
+// DeviceIoReply (16 bytes): A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The
+// CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request
+// (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_SET_VOLUME_INFORMATION.
 
-// Length (4 bytes): A 32-bit unsigned integer. It MUST match the Length field in the Server Drive Set Volume Information Request.
+// Length (4 bytes): A 32-bit unsigned integer. It MUST match the Length field in the Server
+// Drive Set Volume Information Request.
 
 struct ClientDriveSetVolumeInformationResponse {
 
@@ -4792,9 +4817,11 @@ struct ClientDriveSetVolumeInformationResponse {
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4) header. The MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be set to IRP_MJ_SET_VOLUME_INFORMATION.
+// DeviceIoRequest (24 bytes): A DR_DEVICE_IOREQUEST (section 2.2.1.4) header. The
+// MajorFunction field in the DR_DEVICE_IOREQUEST header MUST be set to IRP_MJ_SET_VOLUME_INFORMATION.
 
-// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible values for this field are defined in [MS-FSCC] section 2.5. This field MUST contain the following value.
+// FsInformationClass (4 bytes): A 32-bit unsigned integer. The possible values for this
+// field are defined in [MS-FSCC] section 2.5. This field MUST contain the following value.
 
 //  +------------------------------+-------------------------------------------+
 //  | Value                        | Meaning                                   |
@@ -4803,11 +4830,17 @@ struct ClientDriveSetVolumeInformationResponse {
 //  | 0x00000002                   | volume.                                   |
 //  +------------------------------+-------------------------------------------+
 
-// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the SetVolumeBuffer field.
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the
+// SetVolumeBuffer field.
 
 // Padding (24 bytes): An array of 24 bytes. This field is unused and MUST be ignored.
 
-// SetVolumeBuffer (variable): A variable-length array of bytes. The size of the array is specified by the Length field. The content of this field is based on the value of the FsInformationClass field, which determines the different structures that MUST be contained in the SetVolumeBuffer field. For a complete list of these structures, refer to [MS-FSCC] section 2.5. The "File system information class" table defines all the possible values for the FsInformationClass field.
+// SetVolumeBuffer (variable): A variable-length array of bytes. The size of the array is
+// specified by the Length field. The content of this field is based on the value of the
+// FsInformationClass field, which determines the different structures that MUST be contained
+// in the SetVolumeBuffer field. For a complete list of these structures, refer to [MS-FSCC]
+// section 2.5. The "File system information class" table defines all the possible values
+// for the FsInformationClass field.
 
 struct ServerDriveSetVolumeInformationRequest {
 
@@ -5343,13 +5376,24 @@ enum : uint32_t {
 // |Padding(option)|                                               |
 // +---------------+-----------------------------------------------+
 
-// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header. The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a Device I/O Request (section 2.2.1.4) that has the MajorFunction field set to IRP_MJ_DIRECTORY_CONTROL and the MinorFunction field set to IRP_MN_NOTIFY_CHANGE_DIRECTORY.
+// DeviceIoReply (16 bytes):  A DR_DEVICE_IOCOMPLETION (section 2.2.1.5) header.
+// The CompletionId field of the DR_DEVICE_IOCOMPLETION header MUST match a
+// Device I/O Request (section 2.2.1.4) that has the MajorFunction field set
+// to IRP_MJ_DIRECTORY_CONTROL and the MinorFunction field set to
+// IRP_MN_NOTIFY_CHANGE_DIRECTORY.
 
-// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes in the Buffer field.
+// Length (4 bytes): A 32-bit unsigned integer that specifies the number of bytes
+// in the Buffer field.
 
-// Buffer (variable): A variable-length array of bytes, in which the number of bytes is specified in the Length field. This field has the same meaning as the Buffer field in the SMB2 CHANGE_NOTIFY Response message specified in [MS-SMB2] section 2.2.36. This buffer MUST be empty when the Server Close Drive Request (section 2.2.3.3.2) message has been issued and no drive-specific events have occurred.
+// Buffer (variable): A variable-length array of bytes, in which the number of bytes
+// is specified in the Length field. This field has the same meaning as the Buffer
+// field in the SMB2 CHANGE_NOTIFY Response message specified in [MS-SMB2] section
+// 2.2.36. This buffer MUST be empty when the Server Close Drive Request
+// (section 2.2.3.3.2) message has been issued and no drive-specific events have occurred.
 
-// Padding (1 byte): An optional, 8-bit unsigned integer intended to allow the client minor flexibility in determining the overall packet length. This field is unused and MUST be ignored.
+// Padding (1 byte): An optional, 8-bit unsigned integer intended to allow the client
+// minor flexibility in determining the overall packet length. This field is unused and
+// MUST be ignored.
 
 struct ClientDriveNotifyChangeDirectoryResponse {
 

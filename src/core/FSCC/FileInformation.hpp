@@ -601,11 +601,11 @@ struct ReparseGUIDDataBuffer {
     , ReparseDataLength(ReparseDataLength)
     {
         std::memcpy(this->ReparseGuid, ReparseGuid, GUID_SIZE);
-        //REDASSERT(ReparseDataLength <=  65536);
+//         REDASSERT(ReparseDataLength <=  65536);
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 
-    size_t size() {
+    inline size_t size() {
         return 22 + this->ReparseDataLength;   /* ReparseTag(4) + ReparseDataLength(2) + */
     }                /* ReparseGuid(16)*/
 
@@ -2549,15 +2549,28 @@ public:
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate that if a file with the given name already exists, it SHOULD be replaced with the given file. Set to FALSE to indicate that the rename operation MUST fail if a file with the given name already exists.
+//  ReplaceIfExists (1 byte):  A Boolean (section 2.1.8) value. Set to TRUE to indicate
+// that if a file with the given name already exists, it SHOULD be replaced with the given
+// file. Set to FALSE to indicate that the rename operation MUST fail if a file with the
+// given name already exists.
 
-//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value and MUST be ignored.
+//  Reserved (7 bytes): Reserved area for alignment. This field can contain any value
+// and MUST be ignored.
 
-//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for the directory to which the new name of the file is relative. For network operations, this value MUST always be zero.
+//  RootDirectory (8 bytes): A 64-bit unsigned integer that contains the file handle for
+// the directory to which the new name of the file is relative. For network operations,
+// this value MUST always be zero.
 
-//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in bytes, of the file name contained within the FileName field.
+//  FileNameLength (4 bytes):  A 32-bit unsigned integer that specifies the length, in
+// bytes, of the file name contained within the FileName field.
 
-//  FileName (variable):  A sequence of Unicode characters containing the new name of the file. When working with this field, use FileNameLength to determine the length of the file name rather than assuming the presence of a trailing null delimiter. If the RootDirectory field is zero, this member MUST specify a full pathname to be assigned to the file. For network operations, this pathname is relative to the root of the share. If the RootDirectory field is not zero, this field MUST specify a pathname, relative to RootDirectory, for the new name of the file.
+//  FileName (variable):  A sequence of Unicode characters containing the new name of
+// the file. When working with this field, use FileNameLength to determine the length
+// of the file name rather than assuming the presence of a trailing null delimiter. If
+// the RootDirectory field is zero, this member MUST specify a full pathname to be
+// assigned to the file. For network operations, this pathname is relative to the root
+// of the share. If the RootDirectory field is not zero, this field MUST specify a
+// pathname, relative to RootDirectory, for the new name of the file.
 
 struct FileRenameInformation {
     uint8_t  ReplaceIfExists = 0;
@@ -3529,7 +3542,6 @@ public:
                          uint8_t SupportsObjects, const char * volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
-    , VolumeLabelLength(::UTF8Len(reinterpret_cast<const uint8_t *>(volume_label)))
     , SupportsObjects(SupportsObjects)
     {
 //         const size_t VolumeLabel_tmp_size = sizeof(volume_label);

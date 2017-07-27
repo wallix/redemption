@@ -30,7 +30,8 @@ namespace rdpsnd {
 
 // 2.2.1 RDPSND PDU Header (SNDPROLOG)
 //
-// The RDPSND PDU header is present in many audio PDUs. It is used to identify the PDU type, specify the length of the PDU, and convey message flags.
+// The RDPSND PDU header is present in many audio PDUs. It is used to identify the
+// PDU type, specify the length of the PDU, and convey message flags.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -39,7 +40,8 @@ namespace rdpsnd {
 // |    msgType    |     bPad      |            BodySize           |
 // +---------------+---------------+-------------------------------+
 
-// msgType (1 byte): An 8-bit unsigned integer that specifies the type of audio PDU that follows the BodySize field.
+// msgType (1 byte): An 8-bit unsigned integer that specifies the type of audio PDU
+// that follows the BodySize field.
 
 //  +-----------------------------+--------------------------------------------+
 //  | Value                       | Meaning                                    |
@@ -84,9 +86,13 @@ namespace rdpsnd {
 //  | 0x0d                        |                                            |
 //  +-----------------------------+--------------------------------------------+
 
-// bPad (1 byte): An 8-bit unsigned integer. Unused. The value in this field is arbitrary and MUST be ignored on receipt.
+// bPad (1 byte): An 8-bit unsigned integer. Unused. The value in this field is arbitrary
+// and MUST be ignored on receipt.
 
-// BodySize (2 bytes): A 16-bit unsigned integer. If msgType is not set to 0x02 (SNDC_WAVE), then this field specifies the size, in bytes, of the data that follows the RDPSND PDU header. If msgType is set to 0x02 (SNDC_WAVE), then the representation of BodySize is explained in the Header field in section 2.2.3.3.
+// BodySize (2 bytes): A 16-bit unsigned integer. If msgType is not set to 0x02 (SNDC_WAVE),
+// then this field specifies the size, in bytes, of the data that follows the RDPSND PDU header.
+// If msgType is set to 0x02 (SNDC_WAVE), then the representation of BodySize is explained in
+// the Header field in section 2.2.3.3.
 
 enum : uint8_t {
     SNDC_CLOSE       = 0x01,
@@ -313,21 +319,34 @@ struct ServerAudioFormatsandVersionHeader{
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// wFormatTag (2 bytes): An unsigned 16-bit integer identifying the compression format of the audio format. It MUST be set to a WAVE form Registration Number listed in [RFC2361]. At a minimum, clients and servers MUST support WAVE_FORMAT_PCM (0x0001). All compression formats supported on specific Windows versions along with corresponding wFormatTag field values are specified by the product behavior note in the data field description of this section.
+// wFormatTag (2 bytes): An unsigned 16-bit integer identifying the compression
+// format of the audio format. It MUST be set to a WAVE form Registration Number
+// listed in [RFC2361]. At a minimum, clients and servers MUST support WAVE_FORMAT_PCM (0x0001).
+// All compression formats supported on specific Windows versions along with corresponding
+// wFormatTag field values are specified by the product behavior note in the data field
+// description of this section.
 //
-// nChannels (2 bytes): An unsigned 16-bit integer that specifies the number of channels in the audio format. The number of channels is part of the audio format and is not determined by the Remote Desktop Protocol: Audio Output Virtual Channel Extension protocol.
+// nChannels (2 bytes): An unsigned 16-bit integer that specifies the number of channels in the
+// audio format. The number of channels is part of the audio format and is not determined by the
+// Remote Desktop Protocol: Audio Output Virtual Channel Extension protocol.
 //
-// nSamplesPerSec (4 bytes): An unsigned 32-bit integer that specifies the number of audio samples per second in the audio format.
+// nSamplesPerSec (4 bytes): An unsigned 32-bit integer that specifies the number of audio
+// samples per second in the audio format.
 //
-// nAvgBytesPerSec (4 bytes): An unsigned 32-bit integer that specifies the average number of bytes the audio format uses to encode one second of audio data.
+// nAvgBytesPerSec (4 bytes): An unsigned 32-bit integer that specifies the average
+// number of bytes the audio format uses to encode one second of audio data.
 //
-// nBlockAlign (2 bytes): An unsigned 16-bit integer that specifies the minimum atomic unit of data needed to process audio of this format. See [MSDN-AUDIOFORMAT] for more information about block alignment semantics.
+// nBlockAlign (2 bytes): An unsigned 16-bit integer that specifies the minimum atomic
+// unit of data needed to process audio of this format. See [MSDN-AUDIOFORMAT] for more
+// information about block alignment semantics.
 //
-// wBitsPerSample (2 bytes): An unsigned 16-bit integer that specifies the number of bits needed to represent a sample.
+// wBitsPerSample (2 bytes): An unsigned 16-bit integer that specifies the number of bits
+// needed to represent a sample.
 //
 // cbSize (2 bytes): An unsigned 16-bit integer specifying the size of the data field.
 //
-// data (variable): Extra data specific to the audio format.<4> See [MSDN-AUDIOFORMAT] for additional details about extra format information. The size of data, in bytes, is cbSize.
+// data (variable): Extra data specific to the audio format.<4> See [MSDN-AUDIOFORMAT] for
+// additional details about extra format information. The size of data, in bytes, is cbSize.
 
 
 
@@ -338,7 +357,9 @@ struct ServerAudioFormatsandVersionHeader{
 //
 // For more information about Global System for Mobile communications (GSM), see [ETSI-GSM].
 //
-// The following tables show codecs and associated format tags that are supported by default on the different versions of Windows, which support audio redirection. Unless otherwise specified, information about these codecs can be found in [RFC2361].
+// The following tables show codecs and associated format tags that are supported by default
+// on the different versions of Windows, which support audio redirection. Unless otherwise
+// specified, information about these codecs can be found in [RFC2361].
 //
 // The following codecs are supported by default on Windows XP and Windows Server 2003:
 
@@ -505,7 +526,12 @@ struct AudioFormat {
 
 // 2.2.2.2 Client Audio Formats and Version PDU (CLIENT_AUDIO_VERSION_AND_FORMATS)
 //
-// The Client Audio Formats and Version PDU is a PDU that is used to send version information, capabilities, and a list of supported audio formats from the client to the server.<5> After the server sends its version and a list of supported audio formats to the client, the client sends back a Client Audio Formats and Version PDU to the server containing its version and a list of formats that both the client and server support. This PDU MUST be sent by using virtual channels.
+// The Client Audio Formats and Version PDU is a PDU that is used to send version information,
+// capabilities, and a list of supported audio formats from the client to the server.<5> After
+// the server sends its version and a list of supported audio formats to the client, the
+// client sends back a Client Audio Formats and Version PDU to the server containing its
+// version and a list of formats that both the client and server support. This PDU MUST
+// be sent by using virtual channels.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -528,9 +554,11 @@ struct AudioFormat {
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// Header (4 bytes): An RDPSND PDU header (section 2.2.1). The msgType field of the RDPSND PDU header MUST be set to SNDC_FORMATS (0x07).
+// Header (4 bytes): An RDPSND PDU header (section 2.2.1). The msgType field of the RDPSND
+// PDU header MUST be set to SNDC_FORMATS (0x07).
 //
-// dwFlags (4 bytes): A 32-bit unsigned integer that specifies the general capability flags. The dwFlags field MUST be one or more of the following flags, combined with a bitwise OR operator.
+// dwFlags (4 bytes): A 32-bit unsigned integer that specifies the general capability flags.
+// The dwFlags field MUST be one or more of the following flags, combined with a bitwise OR operator.
 
 //  +-----------------------------+------------------------------------------------------+
 //  | Value                       | Meaning                                              |
@@ -545,23 +573,46 @@ struct AudioFormat {
 //  | 0x00000004                  | all the audio data that is received.                 |
 //  +-----------------------------+------------------------------------------------------+
 
-// dwVolume (4 bytes): A 32-bit unsigned integer. If the TSSNDCAPS_VOLUME flag is not set in the dwFlags field, the dwVolume field MUST be ignored. If the TSSNDCAPS_VOLUME flag is set in the dwFlags field, the dwVolume field specifies the initial volume of the audio stream. The low-order word contains the left-channel volume setting, and the high-order word contains the right-channel setting. A value of 0xFFFF represents full volume, and a value of 0x0000 is silence.
+// dwVolume (4 bytes): A 32-bit unsigned integer. If the TSSNDCAPS_VOLUME flag is not set in
+// the dwFlags field, the dwVolume field MUST be ignored. If the TSSNDCAPS_VOLUME flag is set
+// in the dwFlags field, the dwVolume field specifies the initial volume of the audio stream.
+// The low-order word contains the left-channel volume setting, and the high-order word
+// contains the right-channel setting. A value of 0xFFFF represents full volume, and a
+// value of 0x0000 is silence.
 //
-//     This value is to be interpreted logarithmically. This means that the perceived increase in volume is the same when increasing the volume level from 0x5000 to 0x6000 as it is from 0x4000 to 0x5000.
+// This value is to be interpreted logarithmically. This means that the perceived increase
+// in volume is the same when increasing the volume level from 0x5000 to 0x6000 as it is
+// from 0x4000 to 0x5000.
 //
-// dwPitch (4 bytes): A 32-bit unsigned integer. If the TSSNDCAPS_PITCH flag is not set in the dwFlags field, the dwPitch field MUST be ignored. If the TSSNDCAPS_PITCH flag is set in the dwFlags field, the dwPitch field specifies the initial pitch of the audio stream. The pitch is specified as a fixed-point value. The high-order word contains the signed integer part of the number, and the low-order word contains the fractional part. A value of 0x8000 in the low-order word represents one-half, and 0x4000 represents one-quarter. For example, the value 0x00010000 specifies a multiplier of 1.0 (no pitch change), and a value of 0x000F8000 specifies a multiplier of 15.5.
+// dwPitch (4 bytes): A 32-bit unsigned integer. If the TSSNDCAPS_PITCH flag is not set in the
+// dwFlags field, the dwPitch field MUST be ignored. If the TSSNDCAPS_PITCH flag is set in the
+// dwFlags field, the dwPitch field specifies the initial pitch of the audio stream. The pitch
+// is specified as a fixed-point value. The high-order word contains the signed integer part
+// of the number, and the low-order word contains the fractional part. A value of 0x8000 in
+// the low-order word represents one-half, and 0x4000 represents one-quarter. For example,
+// the value 0x00010000 specifies a multiplier of 1.0 (no pitch change), and a value of
+// 0x000F8000 specifies a multiplier of 15.5.
 //
-// wDGramPort (2 bytes): A 16-bit unsigned integer that, if set to a nonzero value, specifies the client port that the server MUST use to send data over UDP. A zero value means UDP is not supported. This field MUST be specified by using big-endian byte ordering.
+// wDGramPort (2 bytes): A 16-bit unsigned integer that, if set to a nonzero value, specifies
+// the client port that the server MUST use to send data over UDP. A zero value means UDP is
+// not supported. This field MUST be specified by using big-endian byte ordering.
 //
-// wNumberOfFormats (2 bytes): A 16-bit unsigned integer that specifies the number of AUDIO_FORMAT structures that are contained in an sndFormats array.
+// wNumberOfFormats (2 bytes): A 16-bit unsigned integer that specifies the number of
+// AUDIO_FORMAT structures that are contained in an sndFormats array.
 //
-// cLastBlockConfirmed (1 byte): An 8-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// cLastBlockConfirmed (1 byte): An 8-bit unsigned integer. This field is unused. The value
+// is arbitrary and MUST be ignored on receipt.
 //
-// wVersion (2 bytes): A 16-bit unsigned integer that specifies the version of the protocol that is supported by the client.<6>
+// wVersion (2 bytes): A 16-bit unsigned integer that specifies the version of the protocol
+// that is supported by the client.<6>
 //
-// bPad (1 byte): An 8-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// bPad (1 byte): An 8-bit unsigned integer. This field is unused. The value is arbitrary
+// and MUST be ignored on receipt.
 //
-// sndFormats (variable): A variable-sized array of audio formats that are supported by the client and the server, each conforming in structure to the AUDIO_FORMAT. Each audio format MUST also appear in the Server Audio Formats and Version PDU list of audio formats just sent by the server. The number of formats in the array is wNumberOfFormats.
+// sndFormats (variable): A variable-sized array of audio formats that are supported by
+// the client and the server, each conforming in structure to the AUDIO_FORMAT. Each audio
+// format MUST also appear in the Server Audio Formats and Version PDU list of audio formats
+// just sent by the server. The number of formats in the array is wNumberOfFormats.
 
 enum : uint32_t {
     TSSNDCAPS_ALIVE  = 0x00000001,
@@ -643,7 +694,10 @@ struct ClientAudioFormatsandVersionHeader{
 
 // 2.2.2.3 Quality Mode PDU
 //
-// The Quality Mode PDU is a PDU used by the client to select one of three quality modes. If both the client and server are at least version 6, the client MUST send a Quality Mode PDU immediately after sending the audio formats. This packet is only used when the client and server versions are both at least 6.<7> This PDU MUST be sent using virtual channels.
+// The Quality Mode PDU is a PDU used by the client to select one of three quality modes.
+// If both the client and server are at least version 6, the client MUST send a Quality Mode
+// PDU immediately after sending the audio formats. This packet is only used when the client
+// and server versions are both at least 6.<7> This PDU MUST be sent using virtual channels.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -654,9 +708,12 @@ struct ClientAudioFormatsandVersionHeader{
 // |         wQualityMode          |           Reserved            |
 // +-------------------------------+-------------------------------+
 
-// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_QUALITYMODE (0x0C).
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU
+// Header MUST be set to SNDC_QUALITYMODE (0x0C).
 //
-// wQualityMode (2 bytes): A 16-bit unsigned integer. This field specifies the quality setting the client has requested. The definition of these three modes is implementation-dependent, but SHOULD use the following guidelines.
+// wQualityMode (2 bytes): A 16-bit unsigned integer. This field specifies the quality setting
+// the client has requested. The definition of these three modes is implementation-dependent, but
+// SHOULD use the following guidelines.
 
 //  +-----------------------------+------------------------------------------------------+
 //  | Value                       | Meaning                                              |
@@ -674,7 +731,8 @@ struct ClientAudioFormatsandVersionHeader{
 //  |                             | requirements for that format.                        |
 //  +-----------------------------+------------------------------------------------------+
 
-// Reserved (2 bytes): A 16-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// Reserved (2 bytes): A 16-bit unsigned integer. This field is unused. The value is arbitrary
+// and MUST be ignored on receipt.
 
 enum : uint16_t {
     DYNAMIC_QUALITY = 0x0000,
@@ -720,7 +778,10 @@ struct QualityModePDU {
 
 // 2.2.3.1 Training PDU (SNDTRAINING)
 //
-// The Training PDU is a PDU used by the server to request that the client send it a Training Confirm PDU. In response, the client MUST immediately send a Training Confirm PDU to the server. The server uses the sending and receiving of these packets for diagnostic purposes. This PDU can be sent using virtual channels or UDP.
+// The Training PDU is a PDU used by the server to request that the client send it a
+// Training Confirm PDU. In response, the client MUST immediately send a Training Confirm
+// PDU to the server. The server uses the sending and receiving of these packets for
+// diagnostic purposes. This PDU can be sent using virtual channels or UDP.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -735,11 +796,14 @@ struct QualityModePDU {
 // |                              ...                              |
 // +---------------------------------------------------------------+
 
-// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_TRAINING (0x06).
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the
+// RDPSND PDU Header MUST be set to SNDC_TRAINING (0x06).
 //
 // wTimeStamp (2 bytes): A 16-bit unsigned integer. In the Training PDU this value is arbitrary.
 //
-// wPackSize (2 bytes): A 16-bit unsigned integer. If the size of data is nonzero, then this field specifies the size, in bytes, of the entire PDU. If the size of data is 0, then wPackSize MUST be 0.
+// wPackSize (2 bytes): A 16-bit unsigned integer. If the size of data is nonzero,
+// then this field specifies the size, in bytes, of the entire PDU. If the size of
+// data is 0, then wPackSize MUST be 0.
 //
 // data (variable): Unused. The value in this field is arbitrary and MUST be ignored on receipt.
 
@@ -785,7 +849,10 @@ struct TrainingPDU {
 
 // 2.2.3.2 Training Confirm PDU (SNDTRAININGCONFIRM)
 //
-// The Training Confirm PDU is a PDU sent by the client to confirm the reception of a Training PDU. This PDU MUST be sent using virtual channels or UDP. The server MAY use data from this PDU to calculate how fast the network can transmit data, as described in section 3.3.5.1.1.5.
+// The Training Confirm PDU is a PDU sent by the client to confirm the reception
+// of a Training PDU. This PDU MUST be sent using virtual channels or UDP.
+// The server MAY use data from this PDU to calculate how fast the network can
+// transmit data, as described in section 3.3.5.1.1.5.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -796,13 +863,18 @@ struct TrainingPDU {
 // |         wTimeStamp            |           wPackSize           |
 // +-------------------------------+-------------------------------+
 
-// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_TRAINING (0x06).
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the
+// RDPSND PDU Header MUST be set to SNDC_TRAINING (0x06).
 //
-// wTimeStamp (2 bytes): A 16-bit unsigned integer. In the Training PDU this value is arbitrary.
+// wTimeStamp (2 bytes): A 16-bit unsigned integer. In the Training PDU this value
+// is arbitrary.
 //
-// wPackSize (2 bytes): A 16-bit unsigned integer. If the size of data is nonzero, then this field specifies the size, in bytes, of the entire PDU. If the size of data is 0, then wPackSize MUST be 0.
+// wPackSize (2 bytes): A 16-bit unsigned integer. If the size of data is nonzero, then
+// this field specifies the size, in bytes, of the entire PDU. If the size of data is 0,
+// then wPackSize MUST be 0.
 //
-// data (variable): Unused. The value in this field is arbitrary and MUST be ignored on receipt.
+// data (variable): Unused. The value in this field is arbitrary and MUST be ignored
+// on receipt.
 
 struct TrainingConfirmPDU {
 
@@ -845,7 +917,10 @@ struct TrainingConfirmPDU {
 
 // 2.2.3.3 WaveInfo PDU (SNDWAVINFO)
 
-// The WaveInfo PDU is the first of two consecutive PDUs used to transmit audio data over virtual channels. This packet contains information about the audio data along with the first 4 bytes of the audio data itself. This PDU MUST be sent using static virtual channels.
+// The WaveInfo PDU is the first of two consecutive PDUs used to transmit audio
+// data over virtual channels. This packet contains information about the audio data
+// along with the first 4 bytes of the audio data itself. This PDU MUST be sent
+// using static virtual channels.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -860,17 +935,32 @@ struct TrainingConfirmPDU {
 // |                             Data                              |
 // +---------------------------------------------------------------+
 
-// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_WAVE (0x02). The BodySize field of the RDPSND PDU Header is the size of the WaveInfo PDU plus the size of the data field of the Wave PDU that immediately follows this packet minus the size of the Header.
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of
+// the RDPSND PDU Header MUST be set to SNDC_WAVE (0x02). The BodySize field of the
+// RDPSND PDU Header is the size of the WaveInfo PDU plus the size of the data field
+// of the Wave PDU that immediately follows this packet minus the size of the Header.
 //
-// wTimeStamp (2 bytes): A 16-bit unsigned integer representing the time stamp of the audio data. It SHOULD be set to a time that represents when this PDU is built.<8>
+// wTimeStamp (2 bytes): A 16-bit unsigned integer representing the time stamp of
+// the audio data. It SHOULD be set to a time that represents when this PDU is built.<8>
 //
-// wFormatNo (2 bytes): A 16-bit unsigned integer that represents an index into the list of audio formats exchanged between the client and server during the initialization phase, as described in section 3.1.1.2. The format located at that index is the format of the audio data in this PDU and the Wave PDU that immediately follows this packet.
+// wFormatNo (2 bytes): A 16-bit unsigned integer that represents an index into the
+// list of audio formats exchanged between the client and server during the initialization
+// phase, as described in section 3.1.1.2. The format located at that index is the
+// format of the audio data in this PDU and the Wave PDU that immediately follows
+// this packet.
 //
-// cBlockNo (1 byte): An 8-bit unsigned integer specifying the block ID of the audio data. When the client notifies the server that it has consumed the audio data, it sends a Wave Confirm PDU (section 2.2.3.8) containing this field in its cConfirmedBlockNo field.
+// cBlockNo (1 byte): An 8-bit unsigned integer specifying the block ID of the audio
+// data. When the client notifies the server that it has consumed the audio data, it
+// sends a Wave Confirm PDU (section 2.2.3.8) containing this field in its
+// cConfirmedBlockNo field.
 //
-// bPad (3 bytes): A 24-bit unsigned integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// bPad (3 bytes): A 24-bit unsigned integer. This field is unused. The value is
+// arbitrary and MUST be ignored on receipt.
 //
-// Data (4 bytes): The first four bytes of the audio data. The rest of the audio data arrives in the next PDU, which MUST be a Wave PDU. The audio data MUST be in the audio format from the list of formats exchanged during the Initialization Sequence (section 2.2.2); this list is found at the index specified in the wFormatNo field.
+// Data (4 bytes): The first four bytes of the audio data. The rest of the audio data
+// arrives in the next PDU, which MUST be a Wave PDU. The audio data MUST be in the audio
+// format from the list of formats exchanged during the Initialization Sequence (section 2.2.2);
+// this list is found at the index specified in the wFormatNo field.
 
 struct WaveInfoPDU {
 
@@ -926,9 +1016,12 @@ struct WaveInfoPDU {
 
 // 2.2.3.8 Wave Confirm PDU (SNDWAV_CONFIRM)
 //
-// The Wave Confirm PDU is a PDU that MUST be sent by the client to the server immediately after the following two events occur:
+// The Wave Confirm PDU is a PDU that MUST be sent by the client to the server
+// immediately after the following two events occur:
 //
-//     An audio data sample is received from the server, whether using a WaveInfo PDU and Wave PDU, a Wave2 PDU, a Wave Encrypt PDU, or several UDP Wave PDUs followed by a UDP Wave Last PDU.
+// An audio data sample is received from the server, whether using a WaveInfo
+// PDU and Wave PDU, a Wave2 PDU, a Wave Encrypt PDU, or several UDP Wave PDUs
+// followed by a UDP Wave Last PDU.
 //
 //     The audio data sample is emitted to completion by the client.
 //
@@ -943,13 +1036,18 @@ struct WaveInfoPDU {
 // |          wTimeStamp           |  cConfBlockNo |      bPad     |
 // +---------------+---------------+---------------+---------------+
 
-// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU Header MUST be set to SNDC_WAVECONFIRM (0x05).
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the
+// RDPSND PDU Header MUST be set to SNDC_WAVECONFIRM (0x05).
 //
-// wTimeStamp (2 bytes): A 16-bit unsigned integer. See section 3.2.5.2.1.6 for details of how this field is set.
+// wTimeStamp (2 bytes): A 16-bit unsigned integer. See section 3.2.5.2.1.6 for
+// details of how this field is set.
 //
-// cConfirmedBlockNo (1 byte): An 8-bit unsigned integer that MUST be the same as the cBlockNo field of the UDP Wave Last PDU (section 2.2.3.7), the Wave Encrypt PDU (section 2.2.3.5) or the WaveInfo PDU (section 2.2.3.3) just received from the server.
+// cConfirmedBlockNo (1 byte): An 8-bit unsigned integer that MUST be the same as
+// the cBlockNo field of the UDP Wave Last PDU (section 2.2.3.7), the Wave Encrypt
+// PDU (section 2.2.3.5) or the WaveInfo PDU (section 2.2.3.3) just received from the server.
 //
-// bPad (1 byte): An unsigned 8-bit integer. This field is unused. The value is arbitrary and MUST be ignored on receipt.
+// bPad (1 byte): An unsigned 8-bit integer. This field is unused. The value is
+// arbitrary and MUST be ignored on receipt.
 
 struct WaveConfirmPDU {
 
