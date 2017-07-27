@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(Test1Read1)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data1.subarray(4));
+    RED_CHECK_MEM(av, data1);
 }
 
 RED_AUTO_TEST_CASE(Test1Read10)
@@ -114,7 +114,7 @@ RED_AUTO_TEST_CASE(Test1Read10)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data1.subarray(4));
+    RED_CHECK_MEM(av, data1);
 }
 
 RED_AUTO_TEST_CASE(Test1Read100)
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(Test1Read100)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data1.subarray(4));
+    RED_CHECK_MEM(av, data1);
 }
 
 
@@ -137,14 +137,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     BlockTransport t(data2, 1);
     TpduBuffer buf;
 
-    // header
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-
-    // data
-    for (int i = 0; i < 80; ++i) {
+    for (int i = 0; i < 84; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
     }
     buf.load_data(t); RED_CHECK(buf.next_pdu());
@@ -153,16 +146,9 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(4, 81));
+    RED_CHECK_MEM(av, data2.subarray(85));
 
-    // header
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-    buf.load_data(t); RED_CHECK(!buf.next_pdu());
-
-    // data
-    for (int i = 0; i < 80; ++i) {
+    for (int i = 0; i < 84; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
     }
     buf.load_data(t); RED_CHECK(buf.next_pdu());
@@ -171,7 +157,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85+4));
+    RED_CHECK_MEM(av, data2.subarray(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read10)
@@ -188,7 +174,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(4, 81));
+    RED_CHECK_MEM(av, data2.subarray(85));
 
     for (int i = 0; i < 7; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
@@ -199,7 +185,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85+4));
+    RED_CHECK_MEM(av, data2.subarray(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read100)
@@ -213,7 +199,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(4, 81));
+    RED_CHECK_MEM(av, data2.subarray(85));
 
     buf.load_data(t); RED_CHECK(buf.next_pdu());
     RED_CHECK_EQ(t.remaining(), 0);
@@ -221,7 +207,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85+4));
+    RED_CHECK_MEM(av, data2.subarray(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read1000)
@@ -235,7 +221,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(4, 81));
+    RED_CHECK_MEM(av, data2.subarray(85));
 
     RED_CHECK(buf.next_pdu());
     RED_CHECK_EQ(t.remaining(), 0);
@@ -243,5 +229,5 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85+4));
+    RED_CHECK_MEM(av, data2.subarray(85));
 }

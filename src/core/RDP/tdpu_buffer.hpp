@@ -157,12 +157,12 @@ namespace Extractors
                     len = av[1];
                     if (len & 0x80){
                         len = (len & 0x7F) << 8 | av[2];
-                        len -= 1;
-                        buf.advance(1);
+                        // len -= 1;
+                        // buf.advance(1);
                     }
-                    len -= 1;
+                    // len -= 1;
+                    // buf.advance(2);
                     this->has_fast_path = true;
-                    buf.advance(2);
                 }
                 break;
 
@@ -170,13 +170,12 @@ namespace Extractors
                 {
                     len = Parse(av.subarray(2, 2).data()).in_uint16_be();
                     if (len < 6) {
-                        len = 0;
                         LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", len);
                         throw Error(ERR_X224);
                     }
-                    len -= 4;
+                    // len -= 4;
+                    // buf.advance(4);
                     this->has_fast_path = false;
-                    buf.advance(4);
                 }
                 break;
 
@@ -191,9 +190,7 @@ namespace Extractors
         void check_data(Buf64k const & buf) const
         {
             if (!this->has_fast_path) {
-                Parse data(buf.av(2).data());
-                data.in_skip_bytes(1);
-                uint8_t tpdu_type = data.in_uint8();
+                uint8_t tpdu_type = Parse(buf.sub(5, 1).data()).in_uint8();
                 switch (uint8_t(tpdu_type & 0xF0)) {
                     case X224::CR_TPDU: // Connection Request 1110 xxxx
                     case X224::CC_TPDU: // Connection Confirm 1101 xxxx
