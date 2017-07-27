@@ -194,7 +194,7 @@ namespace X224
     // format) in the other classes. The variable part, if present, may further
     // reduce the size of the user data field.
 
-    enum {
+    enum : uint8_t {
         CR_TPDU = 0xE0, // Connection Request 1110 xxxx
         CC_TPDU = 0xD0, // Connection Confirm 1101 xxxx
         DR_TPDU = 0x80, // Disconnect Request 1000 0000
@@ -325,7 +325,7 @@ namespace X224
         size_t length;
         bool   fast_path;
 
-        RecvFactory(Transport & t, uint8_t ** end, size_t bufsize, bool support_fast_path = false)
+        RecvFactory(Transport & t, uint8_t ** end, size_t bufsize)
                 : type(0)
                 , length(0)
                 , fast_path(false) {
@@ -341,16 +341,7 @@ namespace X224
             int action = tpkt_version & 0x03;
 
             if (action == FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH) {
-                if (!support_fast_path) {                   // !
-                    LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
-                    throw Error(ERR_X224);
-                }
                 this->fast_path = true;
-
-                if (action != 0) {
-                    LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
-                    throw Error(ERR_RDP_FASTPATH);
-                }
 
                 t.recv_boom(*end, 1);
                 *end += 1;
@@ -397,7 +388,7 @@ namespace X224
                 *end += tpkt_len - nbbytes;
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
-                switch (tpdu_type & 0xF0) {
+                switch (uint8_t(tpdu_type & 0xF0)) {
                 case X224::CR_TPDU: // Connection Request 1110 xxxx
                 case X224::CC_TPDU: // Connection Confirm 1101 xxxx
                 case X224::DR_TPDU: // Disconnect Request 1000 0000

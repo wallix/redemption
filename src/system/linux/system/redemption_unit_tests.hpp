@@ -149,6 +149,18 @@ namespace std
     }
 }
 
+#include "utils/sugar/underlying_cast.hpp"
+
+template<class Ch, class Tr, class E>
+typename std::enable_if<
+    std::is_enum<E>::value,
+    std::basic_ostream<Ch, Tr>&
+>::type
+operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
+{
+    return out << underlying_cast(e);
+}
+
 #include "cxx/cxx.hpp"
 #include "utils/sugar/byte.hpp"
 

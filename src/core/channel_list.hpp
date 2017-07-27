@@ -352,7 +352,7 @@ namespace CHANNELS {
 
         explicit VirtualChannelPDU(bool verbose = 0) : verbose(verbose) {}
 
-        void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+        void send_to_server( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
                            , const uint8_t * chunk, size_t chunk_size) {
             this->send_<false, MCS::SendDataRequest_Send>(
@@ -362,7 +362,7 @@ namespace CHANNELS {
             );
         }
 
-        void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+        void send_to_client( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
                            , const uint8_t * chunk, size_t chunk_size) {
             this->send_<true, MCS::SendDataIndication_Send>(
@@ -375,7 +375,7 @@ namespace CHANNELS {
     private:
         template<bool enable_verbose, class MCS_SendData>
         void send_(
-          Transport & trans, CryptContext & crypt_context, int encryptionLevel
+          OutTransport trans, CryptContext & crypt_context, int encryptionLevel
         , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
         , const uint8_t * chunk, size_t chunk_size) {
             write_packets(

@@ -2303,7 +2303,7 @@ public:
             constexpr std::size_t array_size = 65536;
             uint8_t array[array_size];
             uint8_t * end = array;
-            X224::RecvFactory fx224(this->trans, &end, array_size, true);
+            X224::RecvFactory fx224(this->trans, &end, array_size);
             InStream stream(array, end - array);
 
             if (fx224.fast_path) {

@@ -23,22 +23,15 @@
 
 #define LOGNULL
 #include "core/RDP/nla/nla.hpp"
+#include "core/RDP/tdpu_buffer.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 
-// RED_AUTO_TEST_CASE(TestNla)
-// {
-//     LogTransport logtrans;
-//     rdpCredssp credssp(logtrans);
-
-//     credssp.credssp_client_authenticate();
-// }
-
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
-    const char client[65000] =
+    const char client[] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
 /* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........
@@ -77,7 +70,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0050 */ "\xd5\xf3\xa7\xb5\x33\xd5\x62\x8d\x93\x18\x54\x39\x8a\xe7"         //....3.b...T9..
         ;
 
-    const char server[65000] =
+    const char server[] =
         // challenge
 /* 0000 */ "\x30\x81\x88\xa0\x03\x02\x01\x02\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|.
 /* 0010 */ "\x7a\x04\x78\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00" //z.xNTLMSSP......
@@ -98,7 +91,6 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
     TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
@@ -106,17 +98,27 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     LCGTime timeobj;
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
-    int res = credssp.credssp_client_authenticate();
-    RED_CHECK_EQUAL(res, 1);
+    rdpCredsspClient credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    RED_CHECK(credssp.credssp_client_authenticate_init());
+
+    rdpCredsspClient::State st = rdpCredsspClient::State::Cont;
+    TpduBuffer buf;
+    while (rdpCredsspClient::State::Cont == st) {
+        buf.load_data(logtrans);
+        while (buf.next_credssp() && rdpCredsspClient::State::Cont == st) {
+            InStream in_stream(buf.current_pdu_buffer());
+            st = credssp.credssp_client_authenticate_next(in_stream);
+        }
+    }
+    RED_CHECK_EQUAL(0, buf.remaining());
+    RED_CHECK_EQUAL(st, rdpCredsspClient::State::Finish);
 }
 
 
 
 RED_AUTO_TEST_CASE(TestNlaserver)
 {
-
-    const char client[65000] =
+    const char client[] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
 /* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........
@@ -156,7 +158,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
         ;
 
-    const char server[65000] =
+    const char server[] =
         // challenge
 /* 0000 */ "\x30\x81\x88\xa0\x03\x02\x01\x02\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|.
 /* 0010 */ "\x7a\x04\x78\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00" //z.xNTLMSSP......
@@ -175,7 +177,6 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
-    logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
@@ -183,7 +184,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     LCGTime timeobj;
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj);
     credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
     RED_CHECK_EQUAL(res, 1);

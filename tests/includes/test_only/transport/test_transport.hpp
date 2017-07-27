@@ -52,12 +52,30 @@ namespace redemption_unit_test__
 
         std::size_t size() const
         {
-            return sig.size();
+            return this->sig.size();
         }
 
         uint8_t const * data() const
         {
-            return sig.data();
+            return this->sig.data();
+        }
+    };
+
+    struct hexdump_with_remaining
+    {
+        char const * type;
+        uint8_t const * p;
+        std::size_t cur;
+        std::size_t len;
+
+        std::size_t size() const
+        {
+            return this->len - this->cur;
+        }
+
+        uint8_t const * data() const
+        {
+            return p;
         }
     };
 
@@ -94,6 +112,14 @@ namespace redemption_unit_test__
         }
         return out;
     }
+
+    inline std::ostream & operator<<(std::ostream & out, hexdump_with_remaining const & x)
+    {
+        return out
+            << hexdump{{x.data(), x.size()}} << '\n'
+            << "~" << x.type << "() remaining=" << x.size() << " len=" << x.len
+        ;
+    }
 }
 
 struct GeneratorTransport : Transport
@@ -124,9 +150,11 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, (redemption_unit_test__::hexdump{{
-                this->data.get() + this->current, this->len - this->current
-            }}));
+            RED_CHECK_MESSAGE(this->len == this->current, (
+                redemption_unit_test__::hexdump_with_remaining{
+                    "GeneratorTransport", this->data.get(), this->current, this->len
+                })
+            );
             std::ostringstream out;
             out << "~GeneratorTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
@@ -147,6 +175,18 @@ private:
         memcpy(buffer, this->data.get() + this->current, len);
         this->current += len;
         return Read::Ok;
+    }
+
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        size_t const remaining = this->len - this->current;
+        if (!remaining) {
+            return 0;
+        }
+        len = std::min(len, remaining);
+        memcpy(buffer, this->data.get() + this->current, len);
+        this->current += len;
+        return len;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override
@@ -201,9 +241,11 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (redemption_unit_test__::hexdump{{
-                this->data.get() + this->current, this->len - this->current
-            }}));
+            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (
+                redemption_unit_test__::hexdump_with_remaining{
+                    "CheckTransport", this->data.get(), this->current, this->len
+                })
+            );
             std::ostringstream out;
             out << "~CheckTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
             throw RemainingError{out.str()};
@@ -297,6 +339,11 @@ private:
         return this->gen.atomic_read(buffer, len);
     }
 
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        return this->gen.partial_read(buffer, len);
+    }
+
     void do_send(const uint8_t * const buffer, size_t len) override
     {
         this->check.send(buffer, len);
@@ -362,6 +409,18 @@ private:
         }
         this->in_stream.in_copy_bytes(buffer, len);
         return Read::Ok;
+    }
+
+    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    {
+        auto const in_offset = this->in_stream.get_offset();
+        auto const out_offset = this->out_stream.get_offset();
+        if (in_offset == out_offset){
+            return 0;
+        }
+        len = std::min(out_offset - out_offset, len);
+        this->in_stream.in_copy_bytes(buffer, len);
+        return len;
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override

@@ -1121,6 +1121,9 @@ struct TLSContext
     {
         for (;;) {
             ssize_t rcvd = ::SSL_read(this->io, data, len);
+            if (rcvd > 0) {
+                return rcvd;
+            }
             unsigned long error = SSL_get_error(this->io, rcvd);
             switch (error) {
                 case SSL_ERROR_NONE:

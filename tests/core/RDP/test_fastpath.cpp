@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    X224::RecvFactory fx224(in_t, &end, array_size);
 
     InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    X224::RecvFactory fx224(in_t, &end, array_size);
     InStream in_s(array, end - array);
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
 
@@ -212,7 +212,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    X224::RecvFactory fx224(in_t, &end, array_size);
     InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
@@ -271,7 +271,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    X224::RecvFactory fx224(in_t, &end, array_size);
     InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
@@ -311,7 +311,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
     uint8_t * end = array;
-    X224::RecvFactory fx224(in_t, &end, array_size, true);
+    X224::RecvFactory fx224(in_t, &end, array_size);
     InStream in_s(array, end - array);
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 

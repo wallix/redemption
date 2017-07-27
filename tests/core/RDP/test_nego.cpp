@@ -27,6 +27,7 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/nego.hpp"
+#include "core/RDP/tdpu_buffer.hpp"
 #include "core/server_notifier_api.hpp"
 #include "test_only/transport/test_transport.hpp"
 
@@ -119,13 +120,31 @@ RED_AUTO_TEST_CASE(TestNego)
 
     const bool server_cert_store = true;
 
+    constexpr std::size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    const X224::RecvFactory fx224(nego.trans.get_transport(), &end, array_size);
+    InStream x224_data(array, end - array);
+
     nego.recv_connection_confirm(
         server_cert_store,
         ServerCertCheck::always_succeed,
         null_server_notifier,
-        "/tmp/certif"
-        );
+        "/tmp/certif",
+        x224_data
+    );
 
+    RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_CREDSSP);
+
+    TpduBuffer buf;
+    while (nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+        buf.load_data(logtrans);
+        while (buf.next_credssp() && nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+            InStream in_stream(buf.current_pdu_buffer());
+            nego.recv_credssp(in_stream);
+        }
+    }
+    RED_CHECK_EQUAL(0, buf.remaining());
     RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
 

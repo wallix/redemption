@@ -214,16 +214,7 @@ struct TSRequest final {
 
     int recv(InStream & stream) {
         int length;
-        int status;
-        // uint32_t version;
-
-        status = stream.get_capacity();
-
-        if (status < 0) {
-            LOG(LOG_ERR, "Credssp TSCredentials::recv() error: %d" , status);
-            return -1;
-        }
-
+        
         /* TSRequest */
         if(!BER::read_sequence_tag(stream, length) ||
            !BER::read_contextual_tag(stream, 0, length, true) ||
