@@ -1052,18 +1052,18 @@ struct WaveInfoPDU {
 struct WaveConfirmPDU {
 
     uint16_t wTimeStamp;
-    uint8_t  cBlockNo;
+    uint8_t  cConfBlockNo;
 
     WaveConfirmPDU() = default;
 
     WaveConfirmPDU( uint16_t wTimeStamp
-                  , uint8_t  cBlockNo)
+                  , uint8_t  cConfBlockNo)
         : wTimeStamp(wTimeStamp)
-        , cBlockNo(cBlockNo) {}
+        , cConfBlockNo(cConfBlockNo) {}
 
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->wTimeStamp);
-        stream.out_uint8(this->cBlockNo);
+        stream.out_uint8(this->cConfBlockNo);
         stream.out_clear_bytes(1);
     }
 
@@ -1076,16 +1076,238 @@ struct WaveConfirmPDU {
             throw Error(ERR_FSCC_DATA_TRUNCATED);
         }
         this->wTimeStamp = stream.in_uint16_le();
-        this->cBlockNo = stream.in_uint8();
+        this->cConfBlockNo = stream.in_uint8();
         stream.in_skip_bytes(1);
     }
 
     void log() {
         LOG(LOG_INFO, "     Wave Confirm PDU:");
-        LOG(LOG_INFO, "          * wTimeStamp = 0x%04x (2 bytes)", this->wTimeStamp);
-        LOG(LOG_INFO, "          * wFormatNo  = 0x%02x (1 byte)", this->cBlockNo);
+        LOG(LOG_INFO, "          * wTimeStamp   = 0x%04x (2 bytes)", this->wTimeStamp);
+        LOG(LOG_INFO, "          * cConfBlockNo = 0x%02x (1 byte)", this->cConfBlockNo);
         LOG(LOG_INFO, "          * bPad - (1 byte) NOT USED");
     }
 };
+
+
+
+// 2.2.3.10 Wave2 PDU (SNDWAVE2)
+//
+// The Wave2 PDU is used to transmit audio data over virtual channels.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +-------------------------------+-------------------------------+
+// |          wTimeStamp           |           wFormatNo           |
+// +---------------+---------------+-------------------------------+
+// |    cBlockNo   |                     bPad                      |
+// +---------------+-----------------------------------------------+
+// |                        dwAudioTimeStamp                       |
+// +---------------------------------------------------------------+
+// |                         Data (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field
+// of the RDPSND PDU Header MUST be set to SNDC_WAVE2 (0x0D). The BodySize
+// field of the RDPSND PDU Header is the size of this PDU minus the size of
+// the header.
+//
+// wTimeStamp (2 bytes): A 16-bit unsigned integer representing the time stamp
+// of the audio data. It SHOULD<10> be set to a time that represents when this PDU is built.
+//
+// wFormatNo (2 bytes): A 16-bit unsigned integer that represents an index into
+// the list of audio formats exchanged between the client and server during the
+// initialization phase, as described in section 3.1.1.2. The format located at
+// that index is the format of the audio data in this PDU and the Wave PDU that
+// immediately follows this packet.
+//
+// cBlockNo (1 byte): An 8-bit unsigned integer specifying the block ID of the
+// audio data. When the client notifies the server that it has consumed the audio
+// data, it sends a Wave Confirm PDU (section 2.2.3.8) containing this field in
+// its cConfirmedBlockNo field.
+//
+// bPad (3 bytes): A 24-bit unsigned integer. This field is unused. The value
+// is arbitrary and MUST be ignored on receipt.
+//
+// dwAudioTimeStamp (4 bytes): A 32-bit unsigned integer representing the timestamp
+// when the server gets audio data from the audio source. The timestamp is the number
+// of milliseconds that have elapsed since the system was started. This timestamp
+// SHOULD be used to sync the audio stream with a video stream remoted using the
+// Remote Desktop Protocol: Video Optimized Remoting Virtual Channel Extension (see
+// the hnsTimestampOffset and hnsTimestamp fields as specified in [MS-RDPEVOR]
+// sections 2.2.1.2 and 2.2.1.6, respectively).
+//
+// Data (variable): Audio data. The format of the audio data MUST be the format
+// specified in the list of formats exchanged during the initialization sequence and
+// found at the index specified in the wFormatNo field.
+
+struct Wave2PDU {
+
+    uint16_t wTimeStamp;
+    uint16_t wFormatNo;
+    uint8_t  cBlockNo;
+    uint32_t dwAudioTimeStamp;
+
+
+    Wave2PDU() = default;
+
+    Wave2PDU( uint16_t wTimeStamp
+               , uint16_t wFormatNo
+               , uint8_t  cBlockNo
+               , uint32_t dwAudioTimeStamp)
+        : wTimeStamp(wTimeStamp)
+        , wFormatNo(wFormatNo)
+        , cBlockNo(cBlockNo)
+        , dwAudioTimeStamp(dwAudioTimeStamp){}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->wTimeStamp);
+        stream.out_uint16_le(this->wFormatNo);
+        stream.out_uint8(this->cBlockNo);
+        stream.out_clear_bytes(3);
+        stream.out_uint16_le(this->dwAudioTimeStamp);
+    }
+
+    void receive(InStream & stream) {
+        const unsigned expected = 8;   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated WaveInfoPDU (0): expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_FSCC_DATA_TRUNCATED);
+        }
+        this->wTimeStamp = stream.in_uint16_le();
+        this->wFormatNo = stream.in_uint16_le();
+        this->cBlockNo = stream.in_uint8();
+        stream.in_skip_bytes(3);
+        this->dwAudioTimeStamp = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "     Wave 2 PDU:");
+        LOG(LOG_INFO, "          * wTimeStamp       = 0x%04x (2 bytes)", this->wTimeStamp);
+        LOG(LOG_INFO, "          * wFormatNo        = 0x%04x (2 bytes)", this->wFormatNo);
+        LOG(LOG_INFO, "          * cBlockNo         = 0x%02x (1 byte)", this->cBlockNo);
+        LOG(LOG_INFO, "          * bPad - (3 bytes)  NOT USED");
+        LOG(LOG_INFO, "          * dwAudioTimeStamp = 0x%08x (4 bytes)", this->dwAudioTimeStamp);
+        LOG(LOG_INFO, "          * Data       ");
+    }
+};
+
+
+
+// 2.2.4.1 Volume PDU (SNDVOL)
+//
+// The Volume PDU is a PDU sent from the server to the client to specify the volume to
+// be set on the audio stream. For this packet to be sent, the client MUST have set the
+// flag TSSNDCAPS_VOLUME (0x0000002) in the Client Audio Formats and Version PDU
+// (section 2.2.2.2) that is sent during the initialization sequence described in
+// section 2.2.2.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                             Volume                            |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND
+// PDU Header MUST be set to SNDC_VOLUME (0x03).
+//
+// Volume (4 bytes): A 32-bit unsigned integer specifying the volume to be set on the audio
+// stream. See the dwVolume field in section 2.2.2.2 for semantics of the data in this field.
+
+struct VolumePDU {
+
+    uint32_t Volume = 0;
+
+
+    VolumePDU() = default;
+
+    VolumePDU(uint32_t Volume)
+        : Volume(Volume){}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->Volume);
+    }
+
+    void receive(InStream & stream) {
+        const unsigned expected = 4;   // Volume(4)
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated Volume PDU (0): expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_FSCC_DATA_TRUNCATED);
+        }
+        this->Volume = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "    Volume PDU:");
+        LOG(LOG_INFO, "          * Volume = 0x%08x (4 bytes)", this->Volume);
+    }
+};
+
+
+
+// 2.2.4.2 Pitch PDU (SNDPITCH)
+//
+// The Pitch PDU is a PDU sent from the server to the client to specify the pitch to be set on
+// the audio stream. For this packet to be sent, the client MUST have set the flag TSSNDCAPS_PITCH
+// (0x0000004) in the Client Audio Formats and Version PDU (section 2.2.2.2) that is sent during
+// the initialization sequence specified in section 2.2.2.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                              Pitch                            |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPSND PDU Header (section 2.2.1). The msgType field of the RDPSND PDU
+// Header MUST be set to SNDC_PITCH (0x04).
+//
+// Pitch (4 bytes): A 32-bit unsigned integer. Although the server can send this PDU, the client
+// MUST ignore it.
+
+struct PitchPDU {
+
+    uint32_t Pitch = 0;
+
+
+    PitchPDU() = default;
+
+    PitchPDU(uint32_t Pitch)
+        : Pitch(Pitch){}
+
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->Pitch);
+    }
+
+    void receive(InStream & stream) {
+        const unsigned expected = 4;   // Pitch(4)
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated Pitch PDU (0): expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_FSCC_DATA_TRUNCATED);
+        }
+        this->Pitch = stream.in_uint32_le();
+    }
+
+    void log() {
+        LOG(LOG_INFO, "    Pitch PDU:");
+        LOG(LOG_INFO, "          * Pitch = 0x%08x (4 bytes)", this->Pitch);
+    }
+};
+
 
 }

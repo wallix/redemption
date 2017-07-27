@@ -516,9 +516,9 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   //, to_verbose_flags(0)   // this->verbose
+                                   , to_verbose_flags(0)   // this->verbose
                                   // , RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels
-                                    , RDPVerbose::rdpdr_dump
+                                    //, RDPVerbose::rdpdr_dump
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -2539,12 +2539,13 @@ public:
                     this->sound_qt->last_PDU_is_WaveInfo = false;
                 }
 
+
                 this->sound_qt->setData(chunk.get_current(), chunk.in_remain());
 
                 if (!(this->sound_qt->wave_data_to_wait)) {
 
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %d",  this->sound_qt->raw_total_size);
+                        LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
                     }
                     //this->sound_qt->setData(uint8_t('\0'), 1);
 
@@ -2577,8 +2578,9 @@ public:
                         rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_FORMATS, 38);
                         header_out.emit(out_stream);
 
-                        rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE
-                                                                        , 0
+                        rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE |
+                                                                          rdpsnd::TSSNDCAPS_VOLUME
+                                                                        , 0x00005000
                                                                         , 0
                                                                         , 0
                                                                         , 1
@@ -2593,11 +2595,11 @@ public:
 
                             if (format.wFormatTag == rdpsnd::WAVE_FORMAT_PCM) {
                                 format.emit(out_stream);
-                                this->sound_qt->sample_per_sec = format.nSamplesPerSec;
+                                this->sound_qt->n_sample_per_sec = format.nSamplesPerSec;
                                 this->sound_qt->bit_per_sample = format.wBitsPerSample;
                                 this->sound_qt->n_channels = format.nChannels;
-                                this->sound_qt->block_size = format.nBlockAlign;
-
+                                this->sound_qt->n_block_align = format.nBlockAlign;
+                                this->sound_qt->bit_per_sec = format.nSamplesPerSec * (format.wBitsPerSample/8) * format.nChannels;
                             }
                         }
 
@@ -2687,17 +2689,9 @@ public:
                         }
 
                         this->sound_qt->wave_data_to_wait = header.BodySize - 8;
-                        this->sound_qt->raw_total_size    = header.BodySize - 12;
-
                         rdpsnd::WaveInfoPDU wi;
                         wi.receive(chunk);
-//                         header.log();
-//                         wi.log();
-
-                        this->sound_qt->last_wTimeStamp = wi.wTimeStamp;
-                        this->sound_qt->last_cConfirmedBlockNo = wi.cBlockNo;
-
-                        this->sound_qt->init();
+                        this->sound_qt->init(header.BodySize - 12);
                         this->sound_qt->setData(wi.Data, 4);
 
                         this->sound_qt->last_PDU_is_WaveInfo = true;
@@ -2705,16 +2699,30 @@ public:
                         break;
 
                     case rdpsnd::SNDC_CLOSE:
-                        //LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
+                        }
                         break;
 
-//                     case rdpsnd::SNDC_SETVOLUME:
-//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
-//                         break;
+                    case rdpsnd::SNDC_SETVOLUME:
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
+                        }
+                        {
+                        rdpsnd::VolumePDU v;
+                        v.receive(chunk);
+                        }
+                        break;
 
-//                     case rdpsnd::SNDC_SETPITCH:
-//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETPITCH PDU");
-//                         break;
+                    case rdpsnd::SNDC_SETPITCH:
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETPITCH PDU");
+                        }
+                        {
+                        rdpsnd::PitchPDU p;
+                        p.receive(chunk);
+                        }
+                        break;
 
 //                     case rdpsnd::SNDC_CRYPTKEY:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_CRYPTKEY PDU");
@@ -2724,17 +2732,31 @@ public:
 //                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVEENCRYPT PDU");
 //                         break;
 
-//                     case rdpsnd::SNDC_UDPWAVELAST:
-//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_UDPWAVELAST PDU");
-//                         break;
+                    case rdpsnd::SNDC_QUALITYMODE:
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_QUALITYMODE PDU");
+                        }
+                        {
+                        rdpsnd::QualityModePDU qm;
+                        qm.receive(chunk);
+                        }
+                        break;
 
-//                     case rdpsnd::SNDC_QUALITYMODE:
-//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_QUALITYMODE PDU");
-//                         break;
+                    case rdpsnd::SNDC_WAVE2:
+                        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                            LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVE2 PDU");
+                        }
+                        {
+                        this->sound_qt->wave_data_to_wait = header.BodySize - 12;
+                        rdpsnd::Wave2PDU w2;
+                        w2.receive(chunk);
 
-//                     case rdpsnd::SNDC_WAVE2:
-//                         LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVE2 PDU");
-//                         break;
+                        this->sound_qt->init(header.BodySize - 12);
+                        this->sound_qt->setData(chunk.get_current(), chunk.in_remain());
+
+                        this->sound_qt->last_PDU_is_WaveInfo = true;
+                        }
+                        break;
 
 
                     default: LOG(LOG_WARNING, "SERVER >> RDPEA: Unknown message type: %x", header.msgType);
@@ -2768,26 +2790,26 @@ public:
 
 
     void send_WaveConfirmPDU() override {
-        StaticOutStream<32> out_stream;
-
-        rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
-        header_out.emit(out_stream);
-
-        rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
-                                 , this->sound_qt->last_cConfirmedBlockNo);
-        wc.emit(out_stream);
-
-        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-        this->mod->send_to_mod_channel( channel_names::rdpsnd
-                                      , chunk_to_send
-                                      , out_stream.get_offset()
-                                      , CHANNELS::CHANNEL_FLAG_LAST |
-                                        CHANNELS::CHANNEL_FLAG_FIRST
-                                      );
-        if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-            LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
-        }
+//         StaticOutStream<32> out_stream;
+//
+//         rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
+//         header_out.emit(out_stream);
+//
+//         rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
+//                                  , this->sound_qt->last_cConfirmedBlockNo);
+//         wc.emit(out_stream);
+//
+//         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//         this->mod->send_to_mod_channel( channel_names::rdpsnd
+//                                       , chunk_to_send
+//                                       , out_stream.get_offset()
+//                                       , CHANNELS::CHANNEL_FLAG_LAST |
+//                                         CHANNELS::CHANNEL_FLAG_FIRST
+//                                       );
+//         if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+//             LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+//         }
     }
 
 
@@ -3292,7 +3314,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::rdpdr;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::rdpsnd;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

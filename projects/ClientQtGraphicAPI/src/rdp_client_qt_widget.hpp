@@ -1283,18 +1283,22 @@ Q_OBJECT
 
 public:
     int wave_data_to_wait;
-    int last_wTimeStamp;
-    int last_cConfirmedBlockNo;
 
-    int sample_per_sec;
-    int bit_per_sample;
-    int n_channels;
-    int block_size;
-    int raw_total_size;
+    uint32_t n_sample_per_sec;
+    uint16_t bit_per_sample;
+    uint16_t n_channels;
+    uint16_t n_block_align;
+    uint32_t bit_per_sec;
 
     bool last_PDU_is_WaveInfo;
 
     Front_RDP_Qt_API * front;
+
+    std::string wave_file_to_write;
+
+    int current_wav_index;
+    int total_wav_files;
+
 
 
 
@@ -1303,15 +1307,15 @@ public:
       , media(nullptr)
       , audioOutput(nullptr)
       , wave_data_to_wait(0)
-      , last_wTimeStamp(0)
-      , last_cConfirmedBlockNo(0)
-      , sample_per_sec(0)
+      , n_sample_per_sec(0)
       , bit_per_sample(0)
       , n_channels(0)
-      , block_size(0)
-      , raw_total_size(0)
+      , n_block_align(0)
+      , bit_per_sec(0)
       , last_PDU_is_WaveInfo(false)
       , front(front)
+      , current_wav_index(0)
+      , total_wav_files(0)
     {
         this->media = new Phonon::MediaObject(this);
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
@@ -1320,52 +1324,63 @@ public:
         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
     }
 
-    void init() {
-//         if (this->media->state() == Phonon::StoppedState) {
-            this->media->stop();
+    void init(size_t raw_total_size) {
 
-            StaticOutStream<64> out_stream;
-            out_stream.out_copy_bytes("RIFF", 4);
-            out_stream.out_uint32_le(this->raw_total_size + 36);
-            out_stream.out_copy_bytes("WAVEfmt ", 8);
-            out_stream.out_uint32_le(16);
-            out_stream.out_uint16_le(1);
-            out_stream.out_uint16_le(this->n_channels);
-            out_stream.out_uint32_le(this->sample_per_sec);
-            out_stream.out_uint32_le(this->sample_per_sec * (this->bit_per_sample/8) * this->n_channels);
-            out_stream.out_uint16_le(this->block_size);
-            out_stream.out_uint16_le(this->bit_per_sample);
-            out_stream.out_copy_bytes("data", 4);
-            out_stream.out_uint32_le(this->raw_total_size);
 
-            std::ofstream file("current.wav", std::ios::out| std::ios::binary);
-            if (file.is_open()) {
-                file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
+        this->total_wav_files++;
 
-                file.close();
-            }
-//         }
+        this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
+
+        StaticOutStream<64> out_stream;
+        out_stream.out_copy_bytes("RIFF", 4);
+        out_stream.out_uint32_le(raw_total_size + 36);
+        out_stream.out_copy_bytes("WAVEfmt ", 8);
+        out_stream.out_uint32_le(16);
+        out_stream.out_uint16_le(1);
+        out_stream.out_uint16_le(this->n_channels);
+        out_stream.out_uint32_le(this->n_sample_per_sec);
+        out_stream.out_uint32_le(this->bit_per_sec);
+        out_stream.out_uint16_le(this->n_block_align);
+        out_stream.out_uint16_le(this->bit_per_sample);
+        out_stream.out_copy_bytes("data", 4);
+        out_stream.out_uint32_le(raw_total_size);
+
+        std::ofstream file(this->wave_file_to_write.c_str(), std::ios::out| std::ios::binary);
+        if (file.is_open()) {
+            file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
+            file.close();
+        }
     }
 
     void setData(const uint8_t * data, size_t size) {
-//         if (this->media->state() == Phonon::StoppedState) {
-            std::ofstream file("current.wav", std::ios::app | std::ios::out| std::ios::binary);
-            if (file) {
-                file.write(reinterpret_cast<const char *>(data), size);
-                file.close();
-            }
-//         }
+        std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
+        if (file) {
+            file.write(reinterpret_cast<const char *>(data), size);
+            file.close();
+        }
     }
 
     void play() {
-        Phonon::MediaSource sources(QUrl("current.wav"));
-        this->media->setCurrentSource(sources);
-        this->media->play();
+        if (this->media->state() == Phonon::StoppedState) {
+
+            if (this->total_wav_files > this->current_wav_index) {
+
+                this->current_wav_index++;
+                std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+
+                Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
+                this->media->setCurrentSource(sources);
+                this->media->play();
+            }
+        }
     }
 
 private Q_SLOTS:
     void call_playback_over() {
-        this->front->send_WaveConfirmPDU();
+        std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+        remove(wav_file_name.c_str());
+        
+        this->play();
     }
 
 };
