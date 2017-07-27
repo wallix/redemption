@@ -1226,10 +1226,9 @@ public:
         // }
 
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), file_name_UTF16,
-                sizeof(file_name_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
+                sizeof(this->file_name_UTF16));
     }
-
 
     void emit(OutStream & stream) const {
         // uint8_t ShortName_unicode_data[24] = {0};
@@ -1258,7 +1257,7 @@ public:
         stream.out_uint32_le(this->EaSize);
         stream.out_uint8(this->ShortNameLength);
 
-        //stream.out_uint8(0);                               // Reserved(1), MUST NOT be transmitted.
+        // Reserved(1), MUST NOT be transmitted.
 
 //        stream.out_copy_bytes(ShortName_unicode_data, 24);
         stream.out_copy_bytes(this->short_name_UTF16, this->ShortNameLength);
@@ -1300,7 +1299,7 @@ public:
         this->EaSize = stream.in_uint32_le();
         this->ShortNameLength = stream.in_sint8();
 
-        //stream.in_skip_bytes(1);                           // Reserved(1), MUST NOT be transmitted.
+        // Reserved(1), MUST NOT be transmitted.
 
         // uint8_t ShortName_utf16[24];
         // stream.in_copy_bytes(ShortName_utf16, 24);
@@ -1359,7 +1358,6 @@ public:
         return size + this->FileNameLength;
     }
 
-
 private:
     size_t str(char * buffer, size_t size) const {
         uint8_t short_name_UTF8[128];
@@ -1391,7 +1389,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1433,6 +1431,7 @@ public:
         LOG(LOG_INFO, "          * FileName        = \"%s\" (%u byte(s))", file_name_UTF8, this->FileNameLength);
     }
 };  // FileBothDirectoryInformation
+
 
 
 // 2.4.10 FileDirectoryInformation
@@ -1729,8 +1728,7 @@ struct FileDispositionInformation {
     FileDispositionInformation() = default;
 
     FileDispositionInformation( uint64_t DeletePending)
-      : DeletePending(DeletePending)
-      {}
+    : DeletePending(DeletePending) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint8(this->DeletePending);
@@ -1747,6 +1745,7 @@ struct FileDispositionInformation {
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
         }
+
         this->DeletePending = stream.in_uint8();
     }
 
@@ -1759,7 +1758,6 @@ struct FileDispositionInformation {
         LOG(LOG_INFO, "          * DeletePending = 0x%02x (1 byte)", this->DeletePending);
     }
 };
-
 
 
 
@@ -1816,8 +1814,7 @@ struct FileEndOfFileInformation {
     FileEndOfFileInformation() = default;
 
     FileEndOfFileInformation( uint64_t EndOfFile)
-      : EndOfFile(EndOfFile)
-      {}
+    : EndOfFile(EndOfFile) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint64_le(this->EndOfFile);
@@ -1878,8 +1875,11 @@ struct FileFsLabelInformation {
 //          std::memcpy(this->VolumeLabel, VolumeLabel, 65536/2);
 
         this->VolumeLabelLength =
-            ::UTF8toUTF16(byte_ptr_cast(volume_label), volume_label_UTF16,
-                sizeof(volume_label_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(volume_label), this->volume_label_UTF16,
+                sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+        this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
+        this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
+        this->VolumeLabelLength += 2;
     }
 
     void emit(OutStream & stream) const {
@@ -1889,7 +1889,7 @@ struct FileFsLabelInformation {
         //         VolumeLabel_unicode_data, sizeof(VolumeLabel_unicode_data));
 
         stream.out_uint32_le(this->VolumeLabelLength);
-        stream.out_copy_bytes(this->volume_label_UTF16, VolumeLabelLength);
+        stream.out_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
 
     void receive(InStream & stream) {
@@ -1936,6 +1936,7 @@ struct FileFsLabelInformation {
         LOG(LOG_INFO, "          * VolumeLabel       = \"%s\" (%u byte(s))", volume_label_UTF8, this->VolumeLabelLength);
     }
 };
+
 
 
 // [MS-FSCC] - 2.4.14 FileFullDirectoryInformation
@@ -2123,7 +2124,7 @@ public:
                 sizeof(this->file_name_UTF16));
     }
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
 
         // uint8_t FileName_unicode_data[2000];
         // const size_t FileName_unicode_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(this->FileName),
@@ -2149,7 +2150,7 @@ public:
         stream.out_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 68;   // NextEntryOffset(4) + FileIndex(4) +
                                             //     CreationTime(8) + LastAccessTime(8) +
@@ -2200,7 +2201,7 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    inline size_t size() const {
+    size_t size() const {
         size_t size = 68;   // NextEntryOffset(4) + FileIndex(4) +
                             //     CreationTime(8) + LastAccessTime(8) +
                             //     LastWriteTime(8) + ChangeTime(8) +
@@ -2234,7 +2235,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2265,6 +2266,8 @@ public:
         LOG(LOG_INFO, "          * FileName        = \"%s\"", file_name_UTF8);
     }
 };  // FileFullDirectoryInformation
+
+
 
 // [MS-FSCC] - 2.4.26 FileNamesInformation
 // =======================================
@@ -2366,8 +2369,8 @@ public:
 //        std::memcpy(this->FileName, file_name, 500);
 
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), file_name_UTF16,
-                sizeof(file_name_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
+                sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2451,7 +2454,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2474,6 +2477,8 @@ public:
         LOG(LOG_INFO, "          * FileName        = \"%s\" (%u byte(s))", file_name_UTF8, this->FileNameLength);
     }
 };
+
+
 
 // [MS-FSCC] - 2.4.34 FileRenameInformation
 // ========================================
@@ -2575,8 +2580,8 @@ struct FileRenameInformation {
 //          std::memcpy(this->FileName, FileName, 500);
 
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), file_name_UTF16,
-                sizeof(file_name_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
+                sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2585,9 +2590,12 @@ struct FileRenameInformation {
         //     FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint8(this->ReplaceIfExists);
+
         stream.out_clear_bytes(7);
+
         stream.out_uint64_le(this->RootDirectory);
         stream.out_uint32_le(this->FileNameLength);
+
         stream.out_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
@@ -2735,7 +2743,7 @@ public:
         stream.out_uint8(this->DeletePending);
         stream.out_uint8(this->Directory);
 
-        //stream.out_clear_bytes(2);    // Reserved(1), MUST NOT be transmitted.
+        // Reserved(1), MUST NOT be transmitted.
     }
 
     void receive(InStream & stream) {
@@ -2793,6 +2801,8 @@ public:
         LOG(LOG_INFO, "          * Reserved - (2 bytes) Not Used");
     }
 };  // FileStandardInformation
+
+
 
 // [MS-FSCC] - 2.5.1 FileFsAttributeInformation
 // ============================================
@@ -2929,8 +2939,6 @@ enum {
     , FILE_SUPPORT_INTEGRITY_STREAMS    = 0x04000000
 };
 
-
-
 // MaximumComponentNameLength (4 bytes): A 32-bit signed integer that
 //  contains the maximum file name component length, in bytes, supported by
 //  the specified file system. The value of this field MUST be greater than
@@ -2983,10 +2991,11 @@ public:
 //         const size_t FileSystemName_tmp_size = sizeof(file_system_name);
 //         REDASSERT(FileSystemName_tmp_size <= 12);
 //        std::memcpy(this->FileSystemName, file_system_name, 12);
+
         this->FileSystemNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_system_name),
                 this->file_system_name_UTF16,
-                sizeof(file_system_name_UTF16));
+                sizeof(this->file_system_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -3087,39 +3096,38 @@ private:
     }
 
     static std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+        std::string str;
+        (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
+        (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
+        (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
 
-    std::string str;
-    (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
-    (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
-    (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
+        (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
+        (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
 
-    (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
-    (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
-    (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
+        (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
+        (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
 
-    (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
-    (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
-    (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
+        (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
 
-    (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
-    (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
-    (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
-
-    (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
-    (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
-    (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
+        (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
+        (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
 
 
-    (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
-    (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
-    (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
+        (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
+        (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
+        (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
 
-    (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
-    (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
-    (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
+        (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
+        (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
+        (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
 
-    return str;
-}
+        return str;
+    }
 
 public:
     void log(int level) const {
@@ -3145,6 +3153,8 @@ public:
         LOG(LOG_INFO, "          * FileSystemName             = \"%s\" (%u byte(s))", file_system_name_UTF8, this->FileSystemNameLength);
     }
 };  // FileFsAttributeInformation
+
+
 
 // [MS-FSCC] - 2.5.4 FileFsFullSizeInformation
 // ===========================================
@@ -3297,6 +3307,8 @@ public:
     }
 };
 
+
+
 // [MS-FSCC] - 2.5.8 FileFsSizeInformation
 // =======================================
 
@@ -3430,6 +3442,8 @@ public:
     }
 };
 
+
+
 // [MS-FSCC] - 2.5.9 FileFsVolumeInformation
 // =========================================
 
@@ -3523,8 +3537,12 @@ public:
 //        std::memcpy(this->VolumeLabel, volume_label, 500);
 
         this->VolumeLabelLength =
-            ::UTF8toUTF16(byte_ptr_cast(volume_label), volume_label_UTF16,
-                sizeof(volume_label_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(volume_label),
+                this->volume_label_UTF16,
+                sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+        this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
+        this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
+        this->VolumeLabelLength += 2;
     }
 
     void emit(OutStream & stream) const {
@@ -3657,6 +3675,8 @@ public:
         LOG(LOG_INFO, "          * VolumeLabel        = \"%s\" (%u byte(s))", volume_label_UTF8, this->VolumeLabelLength);
     }
 };  // FileFsVolumeInformation
+
+
 
 // [MS-FSCC] - 2.5.10 FileFsDeviceInformation
 // ==========================================
@@ -4021,8 +4041,8 @@ struct FileNotifyInformation {
 //        std::memcpy(this->FileName, FileName, 500);
 
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), file_name_UTF16,
-                sizeof(file_name_UTF16));
+            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
+                sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
