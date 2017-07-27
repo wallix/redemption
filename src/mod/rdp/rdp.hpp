@@ -4151,7 +4151,30 @@ public:
                         CASE(RDP_CONNECTED);
                         #undef CASE
                     }
-                    LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
+                    const char * MOD_RDP_NEGO_DESCR = "fail during TLS security exchange";
+                    const char * MOD_RDP_BASIC_SETTINGS_EXCHANGE_DESCR = "fail during basic setting exchange";
+                    const char * MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER_DESCR = "fail during channels connection";
+                    const char * MOD_RDP_GET_LICENSE_DESCR = "failed while trying to get licence";
+                    const char * MOD_RDP_CONNECTED_DESCR = "fail while connecting session on the target";
+                    const char * statedescr = "unknow event";
+                    switch (this->state) {
+                        case MOD_RDP_NEGO:
+                            statedescr = MOD_RDP_NEGO_DESCR;
+                            break;
+                        case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+                            statedescr = MOD_RDP_BASIC_SETTINGS_EXCHANGE_DESCR;
+                            break;
+                        case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
+                            statedescr = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER_DESCR;
+                            break;
+                        case MOD_RDP_GET_LICENSE:
+                            statedescr = MOD_RDP_GET_LICENSE_DESCR;
+                            break;
+                        case MOD_RDP_CONNECTED:
+                            statedescr = MOD_RDP_CONNECTED_DESCR;
+                            break;
+                    }
+                    LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state, %s.", statestr, statedescr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }

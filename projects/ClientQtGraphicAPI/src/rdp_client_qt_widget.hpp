@@ -1326,7 +1326,6 @@ public:
 
     void init(size_t raw_total_size) {
 
-
         this->total_wav_files++;
 
         this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
@@ -1379,7 +1378,7 @@ private Q_SLOTS:
     void call_playback_over() {
         std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
         remove(wav_file_name.c_str());
-        
+
         this->play();
     }
 
