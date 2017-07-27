@@ -273,18 +273,18 @@ struct RdpNego
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-    std::unique_ptr<rdpCredssp> credssp;
+    std::unique_ptr<rdpCredsspClient> credssp;
 
     void recv_credssp(InStream & stream)
     {
         switch (this->credssp->credssp_client_authenticate_next(stream))
         {
-            case rdpCredssp::State::Cont:
+            case rdpCredsspClient::State::Cont:
                 break;
-            case rdpCredssp::State::Err:
+            case rdpCredsspClient::State::Err:
                 LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
                 REDEMPTION_CXX_FALLTHROUGH;
-            case rdpCredssp::State::Finish:
+            case rdpCredsspClient::State::Finish:
                 this->state = NEGO_STATE_FINAL;
                 this->credssp.reset();
                 break;
@@ -327,7 +327,7 @@ struct RdpNego
                     );
 
                 LOG(LOG_INFO, "activating CREDSSP");
-                this->credssp.reset(new rdpCredssp(
+                this->credssp.reset(new rdpCredsspClient(
                     this->trans, this->user,
                     // this->domain, this->password,
                     this->domain, this->current_password,

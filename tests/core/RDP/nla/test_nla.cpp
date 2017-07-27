@@ -98,27 +98,26 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     LCGTime timeobj;
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    rdpCredsspClient credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     RED_CHECK(credssp.credssp_client_authenticate_init());
 
-    rdpCredssp::State st = rdpCredssp::State::Cont;
+    rdpCredsspClient::State st = rdpCredsspClient::State::Cont;
     TpduBuffer buf;
-    while (rdpCredssp::State::Cont == st) {
+    while (rdpCredsspClient::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next_credssp() && rdpCredssp::State::Cont == st) {
+        while (buf.next_credssp() && rdpCredsspClient::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_client_authenticate_next(in_stream);
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(st, rdpCredssp::State::Finish);
+    RED_CHECK_EQUAL(st, rdpCredsspClient::State::Finish);
 }
 
 
 
 RED_AUTO_TEST_CASE(TestNlaserver)
 {
-
     const char client[] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
@@ -185,7 +184,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     LCGTime timeobj;
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj);
     credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
     RED_CHECK_EQUAL(res, 1);

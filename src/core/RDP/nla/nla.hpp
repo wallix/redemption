@@ -33,13 +33,12 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-class rdpCredssp : noncopyable
+class rdpCredsspBase : noncopyable
 {
+protected:
     bool server;
     int send_seq_num;
     int recv_seq_num;
-
-    OutTransport trans;
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
@@ -63,22 +62,21 @@ class rdpCredssp : noncopyable
 public:
     bool hardcoded_tests = false;
 
-public:
-    rdpCredssp(OutTransport transport,
-               uint8_t * user,
-               uint8_t * domain,
-               uint8_t * pass,
-               uint8_t * hostname,
-               const char * target_host,
-               const bool krb,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
-               const bool verbose = false)
+    rdpCredsspBase(
+        uint8_t * user,
+        uint8_t * domain,
+        uint8_t * pass,
+        uint8_t * hostname,
+        const char * target_host,
+        const bool krb,
+        const bool restricted_admin_mode,
+        Random & rand,
+        TimeObj & timeobj,
+        const bool verbose = false
+    )
         : server(false)
         , send_seq_num(0)
         , recv_seq_num(0)
-        , trans(transport)
         , negoToken(ts_request.negoTokens)
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
@@ -91,12 +89,12 @@ public:
         , verbose(verbose)
     {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp:: Initialization");
+            LOG(LOG_INFO, "rdpCredsspClient:: Initialization");
         }
         this->set_credentials(user, domain, pass, hostname);
     }
 
-    ~rdpCredssp()
+    ~rdpCredsspBase()
     {
         if (this->table) {
             delete this->table;
@@ -104,11 +102,10 @@ public:
         }
     }
 
-public:
     void set_credentials(uint8_t * user, uint8_t * domain,
                          uint8_t * pass, uint8_t * hostname) {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::set_credentials");
+            LOG(LOG_INFO, "rdpCredsspClient::set_credentials");
         }
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
@@ -132,10 +129,9 @@ public:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-
     void InitSecurityInterface(SecInterface secInter) {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::InitSecurityInterface");
+            LOG(LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
         }
 
         if (this->table) {
@@ -167,43 +163,8 @@ public:
         }
     }
 
-    int credssp_ntlm_client_init() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::client_init");
-        }
-
-        this->server = false;
-
-        // ============================================
-        /* Get Public Key From TLS Layer and hostname */
-        // ============================================
-
-        this->PublicKey.init(this->trans.get_public_key_length());
-        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        return 1;
-    }
-
-    int credssp_ntlm_server_init() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::server_init");
-        }
-
-        this->server = true;
-
-        // ================================
-        /* Get Public Key From TLS Layer */
-        // ================================
-
-        this->PublicKey.init(this->trans.get_public_key_length());
-        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        return 1;
-    }
-
-
-
-    void ap_integer_increment_le(uint8_t* number, size_t size) {
+protected:
+    static void ap_integer_increment_le(uint8_t* number, size_t size) {
         size_t index = 0;
 
         for (index = 0; index < size; index++) {
@@ -218,7 +179,7 @@ public:
         }
     }
 
-    void ap_integer_decrement_le(uint8_t* number, size_t size) {
+    static void ap_integer_decrement_le(uint8_t* number, size_t size) {
         size_t index = 0;
         for (index = 0; index < size; index++) {
             if (number[index] > 0) {
@@ -232,10 +193,9 @@ public:
         }
     }
 
-
     SEC_STATUS credssp_encrypt_public_key_echo() {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::encrypt_public_key_echo");
+            LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         }
         SecBuffer Buffers[2];
         SecBufferDesc Message;
@@ -277,7 +237,6 @@ public:
                               Buffers[1].Buffer.size(),
                               this->ContextSizes.cbMaxSignature);
         return status;
-
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -289,7 +248,7 @@ public:
         SecBufferDesc Message;
         SEC_STATUS status;
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::decrypt_public_key_echo");
+            LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
         }
 
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
@@ -352,6 +311,57 @@ public:
 
         return SEC_E_OK;
     }
+    
+    void credssp_buffer_free() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::buffer_free");
+        }
+        this->negoToken.init(0);
+        this->pubKeyAuth.init(0);
+        this->authInfo.init(0);
+    }
+};
+
+class rdpCredsspClient : public rdpCredsspBase
+{
+    OutTransport trans;
+
+public:
+    rdpCredsspClient(OutTransport transport,
+               uint8_t * user,
+               uint8_t * domain,
+               uint8_t * pass,
+               uint8_t * hostname,
+               const char * target_host,
+               const bool krb,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               const bool verbose = false)
+        : rdpCredsspBase(
+            user, domain, pass, hostname, target_host, krb,
+            restricted_admin_mode, rand, timeobj, verbose)
+        , trans(transport)
+    {
+    }
+
+public:
+    int credssp_ntlm_client_init() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspClient::client_init");
+        }
+
+        this->server = false;
+
+        // ============================================
+        /* Get Public Key From TLS Layer and hostname */
+        // ============================================
+
+        this->PublicKey.init(this->trans.get_public_key_length());
+        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
+
+        return 1;
+    }
 
     void credssp_encode_ts_credentials() {
         if (this->RestrictedAdminMode) {
@@ -375,7 +385,7 @@ public:
         SecBufferDesc Message;
         SEC_STATUS status;
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::encrypt_ts_credentials");
+            LOG(LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
         }
         this->credssp_encode_ts_credentials();
 
@@ -415,116 +425,13 @@ public:
         return SEC_E_OK;
     }
 
-    SEC_STATUS credssp_decrypt_ts_credentials() {
-        int length;
-        SecBuffer Buffers[2];
-        SecBufferDesc Message;
-        SEC_STATUS status;
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::decrypt_ts_credentials");
-        }
-        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
-
-        if (this->authInfo.size() < 1) {
-            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer\n");
-            return SEC_E_INVALID_TOKEN;
-        }
-
-        length = this->authInfo.size();
-
-        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->authInfo.get_data(),
-                               Buffers[0].Buffer.size());
-
-        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-                               Buffers[1].Buffer.size());
-
-        Message.cBuffers = 2;
-        Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = Buffers;
-
-        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
-
-        if (status != SEC_E_OK)
-            return status;
-
-        InStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
-        this->ts_credentials.recv(decrypted_creds);
-
-        // hexdump(this->ts_credentials.passCreds.userName,
-        //         this->ts_credentials.passCreds.userName_length);
-        // hexdump(this->ts_credentials.passCreds.domainName,
-        //         this->ts_credentials.passCreds.domainName_length);
-        // hexdump(this->ts_credentials.passCreds.password,
-        //         this->ts_credentials.passCreds.password_length);
-
-        return SEC_E_OK;
-    }
-
     void credssp_send() {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::send");
+            LOG(LOG_INFO, "rdpCredsspClient::send");
         }
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
-    }
-
-    int credssp_recv() {
-        // ad hoc read of ber encoding size.
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::recv");
-        }
-        uint8_t head[4] = {};
-        uint8_t * point = head;
-        size_t length = 0;
-        this->trans.get_transport().recv_boom(point, 2);
-        point += 2;
-        uint8_t byte = head[1];
-        if (byte & 0x80) {
-            byte &= ~(0x80);
-
-            if (byte == 1) {
-                this->trans.get_transport().recv_boom(point, byte);
-                length = head[2];
-            }
-            else if (byte == 2) {
-                this->trans.get_transport().recv_boom(point, byte);
-                length = (head[2] << 8) | head[3];
-                if (length > 0xFFFF - 4) {
-                    return -1;
-                }
-            }
-            else {
-                return -1;
-            }
-        }
-        else {
-            length = byte;
-            byte = 0;
-        }
-
-        uint8_t buffer[65536];
-        OutStream ts_request_received(buffer, 2 + byte + length);
-        ts_request_received.out_copy_bytes(head, 2 + byte);
-        this->trans.get_transport().recv_boom(ts_request_received.get_current(), length);
-        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
-        this->ts_request.recv(in_stream);
-
-        // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
-
-        return 1;
-    }
-
-    void credssp_buffer_free() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::buffer_free");
-        }
-        this->negoToken.init(0);
-        this->pubKeyAuth.init(0);
-        this->authInfo.init(0);
     }
 
 private:
@@ -534,7 +441,7 @@ private:
     {
         SEC_STATUS status;
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp::client_authenticate");
+            LOG(LOG_INFO, "rdpCredsspClient::client_authenticate");
         }
 
         if (this->credssp_ntlm_client_init() == 0) {
@@ -795,16 +702,159 @@ public:
                 return State::Finish;
         }
     }
+};
+
+class rdpCredsspServer : public rdpCredsspBase
+{
+    Transport & trans;
+
+public:
+    rdpCredsspServer(Transport & transport,
+               uint8_t * user,
+               uint8_t * domain,
+               uint8_t * pass,
+               uint8_t * hostname,
+               const bool krb,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               const bool verbose = false)
+        : rdpCredsspBase(
+            user, domain, pass, hostname, "", krb,
+            restricted_admin_mode, rand, timeobj, verbose)
+        , trans(transport)
+    {
+    }
+
+    int credssp_ntlm_server_init() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::server_init");
+        }
+
+        this->server = true;
+
+        // ================================
+        /* Get Public Key From TLS Layer */
+        // ================================
+
+        this->PublicKey.init(this->trans.get_public_key_length());
+        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
+
+        return 1;
+    }
+
+    SEC_STATUS credssp_decrypt_ts_credentials() {
+        int length;
+        SecBuffer Buffers[2];
+        SecBufferDesc Message;
+        SEC_STATUS status;
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
+        }
+        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
+
+        if (this->authInfo.size() < 1) {
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer\n");
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        length = this->authInfo.size();
+
+        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
+        Buffers[0].Buffer.copy(this->authInfo.get_data(),
+                               Buffers[0].Buffer.size());
+
+        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
+        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
+                               Buffers[1].Buffer.size());
+
+        Message.cBuffers = 2;
+        Message.ulVersion = SECBUFFER_VERSION;
+        Message.pBuffers = Buffers;
+
+        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
+
+        if (status != SEC_E_OK)
+            return status;
+
+        InStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
+        this->ts_credentials.recv(decrypted_creds);
+
+        // hexdump(this->ts_credentials.passCreds.userName,
+        //         this->ts_credentials.passCreds.userName_length);
+        // hexdump(this->ts_credentials.passCreds.domainName,
+        //         this->ts_credentials.passCreds.domainName_length);
+        // hexdump(this->ts_credentials.passCreds.password,
+        //         this->ts_credentials.passCreds.password_length);
+
+        return SEC_E_OK;
+    }
+
+    void credssp_send() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::send");
+        }
+        StaticOutStream<65536> ts_request_emit;
+        this->ts_request.emit(ts_request_emit);
+        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
+    }
+
+    int credssp_recv() {
+        // ad hoc read of ber encoding size.
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::recv");
+        }
+        uint8_t head[4] = {};
+        uint8_t * point = head;
+        size_t length = 0;
+        this->trans.recv_boom(point, 2);
+        point += 2;
+        uint8_t byte = head[1];
+        if (byte & 0x80) {
+            byte &= ~(0x80);
+
+            if (byte == 1) {
+                this->trans.recv_boom(point, byte);
+                length = head[2];
+            }
+            else if (byte == 2) {
+                this->trans.recv_boom(point, byte);
+                length = (head[2] << 8) | head[3];
+                if (length > 0xFFFF - 4) {
+                    return -1;
+                }
+            }
+            else {
+                return -1;
+            }
+        }
+        else {
+            length = byte;
+            byte = 0;
+        }
+
+        uint8_t buffer[65536];
+        OutStream ts_request_received(buffer, 2 + byte + length);
+        ts_request_received.out_copy_bytes(head, 2 + byte);
+        this->trans.recv_boom(ts_request_received.get_current(), length);
+        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
+        this->ts_request.recv(in_stream);
+
+        // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
+
+        return 1;
+    }
 
     int credssp_server_authenticate() {
        SEC_STATUS status;
        if (this->verbose) {
-           LOG(LOG_INFO, "rdpCredssp::server_authenticate");
+           LOG(LOG_INFO, "rdpCredsspServer::server_authenticate");
        }
        // TODO
        // sspi_GlobalInit();
 
-       if (credssp_ntlm_server_init() == 0)
+       if (this->credssp_ntlm_server_init() == 0)
            return 0;
 
        this->InitSecurityInterface(NTLM_Interface);
@@ -920,7 +970,6 @@ public:
                LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X\n", status);
                return -1;
            }
-
 
            this->credssp_send();
            this->credssp_buffer_free();

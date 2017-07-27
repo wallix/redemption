@@ -273,7 +273,7 @@ struct OutTransport
     bool next() { return this->t.next(); }
     int get_fd() const { return this->t.get_fd(); }
 
-    REDEMPTION_ATTRIBUTE_DEPRECATED
+    // TODO REDEMPTION_ATTRIBUTE_DEPRECATED
     Transport & get_transport() const { return this->t; }
 
 private:

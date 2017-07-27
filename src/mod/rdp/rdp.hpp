@@ -174,7 +174,7 @@ protected:
 
     class ToServerSender : public VirtualChannelDataSender
     {
-        Transport&      transport;
+        OutTransport    transport;
         CryptContext&   encrypt;
         int             encryption_level;
         uint16_t        user_id;
@@ -185,7 +185,7 @@ protected:
         const RDPVerbose verbose;
 
     public:
-        ToServerSender(Transport& transport,
+        ToServerSender(OutTransport transport,
                        CryptContext& encrypt,
                        int encryption_level,
                        uint16_t user_id,
@@ -1560,7 +1560,7 @@ protected:
 
         std::unique_ptr<ToServerSender> to_server_sender =
             std::make_unique<ToServerSender>(
-                this->nego.trans.get_transport(),
+                this->nego.trans,
                 this->encrypt,
                 this->encryptionLevel,
                 this->userid,
@@ -2129,12 +2129,13 @@ public:
 
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid
-                            , stream_data.get_offset()
-                            , this->auth_channel_flags
-                            , stream_data.get_data()
-                            , stream_data.get_offset());
+        virtual_channel_pdu.send_to_server(
+            this->nego.trans, this->encrypt, this->encryptionLevel
+          , this->userid, this->auth_channel_chanid
+          , stream_data.get_offset()
+          , this->auth_channel_flags
+          , stream_data.get_data()
+          , stream_data.get_offset());
     }
 
 private:
@@ -2155,8 +2156,9 @@ private:
         if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-            virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
-                                              , this->userid, channel.chanid, length, flags, chunk, chunk_size);
+            virtual_channel_pdu.send_to_server(
+                this->nego.trans, this->encrypt, this->encryptionLevel
+              , this->userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
             uint8_t const * virtual_channel_data = chunk;
@@ -2183,7 +2185,7 @@ private:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server( this->nego.trans.get_transport(), this->encrypt, this->encryptionLevel
+                virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
                                                   , this->userid, channel.chanid, length
                                                   , get_channel_control_flags(flags, length, remaining_data_length, virtual_channel_data_length)
                                                   , virtual_channel_data, virtual_channel_data_length);
@@ -6483,7 +6485,7 @@ public:
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emit(this->nego.trans.get_transport());
+                rrpdu.emit(this->nego.trans);
             }
         }
         //this->draw_event(time(nullptr), this->front);
@@ -6507,7 +6509,7 @@ public:
                     rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
-            rrpdu.emit(this->nego.trans.get_transport());
+            rrpdu.emit(this->nego.trans);
         }
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
