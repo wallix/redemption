@@ -708,8 +708,7 @@ struct FileAllocationInformation {
     FileAllocationInformation() = default;
 
     FileAllocationInformation(uint64_t AllocationSize)
-    : AllocationSize(AllocationSize)
-    {}
+    : AllocationSize(AllocationSize) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint64_le(this->AllocationSize);
@@ -1186,19 +1185,6 @@ class FileBothDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    // enum : unsigned {
-    //   MIN_SIZE = 93
-    // };
-
-//     uint32_t total_size() const {
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
-
     FileBothDirectoryInformation() = default;
 
     FileBothDirectoryInformation(uint64_t CreationTime,
@@ -1214,33 +1200,13 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-    // , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
-    // , ShortNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         LOG(LOG_INFO, "!!!!!!!!! %zu", file_name_tmp_size);
-//         REDASSERT(file_name_tmp_size <= 500);
-        // std::memcpy(this->FileName, file_name, 500);
-        // if (this->ShortNameLength > 24) {
-        //     this->ShortNameLength = 24;
-        // }
-
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t ShortName_unicode_data[24] = {0};
-        // const size_t ShortName_unicode_size = ::UTF8toUTF16(
-        //         reinterpret_cast<const uint8_t *>(this->ShortName),
-        //         ShortName_unicode_data, sizeof(ShortName_unicode_data));
-
-        // uint8_t  FileName_unicode_data[2000] = {0};
-        // const size_t FileName_unicode_size = ::UTF8toUTF16(
-        //         reinterpret_cast<const uint8_t *>(this->FileName),
-        //         FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1259,13 +1225,12 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-//        stream.out_copy_bytes(ShortName_unicode_data, 24);
         stream.out_copy_bytes(this->short_name_UTF16, this->ShortNameLength);
         // ShortName(24)
         if (this->ShortNameLength < 24) {
             stream.out_clear_bytes(24 - this->ShortNameLength);
         }
-//        stream.out_copy_bytes(FileName_unicode_data, FileName_unicode_size);
+
         stream.out_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
@@ -1301,11 +1266,6 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        // uint8_t ShortName_utf16[24];
-        // stream.in_copy_bytes(ShortName_utf16, 24);
-        // ::UTF16toUTF8(ShortName_utf16,
-        //               this->ShortNameLength / 2,
-        //               reinterpret_cast<uint8_t *>(this->ShortName), 12);
         stream.in_copy_bytes(this->short_name_UTF16, this->ShortNameLength);
         // ShortName(24)
         if (this->ShortNameLength < 24) {
@@ -1322,12 +1282,6 @@ public:
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
-
-        // uint8_t FileName_utf16[2000];
-        // stream.in_copy_bytes(FileName_utf16, this->FileNameLength);
-        // ::UTF16toUTF8(FileName_utf16,
-        //               this->FileNameLength / 2,
-        //               reinterpret_cast<uint8_t *>(this->FileName), 500);
 
         if (this->FileNameLength > sizeof(this->file_name_UTF16)) {
             LOG(LOG_ERR,
@@ -1349,11 +1303,6 @@ public:
                                 //     ShortName(24)
 
         // Reserved(1), MUST NOT be transmitted.
-
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
 
         return size + this->FileNameLength;
     }
@@ -1532,19 +1481,6 @@ class FileDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    // enum : unsigned {
-    //     MIN_SIZE = 64
-    // };
-
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
-
     FileDirectoryInformation() = default;
 
     FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
@@ -1558,22 +1494,13 @@ public:
     , LastWriteTime_(LastWriteTime)
     , ChangeTime(ChangeTime)
     , FileAttributes_(FileAttributes)
-//    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         size_t file_name_tmp_size = sizeof(FileName);
-//         REDASSERT(file_name_tmp_size <=  500);
-//        std::memcpy(this->FileName, FileName, 500);
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t  FileName_unicode_data[2000] = {0};
-        // const size_t FileName_unicode_size = ::UTF8toUTF16(
-        //         reinterpret_cast<const uint8_t *>(this->FileName),
-        //         FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -1636,12 +1563,6 @@ public:
                 this->FileNameLength);
             throw Error(ERR_RDP_INTERNAL);
         }
-
-        // uint8_t FileName_utf16[2000];
-        // stream.in_copy_bytes(FileName_utf16, this->FileNameLength);
-        // ::UTF16toUTF8(FileName_utf16,
-        //               this->FileNameLength / 2,
-        //               reinterpret_cast<uint8_t *>(this->FileName), 500);
 
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
@@ -1870,10 +1791,6 @@ struct FileFsLabelInformation {
 
     FileFsLabelInformation(char * volume_label)
     {
-//           size_t VolumeLabel_tmp_size = sizeof(VolumeLabel);
-//           REDASSERT(VolumeLabel_tmp_size <= 65536/2);
-//          std::memcpy(this->VolumeLabel, VolumeLabel, 65536/2);
-
         this->VolumeLabelLength =
             ::UTF8toUTF16(byte_ptr_cast(volume_label), this->volume_label_UTF16,
                 sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
@@ -1883,11 +1800,6 @@ struct FileFsLabelInformation {
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t  VolumeLabel_unicode_data[65536] = {0};
-        // const size_t VolumeLabel_unicode_size = ::UTF8toUTF16(
-        //         reinterpret_cast<const uint8_t *>(this->VolumeLabel),
-        //         VolumeLabel_unicode_data, sizeof(VolumeLabel_unicode_data));
-
         stream.out_uint32_le(this->VolumeLabelLength);
         stream.out_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
@@ -1912,12 +1824,6 @@ struct FileFsLabelInformation {
                 this->VolumeLabelLength);
             throw Error(ERR_RDP_INTERNAL);
         }
-
-        // uint8_t VolumeLabel_utf16[65536];
-        // stream.in_copy_bytes(VolumeLabel_utf16, this->VolumeLabelLength);
-        // ::UTF16toUTF8(VolumeLabel_utf16,
-        //               this->VolumeLabelLength / 2,
-        //               reinterpret_cast<uint8_t *>(this->VolumeLabel), 500);
 
         stream.in_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
@@ -2085,19 +1991,6 @@ class FileFullDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    //  enum : unsigned {
-    //   MIN_SIZE = 68
-    // };
-
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
-
     FileFullDirectoryInformation() = default;
 
     FileFullDirectoryInformation(uint64_t CreationTime,
@@ -2113,23 +2006,13 @@ public:
     , EndOfFile(EndOfFile)
     , AllocationSize(AllocationSize)
     , FileAttributes(FileAttributes)
-//    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         REDASSERT(file_name_tmp_size <=  500);
-//        std::memcpy(this->FileName, file_name, 500);
-
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-
-        // uint8_t FileName_unicode_data[2000];
-        // const size_t FileName_unicode_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(this->FileName),
-        //     FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
@@ -2346,38 +2229,16 @@ class FileNamesInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    // enum : unsigned {
-    //     MIN_SIZE = 12
-    // };
-
-//     uint32_t total_size() {
-//                 uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileName),
-//             unicode_data, sizeof(unicode_data));
-//
-//         return MIN_SIZE + size_of_unicode_data;
-//     }
-
     FileNamesInformation() = default;
 
     explicit FileNamesInformation(const char * file_name)
-//      : FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(file_name)))
     {
-//         size_t file_name_tmp_size = sizeof(file_name);
-//         REDASSERT(file_name_tmp_size <= 500);
-//        std::memcpy(this->FileName, file_name, 500);
-
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t FileName_unicode_data[2000];
-        // const size_t FileName_UTF16_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(this->FileName),
-        //     FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
         stream.out_uint32_le(this->FileNameLength);
@@ -2418,21 +2279,10 @@ public:
         }
 
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
-
-        // uint8_t FileName_unicode_data[2000];
-        // stream.in_copy_bytes(FileName_unicode_data, this->FileNameLength);
-        // ::UTF16toUTF8(FileName_unicode_data,
-        //     this->FileNameLength / 2,
-        //     reinterpret_cast<uint8_t *>(this->FileName), 500);
     }
 
     size_t size() const {
         const size_t size = 12; // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
-
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-//             unicode_data, sizeof(unicode_data));
 
         return size + this->FileNameLength;
     }
@@ -2586,22 +2436,13 @@ struct FileRenameInformation {
                          , const char * file_name)
       : ReplaceIfExists(ReplaceIfExists)
       , RootDirectory(RootDirectory)
-//    , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//           const size_t file_name_tmp_size = sizeof(FileName);
-//           REDASSERT(file_name_tmp_size <=  500);
-//          std::memcpy(this->FileName, FileName, 500);
-
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t FileName_unicode_data[2000];
-        // const size_t FileName_UTF16_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(this->FileName),
-        //     FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint8(this->ReplaceIfExists);
 
         stream.out_clear_bytes(7);
@@ -2639,12 +2480,6 @@ struct FileRenameInformation {
         }
 
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
-
-        // uint8_t FileName_unicode_data[2000];
-        // stream.in_copy_bytes(FileName_unicode_data, this->FileNameLength);
-        // ::UTF16toUTF8(FileName_unicode_data,
-        //     this->FileNameLength / 2,
-        //     reinterpret_cast<uint8_t *>(this->FileName), 500);
     }
 
     void log() const {
@@ -3001,10 +2836,6 @@ public:
     : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
-//         const size_t FileSystemName_tmp_size = sizeof(file_system_name);
-//         REDASSERT(FileSystemName_tmp_size <= 12);
-//        std::memcpy(this->FileSystemName, file_system_name, 12);
-
         this->FileSystemNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_system_name),
                 this->file_system_name_UTF16,
@@ -3015,12 +2846,6 @@ public:
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
-        // uint8_t unicode_data[48];
-        // const size_t size_of_unicode_data = ::UTF8toUTF16(
-        //     reinterpret_cast<const uint8_t *>(this->FileSystemName),
-        //     unicode_data, sizeof(unicode_data));
-
-        // stream.out_uint32_le(size_of_unicode_data); // FileSystemNameLength(4)
         stream.out_uint32_le(this->FileSystemNameLength);
 
         stream.out_copy_bytes(this->file_system_name_UTF16,
@@ -3063,11 +2888,6 @@ public:
             throw Error(ERR_RDP_INTERNAL);
         }
 
-        // uint8_t FileSystemName_unicode_data[48];
-        // stream.in_copy_bytes(FileSystemName_unicode_data, this->FileSystemNameLength);
-        // ::UTF16toUTF8(FileSystemName_unicode_data,
-        //     this->FileSystemNameLength / 2,
-        //     reinterpret_cast<uint8_t *>(this->FileSystemName), 500);
         stream.in_copy_bytes(this->file_system_name_UTF16,
             this->FileSystemNameLength);
     }
@@ -3075,11 +2895,6 @@ public:
     size_t size() const {
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
-
-//         uint8_t unicode_data[65536];
-//         const size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->FileSystemName),
-//             unicode_data, sizeof(unicode_data));
 
         return size + this->FileSystemNameLength;
     }
@@ -3544,10 +3359,6 @@ public:
     , VolumeSerialNumber(VolumeSerialNumber)
     , SupportsObjects(SupportsObjects)
     {
-//         const size_t VolumeLabel_tmp_size = sizeof(volume_label);
-//         REDASSERT(VolumeLabel_tmp_size <= 500);
-//        std::memcpy(this->VolumeLabel, volume_label, 500);
-
         this->VolumeLabelLength =
             ::UTF8toUTF16(byte_ptr_cast(volume_label),
                 this->volume_label_UTF16,
@@ -3561,19 +3372,12 @@ public:
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
 
-        // uint8_t VolumeLabel_unicode_data[2000];
-        // const size_t size_of_VolumeLabel_unicode_data = ::UTF8toUTF16(
-        //     reinterpret_cast<const uint8_t *>(VolumeLabel),
-        //     VolumeLabel_unicode_data, sizeof(VolumeLabel_unicode_data));
-
-//        stream.out_uint32_le(size_of_VolumeLabel_unicode_data); // VolumeLabelLength(4)
         stream.out_uint32_le(this->VolumeLabelLength);
 
         stream.out_uint8(this->SupportsObjects);
 
         // Reserved(1), MUST NOT be transmitted.
 
-//        stream.out_copy_bytes(VolumeLabel_unicode_data, size_of_VolumeLabel_unicode_data);
         stream.out_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
 
@@ -3614,19 +3418,6 @@ public:
             throw Error(ERR_RDP_INTERNAL);
         }
 
-        // uint8_t VolumeLabel_unicode_data[48];
-        // stream.in_copy_bytes(VolumeLabel_unicode_data, this->VolumeLabelLength);
-        // const size_t length_of_VolumeLabel_utf8_string = ::UTF16toUTF8(VolumeLabel_unicode_data,
-        //     this->VolumeLabelLength / 2,
-        //     reinterpret_cast<uint8_t *>(this->VolumeLabel), 12);
-
-        // this->VolumeLabel[length_of_VolumeLabel_utf8_string] = '\0';
-        // for (uint8_t * c =
-        //          reinterpret_cast<uint8_t *>(this->VolumeLabel) + length_of_VolumeLabel_utf8_string - 1;
-        //      (c >= reinterpret_cast<uint8_t *>(this->VolumeLabel)) && ((*c) == ' '); c--) {
-        //     *c = '\0';
-        // }
-
         stream.in_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
 
@@ -3635,11 +3426,6 @@ public:
                                 //     VolumeLabelLength(4) + SupportsObjects(1)
 
         // Reserved(1), MUST NOT be transmitted.
-
-//         uint8_t unicode_data[65536];
-//         size_t size_of_unicode_data = ::UTF8toUTF16(
-//             reinterpret_cast<const uint8_t *>(this->VolumeLabel),
-//             unicode_data, sizeof(unicode_data));
 
         return size + this->VolumeLabelLength;
     }
@@ -4046,28 +3832,17 @@ struct FileNotifyInformation {
     FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, const char * file_name)
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
-//      , FileNameLength(::UTF8Len(reinterpret_cast<const uint8_t *>(FileName)))
     {
-//         const size_t file_name_tmp_size = sizeof(FileName);
-//         REDASSERT(file_name_tmp_size <= 500);
-//        std::memcpy(this->FileName, FileName, 500);
-
         this->FileNameLength =
             ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
                 sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
-        // uint8_t  FileName_unicode_data[2000] = {0};
-        // const size_t FileName_unicode_size = ::UTF8toUTF16(
-        //         reinterpret_cast<const uint8_t *>(this->FileName),
-        //         FileName_unicode_data, sizeof(FileName_unicode_data));
-
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->Action);
         stream.out_uint32_le(this->FileNameLength);
 
-//        stream.out_copy_bytes(FileName_unicode_data, FileName_unicode_size);
         stream.out_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
@@ -4086,12 +3861,6 @@ struct FileNotifyInformation {
         this->NextEntryOffset = stream.in_uint32_le();
         this->Action          = stream.in_uint32_le();
         this->FileNameLength  = stream.in_uint32_le();
-
-        // uint8_t FileName_utf16[2000];
-        // stream.in_copy_bytes(FileName_utf16, this->FileNameLength);
-        // ::UTF16toUTF8(FileName_utf16,
-        //               this->FileNameLength / 2,
-        //               reinterpret_cast<uint8_t *>(this->FileName), 500);
 
         {
             const unsigned expected = this->FileNameLength; // FileName(variable)
