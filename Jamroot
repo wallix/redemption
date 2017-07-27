@@ -140,13 +140,16 @@ constant OBJ_TEST_DEPENDENCIES :
     <define>RECORD_PATH='\"/tmp/redemption_recorded\"'
     <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"'
     <define>PNG_PATH='\"/tmp\"'
+    <define>OCR_PATH='\"/tmp\"'
     <define>WRM_PATH='\"/tmp\"'
+    <define>FLV_PATH='\"/tmp\"'
     <define>HASH_PATH='\"/tmp/redemption_hash\"'
     <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"'
     <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"'
     <define>CERTIF_PATH='\"/tmp/redemption_cert\"'
     <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"'
     <define>PID_PATH='\"/tmp/redemption_pid\"'
+    #<define>CFG_THEMES_PATH='\"$(ETC_PREFIX)/themes\"'
 ;
 
 constant TEST_DEPENDENCIES :

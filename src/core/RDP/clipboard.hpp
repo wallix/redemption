@@ -697,6 +697,7 @@ struct ServerMonitorReadyPDU
 
     void log() const {
         this->header.log();
+        LOG(LOG_INFO, "     Server Monitor Ready PDU");
     }
 
 };  // struct ServerMonitorReadyPDU
@@ -1179,7 +1180,6 @@ struct FormatListResponsePDU
 
     void log() const {
         this->header.log();
-
     }
 
 };  // struct FormatListResponsePDU
