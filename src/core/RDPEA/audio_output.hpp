@@ -1042,9 +1042,10 @@ struct WaveInfoPDU {
 // wTimeStamp (2 bytes): A 16-bit unsigned integer. See section 3.2.5.2.1.6 for
 // details of how this field is set.
 //
-// cConfirmedBlockNo (1 byte): An 8-bit unsigned integer that MUST be the same as
-// the cBlockNo field of the UDP Wave Last PDU (section 2.2.3.7), the Wave Encrypt
-// PDU (section 2.2.3.5) or the WaveInfo PDU (section 2.2.3.3) just received from the server.
+// cConfBlockNo (1 byte): Confirmation Block Number. An 8-bit unsigned 
+// integer that MUST be the same as the cBlockNo field of the 
+// UDP Wave Last PDU (section 2.2.3.7), the Wave Encrypt PDU (section
+// 2.2.3.5) or the WaveInfo PDU (section 2.2.3.3) just received from the server.
 //
 // bPad (1 byte): An unsigned 8-bit integer. This field is unused. The value is
 // arbitrary and MUST be ignored on receipt.
