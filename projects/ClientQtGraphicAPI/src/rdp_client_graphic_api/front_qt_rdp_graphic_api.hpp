@@ -446,7 +446,7 @@ public:
         return true;
     }
 
-    
+
 
 public Q_SLOTS:
     void call_draw_event() {
@@ -1748,7 +1748,7 @@ public:
                                                 , begin_read
                                                 , end_read
                                                 , Screen_Qt::BALISED_FRAME
-                                                // FileToGraphic::Verbose::play
+                                                //, FileToGraphic::Verbose::rdp_orders
                                                 , to_verbose_flags(0)
                                                 ));
 

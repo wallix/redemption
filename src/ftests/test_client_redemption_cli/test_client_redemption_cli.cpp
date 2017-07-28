@@ -741,7 +741,6 @@ int main(int argc, char** argv)
                 }
                 break;
             case 72:
-            case 73:
                 if (i+1 < argc) {
                     out_path = argv[i+1];
                     i++;
@@ -1209,6 +1208,7 @@ void print_help() {
     std::cout << "--bogus_rectc [on/off]             Active/unactive bogus refresh rect" <<  "\n";
     std::cout << "--multi_mon [on/off]               Active/unactive allow using multiple monitors" <<  "\n";
     std::cout << "--adj_perf_rec [on/off]            Active/unactive adjust performance flags for recording" <<  "\n";
+    std::cout << "--outpath [outpath]                Set path where connection time will be written" <<  "\n";
 
     std::cout << std::endl;
 }
