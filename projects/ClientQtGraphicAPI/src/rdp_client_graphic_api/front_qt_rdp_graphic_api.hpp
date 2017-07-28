@@ -409,9 +409,9 @@ public:
         if (this->_callback !=  nullptr) {
 
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_draw_event()));
+            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_draw_event_data()));
 
-            this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event()));
+            this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
 
             if (this->_callback) {
                 if (this->_callback->get_event().set_state) {
@@ -449,6 +449,16 @@ public:
 
 
 public Q_SLOTS:
+    void call_draw_event_data() {
+        this->_callback->get_event().waked_up_by_time = false;
+        this->call_draw_event();
+    }
+
+    void call_draw_event_timer() {
+        this->_callback->get_event().waked_up_by_time = true;
+        this->call_draw_event();
+    }
+
     void call_draw_event() {
         if (this->_front->mod) {
 
@@ -1453,7 +1463,7 @@ public Q_SLOTS:
     void slotRepaint() {
         QPainter match_painter(&(this->_match_pixmap));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
-        match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
+        //match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
@@ -1902,7 +1912,7 @@ public:
 
         if (uint8_t(this->info.bpp) != color_ctx.depth().to_bpp()) {
             BGRColor d = color_decode(color, color_ctx);
-            color       = color_encode(d, uint8_t(this->info.bpp));
+            color      = color_encode(d, uint8_t(this->info.bpp));
         }
 
         BGRColor bgr = color_decode(color, this->info.bpp, this->mod_palette);
@@ -3145,7 +3155,6 @@ public:
                                             , ""
                                             , 0xfffffff
                                             , false
-                                            , false
                                             , std::chrono::duration<long int>{60}
                                             , false
                                             , false
@@ -3209,9 +3218,9 @@ public:
                     this->mod_qt->disconnect(false);
                     this->disconnect(labelErrorMsg);
                 }
-            } catch (const Error &) {
+            } catch (const Error & e) {
                 this->dropScreen();
-                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
+                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Error "+ e.errmsg());
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 

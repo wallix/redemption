@@ -1484,6 +1484,8 @@ public:
                     this->verbose
                 );
         }
+
+        LOG(LOG_INFO, "mod_rdp end!!!!!!!!!!!!!!!!");
     }   // mod_rdp
 
     ~mod_rdp() override {
@@ -2560,6 +2562,9 @@ public:
 
         case RdpNego::NEGO_STATE_CREDSSP:
             this->nego.recv_credssp(stream);
+            if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
+                this->send_connectInitialPDUwithGccConferenceCreateRequest();
+            }
             break;
 
         case RdpNego::NEGO_STATE_FINAL:

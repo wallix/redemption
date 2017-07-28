@@ -311,7 +311,7 @@ protected:
 
         return SEC_E_OK;
     }
-    
+
     void credssp_buffer_free() {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::buffer_free");
@@ -701,6 +701,8 @@ public:
                 this->client_auth_data.state = ClientAuthenticateData::Start;
                 return State::Finish;
         }
+
+        return State::Err;
     }
 };
 
