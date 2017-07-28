@@ -179,7 +179,10 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
                                 nullptr, record_tmp_path, basename, groupid};
 
-        MetaParams meta_params;
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No
+        };
         KbdLogParams kbdlog_params;
         PatternCheckerParams patter_checker_params;
         SequencedVideoParams sequenced_video_params;
@@ -205,7 +208,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
         int debug_capture = ini.get<cfg::debug::capture>();
         bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-        bool meta_enable_session_log = false;
         const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
         bool rt_display = ini.get<cfg::video::rt_display>();
@@ -236,7 +238,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , pattern_notify
                         , debug_capture
                         , flv_capture_chunk
-                        , meta_enable_session_log
                         , flv_break_interval
                         , syslog_keyboard_log
                         , rt_display
@@ -431,7 +432,10 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
                         nullptr, record_tmp_path, basename, groupid};
 
-    MetaParams meta_params;
+    MetaParams meta_params{
+        MetaParams::EnableSessionLog::No,
+        MetaParams::HideNonPrintable::No
+    };
     KbdLogParams kbdlog_params;
     PatternCheckerParams patter_checker_params;
     SequencedVideoParams sequenced_video_params;
@@ -458,7 +462,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
     int debug_capture = ini.get<cfg::debug::capture>();
     bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-    bool meta_enable_session_log = false;
     const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
     bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
     bool rt_display = ini.get<cfg::video::rt_display>();
@@ -490,7 +493,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , pattern_notify
                    , debug_capture
                    , flv_capture_chunk
-                   , meta_enable_session_log
                    , flv_break_interval
                    , syslog_keyboard_log
                    , rt_display
@@ -564,7 +566,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans);
+        SessionMeta meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -616,7 +618,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans);
+        SessionMeta meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -655,7 +657,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans);
+        SessionMeta meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -700,7 +702,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans);
+        SessionMeta meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -749,7 +751,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans);
+        SessionMeta meta(now, trans, false);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -834,6 +836,103 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         "1970-01-01 01:17:13 - [Kbd]MP\n"
         "1970-01-01 01:17:14 + Blah6\n"
         "1970-01-01 01:17:27 - [Kbd]QR/<up>/<backspace>T//U//V\n"
+    );
+}
+
+
+RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
+{
+    BufTransport trans;
+
+    {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, true);
+
+        meta.kbd_input(now, 'A'); now.tv_sec += 1;
+
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+
+        meta.kbd_input(now, 'B');
+
+        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+
+        meta.kbd_input(now, 'C'); now.tv_sec += 1;
+
+        meta.possible_active_window_change();
+
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
+        meta.kbd_input(now, 'D'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, 'E'); now.tv_sec += 1;
+        meta.kbd_input(now, 'F'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, 'G'); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\r'); now.tv_sec += 1;
+        meta.kbd_input(now, '\t'); now.tv_sec += 1;
+        meta.kbd_input(now, 'H'); now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.kbd_input(now, 'I'); now.tv_sec += 1;
+        meta.kbd_input(now, 'J'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'K'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah4")); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'a'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'L'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah5")); now.tv_sec += 1;
+        meta.kbd_input(now, 'M'); now.tv_sec += 1;
+        meta.kbd_input(now, 'N'); now.tv_sec += 1;
+        meta.kbd_input(now, 'O'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'P'); now.tv_sec += 1;
+        meta.possible_active_window_change();
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah6")); now.tv_sec += 1;
+        meta.kbd_input(now, 'Q'); now.tv_sec += 1;
+        meta.kbd_input(now, 'R'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x2191); now.tv_sec += 1; // UP
+        meta.kbd_input(now, 'S'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'T'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, 'U'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, '/'); now.tv_sec += 1;
+        meta.kbd_input(now, 0x08); now.tv_sec += 1;
+        meta.kbd_input(now, 'V'); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:43 - [Kbd]ABC\n"
+        "1970-01-01 01:16:44 + Blah2\n"
+        "1970-01-01 01:16:45 - [Kbd]D\n"
+        "1970-01-01 01:16:48 - [Kbd]EF\n"
+        "1970-01-01 01:16:52 + Blah3\n"
+        "1970-01-01 01:16:52 - [Kbd]G\n"
+        "1970-01-01 01:16:57 + (break)\n"
+        "1970-01-01 01:17:00 - [Kbd]HIK\n"
+        "1970-01-01 01:17:01 + Blah4\n"
+        "1970-01-01 01:17:06 - [Kbd]L\n"
+        "1970-01-01 01:17:07 + Blah5\n"
+        "1970-01-01 01:17:13 - [Kbd]MP\n"
+        "1970-01-01 01:17:14 + Blah6\n"
+        "1970-01-01 01:17:27 - [Kbd]QRT/U/V\n"
     );
 }
 

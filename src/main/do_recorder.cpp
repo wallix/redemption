@@ -1777,7 +1777,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.groupid = groupid;
 
 
-                        MetaParams meta_params;
+                        MetaParams meta_params{
+                            MetaParams::EnableSessionLog::No,
+                            MetaParams::HideNonPrintable::No
+                        };
                         KbdLogParams kbdlog_params;
                         PatternCheckerParams patter_checker_params;
                         SequencedVideoParams sequenced_video_params;
@@ -1803,7 +1806,6 @@ const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
 const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
 int debug_capture = ini.get<cfg::debug::capture>();
 bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-bool meta_enable_session_log = false;
 const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
 bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
 bool rt_display = ini.get<cfg::video::rt_display>();
@@ -1837,7 +1839,6 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , pattern_notify
                                 , debug_capture
                                 , flv_capture_chunk
-                                , meta_enable_session_log
                                 , flv_break_interval
                                 , syslog_keyboard_log
                                 , rt_display

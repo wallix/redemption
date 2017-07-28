@@ -111,13 +111,25 @@ struct array_view
     }
 
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset) const noexcept
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset) noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
     }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset, std::size_t count) const noexcept
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset, std::size_t count) noexcept
+    {
+        assert(offset <= this->size() && count <= this->size() - offset);
+        return {this->data() + offset, count};
+    }
+
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view<T const> subarray(std::size_t offset) const noexcept
+    {
+        assert(offset <= this->size());
+        return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
+    }
+
+    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view<T const> subarray(std::size_t offset, std::size_t count) const noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};

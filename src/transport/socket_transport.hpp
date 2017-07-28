@@ -257,6 +257,31 @@ public:
         return rv;
     }
 
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
+    {
+        if (bool(this->verbose & Verbose::dump)) {
+            LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
+        }
+
+        ssize_t const res = this->privpartial_recv(buffer, len);
+
+        if (res <= 0){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        }
+
+        if (res >= 0) {
+            this->total_received += res;
+
+            if (bool(this->verbose & Verbose::dump)) {
+                LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, res);
+                hexdump_c(buffer, res);
+                LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, res);
+            }
+        }
+
+        return res;
+    }
+
     Read do_atomic_read(uint8_t * buffer, size_t len) override {
         if (bool(this->verbose & Verbose::dump)) {
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
@@ -415,6 +440,78 @@ private:
         }
 
         return len;
+    }
+
+    ssize_t privpartial_recv(uint8_t * data, size_t const len)
+    {
+        size_t buf_remaining = this->recv_buf_size - this->recv_buf_index;
+        if (len <= buf_remaining) {
+            memcpy(data, this->recv_buf + this->recv_buf_index, len);
+            this->recv_buf_index += len;
+            return len;
+        }
+
+        size_t remaining_len = len;
+
+        if (buf_remaining) {
+            memcpy(data, this->recv_buf + this->recv_buf_index, buf_remaining);
+            remaining_len -= buf_remaining;
+            data += buf_remaining;
+            this->recv_buf_index += buf_remaining;
+            return buf_remaining;
+        }
+
+        if (this->tls) {
+            ssize_t const res = this->tls->privpartial_recv_tls(
+                this->recv_buf, sizeof(this->recv_buf));
+
+            if (res <= 0) {
+                return res;
+            }
+
+            if (remaining_len <= size_t(res)) {
+                memcpy(data, this->recv_buf, remaining_len);
+                this->recv_buf_size = res;
+                this->recv_buf_index = remaining_len;
+                remaining_len = 0;
+            }
+            else {
+                memcpy(data, this->recv_buf, res);
+                remaining_len -= res;
+                data += res;
+            }
+
+            return res;
+        }
+
+        ssize_t res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0);
+        switch (res) {
+            case -1: /* error, maybe EAGAIN */ {
+                int err = errno;
+                if (try_again(err)) {
+                    return 0;
+                }
+                return -1;
+            }
+            case 0: /* no data received, socket closed */
+                // if we were not able to receive the amount of data required, this is an error
+                // not need to process the received data as it will end badly
+                return -1;
+            default: /* some data received */
+                if (remaining_len <= size_t(res)) {
+                    memcpy(data, this->recv_buf, remaining_len);
+                    this->recv_buf_size = res;
+                    this->recv_buf_index = remaining_len;
+                    remaining_len = 0;
+                }
+                else {
+                    memcpy(data, this->recv_buf, res);
+                    remaining_len -= res;
+                    data += res;
+                    remaining_len = 0;
+                }
+                return res;
+        }
     }
 
     ssize_t privsend(const uint8_t * data, size_t len)

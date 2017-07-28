@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     RED_CHECK_EQUAL(0x50, x224.tpdu_hdr.LI);
 
-    RED_CHECK_EQUAL(0, strcmp("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie));
+    RED_CHECK_EQUAL("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CORRELATION_INFO_PRESENT), x224.rdp_neg_flags);
     RED_CHECK_EQUAL(8, x224.rdp_neg_length);
@@ -66,18 +66,6 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 
     RED_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
     RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
-}
-
-
-RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
-{
-    GeneratorTransport t("\x04\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
-
-    constexpr size_t array_size = AUTOSIZE;
-    uint8_t array[array_size];
-    uint8_t * end = array;
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), ERR_X224);
-    t.disable_remaining_error();
 }
 
 RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
@@ -271,7 +259,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     RED_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
-    RED_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
+    RED_CHECK_EQUAL("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
     RED_CHECK_EQUAL(0, x224.rdp_neg_flags);
     RED_CHECK_EQUAL(8, x224.rdp_neg_length);

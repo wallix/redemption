@@ -568,6 +568,7 @@ test-canonical utils/sugar/unique_fd.hpp ;
 
 ## Capabilities tests
 ## @{
+test-canonical core/RDP/tpdu_buffer.hpp ;
 test-canonical core/RDP/capabilities.hpp ;
 test-canonical core/RDP/capabilities/activate.hpp ;
 test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp ;

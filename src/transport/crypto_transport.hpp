@@ -192,21 +192,6 @@ public:
         return fhash;
     }
 
-//    void hash(const char * pathname)
-//    {
-//        this->open(pathname);
-//    }
-
-    size_t partial_read(uint8_t * buffer, size_t len) __attribute__ ((warn_unused_result))
-    {
-        return this->do_partial_read(buffer, len);
-    }
-
-    size_t partial_read(char * buffer, size_t len) __attribute__ ((warn_unused_result))
-    {
-        return this->do_partial_read(reinterpret_cast<uint8_t*>(buffer), len);
-    }
-
     void open(const char * const pathname, const_byte_array derivator)
     {
         if (this->is_open()){
@@ -381,7 +366,7 @@ private:
         }
     }
 
-    size_t do_partial_read(uint8_t * buffer, size_t len)
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
     {
         if (this->eof){
             return 0;

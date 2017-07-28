@@ -134,11 +134,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    t.disable_remaining_error();
+
+    for (int count = 0; count < 70; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 70) break;
         mod.draw_event(time(nullptr), front);
     }
 
@@ -232,11 +231,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    t.disable_remaining_error();
+
+    for (int count = 0; count < 40; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 40) break;
         mod.draw_event(time(nullptr), front);
     }
 

@@ -545,8 +545,6 @@ public:
 
     void enable_kbd_input_mask(bool) override {}
 
-    void hide_key_markers(bool) override {}
-
     void send_meta_chunk()
     {
         const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
@@ -916,8 +914,6 @@ private:
 
         void enable_kbd_input_mask(bool) override {}
 
-        void hide_key_markers(bool) override {}
-
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
@@ -1131,8 +1127,6 @@ public:
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_mask_enabled = enable;
     }
-
-    void hide_key_markers(bool) override {}
 
     void enable_keyboard_log()
     {

@@ -281,10 +281,10 @@ RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)
 {
     const size_t len = 4;
     const char data[] =
-            "\xa7\x11\x00\x00";
+            "\xa7\x11\x01\x00";
 
     StaticOutStream<32> stream;
-    rdpsnd::WaveConfirmPDU ch(0x11a7, 0x00);
+    rdpsnd::WaveConfirmPDU ch(0x11a7, 0x01);
 
     ch.emit(stream);
 
@@ -295,7 +295,7 @@ RED_AUTO_TEST_CASE(WaveConfirmPDUReceive)
 {
     const size_t len = 4;
     const char data[] =
-            "\xa7\x11\x00\x00";
+            "\xa7\x11\x01\x00";
 
     InStream in_stream(data, len);
 
@@ -303,5 +303,5 @@ RED_AUTO_TEST_CASE(WaveConfirmPDUReceive)
     ch.receive(in_stream);
 
     RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
-    RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
+    RED_CHECK_EQUAL(ch.cConfBlockNo, 0x01);
 }

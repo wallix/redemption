@@ -30,7 +30,7 @@
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-//#define LOGPRINT
+// #define LOGPRINT
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -136,12 +136,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    for (uint32_t count = 0; count < 72; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 70) break;
-        mod.draw_event(time(nullptr), front);
+        mod.draw_event(0, front);
     }
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
@@ -244,12 +241,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE) {
+    for (uint32_t count = 0; count < 72; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 70) break;
-        mod.draw_event(time(nullptr), front);
+        mod.draw_event(0, front);
     }
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");

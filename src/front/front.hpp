@@ -913,7 +913,7 @@ public:
 
         cctx.set_master_key(ini.get<cfg::crypto::key0>());
         cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-        
+
 
 
         if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
@@ -964,7 +964,10 @@ public:
             );
         }
 
-        MetaParams meta_params;
+        MetaParams meta_params {
+            MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
+            MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>())
+        };
         KbdLogParams kbdlog_params;
         PatternCheckerParams patter_checker_params;
         SequencedVideoParams sequenced_video_params;
@@ -990,7 +993,6 @@ public:
         const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
         int debug_capture = ini.get<cfg::debug::capture>();
         bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-        bool meta_enable_session_log = ini.get<cfg::session_log::enable_session_log>();
         const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
         bool rt_display = ini.get<cfg::video::rt_display>();
@@ -1023,7 +1025,6 @@ public:
                                     , pattern_notify
                                     , debug_capture
                                     , flv_capture_chunk
-                                    , meta_enable_session_log
                                     , flv_break_interval
                                     , syslog_keyboard_log
                                     , rt_display
@@ -1042,7 +1043,6 @@ public:
         }
 
         this->update_keyboard_input_mask_state();
-        this->update_hiden_key_markers_state();
 
         if (capture_wrm) {
             this->ini.set_acl<cfg::context::recording_started>(true);
@@ -2303,7 +2303,7 @@ public:
             constexpr std::size_t array_size = 65536;
             uint8_t array[array_size];
             uint8_t * end = array;
-            X224::RecvFactory fx224(this->trans, &end, array_size, true);
+            X224::RecvFactory fx224(this->trans, &end, array_size);
             InStream stream(array, end - array);
 
             if (fx224.fast_path) {
@@ -4623,12 +4623,6 @@ private:
                     this->consent_ui_is_visible || mask_unidentified_data
                 );
         }
-    }
-
-    void update_hiden_key_markers_state() {
-      if (this->capture) {
-            this->capture->hide_key_markers(ini.get<cfg::session_log::hide_non_printable_kbd_input>());
-      }
     }
 };
 

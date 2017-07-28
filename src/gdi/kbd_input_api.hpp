@@ -34,7 +34,6 @@ struct KbdInputApi : private noncopyable
 
     virtual bool kbd_input(timeval const & now, uint32_t uchar) = 0;
     virtual void enable_kbd_input_mask(bool enable) = 0;
-    virtual void hide_key_markers(bool hide) = 0;
 };
 
 }
