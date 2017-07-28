@@ -1484,8 +1484,6 @@ public:
                     this->verbose
                 );
         }
-
-        LOG(LOG_INFO, "mod_rdp end!!!!!!!!!!!!!!!!");
     }   // mod_rdp
 
     ~mod_rdp() override {
