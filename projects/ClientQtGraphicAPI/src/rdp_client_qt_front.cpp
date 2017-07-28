@@ -3314,7 +3314,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::rdpsnd;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
