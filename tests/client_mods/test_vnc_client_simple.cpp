@@ -271,7 +271,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , report_message
         , false
         , verbose);
-    mod.get_event().set();
+//    mod.get_event().set();
+    mod.get_event().set_trigger_time(wait_obj::NOW);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");

@@ -2243,8 +2243,9 @@ public:
         if ((this->state == MOD_RDP_NEGO) &&
             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
              (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
-            this->event.object_and_time = true;
-            this->event.set();
+            // this->event.object_and_time = true;
+            // this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
         return this->event;
     }
@@ -3738,7 +3739,10 @@ public:
                             if (!this->already_upped_and_running) {
                                 this->do_enable_session_probe();
 
-                                this->event.object_and_time = (this->open_session_timeout.count() > 0);
+                                //this->event.object_and_time = (this->open_session_timeout.count() > 0);
+                                if (this->open_session_timeout.count() > 0) {
+                                    this->event.set_trigger_time(wait_obj::NOW);
+                                }
 
                                 this->already_upped_and_running = true;
                             }
@@ -4225,7 +4229,8 @@ public:
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
                 LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED");
-                this->event.set(1000000);
+//                this->event.set(1000000);
+                this->event.set_trigger_time(1000000);
             break;
             case Timeout::TIMEOUT_INACTIVE:
                 LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE");
@@ -5883,7 +5888,8 @@ public:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
-            this->event.reset();
+//            this->event.reset();
+            this->event.reset_trigger_time();
         }
 
         if (this->enable_session_probe) {
@@ -7430,7 +7436,8 @@ private:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
                 now, this->open_session_timeout.count());
-            this->event.set(1000000);
+//            this->event.set(1000000);
+            this->event.set_trigger_time(1000000);
         }
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");

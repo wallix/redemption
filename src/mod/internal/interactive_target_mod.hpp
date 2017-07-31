@@ -131,7 +131,8 @@ private:
         }
         this->vars.set_acl<cfg::context::display_message>(true);
         this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
+//        this->event.set();
+        this->event.set_trigger_time(wait_obj::NOW);
     }
 
     // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -140,7 +141,8 @@ private:
         this->vars.set_acl<cfg::context::target_password>("");
         this->vars.set_acl<cfg::context::display_message>(false);
         this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
+//        this->event.set();
+        this->event.set_trigger_time(wait_obj::NOW);
     }
 
 public:
@@ -151,7 +153,8 @@ public:
             this->copy_paste.ready(this->front);
         }
 
-        this->event.reset();
+//        this->event.reset();
+        this->event.reset_trigger_time();
     }
 
     bool is_up_and_running() override { return true; }

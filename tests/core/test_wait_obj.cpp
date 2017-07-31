@@ -42,7 +42,8 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
-    nonsocketobj.reset();
+//    nonsocketobj.reset();
+    nonsocketobj.reset_trigger_time();
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
@@ -54,7 +55,8 @@ RED_AUTO_TEST_CASE(Testwait_obj)
 
 
     // set wait obj (no timer)
-    nonsocketobj.set();
+//    nonsocketobj.set();
+    nonsocketobj.set_trigger_time(wait_obj::NOW);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, true);
 
@@ -65,13 +67,15 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 2L;
 
     // reset
-    nonsocketobj.reset();
+//    nonsocketobj.reset();
+    nonsocketobj.reset_trigger_time();
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
     // set a waitobj with a timer will set it
     // after the timeout is triggered
-    nonsocketobj.set(500000);
+//    nonsocketobj.set(500000);
+    nonsocketobj.set_trigger_time(500000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
     RED_CHECK_EQUAL(timeout.tv_sec, 2L);
@@ -89,8 +93,10 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     // adding two non socket waitobj to fd set
     // setting them with differents timers.
     wait_obj nonsocketobj2;
-    nonsocketobj.set(1500000);
-    nonsocketobj2.set(300000);
+//    nonsocketobj.set(1500000);
+    nonsocketobj.set_trigger_time(1500000);
+//    nonsocketobj2.set(300000);
+    nonsocketobj2.set_trigger_time(300000);
 
     nonsocketobj.wait_on_timeout(timeout);
     RED_CHECK_EQUAL(timeout.tv_sec, 1L);
@@ -105,10 +111,12 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     // set a wait obj twice but with different timers:
     // only the last timer will be considered
     timeout.tv_sec = 2L;
-    nonsocketobj.set(300000);
+//    nonsocketobj.set(300000);
+    nonsocketobj.set_trigger_time(300000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
-    nonsocketobj.set(1400000);
+//    nonsocketobj.set(1400000);
+    nonsocketobj.set_trigger_time(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
@@ -123,7 +131,8 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 2L;
     timeout.tv_usec = 0L;
 
-    nonsocketobj.reset();
+//    nonsocketobj.reset();
+    nonsocketobj.reset_trigger_time();
     nonsocketobj.update(300000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
@@ -140,7 +149,8 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 2L;
     timeout.tv_usec = 0L;
 
-    nonsocketobj.reset();
+//    nonsocketobj.reset();
+    nonsocketobj.reset_trigger_time();
     nonsocketobj.update(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
@@ -158,7 +168,8 @@ RED_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 3L;
     timeout.tv_usec = 0L;
 
-    nonsocketobj.reset();
+//    nonsocketobj.reset();
+    nonsocketobj.reset_trigger_time();
     nonsocketobj.update(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);

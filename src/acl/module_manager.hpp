@@ -308,7 +308,8 @@ public:
         if (this->ini.get<cfg::context::forcemodule>() &&
             !this->is_connected()) {
             this->mod->get_event().signal = BACK_EVENT_NEXT;
-            this->mod->get_event().set();
+//            this->mod->get_event().set();
+            this->mod->get_event().set_trigger_time(wait_obj::NOW);
             this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }
@@ -796,7 +797,8 @@ public:
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
-        this->no_mod.get_event().reset();
+//        this->no_mod.get_event().reset();
+        this->no_mod.get_event().reset_trigger_time();
         this->mod = &this->no_mod;
     }
 

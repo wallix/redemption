@@ -227,7 +227,8 @@ public:
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
     }
 
@@ -275,7 +276,8 @@ public:
         if (this->end_of_data) {
             timespec wtime = {1, 0};
             nanosleep(&wtime, nullptr);
-            this->event.set(std::chrono::seconds(1));
+//            this->event.set(std::chrono::seconds(1));
+            this->event.set_trigger_time(std::chrono::seconds(1));
             return;
         }
 
@@ -334,14 +336,16 @@ public:
                 }
             }
 
-            this->event.set(1);
+//            this->event.set(1);
+            this->event.set_trigger_time(wait_obj::NOW);
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 this->auth_error_message = "The recorded file is inaccessible or corrupted!";
 
                 this->event.signal = BACK_EVENT_NEXT;
-                this->event.set(1);
+//                this->event.set(1);
+                this->event.set_trigger_time(wait_obj::NOW);
             }
             else {
                 throw;

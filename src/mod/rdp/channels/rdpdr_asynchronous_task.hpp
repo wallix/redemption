@@ -98,9 +98,10 @@ public:
     void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
 
-        wait_object.object_and_time = true;
+//        wait_object.object_and_time = true;
 
-        wait_object.set(1000000);
+//        wait_object.set(1000000);
+        wait_object.set_trigger_time(1000000);
     }
 
     int get_file_descriptor() const override { return this->file_descriptor; }
@@ -208,9 +209,10 @@ public:
     void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
 
-        wait_object.object_and_time = true;
+//        wait_object.object_and_time = true;
 
-        wait_object.set(1000);  // 1 ms
+//        wait_object.set(1000);  // 1 ms
+        wait_object.set_trigger_time(1000); // 1 ms
     }
 
     bool run(const wait_obj &) override {
@@ -275,9 +277,10 @@ public:
     void configure_wait_object(wait_obj & wait_object) const override {
         REDASSERT(!wait_object.waked_up_by_time);
 
-        wait_object.object_and_time = true;
+//        wait_object.object_and_time = true;
 
-        wait_object.set(1000);  // 1 ms
+//        wait_object.set(1000);  // 1 ms
+        wait_object.set_trigger_time(1000); // 1 ms
     }
 
     bool run(const wait_obj &) override {

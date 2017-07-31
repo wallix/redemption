@@ -204,7 +204,8 @@ public:
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
-        if (bool(*this) && this->button_1_down_event.object_and_time) {
+//        if (bool(*this) && this->button_1_down_event.object_and_time) {
+        if (bool(*this) && this->button_1_down_event.is_trigger_time_set()) {
             out_event_handlers.emplace_back(
                 &this->button_1_down_event,
                 &this->button_1_down_event_handler,
@@ -219,7 +220,8 @@ public:
         this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
             this->button_1_down);
 
-        this->button_1_down_event.object_and_time = false;
+//        this->button_1_down_event.object_and_time = false;
+        this->button_1_down_event.reset_trigger_time();
     }
 
     Rect adjust_rect(Rect rect) {
@@ -774,13 +776,15 @@ public:
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
-        if (this->button_1_down_event.object_and_time) {
+//        if (this->button_1_down_event.object_and_time) {
+        if (this->button_1_down_event.is_trigger_time_set()) {
             if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
                 this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
                     this->button_1_down);
             }
 
-            this->button_1_down_event.object_and_time = false;
+//            this->button_1_down_event.object_and_time = false;
+            this->button_1_down_event.reset_trigger_time();
         }
 
         // Mouse pointer managment
@@ -883,12 +887,13 @@ public:
                         (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                         this->button_1_down = this->pressed_mouse_button;
 
-                        this->button_1_down_event.set(400000);
+//                        this->button_1_down_event.set(400000);
+                        this->button_1_down_event.set_trigger_time(400000);
 
                         this->button_1_down_x = xPos;
                         this->button_1_down_y = yPos;
 
-                        this->button_1_down_event.object_and_time  = true;
+//                        this->button_1_down_event.object_and_time  = true;
                         this->button_1_down_event.waked_up_by_time = false;
 
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;

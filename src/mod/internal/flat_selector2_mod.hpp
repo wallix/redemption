@@ -135,7 +135,8 @@ public:
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::selector>();
         this->event.signal = BACK_EVENT_REFRESH;
-        this->event.set();
+//        this->event.set();
+        this->event.set_trigger_time(wait_obj::NOW);
     }
 
     void notify(Widget2* widget, notify_event_t event) override {
@@ -150,7 +151,8 @@ public:
             this->vars.ask<cfg::context::password>();
             this->vars.set<cfg::context::selector>(false);
             this->event.signal = BACK_EVENT_NEXT;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
 
             this->waiting_for_next_module = true;
         } break;
@@ -175,7 +177,8 @@ public:
                 this->vars.ask<cfg::context::target_protocol>();
 
                 this->event.signal = BACK_EVENT_NEXT;
-                this->event.set();
+//                this->event.set();
+                this->event.set_trigger_time(wait_obj::NOW);
 
                 this->waiting_for_next_module = true;
             }
@@ -242,7 +245,8 @@ public:
 
         this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
         this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-        this->event.reset();
+//        this->event.reset();
+        this->event.reset_trigger_time();
     }
 
 private:
@@ -358,7 +362,8 @@ public:
             this->copy_paste.ready(this->front);
         }
 
-        this->event.reset();
+//        this->event.reset();
+        this->event.reset_trigger_time();
     }
 
     bool is_up_and_running() override { return true; }

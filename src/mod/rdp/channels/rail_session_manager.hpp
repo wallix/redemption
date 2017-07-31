@@ -461,7 +461,8 @@ public:
 
             this->currently_without_window = true;
 
-            this->event.set(rail_disconnect_message_delay * 1000);
+//            this->event.set(rail_disconnect_message_delay * 1000);
+            this->event.set_trigger_time(rail_disconnect_message_delay * 1000);
         }
 
         if (has_window) {

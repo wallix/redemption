@@ -1479,7 +1479,8 @@ Capture::Microseconds Capture::periodic_snapshot(
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
 ) {
-    this->capture_event.reset();
+//    this->capture_event.reset();
+    this->capture_event.reset_trigger_time();
 
     if (this->gd_drawable) {
         this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
