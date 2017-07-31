@@ -72,6 +72,7 @@
 #include "core/RDP/capabilities/largepointer.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDPEA/audio_output.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/RDP/tdpu_buffer.hpp"
@@ -3597,6 +3598,9 @@ public:
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
+//                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+//                     rdpsnd::streamLogClient(stream, flags);
+//                 }
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );

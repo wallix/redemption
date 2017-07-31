@@ -23,6 +23,8 @@
 
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "core/channel_list.hpp"
+
 
 namespace rdpsnd {
 
@@ -1310,5 +1312,90 @@ struct PitchPDU {
     }
 };
 
+
+
+
+
+
+static inline void streamLogClient(InStream & stream, int flag) {
+    rdpsnd::RDPSNDPDUHeader header;
+    header.receive(stream);
+    header.log();
+
+    switch (header.msgType) {
+
+        case SNDC_FORMATS:
+        {
+            rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
+            safsvh.receive(stream);
+            safsvh.log();
+        }
+            break;
+
+        case SNDC_TRAINING:
+        {
+            rdpsnd::TrainingPDU train;
+            train.receive(stream);
+            train.log();
+        }
+            break;
+
+        case SNDC_WAVE:
+        {
+            if ( flag == CHANNELS::CHANNEL_FLAG_FIRST) {
+                rdpsnd::WaveInfoPDU wi;
+                wi.receive(stream);
+                wi.log();
+            } else {
+                LOG(LOG_INFO, "RDPSDN SNDC_WAVE");
+            }
+        }
+            break;
+
+        case SNDC_CLOSE:
+        {
+            LOG(LOG_INFO, "RDPSDN SNDC_CLOSE");
+        }
+            break;
+
+        case SNDC_SETVOLUME:
+        {
+            rdpsnd::VolumePDU v;
+            v.receive(stream);
+            v.log();
+        }
+            break;
+
+        case SNDC_SETPITCH:
+        {
+            rdpsnd::PitchPDU p;
+            p.receive(stream);
+            p.log();
+        }
+            break;
+
+        case SNDC_QUALITYMODE:
+        {
+            rdpsnd::QualityModePDU qm;
+            qm.receive(stream);
+            qm.log();
+        }
+            break;
+
+        case rdpsnd::SNDC_WAVE2:
+        {
+            if ( flag == CHANNELS::CHANNEL_FLAG_FIRST) {
+                rdpsnd::Wave2PDU w2;
+                w2.receive(stream);
+                w2.log();
+            } else {
+                LOG(LOG_INFO, "RDPSDN SNDC_WAVE2");
+            }
+        }
+            break;
+
+        default: LOG(LOG_WARNING, "RDPSND Unknow PDU with length = %zu", header.BodySize);
+            break;
+    }
 
 }
