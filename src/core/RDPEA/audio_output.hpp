@@ -1318,7 +1318,7 @@ struct PitchPDU {
 
 
 static inline void streamLogClient(InStream & stream, int flag) {
-    rdpsnd::RDPSNDPDUHeader header;
+    RDPSNDPDUHeader header;
     header.receive(stream);
     header.log();
 
@@ -1326,7 +1326,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
 
         case SNDC_FORMATS:
         {
-            rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
+            ServerAudioFormatsandVersionHeader safsvh;
             safsvh.receive(stream);
             safsvh.log();
         }
@@ -1334,7 +1334,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
 
         case SNDC_TRAINING:
         {
-            rdpsnd::TrainingPDU train;
+            TrainingPDU train;
             train.receive(stream);
             train.log();
         }
@@ -1343,7 +1343,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
         case SNDC_WAVE:
         {
             if ( flag == CHANNELS::CHANNEL_FLAG_FIRST) {
-                rdpsnd::WaveInfoPDU wi;
+                WaveInfoPDU wi;
                 wi.receive(stream);
                 wi.log();
             } else {
@@ -1360,7 +1360,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
 
         case SNDC_SETVOLUME:
         {
-            rdpsnd::VolumePDU v;
+            VolumePDU v;
             v.receive(stream);
             v.log();
         }
@@ -1368,7 +1368,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
 
         case SNDC_SETPITCH:
         {
-            rdpsnd::PitchPDU p;
+            PitchPDU p;
             p.receive(stream);
             p.log();
         }
@@ -1376,16 +1376,16 @@ static inline void streamLogClient(InStream & stream, int flag) {
 
         case SNDC_QUALITYMODE:
         {
-            rdpsnd::QualityModePDU qm;
+            QualityModePDU qm;
             qm.receive(stream);
             qm.log();
         }
             break;
 
-        case rdpsnd::SNDC_WAVE2:
+        case SNDC_WAVE2:
         {
             if ( flag == CHANNELS::CHANNEL_FLAG_FIRST) {
-                rdpsnd::Wave2PDU w2;
+                Wave2PDU w2;
                 w2.receive(stream);
                 w2.log();
             } else {
@@ -1397,5 +1397,6 @@ static inline void streamLogClient(InStream & stream, int flag) {
         default: LOG(LOG_WARNING, "RDPSND Unknow PDU with length = %zu", header.BodySize);
             break;
     }
+}
 
 }

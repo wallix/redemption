@@ -3599,9 +3599,9 @@ public:
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
-//                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+                if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
 //                     rdpsnd::streamLogClient(stream, flags);
-//                 }
+                }
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );

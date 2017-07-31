@@ -414,11 +414,11 @@ public:
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
 
             if (this->_callback) {
-                if (this->_callback->get_event().set_state) {
+                if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
-                    + (this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000;
-
+                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
+                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
+//                     this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
@@ -450,12 +450,12 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
-        this->_callback->get_event().waked_up_by_time = false;
+//         this->_callback->get_event().waked_up_by_time = false;
         this->call_draw_event();
     }
 
     void call_draw_event_timer() {
-        this->_callback->get_event().waked_up_by_time = true;
+//         this->_callback->get_event().waked_up_by_time = true;
         this->call_draw_event();
     }
 
@@ -465,10 +465,12 @@ public Q_SLOTS:
             this->_front->callback();
 
             if (this->_callback) {
-                if (this->_callback->get_event().set_state) {
+                if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    int time_to_wake = ((this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000)
-                    + ((this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000);
+                    int time_to_wake = ((this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000)
+                    + ((this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000);
+
+                    this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
