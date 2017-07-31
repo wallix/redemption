@@ -133,10 +133,10 @@ RED_AUTO_TEST_CASE(Testwait_obj)
 
 //    nonsocketobj.reset();
     nonsocketobj.reset_trigger_time();
-    nonsocketobj.update(300000);
+    nonsocketobj.update_trigger_time(300000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
-    nonsocketobj.update(1400000);
+    nonsocketobj.update_trigger_time(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
@@ -151,10 +151,10 @@ RED_AUTO_TEST_CASE(Testwait_obj)
 
 //    nonsocketobj.reset();
     nonsocketobj.reset_trigger_time();
-    nonsocketobj.update(1400000);
+    nonsocketobj.update_trigger_time(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
-    nonsocketobj.update(800000);
+    nonsocketobj.update_trigger_time(800000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 
@@ -170,10 +170,10 @@ RED_AUTO_TEST_CASE(Testwait_obj)
 
 //    nonsocketobj.reset();
     nonsocketobj.reset_trigger_time();
-    nonsocketobj.update(1400000);
+    nonsocketobj.update_trigger_time(1400000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
-    nonsocketobj.update(2800000);
+    nonsocketobj.update_trigger_time(2800000);
     res = nonsocketobj.is_set(INVALID_SOCKET, rfds);
     RED_CHECK_EQUAL(res, false);
 

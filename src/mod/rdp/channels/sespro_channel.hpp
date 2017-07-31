@@ -265,7 +265,7 @@ public:
 
     bool is_event_signaled() {
         return (this->session_probe_event.is_trigger_time_set() &&
-            this->session_probe_event.waked_up_by_time);
+            this->session_probe_event.is_waked_up_by_time());
     }
 
     bool is_disconnection_reconnection_required() {
@@ -275,7 +275,7 @@ public:
     void process_event()
     {
         if (!this->session_probe_event.is_trigger_time_set() ||
-            !this->session_probe_event.waked_up_by_time) {
+            !this->session_probe_event.is_waked_up_by_time()) {
             return;
         }
 

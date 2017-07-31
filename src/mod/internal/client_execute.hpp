@@ -894,7 +894,7 @@ public:
                         this->button_1_down_y = yPos;
 
 //                        this->button_1_down_event.object_and_time  = true;
-                        this->button_1_down_event.waked_up_by_time = false;
+//                        this->button_1_down_event.waked_up_by_time = false;
 
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 

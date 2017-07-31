@@ -925,7 +925,7 @@ public:
             if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (!this->event.waked_up_by_time ) {
+            if (!this->event.is_waked_up_by_time()) {
                 try {
                     uint8_t type; /* message-type */
                     this->t.recv_boom(&type, 1);
@@ -1416,7 +1416,7 @@ public:
             throw Error(ERR_VNC);
         }
 
-        if (this->event.waked_up_by_time) {
+        if (this->event.is_waked_up_by_time()) {
 //            this->event.reset();
             this->event.reset_trigger_time();
 

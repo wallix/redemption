@@ -1271,7 +1271,7 @@ public:
             this->session_resized = false;
         }
 
-        if (this->event.waked_up_by_time) return;
+        if (this->event.is_waked_up_by_time()) return;
 
         unsigned expected;
 

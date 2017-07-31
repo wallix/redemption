@@ -48,10 +48,10 @@ public:
 private:
     timeval     trigger_time = { 0, 0 };
 
-public:
 //    bool        object_and_time = false;
     bool        waked_up_by_time = false;
 
+public:
     static constexpr const uint64_t NOW = 0;
 
     wait_obj()
@@ -74,6 +74,10 @@ public:
         return (this->trigger_time != ::timeval({0, 0}));
     }
 
+    bool is_waked_up_by_time() const {
+        return this->waked_up_by_time;
+    }
+
     void full_reset()
     {
         *this = wait_obj();
@@ -81,12 +85,16 @@ public:
 
     void reset_trigger_time()
     {
+        this->waked_up_by_time = false;
+
 //        this->set_state = false;
         this->trigger_time = ::timeval({0, 0});
     }
 
     void set_trigger_time(std::chrono::microseconds idle_usec)
     {
+        this->waked_up_by_time = false;
+
 //        this->set_state = true;
         struct timeval now = tvtime();
 
@@ -102,7 +110,7 @@ public:
         this->set_trigger_time(std::chrono::microseconds(idle_usec));
     }
 
-    void update(std::chrono::microseconds idle_usec)
+    void update_trigger_time(std::chrono::microseconds idle_usec)
     {
         if (!idle_usec.count()) {
             return;
@@ -121,9 +129,9 @@ public:
     }
 
     // Idle time in microsecond
-    void update(uint64_t idle_usec)
+    void update_trigger_time(uint64_t idle_usec)
     {
-        this->update(std::chrono::microseconds(idle_usec));
+        this->update_trigger_time(std::chrono::microseconds(idle_usec));
     }
 
     void wait_on_timeout(timeval & timeout) const
@@ -131,7 +139,7 @@ public:
         // TODO: And what exactly means that set_state state variable in wait_obj ?
         // if it means 'already triggered' it's one more reason to wake up fast...
 //        if (this->set_state) {
-        if (is_trigger_time_set()) {
+        if (this->is_trigger_time_set()) {
             timeval now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
             if (lessthantimeval(remain, timeout)) {

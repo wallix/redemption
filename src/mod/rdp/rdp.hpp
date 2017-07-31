@@ -4035,7 +4035,7 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        bool waked_up_by_time = this->event.waked_up_by_time;
+        bool waked_up_by_time = this->event.is_waked_up_by_time();
 
         if (!waked_up_by_time) {
             this->buf.load_data(this->nego.trans.get_transport());

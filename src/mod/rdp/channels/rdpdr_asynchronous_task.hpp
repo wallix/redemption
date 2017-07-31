@@ -96,7 +96,7 @@ public:
     {}
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.waked_up_by_time);
+        REDASSERT(!wait_object.is_waked_up_by_time());
 
 //        wait_object.object_and_time = true;
 
@@ -107,7 +107,7 @@ public:
     int get_file_descriptor() const override { return this->file_descriptor; }
 
     bool run(const wait_obj & wait_object) override {
-        if (wait_object.waked_up_by_time) {
+        if (wait_object.is_waked_up_by_time()) {
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
                 this->file_descriptor);
             return true;
@@ -207,7 +207,7 @@ public:
     }
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.waked_up_by_time);
+        REDASSERT(!wait_object.is_waked_up_by_time());
 
 //        wait_object.object_and_time = true;
 
@@ -275,7 +275,7 @@ public:
     }
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.waked_up_by_time);
+        REDASSERT(!wait_object.is_waked_up_by_time());
 
 //        wait_object.object_and_time = true;
 

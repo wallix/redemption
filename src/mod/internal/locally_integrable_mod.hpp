@@ -100,7 +100,7 @@ struct LocallyIntegrableMod : public InternalMod {
 
 //        if (this->first_click_down_event.object_and_time &&
         if (this->first_click_down_event.is_trigger_time_set() &&
-            this->first_click_down_event.waked_up_by_time) {
+            this->first_click_down_event.is_waked_up_by_time()) {
             this->cancel_double_click_detection();
         }
     }
@@ -129,7 +129,7 @@ struct LocallyIntegrableMod : public InternalMod {
                             this->first_click_down_event.set_trigger_time(1000000);
 
 //                            this->first_click_down_event.object_and_time  = true;
-                            this->first_click_down_event.waked_up_by_time = false;
+//                            this->first_click_down_event.waked_up_by_time = false;
                         }
                     break;
 
@@ -232,7 +232,7 @@ struct LocallyIntegrableMod : public InternalMod {
     void draw_event(time_t, gdi::GraphicApi &) override {
         if (this->rail_enabled &&
             (false == static_cast<bool>(this->client_execute)) &&
-            this->event.waked_up_by_time) {
+            this->event.is_waked_up_by_time()) {
 
             this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
                 this->is_resizing_hosted_desktop_allowed());
@@ -255,7 +255,7 @@ private:
         this->first_click_down_event.reset_trigger_time();
 
 //        this->first_click_down_event.object_and_time  = false;
-        this->first_click_down_event.waked_up_by_time = false;
+//        this->first_click_down_event.waked_up_by_time = false;
 
         this->dc_state = DCSTATE_WAIT;
     }

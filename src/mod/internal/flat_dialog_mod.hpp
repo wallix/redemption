@@ -141,7 +141,7 @@ public:
     void draw_event(time_t now, gdi::GraphicApi & gapi) override {
         LocallyIntegrableMod::draw_event(now, gapi);
 
-        if (!this->copy_paste && event.waked_up_by_time) {
+        if (!this->copy_paste && this->event.is_waked_up_by_time()) {
             this->copy_paste.ready(this->front);
         }
         switch(this->timeout.check(now)) {
