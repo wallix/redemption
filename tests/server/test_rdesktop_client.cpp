@@ -40,9 +40,6 @@
 #include "test_only/transport/test_transport.hpp"
 #include "configs/config.hpp"
 #include "front/front.hpp"
-// Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
 #include "test_only/lcg_random.hpp"
 
 

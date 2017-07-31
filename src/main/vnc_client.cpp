@@ -24,7 +24,6 @@
 
 #define LOGPRINT
 #include "utils/log.hpp"
-//#include "core/front_api.hpp"
 #include "front/client_front.hpp"
 #include "core/client_info.hpp"
 #include "core/session.hpp"
@@ -137,7 +136,7 @@ int main(int argc, char** argv)
       , bogus_clipboard_infinite_loop
       , report_message
       , false
-      , verbose);
+      , to_verbose_flags(verbose));
 //    mod.get_event().set();
     mod.get_event().set_trigger_time(wait_obj::NOW);
 

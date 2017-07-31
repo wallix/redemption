@@ -87,7 +87,7 @@ struct Buf64k
                 this->len -= this->idx;
                 this->idx = 0;
             }
-            this->len += trans.partial_read(this->buf + this->len, size_t(max_len - this->len));
+            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
         }
     }
 

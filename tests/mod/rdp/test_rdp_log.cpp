@@ -23,14 +23,11 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
+// #define LOGNULL
+// #define LOGPRINT
 
-#define LOGNULL
-//#define LOGPRINT
-#include "utils/log.hpp"
-
-//#include "path/to/file.hpp"
+#include "mod/rdp/rdp_log.hpp"
 
 RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    RED_CHECK(true);
 }

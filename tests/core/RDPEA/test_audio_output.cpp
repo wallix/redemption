@@ -162,9 +162,9 @@ RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderReceive)
 
 RED_AUTO_TEST_CASE(QualityModePDUEmit)
 {
-    const size_t len = 4;
+    const size_t len = 2;
     const char data[] =
-            "\x01\x00\x00\x00";
+            "\x01\x00";
 
     StaticOutStream<32> stream;
     rdpsnd::QualityModePDU ch(rdpsnd::MEDIUM_QUALITY);
@@ -263,11 +263,9 @@ RED_AUTO_TEST_CASE(WaveInfoPDUEmit)
 
 RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\xa7\x11\x00\x00\x00\x00\x00\x00";
+    const auto data = cstr_array_view("\xa7\x11\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04");
 
-    InStream in_stream(data, len);
+    InStream in_stream(data);
 
     rdpsnd::WaveInfoPDU ch;
     ch.receive(in_stream);
@@ -275,6 +273,7 @@ RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
     RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
     RED_CHECK_EQUAL(ch.wFormatNo, 0x0000);
     RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
+    RED_CHECK_MEM_AA(ch.Data, data.subarray(8));
 }
 
 RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)

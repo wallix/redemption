@@ -30,5 +30,4 @@
 
 RED_AUTO_TEST_CASE(Testtransparentchunk)
 {
-    RED_CHECK(true);
 }

@@ -28,14 +28,10 @@
 //#define LOGPRINT
 #include "utils/log.hpp"
 
-//#include "path/to/file.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 
 
 RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
-    RED_CHECK(true);
-
-
     aux_::BmpMemAlloc bmpMemAlloc;
 }

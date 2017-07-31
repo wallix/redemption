@@ -1626,7 +1626,7 @@ public:
                         this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                         report_message,
                         false,
-                        this->ini.get<cfg::debug::mod_vnc>()
+                        to_verbose_flags(this->ini.get<cfg::debug::mod_vnc>())
                     ));
 
                     if (this->front.client_info.remote_program) {

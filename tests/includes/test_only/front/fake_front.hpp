@@ -30,7 +30,6 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "gdi/graphic_api.hpp"
 
-//#include <openssl/ssl.h>
 
 class FakeFront : public FrontAPI
 {

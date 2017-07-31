@@ -23,12 +23,9 @@
 
 #include "utils/sugar/make_unique.hpp"
 
-// #include <boost/multiprecision/cpp_int.hpp>
+// include <boost/multiprecision/cpp_int.hpp>
 
 #include <algorithm>
-//#include <sstream>
-//#include <iomanip>
-
 #include <cassert>
 
 
@@ -163,8 +160,6 @@ static inline size_t mod_exp_direct(
     std::reverse_copy(result.a.get(), result.a.get() + count_bytes, out);
 
     return count_bytes; //result.copy_unsafe(out/*, out_len*/);
-
-
 
 //
 //     auto b256_to_bigint = [](uint8_t const * s, size_t n, char * ctx) {

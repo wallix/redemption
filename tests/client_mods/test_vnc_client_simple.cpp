@@ -44,9 +44,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 0;
+    auto vnc_verbose = mod_vnc::Verbose::none;
+    auto front_verbose = 0;
 
-    FakeFront front(info, verbose);
+    FakeFront front(info, front_verbose);
 
 //    BStream stream(65536);
 //    const char * name = "VNC Target";
@@ -239,7 +240,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
 //    LCGRandom gen(0);
 
-    if (verbose > 2){
+    if (front_verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
     }
 
@@ -270,11 +271,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , bogus_clipboard_infinite_loop
         , report_message
         , false
-        , verbose);
+        , vnc_verbose);
 //    mod.get_event().set();
     mod.get_event().set_trigger_time(wait_obj::NOW);
 
-    if (verbose > 2){
+    if (front_verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
     }
 //    RED_CHECK(t.status);
