@@ -82,6 +82,10 @@ public:
         return this->trigger_time;
     }
 
+    void set_waked_up_by_time(bool waked_up_by_time) {
+        this->waked_up_by_time = waked_up_by_time;
+    }
+
     void full_reset()
     {
         *this = wait_obj();

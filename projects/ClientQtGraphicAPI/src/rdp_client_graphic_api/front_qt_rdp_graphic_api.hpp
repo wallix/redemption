@@ -450,12 +450,12 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
-//         this->_callback->get_event().waked_up_by_time = false;
+        this->_callback->get_event().set_waked_up_by_time(false);
         this->call_draw_event();
     }
 
     void call_draw_event_timer() {
-//         this->_callback->get_event().waked_up_by_time = true;
+        this->_callback->get_event().set_waked_up_by_time(true);
         this->call_draw_event();
     }
 
