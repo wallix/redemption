@@ -921,7 +921,7 @@ public:
             if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
+            if (!this->event.waked_up_by_time ) {
                 try {
                     uint8_t type; /* message-type */
                     this->t.recv_boom(&type, 1);
