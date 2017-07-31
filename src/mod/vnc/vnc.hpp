@@ -52,7 +52,8 @@
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-struct mod_vnc : public InternalMod, private NotifyApi {
+struct mod_vnc : public InternalMod, private NotifyApi
+{
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
@@ -130,7 +131,20 @@ private:
     uint8_t green_shift;
     uint8_t blue_shift;
 
-    uint32_t   verbose;
+public:
+    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    {
+        none,
+        basic_trace     = 0x0001,
+        keymap_stack    = 0x0002,
+        draw_event      = 0x0004,
+        input           = 0x0008,
+        connection      = 0x0010,
+
+        clipboard       = 0x0080,
+    };
+
+private:
     KeymapSym  keymapSym;
 
     uint8_t to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
@@ -223,7 +237,7 @@ public:
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
-           , uint32_t verbose
+           , Verbose verbose
            )
     //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme, false)
@@ -237,7 +251,7 @@ public:
     , password{0}
     , t(t)
     , verbose(verbose)
-    , keymapSym(verbose)
+    , keymapSym(static_cast<uint32_t>(verbose))
     , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
     , to_rdp_clipboard_data_is_utf8_encoded(false)
     , to_vnc_clipboard_data_size(0)
@@ -301,7 +315,7 @@ public:
     int get_fd() const override { return this->t.get_fd(); }
 
     void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "MS-Logon with following values:");
             LOG(LOG_INFO, "Gen=%" PRIu64, gen);
             LOG(LOG_INFO, "Mod=%" PRIu64, mod);
@@ -333,7 +347,7 @@ public:
 
         this->t.send(out_stream.get_data(), out_stream.get_offset());
         // sec result
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Waiting for password ack");
         }
 
@@ -363,7 +377,7 @@ public:
             catch (Error const &) {
             }
         } else {
-            if (this->verbose) {
+            if (bool(this->verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO, "MS LOGON password ok\n");
             }
         }
@@ -423,8 +437,9 @@ public:
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
 
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-        LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
-
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+        }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
@@ -464,7 +479,7 @@ public:
     }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         }
         StaticOutPerStream<8> stream;
@@ -625,7 +640,7 @@ protected:
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (this->verbose & 0x80) {
+                    if (bool(this->verbose & Verbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
                     }
 
@@ -638,7 +653,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (this->verbose & 0x80) {
+                    if (bool(this->verbose & Verbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
                     }
 
@@ -652,7 +667,7 @@ protected:
             }
             else {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (this->verbose & 0x80) {
+                    if (bool(this->verbose & Verbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
 
@@ -670,7 +685,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (this->verbose & 0x80) {
+                    if (bool(this->verbose & Verbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
                     }
 
@@ -692,7 +707,7 @@ public:
                                       , int16_t param2
                                       ) override {
     //==============================================================================================================
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG( LOG_INFO
                , "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x"
                , time, device_flags, param1, param2);
@@ -736,9 +751,9 @@ public:
     }
 
 protected:
-    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, uint32_t verbose)
+    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, Verbose verbose)
     {
-        if (verbose) {
+        if (bool(verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
         }
 
@@ -750,7 +765,7 @@ protected:
             p != end;
             encoding_type = std::strtol(p, &end, 10))
         {
-            if (verbose) {
+            if (bool(verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", encoding_type);
             }
             stream.out_uint32_be(encoding_type);
@@ -766,13 +781,13 @@ protected:
 public:
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         (void)now;
-        if (this->verbose & 2) {
+        if (bool(this->verbose & Verbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
         switch (this->state)
         {
         case ASK_PASSWORD:
-            if (this->verbose & 1) {
+            if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=ASK_PASSWORD");
             }
             this->screen.add_widget(&this->challenge);
@@ -789,7 +804,7 @@ public:
             break;
         case DO_INITIAL_CLEAR_SCREEN:
             {
-                if (this->verbose & 1) {
+                if (bool(this->verbose & Verbose::connection)) {
                     LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
                 }
                 // set almost null cursor, this is the little dot cursor
@@ -820,7 +835,7 @@ public:
                 this->lib_open_clip_channel();
 
                 this->event.object_and_time = false;
-                if (this->verbose & 1) {
+                if (bool(this->verbose & Verbose::connection)) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
 
@@ -828,7 +843,7 @@ public:
                     RDPECLIP::CB_CAPS_VERSION_1,
                     this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "Server use %s format name",
                         (this->server_use_long_format_names ? "long" : "short"));
                 }
@@ -846,7 +861,7 @@ public:
                 size_t length     = out_s.get_offset();
                 size_t chunk_size = length;
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                         RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
                         clip_cap_pdu.header.msgType()
@@ -870,7 +885,7 @@ public:
                 length     = out_s.get_offset();
                 chunk_size = length;
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                         RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
                         server_monitor_ready_pdu.header.msgType()
@@ -887,7 +902,7 @@ public:
             }
             break;
         case RETRY_CONNECTION:
-            if (this->verbose & 1) {
+            if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
@@ -903,7 +918,7 @@ public:
             this->event.set();
             break;
         case UP_AND_RUNNING:
-            if (this->verbose & 2) {
+            if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
             if (this->is_socket_transport && static_cast<SocketTransport&>(this->t).can_recv()) {
@@ -944,7 +959,7 @@ public:
             }
             break;
         case WAIT_PASSWORD:
-            if (this->verbose & 1) {
+            if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
             this->event.object_and_time = false;
@@ -952,7 +967,7 @@ public:
             break;
         case WAIT_SECURITY_TYPES:
             {
-                if (this->verbose & 1) {
+                if (bool(this->verbose & Verbose::connection)) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
@@ -960,7 +975,7 @@ public:
                 uint8_t server_protoversion[12];
                 this->t.recv_boom(server_protoversion, 12);
                 server_protoversion[11] = 0;
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
                 }
                 this->t.send("RFB 003.003\n", 12);
@@ -972,7 +987,7 @@ public:
                     return Parse(buf).in_sint32_be();
                 }();
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
                         "(1 = none, 2 = standard, -6 = mslogon)\n",
                         security_level);
@@ -983,7 +998,7 @@ public:
                         break;
                     case 2: // the password and the server random
                     {
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Receiving VNC Server Random");
                         }
                         uint8_t buf[16];
@@ -1002,13 +1017,13 @@ public:
                             rfbDes(buf, buf);
                             rfbDes(buf + 8, buf + 8);
                         }
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Sending Password");
                         }
                         this->t.send(buf, 16);
 
                         // sec result
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Waiting for password ack");
                         }
                         recv(4);
@@ -1053,7 +1068,7 @@ public:
                                 throw Error(ERR_VNC_CONNECTION_ERROR);
                             }
                         } else {
-                            if (this->verbose) {
+                            if (bool(this->verbose & Verbose::basic_trace)) {
                                 LOG(LOG_INFO, "vnc password ok\n");
                             }
                         }
@@ -1328,7 +1343,7 @@ public:
 
                     if (!number_of_encodings)
                     {
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
                         }
 
@@ -1345,7 +1360,7 @@ public:
 
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
                 case FrontAPI::ResizeResult::instant_done:
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "no resizing needed");
                     }
                     // no resizing needed
@@ -1354,7 +1369,7 @@ public:
                     this->event.set();
                     break;
                 case FrontAPI::ResizeResult::no_need:
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "no resizing needed");
                     }
                     // no resizing needed
@@ -1363,7 +1378,7 @@ public:
                     this->event.set();
                     break;
                 case FrontAPI::ResizeResult::done:
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "resizing done");
                     }
                     // resizing done
@@ -1400,7 +1415,7 @@ public:
                 //LOG(LOG_INFO,
                 //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                 //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO,
                         "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (time)",
                         RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -1478,14 +1493,14 @@ private:
 
                 uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %d",
                         subencoding);
                 }
 
                 if (!subencoding)
                 {
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
                     }
 
@@ -1498,7 +1513,7 @@ private:
                 }
                 else if (subencoding == 1)
                 {
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "VNC Encoding: ZRLE, Solid tile (single color)");
                     }
@@ -1522,7 +1537,7 @@ private:
                 }
                 else if ((subencoding >= 2) && (subencoding <= 16))
                 {
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "VNC Encoding: ZRLE, Packed palette types, "
                                 "palette size=%d",
@@ -1637,7 +1652,7 @@ private:
                 }
                 else if (subencoding == 128)
                 {
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                     }
 
@@ -1697,7 +1712,7 @@ private:
                 }
                 else
                 {
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                     }
 
@@ -1933,7 +1948,7 @@ private:
 
                 uint32_t zlib_compressed_data_length = Parse(data_zrle).in_uint32_be();
 
-                if (this->verbose)
+                if (bool(this->verbose & Verbose::basic_trace))
                 {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
                         zlib_compressed_data_length);
@@ -1989,7 +2004,7 @@ private:
 
                     InStream zlib_uncompressed_data_stream(data, data_size - zstrm.avail_out);
 
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
                             zlib_uncompressed_data_stream.in_remain(),
@@ -2224,7 +2239,7 @@ private:
         this->to_rdp_clipboard_data.in_skip_bytes(3);   // padding(3)
         const uint32_t clipboard_data_length =          // length(4)
             this->to_rdp_clipboard_data.in_uint32_be();
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", clipboard_data_length);
         }
 
@@ -2246,7 +2261,7 @@ private:
 
                 this->to_rdp_clipboard_data_is_utf8_encoded =
                     ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), clipboard_data_length);
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO,
                         "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
                         (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
@@ -2282,7 +2297,7 @@ private:
         }
 
         if (clipboard_down_is_really_enabled) {
-            if (this->verbose) {
+            if (bool(this->verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO,
                     "mod_vnc::lib_clip_data: Sending Format List PDU (%d) to client.",
                     RDPECLIP::CB_FORMAT_LIST);
@@ -2322,7 +2337,7 @@ private:
         size_t length,
         uint32_t flags
     ) override {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
 
@@ -2333,7 +2348,7 @@ private:
         if (front_channel_name == channel_names::cliprdr) {
             this->clipboard_send_to_vnc(chunk, length, flags);
         }
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel done");
         }
     } // send_to_mod_channel
@@ -2341,7 +2356,7 @@ private:
 private:
     void clipboard_send_to_vnc(InStream & chunk, size_t length, uint32_t flags)
     {
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc:"
                            " length=%zu chunk_size=%zu flags=0x%08X"
                , length, chunk.get_capacity(), flags);
@@ -2394,7 +2409,7 @@ private:
             // msgType read is not a msgType, it's a part of data.
         }
 
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(msgType), msgType);
         }
@@ -2417,7 +2432,7 @@ private:
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
                         RDPECLIP::CB_FORMAT_LIST_RESPONSE);
                 }
@@ -2465,7 +2480,7 @@ private:
                     //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                     //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                     if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d)",
                                 RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -2494,7 +2509,7 @@ private:
                     }
                     else {
                         if (this->bogus_clipboard_infinite_loop == VncBogusClipboardInfiniteLoop::delayed) {
-                            if (this->verbose) {
+                            if (bool(this->verbose & Verbose::basic_trace)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -2508,7 +2523,7 @@ private:
                             != VncBogusClipboardInfiniteLoop::duplicated
                         && (this->clipboard_general_capability_flags
                             & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
-                            if (this->verbose) {
+                            if (bool(this->verbose & Verbose::basic_trace)) {
                                 LOG( LOG_INFO
                                    , "mod_vnc::clipboard_send_to_vnc: "
                                      "duplicated clipboard update event "
@@ -2517,7 +2532,7 @@ private:
                             }
                         }
                         else {
-                            if (this->verbose) {
+                            if (bool(this->verbose & Verbose::basic_trace)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST(%d) (preventive)",
                                     RDPECLIP::CB_FORMAT_LIST);
@@ -2564,7 +2579,7 @@ private:
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
                 format_data_request_pdu.recv(chunk);
 
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG( LOG_INFO
                        , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%d) msgFlags=0x%02x datalen=%u requestedFormatId=%s(%u)"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
@@ -2602,7 +2617,7 @@ private:
                                                     chunk_size,
                                                     send_flags
                                                    );
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d) - chunk_size=%u",
                                 RDPECLIP::CB_FORMAT_DATA_RESPONSE,
@@ -2665,7 +2680,7 @@ private:
 
                     send_format_data_response(out_stream);
 
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc: "
                                 "Sending Format Data Response PDU (CF_TEXT) done");
@@ -2712,7 +2727,7 @@ private:
 
                     send_format_data_response(out_stream);
 
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc: "
                                 "Sending Format Data Response PDU (CF_UNICODETEXT) done");
@@ -2759,7 +2774,7 @@ private:
                         this->to_vnc_clipboard_data_size      =
                         this->to_vnc_clipboard_data_remaining = format_data_response_pdu.header.dataLen();
 
-                        if (this->verbose) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG( LOG_INFO
                                , "mod_vnc::clipboard_send_to_vnc: virtual channel data span in multiple Virtual Channel PDUs: total=%u"
                                , this->to_vnc_clipboard_data_size);
@@ -2804,7 +2819,7 @@ private:
                 REDASSERT(this->to_vnc_clipboard_data_size);
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
-                if (this->verbose) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: an other trunk");
                 }
 
@@ -2813,7 +2828,7 @@ private:
                     throw Error(ERR_VNC);
                 }
 
-                // if (this->verbose) {
+                // if (bool(this->verbose & Verbose::basic_trace)) {
                 //     LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: trunk size=%u, capacity=%u"
                 //        , chunk.in_remain(), static_cast<unsigned>(this->to_vnc_clipboard_data.tailroom()));
                 // }
@@ -2855,19 +2870,19 @@ private:
                     if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
                         this->client_use_long_format_names = true;
                     }
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "Client use %s format name",
                             (this->client_use_long_format_names ? "long" : "short"));
                     }
 
-                    if (this->verbose) {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
                         general_caps.log(LOG_INFO);
                     }
                 }
             }
             break;
         }
-        if (this->verbose) {
+        if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: done");
         }
     } // clipboard_send_to_vnc
@@ -2876,7 +2891,7 @@ private:
 public:
     void rdp_input_up_and_running() override {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-            if (this->verbose) {
+            if (bool(this->verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;

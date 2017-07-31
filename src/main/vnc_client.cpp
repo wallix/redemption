@@ -137,7 +137,7 @@ int main(int argc, char** argv)
       , bogus_clipboard_infinite_loop
       , report_message
       , false
-      , verbose);
+      , to_verbose_flags(verbose));
     mod.get_event().set();
 
     run_mod(mod, front, &sock_trans);
