@@ -31,7 +31,6 @@
 
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
-//#include <boost/foreach.hpp>
 
 
 RED_AUTO_TEST_CASE(TestSubRegion)

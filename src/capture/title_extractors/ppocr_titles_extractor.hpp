@@ -39,8 +39,6 @@
 #include "ocr_title.hpp"
 
 #include <algorithm>
-/*chrono*///#include <chrono>
-
 
 // namespace rdp_ppocr {
 //

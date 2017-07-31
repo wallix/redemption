@@ -987,7 +987,7 @@ struct WaveInfoPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 8;   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
+        const unsigned expected = 12;   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3) + Data (4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated WaveInfoPDU (0): expected=%u remains=%zu",

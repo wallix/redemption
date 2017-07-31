@@ -34,15 +34,13 @@
 #include "utils/parse.hpp"
 #include "sashimi/serialize.hpp"
 
-//#include "string.hpp"
 #include "sashimi/libssh/libssh.h"
 #include "sashimi/libcrypto.hpp"
 
 #define DEBUG_BUFFER
 
+#include <memory> // for unique_ptr
 
-// for unique_ptr
-#include <memory>
 
 inline size_t power2up(size_t value)
 {

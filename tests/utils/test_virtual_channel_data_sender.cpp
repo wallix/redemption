@@ -23,17 +23,12 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
-
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-//#include "path/to/file.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
 
 RED_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {
-    RED_CHECK(true);
-
-    
 }

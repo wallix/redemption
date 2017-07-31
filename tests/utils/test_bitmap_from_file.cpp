@@ -28,7 +28,6 @@
 
 #include "utils/drawable.hpp"
 #include "utils/bitmap_from_file.hpp"
-//#include "path/to/file.hpp"
 
 RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
 {

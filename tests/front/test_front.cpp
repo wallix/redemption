@@ -39,7 +39,7 @@
 
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "transport/socket_transport.hpp"
+//include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"

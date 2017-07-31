@@ -28,7 +28,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-// #include <wctype.h>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
