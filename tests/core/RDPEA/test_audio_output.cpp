@@ -162,9 +162,9 @@ RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderReceive)
 
 RED_AUTO_TEST_CASE(QualityModePDUEmit)
 {
-    const size_t len = 4;
+    const size_t len = 2;
     const char data[] =
-            "\x01\x00\x00\x00";
+            "\x01\x00";
 
     StaticOutStream<32> stream;
     rdpsnd::QualityModePDU ch(rdpsnd::MEDIUM_QUALITY);

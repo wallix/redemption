@@ -751,11 +751,11 @@ struct QualityModePDU {
 
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->wQualityMode);
-        stream.out_clear_bytes(2);
+        //stream.out_clear_bytes(2);
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;           // wQualityMode(4) + Reserved(2)
+        const unsigned expected = 2;           // wQualityMode(4) + Reserved(2)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated QualityModePDU (0): expected=%u remains=%zu",
@@ -1042,8 +1042,8 @@ struct WaveInfoPDU {
 // wTimeStamp (2 bytes): A 16-bit unsigned integer. See section 3.2.5.2.1.6 for
 // details of how this field is set.
 //
-// cConfBlockNo (1 byte): Confirmation Block Number. An 8-bit unsigned 
-// integer that MUST be the same as the cBlockNo field of the 
+// cConfBlockNo (1 byte): Confirmation Block Number. An 8-bit unsigned
+// integer that MUST be the same as the cBlockNo field of the
 // UDP Wave Last PDU (section 2.2.3.7), the Wave Encrypt PDU (section
 // 2.2.3.5) or the WaveInfo PDU (section 2.2.3.3) just received from the server.
 //

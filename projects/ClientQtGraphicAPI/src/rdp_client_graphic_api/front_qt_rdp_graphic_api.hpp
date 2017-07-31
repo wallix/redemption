@@ -1435,7 +1435,7 @@ public Q_SLOTS:
 
         if (!this->_front->replay_mod->get_break_privplay_client()) {
             if (!this->_front->replay_mod->play_client()) {
-                this->slotRepaint();
+                this->slotRepainMatcht();
             }
         }
 
@@ -1464,6 +1464,13 @@ public Q_SLOTS:
         QPainter match_painter(&(this->_match_pixmap));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
         //match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
+        this->repaint();
+    }
+
+    void slotRepainMatcht() {
+        QPainter match_painter(&(this->_match_pixmap));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
@@ -1929,7 +1936,7 @@ public:
             return;
         }
 
-        int rowYCoord(drect.y + drect.cy-1);
+        //int rowYCoord(drect.y + drect.cy-1);
 
         QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
         QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
@@ -1946,7 +1953,7 @@ public:
 
         int indice(mincy-1);
 
-        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine());
+        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine() * drect.cy);
 
         for (size_t k = 0 ; k < mincy; k++) {
 
@@ -1954,16 +1961,22 @@ public:
             const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
             Op op;
-            for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+            int line_origine = k*srcBitmap.bytesPerLine();
+            int line_end     = line_origine + srcBitmap.bytesPerLine();
+            for (int i = line_origine; i < line_end; i++) {
                 data[i] = op.op(srcData[i], dstData[i]);
             }
 
-            QImage image(data.get(), mincx, 1, srcBitmap.format());
-            QRect trect(drect.x, rowYCoord, mincx, 1);
-            this->screen->paintCache().drawImage(trect, image);
+//             QImage image(data.get(), mincx, 1, srcBitmap.format());
+//             QRect trect(drect.x, rowYCoord, mincx, 1);
+//             this->screen->paintCache().drawImage(trect, image);
 
-            rowYCoord--;
+            //rowYCoord--;
         }
+
+        QImage image(data.get(), mincx, mincy, srcBitmap.format());
+        QRect trect(drect.x, drect.y, mincx, mincy);
+        this->screen->paintCache().drawImage(trect, image);
     }
 
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy) {
@@ -2257,7 +2270,8 @@ public:
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //bitmap_data.log(LOG_INFO, "FakeFront");
+            //bitmap_data.log(LOG_INFO, "RDPBitmapData");
+            LOG(LOG_INFO, "RDPBitmapData");
             LOG(LOG_INFO, "========================================\n");
         }
         //std::cout << "RDPBitmapData" << std::endl;
@@ -2278,26 +2292,22 @@ public:
             return;
         }
 
-        int rowYCoord(drect.y + drect.cy - 1);
-
         QImage::Format format(this->bpp_to_QFormat(bmp.bpp(), false)); //bpp
         QImage qbitmap(bmp.data(), mincx, mincy, bmp.line_size(), format);
 
         if (bmp.bpp() == 24) {
             qbitmap = qbitmap.rgbSwapped();
+            LOG(LOG_INFO, "RDPBitmapData rgbSwapped");
         }
 
         if (bmp.bpp() != this->info.bpp) {
             qbitmap = qbitmap.convertToFormat(this->imageFormatRGB);
+            LOG(LOG_INFO, "RDPBitmapData convertToFormat");
         }
 
-        for (size_t k = 0 ; k < drect.cy; k++) {
-
-            QImage image(qbitmap.constScanLine(k), mincx, 1, qbitmap.format());
-            QRect trect(drect.x, rowYCoord, mincx, 1);
-            this->screen->paintCache().drawImage(trect, image);
-            rowYCoord--;
-        }
+        qbitmap = qbitmap.mirrored(false, true);
+        QRect trect(drect.x, drect.y, mincx, mincy);
+        this->screen->paintCache().drawImage(trect, qbitmap);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(bitmap_data, bmp);
@@ -2806,8 +2816,6 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->screen->update_view();
-
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(order);
             struct timeval time;
@@ -3211,7 +3219,7 @@ public:
                 this->mod->draw_event(time(nullptr), *(this));
                 if (!this->is_pipe_ok) {
                     this->dropScreen();
-                    const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed.");
+                    const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Broken pipe.");
                     LOG(LOG_INFO, "%s", errorMsg.c_str());
                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
