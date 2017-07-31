@@ -22,7 +22,6 @@
 
 */
 
-
 #pragma once
 
 #include "utils/difftimeval.hpp"
@@ -38,23 +37,30 @@ enum BackEvent_t {
     BACK_EVENT_RETRY_CURRENT
 };
 
-
 class wait_obj
 {
+private:
+//    bool        set_state;
+
 public:
-    bool        set_state;
-    BackEvent_t signal;
-    timeval     trigger_time;
-    bool        object_and_time;
-    bool        waked_up_by_time;
+    BackEvent_t signal = BACK_EVENT_NONE;
+
+private:
+    timeval     trigger_time = { 0, 0 };
+
+//    bool        object_and_time = false;
+    bool        waked_up_by_time = false;
+
+public:
+    static constexpr const uint64_t NOW = 0;
 
     wait_obj()
-    : set_state(false)
-    , signal(BACK_EVENT_NONE)
-    , object_and_time(false)
-    , waked_up_by_time(false)
+//    : set_state(false)
+//    , signal(BACK_EVENT_NONE)
+//    , object_and_time(false)
+//    , waked_up_by_time(false)
     {
-        this->trigger_time = tvtime();
+//        this->trigger_time = tvtime();
     }
 
 private:
@@ -64,19 +70,32 @@ private:
     wait_obj& operator=(wait_obj&&) = default; // for full_reset()
 
 public:
+    bool is_trigger_time_set() const {
+        return (this->trigger_time != ::timeval({0, 0}));
+    }
+
+    bool is_waked_up_by_time() const {
+        return this->waked_up_by_time;
+    }
+
     void full_reset()
     {
         *this = wait_obj();
     }
 
-    void reset()
+    void reset_trigger_time()
     {
-        this->set_state = false;
+        this->waked_up_by_time = false;
+
+//        this->set_state = false;
+        this->trigger_time = ::timeval({0, 0});
     }
 
-    void set(std::chrono::microseconds idle_usec)
+    void set_trigger_time(std::chrono::microseconds idle_usec)
     {
-        this->set_state = true;
+        this->waked_up_by_time = false;
+
+//        this->set_state = true;
         struct timeval now = tvtime();
 
         // uint64_t sum_usec = (now.tv_usec + idle_usec);
@@ -86,17 +105,18 @@ public:
     }
 
     // Idle time in microsecond
-    void set(uint64_t idle_usec = 0)
+    void set_trigger_time(uint64_t idle_usec)
     {
-        this->set(std::chrono::microseconds(idle_usec));
+        this->set_trigger_time(std::chrono::microseconds(idle_usec));
     }
 
-    void update(std::chrono::microseconds idle_usec)
+    void update_trigger_time(std::chrono::microseconds idle_usec)
     {
         if (!idle_usec.count()) {
             return;
         }
-        if (this->set_state) {
+//        if (this->set_state) {
+        if (this->is_trigger_time_set()) {
             timeval now = tvtime();
             timeval new_trigger = addusectimeval(idle_usec, now);
             if (lessthantimeval(new_trigger, this->trigger_time)) {
@@ -104,21 +124,22 @@ public:
             }
         }
         else {
-            this->set(idle_usec);
+            this->set_trigger_time(idle_usec);
         }
     }
 
     // Idle time in microsecond
-    void update(uint64_t idle_usec)
+    void update_trigger_time(uint64_t idle_usec)
     {
-        this->update(std::chrono::microseconds(idle_usec));
+        this->update_trigger_time(std::chrono::microseconds(idle_usec));
     }
 
     void wait_on_timeout(timeval & timeout) const
     {
         // TODO: And what exactly means that set_state state variable in wait_obj ?
         // if it means 'already triggered' it's one more reason to wake up fast...
-        if (this->set_state) {
+//        if (this->set_state) {
+        if (this->is_trigger_time_set()) {
             timeval now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
             if (lessthantimeval(remain, timeout)) {
@@ -136,7 +157,8 @@ public:
             io_fd_set(fd, rfds);
             max = (static_cast<unsigned>(fd) > max) ? fd : max;
         }
-        if (fd <= INVALID_SOCKET || this->object_and_time) {
+//        if (fd <= INVALID_SOCKET || this->object_and_time) {
+        if (fd <= INVALID_SOCKET || this->is_trigger_time_set()) {
             this->wait_on_timeout(timeout);
         }
     }
@@ -148,12 +170,14 @@ public:
         if (fd > INVALID_SOCKET) {
             bool res = io_fd_isset(fd, rfds);
 
-            if (res || !this->object_and_time) {
+//            if (res || !this->object_and_time) {
+            if (res || !this->is_trigger_time_set()) {
                 return res;
             }
         }
 
-        if (this->set_state) {
+//        if (this->set_state) {
+        if (this->is_trigger_time_set()) {
             if (tvtime() >= this->trigger_time) {
                 this->waked_up_by_time = true;
                 return true;
@@ -167,7 +191,8 @@ public:
     {
         this->waked_up_by_time = false;
 
-        if (this->set_state) {
+        if (this->is_trigger_time_set()) {
+//        if (this->set_state) {
             if (tvtime() >= this->trigger_time) {
                 this->waked_up_by_time = true;
                 return true;

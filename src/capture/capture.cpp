@@ -1479,7 +1479,8 @@ Capture::Microseconds Capture::periodic_snapshot(
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
 ) {
-    this->capture_event.reset();
+//    this->capture_event.reset();
+    this->capture_event.reset_trigger_time();
 
     if (this->gd_drawable) {
         this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
@@ -1491,7 +1492,7 @@ Capture::Microseconds Capture::periodic_snapshot(
         for (gdi::CaptureApi & cap : this->caps) {
             time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
         }
-        this->capture_event.update(time.count());
+        this->capture_event.update_trigger_time(time.count());
     }
     return time;
 }

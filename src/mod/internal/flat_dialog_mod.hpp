@@ -117,7 +117,8 @@ private:
             this->vars.set_acl<cfg::context::display_message>(true);
         }
         this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
+//        this->event.set();
+        this->event.set_trigger_time(wait_obj::NOW);
     }
 
     // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -132,14 +133,15 @@ private:
             }
         }
         this->event.signal = BACK_EVENT_NEXT;
-        this->event.set();
+//        this->event.set();
+        this->event.set_trigger_time(wait_obj::NOW);
     }
 
 public:
     void draw_event(time_t now, gdi::GraphicApi & gapi) override {
         LocallyIntegrableMod::draw_event(now, gapi);
 
-        if (!this->copy_paste && event.waked_up_by_time) {
+        if (!this->copy_paste && this->event.is_waked_up_by_time()) {
             this->copy_paste.ready(this->front);
         }
         switch(this->timeout.check(now)) {
@@ -147,10 +149,12 @@ public:
             this->accepted();
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set(1000000);
+//            this->event.set(1000000);
+            this->event.set_trigger_time(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-            this->event.reset();
+//            this->event.reset();
+            this->event.reset_trigger_time();
             break;
         }
     }

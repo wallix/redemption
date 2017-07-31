@@ -80,7 +80,8 @@ struct LocallyIntegrableMod : public InternalMod {
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (this->rail_enabled) {
-            if (this->first_click_down_event.object_and_time) {
+//            if (this->first_click_down_event.object_and_time) {
+            if (this->first_click_down_event.is_trigger_time_set()) {
                 out_event_handlers.emplace_back(
                     &this->first_click_down_event,
                     &this->first_click_down_event_handler,
@@ -97,8 +98,9 @@ struct LocallyIntegrableMod : public InternalMod {
     void process_first_click_down_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         REDASSERT(this->rail_enabled);
 
-        if (this->first_click_down_event.object_and_time &&
-            this->first_click_down_event.waked_up_by_time) {
+//        if (this->first_click_down_event.object_and_time &&
+        if (this->first_click_down_event.is_trigger_time_set() &&
+            this->first_click_down_event.is_waked_up_by_time()) {
             this->cancel_double_click_detection();
         }
     }
@@ -123,10 +125,11 @@ struct LocallyIntegrableMod : public InternalMod {
                         if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                             this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
 
-                            this->first_click_down_event.set(1000000);
+//                            this->first_click_down_event.set(1000000);
+                            this->first_click_down_event.set_trigger_time(1000000);
 
-                            this->first_click_down_event.object_and_time  = true;
-                            this->first_click_down_event.waked_up_by_time = false;
+//                            this->first_click_down_event.object_and_time  = true;
+//                            this->first_click_down_event.waked_up_by_time = false;
                         }
                     break;
 
@@ -229,7 +232,7 @@ struct LocallyIntegrableMod : public InternalMod {
     void draw_event(time_t, gdi::GraphicApi &) override {
         if (this->rail_enabled &&
             (false == static_cast<bool>(this->client_execute)) &&
-            this->event.waked_up_by_time) {
+            this->event.is_waked_up_by_time()) {
 
             this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
                 this->is_resizing_hosted_desktop_allowed());
@@ -248,10 +251,11 @@ private:
     void cancel_double_click_detection() {
         REDASSERT(this->rail_enabled);
 
-        this->first_click_down_event.reset();
+//        this->first_click_down_event.reset();
+        this->first_click_down_event.reset_trigger_time();
 
-        this->first_click_down_event.object_and_time  = false;
-        this->first_click_down_event.waked_up_by_time = false;
+//        this->first_click_down_event.object_and_time  = false;
+//        this->first_click_down_event.waked_up_by_time = false;
 
         this->dc_state = DCSTATE_WAIT;
     }

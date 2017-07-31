@@ -488,7 +488,8 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-        this->event.set(1000);
+//        this->event.set(1000);
+        this->event.set_trigger_time(1000);
     }
 
     void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
@@ -722,7 +723,8 @@ protected:
 
             this->t.send(stream.get_data(), stream.get_offset());
 
-            this->event.set(1000);
+//            this->event.set(1000);
+            this->event.set_trigger_time(1000);
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -922,7 +924,8 @@ public:
                 this->update_screen(Rect(0, 0, this->width, this->height));
                 this->lib_open_clip_channel();
 
-                this->event.object_and_time = false;
+//                this->event.object_and_time = false;
+                this->event.reset_trigger_time();
                 if (bool(this->verbose & Verbose::connection)) {
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
@@ -1003,13 +1006,14 @@ public:
             }
 
             this->state = WAIT_SECURITY_TYPES;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
             break;
         case UP_AND_RUNNING:
             if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (!this->event.waked_up_by_time ) {
+            if (!this->event.is_waked_up_by_time()) {
                 try {
                     uint8_t type; /* message-type */
                     this->t.recv_boom(&type, 1);
@@ -1039,7 +1043,8 @@ public:
                     this->front.must_be_stop_capture();
                 }
                 if (this->event.signal != BACK_EVENT_NEXT) {
-                    this->event.set(1000);
+//                    this->event.set(1000);
+                    this->event.set_trigger_time(1000);
                 }
             }
             else {
@@ -1050,8 +1055,9 @@ public:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
-            this->event.object_and_time = false;
-            this->event.reset();
+//            this->event.object_and_time = false;
+//            this->event.reset();
+            this->event.reset_trigger_time();
             break;
         case WAIT_SECURITY_TYPES:
             {
@@ -1145,8 +1151,9 @@ public:
                                 this->t.disconnect();
 
                                 this->state = ASK_PASSWORD;
-                                this->event.object_and_time = true;
-                                this->event.set();
+//                                this->event.object_and_time = true;
+//                                this->event.set();
+                                this->event.set_trigger_time(wait_obj::NOW);
 
                                 return;
                             }
@@ -1453,8 +1460,9 @@ public:
                     }
                     // no resizing needed
                     this->state = DO_INITIAL_CLEAR_SCREEN;
-                    this->event.object_and_time = true;
-                    this->event.set();
+//                    this->event.object_and_time = true;
+//                    this->event.set();
+                    this->event.set_trigger_time(wait_obj::NOW);
                     break;
                 case FrontAPI::ResizeResult::no_need:
                     if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1462,8 +1470,9 @@ public:
                     }
                     // no resizing needed
                     this->state = DO_INITIAL_CLEAR_SCREEN;
-                    this->event.object_and_time = true;
-                    this->event.set();
+//                    this->event.object_and_time = true;
+//                    this->event.set();
+                    this->event.set_trigger_time(wait_obj::NOW);
                     break;
                 case FrontAPI::ResizeResult::done:
                     if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1474,7 +1483,8 @@ public:
                     this->front_height = this->height;
 
                     this->state = WAIT_CLIENT_UP_AND_RUNNING;
-                    this->event.object_and_time = true;
+//                    this->event.object_and_time = true;
+                    this->event.set_trigger_time(wait_obj::NOW);
 
                     this->is_first_membelt = true;
                     break;
@@ -1494,8 +1504,9 @@ public:
             throw Error(ERR_VNC);
         }
 
-        if (this->event.waked_up_by_time) {
-            this->event.reset();
+        if (this->event.is_waked_up_by_time()) {
+//            this->event.reset();
+            this->event.reset_trigger_time();
 
             if (this->clipboard_requesting_for_data_is_delayed) {
                 //const uint64_t usnow = ustime();
@@ -2602,8 +2613,9 @@ private:
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
-                            this->event.object_and_time = true;
-                            this->event.set(MINIMUM_TIMEVAL - timeval_diff);
+//                            this->event.object_and_time = true;
+//                            this->event.set(MINIMUM_TIMEVAL - timeval_diff);
+                            this->event.set_trigger_time(MINIMUM_TIMEVAL - timeval_diff);
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
@@ -2983,7 +2995,8 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
     }
 
@@ -2999,11 +3012,13 @@ public:
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
             break;
         case NOTIFY_CANCEL:
             this->event.signal = BACK_EVENT_NEXT;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
 
             this->screen.clear();
             break;

@@ -126,7 +126,8 @@ public:
     {
         LocallyIntegrableMod::draw_event(now, gapi);
 
-        this->event.reset();
+//        this->event.reset();
+        this->event.reset_trigger_time();
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {

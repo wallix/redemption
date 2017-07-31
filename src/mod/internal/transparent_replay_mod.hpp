@@ -58,7 +58,8 @@ public:
                 this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
             }
 
-            this->event.set(1);
+//            this->event.set(1);
+            this->event.set_trigger_time(wait_obj::NOW);
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
@@ -67,7 +68,8 @@ public:
                 }
 
                 this->event.signal = BACK_EVENT_NEXT;
-                this->event.set(1);
+//                this->event.set(1);
+                this->event.set_trigger_time(wait_obj::NOW);
             }
             else {
                 throw;
