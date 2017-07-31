@@ -15,11 +15,10 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan, Raphaël ZHOU
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Synchronisation objects
-
 */
 
 #pragma once
@@ -39,29 +38,18 @@ enum BackEvent_t {
 
 class wait_obj
 {
-private:
-//    bool        set_state;
-
 public:
     BackEvent_t signal = BACK_EVENT_NONE;
 
 private:
-    timeval     trigger_time = { 0, 0 };
+    timeval trigger_time = { 0, 0 };
 
-//    bool        object_and_time = false;
-    bool        waked_up_by_time = false;
+    bool    waked_up_by_time = false;
 
 public:
     static constexpr const uint64_t NOW = 0;
 
-    wait_obj()
-//    : set_state(false)
-//    , signal(BACK_EVENT_NONE)
-//    , object_and_time(false)
-//    , waked_up_by_time(false)
-    {
-//        this->trigger_time = tvtime();
-    }
+    wait_obj() = default;
 
 private:
     wait_obj(wait_obj&&) = delete;
@@ -71,7 +59,7 @@ private:
 
 public:
     bool is_trigger_time_set() const {
-        return (this->trigger_time != ::timeval({0, 0}));
+        return (this->trigger_time != ::timeval({ 0, 0 }));
     }
 
     bool is_waked_up_by_time() const {
@@ -95,20 +83,15 @@ public:
     {
         this->waked_up_by_time = false;
 
-//        this->set_state = false;
-        this->trigger_time = ::timeval({0, 0});
+        this->trigger_time = ::timeval({ 0, 0 });
     }
 
     void set_trigger_time(std::chrono::microseconds idle_usec)
     {
         this->waked_up_by_time = false;
 
-//        this->set_state = true;
         struct timeval now = tvtime();
 
-        // uint64_t sum_usec = (now.tv_usec + idle_usec);
-        // this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
-        // this->trigger_time.tv_usec = sum_usec % 1000000;
         this->trigger_time = addusectimeval(idle_usec, now);
     }
 
@@ -123,7 +106,7 @@ public:
         if (!idle_usec.count()) {
             return;
         }
-//        if (this->set_state) {
+
         if (this->is_trigger_time_set()) {
             timeval now = tvtime();
             timeval new_trigger = addusectimeval(idle_usec, now);
@@ -144,9 +127,6 @@ public:
 
     void wait_on_timeout(timeval & timeout) const
     {
-        // TODO: And what exactly means that set_state state variable in wait_obj ?
-        // if it means 'already triggered' it's one more reason to wake up fast...
-//        if (this->set_state) {
         if (this->is_trigger_time_set()) {
             timeval now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
@@ -159,13 +139,11 @@ public:
     void wait_on_fd(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
     {
         // TODO: shouldn't we *always* have a timeout ?
-        // TODO: And what exactly means that set_state state variable in wait_obj ?
-        // if it means 'already triggered' it's one more reason to wake up fast...
         if (fd > INVALID_SOCKET) {
             io_fd_set(fd, rfds);
             max = (static_cast<unsigned>(fd) > max) ? fd : max;
         }
-//        if (fd <= INVALID_SOCKET || this->object_and_time) {
+
         if (fd <= INVALID_SOCKET || this->is_trigger_time_set()) {
             this->wait_on_timeout(timeout);
         }
@@ -178,13 +156,11 @@ public:
         if (fd > INVALID_SOCKET) {
             bool res = io_fd_isset(fd, rfds);
 
-//            if (res || !this->object_and_time) {
             if (res || !this->is_trigger_time_set()) {
                 return res;
             }
         }
 
-//        if (this->set_state) {
         if (this->is_trigger_time_set()) {
             if (tvtime() >= this->trigger_time) {
                 this->waked_up_by_time = true;
@@ -200,7 +176,6 @@ public:
         this->waked_up_by_time = false;
 
         if (this->is_trigger_time_set()) {
-//        if (this->set_state) {
             if (tvtime() >= this->trigger_time) {
                 this->waked_up_by_time = true;
                 return true;
@@ -210,4 +185,3 @@ public:
         return false;
     }
 };
-
