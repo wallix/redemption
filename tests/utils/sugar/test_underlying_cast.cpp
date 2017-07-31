@@ -27,5 +27,4 @@
 
 RED_AUTO_TEST_CASE(TestUnderlyingCast)
 {
-    RED_CHECK(true);
 }

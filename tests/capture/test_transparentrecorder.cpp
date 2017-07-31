@@ -31,5 +31,4 @@
 
 RED_AUTO_TEST_CASE(Test_transparentrecorder)
 {
-    RED_CHECK(true);
 }

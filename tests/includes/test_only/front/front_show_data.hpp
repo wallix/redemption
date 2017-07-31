@@ -50,7 +50,6 @@
 
 #include <algorithm>
 #include <fstream>
-//#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
 #include "core/front_api.hpp"
@@ -58,12 +57,11 @@
 #include "mod/mod_api.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
-//#include "core/RDP/capabilities/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "core/client_info.hpp"
 
-//#include "utils/png.hpp"
+//include "utils/png.hpp"
 
 class Front_Show_Data : public FrontAPI
 {

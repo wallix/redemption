@@ -30,5 +30,4 @@
 
 RED_AUTO_TEST_CASE(Testtransparentplayer)
 {
-    RED_CHECK(true);
 }

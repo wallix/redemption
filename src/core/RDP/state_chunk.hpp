@@ -36,9 +36,9 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 // TODO missing RDP orders
-// #include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-// #include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-// #include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+// include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+// include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+// include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 
 struct StateChunk {
     RDPOrderCommon          common;

@@ -19,20 +19,9 @@
 */
 
 
-//#include <algorithm>
 #include <string>
 #include <unistd.h>
-/*
-#include <signal.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
-#include "core/listen.hpp"
-#include "utils/parse_ip_conntrack.hpp"
-*/
 #include "../src/system/Qt/front_widget_Qt.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"

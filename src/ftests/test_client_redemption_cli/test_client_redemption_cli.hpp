@@ -66,7 +66,6 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
-//#include "mod/mod_api.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"

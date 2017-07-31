@@ -29,7 +29,6 @@
 #include "utils/apps/recording_progress.hpp"
 #include "test_only/get_file_contents.hpp"
 
-//#include "path/to/file.hpp"
 
 RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {

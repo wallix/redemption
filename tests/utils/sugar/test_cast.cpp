@@ -27,7 +27,4 @@
 
 RED_AUTO_TEST_CASE(TestCast)
 {
-    RED_CHECK(true);
-
-
 }

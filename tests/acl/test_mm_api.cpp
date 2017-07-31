@@ -23,14 +23,9 @@
 #define RED_TEST_MODULE TestMMAPI
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-#include "utils/log.hpp"
-
-//#include "path/to/file.hpp"
+// #define LOGNULL
+// #define LOGPRINT
 
 RED_AUTO_TEST_CASE(TestMMAPI1)
 {
-    LOG(LOG_INFO, "Test not yet implemented");
-    RED_CHECK(true);
 }
