@@ -723,7 +723,7 @@ public:
                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
                                              , CHANID_WABDIAG
                                              };
-        this->cl.push_back(channel_WabDiag);
+//         this->cl.push_back(channel_WabDiag);
 
         CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -2621,10 +2621,10 @@ public:
 
                         StaticOutStream<32> quality_stream;
 
-                        rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_QUALITYMODE, 8);
+                        rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_QUALITYMODE, 6);
                         header_quality.emit(quality_stream);
 
-                        rdpsnd::QualityModePDU qm(rdpsnd::DYNAMIC_QUALITY);
+                        rdpsnd::QualityModePDU qm(rdpsnd::HIGH_QUALITY);
                         qm.emit(quality_stream);
 
                         InStream chunk_to_send2(quality_stream.get_data(), quality_stream.get_offset());
@@ -3314,7 +3314,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::rdpsnd;         //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::none;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
