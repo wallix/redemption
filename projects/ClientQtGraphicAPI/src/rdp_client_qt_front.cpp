@@ -255,6 +255,11 @@ public:
                             this->modRDPParamsData.enable_nla = true;
                         } else { this->modRDPParamsData.enable_nla = false; }
                     } else
+                    if (tag.compare(std::string("sound")) == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_sound = true;
+                        } else { this->modRDPParamsData.enable_sound = false; }
+                    } else
                     if (tag.compare(std::string("delta_time")) == 0) {
                         if (std::stoi(info)) {
                             this->delta_time = std::stoi(info);
@@ -369,6 +374,7 @@ public:
                 new_ofile << "record "                << this->is_recording                 << "\n";
                 new_ofile << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
                 new_ofile << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+                new_ofile << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
@@ -391,6 +397,7 @@ public:
                 ofichier << "record "                << this->is_recording                 << "\n";
                 ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
                 ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+                ofichier << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
@@ -725,13 +732,15 @@ public:
                                              };
 //         this->cl.push_back(channel_WabDiag);
 
-        CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANID_RDPSND
-                                                 };
-        this->cl.push_back(channel_audio_output);
+        if (modRDPParamsData.enable_sound) {
+            CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
+                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                    , CHANID_RDPSND
+                                                    };
+            this->cl.push_back(channel_audio_output);
+        }
 
         return FrontQtRDPGraphicAPI::connect();
     }

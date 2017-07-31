@@ -111,6 +111,7 @@ public:
     {
         bool enable_tls                      = false;
         bool enable_nla                      = false;
+        bool enable_sound                    = false;
     } modRDPParamsData;
 
     struct ClipbrdFormatsList{
@@ -286,6 +287,7 @@ public:
     QCheckBox            _recordingCB;
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
+    QCheckBox            _soundBox;
     QCheckBox            _clipboardCheckBox;
     QCheckBox            _shareCheckBox;
 
@@ -313,6 +315,7 @@ public:
     QLabel               _labelRecording;
     QLabel               _labelTls;
     QLabel               _labelNla;
+    QLabel               _labelSound;
     QLabel               _labelCaptureFreq;
     QLabel               _labelClipboard;
     QLabel               _labelShare;
@@ -348,6 +351,7 @@ public:
         , _recordingCB(this)
         , _tlsBox(this)
         , _nlaBox(this)
+        , _soundBox(this)
         , _clipboardCheckBox(this)
         , _shareCheckBox(this)
         , _sharePath(this->_front->SHARE_DIR.c_str(), this)
@@ -370,6 +374,7 @@ public:
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
+        , _labelSound("Sound :",  this)
         , _labelCaptureFreq("Capture per second :", this)
         , _labelClipboard("Shared Clipboard :", this)
         , _labelShare("Shared Virtual Disk :", this)
@@ -439,6 +444,9 @@ public:
 
         this->_nlaBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
+
+        this->_soundBox.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->_labelSound), &(this->_soundBox));
 
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
@@ -696,6 +704,12 @@ private:
             this->_nlaBox.setCheckState(Qt::Unchecked);
         }
 
+        if (this->_front->modRDPParamsData.enable_sound) {
+            this->_soundBox.setCheckState(Qt::Checked);
+        } else {
+            this->_soundBox.setCheckState(Qt::Unchecked);
+        }
+
         if (this->_front->enable_shared_clipboard) {
             this->_clipboardCheckBox.setCheckState(Qt::Checked);
         } else {
@@ -829,6 +843,11 @@ public Q_SLOTS:
             this->_front->modRDPParamsData.enable_nla = true;
         } else {
             this->_front->modRDPParamsData.enable_nla = false;
+        }
+        if (this->_soundBox.isChecked()) {
+            this->_front->modRDPParamsData.enable_sound = true;
+        } else {
+            this->_front->modRDPParamsData.enable_sound = false;
         }
         this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
