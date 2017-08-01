@@ -28,6 +28,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/cast.hpp"
 #include "core/WMF/MetaFileFormat.hpp"
+#include "core/channel_list.hpp"
 
 
 namespace RDPECLIP {
@@ -2423,6 +2424,112 @@ struct UnlockClipboardDataPDU
         LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
 };
+
+
+
+static inline void streamLog(InStream & stream, int flags) {
+    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        InStream chunk =  stream.clone();
+        CliprdrHeader header;
+        header.recv(chunk);
+
+        switch (header.msgType()) {
+
+            case CB_MONITOR_READY:
+            {
+                ServerMonitorReadyPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+            case CB_FORMAT_LIST:
+            {
+
+            }
+                break;
+
+            case CB_FORMAT_LIST_RESPONSE:
+            {
+                FormatListResponsePDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_FORMAT_DATA_REQUEST:
+            {
+                FormatListResponsePDU pdu;                  // TODO predict long or short
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_FORMAT_DATA_RESPONSE:
+            {
+                FormatDataResponsePDU pdu;                  // TODO predict predict type
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_TEMP_DIRECTORY:
+            {
+                ClientTemporaryDirectoryPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_CLIP_CAPS:
+            {
+                ClipboardCapabilitiesPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+
+                GeneralCapabilitySet pdu2;
+                pdu2.recv(stream);
+                pdu2.log();
+            }
+                break;
+
+            case CB_FILECONTENTS_REQUEST:
+            {
+                FileContentsRequestPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_FILECONTENTS_RESPONSE:
+            {
+                FormatListResponsePDU pdu;                  // TODO predict size or range
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_LOCK_CLIPDATA:
+            {
+                LockClipboardDataPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            case CB_UNLOCK_CLIPDATA:
+            {
+                UnlockClipboardDataPDU pdu;
+                pdu.recv(stream);
+                pdu.log();
+            }
+                break;
+
+            default: LOG(LOG_WARNING, "CLIPRDR Unknow PDU with length = %u", header.dataLen());
+                break;
+        }
+
+    }
+}
 
 }   // namespace RDPECLIP
 
