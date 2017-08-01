@@ -2589,7 +2589,7 @@ public:
 
                         rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE |
                                                                           rdpsnd::TSSNDCAPS_VOLUME
-                                                                        , 0x00005000
+                                                                        , 0x7fff7fff
                                                                         , 0
                                                                         , 0
                                                                         , 1

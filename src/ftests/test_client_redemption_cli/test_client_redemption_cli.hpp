@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
+#include "mod/vnc/vnc.hpp"
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
