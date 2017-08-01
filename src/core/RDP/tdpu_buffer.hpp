@@ -38,6 +38,11 @@ struct Buf64k
         return uint16_t(this->len - this->idx);
     }
 
+    array_view_u8 av() noexcept
+    {
+        return {this->buf, this->remaining()};
+    }
+
     array_view_u8 av(std::size_t n) noexcept
     {
         assert(n <= this->remaining());

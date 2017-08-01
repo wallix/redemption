@@ -43,6 +43,7 @@
 #include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
+#include "core/RDP/tdpu_buffer.hpp"
 
 #include <cstdlib>
 
@@ -148,7 +149,7 @@ private:
     KeymapSym  keymapSym;
 
     uint8_t to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
-    InStream to_rdp_clipboard_data;
+    InStream to_rdp_clipboard_data; // NOTE can be array_view
     bool     to_rdp_clipboard_data_is_utf8_encoded;
 
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
@@ -779,11 +780,12 @@ protected:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        (void)now;
+    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    {
         if (bool(this->verbose & Verbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
+
         switch (this->state)
         {
         case ASK_PASSWORD:
@@ -2138,36 +2140,103 @@ private:
         this->update_screen(Rect(0, 0, this->width, this->height));
     } // lib_framebuffer_update
 
-    //==============================================================================================================
-    void lib_palette_update(gdi::GraphicApi & drawable) {
-    //==============================================================================================================
-        uint8_t buf[5];
-        InStream stream(buf);
-        {
-            auto end = buf;
-            this->t.recv_boom(end, 5);
-        }
-        stream.in_skip_bytes(1);
-        int first_color = stream.in_uint16_be();
-        int num_colors = stream.in_uint16_be();
 
-        uint8_t buf2[8192];
-        InStream stream2(buf2);
+    struct PaletteUpdateCtx
+    {
+        enum class State
         {
-            auto end = buf2;
-            this->t.recv_boom(end, num_colors * 6);
-        }
+            Header,
+            Data,
+            SkipData,
+        };
+        uint16_t first_color;
+        uint16_t num_colors;
 
-        if (num_colors <= 256) {
-            for (int i = 0; i < num_colors; i++) {
-                const int b = stream2.in_uint16_be() >> 8;
-                const int g = stream2.in_uint16_be() >> 8;
-                const int r = stream2.in_uint16_be() >> 8;
-                this->palette.set_color(first_color + i, BGRColor(b, g, r));
+        State read_header(Buf64k & buf)
+        {
+            if (buf.remaining() < 4)
+            {
+                return State::Header;
             }
+
+            Parse parse(buf.sub(1, 3).data());
+            this->first_color = parse.in_uint16_be();
+            this->num_colors = parse.in_uint16_be();
+
+            buf.advance(4);
+
+            if (this->first_color + this->num_colors > 256) {
+                LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n",
+                    this->num_colors);
+                return State::SkipData;
+            }
+
+            return State::Data;
         }
-        else {
-            LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
+
+        State read_data(Buf64k & buf, BGRPalette & palette)
+        {
+            if (buf.remaining() < 6)
+            {
+                return State::Data;
+            }
+
+            InStream stream(buf.av());
+            uint16_t const n = std::min<uint16_t>(
+                stream.get_capacity() / 6,
+                this->num_colors
+            );
+            this->num_colors -= n;
+
+            uint16_t const max = n + this->first_color;
+            for (; this->first_color < max; ++this->first_color) {
+                const int b = stream.in_uint16_be() >> 8;
+                const int g = stream.in_uint16_be() >> 8;
+                const int r = stream.in_uint16_be() >> 8;
+                palette.set_color(this->first_color, BGRColor(b, g, r));
+            }
+
+            buf.advance(n * 6);
+
+            return this->num_colors ? State::Data : State::Header;
+        }
+
+        State skip_data(Buf64k & buf)
+        {
+            auto const n = std::min(buf.remaining(), uint16_t(this->num_colors * 6));
+            this->num_colors -= n / 6;
+            buf.advance(n);
+            return this->num_colors ? State::Data : State::Header;
+        }
+    };
+    PaletteUpdateCtx palette_update_ctx;
+
+    void lib_palette_update(gdi::GraphicApi & drawable)
+    {
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+        using State = PaletteUpdateCtx::State;
+        auto state = State::Header;
+        while (State::Header == state) {
+            buf.read_from(trans);
+            state = this->palette_update_ctx.read_header(buf);
+        }
+        while (State::Data == state) {
+            buf.read_from(trans);
+            state = this->palette_update_ctx.read_header(buf);
+        }
+        while (State::SkipData == state) {
+            buf.read_from(trans);
+            state = this->palette_update_ctx.read_header(buf);
         }
 
         this->front.set_palette(this->palette);
@@ -2229,13 +2298,10 @@ private:
     //  - send a notification to the front (Format List PDU) that the server clipboard
     //    status has changed
     //******************************************************************************
-    //==============================================================================================================
-    void lib_clip_data(void) {
+    void lib_clip_data(void)
+    {
         this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
-        {
-            auto end = this->to_rdp_clipboard_data_buffer;
-            this->t.recv_boom(end, 7);
-        }
+        this->t.recv_boom(this->to_rdp_clipboard_data_buffer, 7);
         this->to_rdp_clipboard_data.in_skip_bytes(3);   // padding(3)
         const uint32_t clipboard_data_length =          // length(4)
             this->to_rdp_clipboard_data.in_uint32_be();
@@ -2251,12 +2317,9 @@ private:
             this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
 
             if (clipboard_data_length < this->to_rdp_clipboard_data.get_capacity()) {
-                auto end = this->to_rdp_clipboard_data_buffer;
-                this->t.recv_boom(end, clipboard_data_length);  // Clipboard data.
-                end += clipboard_data_length;
-                *end++ = '\0';  // Null character.
-                this->to_rdp_clipboard_data.in_skip_bytes(end - this->to_rdp_clipboard_data.get_data());
-
+                this->t.recv_boom(this->to_rdp_clipboard_data_buffer, clipboard_data_length);  // Clipboard data.
+                this->to_rdp_clipboard_data_buffer[clipboard_data_length] = '\0';
+                this->to_rdp_clipboard_data.in_skip_bytes(clipboard_data_length);
                 remaining_clipboard_data_length = 0;
 
                 this->to_rdp_clipboard_data_is_utf8_encoded =
@@ -2275,8 +2338,8 @@ private:
                     ::snprintf(::char_ptr_cast(this->to_rdp_clipboard_data_buffer),
                                this->to_rdp_clipboard_data.get_capacity(),
                                "The text was too long to fit in the clipboard buffer. "
-                                   "The buffer size is limited to %u bytes.",
-                               static_cast<uint32_t>(this->to_rdp_clipboard_data.get_capacity())) +
+                                   "The buffer size is limited to %zu bytes.",
+                               this->to_rdp_clipboard_data.get_capacity()) +
                     1   // Null character.
                 );
 
@@ -2287,12 +2350,10 @@ private:
         while (remaining_clipboard_data_length) {
             char drop[4096];
 
-            char * end = drop;
-
             const uint32_t number_of_bytes_to_read =
-                std::min<uint32_t>(remaining_clipboard_data_length, sizeof(drop));
+                std::min<size_t>(remaining_clipboard_data_length, sizeof(drop));
 
-            this->t.recv_boom(end, sizeof(number_of_bytes_to_read));
+            this->t.recv_boom(drop, number_of_bytes_to_read);
             remaining_clipboard_data_length -= number_of_bytes_to_read;
         }
 
@@ -2619,9 +2680,8 @@ private:
                                                    );
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO,
-                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d) - chunk_size=%u",
-                                RDPECLIP::CB_FORMAT_DATA_RESPONSE,
-                                static_cast<uint32_t>(chunk_size));
+                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d) - chunk_size=%zu",
+                                RDPECLIP::CB_FORMAT_DATA_RESPONSE, chunk_size);
                         }
 
                         send_flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
@@ -2799,9 +2859,9 @@ private:
                                 ::snprintf(latin1_overflow_message_buffer,
                                            latin1_overflow_message_buffer_length,
                                            "The data was too large to fit into the clipboard buffer. "
-                                               "The buffer size is limited to %u bytes. "
-                                               "The length of data is %u bytes.",
-                                           static_cast<uint32_t>(this->to_vnc_clipboard_data.get_capacity()),
+                                               "The buffer size is limited to %zu bytes. "
+                                               "The length of data is %" PRIu32 " bytes.",
+                                           this->to_vnc_clipboard_data.get_capacity(),
                                            this->to_vnc_clipboard_data_size);
 
                             this->to_vnc_clipboard_data.out_skip_bytes(latin1_overflow_message_length);
