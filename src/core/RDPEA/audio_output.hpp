@@ -424,6 +424,7 @@ enum : uint16_t {
     WAVE_FORMAT_MULAW  = 0x0007,
     WAVE_FORMAT_AAC    = 0xa106,
 
+    // The following codecs are NOT supported by default on Windows:
     WAVE_FORMAT_DSPGROUP_TRUESPEECH = 0x0022,
     WAVE_FORMAT_MPEGLAYER3          = 0x0055,
     WAVE_FORMAT_VOXWARE_AC10        = 0x0071,
@@ -1370,6 +1371,7 @@ static inline void streamLogClient(InStream & stream, int flag) {
 }
 
 
+
 static inline void streamLogServer(InStream & stream, int flag) {
 
     if ( flag & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1411,7 +1413,7 @@ static inline void streamLogServer(InStream & stream, int flag) {
 
             case SNDC_CLOSE:
             {
-                LOG(LOG_INFO, "RDPSDN SNDC_CLOSE");
+                LOG(LOG_INFO, "Server RDPSDN SNDC_CLOSE");
             }
                 break;
 
@@ -1447,7 +1449,12 @@ static inline void streamLogServer(InStream & stream, int flag) {
             }
                 break;
 
-            default: LOG(LOG_WARNING, "Server RDPSND Unknow PDU with length = %zu", header.BodySize);
+            default:
+                if (header.BodySize ==  0 && header.msgType ==  0) {
+                    LOG(LOG_INFO, "Server RDPSDN SNDC_WAVE");
+                } else {
+                    LOG(LOG_WARNING, "Server RDPSND Unknow PDU with length = %zu", header.BodySize);
+                }
                 break;
         }
         LOG(LOG_INFO, "");

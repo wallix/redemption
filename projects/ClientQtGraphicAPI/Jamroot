@@ -97,7 +97,6 @@ exe client_demo_Qt4 :
     src/rdp_client_graphic_api/Qt4/Qt.hpp
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    src/rdp_client_qt_widget.hpp
     front_Qt4_Demo.o
     video_capture.o
     capture.o

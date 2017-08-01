@@ -77,7 +77,7 @@ public:
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->reportMessage
                                    , this->is_apple
-                                   , 0xfffffffd);
+                                   , to_verbose_flags(0xfffffffd));
 
         } catch (const Error &) {
             return nullptr;
