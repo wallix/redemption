@@ -487,9 +487,6 @@ public Q_SLOTS:
     }
 
 
-
-
-
 };
 
 

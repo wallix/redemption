@@ -2145,6 +2145,11 @@ private:
         uint8_t const * chunk, std::size_t chunk_size,
         size_t length, uint32_t flags
     ) {
+        if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+            InStream clone(chunk, chunk_size);
+            rdpsnd::streamLogClient(clone, flags);
+        }
+
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
@@ -3600,8 +3605,10 @@ public:
             }
             else {
                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-//                     rdpsnd::streamLogClient(stream, flags);
+                    InStream clone = sec.payload.clone();
+                    rdpsnd::streamLogServer(clone, flags);
                 }
+
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );
