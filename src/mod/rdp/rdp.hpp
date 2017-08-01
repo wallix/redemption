@@ -75,7 +75,7 @@
 #include "core/RDPEA/audio_output.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "core/RDP/tdpu_buffer.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "capture/transparentrecorder.hpp"
 
 #include "core/client_info.hpp"
