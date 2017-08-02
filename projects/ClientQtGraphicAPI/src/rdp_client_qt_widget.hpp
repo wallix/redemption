@@ -246,7 +246,7 @@ public:
     virtual void deleteCurrentProtile() = 0;
 
     // CHANNELS
-    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual void emptyLocalBuffer() = 0;
     virtual void send_WaveConfirmPDU() = 0;
@@ -1138,8 +1138,10 @@ public:
 
     void send_FormatListPDU() {
         uint32_t formatIDs[]                  = { this->_bufferTypeID };
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
-        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+        const uint16_t * formatListDataShortName[] = { reinterpret_cast<const uint16_t *>(this->_bufferTypeLongName.data())};
+        const size_t size_names[] = {this->_bufferTypeLongName.size()};
+
+        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, size_names, 1);
     }
 
 

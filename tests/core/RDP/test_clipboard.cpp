@@ -419,14 +419,25 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 RED_AUTO_TEST_CASE(TestFormatListPDU) {
 
     // inData
-    uint32_t IDs[] = {48026, 48025, RDPECLIP::CF_UNICODETEXT, RDPECLIP::CF_TEXT, RDPECLIP::CF_METAFILEPICT};
-    std::string names[] = {std::string("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26), std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42), std::string("\0\0", 2), std::string("\0\0", 2), std::string("\0\0", 2)};
+    std::string name1("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26);
+    std::string name2("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
+    std::string name3("\0\0", 2);
+
+    const uint16_t * names[] = {reinterpret_cast<const uint16_t *>(name1.data()),
+                                reinterpret_cast<const uint16_t *>(name2.data()),
+                                reinterpret_cast<const uint16_t *>(name3.data()),
+                                reinterpret_cast<const uint16_t *>(name3.data()),
+                                reinterpret_cast<const uint16_t *>(name3.data())};
     std::size_t size = 5;
+
+    uint32_t IDs[] = {48026, 48025, RDPECLIP::CF_UNICODETEXT, RDPECLIP::CF_TEXT, RDPECLIP::CF_METAFILEPICT};
+    size_t sizes[] = {26, 42, 2, 2, 2};
 
     // Init stream format list PDU long name
     StaticOutStream<1024> out_stream;
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(IDs, names, size);
-    format_list_pdu_long.emit_LongName(out_stream);
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(IDs, names, sizes, size);
+    format_list_pdu_long.emit(out_stream);
+
 
     const char exp_data[] =
         "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.

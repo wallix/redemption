@@ -834,7 +834,17 @@ public:
                             this->_monitorCountNegociated = true;
                         }
                         {
-                            this->send_FormatListPDU(this->clipbrdFormatsList.IDs, this->clipbrdFormatsList.names, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
+                            const uint16_t * names[] = {
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[0].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[1].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[2].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[3].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
+                                                       };
+
+                            size_t sizes[] = {26, 42, 2, 2, 2};
+
+                            this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
                         }
 
                     break;
@@ -3247,11 +3257,11 @@ public:
         this->clipboard_qt->emptyBuffer();
     }
 
-    void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) override {
+    void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, const std::size_t formatIDs_size) override {
 
         StaticOutStream<1024> out_stream;
-        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
-        format_list_pdu_long.emit_LongName(out_stream);
+        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, size_names, formatIDs_size);
+        format_list_pdu_long.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
         this->mod->send_to_mod_channel( channel_names::cliprdr
@@ -3322,7 +3332,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::rdpsnd;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::none;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
