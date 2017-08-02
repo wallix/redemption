@@ -1162,6 +1162,8 @@ struct FormatListResponsePDU
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
 
+    FormatListResponsePDU() = default;
+
     void emit(OutStream & stream) const {
         this->header.emit(stream);
     }
@@ -2426,8 +2428,13 @@ struct UnlockClipboardDataPDU
 };
 
 
+struct CLIPRDRState
+{
+    bool use_long_format_names = true;
+};
 
-static inline void streamLog(InStream & stream, int flags) {
+
+static inline void streamLog(InStream & stream, int flags, CLIPRDRState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
         InStream chunk =  stream.clone();
         CliprdrHeader header;
@@ -2444,7 +2451,15 @@ static inline void streamLog(InStream & stream, int flags) {
                 break;
             case CB_FORMAT_LIST:
             {
-
+//                 if (state.use_long_format_names) {
+//                     FormatListPDU_LongName pdu;
+//                     pdu.recv(stream);
+//                     pdu.log();
+//                 } else {
+//                     FormatListPDU_ShortName pdu;
+//                     pdu.recv(stream);
+//                     pdu.log();
+//                 }
             }
                 break;
 
@@ -2458,7 +2473,7 @@ static inline void streamLog(InStream & stream, int flags) {
 
             case CB_FORMAT_DATA_REQUEST:
             {
-                FormatListResponsePDU pdu;                  // TODO predict long or short
+                FormatDataRequestPDU pdu;
                 pdu.recv(stream);
                 pdu.log();
             }
@@ -2486,9 +2501,11 @@ static inline void streamLog(InStream & stream, int flags) {
                 pdu.recv(stream);
                 pdu.log();
 
-                GeneralCapabilitySet pdu2;
-                pdu2.recv(stream);
-                pdu2.log();
+//                 GeneralCapabilitySet pdu2;
+//                 pdu2.recv(stream);
+//                 pdu2.log();
+//
+//                 state.use_long_format_names = bool(pdu2.generalFlags() & CB_USE_LONG_FORMAT_NAMES);
             }
                 break;
 

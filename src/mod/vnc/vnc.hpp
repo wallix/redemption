@@ -598,6 +598,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                 }
+                break;
 
             case 0x0409: // United States
                 // TODO treat problematic case
@@ -606,6 +607,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                 }
+                break;
 
            case 0x0410: // Italian
                // TODO treat problematic case
@@ -614,6 +616,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x0419: // Russian
                // TODO treat problematic case
@@ -622,6 +625,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x041d: // Swedish
                // TODO treat problematic case
@@ -630,6 +634,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x046e: // Luxemburgish
                // TODO treat problematic case
@@ -638,6 +643,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x0807: // German Swizerland
                // TODO treat problematic case
@@ -646,6 +652,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x0809: // English UK
                // TODO treat problematic case
@@ -654,6 +661,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x080c: // French Belgium
                // TODO treat problematic case
@@ -662,6 +670,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x0813: // Dutch Belgium
                // TODO treat problematic case
@@ -670,6 +679,7 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             case 0x100c: // French Swizerland
                // TODO treat problematic case
@@ -678,10 +688,11 @@ public:
                         this->keyMapSym_event(device_flags, param1, downflag);
                         break;
                }
+               break;
 
             default:
-                this->keyMapSym_event(device_flags, param1, downflag);
-                break;
+               this->keyMapSym_event(device_flags, param1, downflag);
+               break;
         }
     }
 
