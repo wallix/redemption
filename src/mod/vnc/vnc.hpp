@@ -39,10 +39,10 @@
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/report_message_api.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "transport/socket_transport.hpp"
 #include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
+#include "utils/verbose_flags.hpp"
 #include "core/RDP/tdpu_buffer.hpp"
 
 #include <cstdlib>
@@ -148,10 +148,6 @@ public:
 private:
     KeymapSym  keymapSym;
 
-    uint8_t to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
-    InStream to_rdp_clipboard_data; // NOTE can be array_view
-    bool     to_rdp_clipboard_data_is_utf8_encoded;
-
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
     uint32_t to_vnc_clipboard_data_size;
     uint32_t to_vnc_clipboard_data_remaining;
@@ -193,8 +189,6 @@ private:
     bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
 
-    const bool is_socket_transport;
-
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
@@ -233,7 +227,7 @@ public:
            , bool clipboard_down
            , const char * encodings
            , bool allow_authentification_retries
-           , bool is_socket_transport
+           , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
@@ -253,20 +247,18 @@ public:
     , t(t)
     , verbose(verbose)
     , keymapSym(static_cast<uint32_t>(verbose))
-    , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
-    , to_rdp_clipboard_data_is_utf8_encoded(false)
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
-    , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
+    , clipboard_data_ctx(verbose)
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -301,15 +293,6 @@ public:
     //==============================================================================================================
     ~mod_vnc() override {
         inflateEnd(&this->zstrm);
-
-        // TODO mod_vnc isn't owner of sck
-        if (this->is_socket_transport) {
-            auto & st = static_cast<SocketTransport&>(this->t);
-            if (st.sck > 0){
-                close(st.sck);
-            }
-        }
-
         this->screen.clear();
     }
 
@@ -933,6 +916,8 @@ public:
                         break;
                         case 1: /* palette */
                             this->lib_palette_update(drawable);
+                        break;
+                        case 2: /* bell */
                         break;
                         case 3: /* clipboard */ /* ServerCutText */
                             this->lib_clip_data();
@@ -2159,9 +2144,10 @@ private:
                 return State::Header;
             }
 
-            Parse parse(buf.sub(1, 3).data());
-            this->first_color = parse.in_uint16_be();
-            this->num_colors = parse.in_uint16_be();
+            InStream stream(buf.av(4));
+            stream.in_skip_bytes(1);
+            this->first_color = stream.in_uint16_be();
+            this->num_colors = stream.in_uint16_be();
 
             buf.advance(4);
 
@@ -2232,11 +2218,11 @@ private:
         }
         while (State::Data == state) {
             buf.read_from(trans);
-            state = this->palette_update_ctx.read_header(buf);
+            state = this->palette_update_ctx.read_data(buf, this->palette);
         }
         while (State::SkipData == state) {
             buf.read_from(trans);
-            state = this->palette_update_ctx.read_header(buf);
+            state = this->palette_update_ctx.skip_data(buf);
         }
 
         this->front.set_palette(this->palette);
@@ -2291,6 +2277,118 @@ private:
         return this->front.get_channel_list().get_by_name(channel_name);
     } // get_channel_by_name
 
+
+    struct ClipboardDataCtx
+    {
+        enum class State
+        {
+            Header,
+            SetEnable,
+            Data,
+            SkipData,
+        };
+        uint32_t data_length;
+        uint32_t remaining_data_length;
+
+        uint8_t  to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
+        InStream to_rdp_clipboard_data; // NOTE can be array_view
+        bool     to_rdp_clipboard_data_is_utf8_encoded;
+        Verbose  verbose;
+
+        explicit ClipboardDataCtx(Verbose verbose)
+          : to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
+          , to_rdp_clipboard_data_is_utf8_encoded(false)
+          , verbose(verbose)
+        {}
+
+        State read_header(Buf64k & buf)
+        {
+            if (buf.remaining() < 7)
+            {
+                return State::Header;
+            }
+
+            InStream stream(buf.av(7));
+            stream.in_skip_bytes(3);                   // padding(3)
+            this->data_length = stream.in_uint32_be(); // length(4)
+            this->remaining_data_length = this->data_length;
+            buf.advance(7);
+
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
+            }
+
+            return State::SetEnable;
+        }
+
+        State set_enable_clipboard_down(bool clipboard_down_is_really_enabled)
+        {
+            this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
+
+            if (!clipboard_down_is_really_enabled) {
+                return State::SkipData;
+            }
+
+            if (this->data_length < this->to_rdp_clipboard_data.get_capacity()) {
+                return State::Data;
+            }
+
+            this->to_rdp_clipboard_data.in_skip_bytes(::snprintf(
+                ::char_ptr_cast(this->to_rdp_clipboard_data_buffer),
+                this->to_rdp_clipboard_data.get_capacity(),
+                "The text was too long to fit in the clipboard buffer. "
+                "The buffer size is limited to %zu bytes.",
+                this->to_rdp_clipboard_data.get_capacity()
+            ) + 1 /* Null character */);
+
+            this->to_rdp_clipboard_data_is_utf8_encoded = true;
+
+            return State::SkipData;
+        }
+
+        State read_data(Buf64k & buf)
+        {
+            auto const av = buf.av(std::min<uint32_t>(
+                this->remaining_data_length, buf.remaining()));
+
+            auto const buf_pos = this->data_length - this->remaining_data_length;
+            memcpy(this->to_rdp_clipboard_data_buffer + buf_pos, av.data(), av.size());
+            this->remaining_data_length -= av.size();
+            buf.advance(av.size());
+
+            if (this->remaining_data_length) {
+                return State::Data;
+            }
+
+            this->to_rdp_clipboard_data_buffer[this->data_length] = '\0';
+            this->to_rdp_clipboard_data.in_skip_bytes(this->data_length);
+
+            this->to_rdp_clipboard_data_is_utf8_encoded =
+                ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), this->data_length);
+
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO,
+                    "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
+                    (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
+                if (this->data_length <= 64) {
+                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
+                }
+            }
+
+            return State::Header;
+        }
+
+        State skip_data(Buf64k & buf)
+        {
+            const auto number_of_bytes_to_read =
+                std::min<size_t>(this->remaining_data_length, buf.remaining());
+            buf.advance(number_of_bytes_to_read);
+            this->remaining_data_length -= number_of_bytes_to_read;
+            return this->remaining_data_length ? State::SkipData : State::Header;
+        }
+    };
+    ClipboardDataCtx clipboard_data_ctx;
+
     //******************************************************************************
     // Entry point for VNC server clipboard content reception
     // Conversion to RDP behaviour :
@@ -2300,61 +2398,40 @@ private:
     //******************************************************************************
     void lib_clip_data(void)
     {
-        this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
-        this->t.recv_boom(this->to_rdp_clipboard_data_buffer, 7);
-        this->to_rdp_clipboard_data.in_skip_bytes(3);   // padding(3)
-        const uint32_t clipboard_data_length =          // length(4)
-            this->to_rdp_clipboard_data.in_uint32_be();
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", clipboard_data_length);
-        }
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+        using State = ClipboardDataCtx::State;
+        auto state = State::Header;
 
-        uint32_t remaining_clipboard_data_length = clipboard_data_length;
+        while (State::Header == state) {
+            buf.read_from(trans);
+            state = this->clipboard_data_ctx.read_header(buf);
+        }
 
         const bool clipboard_down_is_really_enabled =
-            (this->enable_clipboard_down && this->get_channel_by_name(channel_names::cliprdr));
-        if (clipboard_down_is_really_enabled) {
-            this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
+            this->enable_clipboard_down
+         && this->get_channel_by_name(channel_names::cliprdr);
 
-            if (clipboard_data_length < this->to_rdp_clipboard_data.get_capacity()) {
-                this->t.recv_boom(this->to_rdp_clipboard_data_buffer, clipboard_data_length);  // Clipboard data.
-                this->to_rdp_clipboard_data_buffer[clipboard_data_length] = '\0';
-                this->to_rdp_clipboard_data.in_skip_bytes(clipboard_data_length);
-                remaining_clipboard_data_length = 0;
+        state = this->clipboard_data_ctx.set_enable_clipboard_down(
+            clipboard_down_is_really_enabled);
 
-                this->to_rdp_clipboard_data_is_utf8_encoded =
-                    ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), clipboard_data_length);
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
-                        (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
-                    if (clipboard_data_length <= 64) {
-                        hexdump_c(this->to_rdp_clipboard_data.get_data(), clipboard_data_length);
-                    }
-                }
-            }
-            else {
-                this->to_rdp_clipboard_data.in_skip_bytes(
-                    ::snprintf(::char_ptr_cast(this->to_rdp_clipboard_data_buffer),
-                               this->to_rdp_clipboard_data.get_capacity(),
-                               "The text was too long to fit in the clipboard buffer. "
-                                   "The buffer size is limited to %zu bytes.",
-                               this->to_rdp_clipboard_data.get_capacity()) +
-                    1   // Null character.
-                );
-
-                this->to_rdp_clipboard_data_is_utf8_encoded = true;
-            }
+        while (State::Data == state) {
+            buf.read_from(trans);
+            state = this->clipboard_data_ctx.read_data(buf);
         }
 
-        while (remaining_clipboard_data_length) {
-            char drop[4096];
-
-            const uint32_t number_of_bytes_to_read =
-                std::min<size_t>(remaining_clipboard_data_length, sizeof(drop));
-
-            this->t.recv_boom(drop, number_of_bytes_to_read);
-            remaining_clipboard_data_length -= number_of_bytes_to_read;
+        while (State::SkipData == state) {
+            buf.read_from(trans);
+            state = this->clipboard_data_ctx.skip_data(buf);
         }
 
         if (clipboard_down_is_really_enabled) {
@@ -2367,7 +2444,7 @@ private:
             RDPECLIP::FormatListPDU format_list_pdu;
             StaticOutStream<256>    out_s;
 
-            const bool unicodetext = this->to_rdp_clipboard_data_is_utf8_encoded;
+            const bool unicodetext = this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded;
 
             format_list_pdu.emit_ex(out_s, unicodetext);
 
@@ -2710,11 +2787,11 @@ private:
                 }
 
                 if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT) &&
-                    !this->to_rdp_clipboard_data_is_utf8_encoded) {
+                    !this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
-                            this->to_rdp_clipboard_data.get_offset() * 2 +    // data
+                            this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset() * 2 +    // data
                             1                                           // Null character
                         );
 
@@ -2725,8 +2802,8 @@ private:
 
                     const size_t to_rdp_clipboard_data_length =
                         ::linux_to_windows_newline_convert(
-                                ::char_ptr_cast(this->to_rdp_clipboard_data.get_data()),
-                                this->to_rdp_clipboard_data.get_offset(),
+                                ::char_ptr_cast(this->clipboard_data_ctx.to_rdp_clipboard_data.get_data()),
+                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset(),
                                 ::char_ptr_cast(out_data_stream.get_data()),
                                 out_data_stream.get_capacity()
                             );
@@ -2750,7 +2827,7 @@ private:
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
-                            this->to_rdp_clipboard_data.get_offset() * 4 +    // data
+                            this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset() * 4 +    // data
                             1                                           // Null character
                         );
 
@@ -2760,17 +2837,17 @@ private:
                         );
 
                     size_t utf16_data_length;
-                    if (this->to_rdp_clipboard_data_is_utf8_encoded) {
+                    if (this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded) {
                         utf16_data_length = UTF8toUTF16_CrLf(
-                                this->to_rdp_clipboard_data.get_data(),
+                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_data(),
                                 out_data_stream.get_data(),
                                 out_data_stream.get_capacity()
                             );
                     }
                     else {
                         utf16_data_length = Latin1toUTF16(
-                                this->to_rdp_clipboard_data.get_data(),
-                                this->to_rdp_clipboard_data.get_offset(),
+                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_data(),
+                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset(),
                                 out_data_stream.get_data(),
                                 out_data_stream.get_capacity()
                             );

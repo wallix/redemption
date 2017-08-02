@@ -484,7 +484,12 @@ private:
             return res;
         }
 
-        ssize_t res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0);
+        ssize_t res = 0;
+
+        // TODO (temporary) test on EAGAIN
+        while ((res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0)) == -1
+            && errno == EAGAIN) {
+        }
         switch (res) {
             case -1: /* error, maybe EAGAIN */ {
                 int err = errno;
