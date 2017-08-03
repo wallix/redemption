@@ -574,7 +574,7 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    size_t max_bitmap_size = 1024 * 64;
+    size_t max_bitmap_size = 1024 * 30; // should be less than 1 << 15
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
@@ -1127,7 +1127,7 @@ private:
             this->mppc_enc = nullptr;
         }
 
-        this->max_bitmap_size = 1024 * 64;
+        this->max_bitmap_size = 1024 * 30;  // should be less than 1 << 15
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1))
         {
