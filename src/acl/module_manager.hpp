@@ -1210,6 +1210,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1221,6 +1222,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1277,6 +1279,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (3)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1288,6 +1291,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (4)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1575,6 +1579,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (5)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1586,6 +1591,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (6)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 

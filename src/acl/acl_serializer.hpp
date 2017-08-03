@@ -671,6 +671,7 @@ private:
                 }
                 else if (!this->has_next_buffer) {
                     if (key_buf_len) {
+                        LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (1)");
                         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                     }
                     return nullptr;
@@ -767,6 +768,7 @@ private:
 
         void read_packet() {
             if (!this->has_next_buffer) {
+                LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (2)");
                 throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
             }
             this->safe_read_packet();
@@ -829,6 +831,7 @@ public:
                 }
                 else {
                     reader.hexdump();
+                    LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (3)");
                     throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                 }
             }
