@@ -338,7 +338,6 @@ public:
     private:
         State state = State::Size;
         uint32_t len;
-        array_view_u8 mess;
 
         State read_size(Buf64k & buf)
         {
@@ -377,11 +376,6 @@ public:
             return State::Strip;
         }
 
-        array_view_u8 get_message() const noexcept
-        {
-            return this->mess;
-        }
-
         State strip_data(Buf64k & buf)
         {
             const size_t sz = std::min<size_t>(buf.remaining(), this->len);
@@ -392,110 +386,78 @@ public:
         }
     };
 
-    struct MsLogonCtx
+    struct AuthResponseCtx
     {
-        enum State
+        enum class State
         {
-            Auth,
-            ResponseHeader,
-            ResponseFail,
+            Header,
+            ReasonFail,
+            Finish,
         };
 
         using ReasonCtx = MessageCtx<256>;
 
         ReasonCtx reason;
 
-        State read_auth(Buf64k & buf, mod_vnc & vnc)
-        {
-            const size_t sz = 24;
-
-            if (buf.remaining() < sz)
-            {
-                return State::Auth;
-            }
-
-            InStream stream(buf.av(sz));
-            uint64_t gen = stream.in_uint64_be();
-            uint64_t mod = stream.in_uint64_be();
-            uint64_t resp = stream.in_uint64_be();
-
-            buf.advance(sz);
-
-            if (bool(vnc.verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "MS-Logon with following values:");
-                LOG(LOG_INFO, "Gen=%" PRIu64, gen);
-                LOG(LOG_INFO, "Mod=%" PRIu64, mod);
-                LOG(LOG_INFO, "Resp=%" PRIu64, resp);
-            }
-
-            DiffieHellman dh(gen, mod);
-            uint64_t pub = dh.createInterKey();
-
-            StaticOutStream<32768> out_stream;
-            out_stream.out_uint64_be(pub);
-
-            uint64_t key = dh.createEncryptionKey(resp);
-            uint8_t keybuffer[8] = {};
-            dh.uint64_to_uint8p(key, keybuffer);
-
-            rfbDesKey(keybuffer, EN0); // 0, encrypt
-
-            uint8_t ms_username[256] = {};
-            uint8_t ms_password[64] = {};
-            memcpy(ms_username, vnc.username, 256);
-            memcpy(ms_password, vnc.password, 64);
-            uint8_t cp_username[256] = {};
-            uint8_t cp_password[64] = {};
-            rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
-            rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
-
-            out_stream.out_copy_bytes(cp_username, 256);
-            out_stream.out_copy_bytes(cp_password, 64);
-
-            vnc.t.send(out_stream.get_data(), out_stream.get_offset());
-            // sec result
-            if (bool(vnc.verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Waiting for password ack");
-            }
-
-            return State::ResponseHeader;
-        }
-
-        State read_response_header(Buf64k & buf, mod_vnc & vnc)
+        State read_header(Buf64k & buf)
         {
             const size_t sz = 4;
 
             if (buf.remaining() < sz)
             {
-                return State::ResponseHeader;
+                return State::Header;
             }
 
             uint32_t const i = InStream(buf.av(sz)).in_uint32_be();
 
             buf.advance(sz);
 
-            if (i == 0) {
-                if (bool(vnc.verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "MS LOGON password ok\n");
-                }
-                return State::Auth;
-            }
-            else {
-                LOG(LOG_INFO, "MS LOGON password FAILED\n");
-                return State::ResponseFail;
-            }
+            return i ? State::ReasonFail : State::Finish;
         }
 
-        State read_response_fail(Buf64k & buf)
+        State read_reason_fail(Buf64k & buf)
         {
             if (this->reason.read(buf, [](array_view_u8 av){
                 LOG(LOG_INFO, "Reason for the connection failure: %.*s",
                     int(av.size()), byte_ptr(av.data()).to_charp());
             })) {
-                return State::Auth;
+                return State::Finish;
             }
 
-            return State::ResponseFail;
+            return State::ReasonFail;
+        }
+    };
+    AuthResponseCtx auth_response_ctx;
+
+    struct MsLogonCtx
+    {
+        enum class State
+        {
+            Data,
+            Finish,
+        };
+
+        uint64_t gen;
+        uint64_t mod;
+        uint64_t resp;
+
+        State read_data(Buf64k & buf)
+        {
+            const size_t sz = 24;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            InStream stream(buf.av(sz));
+            this->gen = stream.in_uint64_be();
+            this->mod = stream.in_uint64_be();
+            this->resp = stream.in_uint64_be();
+
+            buf.advance(sz);
+
+            return State::Finish;
         }
     };
     MsLogonCtx ms_logon_ctx;
@@ -515,18 +477,69 @@ public:
         Trans trans(this->t);
 
         using State = MsLogonCtx::State;
-        auto state = State::Auth;
-        while (State::Auth == state) {
+        auto state = State::Data;
+        while (State::Data == state) {
             buf.read_from(trans);
-            state = this->ms_logon_ctx.read_auth(buf, *this);
+            state = this->ms_logon_ctx.read_data(buf);
         }
-        while (State::ResponseHeader == state) {
-            buf.read_from(trans);
-            state = this->ms_logon_ctx.read_response_header(buf, *this);
+
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "MS-Logon with following values:");
+            LOG(LOG_INFO, "Gen=%" PRIu64, this->ms_logon_ctx.gen);
+            LOG(LOG_INFO, "Mod=%" PRIu64, this->ms_logon_ctx.mod);
+            LOG(LOG_INFO, "Resp=%" PRIu64, this->ms_logon_ctx.resp);
         }
-        while (State::ResponseFail == state) {
-            buf.read_from(trans);
-            state = this->ms_logon_ctx.read_response_fail(buf);
+
+        DiffieHellman dh(this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
+        uint64_t pub = dh.createInterKey();
+
+        StaticOutStream<32768> out_stream;
+        out_stream.out_uint64_be(pub);
+
+        uint64_t key = dh.createEncryptionKey(this->ms_logon_ctx.resp);
+        uint8_t keybuffer[8] = {};
+        dh.uint64_to_uint8p(key, keybuffer);
+
+        rfbDesKey(keybuffer, EN0); // 0, encrypt
+
+        uint8_t ms_username[256] = {};
+        uint8_t ms_password[64] = {};
+        memcpy(ms_username, this->username, 256);
+        memcpy(ms_password, this->password, 64);
+        uint8_t cp_username[256] = {};
+        uint8_t cp_password[64] = {};
+        rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
+        rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
+
+        out_stream.out_copy_bytes(cp_username, 256);
+        out_stream.out_copy_bytes(cp_password, 64);
+
+        this->t.send(out_stream.get_data(), out_stream.get_offset());
+        // sec result
+
+        {
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "Waiting for password ack");
+            }
+            using State = AuthResponseCtx::State;
+            auto state = State::Header;
+            while (State::Header == state) {
+                buf.read_from(trans);
+                state = this->auth_response_ctx.read_header(buf);
+            }
+            if (State::ReasonFail == state) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "MS LOGON password ok\n");
+                }
+                while (State::ReasonFail == state) {
+                    buf.read_from(trans);
+                    state = this->auth_response_ctx.read_reason_fail(buf);
+                }
+            }
+            else {
+                LOG(LOG_INFO, "MS LOGON password FAILED\n");
+            }
         }
     }
 
@@ -1112,6 +1125,34 @@ protected:
         number_of_encodings = (stream.get_offset() - stream_offset) / 4;
     }
 
+    struct PasswordCtx
+    {
+        enum class State
+        {
+            RandomKey,
+            Finish,
+        };
+
+        array_view_u8 server_random;
+
+        State read_random_number(Buf64k & buf)
+        {
+            const size_t sz = 16;
+
+            if (buf.remaining() < sz)
+            {
+                return State::RandomKey;
+            }
+
+            this->server_random = buf.av(sz);
+
+            buf.advance(sz);
+            return State::Finish;
+        }
+    };
+
+    PasswordCtx password_ctx;
+
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
@@ -1338,59 +1379,63 @@ public:
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Receiving VNC Server Random");
                         }
-                        uint8_t buf[16];
-                        auto recv = [&](size_t len) {
-                            this->t.recv_boom(buf, len);
-                        };
-                        recv(16);
 
-                        // taken from vncauth.c
+                        Buf64k buf;
+                        struct Trans : Transport
                         {
+                            Transport & t;
+                            Trans(Transport & t) : t(t) {}
+                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                            {
+                                return this->t.partial_read(buffer, 1);
+                            }
+                        };
+                        Trans trans(this->t);
+
+                        {
+                            using State = PasswordCtx::State;
+                            auto state = State::RandomKey;
+                            while (State::RandomKey == state) {
+                                buf.read_from(trans);
+                                state = this->password_ctx.read_random_number(buf);
+                            }
+
                             char key[12] = {};
 
                             // key is simply password padded with nulls
                             strncpy(key, this->password, 8);
                             rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
-                            rfbDes(buf, buf);
-                            rfbDes(buf + 8, buf + 8);
+                            auto const random_buf = this->password_ctx.server_random.data();
+                            rfbDes(random_buf, random_buf);
+                            rfbDes(random_buf + 8, random_buf + 8);
+
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Sending Password");
+                            }
+                            this->t.send(random_buf, 16);
                         }
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Sending Password");
-                        }
-                        this->t.send(buf, 16);
 
                         // sec result
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Waiting for password ack");
                         }
-                        recv(4);
-                        int i = Parse(buf).in_uint32_be();
-                        if (i != 0) {
-                            // vnc password failed
-                            // Optionnal
-                            try
-                            {
-                                recv(4);
-                                uint32_t reason_length = Parse(buf).in_uint32_be();
 
-                                char   reason[256];
-                                char * preason = reason;
+                        using State = AuthResponseCtx::State;
+                        auto state = State::Header;
+                        while (State::Header == state) {
+                            buf.read_from(trans);
+                            state = this->auth_response_ctx.read_header(buf);
+                        }
+                        if (State::ReasonFail == state) {
+                            LOG(LOG_ERR, "vnc password failed");
 
-                                this->t.recv_boom(preason,
-                                                std::min<size_t>(sizeof(reason) - 1, reason_length));
-                                preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
-                                *preason = 0;
-
-                                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
-                            }
-                            catch (const Error &)
-                            {
+                            while (State::ReasonFail == state) {
+                                buf.read_from(trans);
+                                state = this->auth_response_ctx.read_reason_fail(buf);
                             }
 
                             if (this->allow_authentification_retries)
                             {
-                                LOG(LOG_ERR, "vnc password failed");
-
                                 this->t.disconnect();
 
                                 this->state = ASK_PASSWORD;
@@ -1401,10 +1446,10 @@ public:
                             }
                             else
                             {
-                                LOG(LOG_ERR, "vnc password failed");
                                 throw Error(ERR_VNC_CONNECTION_ERROR);
                             }
-                        } else {
+                        }
+                        else {
                             if (bool(this->verbose & Verbose::basic_trace)) {
                                 LOG(LOG_INFO, "vnc password ok\n");
                             }
