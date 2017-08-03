@@ -1797,323 +1797,535 @@ private:
             }
         }
     }
-    //==============================================================================================================
-    void lib_framebuffer_update(gdi::GraphicApi & drawable) {
-    //==============================================================================================================
-        uint8_t data_rec[256];
-        InStream stream_rec(data_rec);
-        uint8_t * end = data_rec;
-        this->t.recv_boom(end, 3);
-        end += 3;
-        stream_rec.in_skip_bytes(1);
-        size_t num_recs = stream_rec.in_uint16_be();
 
-        uint8_t Bpp = nbbytes(this->bpp);
-        for (size_t i = 0; i < num_recs; i++) {
-            stream_rec = InStream(data_rec);
-            end = data_rec;
-            this->t.recv_boom(end, 12);
-            end += 12;
-            const uint16_t x = stream_rec.in_uint16_be();
-            const uint16_t y = stream_rec.in_uint16_be();
-            const uint16_t cx = stream_rec.in_uint16_be();
-            const uint16_t cy = stream_rec.in_uint16_be();
-            const uint32_t encoding = stream_rec.in_uint32_be();
+    struct FrameBufferUpdateCtx
+    {
+        uint8_t Bpp;
+
+        enum class State
+        {
+            Header,
+            Encoding,
+            Data,
+            ZrleData,
+            RreData,
+            // DataRaw,
+            // DataCopyRect,
+            // DataRRE,
+            // DataHextile,
+            // DataZRLE,
+            // DataCursor,
+        };
+
+        uint16_t num_recs;
+
+        uint16_t x;
+        uint16_t y;
+        uint16_t cx;
+        uint16_t cy;
+        uint16_t original_x;
+        uint32_t encoding;
+
+        uint32_t zlib_compressed_data_length;
+
+        uint32_t number_of_subrectangles_remain;
+        std::unique_ptr<uint8_t[]> rre_raw;
+
+        State read_header(Buf64k & buf)
+        {
+            const size_t sz = 3;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Header;
+            }
+
+            InStream stream(buf.av(sz));
+            stream.in_skip_bytes(1);
+            this->num_recs = stream.in_uint16_be();
+
+            buf.advance(sz);
+            return this->num_recs ? State::Encoding : State::Header;
+        }
+
+        State read_encoding(Buf64k & buf)
+        {
+            if (!this->num_recs) {
+                return State::Header;
+            }
+
+            const size_t sz = 12;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Encoding;
+            }
+
+            InStream stream(buf.av(sz));
+            this->x = stream.in_uint16_be();
+            this->y = stream.in_uint16_be();
+            this->cx = stream.in_uint16_be();
+            this->cy = stream.in_uint16_be();
+            this->encoding = stream.in_uint32_be();
+            this->original_x = this->x;
+
+            --this->num_recs;
+            buf.advance(sz);
+
+            return State::Data;
+        }
+
+        State read_data_raw(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        {
+            size_t const size_line = this->cx * this->Bpp;
+            auto const av = buf.av();
+
+            if (av.size() >= size_line) {
+                auto const cy = av.size() / size_line;
+                auto const new_av = av.subarray(0, cy * size_line);
+
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(
+                    Rect(this->x, this->y, this->cx, cy),
+                    new_av.data(),
+                    drawable
+                );
+
+                this->y += cy;
+                this->cy -= cy;
+
+                buf.advance(new_av.size());
+            }
+
+            return this->cy ? State::Data : State::Encoding;
+        }
+
+        State read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            InStream stream_copy_rect(buf.av(sz));
+            const int srcx = stream_copy_rect.in_uint16_be();
+            const int srcy = stream_copy_rect.in_uint16_be();
+
+            //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+            const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
+            update_lock<FrontAPI> lock(vnc.front);
+            drawable.draw(scrblt, Rect(0, 0, vnc.front_width, vnc.front_height));
+
+            buf.advance(sz);
+
+            return State::Encoding;
+        }
+
+        State read_data_rre(Buf64k & buf)
+        {
+            const size_t sz = 4 + this->Bpp;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            InStream stream_rre(buf.av(sz));
+            this->number_of_subrectangles_remain = stream_rre.in_uint32_be();
+
+            //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+            this->rre_raw.reset(new(std::nothrow) uint8_t[cx * cy * Bpp]);
+            if (!this->rre_raw) {
+                LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
+                throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
+            }
+
+            for (uint8_t * point_cur = this->rre_raw.get(), * point_end = point_cur + cx * cy * Bpp;
+                    point_cur < point_end; point_cur += Bpp) {
+                memcpy(point_cur, stream_rre.get_current(), Bpp);
+            }
+
+            buf.advance(sz);
+
+            return State::RreData;
+        }
+
+        State read_data_rre_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        {
+            if (!this->number_of_subrectangles_remain) {
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(Rect(x, y, cx, cy), this->rre_raw.get(), drawable);
+                return State::Encoding;
+            }
+
+            const size_t sz = 8 + this->Bpp;
+
+            if (buf.remaining() < sz)
+            {
+                return State::RreData;
+            }
+
+            --this->number_of_subrectangles_remain;
+
+            InStream subrectangles(buf.av(sz));
+            auto bytes_per_pixel = subrectangles.get_current();
+            subrectangles.in_skip_bytes(Bpp);
+            auto subrec_x        = subrectangles.in_uint16_be();
+            auto subrec_y        = subrectangles.in_uint16_be();
+            auto subrec_width    = subrectangles.in_uint16_be();
+            auto subrec_height   = subrectangles.in_uint16_be();
+
+            auto ling_boundary = cx * Bpp;
+            auto point_line_cur = this->rre_raw.get() + subrec_y * ling_boundary;
+            auto point_line_end = point_line_cur + subrec_height * ling_boundary;
+            for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
+                for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
+                        * point_end = point_cur + subrec_width * Bpp;
+                        point_cur < point_end; point_cur += Bpp) {
+                    memcpy(point_cur, bytes_per_pixel, Bpp);
+                }
+            }
+
+            buf.advance(sz);
+
+            return State::RreData;
+        }
+
+        State read_data_hextile()
+        {
+            LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                this->Bpp, this->x, this->y, this->cx, this->cy);
+            return State::Encoding;
+        }
+
+        State read_data_zrle(Buf64k & buf, mod_vnc & vnc)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
+
+            if (bool(vnc.verbose & Verbose::basic_trace))
+            {
+                LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
+                    this->zlib_compressed_data_length);
+            }
+
+            if (this->zlib_compressed_data_length > 65536)
+            {
+                LOG(LOG_ERR,
+                    "VNC Encoding: ZRLE, compressed data buffer too small "
+                        "(65536 < %" PRIu32 ")",
+                    this->zlib_compressed_data_length);
+                throw Error(ERR_BUFFER_TOO_SMALL);
+            }
+
+            buf.advance(sz);
+
+            return State::ZrleData;
+        }
+
+        State read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        {
+            if (buf.remaining() < this->zlib_compressed_data_length)
+            {
+                return State::ZrleData;
+            }
+
+            ZRLEUpdateContext zrle_update_context;
+
+            zrle_update_context.Bpp       = Bpp;
+            zrle_update_context.x         = x;
+            zrle_update_context.cx        = cx;
+            zrle_update_context.cx_remain = cx;
+            zrle_update_context.cy_remain = cy;
+            zrle_update_context.tile_x    = x;
+            zrle_update_context.tile_y    = y;
+
+            vnc.zstrm.avail_in = this->zlib_compressed_data_length;
+            vnc.zstrm.next_in  = buf.av().data();
+
+            while (vnc.zstrm.avail_in > 0)
+            {
+                constexpr std::size_t reserved_leading_space = 16384;
+                constexpr std::size_t total_size = 49152;
+                constexpr std::size_t data_size = total_size - reserved_leading_space;
+
+                uint8_t zlib_uncompressed_data_buffer[total_size];
+
+                uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
+
+                vnc.zstrm.avail_out = data_size;
+                vnc.zstrm.next_out  = data;
+
+                int zlib_result = inflate(&vnc.zstrm, Z_NO_FLUSH);
+
+                if (zlib_result != Z_OK)
+                {
+                    LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
+                    throw Error(ERR_VNC_ZLIB_INFLATE);
+                }
+
+                InStream zlib_uncompressed_data_stream(data, data_size - vnc.zstrm.avail_out);
+
+                if (bool(vnc.verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO,
+                        "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
+                        zlib_uncompressed_data_stream.in_remain(),
+                        zrle_update_context.data_remain.get_offset());
+                }
+
+                if (zrle_update_context.data_remain.get_offset())
+                {
+                    auto sz = zrle_update_context.data_remain.get_offset();
+                    data -= sz;
+                    memcpy(data, zrle_update_context.data_remain.get_data(), sz);
+                    zlib_uncompressed_data_stream = InStream(data, data_size - vnc.zstrm.avail_out + sz);
+
+                    zrle_update_context.data_remain.rewind();
+                }
+
+                vnc.lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context, drawable);
+            }
+
+            buf.advance(this->zlib_compressed_data_length);
+
+            return State::Encoding;
+        }
+
+        State read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & /*drawable*/)
+        {
+            // TODO see why we get these empty rects ?
+            if (this->cx <= 0 && this->cy <= 0) {
+                return State::Encoding;
+            }
+
+            // 7.7.2   Cursor Pseudo-encoding
+            // ------------------------------
+
+            // A client which requests the Cursor pseudo-encoding is
+            // declaring that it is capable of drawing a mouse cursor
+            // locally. This can significantly improve perceived performance
+            // over slow links.
+
+            // The server sets the cursor shape by sending a pseudo-rectangle
+            // with the Cursor pseudo-encoding as part of an update.
+
+            // x, y : The pseudo-rectangle's x-position and y-position
+            // indicate the hotspot of the cursor,
+
+            // cx, cy : width and height indicate the width and height of
+            // the cursor in pixels.
+
+            // The data consists of width * height pixel values followed by
+            // a bitmask.
+
+            // PIXEL array : width * height * bytesPerPixel
+            // bitmask     : floor((width + 7) / 8) * height
+
+            // The bitmask consists of left-to-right, top-to-bottom
+            // scanlines, where each scanline is padded to a whole number of
+            // bytes. Within each byte the most significant bit represents
+            // the leftmost pixel, with a 1-bit meaning the corresponding
+            // pixel in the cursor is valid.
+
+            const int sz_pixel_array = this->cx * this->cy * this->Bpp;
+            const int sz_bitmask = nbbytes(this->cx) * this->cy;
+
+            if (sz_pixel_array + sz_bitmask > 65536)
+            {
+                LOG(LOG_ERR,
+                    "VNC Encoding: Cursor, data buffer too small (65536 < %d)",
+                    sz_pixel_array + sz_bitmask);
+                throw Error(ERR_BUFFER_TOO_SMALL);
+            }
+
+            if (buf.remaining() < sz_pixel_array + sz_bitmask)
+            {
+                return State::Data;
+            }
+
+            auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
+            const uint8_t * vnc_pointer_data = cursor_buf;
+            const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
+
+            Pointer cursor;
+            //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
+            cursor.x = x;
+            cursor.y = y;
+            // cursor.bpp = 24;
+            cursor.width = 32;
+            cursor.height = 32;
+            // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
+            if (cx == 1 && cy == 1) {
+                // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
+                memset(cursor.data, 0, sizeof(cursor.data));
+                cursor.data[2883] = 0xFF;
+                cursor.data[2884] = 0xFF;
+                cursor.data[2885] = 0xFF;
+                memset(cursor.mask, 0xFF, sizeof(cursor.mask));
+                cursor.mask[116] = 0x1F;
+                cursor.mask[120] = 0x1F;
+                cursor.mask[124] = 0x1F;
+            }
+            else {
+                // clear target cursor mask
+                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
+                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
+                        cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
+                    }
+                }
+                // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
+                // copy vnc pointer and mask to rdp pointer and mask
+
+                for (int yy = 0; yy < cy; yy++) {
+                    for (int xx = 0 ; xx < cx ; xx++){
+                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                            if ((yy < 32) && (xx < 32)){
+                                cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                int pixel = 0;
+                                for (int tt = 0 ; tt < Bpp; tt++){
+                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
+                                }
+                                // TODO temporary: force black cursor
+                                int red   = (pixel >> vnc.red_shift) & vnc.red_max;
+                                int green = (pixel >> vnc.green_shift) & vnc.green_max;
+                                int blue  = (pixel >> vnc.blue_shift) & vnc.blue_max;
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
+                            }
+                        }
+                    }
+                }
+                /* keep these in 32x32, vnc cursor can be alot bigger */
+                /* (anyway hotspot is usually 0, 0)                   */
+                //if (x > 31) { x = 31; }
+                //if (y > 31) { y = 31; }
+            }
+            cursor.update_bw();
+            // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
+            vnc.front.begin_update();
+            vnc.front.set_pointer(cursor);
+            vnc.front.end_update();
+
+            buf.advance(sz_pixel_array + sz_bitmask);
+            return State::Encoding;
+        }
+    };
+    FrameBufferUpdateCtx frame_buffer_update_ctx;
+
+    void lib_framebuffer_update(gdi::GraphicApi & drawable)
+    {
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+
+        this->frame_buffer_update_ctx.Bpp = nbbytes(this->bpp);
+
+        using State = FrameBufferUpdateCtx::State;
+        auto state = State::Header;
+        while (State::Header == state) {
+            buf.read_from(trans);
+            state = this->frame_buffer_update_ctx.read_header(buf);
+        }
+
+        for (size_t i = 0; i < this->frame_buffer_update_ctx.num_recs; i++) {
+            auto const tmp_num_rects = this->frame_buffer_update_ctx.num_recs;
+            state = State::Encoding;
+            while (State::Encoding == state) {
+                buf.read_from(trans);
+                state = this->frame_buffer_update_ctx.read_encoding(buf);
+            }
+            this->frame_buffer_update_ctx.num_recs = tmp_num_rects;
+
+            const uint32_t encoding = this->frame_buffer_update_ctx.encoding;
 
             switch (encoding) {
             case 0: /* raw */
             {
-                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
-                if (!raw) {
-                    LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
-                    throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
-                }
-
-                update_lock<FrontAPI> lock(this->front);
-                for (uint16_t yy = y ; yy < y + cy ; yy += 16) {
-                    uint8_t * tmp = raw.get();
-                    uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
-                    this->t.recv_boom(tmp, cyy*cx*Bpp);
-                    //LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
-                    this->draw_tile(Rect(x, yy, cx, cyy), raw.get(), drawable);
+                LOG(LOG_ERR, "raw");
+                while (State::Data == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_raw(buf, *this, drawable);
                 }
             }
             break;
             case 1: /* copy rect */
             {
-                uint8_t data_copy_rect[4];
-                InStream stream_copy_rect(data_copy_rect);
-                uint8_t * end = data_copy_rect;
-                this->t.recv_boom(end, 4);
-                const int srcx = stream_copy_rect.in_uint16_be();
-                const int srcy = stream_copy_rect.in_uint16_be();
-                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                update_lock<FrontAPI> lock(this->front);
-                drawable.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                LOG(LOG_ERR, "copy rect");
+                while (State::Data == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_copy_rect(buf, *this, drawable);
+                }
             }
             break;
             case 2: /* RRE */
             {
-                //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
-                if (!raw) {
-                    LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
-                    throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
+                LOG(LOG_ERR, "RRE");
+                while (State::Data == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_rre(buf);
                 }
-
-                uint8_t data_rre[256];
-                InStream stream_rre(data_rre);
-
-                uint8_t * end = data_rre;
-                this->t.recv_boom(end,
-                      4   /* number-of-subrectangles */
-                    + Bpp /* background-pixel-value */
-                    );
-                end += 4 + Bpp;
-
-                uint32_t number_of_subrectangles_remain = stream_rre.in_uint32_be();
-
-                uint8_t const * bytes_per_pixel = stream_rre.get_current();
-
-                for (uint8_t * point_cur = raw.get(), * point_end = point_cur + cx * cy * Bpp;
-                     point_cur < point_end; point_cur += Bpp) {
-                    memcpy(point_cur, bytes_per_pixel, Bpp);
+                while (State::RreData == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_rre_data(buf, *this, drawable);
                 }
-
-                uint8_t    subrectangles_buf[65535];
-                uint16_t   subrec_x, subrec_y, subrec_width, subrec_height;
-                uint8_t  * point_line_cur;
-                uint8_t  * point_line_end;
-                uint32_t   i;
-                uint32_t   ling_boundary;
-
-                while (number_of_subrectangles_remain > 0) {
-                    auto number_of_subrectangles_read = std::min<uint32_t>(4096, number_of_subrectangles_remain);
-
-                    InStream subrectangles(subrectangles_buf);
-                    end = subrectangles_buf;
-                    this->t.recv_boom(end, (Bpp + 8) * number_of_subrectangles_read);
-
-                    number_of_subrectangles_remain -= number_of_subrectangles_read;
-
-                    for (i = 0; i < number_of_subrectangles_read; i++) {
-                        bytes_per_pixel = subrectangles.get_current();
-                        subrectangles.in_skip_bytes(Bpp);
-                        subrec_x        = subrectangles.in_uint16_be();
-                        subrec_y        = subrectangles.in_uint16_be();
-                        subrec_width    = subrectangles.in_uint16_be();
-                        subrec_height   = subrectangles.in_uint16_be();
-
-                        ling_boundary = cx * Bpp;
-                        point_line_cur = raw.get() + subrec_y * ling_boundary;
-                        point_line_end = point_line_cur + subrec_height * ling_boundary;
-                        for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-                            for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
-                                 * point_end = point_cur + subrec_width * Bpp;
-                                 point_cur < point_end; point_cur += Bpp) {
-                                memcpy(point_cur, bytes_per_pixel, Bpp);
-                            }
-                        }
-                    }
-                }
-
-                update_lock<FrontAPI> lock(this->front);
-                this->draw_tile(Rect(x, y, cx, cy), raw.get(), drawable);
             }
             break;
             case 5: /* Hextile */
-                LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+            {
+                LOG(LOG_INFO,
+                    "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                    this->frame_buffer_update_ctx.Bpp,
+                    this->frame_buffer_update_ctx.x,
+                    this->frame_buffer_update_ctx.y,
+                    this->frame_buffer_update_ctx.cx,
+                    this->frame_buffer_update_ctx.cy);
+            }
             break;
             case 16:    /* ZRLE */
             {
-                uint8_t data_zrle[4];
-                uint8_t * end = data_zrle;
-
-                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t.recv_boom(end, 4);
-
-                uint32_t zlib_compressed_data_length = Parse(data_zrle).in_uint32_be();
-
-                if (bool(this->verbose & Verbose::basic_trace))
-                {
-                    LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
-                        zlib_compressed_data_length);
+                LOG(LOG_ERR, "ZRLE");
+                while (State::Data == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_zrle(buf, *this);
                 }
-
-                if (zlib_compressed_data_length > 65536)
-                {
-                    LOG(LOG_ERR,
-                        "VNC Encoding: ZRLE, compressed data buffer too small "
-                            "(65536 < %" PRIu32 ")",
-                        zlib_compressed_data_length);
-                    throw Error(ERR_BUFFER_TOO_SMALL);
-                }
-
-                uint8_t zlib_compressed_data[65536];
-                end = zlib_compressed_data;
-                this->t.recv_boom(end, zlib_compressed_data_length);
-                REDASSERT(end - zlib_compressed_data == 0);
-
-                ZRLEUpdateContext zrle_update_context;
-
-                zrle_update_context.Bpp       = Bpp;
-                zrle_update_context.x         = x;
-                zrle_update_context.cx        = cx;
-                zrle_update_context.cx_remain = cx;
-                zrle_update_context.cy_remain = cy;
-                zrle_update_context.tile_x    = x;
-                zrle_update_context.tile_y    = y;
-
-                zstrm.avail_in = zlib_compressed_data_length;
-                zstrm.next_in  = zlib_compressed_data;
-
-                while (zstrm.avail_in > 0)
-                {
-                    constexpr std::size_t reserved_leading_space = 16384;
-                    constexpr std::size_t total_size = 49152;
-                    constexpr std::size_t data_size = total_size - reserved_leading_space;
-
-                    uint8_t zlib_uncompressed_data_buffer[total_size];
-
-                    uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
-
-                    zstrm.avail_out = data_size;
-                    zstrm.next_out  = data;
-
-                    int zlib_result = inflate(&zstrm, Z_NO_FLUSH);
-
-                    if (zlib_result != Z_OK)
-                    {
-                        LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
-                        throw Error(ERR_VNC_ZLIB_INFLATE);
-                    }
-
-                    InStream zlib_uncompressed_data_stream(data, data_size - zstrm.avail_out);
-
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO,
-                            "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
-                            zlib_uncompressed_data_stream.in_remain(),
-                            zrle_update_context.data_remain.get_offset());
-                    }
-
-                    if (zrle_update_context.data_remain.get_offset())
-                    {
-                        auto sz = zrle_update_context.data_remain.get_offset();
-                        data -= sz;
-                        memcpy(data, zrle_update_context.data_remain.get_data(), sz);
-                        zlib_uncompressed_data_stream = InStream(data, data_size - zstrm.avail_out + sz);
-
-                        zrle_update_context.data_remain.rewind();
-                    }
-
-                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context, drawable);
+                while (State::ZrleData == state) {
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_zrle_data(buf, *this, drawable);
                 }
             }
             break;
             case 0xffffff11: /* (-239) cursor */
-            // TODO see why we get these empty rects ?
-            if (cx > 0 && cy > 0) {
-                // 7.7.2   Cursor Pseudo-encoding
-                // ------------------------------
-
-                // A client which requests the Cursor pseudo-encoding is
-                // declaring that it is capable of drawing a mouse cursor
-                // locally. This can significantly improve perceived performance
-                // over slow links.
-
-                // The server sets the cursor shape by sending a pseudo-rectangle
-                // with the Cursor pseudo-encoding as part of an update.
-
-                // x, y : The pseudo-rectangle's x-position and y-position
-                // indicate the hotspot of the cursor,
-
-                // cx, cy : width and height indicate the width and height of
-                // the cursor in pixels.
-
-                // The data consists of width * height pixel values followed by
-                // a bitmask.
-
-                // PIXEL array : width * height * bytesPerPixel
-                // bitmask     : floor((width + 7) / 8) * height
-
-                // The bitmask consists of left-to-right, top-to-bottom
-                // scanlines, where each scanline is padded to a whole number of
-                // bytes. Within each byte the most significant bit represents
-                // the leftmost pixel, with a 1-bit meaning the corresponding
-                // pixel in the cursor is valid.
-
-                const int sz_pixel_array = cx * cy * Bpp;
-                const int sz_bitmask = nbbytes(cx) * cy;
-                StreamBufMaker<65536> cursor_buf_maker;
-                auto cursor_buf = cursor_buf_maker.reserve(sz_pixel_array + sz_bitmask);
-                const uint8_t *vnc_pointer_data = cursor_buf;
-                const uint8_t *vnc_pointer_mask = cursor_buf + sz_pixel_array;
-                {
-                    auto end = cursor_buf;
-                    this->t.recv_boom(end, sz_pixel_array + sz_bitmask);
+            {
+                LOG(LOG_ERR, "cursor");
+                while (State::Data == state) {
+                    LOG(LOG_ERR, "cursor remaining buf %hu", buf.remaining());
+                    buf.read_from(trans);
+                    state = this->frame_buffer_update_ctx
+                      .read_data_cursor(buf, *this, drawable);
                 }
-
-                Pointer cursor;
-                //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
-                cursor.x = x;
-                cursor.y = y;
-//                cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
-                // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-                if (cx == 1 && cy == 1) {
-                    // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
-                    memset(cursor.data, 0, sizeof(cursor.data));
-                    cursor.data[2883] = 0xFF;
-                    cursor.data[2884] = 0xFF;
-                    cursor.data[2885] = 0xFF;
-                    memset(cursor.mask, 0xFF, sizeof(cursor.mask));
-                    cursor.mask[116] = 0x1F;
-                    cursor.mask[120] = 0x1F;
-                    cursor.mask[124] = 0x1F;
-                }
-                else {
-                    // clear target cursor mask
-                    for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                        for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                        }
-                    }
-                    // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
-                    // copy vnc pointer and mask to rdp pointer and mask
-
-                    for (int yy = 0; yy < cy; yy++) {
-                        for (int xx = 0 ; xx < cx ; xx++){
-                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                                if ((yy < 32) && (xx < 32)){
-                                    cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                    int pixel = 0;
-                                    for (int tt = 0 ; tt < Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
-                                    }
-                                    // TODO temporary: force black cursor
-                                    int red   = (pixel >> this->red_shift) & red_max;
-                                    int green = (pixel >> this->green_shift) & green_max;
-                                    int blue  = (pixel >> this->blue_shift) & blue_max;
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
-                                }
-                            }
-                        }
-                    }
-                    /* keep these in 32x32, vnc cursor can be alot bigger */
-                    /* (anyway hotspot is usually 0, 0)                   */
-                    //if (x > 31) { x = 31; }
-                    //if (y > 31) { y = 31; }
-                }
-                cursor.update_bw();
-                // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-                this->front.begin_update();
-                this->front.set_pointer(cursor);
-                this->front.end_update();
             }
             break;
             default:
