@@ -770,12 +770,12 @@ public:
             if (!this->client_info.remote_program) {
                 /* older client can't resize */
                 if (client_info.build <= 419) {
-                    LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
+                    LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
                     // resizing needed but not available
                     res = ResizeResult::fail;
                 }
                 else {
-                    LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
+                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
 
                     this->client_info.width = width;
                     this->client_info.height = height;
@@ -800,7 +800,7 @@ public:
                     this->send_demand_active();
                     this->send_monitor_layout();
 
-                    LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
+                    LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
                     state = ACTIVATE_AND_PROCESS_DATA;
                     res = ResizeResult::done;
                 }
@@ -834,7 +834,7 @@ public:
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
 
         if (this->capture) {
-            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
+            LOG(LOG_INFO, "Front::can_be_start_capture: session capture is already started");
             return false;
         }
 
@@ -843,7 +843,7 @@ public:
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ) {
-            LOG(LOG_INFO, "Front::start_capture: Capture is not necessary");
+            LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
         }
 
@@ -855,15 +855,15 @@ public:
             ini.set<cfg::video::png_limit>(0);
         }
 
-        LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
+        LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
         struct timeval now = tvtime();
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
-            LOG(LOG_INFO, "auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
-            LOG(LOG_INFO, "host          = %s\n", ini.get<cfg::globals::host>());
-            LOG(LOG_INFO, "target_device = %s\n", ini.get<cfg::globals::target_device>());
-            LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: host          = %s\n", ini.get<cfg::globals::host>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: target_device = %s\n", ini.get<cfg::globals::target_device>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: target_user   = %s\n", ini.get<cfg::globals::target_user>());
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
@@ -916,14 +916,12 @@ public:
         cctx.set_master_key(ini.get<cfg::crypto::key0>());
         cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
-
-
         if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
+            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
         }
 
         if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
+            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", hash_path);
         }
 
         char path[1024];
@@ -936,7 +934,7 @@ public:
 
         if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            LOG(LOG_ERR, "Front::can_be_start_capture: Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
@@ -954,7 +952,7 @@ public:
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
         if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            LOG(LOG_INFO, "Front::can_be_start_capture: Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                 capture_wrm ?"wrm ":"",
                 capture_png ?"png ":"",
                 capture_kbd ? 1 : 0,
@@ -1057,7 +1055,7 @@ public:
     bool must_be_stop_capture() override
     {
         if (this->capture) {
-            LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
+            LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             delete this->capture;
             this->capture = nullptr;
 
@@ -1075,7 +1073,7 @@ public:
 
     void periodic_snapshot()
     {
-        //LOG(LOG_INFO, "periodic snapshot");
+        //LOG(LOG_INFO, "Front::periodic_snapshot");
         if (this->capture) {
             struct timeval now = tvtime();
             this->capture->periodic_snapshot(
@@ -1117,9 +1115,9 @@ public:
 private:
     void reset() {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
-            LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
-            LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
+            LOG(LOG_INFO, "Front::reset: use_bitmap_comp=%u", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
+            LOG(LOG_INFO, "Front::reset: use_compact_packets=%u", this->client_info.use_compact_packets);
+            LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
 
         if (this->mppc_enc) {
@@ -1133,26 +1131,26 @@ private:
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
+                LOG(LOG_INFO, "Front::reset: Use RDP 6.1 Bulk compression");
             }
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
             this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_RDP6:
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
+                LOG(LOG_INFO, "Front::reset: Use RDP 6.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_60_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_64K:
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
+                LOG(LOG_INFO, "Front::reset: Use RDP 5.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_50_enc(this->ini.get<cfg::debug::compression>());
             break;
         case PACKET_COMPR_TYPE_8K:
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
+                LOG(LOG_INFO, "Front::reset: Use RDP 4.0 Bulk compression");
             }
             this->mppc_enc = new rdp_mppc_40_enc(this->ini.get<cfg::debug::compression>());
             this->max_bitmap_size = 1024 * 8;
@@ -1183,18 +1181,18 @@ private:
 public:
     void begin_update() override {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "Front::begin_update level=%d", this->order_level);
+            LOG(LOG_INFO, "Front::begin_update: level=%d", this->order_level);
         }
         this->order_level++;
     }
 
     void end_update() override {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "Front::end_update level=%d", this->order_level);
+            LOG(LOG_INFO, "Front::end_update: level=%d", this->order_level);
         }
         this->order_level--;
         if (!this->up_and_running) {
-            LOG(LOG_ERR, "Front is not up and running.");
+            LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
         if (this->order_level == 0) {
@@ -1230,7 +1228,7 @@ public:
                                 , int flags) override {
         if (bool(this->verbose & Verbose::channel)) {
             LOG( LOG_INFO
-               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
+               , "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
                , channel.name, channel.chanid, voidp(chunk), length, chunk_size, flags);
         }
 
@@ -1248,9 +1246,15 @@ public:
 
     void incoming(Callback & cb, time_t now)
     {
+        unsigned expected;
+
+        if (bool(this->verbose & Verbose::basic_trace3)) {
+            LOG(LOG_INFO, "Front::incoming");
+        }
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
-            LOG(LOG_ERR, "RDP handshake timeout reached!");
+            LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
             throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
@@ -1273,12 +1277,6 @@ public:
 
         if (this->event.is_waked_up_by_time()) return;
 
-        unsigned expected;
-
-        if (bool(this->verbose & Verbose::basic_trace3)) {
-            LOG(LOG_INFO, "Front::incoming");
-        }
-
         switch (this->state) {
         case CONNECTION_INITIATION:
         {
@@ -1295,8 +1293,8 @@ public:
             //    | <----------X224 Connection Confirm PDU----------------- |
 
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
-                LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
+                LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
+                LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
             }
 
             {
@@ -1308,37 +1306,37 @@ public:
 
                 X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.get_capacity()) {
-                    LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
+                    LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
                                  " %zu bytes remains", stream.get_capacity() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
                 if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                    LOG(LOG_WARNING, "tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+                    LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
                 }
 
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
                     (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
                     && this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                    LOG(LOG_INFO, "Fallback to legacy security protocol");
+                    LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
                     this->tls_client_active = false;
                 }
                 else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
                          !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                    LOG(LOG_WARNING, "TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
+                    LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
                 }
             }
 
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
+                LOG(LOG_INFO, "Front::incoming: sending x224 connection confirm PDU");
             }
             {
                 uint8_t rdp_neg_type = 0;
                 uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_client_active) {
-                    LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+                    LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
                     if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                         rdp_neg_type = X224::RDP_NEG_RSP;
                         rdp_neg_code = X224::PROTOCOL_TLS;
@@ -1350,7 +1348,7 @@ public:
                     }
                 }
                 else {
-                    LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+                    LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support not Enabled");
                 }
 
                 StaticOutStream<256> stream;
@@ -1399,9 +1397,8 @@ public:
             //                   GCC conference Create Response
 
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
+                LOG(LOG_INFO, "Front::incoming: Basic Settings Exchange");
             }
-
 
             constexpr size_t array_size = AUTOSIZE;
             uint8_t array[array_size];
@@ -1425,7 +1422,7 @@ public:
                         GCC::UserData::CSCore cs_core;
                         cs_core.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_core.log("Received from Client");
+                            cs_core.log("Front::incoming: Received from Client");
                         }
 
                         this->client_info.width     = cs_core.desktopWidth;
@@ -1476,7 +1473,7 @@ public:
                         GCC::UserData::CSSecurity cs_sec;
                         cs_sec.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_sec.log("Received from Client");
+                            cs_sec.log("Front::incoming: Received from Client");
                         }
                     }
                     break;
@@ -1498,7 +1495,7 @@ public:
                             }
                         }
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_net.log("Received from Client");
+                            cs_net.log("Front::incoming: Received from Client");
                         }
                     }
                     break;
@@ -1509,7 +1506,7 @@ public:
                         this->client_info.console_session =
                             (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_cluster.log("Receiving from Client");
+                            cs_cluster.log("Front::incoming: Receiving from Client");
                         }
                     }
                     break;
@@ -1519,12 +1516,12 @@ public:
                             this->client_info.cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_monitor.log("Receiving from Client");
+                            cs_monitor.log("Front::incoming: Receiving from Client");
                         }
 
                         Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "MonitorsRect=(%d, %d, %d, %d)",
+                            LOG(LOG_INFO, "Front::incoming: MonitorsRect=(%d, %d, %d, %d)",
                                 client_monitors_rect.x, client_monitors_rect.y,
                                 client_monitors_rect.cx, client_monitors_rect.cy);
                         }
@@ -1540,7 +1537,7 @@ public:
                         GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
                         cs_mcs_msgchannel.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_mcs_msgchannel.log("Receiving from Client");
+                            cs_mcs_msgchannel.log("Front::incoming: Receiving from Client");
                         }
                     }
                     break;
@@ -1549,17 +1546,17 @@ public:
                         GCC::UserData::CSMultiTransport cs_multitransport;
                         cs_multitransport.recv(f.payload);
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            cs_multitransport.log("Receiving from Client");
+                            cs_multitransport.log("Front::incoming: Receiving from Client");
                         }
                     }
                     break;
                     default:
-                        LOG(LOG_WARNING, "Unexpected data block tag %x\n", f.tag);
+                        LOG(LOG_WARNING, "Front::incoming: Unexpected data block tag %x\n", f.tag);
                     break;
                 }
             }
             if (gcc_cr.payload.in_check_rem(1)) {
-                LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
+                LOG(LOG_ERR, "Front::incoming: recv connect request parsing gcc data : short header");
                 throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }
 
@@ -1574,7 +1571,7 @@ public:
                             sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
                         }
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            sc_core.log("Sending to client");
+                            sc_core.log("Front::incoming: Sending to client");
                         }
                         sc_core.emit(stream);
                     }
@@ -1587,7 +1584,7 @@ public:
                             sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
                         }
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            sc_net.log("Sending to client");
+                            sc_net.log("Front::incoming: Sending to client");
                         }
                         sc_net.emit(stream);
                     }
@@ -1600,7 +1597,7 @@ public:
                         sc_sec1.serverRandomLen = 0;
                         sc_sec1.serverCertLen = 0;
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            sc_sec1.log("Sending to client");
+                            sc_sec1.log("Front::incoming: Sending to client");
                         }
                         sc_sec1.emit(stream);
                     }
@@ -1670,7 +1667,7 @@ public:
                             "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
                         if (bool(this->verbose & Verbose::basic_trace)) {
-                            sc_sec1.log("Sending to client");
+                            sc_sec1.log("Front::incoming: Sending to client");
                         }
                         sc_sec1.emit(stream);
                     }
@@ -1721,11 +1718,11 @@ public:
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
             if (bool(this->verbose & Verbose::channel)) {
-                LOG(LOG_INFO, "Front::incoming::Channel Connection");
+                LOG(LOG_INFO, "Front::incoming: Channel Connection");
             }
 
             if (bool(this->verbose)) {
-                LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
+                LOG(LOG_INFO, "Front::incoming: Recv MCS::ErectDomainRequest");
             }
             {
                 constexpr size_t array_size = 256;
@@ -1739,7 +1736,7 @@ public:
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (bool(this->verbose)) {
-                LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
+                LOG(LOG_INFO, "Front::incoming: Recv MCS::AttachUserRequest");
             }
             {
                 constexpr size_t array_size = 256;
@@ -1759,7 +1756,7 @@ public:
             }
 
             if (bool(this->verbose)) {
-                LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm userid=%u", this->userid);
+                LOG(LOG_INFO, "Front::incoming: Send MCS::AttachUserConfirm userid=%u", this->userid);
             }
 
             write_packets(
@@ -1775,7 +1772,7 @@ public:
             });
             this->channel_join_request_transmission([this](MCS::ChannelJoinRequest_Recv & mcs) {
                 if (mcs.initiator != this->userid) {
-                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
             });
@@ -1783,11 +1780,11 @@ public:
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
                 this->channel_join_request_transmission([this,i](MCS::ChannelJoinRequest_Recv & mcs) {
                     if (bool(this->verbose & Verbose::channel)) {
-                        LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16 " -> cjcf", i, mcs.channelId);
+                        LOG(LOG_INFO, "Front::incoming: cjrq[%zu] = %" PRIu16 " -> cjcf", i, mcs.channelId);
                     }
 
                     if (mcs.initiator != this->userid) {
-                        LOG(LOG_ERR, "MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
+                        LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
                             this->userid, mcs.initiator);
                         throw Error(ERR_MCS_BAD_USERID);
                     }
@@ -1797,7 +1794,7 @@ public:
             }
 
             if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
+                LOG(LOG_INFO, "Front::incoming: RDP Security Commencement");
             }
 
             // RDP Security Commencement
@@ -1830,11 +1827,11 @@ public:
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
             if (this->tls_client_active) {
-                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
+                LOG(LOG_INFO, "Front::incoming: TLS mode: exchange packet disabled");
             }
             else
             {
-                LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
+                LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
                 constexpr size_t array_size = 256;
                 uint8_t array[array_size];
                 uint8_t * end = array;
@@ -1844,10 +1841,10 @@ public:
 
                 int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                 if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                    LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                     this->is_client_disconnected = true;
                     throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
@@ -1886,7 +1883,7 @@ public:
         // Client                                                     Server
         //    |------ Client Info PDU      ---------------------------> |
         {
-            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+            LOG(LOG_INFO, "Front::incoming: Secure Settings Exchange");
 
             constexpr size_t array_size = AUTOSIZE;
             uint8_t array[array_size];
@@ -1897,10 +1894,10 @@ public:
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
             if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
-                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                 this->is_client_disconnected = true;
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
@@ -1908,7 +1905,7 @@ public:
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (bool(this->verbose & Verbose::sec_decrypted)) {
-                LOG(LOG_INFO, "sec decrypted payload:");
+                LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
@@ -1927,17 +1924,17 @@ public:
                                                 );
 
             if (sec.payload.in_remain()) {
-                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %zu bytes trailing",
+                LOG(LOG_ERR, "Front::incoming: process_logon all data should have been consumed %zu bytes trailing",
                     sec.payload.in_remain());
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
-            LOG(LOG_INFO, "Front Keyboard Layout = 0x%x", this->client_info.keylayout);
+            LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
             this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (bool(this->verbose & Verbose::basic_trace2)) {
-                    LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                    LOG(LOG_INFO, "Front::incoming: licencing client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming: licencing send_media_lic_response");
                 }
 
                 this->send_data_indication(
@@ -1962,7 +1959,7 @@ public:
                         sec_header.out_copy_bytes(lic3, sizeof(lic3));
 
                         if (bool(this->verbose & Verbose::global_channel)) {
-                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
                             hexdump_d(lic3, sizeof(lic3));
                         }
                     }
@@ -1982,18 +1979,18 @@ public:
                 //    |--------- Confirm Active PDU --------------------------> |
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                    LOG(LOG_INFO, "Front::incoming: send_demand_active");
                 }
                 this->send_demand_active();
                 this->send_monitor_layout();
 
-                LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
+                LOG(LOG_INFO, "Front::incoming: ACTIVATED (mce)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
                 if (bool(this->verbose & Verbose::channel)) {
-                    LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+                    LOG(LOG_INFO, "Front::incoming: licencing not client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");
                 }
 
                 this->send_data_indication(
@@ -2056,7 +2053,7 @@ public:
                         stream.out_copy_bytes(lic1, sizeof(lic1));
 
                         if (bool(this->verbose & Verbose::global_channel)) {
-                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
                             hexdump_d(stream.get_data(), stream.get_offset());
                         }
 
@@ -2073,7 +2070,7 @@ public:
                 );
 
                 if (bool(this->verbose & Verbose::basic_trace2)) {
-                    LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                    LOG(LOG_INFO, "Front::incoming: Waiting for answer to lic_initial");
                 }
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
             }
@@ -2083,7 +2080,7 @@ public:
         case WAITING_FOR_ANSWER_TO_LICENCE:
         {
             if (bool(this->verbose & Verbose::basic_trace2)) {
-                LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
+                LOG(LOG_INFO, "Front::incoming: WAITING_FOR_ANSWER_TO_LICENCE");
             }
             constexpr size_t array_size = AUTOSIZE;
             uint8_t array[array_size];
@@ -2097,7 +2094,7 @@ public:
             if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
-                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                 this->is_client_disconnected = true;
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
@@ -2105,7 +2102,7 @@ public:
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
             if (bool(this->verbose & Verbose::global_channel)) {
-                LOG(LOG_INFO, "sec decrypted payload:");
+                LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
                 hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
             }
 
@@ -2134,11 +2131,11 @@ public:
                 case LIC::ERROR_ALERT:
                 {
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Front::ERROR_ALERT");
+                        LOG(LOG_INFO, "Front::incoming: LIC::ERROR_ALERT");
                     }
                     // TODO We should check what is actually returned by this message, as it may be an error
                     LIC::ErrorAlert_Recv lic(sec.payload);
-                    LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
+                    LOG(LOG_ERR, "Front::incoming: License Alert: error=%u transition=%u",
                         lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
 
                 }
@@ -2146,7 +2143,7 @@ public:
                 case LIC::NEW_LICENSE_REQUEST:
                 {
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
+                        LOG(LOG_INFO, "Front::incoming: LIC::NEW_LICENSE_REQUEST");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
                     // TODO Instead of returning a license we return a message saying that no license is OK
@@ -2156,20 +2153,20 @@ public:
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
                     // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
+                        LOG(LOG_INFO, "Front::incoming: LIC::PLATFORM_CHALLENGE_RESPONSE");
                     }
                     break;
                 case LIC::LICENSE_INFO:
                     // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Front::LICENSE_INFO");
+                        LOG(LOG_INFO, "Front::incoming: LIC::LICENSE_INFO");
                     }
                     // TODO Instead of returning a license we return a message saying that no license is OK
                     this->send_valid_client_license_data();
                     break;
                 default:
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Front::LICENCE_TAG %u unknown or unsupported by server", flic.tag);
+                        LOG(LOG_INFO, "Front::incoming: LICENCE_TAG %u unknown or unsupported by server", flic.tag);
                     }
                     break;
                 }
@@ -2187,34 +2184,34 @@ public:
                 //    |--------- Confirm Active PDU --------------------------> |
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                    LOG(LOG_INFO, "Front::incoming: send_demand_active");
                 }
                 this->send_demand_active();
                 this->send_monitor_layout();
 
-                LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
+                LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
                 if (bool(this->verbose & Verbose::basic_trace2)) {
-                    LOG(LOG_INFO, "non licence packet: still waiting for licence");
+                    LOG(LOG_INFO, "Front::incoming: non licence packet: still waiting for licence");
                 }
                 ShareControl_Recv sctrl(sec.payload);
 
                 switch (sctrl.pduType) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
+                        LOG(LOG_INFO, "Front::incoming: Unexpected DEMANDACTIVE PDU while in licence negociation");
                     }
                     break;
                 case PDUTYPE_CONFIRMACTIVEPDU:
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
+                        LOG(LOG_INFO, "Front::incoming: Unexpected CONFIRMACTIVE PDU");
                     }
                     {
                         expected = 6; /* shareId(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)) {
-                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
+                            LOG(LOG_ERR, "Front::incoming: Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                                 expected, sctrl.payload.in_remain());
                             throw Error(ERR_MCS_PDU_TRUNCATED);
                         }
@@ -2225,14 +2222,14 @@ public:
                         (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()) {
-                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%zu",
+                        LOG(LOG_ERR, "Front::incoming: Trailing data after CONFIRMACTIVE PDU remains=%zu",
                             sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
+                        LOG(LOG_INFO, "Front::incoming: Unexpected DATA PDU while in licence negociation");
                     }
                     // at this point licence negociation is still ongoing
                     // most data packets should not be received
@@ -2245,18 +2242,18 @@ public:
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
+                        LOG(LOG_INFO, "Front::incoming: Unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
                     // TODO check all payload data is consumed
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (bool(this->verbose & Verbose::basic_trace2)) {
-                        LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
+                        LOG(LOG_INFO, "Front::incoming: Unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
                     // TODO check all payload data is consumed
                     break;
                 default:
-                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
+                    LOG(LOG_WARNING, "Front::incoming: Unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
                     break;
                 }
                 // TODO Check why this is necessary when using loop connection ?
@@ -2267,7 +2264,7 @@ public:
 
         case ACTIVATE_AND_PROCESS_DATA:
         if (bool(this->verbose & Verbose::basic_trace4)) {
-            LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
+            LOG(LOG_INFO, "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
         }
         // Connection Finalization
         // -----------------------
@@ -2316,7 +2313,7 @@ public:
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++) {
                     if (!cfpie.payload.in_check_rem(1)) {
-                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%zu",
+                        LOG(LOG_ERR, "Front::incoming: Truncated Fast-Path input event PDU, need=1 remains=%zu",
                             cfpie.payload.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -2331,7 +2328,7 @@ public:
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
                                 LOG(LOG_INFO,
-                                    "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
+                                    "Front::incoming: Received Fast-Path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
                                     ke.spKeyboardFlags, ke.keyCode);
                             }
 
@@ -2345,7 +2342,7 @@ public:
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
                                 LOG(LOG_INFO,
-                                    "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    "Front::incoming: Received Fast-Path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                                     me.pointerFlags, me.xPos, me.yPos);
                             }
 
@@ -2375,7 +2372,7 @@ public:
                             FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
-                                LOG(LOG_INFO, "Front::Received fast-path PUD, sync eventFlags=0x%X",
+                                LOG(LOG_INFO, "Front::incoming: Received Fast-Path PUD, sync eventFlags=0x%X",
                                     se.eventFlags);
                             }
 
@@ -2392,17 +2389,17 @@ public:
 
                         default:
                             LOG(LOG_INFO,
-                                "Front::Received unexpected fast-path PUD, eventCode = %u",
+                                "Front::incoming: Received unexpected Fast-Path PUD, eventCode = %u",
                                 eventCode);
                             throw Error(ERR_RDP_FASTPATH);
                     }
                     if (bool(this->verbose & Verbose::basic_trace3)) {
-                        LOG(LOG_INFO, "Front::Received fast-path PUD done");
+                        LOG(LOG_INFO, "Front::incoming: Received Fast-Path PUD done");
                     }
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
-                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%zu",
+                    LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
                         cfpie.payload.in_remain());
                 }
                 break;
@@ -2413,12 +2410,12 @@ public:
                 if (fx224.type == X224::DR_TPDU) {
                     // TODO What is the clean way to actually disconnect ?
                     X224::DR_TPDU_Recv x224(stream);
-                    LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
+                    LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
                     this->is_client_disconnected = true;
                     throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
-                    LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
+                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %u)", fx224.type);
                     throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
 
@@ -2426,10 +2423,10 @@ public:
 
                 int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                 if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                    LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                     this->is_client_disconnected = true;
                     throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
@@ -2437,17 +2434,17 @@ public:
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
                 if (bool(this->verbose & Verbose::sec_decrypted)) {
-                    LOG(LOG_INFO, "sec decrypted payload:");
+                    LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
                     hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
                 }
 
                 if (bool(this->verbose & Verbose::basic_trace4)) {
-                    LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
+                    LOG(LOG_INFO, "Front::incoming: sec_flags=%x", sec.flags);
                 }
 
                 if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
                     if (bool(this->verbose & Verbose::channel)) {
-                        LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
+                        LOG(LOG_INFO, "Front::incoming: channel_data channelId=%u", mcs.channelId);
                     }
 
                     size_t num_channel_src = this->channel_list.size();
@@ -2459,7 +2456,7 @@ public:
                     }
 
                     if (num_channel_src >= this->channel_list.size()) {
-                        LOG(LOG_ERR, "Front::incoming::Unknown Channel");
+                        LOG(LOG_ERR, "Front::incoming: Unknown Channel");
                         throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                     }
 
@@ -2470,7 +2467,7 @@ public:
 
                     expected = 8; /* length(4) + flags(4) */
                     if (!sec.payload.in_check_rem(expected)) {
-                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%zu",
+                        LOG(LOG_ERR, "Front::incoming: Data truncated, need=%u remains=%zu",
                             expected, sec.payload.in_remain());
                         throw Error(ERR_MCS);
                     }
@@ -2481,7 +2478,7 @@ public:
 
                     if (this->up_and_running) {
                         if (bool(this->verbose & Verbose::channel)) {
-                            LOG(LOG_INFO, "Front::send_to_mod_channel channel_name=\"%s\"", channel.name);
+                            LOG(LOG_INFO, "Front::incoming: channel_name=\"%s\"", channel.name);
                         }
 
                         InStream chunk(sec.payload.get_current(), chunk_size);
@@ -2490,7 +2487,7 @@ public:
                     }
                     else {
                         if (bool(this->verbose & Verbose::channel)) {
-                            LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
+                            LOG(LOG_INFO, "Front::incoming: not up_and_running send_to_mod_channel dropped");
                         }
                     }
                     sec.payload.in_skip_bytes(chunk_size);
@@ -2502,18 +2499,18 @@ public:
                         switch (sctrl.pduType) {
                         case PDUTYPE_DEMANDACTIVEPDU:
                             if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
+                                LOG(LOG_INFO, "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
                             }
                             break;
                         case PDUTYPE_CONFIRMACTIVEPDU:
                             if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
+                                LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU");
                             }
                             {
                                 expected = 6;   /* shareId(4) + originatorId(2) */
                                 if (!sctrl.payload.in_check_rem(expected)) {
                                     LOG(LOG_ERR,
-                                        "Truncated Confirm active PDU data, need=%u remains=%zu",
+                                        "Front::incoming: Truncated Confirm Active PDU data, need=%u remains=%zu",
                                         expected, sctrl.payload.in_remain());
                                     throw Error(ERR_RDP_DATA_TRUNCATED);
                                 }
@@ -2532,13 +2529,13 @@ public:
                                 this->orders.graphics_update_pdu().draw(cmd);
                             }
                             if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
+                                LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU done");
                             }
 
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
                             if (bool(this->verbose & Verbose::basic_trace4)) {
-                                LOG(LOG_INFO, "Front received DATAPDU");
+                                LOG(LOG_INFO, "Front::incoming: Received DATAPDU");
                             }
                             // this is rdp_process_data that will set up_and_running to 1
                             // when fonts have been received
@@ -2546,29 +2543,29 @@ public:
                             //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                             this->process_data(sctrl.payload, cb);
                             if (bool(this->verbose & Verbose::basic_trace4)) {
-                                LOG(LOG_INFO, "Front received DATAPDU done");
+                                LOG(LOG_INFO, "Front::incoming: Received DATAPDU done");
                             }
 
                             if (!sctrl.payload.check_end())
                             {
                                 LOG(LOG_ERR,
-                                    "Trailing data after DATAPDU: remains=%zu",
+                                    "Front::incoming: Trailing data after DATAPDU: remains=%zu",
                                     sctrl.payload.in_remain());
                                 throw Error(ERR_MCS_PDU_TRAILINGDATA);
                             }
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
                             if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
+                                LOG(LOG_INFO, "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
                             }
                             break;
                         case PDUTYPE_SERVER_REDIR_PKT:
                             if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
+                                LOG(LOG_INFO, "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
                             }
                             break;
                         default:
-                            LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pduType);
+                            LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)\n", sctrl.pduType);
                             break;
                         }
 
@@ -2580,7 +2577,7 @@ public:
                 if (!sec.payload.check_end())
                 {
                     LOG(LOG_ERR,
-                        "Trailing data after SEC: remains=%zu",
+                        "Front::incoming: Trailing data after SEC: remains=%zu",
                         sec.payload.in_remain());
                     throw Error(ERR_SEC_TRAILINGDATA);
                 }
@@ -2613,7 +2610,7 @@ public:
                 (void)sec;
 
                 if (bool(this->verbose & Verbose::global_channel)) {
-                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    LOG(LOG_INFO, "Front::send_valid_client_license_data: Sec clear payload to send:");
                     hexdump_d(lic2, sizeof(lic2));
                 }
 
@@ -2668,7 +2665,7 @@ private:
                 stream.out_copy_bytes(data.get_data(), data.get_capacity());
 
                 if (bool(this->verbose & Verbose::basic_trace3)) {
-                    LOG(LOG_INFO, "Front::send_data: fast-path");
+                    LOG(LOG_INFO, "Front::send_fastpath_data");
                 }
             },
             [this](StreamSize<256>, OutStream & fastpath_header, uint8_t * pkt_data, std::size_t pkt_sz) {
@@ -2688,7 +2685,7 @@ private:
         this->update_keyboard_input_mask_state();
 
         if (!started) {
-            this->session_update("Probe.Status=Unknown");
+            this->session_update("Front::session_probe_started: Probe.Status=Unknown");
         }
     }
 
@@ -2778,7 +2775,7 @@ private:
                     configuration_load(GeneralCapsLoader(general_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
-                    general_caps.log("Sending to client");
+                    general_caps.log("Front::send_demand_active: Sending to client");
                 }
                 general_caps.emit(stream);
                 caps_count++;
@@ -2792,14 +2789,14 @@ private:
                     configuration_load(BitmapCapsLoader(bitmap_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
-                    bitmap_caps.log("Sending to client");
+                    bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
                 bitmap_caps.emit(stream);
                 caps_count++;
 
                 FontCaps font_caps;
                 if (bool(this->verbose)) {
-                    font_caps.log("Sending to client");
+                    font_caps.log("Front::send_demand_active: Sending to client");
                 }
                 font_caps.emit(stream);
                 caps_count++;
@@ -2827,7 +2824,7 @@ private:
                     configuration_load(OrderCapsLoader(order_caps), this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
-                    order_caps.log("Sending to client");
+                    order_caps.log("Front::send_demand_active: Sending to client");
                 }
                 order_caps.emit(stream);
                 caps_count++;
@@ -2835,7 +2832,7 @@ private:
                 if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
                     BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
                     if (bool(this->verbose)) {
-                        bitmap_cache_host_support_caps.log("Sending to client");
+                        bitmap_cache_host_support_caps.log("Front::send_demand_active: Sending to client");
                     }
                     bitmap_cache_host_support_caps.emit(stream);
                     caps_count++;
@@ -2843,7 +2840,7 @@ private:
 
                 ColorCacheCaps colorcache_caps;
                 if (bool(this->verbose)) {
-                    colorcache_caps.log("Sending to client");
+                    colorcache_caps.log("Front::send_demand_active: Sending to client");
                 }
                 colorcache_caps.emit(stream);
                 caps_count++;
@@ -2852,7 +2849,7 @@ private:
                 pointer_caps.colorPointerCacheSize = 0x19;
                 pointer_caps.pointerCacheSize = 0x19;
                 if (bool(this->verbose)) {
-                    pointer_caps.log("Sending to client");
+                    pointer_caps.log("Front::send_demand_active: Sending to client");
                 }
                 pointer_caps.emit(stream);
                 caps_count++;
@@ -2861,7 +2858,7 @@ private:
                 share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
                 share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
                 if (bool(this->verbose)) {
-                    share_caps.log("Sending to client");
+                    share_caps.log("Front::send_demand_active: Sending to client");
                 }
                 share_caps.emit(stream);
                 caps_count++;
@@ -2878,7 +2875,7 @@ private:
                 input_caps.keyboardSubType     = 0;
                 input_caps.keyboardFunctionKey = 0;
                 if (bool(this->verbose)) {
-                    input_caps.log("Sending to client");
+                    input_caps.log("Front::send_demand_active: Sending to client");
                 }
                 input_caps.emit(stream);
                 caps_count++;
@@ -2887,7 +2884,7 @@ private:
                     RailCaps rail_caps;
                     rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
                     if (bool(this->verbose)) {
-                        rail_caps.log("Sending to client");
+                        rail_caps.log("Front::send_demand_active: Sending to client");
                     }
                     rail_caps.emit(stream);
                     caps_count++;
@@ -2897,7 +2894,7 @@ private:
                     window_list_caps.NumIconCaches = 3;
                     window_list_caps.NumIconCacheEntries = 12;
                     if (bool(this->verbose)) {
-                        window_list_caps.log("Sending to client");
+                        window_list_caps.log("Front::send_demand_active: Sending to client");
                     }
                     window_list_caps.emit(stream);
                     caps_count++;
@@ -2908,7 +2905,7 @@ private:
 
                     large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
                     if (bool(this->verbose)) {
-                        large_pointer_caps.log("Sending to client");
+                        large_pointer_caps.log("Front::send_demand_active: Sending to client");
                     }
                     large_pointer_caps.emit(stream);
                     caps_count++;
@@ -2916,7 +2913,7 @@ private:
                     MultiFragmentUpdateCaps multifrag_caps;
                     multifrag_caps.MaxRequestSize = 38055;
                     if (bool(this->verbose)) {
-                        multifrag_caps.log("Sending to client");
+                        multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }
                     multifrag_caps.emit(stream);
                     caps_count++;
@@ -2934,28 +2931,28 @@ private:
             },
             [this](StreamSize<0>, OutStream &, uint8_t  const * packet_data, std::size_t packet_size) {
                 if (bool(this->verbose & Verbose::global_channel)) {
-                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
                     hexdump_d(packet_data, packet_size);
                 }
             }
         );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::send_demand_active done");
+            LOG(LOG_INFO, "Front::send_demand_active: done");
         }
     }   // send_demand_active
 
     void process_confirm_active(InStream & stream)
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "process_confirm_active");
+            LOG(LOG_INFO, "Front::process_confirm_active");
         }
         // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
         // TODO Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)
 
         unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
+            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2964,7 +2961,7 @@ private:
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
 
         if (!stream.in_check_rem(lengthSourceDescriptor)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%zu",
+            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%zu",
                 lengthSourceDescriptor, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2972,8 +2969,8 @@ private:
         stream.in_skip_bytes(lengthSourceDescriptor);
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
-            LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
+            LOG(LOG_INFO, "Front::process_confirm_active: lengthSourceDescriptor = %u", lengthSourceDescriptor);
+            LOG(LOG_INFO, "Front::process_confirm_active: lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
 
         uint8_t const * start = stream.get_current();
@@ -2982,7 +2979,7 @@ private:
 
         expected = 4; /* numberCapabilities(2) + pad(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%zu",
+            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2995,14 +2992,14 @@ private:
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
             if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (bad length):"
+                LOG(LOG_ERR, "Front::process_confirm_active: Incomplete capabilities received (bad length):"
                     " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
                     stream.in_remain());
             }
             if (stream.get_current() + 4 > actualCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (need more data):"
+                LOG(LOG_ERR, "Front::process_confirm_active: Incomplete capabilities received (need more data):"
                     " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
@@ -3018,7 +3015,7 @@ private:
             case CAPSTYPE_GENERAL: {
                     this->client_info.general_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.general_caps.log("Receiving from client");
+                        this->client_info.general_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.use_compact_packets =
                         (this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
@@ -3033,7 +3030,7 @@ private:
             case CAPSTYPE_BITMAP: {
                     this->client_info.bitmap_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.bitmap_caps.log("Receiving from client");
+                        this->client_info.bitmap_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 /*
                     this->client_info.bpp    =
@@ -3052,14 +3049,14 @@ private:
             case CAPSTYPE_ORDER: { /* 3 */
                     this->client_info.order_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.order_caps.log("Receiving from client");
+                        this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
                     this->client_info.bmp_cache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.bmp_cache_caps.log("Receiving from client");
+                        this->client_info.bmp_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.number_of_cache      = 3;
                     this->client_info.cache1_entries       = this->client_info.bmp_cache_caps.cache0Entries;
@@ -3079,19 +3076,19 @@ private:
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_CONTROL");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_CONTROL");
                 }
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_ACTIVATION");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_ACTIVATION");
                 }
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
                     PointerCaps pointer_caps;
                     pointer_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        pointer_caps.log("Receiving from client");
+                        pointer_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
                     this->client_info.pointer_cache_entries =
@@ -3102,45 +3099,45 @@ private:
                 break;
             case CAPSTYPE_SHARE: /* 9 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_SHARE");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_SHARE");
                 }
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_COLORCACHE");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_COLORCACHE");
                 }
                 break;
             case CAPSTYPE_SOUND:
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_SOUND");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_SOUND");
                 }
                 break;
             case CAPSTYPE_INPUT: /* 13 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_INPUT");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_INPUT");
                 }
                 break;
             case CAPSTYPE_FONT: /* 14 */
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
                     if (bool(this->verbose)) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BRUSH");
+                        LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_BRUSH");
                     }
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        brushcache_caps.log("Receiving from client");
+                        brushcache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: { /* 16 */
                     if (bool(this->verbose)) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                        LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_GLYPHCACHE");
                     }
                     this->client_info.glyph_cache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.glyph_cache_caps.log("Receiving from client");
+                        this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
@@ -3150,16 +3147,16 @@ private:
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_OFFSCREENCACHE");
                 }
                 this->client_info.off_screen_cache_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_info.off_screen_cache_caps.log("Receiving from client");
+                    this->client_info.off_screen_cache_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
@@ -3167,7 +3164,7 @@ private:
 
                     this->client_info.bmp_cache_2_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        this->client_info.bmp_cache_2_caps.log("Receiving from client");
+                        this->client_info.bmp_cache_2_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
                     // TODO We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2
@@ -3219,75 +3216,75 @@ private:
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_VIRTUALCHANNEL");
                 }
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
                 }
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 }
                 break;
             case CAPSTYPE_RAIL: /* 23 */
                 this->client_info.rail_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_info.rail_caps.log("Receiving from client");
+                    this->client_info.rail_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
                 this->client_info.window_list_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_info.window_list_caps.log("Receiving from client");
+                    this->client_info.window_list_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps cap;
                     cap.recv(stream, capset_length);
                     if (bool(this->verbose)) {
-                        cap.log("Receiving from client");
+                        cap.log("Front::process_confirm_active: Receiving from client");
                     }
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
                 this->client_info.multi_fragment_update_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_info.multi_fragment_update_caps.log("Receiving from client");
+                    this->client_info.multi_fragment_update_caps.log("Front::process_confirm_active: Receiving from client");
                 }
 //                this->use_multi_frag = true;
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
                 this->client_info.large_pointer_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
-                    this->client_info.large_pointer_caps.log("Receiving from client");
+                    this->client_info.large_pointer_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
                 }
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
                 }
                 break;
             default:
                 if (bool(this->verbose)) {
-                    LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
+                    LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client unknown caps %u", capset_type);
                 }
                 break;
             }
             if (stream.get_current() > next) {
-                LOG(LOG_ERR, "read out of bound detected");
+                LOG(LOG_ERR, "Front::process_confirm_active: Read out of bound detected");
                 throw Error(ERR_MCS);
             }
             stream.in_skip_bytes(next - stream.get_current());
@@ -3298,7 +3295,7 @@ private:
             stream.in_skip_bytes(4); /* Session Id */
         }
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p",
+            LOG(LOG_INFO, "Front::process_confirm_active: done p=%p end=%p",
                 voidp(stream.get_current()), voidp(stream.get_data_end()));
         }
     }
@@ -3366,7 +3363,7 @@ private:
     void send_synchronize()
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_synchronize");
+            LOG(LOG_INFO, "Front::send_synchronize");
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -3389,7 +3386,7 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_synchronize done");
+            LOG(LOG_INFO, "Front::send_synchronize: done");
         }
     }
 
@@ -3418,7 +3415,7 @@ private:
     void send_control(int action)
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_control action=%u", action);
+            LOG(LOG_INFO, "Front::send_control: action=%u", action);
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -3443,7 +3440,7 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_control done. action=%u", action);
+            LOG(LOG_INFO, "Front::send_control: done. action=%u", action);
         }
     }
 
@@ -3451,7 +3448,7 @@ private:
     void send_fontmap()
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_fontmap");
+            LOG(LOG_INFO, "Front::send_fontmap");
         }
 
         static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
@@ -3498,13 +3495,13 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_fontmap done");
+            LOG(LOG_INFO, "Front::send_fontmap: done");
         }
     }
 
     void send_savesessioninfo() override {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_savesessioninfo");
+            LOG(LOG_INFO, "Front::send_savesessioninfo");
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -3532,7 +3529,7 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_savesessioninfo done");
+            LOG(LOG_INFO, "Front::send_savesessioninfo: done");
         }
     }   // void send_savesessioninfo()
 
@@ -3544,13 +3541,13 @@ private:
         }
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_monitor_layout");
+            LOG(LOG_INFO, "Front::send_monitor_layout");
         }
 
         MonitorLayoutPDU monitor_layout_pdu;
 
         monitor_layout_pdu.set(this->client_info.cs_monitor);
-        monitor_layout_pdu.log("Send to client");
+        monitor_layout_pdu.log("Front::send_monitor_layout: Send to client");
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
@@ -3572,20 +3569,20 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_monitor_layout done");
+            LOG(LOG_INFO, "Front::send_monitor_layout: done");
         }
     }
 
     /* PDUTYPE_DATAPDU */
     void process_data(InStream & stream, Callback & cb)
     {
-        unsigned expected;
         if (bool(this->verbose & Verbose::basic_trace4)) {
-            LOG(LOG_INFO, "Front::process_data(...)");
+            LOG(LOG_INFO, "Front::process_data");
         }
+        unsigned expected;
         ShareData_Recv sdata_in(stream, nullptr);
         if (bool(this->verbose & Verbose::basic_trace4)) {
-            LOG(LOG_INFO, "sdata_in.pdutype2=%" PRIu8
+            LOG(LOG_INFO, "Front::process_data: sdata_in.pdutype2=%" PRIu8
                           " sdata_in.len=%" PRIu16
                           " sdata_in.compressedLen=%" PRIu16
                           " remains=%zu"
@@ -3601,19 +3598,19 @@ private:
         switch (sdata_in.pdutype2) {
         case PDUTYPE2_UPDATE:  // Update PDU (section 2.2.9.1.1.3)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_UPDATE");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_UPDATE");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_CONTROL");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_CONTROL");
             }
             {
                 expected = 8;   /* action(2) + grantId(2) + controlId(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%zu",
+                    LOG(LOG_ERR, "Front::process_data: Truncated Control PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3629,13 +3626,13 @@ private:
                         this->send_control(RDP_CTL_COOPERATE);
                     break;
                     default:
-                        LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
+                        LOG(LOG_WARNING, "Front::process_data: DATA_PDU_CONTROL unknown action (%d)\n", action);
                 }
             }
             break;
         case PDUTYPE2_POINTER: // Pointer Update PDU (section 2.2.9.1.1.4)
             if (bool(this->verbose & Verbose::basic_trace3)) {
-                LOG(LOG_INFO, "PDUTYPE2_POINTER");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_POINTER");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
@@ -3645,7 +3642,7 @@ private:
                 SlowPath::ClientInputEventPDU_Recv cie(sdata_in.payload);
 
                 if (bool(this->verbose & Verbose::basic_trace3)) {
-                    LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", cie.numEvents);
+                    LOG(LOG_INFO, "Front::process_data: PDUTYPE2_INPUT num_events=%u", cie.numEvents);
                 }
 
                 for (int index = 0; index < cie.numEvents; index++) {
@@ -3659,7 +3656,7 @@ private:
                             SlowPath::SynchronizeEvent_Recv se(ie.payload);
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
-                                LOG(LOG_INFO, "SlowPath INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
+                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
                                     ie.eventTime, se.toggleFlags);
                             }
                             // happens when client gets focus and sends key modifier info
@@ -3676,7 +3673,7 @@ private:
                             SlowPath::MouseEvent_Recv me(ie.payload);
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
-                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
+                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                     ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
                             }
                             this->mouse_x = me.xPos;
@@ -3702,7 +3699,7 @@ private:
                             SlowPath::KeyboardEvent_Recv ke(ie.payload);
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
-                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
+                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                     ie.eventTime, ke.keyboardFlags, ke.keyCode);
                             }
 
@@ -3711,23 +3708,23 @@ private:
                         break;
 
                         default:
-                            LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
+                            LOG(LOG_WARNING, "Front::process_data: Unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
                         break;
                     }
                 }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
-                    LOG(LOG_INFO, "PDUTYPE2_INPUT done");
+                    LOG(LOG_INFO, "Front::process_data: PDUTYPE2_INPUT done");
                 }
             }
         break;
         case PDUTYPE2_SYNCHRONIZE:  // Synchronize PDU (section 2.2.1.14.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SYNCHRONIZE");
             }
             {
                 expected = 4;   /* messageType(2) + targetUser(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%zu",
+                    LOG(LOG_ERR, "Front::process_data: Truncated Synchronize PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3735,7 +3732,7 @@ private:
                 uint16_t messageType = sdata_in.payload.in_uint16_le();
                 uint16_t controlId = sdata_in.payload.in_uint16_le();
                 if (bool(this->verbose & Verbose::basic_trace4)) {
-                    LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
+                    LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
                                   static_cast<unsigned>(messageType),
                                   static_cast<unsigned>(controlId));
@@ -3745,7 +3742,7 @@ private:
         break;
         case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_REFRESH_RECT");
             }
             // numberOfAreas (1 byte): An 8-bit, unsigned integer. The number of Inclusive Rectangle
             // (section 2.2.11.1) structures in the areasToRefresh field.
@@ -3769,7 +3766,7 @@ private:
             {
                 expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
+                    LOG(LOG_ERR, "Front::process_data: Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3779,7 +3776,7 @@ private:
 
                 expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
+                    LOG(LOG_ERR, "Front::process_data: Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3793,7 +3790,7 @@ private:
                     int bottom = sdata_in.payload.in_uint16_le();
                     rect = Rect(left, top, (right - left) + 1, (bottom - top) + 1);
                     if (bool(this->verbose & Verbose::basic_trace4)) {
-                        LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
+                        LOG(LOG_INFO, "Front::process_data: PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                             left, top, right, bottom, rect.cx, rect.cy);
                     }
@@ -3807,14 +3804,14 @@ private:
         break;
         case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1):w
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_PLAY_SOUND");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SUPPRESS_OUTPUT");
             }
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
@@ -3841,7 +3838,7 @@ private:
         break;
         case PDUTYPE2_SHUTDOWN_REQUEST: // Shutdown Request PDU (section 2.2.2.2.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SHUTDOWN_REQUEST");
             }
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
@@ -3867,14 +3864,14 @@ private:
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SHUTDOWN_DENIED");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SAVE_SESSION_INFO");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
@@ -3882,7 +3879,7 @@ private:
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
         {
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_FONTLIST");
             }
         // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
         // ================================================
@@ -3911,7 +3908,7 @@ private:
 
             expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
             if (!sdata_in.payload.in_check_rem(expected)) {
-                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%zu",
+                LOG(LOG_ERR, "Front::process_data: Truncated Font list PDU data, need=%u remains=%zu",
                     expected, sdata_in.payload.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -3935,7 +3932,7 @@ private:
                 }
 
                 if (bool(this->verbose & (Verbose::basic_trace4 | Verbose::basic_trace))) {
-                    LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
+                    LOG(LOG_INFO, "Front::process_data: --------------> UP AND RUNNING <--------------");
                 }
 
                 this->set_gd(this->orders.graphics_update_pdu());
@@ -3961,7 +3958,7 @@ private:
                         username = this->client_info.username;
                     }
                     this->ini.ask<cfg::context::selector>();
-                    LOG(LOG_INFO, "asking for selector");
+                    LOG(LOG_INFO, "Front::process_data: asking for selector");
                     this->ini.set_acl<cfg::globals::auth_user>(username);
                     this->ini.ask<cfg::globals::target_user>();
                     this->ini.ask<cfg::globals::target_device>();
@@ -4002,21 +3999,21 @@ private:
         break;
         case PDUTYPE2_FONTMAP:  // Font Map PDU (section 2.2.1.22.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_FONTMAP");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
 
             if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
@@ -4025,7 +4022,7 @@ private:
 
                 pklpdud.receive(sdata_in.payload);
                 if (bool(this->verbose & Verbose::basic_trace4)) {
-                    pklpdud.log(LOG_INFO, "Receiving from client");
+                    pklpdud.log(LOG_INFO, "Front::process_data: Receiving from client");
                 }
 
                 // TODO mutable and static is a bad idea
@@ -4071,70 +4068,70 @@ private:
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SET_ERROR_INFO_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             if (bool(this->verbose & Verbose::basic_trace4)) {
-                LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
+                LOG(LOG_INFO, "Front::process_data: PDUTYPE2_ARC_STATUS_PDU");
             }
             // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
 
         default:
-            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", sdata_in.pdutype2);
+            LOG(LOG_WARNING, "Front::process_data: Unsupported PDUTYPE in process_data %d\n", sdata_in.pdutype2);
             break;
         }
 
         stream.in_skip_bytes(sdata_in.payload.get_current() - stream.get_current());
 
         if (bool(this->verbose & Verbose::basic_trace4)) {
-            LOG(LOG_INFO, "process_data done");
+            LOG(LOG_INFO, "Front::process_data: done");
         }
     }
 
     void send_deactive()
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_deactive");
+            LOG(LOG_INFO, "Front::send_deactive");
         }
 
         this->send_data_indication_ex_impl(
@@ -4142,14 +4139,14 @@ private:
             [&](StreamSize<256>, OutStream & stream) {
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
-                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");
                     hexdump_d(stream.get_data(), stream.get_offset());
                 }
             }
         );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "send_deactive done");
+            LOG(LOG_INFO, "Front::send_deactive: done");
         }
     }
 
@@ -4293,10 +4290,10 @@ protected:
                     }
                 }
                 else if (data == 0xFE) {
-                     LOG(LOG_WARNING, "Glyph fragment not implemented yet");
+                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
                 else if (data == 0xFF)  {
-                    LOG(LOG_WARNING, "Glyph fragment not implemented yet");
+                    LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
             }
 
@@ -4362,7 +4359,7 @@ private:
     void draw_tile(Rect dst_tile, Rect src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, Rect clip)
     {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u))",
+            LOG(LOG_INFO, "Front::draw_tile(MemBlt)((%u, %u, %u, %u) (%u, %u, %u, %u))",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }
@@ -4376,7 +4373,7 @@ private:
     void draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip, gdi::ColorCtx color_ctx)
     {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "front::draw:draw_tile3((%u, %u, %u, %u) (%u, %u, %u, %u)",
+            LOG(LOG_INFO, "Front::draw_tile(Mem3Blt)((%u, %u, %u, %u) (%u, %u, %u, %u)",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }
@@ -4550,7 +4547,7 @@ private:
 public:
     void sync() override {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "Front::flush");
+            LOG(LOG_INFO, "Front::sync");
         }
         this->gd->sync();
     }
@@ -4594,7 +4591,7 @@ private:
 
         if (this->up_and_running) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
-                LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
+                LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
                 if (send_to_mod) {
@@ -4630,4 +4627,3 @@ private:
         }
     }
 };
-
