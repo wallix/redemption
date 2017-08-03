@@ -652,21 +652,21 @@ public:
     }
 
     void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) {
-        StaticOutStream<1024> out_stream;
-        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
-        format_list_pdu_long.emit(out_stream);
-        const uint32_t total_length = out_stream.get_offset();
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        this->_callback->send_to_mod_channel( channel_names::cliprdr
-                                            , chunk
-                                            , total_length
-                                            , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                            );
-        if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
-            std::cout << "client >> Format List PDU" << std::endl;
-        }
+//         StaticOutStream<1024> out_stream;
+//         RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
+//         format_list_pdu_long.emit(out_stream);
+//         const uint32_t total_length = out_stream.get_offset();
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         this->_callback->send_to_mod_channel( channel_names::cliprdr
+//                                             , chunk
+//                                             , total_length
+//                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+//                                             CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                             );
+//         if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
+//             std::cout << "client >> Format List PDU" << std::endl;
+//         }
     }
 
     void send_to_clipboard_Buffer(InStream & chunk) { (void)chunk; }
