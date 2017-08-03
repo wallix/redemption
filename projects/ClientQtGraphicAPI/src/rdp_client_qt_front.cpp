@@ -523,9 +523,9 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
-                                   , to_verbose_flags(0)   // this->verbose
+                                  // , to_verbose_flags(0)   // this->verbose
                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
-                                    //, RDPVerbose::graphics
+                                   , RDPVerbose::cliprdr 
                                    );
 
         mod_rdp_params.device_id                       = "device_id";
@@ -3257,10 +3257,10 @@ public:
         this->clipboard_qt->emptyBuffer();
     }
 
-    void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, const std::size_t formatIDs_size) override {
+    void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) override {
 
-        StaticOutStream<1024> out_stream;
-        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, size_names, formatIDs_size);
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
         format_list_pdu_long.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -3270,6 +3270,7 @@ public:
                                       , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
+
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
         }
@@ -3332,7 +3333,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = RDPVerbose::cliprdr;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 

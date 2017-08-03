@@ -696,6 +696,7 @@ protected:
     bool   session_disconnection_logged = false;
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
+    RDPECLIP::CliprdrLogState cliprdrLogStatus;
 
     class AsynchronousTaskEventHandler : public EventHandler::CB {
         mod_rdp& mod_;
@@ -2064,6 +2065,12 @@ private:
                                      InStream & chunk, size_t length, uint32_t flags) {
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            InStream clone = chunk.clone();
+            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+        }
+
         if (this->session_probe_launcher) {
             if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
                 return;
@@ -2149,6 +2156,7 @@ private:
             InStream clone(chunk, chunk_size);
             rdpsnd::streamLogClient(clone, flags);
         }
+
 
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
@@ -7583,6 +7591,11 @@ private:
     ) {
         (void)cliprdr_channel;
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            InStream clone = stream.clone();
+            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+        }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
