@@ -451,11 +451,8 @@ private:
             return len;
         }
 
-        size_t remaining_len = len;
-
         if (buf_remaining) {
             memcpy(data, this->recv_buf + this->recv_buf_index, buf_remaining);
-            remaining_len -= buf_remaining;
             data += buf_remaining;
             this->recv_buf_index += buf_remaining;
             return buf_remaining;
@@ -469,15 +466,13 @@ private:
                 return res;
             }
 
-            if (remaining_len <= size_t(res)) {
-                memcpy(data, this->recv_buf, remaining_len);
+            if (len <= size_t(res)) {
+                memcpy(data, this->recv_buf, len);
                 this->recv_buf_size = res;
-                this->recv_buf_index = remaining_len;
-                remaining_len = 0;
+                this->recv_buf_index = len;
             }
             else {
                 memcpy(data, this->recv_buf, res);
-                remaining_len -= res;
                 data += res;
             }
 
@@ -498,17 +493,15 @@ private:
                 // not need to process the received data as it will end badly
                 return -1;
             default: /* some data received */
-                if (remaining_len <= size_t(res)) {
-                    memcpy(data, this->recv_buf, remaining_len);
+                if (len <= size_t(res)) {
+                    memcpy(data, this->recv_buf, len);
                     this->recv_buf_size = res;
-                    this->recv_buf_index = remaining_len;
-                    remaining_len = 0;
+                    this->recv_buf_index = len;
+                    return len;
                 }
                 else {
                     memcpy(data, this->recv_buf, res);
-                    remaining_len -= res;
                     data += res;
-                    remaining_len = 0;
                 }
                 return res;
         }
