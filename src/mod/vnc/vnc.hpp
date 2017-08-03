@@ -298,74 +298,424 @@ public:
 
     int get_fd() const override { return this->t.get_fd(); }
 
-    void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "MS-Logon with following values:");
-            LOG(LOG_INFO, "Gen=%" PRIu64, gen);
-            LOG(LOG_INFO, "Mod=%" PRIu64, mod);
-            LOG(LOG_INFO, "Resp=%" PRIu64, resp);
-        }
-        DiffieHellman dh(gen, mod);
-        uint64_t pub = dh.createInterKey();
+    template<std::size_t MaxLen>
+    class MessageCtx
+    {
+        static_assert(MaxLen < 32*1024, "inefficient");
 
-        StaticOutStream<32768> out_stream;
-        out_stream.out_uint64_be(pub);
-
-        uint64_t key = dh.createEncryptionKey(resp);
-        uint8_t keybuffer[8] = {};
-        dh.uint64_to_uint8p(key, keybuffer);
-
-        rfbDesKey(keybuffer, EN0); // 0, encrypt
-
-        uint8_t ms_username[256] = {};
-        uint8_t ms_password[64] = {};
-        memcpy(ms_username, this->username, 256);
-        memcpy(ms_password, this->password, 64);
-        uint8_t cp_username[256] = {};
-        uint8_t cp_password[64] = {};
-        rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
-        rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
-
-        out_stream.out_copy_bytes(cp_username, 256);
-        out_stream.out_copy_bytes(cp_password, 64);
-
-        this->t.send(out_stream.get_data(), out_stream.get_offset());
-        // sec result
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Waiting for password ack");
-        }
-
-        auto in_uint32_be = [&]{
-            uint8_t buf_stream[4];
-            this->t.recv_boom(buf_stream, 4);
-            return Parse(buf_stream).in_uint32_be();
-
+        enum State
+        {
+            Size,
+            Data,
+            Strip,
         };
-        uint32_t i = in_uint32_be();
-        if (i != 0u) {
-            // vnc password failed
-            LOG(LOG_INFO, "MS LOGON password FAILED\n");
-            // Optionnal
-            try {
-                uint32_t reason_length = in_uint32_be();
 
-                char   reason[256];
-                char * preason = reason;
-
-                this->t.recv_boom(preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
-                preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
-                *preason = 0;
-
-                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
+    public:
+        template<class F>
+        bool read(Buf64k & buf, F && f)
+        {
+            switch (this->state)
+            {
+                case State::Size:
+                    this->state = this->read_size(buf);
+                    break;
+                case State::Data:
+                    this->state = this->read_data(buf, f);
+                    if (this->state == State::Size) {
+                        return true;
+                    }
+                    break;
+                case State::Strip:
+                    this->state = this->strip_data(buf);
+                    if (this->state == State::Size) {
+                        return true;
+                    }
+                    break;
             }
-            catch (Error const &) {
+            return false;
+        }
+
+    private:
+        State state = State::Size;
+        uint32_t len;
+        array_view_u8 mess;
+
+        State read_size(Buf64k & buf)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Size;
             }
-        } else {
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "MS LOGON password ok\n");
+
+            this->len = InStream(buf.av(sz)).in_uint32_be();
+
+            buf.advance(sz);
+
+            return State::Data;
+        }
+
+        template<class F>
+        State read_data(Buf64k & buf, F & f)
+        {
+            const size_t sz = std::min<size_t>(MaxLen, this->len);
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            f(array_view_u8{buf.av().data(), sz});
+            buf.advance(sz);
+
+            if (sz == this->len) {
+                return State::Size;
+            }
+
+            this->len -= MaxLen;
+            return State::Strip;
+        }
+
+        array_view_u8 get_message() const noexcept
+        {
+            return this->mess;
+        }
+
+        State strip_data(Buf64k & buf)
+        {
+            const size_t sz = std::min<size_t>(buf.remaining(), this->len);
+            this->len -= sz;
+            buf.advance(sz);
+
+            return this->len ? State::Strip : State::Size;
+        }
+    };
+
+    struct MsLogonCtx
+    {
+        enum State
+        {
+            Auth,
+            ResponseHeader,
+            ResponseFail,
+        };
+
+        using ReasonCtx = MessageCtx<256>;
+
+        ReasonCtx reason;
+
+        State read_auth(Buf64k & buf, mod_vnc & vnc)
+        {
+            const size_t sz = 24;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Auth;
+            }
+
+            InStream stream(buf.av(sz));
+            uint64_t gen = stream.in_uint64_be();
+            uint64_t mod = stream.in_uint64_be();
+            uint64_t resp = stream.in_uint64_be();
+
+            buf.advance(sz);
+
+            if (bool(vnc.verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "MS-Logon with following values:");
+                LOG(LOG_INFO, "Gen=%" PRIu64, gen);
+                LOG(LOG_INFO, "Mod=%" PRIu64, mod);
+                LOG(LOG_INFO, "Resp=%" PRIu64, resp);
+            }
+
+            DiffieHellman dh(gen, mod);
+            uint64_t pub = dh.createInterKey();
+
+            StaticOutStream<32768> out_stream;
+            out_stream.out_uint64_be(pub);
+
+            uint64_t key = dh.createEncryptionKey(resp);
+            uint8_t keybuffer[8] = {};
+            dh.uint64_to_uint8p(key, keybuffer);
+
+            rfbDesKey(keybuffer, EN0); // 0, encrypt
+
+            uint8_t ms_username[256] = {};
+            uint8_t ms_password[64] = {};
+            memcpy(ms_username, vnc.username, 256);
+            memcpy(ms_password, vnc.password, 64);
+            uint8_t cp_username[256] = {};
+            uint8_t cp_password[64] = {};
+            rfbDesText(ms_username, cp_username, sizeof(ms_username), keybuffer);
+            rfbDesText(ms_password, cp_password, sizeof(ms_password), keybuffer);
+
+            out_stream.out_copy_bytes(cp_username, 256);
+            out_stream.out_copy_bytes(cp_password, 64);
+
+            vnc.t.send(out_stream.get_data(), out_stream.get_offset());
+            // sec result
+            if (bool(vnc.verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "Waiting for password ack");
+            }
+
+            return State::ResponseHeader;
+        }
+
+        State read_response_header(Buf64k & buf, mod_vnc & vnc)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return State::ResponseHeader;
+            }
+
+            uint32_t const i = InStream(buf.av(sz)).in_uint32_be();
+
+            buf.advance(sz);
+
+            if (i == 0) {
+                if (bool(vnc.verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "MS LOGON password ok\n");
+                }
+                return State::Auth;
+            }
+            else {
+                LOG(LOG_INFO, "MS LOGON password FAILED\n");
+                return State::ResponseFail;
             }
         }
 
+        State read_response_fail(Buf64k & buf)
+        {
+            if (this->reason.read(buf, [](array_view_u8 av){
+                LOG(LOG_INFO, "Reason for the connection failure: %.*s",
+                    int(av.size()), byte_ptr(av.data()).to_charp());
+            })) {
+                return State::Auth;
+            }
+
+            return State::ResponseFail;
+        }
+    };
+    MsLogonCtx ms_logon_ctx;
+
+    void ms_logon()
+    {
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+
+        using State = MsLogonCtx::State;
+        auto state = State::Auth;
+        while (State::Auth == state) {
+            buf.read_from(trans);
+            state = this->ms_logon_ctx.read_auth(buf, *this);
+        }
+        while (State::ResponseHeader == state) {
+            buf.read_from(trans);
+            state = this->ms_logon_ctx.read_response_header(buf, *this);
+        }
+        while (State::ResponseFail == state) {
+            buf.read_from(trans);
+            state = this->ms_logon_ctx.read_response_fail(buf);
+        }
+    }
+
+    MessageCtx<8192> invalid_auth_ctx;
+
+    void invalid_auth()
+    {
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+
+        while (!this->invalid_auth_ctx.read(buf, [](array_view_u8 av){
+            hexdump_c(av.data(), av.size());
+        })) {
+            buf.read_from(trans);
+        }
+    }
+
+    // 7.3.2   ServerInit
+    // ------------------
+    // After receiving the ClientInit message, the server sends a
+    // ServerInit message. This tells the client the width and
+    // height of the server's framebuffer, its pixel format and the
+    // name associated with the desktop:
+
+    // framebuffer-width  : 2 bytes
+    // framebuffer-height : 2 bytes
+
+    // PIXEL_FORMAT       : 16 bytes
+    // VNC pixel_format capabilities
+    // -----------------------------
+    // Server-pixel-format specifies the server's natural pixel
+    // format. This pixel format will be used unless the client
+    // requests a different format using the SetPixelFormat message
+    // (SetPixelFormat).
+
+    // PIXEL_FORMAT::bits per pixel  : 1 byte
+    // PIXEL_FORMAT::color depth     : 1 byte
+
+    // Bits-per-pixel is the number of bits used for each pixel
+    // value on the wire. This must be greater than or equal to the
+    // depth which is the number of useful bits in the pixel value.
+    // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
+    // pixels are not yet supported.
+
+    // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
+
+    // Big-endian-flag is non-zero (true) if multi-byte pixels are
+    // interpreted as big endian. Of course this is meaningless
+    // for 8 bits-per-pixel.
+
+    // PIXEL_FORMAT::true color flag : 1 byte
+    // PIXEL_FORMAT::red max         : 2 bytes
+    // PIXEL_FORMAT::green max       : 2 bytes
+    // PIXEL_FORMAT::blue max        : 2 bytes
+    // PIXEL_FORMAT::red shift       : 1 bytes
+    // PIXEL_FORMAT::green shift     : 1 bytes
+    // PIXEL_FORMAT::blue shift      : 1 bytes
+
+    // If true-colour-flag is non-zero (true) then the last six
+    // items specify how to extract the red, green and blue
+    // intensities from the pixel value. Red-max is the maximum
+    // red value (= 2^n - 1 where n is the number of bits used
+    // for red). Note this value is always in big endian order.
+    // Red-shift is the number of shifts needed to get the red
+    // value in a pixel to the least significant bit. Green-max,
+    // green-shift and blue-max, blue-shift are similar for green
+    // and blue. For example, to find the red value (between 0 and
+    // red-max) from a given pixel, do the following:
+
+    // * Swap the pixel value according to big-endian-flag (e.g.
+    // if big-endian-flag is zero (false) and host byte order is
+    // big endian, then swap).
+    // * Shift right by red-shift.
+    // * AND with red-max (in host byte order).
+
+    // If true-colour-flag is zero (false) then the server uses
+    // pixel values which are not directly composed from the red,
+    // green and blue intensities, but which serve as indices into
+    // a colour map. Entries in the colour map are set by the
+    // server using the SetColourMapEntries message
+    // (SetColourMapEntries).
+
+    // PIXEL_FORMAT::padding         : 3 bytes
+
+    // name-length        : 4 bytes
+    // name-string        : variable
+
+    // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
+
+    // TODO not yet supported
+    // If the Tight Security Type is activated, the server init
+    // message is extended with an interaction capabilities section.
+
+    struct ServerInitCtx
+    {
+        enum class State
+        {
+            PixelFormat,
+            EncodingName,
+        };
+
+        uint32_t lg;
+
+        State read_pixel_format(Buf64k & buf, mod_vnc & vnc)
+        {
+            const size_t sz = 24;
+
+            if (buf.remaining() < sz)
+            {
+                return State::PixelFormat;
+            }
+
+            InStream stream(buf.av(sz));
+            vnc.width = stream.in_uint16_be();
+            vnc.height = stream.in_uint16_be();
+            vnc.bpp    = stream.in_uint8();
+            vnc.depth  = stream.in_uint8();
+            vnc.endianess = stream.in_uint8();
+            vnc.true_color_flag = stream.in_uint8();
+            vnc.red_max = stream.in_uint16_be();
+            vnc.green_max = stream.in_uint16_be();
+            vnc.blue_max = stream.in_uint16_be();
+            vnc.red_shift = stream.in_uint8();
+            vnc.green_shift = stream.in_uint8();
+            vnc.blue_shift = stream.in_uint8();
+            stream.in_skip_bytes(3); // skip padding
+
+            // LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+
+            this->lg = stream.in_uint32_be();
+
+            if (this->lg > sizeof(vnc.mod_name)-1) {
+                LOG(LOG_ERR, "VNC connection error");
+                throw Error(ERR_VNC_CONNECTION_ERROR);
+            }
+
+            buf.advance(sz);
+            return State::EncodingName;
+        }
+
+        State read_encoding_name(Buf64k & buf, mod_vnc & vnc)
+        {
+            if (buf.remaining() < this->lg)
+            {
+                return State::EncodingName;
+            }
+
+            memcpy(vnc.mod_name, buf.av().data(), this->lg);
+            vnc.mod_name[this->lg] = 0;
+
+            buf.advance(this->lg);
+            return State::PixelFormat;
+        }
+    };
+    ServerInitCtx server_init_ctx;
+
+    void server_init()
+    {
+        Buf64k buf;
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+
+        using State = ServerInitCtx::State;
+        auto state = State::PixelFormat;
+        while (State::PixelFormat == state) {
+            buf.read_from(trans);
+            state = this->server_init_ctx.read_pixel_format(buf, *this);
+        }
+        while (State::EncodingName == state) {
+            buf.read_from(trans);
+            state = this->server_init_ctx.read_encoding_name(buf, *this);
+        }
     }
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
@@ -1064,23 +1414,13 @@ public:
                     case -6: // MS-LOGON
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
-                        uint8_t buf[8+8+8];
-                        this->t.recv_boom(buf, sizeof(buf));
-                        InStream stream(buf);
-                        uint64_t gen = stream.in_uint64_be();
-                        uint64_t mod = stream.in_uint64_be();
-                        uint64_t resp = stream.in_uint64_be();
-                        this->ms_logon(gen, mod, resp);
+                        this->ms_logon();
                     }
                     break;
                     case 0:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
-                        uint8_t buf[8192];
-                        this->t.recv_boom(buf, 4);
-                        size_t reason_length = Parse(buf).in_uint32_be();
-                        this->t.recv_boom(buf, reason_length);
-                        hexdump_c(buf, reason_length);
+                        this->invalid_auth();
                         throw Error(ERR_VNC_CONNECTION_ERROR);
 
                     }
@@ -1090,113 +1430,7 @@ public:
                 }
                 this->t.send("\x01", 1); // share flag
 
-                // 7.3.2   ServerInit
-                // ------------------
-                // After receiving the ClientInit message, the server sends a
-                // ServerInit message. This tells the client the width and
-                // height of the server's framebuffer, its pixel format and the
-                // name associated with the desktop:
-
-                // framebuffer-width  : 2 bytes
-                // framebuffer-height : 2 bytes
-
-                // PIXEL_FORMAT       : 16 bytes
-                // VNC pixel_format capabilities
-                // -----------------------------
-                // Server-pixel-format specifies the server's natural pixel
-                // format. This pixel format will be used unless the client
-                // requests a different format using the SetPixelFormat message
-                // (SetPixelFormat).
-
-                // PIXEL_FORMAT::bits per pixel  : 1 byte
-                // PIXEL_FORMAT::color depth     : 1 byte
-
-                // Bits-per-pixel is the number of bits used for each pixel
-                // value on the wire. This must be greater than or equal to the
-                // depth which is the number of useful bits in the pixel value.
-                // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
-                // pixels are not yet supported.
-
-                // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
-
-                // Big-endian-flag is non-zero (true) if multi-byte pixels are
-                // interpreted as big endian. Of course this is meaningless
-                // for 8 bits-per-pixel.
-
-                // PIXEL_FORMAT::true color flag : 1 byte
-                // PIXEL_FORMAT::red max         : 2 bytes
-                // PIXEL_FORMAT::green max       : 2 bytes
-                // PIXEL_FORMAT::blue max        : 2 bytes
-                // PIXEL_FORMAT::red shift       : 1 bytes
-                // PIXEL_FORMAT::green shift     : 1 bytes
-                // PIXEL_FORMAT::blue shift      : 1 bytes
-
-                // If true-colour-flag is non-zero (true) then the last six
-                // items specify how to extract the red, green and blue
-                // intensities from the pixel value. Red-max is the maximum
-                // red value (= 2^n - 1 where n is the number of bits used
-                // for red). Note this value is always in big endian order.
-                // Red-shift is the number of shifts needed to get the red
-                // value in a pixel to the least significant bit. Green-max,
-                // green-shift and blue-max, blue-shift are similar for green
-                // and blue. For example, to find the red value (between 0 and
-                // red-max) from a given pixel, do the following:
-
-                // * Swap the pixel value according to big-endian-flag (e.g.
-                // if big-endian-flag is zero (false) and host byte order is
-                // big endian, then swap).
-                // * Shift right by red-shift.
-                // * AND with red-max (in host byte order).
-
-                // If true-colour-flag is zero (false) then the server uses
-                // pixel values which are not directly composed from the red,
-                // green and blue intensities, but which serve as indices into
-                // a colour map. Entries in the colour map are set by the
-                // server using the SetColourMapEntries message
-                // (SetColourMapEntries).
-
-                // PIXEL_FORMAT::padding         : 3 bytes
-
-                // name-length        : 4 bytes
-                // name-string        : variable
-
-                // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
-
-                // TODO not yet supported
-                // If the Tight Security Type is activated, the server init
-                // message is extended with an interaction capabilities section.
-
-                {
-                    uint8_t buf[24];
-                    this->t.recv_boom(buf, sizeof(buf));  // server init
-
-                    InStream stream(buf);
-                    this->width = stream.in_uint16_be();
-                    this->height = stream.in_uint16_be();
-                    this->bpp    = stream.in_uint8();
-                    this->depth  = stream.in_uint8();
-                    this->endianess = stream.in_uint8();
-                    this->true_color_flag = stream.in_uint8();
-                    this->red_max = stream.in_uint16_be();
-                    this->green_max = stream.in_uint16_be();
-                    this->blue_max = stream.in_uint16_be();
-                    this->red_shift = stream.in_uint8();
-                    this->green_shift = stream.in_uint8();
-                    this->blue_shift = stream.in_uint8();
-                    stream.in_skip_bytes(3); // skip padding
-
-                    // LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
-
-                    int lg = stream.in_uint32_be();
-
-                    if (lg > 255 || lg < 0) {
-                        LOG(LOG_ERR, "VNC connection error");
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
-                    }
-                    this->t.recv_boom(this->mod_name, lg);
-                    this->mod_name[lg] = 0;
-                    // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
-                }
+                this->server_init();
 
                 // should be connected
 
@@ -1956,7 +2190,9 @@ private:
         {
             if (!this->number_of_subrectangles_remain) {
                 update_lock<FrontAPI> lock(vnc.front);
+                // TODO MultiRect
                 vnc.draw_tile(Rect(x, y, cx, cy), this->rre_raw.get(), drawable);
+                this->rre_raw.reset();
                 return State::Encoding;
             }
 
@@ -2258,7 +2494,6 @@ private:
             switch (encoding) {
             case 0: /* raw */
             {
-                LOG(LOG_ERR, "raw");
                 while (State::Data == state) {
                     buf.read_from(trans);
                     state = this->frame_buffer_update_ctx
@@ -2268,7 +2503,6 @@ private:
             break;
             case 1: /* copy rect */
             {
-                LOG(LOG_ERR, "copy rect");
                 while (State::Data == state) {
                     buf.read_from(trans);
                     state = this->frame_buffer_update_ctx
@@ -2278,7 +2512,6 @@ private:
             break;
             case 2: /* RRE */
             {
-                LOG(LOG_ERR, "RRE");
                 while (State::Data == state) {
                     buf.read_from(trans);
                     state = this->frame_buffer_update_ctx
@@ -2304,7 +2537,6 @@ private:
             break;
             case 16:    /* ZRLE */
             {
-                LOG(LOG_ERR, "ZRLE");
                 while (State::Data == state) {
                     buf.read_from(trans);
                     state = this->frame_buffer_update_ctx
@@ -2319,9 +2551,7 @@ private:
             break;
             case 0xffffff11: /* (-239) cursor */
             {
-                LOG(LOG_ERR, "cursor");
                 while (State::Data == state) {
-                    LOG(LOG_ERR, "cursor remaining buf %hu", buf.remaining());
                     buf.read_from(trans);
                     state = this->frame_buffer_update_ctx
                       .read_data_cursor(buf, *this, drawable);
