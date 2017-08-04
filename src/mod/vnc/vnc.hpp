@@ -210,7 +210,6 @@ private:
     int keylayout;
 
 public:
-    //==============================================================================================================
     mod_vnc( Transport & t
            , const char * username
            , const char * password
@@ -234,7 +233,6 @@ public:
            , bool server_is_apple
            , Verbose verbose
            )
-    //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
@@ -260,7 +258,6 @@ public:
     , keylayout(keylayout)
     , clipboard_data_ctx(verbose)
     {
-    //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         ::time(&this->beginning);
@@ -290,7 +287,6 @@ public:
         LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
-    //==============================================================================================================
     ~mod_vnc() override {
         inflateEnd(&this->zstrm);
         this->screen.clear();
@@ -729,6 +725,108 @@ public:
             buf.read_from(trans);
             state = this->server_init_ctx.read_encoding_name(buf, *this);
         }
+    }
+
+    void initial_clear_screen(gdi::GraphicApi & drawable)
+    {
+        if (bool(this->verbose & Verbose::connection)) {
+            LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
+        }
+        // set almost null cursor, this is the little dot cursor
+        Pointer cursor;
+        cursor.x = 3;
+        cursor.y = 3;
+        // cursor.bpp = 24;
+        cursor.width = 32;
+        cursor.height = 32;
+        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+        memset(cursor.mask, 0xff, 32 * (32 / 8));
+        cursor.update_bw();
+        this->front.set_pointer(cursor);
+
+        this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+
+        LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+
+        Rect const screen_rect(0, 0, this->width, this->height);
+
+        this->front.begin_update();
+        RDPOpaqueRect orect(screen_rect, RDPColor{});
+        drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette));
+        this->front.end_update();
+
+        this->state = UP_AND_RUNNING;
+        this->front.can_be_start_capture();
+        this->update_screen(screen_rect);
+        this->lib_open_clip_channel();
+
+        this->event.object_and_time = false;
+        if (bool(this->verbose & Verbose::connection)) {
+            LOG(LOG_INFO, "VNC screen cleaning ok\n");
+        }
+
+        RDPECLIP::GeneralCapabilitySet general_caps(
+            RDPECLIP::CB_CAPS_VERSION_1,
+            this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "Server use %s format name",
+                (this->server_use_long_format_names ? "long" : "short"));
+        }
+
+        RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
+                1,
+                RDPECLIP::GeneralCapabilitySet::size()
+            );
+
+        StaticOutStream<1024> out_s;
+
+        clip_cap_pdu.emit(out_s);
+        general_caps.emit(out_s);
+
+        size_t length     = out_s.get_offset();
+        size_t chunk_size = length;
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
+                clip_cap_pdu.header.msgType()
+                );
+        }
+
+        this->send_to_front_channel( channel_names::cliprdr
+                                   , out_s.get_data()
+                                   , length
+                                   , chunk_size
+                                   ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                     | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
+
+        RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
+
+        out_s.rewind();
+
+        server_monitor_ready_pdu.emit(out_s);
+
+        length     = out_s.get_offset();
+        chunk_size = length;
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
+                server_monitor_ready_pdu.header.msgType()
+                );
+        }
+
+        this->send_to_front_channel( channel_names::cliprdr
+                                   , out_s.get_data()
+                                   , length
+                                   , chunk_size
+                                   ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                     | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
     }
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
@@ -1178,112 +1276,21 @@ public:
 
             this->state = WAIT_PASSWORD;
             break;
+
         case DO_INITIAL_CLEAR_SCREEN:
-            {
-                if (bool(this->verbose & Verbose::connection)) {
-                    LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
-                }
-                // set almost null cursor, this is the little dot cursor
-                Pointer cursor;
-                cursor.x = 3;
-                cursor.y = 3;
-//                cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
-                memset(cursor.data + 31 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 30 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 29 * (32 * 3), 0xff, 9);
-                memset(cursor.mask, 0xff, 32 * (32 / 8));
-                cursor.update_bw();
-                this->front.set_pointer(cursor);
-
-                this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
-
-                LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-                this->front.begin_update();
-                RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), RDPColor{});
-                drawable.draw(orect, Rect(0, 0, this->width, this->height), gdi::ColorCtx::from_bpp(this->bpp, this->palette));
-                this->front.end_update();
-
-                this->state = UP_AND_RUNNING;
-                this->front.can_be_start_capture();
-                this->update_screen(Rect(0, 0, this->width, this->height));
-                this->lib_open_clip_channel();
-
-                this->event.object_and_time = false;
-                if (bool(this->verbose & Verbose::connection)) {
-                    LOG(LOG_INFO, "VNC screen cleaning ok\n");
-                }
-
-                RDPECLIP::GeneralCapabilitySet general_caps(
-                    RDPECLIP::CB_CAPS_VERSION_1,
-                    this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Server use %s format name",
-                        (this->server_use_long_format_names ? "long" : "short"));
-                }
-
-                RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
-                        1,
-                        RDPECLIP::GeneralCapabilitySet::size()
-                    );
-
-                StaticOutStream<1024> out_s;
-
-                clip_cap_pdu.emit(out_s);
-                general_caps.emit(out_s);
-
-                size_t length     = out_s.get_offset();
-                size_t chunk_size = length;
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
-                        clip_cap_pdu.header.msgType()
-                        );
-                }
-
-                this->send_to_front_channel( channel_names::cliprdr
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-
-                RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-
-                out_s.rewind();
-
-                server_monitor_ready_pdu.emit(out_s);
-
-                length     = out_s.get_offset();
-                chunk_size = length;
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
-                        server_monitor_ready_pdu.header.msgType()
-                        );
-                }
-
-                this->send_to_front_channel( channel_names::cliprdr
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-            }
+            this->initial_clear_screen(drawable);
             break;
+
         case RETRY_CONNECTION:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
             {
-                this->t.connect();
+                if (!this->t.connect()) {
+                    LOG(LOG_ERR, "VNC connection error");
+                    throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
             }
             catch (Error const &)
             {
@@ -1293,48 +1300,15 @@ public:
             this->state = WAIT_SECURITY_TYPES;
             this->event.set();
             break;
+
         case UP_AND_RUNNING:
             if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
-            if (!this->event.waked_up_by_time ) {
+
+            if (!this->event.waked_up_by_time) {
                 try {
-                    Buf64k buf;
-                    struct Trans : Transport
-                    {
-                        Transport & t;
-                        Trans(Transport & t) : t(t) {}
-                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                        {
-                            return this->t.partial_read(buffer, 1);
-                        }
-                    };
-                    Trans trans(this->t);
-
-                    while (!buf.remaining()) {
-                        buf.read_from(trans);
-                    }
-                    uint8_t const message_type = buf.av()[0];
-                    buf.advance(1);
-
-                    /* message-type */
-                    switch (message_type) {
-                        case 0: /* framebuffer update */
-                            this->lib_framebuffer_update(drawable);
-                        break;
-                        case 1: /* palette */
-                            this->lib_palette_update(drawable);
-                        break;
-                        case 2: /* bell */
-                            // TODO bell
-                        break;
-                        case 3: /* clipboard */ /* ServerCutText */
-                            this->lib_clip_data();
-                        break;
-                        default:
-                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
-                        break;
-                    }
+                    this->up_and_running(drawable);
                 }
                 catch (const Error & e) {
                     LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
@@ -1346,6 +1320,7 @@ public:
                     this->event.signal = BACK_EVENT_NEXT;
                     this->front.must_be_stop_capture();
                 }
+
                 if (this->event.signal != BACK_EVENT_NEXT) {
                     this->event.set(1000);
                 }
@@ -1354,6 +1329,7 @@ public:
                 this->update_screen(Rect(0, 0, this->width, this->height));
             }
             break;
+
         case WAIT_PASSWORD:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
@@ -1361,6 +1337,7 @@ public:
             this->event.object_and_time = false;
             this->event.reset();
             break;
+
         case WAIT_SECURITY_TYPES:
             {
                 if (bool(this->verbose & Verbose::connection)) {
@@ -2527,20 +2504,8 @@ private:
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
-    void lib_framebuffer_update(gdi::GraphicApi & drawable)
+    void lib_framebuffer_update(gdi::GraphicApi & drawable, Buf64k & buf, Transport & trans)
     {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
         this->frame_buffer_update_ctx.Bpp = nbbytes(this->bpp);
 
         using State = FrameBufferUpdateCtx::State;
@@ -2709,19 +2674,8 @@ private:
     };
     PaletteUpdateCtx palette_update_ctx;
 
-    void lib_palette_update(gdi::GraphicApi & drawable)
+    void lib_palette_update(gdi::GraphicApi & drawable, Buf64k & buf, Transport & trans)
     {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
         using State = PaletteUpdateCtx::State;
         auto state = State::Header;
         while (State::Header == state) {
@@ -2790,30 +2744,78 @@ private:
     } // get_channel_by_name
 
 
-    struct ClipboardDataCtx
+    class ClipboardDataCtx
     {
         enum class State
         {
             Header,
-            SetEnable,
             Data,
             SkipData,
         };
+
+    public:
+        explicit ClipboardDataCtx(Verbose verbose)
+          : verbose(verbose)
+          , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
+          , to_rdp_clipboard_data_is_utf8_encoded(false)
+        {}
+
+        void start(bool clipboard_down_is_really_enabled) noexcept
+        {
+            this->clipboard_down_is_really_enabled = clipboard_down_is_really_enabled;
+            this->state = State::Header;
+        }
+
+        bool run(Buf64k & buf)
+        {
+            switch (this->state)
+            {
+                case State::Header:
+                    this->state = this->read_header(buf);
+                    break;
+                case State::Data:
+                    this->state = this->read_data(buf);
+                    return this->state == State::Header;
+                case State::SkipData:
+                    this->state = this->skip_data(buf);
+                    return this->state == State::Header;
+            }
+            return false;
+        }
+
+        bool clipboard_is_enabled() const noexcept
+        {
+            return this->clipboard_down_is_really_enabled;
+        }
+
+        array_view_const_u8 clipboard_data() const noexcept
+        {
+            return {
+                this->to_rdp_clipboard_data.get_data(),
+                this->to_rdp_clipboard_data.get_offset()
+            };
+        }
+
+        bool clipboard_data_is_utf8_encoded() const noexcept
+        {
+            return this->to_rdp_clipboard_data_is_utf8_encoded;
+        }
+
+    private:
+        State    state;
+        Verbose  verbose;
+
+        bool     clipboard_down_is_really_enabled;
+
         uint32_t data_length;
         uint32_t remaining_data_length;
 
         uint8_t  to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
         InStream to_rdp_clipboard_data; // NOTE can be array_view
+
         bool     to_rdp_clipboard_data_is_utf8_encoded;
-        Verbose  verbose;
 
-        explicit ClipboardDataCtx(Verbose verbose)
-          : to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
-          , to_rdp_clipboard_data_is_utf8_encoded(false)
-          , verbose(verbose)
-        {}
-
-        State read_header(Buf64k & buf)
+        State read_header(Buf64k & buf) noexcept
         {
             if (buf.remaining() < 7)
             {
@@ -2830,11 +2832,6 @@ private:
                 LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
             }
 
-            return State::SetEnable;
-        }
-
-        State set_enable_clipboard_down(bool clipboard_down_is_really_enabled)
-        {
             this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
 
             if (!clipboard_down_is_really_enabled) {
@@ -2908,7 +2905,51 @@ private:
     //  - send a notification to the front (Format List PDU) that the server clipboard
     //    status has changed
     //******************************************************************************
-    void lib_clip_data(void)
+    bool lib_clip_data(Buf64k & buf)
+    {
+        if (!this->clipboard_data_ctx.run(buf)) {
+            return false;
+        }
+
+        if (this->clipboard_data_ctx.clipboard_is_enabled()) {
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO,
+                    "mod_vnc::lib_clip_data: Sending Format List PDU (%d) to client.",
+                    RDPECLIP::CB_FORMAT_LIST);
+            }
+
+            RDPECLIP::FormatListPDU format_list_pdu;
+            StaticOutStream<256>    out_s;
+
+            format_list_pdu.emit_ex(
+                out_s,
+                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
+            );
+
+            size_t length     = out_s.get_offset();
+            size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+            this->send_to_front_channel(
+                channel_names::cliprdr,
+                out_s.get_data(),
+                length,
+                chunk_size,
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+            );
+
+            this->clipboard_owned_by_client = false;
+
+            // Can stop RDP to VNC clipboard infinite loop.
+            this->clipboard_requesting_for_data_is_delayed = false;
+        }
+        else {
+            LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
+        }
+
+        return true;
+    } // lib_clip_data
+
+    void up_and_running(gdi::GraphicApi & drawable)
     {
         Buf64k buf;
         struct Trans : Transport
@@ -2921,65 +2962,37 @@ private:
             }
         };
         Trans trans(this->t);
-        using State = ClipboardDataCtx::State;
-        auto state = State::Header;
 
-        while (State::Header == state) {
+        while (!buf.remaining()) {
             buf.read_from(trans);
-            state = this->clipboard_data_ctx.read_header(buf);
         }
+        uint8_t const message_type = buf.av()[0];
+        buf.advance(1);
 
-        const bool clipboard_down_is_really_enabled =
-            this->enable_clipboard_down
-         && this->get_channel_by_name(channel_names::cliprdr);
-
-        state = this->clipboard_data_ctx.set_enable_clipboard_down(
-            clipboard_down_is_really_enabled);
-
-        while (State::Data == state) {
-            buf.read_from(trans);
-            state = this->clipboard_data_ctx.read_data(buf);
+        /* message-type */
+        switch (message_type) {
+            case 0: /* framebuffer update */
+                this->lib_framebuffer_update(drawable, buf, trans);
+            break;
+            case 1: /* palette */
+                this->lib_palette_update(drawable, buf, trans);
+            break;
+            case 2: /* bell */
+                // TODO bell
+            break;
+            case 3: /* clipboard */ /* ServerCutText */
+                this->clipboard_data_ctx.start(
+                    this->enable_clipboard_down
+                 && this->get_channel_by_name(channel_names::cliprdr));
+                while (!this->lib_clip_data(buf)) {
+                    buf.read_from(trans);
+                }
+            break;
+            default:
+                LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
+            break;
         }
-
-        while (State::SkipData == state) {
-            buf.read_from(trans);
-            state = this->clipboard_data_ctx.skip_data(buf);
-        }
-
-        if (clipboard_down_is_really_enabled) {
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO,
-                    "mod_vnc::lib_clip_data: Sending Format List PDU (%d) to client.",
-                    RDPECLIP::CB_FORMAT_LIST);
-            }
-
-            RDPECLIP::FormatListPDU format_list_pdu;
-            StaticOutStream<256>    out_s;
-
-            const bool unicodetext = this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded;
-
-            format_list_pdu.emit_ex(out_s, unicodetext);
-
-            size_t length     = out_s.get_offset();
-            size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
-
-            this->send_to_front_channel(channel_names::cliprdr,
-                                        out_s.get_data(),
-                                        length,
-                                        chunk_size,
-                                          CHANNELS::CHANNEL_FLAG_FIRST
-                                        | CHANNELS::CHANNEL_FLAG_LAST
-                                       );
-
-            this->clipboard_owned_by_client = false;
-
-            // Can stop RDP to VNC clipboard infinite loop.
-            this->clipboard_requesting_for_data_is_delayed = false;
-        }
-        else {
-            LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
-        }
-    } // lib_clip_data
+    }
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
@@ -3299,11 +3312,11 @@ private:
                 }
 
                 if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT) &&
-                    !this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded) {
+                    !this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
-                            this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset() * 2 +    // data
+                            this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
                             1                                           // Null character
                         );
 
@@ -3314,11 +3327,11 @@ private:
 
                     const size_t to_rdp_clipboard_data_length =
                         ::linux_to_windows_newline_convert(
-                                ::char_ptr_cast(this->clipboard_data_ctx.to_rdp_clipboard_data.get_data()),
-                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset(),
-                                ::char_ptr_cast(out_data_stream.get_data()),
-                                out_data_stream.get_capacity()
-                            );
+                            ::char_ptr_cast(this->clipboard_data_ctx.clipboard_data().data()),
+                            this->clipboard_data_ctx.clipboard_data().size(),
+                            ::char_ptr_cast(out_data_stream.get_data()),
+                            out_data_stream.get_capacity()
+                        );
                     out_data_stream.out_skip_bytes(to_rdp_clipboard_data_length);
 
                     const bool response_ok = true;
@@ -3338,31 +3351,31 @@ private:
                 else if (format_data_request_pdu.requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
-                            8 +                                         // clipHeader(8)
-                            this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset() * 4 +    // data
-                            1                                           // Null character
-                        );
+                        8 +                                         // clipHeader(8)
+                        this->clipboard_data_ctx.clipboard_data().size() * 4 +    // data
+                        1                                           // Null character
+                    );
 
                     OutStream out_data_stream(
-                            out_stream.get_data() + 8 /* clipHeader(8) */,
-                            out_stream.get_capacity() - 8 /* clipHeader(8) */
-                        );
+                        out_stream.get_data() + 8 /* clipHeader(8) */,
+                        out_stream.get_capacity() - 8 /* clipHeader(8) */
+                    );
 
                     size_t utf16_data_length;
-                    if (this->clipboard_data_ctx.to_rdp_clipboard_data_is_utf8_encoded) {
+                    if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                         utf16_data_length = UTF8toUTF16_CrLf(
-                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_data(),
-                                out_data_stream.get_data(),
-                                out_data_stream.get_capacity()
-                            );
+                            this->clipboard_data_ctx.clipboard_data().data(),
+                            out_data_stream.get_data(),
+                            out_data_stream.get_capacity()
+                        );
                     }
                     else {
                         utf16_data_length = Latin1toUTF16(
-                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_data(),
-                                this->clipboard_data_ctx.to_rdp_clipboard_data.get_offset(),
-                                out_data_stream.get_data(),
-                                out_data_stream.get_capacity()
-                            );
+                            this->clipboard_data_ctx.clipboard_data().data(),
+                            this->clipboard_data_ctx.clipboard_data().size(),
+                            out_data_stream.get_data(),
+                            out_data_stream.get_capacity()
+                        );
                     }
 
                     out_data_stream.out_skip_bytes(utf16_data_length);
