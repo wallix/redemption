@@ -1299,9 +1299,26 @@ public:
             }
             if (!this->event.waked_up_by_time ) {
                 try {
-                    uint8_t type; /* message-type */
-                    this->t.recv_boom(&type, 1);
-                    switch (type) {
+                    Buf64k buf;
+                    struct Trans : Transport
+                    {
+                        Transport & t;
+                        Trans(Transport & t) : t(t) {}
+                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                        {
+                            return this->t.partial_read(buffer, 1);
+                        }
+                    };
+                    Trans trans(this->t);
+
+                    while (!buf.remaining()) {
+                        buf.read_from(trans);
+                    }
+                    uint8_t const message_type = buf.av()[0];
+                    buf.advance(1);
+
+                    /* message-type */
+                    switch (message_type) {
                         case 0: /* framebuffer update */
                             this->lib_framebuffer_update(drawable);
                         break;
@@ -1309,12 +1326,13 @@ public:
                             this->lib_palette_update(drawable);
                         break;
                         case 2: /* bell */
+                            // TODO bell
                         break;
                         case 3: /* clipboard */ /* ServerCutText */
                             this->lib_clip_data();
                         break;
                         default:
-                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
                         break;
                     }
                 }
@@ -1349,21 +1367,40 @@ public:
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
-                /* protocol version */
-                uint8_t server_protoversion[12];
-                this->t.recv_boom(server_protoversion, 12);
-                server_protoversion[11] = 0;
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
+                Buf64k buf;
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                size_t const protocol_version_len = 12;
+
+                while (buf.remaining() < protocol_version_len) {
+                    buf.read_from(trans);
                 }
+
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    // protocol_version_len - zero terminal
+                    LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
+                        int(protocol_version_len-1), buf.av().data());
+                }
+
+                buf.advance(protocol_version_len);
+
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
 
-                int32_t const security_level = [this](){
-                    uint8_t buf[4];
-                    this->t.recv_boom(buf, sizeof(buf));
-                    return Parse(buf).in_sint32_be();
-                }();
+                while (buf.remaining() < 4) {
+                    buf.read_from(trans);
+                }
+                int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
+                buf.advance(4);
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
@@ -1379,18 +1416,6 @@ public:
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "Receiving VNC Server Random");
                         }
-
-                        Buf64k buf;
-                        struct Trans : Transport
-                        {
-                            Transport & t;
-                            Trans(Transport & t) : t(t) {}
-                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                            {
-                                return this->t.partial_read(buffer, 1);
-                            }
-                        };
-                        Trans trans(this->t);
 
                         {
                             using State = PasswordCtx::State;
