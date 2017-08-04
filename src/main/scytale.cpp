@@ -381,14 +381,13 @@ struct RedCryptoKeyHandle
     }
 };
 
-RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex);
 
 RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
 {
     if (!masterkeyhex || strlen(masterkeyhex) != sizeof(HashHexArray)-1){
         return nullptr;
     }
-    for (size_t i = 0 ; i < sizeof(HashHexArray) ; i++){
+    for (size_t i = 0 ; i < sizeof(HashHexArray) - 1 ; i++){
         char c = masterkeyhex[i];
         if (not ((c >= '0' and c <= '9') or (c >= 'A' and c <= 'F') or (c >= 'a' and c <= 'f'))){
             return nullptr;
@@ -398,14 +397,12 @@ RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
     return handle;
 }
 
-const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const char * derivator);
-
-const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const char * derivator)
+const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len)
 {
     uint8_t tmp[MD_HASH::DIGEST_LENGTH];
     {
         MD_HASH sha256;
-        sha256.update(reinterpret_cast<const uint8_t*>(derivator), strlen(derivator));
+        sha256.update(derivator, len);
         sha256.final(tmp);
     }
     {
@@ -419,6 +416,24 @@ const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const char * deri
     hash_to_hashhex(handle->derivated, handle->derivatedhex);
     return handle->derivatedhex;
 }
+
+
+void scytale_key_delete(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    delete handle;
+}
+
+
+const char * scytale_key_master(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->masterhex;
+}
+
+const char * scytale_key_derivated(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->derivatedhex;
+}
+
 
 RedCryptoReaderHandle * scytale_reader_new(const char * derivator
                                                 , get_hmac_key_prototype* hmac_fn

@@ -26,6 +26,7 @@ extern "C"
 {
     class RedCryptoWriterHandle;
     class RedCryptoReaderHandle;
+    class RedCryptoKeyHandle;
 
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
@@ -98,4 +99,18 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle);
+    
+    REDEMPTION_LIB_EXPORT
+    RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex);
+
+    REDEMPTION_LIB_EXPORT
+    const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len);
+
+    REDEMPTION_LIB_EXPORT
+    void scytale_key_delete(RedCryptoKeyHandle * handle);
+    
+    const char * scytale_key_master(RedCryptoKeyHandle * handle);
+    const char * scytale_key_derivated(RedCryptoKeyHandle * handle);
+
+
 }
