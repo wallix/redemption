@@ -224,6 +224,24 @@ RED_AUTO_TEST_CASE(TestscytaleError)
 
 }
 
+RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
+{
+    // master derivator: "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
+    RedCryptoKeyHandle * handle = scytale_key_new("563eb6e8158f0eed2e5fb6bc2893bc15270d7e7815fa804a723ef4fb315ff4b2");
+    RED_CHECK_NE(handle, nullptr);
+    const char * derivator = "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm";
+    const char * result = scytale_key_derivate(handle, bytes(derivator), std::strlen(derivator));
+    RED_CHECK_EQ(result, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648");
+
+    // .log behave as .mwrm for historical reasons
+    const char * derivator2 = "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.log";
+    const char * r2 = scytale_key_derivate(handle, bytes(derivator2), std::strlen(derivator2));
+    RED_CHECK_EQ(r2, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648");
+
+    scytale_key_delete(handle);
+}
+            
+
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
 {
     // master derivator: "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"
