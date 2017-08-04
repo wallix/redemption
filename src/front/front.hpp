@@ -3139,6 +3139,12 @@ private:
                     if (bool(this->verbose)) {
                         this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
+                    if (ini.get<cfg::client::bogus_ios_glyph_support_level>() &&
+                        (this->client_info.general_caps.os_major == OSMAJORTYPE_IOS)) {
+                        LOG(LOG_INFO, "Front::process_confirm_active: Support of bogus iOS glyph support level enabled.");
+
+                        this->client_info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_NONE;
+                    }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
                             this->client_info.glyph_cache_caps.GlyphCache[i].CacheEntries;
