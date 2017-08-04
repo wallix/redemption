@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
+    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan, Jennifer Inthavong
 */
 
 
@@ -308,7 +308,7 @@ public:
 
         uint8_t * userup = new uint8_t[user_size];
         memcpy(userup, user, user_size);
-        UTF16Upper(userup, user_size / 2);
+        UTF16Upper(userup, user_size);
         hmac_md5.update(userup, user_size);
         delete [] userup;
         userup = nullptr;
@@ -351,7 +351,7 @@ public:
 
         uint8_t * userup = new uint8_t[user_size];
         memcpy(userup, user, user_size);
-        UTF16Upper(userup, user_size / 2);
+        UTF16Upper(userup, user_size);
         hmac_md5.update(userup, user_size);
 
         delete [] userup;

@@ -257,6 +257,19 @@ namespace
         }
         *phex = '\0';
     }
+    
+    inline void hashex_to_hash(HashHexArray const & hashhex, HashArray hash) noexcept {
+        // Undefined Behavior if hashhex is not a valid input hex key
+        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
+        auto phex = hash;
+        for (size_t i = 0 ; i < sizeof(hashhex) - 1 ; i += 2) {
+            auto c1 = hashhex[i];
+            auto c2 = hashhex[i+1];
+            *phex++ = ((0xF & (c1 < 'A'? c1 - '0' : c1 < 'a' ? c1 - 'A' : c1 - 'a')) << 4)
+                    |  (0xF & (c2 < 'A'? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
+        }
+    }
+
 }
 
 
@@ -351,6 +364,74 @@ void scytale_writer_delete(RedCryptoWriterHandle * handle) {
 char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
 {
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
+}
+
+
+struct RedCryptoKeyHandle
+{
+    HashHexArray masterhex;
+    HashArray master;
+    HashHexArray derivatedhex;
+    HashArray derivated;
+    
+    RedCryptoKeyHandle(const char * masterkeyhex)
+    {
+        memcpy(this->masterhex, masterkeyhex, sizeof(this->masterhex));
+        hashex_to_hash(this->masterhex, this->master);
+    }
+};
+
+
+RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
+{
+    if (!masterkeyhex || strlen(masterkeyhex) != sizeof(HashHexArray)-1){
+        return nullptr;
+    }
+    for (size_t i = 0 ; i < sizeof(HashHexArray) - 1 ; i++){
+        char c = masterkeyhex[i];
+        if (not ((c >= '0' and c <= '9') or (c >= 'A' and c <= 'F') or (c >= 'a' and c <= 'f'))){
+            return nullptr;
+        }
+    }
+    auto handle = new (std::nothrow) RedCryptoKeyHandle(masterkeyhex);
+    return handle;
+}
+
+const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len)
+{
+    uint8_t tmp[MD_HASH::DIGEST_LENGTH];
+    {
+        MD_HASH sha256;
+        sha256.update(derivator, len);
+        sha256.final(tmp);
+    }
+    {
+        MD_HASH sha256;
+        sha256.update(tmp, DERIVATOR_LENGTH);
+        sha256.update(handle->master, CRYPTO_KEY_LENGTH);
+        sha256.final(tmp);
+    }
+    static_assert(sizeof(handle->derivated) == sizeof(tmp), "");
+    memcpy(handle->derivated, tmp, HMAC_KEY_LENGTH);
+    hash_to_hashhex(handle->derivated, handle->derivatedhex);
+    return handle->derivatedhex;
+}
+
+
+void scytale_key_delete(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    delete handle;
+}
+
+
+const char * scytale_key_master(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->masterhex;
+}
+
+const char * scytale_key_derivated(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->derivatedhex;
 }
 
 

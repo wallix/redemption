@@ -407,6 +407,9 @@ public:
         case ERR_RAIL_UNAUTHORIZED_PROGRAM:
             return "The RemoteApp program is not in the list of authorized programs";
 
+        case ERR_RDP_OPEN_SESSION_TIMEOUT:
+            return "Logon timer expired";
+
         default:
             if (this->has_msg && this->with_id == with_id) {
                 return this->msg;

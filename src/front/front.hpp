@@ -4263,29 +4263,24 @@ protected:
 
                         const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
                         if (rect.cx != 0 && rect.cy != 0) {
-
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
-                            RDPBitmapData rDPBitmapData;
-                            rDPBitmapData.dest_left = rect.x;
-                            rDPBitmapData.dest_top = rect.y;
-                            rDPBitmapData.dest_right = rect.cx + rect.x - 1;
-                            rDPBitmapData.dest_bottom = rect.cy + rect.y - 1;
-                            rDPBitmapData.width = rect.cx;
-                            rDPBitmapData.height = rect.cy;
-                            rDPBitmapData.bits_per_pixel = 24;
-                            rDPBitmapData.flags = 0x0401;
-                            rDPBitmapData.bitmap_length = rect.cx * rect.cy * 3;
+                            RDPBitmapData rdpbd;
+                            rdpbd.dest_left      = rect.x;
+                            rdpbd.dest_top       = rect.y;
+                            rdpbd.dest_right     = rect.cx + rect.x - 1;
+                            rdpbd.dest_bottom    = rect.cy + rect.y - 1;
+                            rdpbd.bits_per_pixel = 24;
+                            rdpbd.flags          = 0x0401;
+                            rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
-                             // Compressed Data Header (TS_CD_HEADER)
-//                             rDPBitmapData.cb_comp_main_body_size;
-//                             rDPBitmapData.cb_scan_width;
-//                             rDPBitmapData.cb_uncompressed_size;
-
-                            //RDPMemBlt cmd(cmd.cache_id, rect, 0xCC, rect.x, rect.y, 0);
-                            const Rect tile(rect.x - x, rect.y - y, rect.cx, rect.cy);
+                            const Rect tile(0, 0, rect.cx, rect.cy);
                             Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
-                            draw_impl(rDPBitmapData, bmp);
+
+                            rdpbd.width          = bmp.cx();
+                            rdpbd.height         = bmp.cy();
+
+                            draw_impl(rdpbd, bmp);
                         }
                     }
                 }
