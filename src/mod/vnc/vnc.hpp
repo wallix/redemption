@@ -158,8 +158,6 @@ private:
     bool client_use_long_format_names = false;
     bool server_use_long_format_names = true;
 
-    z_stream zstrm;
-
     enum {
         ASK_PASSWORD,
         DO_INITIAL_CLEAR_SCREEN,
@@ -254,22 +252,13 @@ public:
     , report_message(report_message)
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
+    , frame_buffer_update_ctx(verbose)
     , clipboard_data_ctx(verbose)
     {
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         ::time(&this->beginning);
 
-        memset(&zstrm, 0, sizeof(zstrm));
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-        if (inflateInit(&this->zstrm) != Z_OK)
-        REDEMPTION_DIAGNOSTIC_POP
-        {
-            LOG(LOG_ERR, "vnc zlib initialization failed");
-
-            throw Error(ERR_VNC_ZLIB_INITIALIZATION);
-        }
         // TODO init layout sym with apple layout
         if (this->server_is_apple) {
             keymapSym.init_layout_sym(0x0409);
@@ -286,7 +275,6 @@ public:
     } // Constructor
 
     ~mod_vnc() override {
-        inflateEnd(&this->zstrm);
         this->screen.clear();
     }
 
@@ -2079,8 +2067,6 @@ private:
 
     struct FrameBufferUpdateCtx
     {
-        uint8_t Bpp;
-
         enum class State
         {
             Header,
@@ -2088,13 +2074,76 @@ private:
             Data,
             ZrleData,
             RreData,
-            // DataRaw,
-            // DataCopyRect,
-            // DataRRE,
-            // DataHextile,
-            // DataZRLE,
-            // DataCursor,
         };
+
+        FrameBufferUpdateCtx(Verbose verbose)
+          : zstrm{}
+          , verbose(verbose)
+        {
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+            if (inflateInit(&this->zstrm) != Z_OK)
+            REDEMPTION_DIAGNOSTIC_POP
+            {
+                LOG(LOG_ERR, "vnc zlib initialization failed");
+                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
+            }
+        }
+
+        ~FrameBufferUpdateCtx()
+        {
+            inflateEnd(&this->zstrm);
+        }
+
+        void start(uint8_t Bpp)
+        {
+            this->Bpp = Bpp;
+            this->state = State::Header;
+        }
+
+        template<class F>
+        bool run(Buf64k & buf, mod_vnc & vnc, F && f)
+        {
+            switch (this->state)
+            {
+            case State::Header: this->state = this->read_header(buf);
+                break;
+            case State::Encoding: this->state = this->read_encoding(buf);
+                return this->state == State::Header;
+            case State::Data:
+                switch (this->encoding)
+                {
+                case 0:  /* raw */
+                    this->state = this->read_data_raw(buf, f); break;
+                case 1:  /* copy rect */
+                    this->state = this->read_data_copy_rect(buf, f); break;
+                case 2:  /* RRE */
+                    this->state = this->read_data_rre(buf); break;
+                case 5: /* Hextile */ // TODO unimplemented
+                    LOG(LOG_INFO,
+                        "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                        this->Bpp, this->x, this->y, this->cx, this->cy);
+                    this->state = State::Encoding;
+                    break;
+                case 16: /* ZRLE */
+                    this->state = this->read_data_zrle(buf); break;
+                case 0xffffff11: /* (-239) cursor */
+                    this->state = this->read_data_cursor(buf, vnc, f); break;
+                default:
+                    LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
+                    throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                }
+                break;
+            case State::ZrleData: this->state = this->read_data_zrle_data(buf, f); break;
+            case State::RreData: this->state = this->read_data_rre_data(buf, f); break;
+            }
+            return false;
+        }
+
+    private:
+        uint8_t Bpp;
+
+        State state;
 
         uint16_t num_recs;
 
@@ -2102,7 +2151,6 @@ private:
         uint16_t y;
         uint16_t cx;
         uint16_t cy;
-        uint16_t original_x;
         uint32_t encoding;
 
         uint32_t zlib_compressed_data_length;
@@ -2110,7 +2158,10 @@ private:
         uint32_t number_of_subrectangles_remain;
         std::unique_ptr<uint8_t[]> rre_raw;
 
-        State read_header(Buf64k & buf)
+        z_stream zstrm;
+        Verbose verbose;
+
+        State read_header(Buf64k & buf) noexcept
         {
             const size_t sz = 3;
 
@@ -2124,10 +2175,10 @@ private:
             this->num_recs = stream.in_uint16_be();
 
             buf.advance(sz);
-            return this->num_recs ? State::Encoding : State::Header;
+            return State::Encoding;
         }
 
-        State read_encoding(Buf64k & buf)
+        State read_encoding(Buf64k & buf) noexcept
         {
             if (!this->num_recs) {
                 return State::Header;
@@ -2146,15 +2197,17 @@ private:
             this->cx = stream.in_uint16_be();
             this->cy = stream.in_uint16_be();
             this->encoding = stream.in_uint32_be();
-            this->original_x = this->x;
 
             --this->num_recs;
             buf.advance(sz);
 
+            // TODO see why we get these empty rects ?
+            // return State::Encoding;
             return State::Data;
         }
 
-        State read_data_raw(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        template<class F>
+        State read_data_raw(Buf64k & buf, F && f)
         {
             size_t const size_line = this->cx * this->Bpp;
             auto const av = buf.av();
@@ -2163,12 +2216,7 @@ private:
                 auto const cy = av.size() / size_line;
                 auto const new_av = av.subarray(0, cy * size_line);
 
-                update_lock<FrontAPI> lock(vnc.front);
-                vnc.draw_tile(
-                    Rect(this->x, this->y, this->cx, cy),
-                    new_av.data(),
-                    drawable
-                );
+                f(Rect(this->x, this->y, this->cx, cy), new_av);
 
                 this->y += cy;
                 this->cy -= cy;
@@ -2179,7 +2227,8 @@ private:
             return this->cy ? State::Data : State::Encoding;
         }
 
-        State read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        template<class F>
+        State read_data_copy_rect(Buf64k & buf, F && f)
         {
             const size_t sz = 4;
 
@@ -2189,15 +2238,12 @@ private:
             }
 
             InStream stream_copy_rect(buf.av(sz));
-            const int srcx = stream_copy_rect.in_uint16_be();
-            const int srcy = stream_copy_rect.in_uint16_be();
-
-            //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-            const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-            update_lock<FrontAPI> lock(vnc.front);
-            drawable.draw(scrblt, Rect(0, 0, vnc.front_width, vnc.front_height));
+            uint16_t const srcx = stream_copy_rect.in_uint16_be();
+            uint16_t const srcy = stream_copy_rect.in_uint16_be();
 
             buf.advance(sz);
+
+            f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy);
 
             return State::Encoding;
         }
@@ -2231,12 +2277,12 @@ private:
             return State::RreData;
         }
 
-        State read_data_rre_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        template<class F>
+        State read_data_rre_data(Buf64k & buf, F && f)
         {
             if (!this->number_of_subrectangles_remain) {
-                update_lock<FrontAPI> lock(vnc.front);
-                // TODO MultiRect
-                vnc.draw_tile(Rect(x, y, cx, cy), this->rre_raw.get(), drawable);
+                // TODO used MultiRect
+                f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get());
                 this->rre_raw.reset();
                 return State::Encoding;
             }
@@ -2274,14 +2320,7 @@ private:
             return State::RreData;
         }
 
-        State read_data_hextile()
-        {
-            LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                this->Bpp, this->x, this->y, this->cx, this->cy);
-            return State::Encoding;
-        }
-
-        State read_data_zrle(Buf64k & buf, mod_vnc & vnc)
+        State read_data_zrle(Buf64k & buf)
         {
             const size_t sz = 4;
 
@@ -2292,7 +2331,7 @@ private:
 
             this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
 
-            if (bool(vnc.verbose & Verbose::basic_trace))
+            if (bool(this->verbose & Verbose::basic_trace))
             {
                 LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
                     this->zlib_compressed_data_length);
@@ -2312,7 +2351,8 @@ private:
             return State::ZrleData;
         }
 
-        State read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        template<class F>
+        State read_data_zrle_data(Buf64k & buf, F && f)
         {
             if (buf.remaining() < this->zlib_compressed_data_length)
             {
@@ -2329,10 +2369,10 @@ private:
             zrle_update_context.tile_x    = x;
             zrle_update_context.tile_y    = y;
 
-            vnc.zstrm.avail_in = this->zlib_compressed_data_length;
-            vnc.zstrm.next_in  = buf.av().data();
+            this->zstrm.avail_in = this->zlib_compressed_data_length;
+            this->zstrm.next_in  = buf.av().data();
 
-            while (vnc.zstrm.avail_in > 0)
+            while (this->zstrm.avail_in > 0)
             {
                 constexpr std::size_t reserved_leading_space = 16384;
                 constexpr std::size_t total_size = 49152;
@@ -2342,10 +2382,10 @@ private:
 
                 uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
 
-                vnc.zstrm.avail_out = data_size;
-                vnc.zstrm.next_out  = data;
+                this->zstrm.avail_out = data_size;
+                this->zstrm.next_out  = data;
 
-                int zlib_result = inflate(&vnc.zstrm, Z_NO_FLUSH);
+                int zlib_result = inflate(&this->zstrm, Z_NO_FLUSH);
 
                 if (zlib_result != Z_OK)
                 {
@@ -2353,9 +2393,9 @@ private:
                     throw Error(ERR_VNC_ZLIB_INFLATE);
                 }
 
-                InStream zlib_uncompressed_data_stream(data, data_size - vnc.zstrm.avail_out);
+                InStream zlib_uncompressed_data_stream(data, data_size - this->zstrm.avail_out);
 
-                if (bool(vnc.verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO,
                         "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
                         zlib_uncompressed_data_stream.in_remain(),
@@ -2367,12 +2407,12 @@ private:
                     auto sz = zrle_update_context.data_remain.get_offset();
                     data -= sz;
                     memcpy(data, zrle_update_context.data_remain.get_data(), sz);
-                    zlib_uncompressed_data_stream = InStream(data, data_size - vnc.zstrm.avail_out + sz);
+                    zlib_uncompressed_data_stream = InStream(data, data_size - this->zstrm.avail_out + sz);
 
                     zrle_update_context.data_remain.rewind();
                 }
 
-                vnc.lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context, drawable);
+                f(zlib_uncompressed_data_stream, zrle_update_context);
             }
 
             buf.advance(this->zlib_compressed_data_length);
@@ -2380,7 +2420,8 @@ private:
             return State::Encoding;
         }
 
-        State read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & /*drawable*/)
+        template<class F>
+        State read_data_cursor(Buf64k & buf, mod_vnc & vnc, F && f)
         {
             // TODO see why we get these empty rects ?
             if (this->cx <= 0 && this->cy <= 0) {
@@ -2492,9 +2533,7 @@ private:
             }
             cursor.update_bw();
             // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-            vnc.front.begin_update();
-            vnc.front.set_pointer(cursor);
-            vnc.front.end_update();
+            f(cursor);
 
             buf.advance(sz_pixel_array + sz_bitmask);
             return State::Encoding;
@@ -2502,103 +2541,66 @@ private:
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
-    void lib_framebuffer_update(gdi::GraphicApi & drawable, Buf64k & buf, Transport & trans)
+    bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
-        this->frame_buffer_update_ctx.Bpp = nbbytes(this->bpp);
+        struct CtxFn
+        {
+            mod_vnc & vnc;
+            gdi::GraphicApi & drawable;
 
-        using State = FrameBufferUpdateCtx::State;
-        auto state = State::Header;
-        while (State::Header == state) {
-            buf.read_from(trans);
-            state = this->frame_buffer_update_ctx.read_header(buf);
-        }
+            // raw_fn
+            void operator()(Rect rect, array_view_const_u8 av)
+            {
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(rect, av.data(), drawable);
+            }
 
-        for (size_t i = 0; i < this->frame_buffer_update_ctx.num_recs; i++) {
-            auto const tmp_num_rects = this->frame_buffer_update_ctx.num_recs;
-            state = State::Encoding;
-            while (State::Encoding == state) {
-                buf.read_from(trans);
-                state = this->frame_buffer_update_ctx.read_encoding(buf);
+            // copy_rect_fn
+            void operator()(Rect rect, uint16_t srcx, uint16_t srcy)
+            {
+                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+                update_lock<FrontAPI> lock(vnc.front);
+                drawable.draw(
+                    RDPScrBlt(rect, 0xCC, srcx, srcy),
+                    Rect(0, 0, vnc.front_width, vnc.front_height)
+                );
             }
-            this->frame_buffer_update_ctx.num_recs = tmp_num_rects;
 
-            const uint32_t encoding = this->frame_buffer_update_ctx.encoding;
+            // rre_fn
+            void operator()(Rect rect, uint8_t const * bitmap_data)
+            {
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(rect, bitmap_data, drawable);
+            }
 
-            switch (encoding) {
-            case 0: /* raw */
+            // zrle_fn
+            void operator()(
+                InStream & zlib_uncompressed_data_stream,
+                ZRLEUpdateContext & zrle_update_context
+            ){
+                vnc.lib_framebuffer_update_zrle(
+                    zlib_uncompressed_data_stream,
+                    zrle_update_context,
+                    drawable
+                );
+            }
+
+            // cursor_fn
+            void operator()(Pointer const & cursor)
             {
-                while (State::Data == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_raw(buf, *this, drawable);
-                }
+                vnc.front.begin_update();
+                vnc.front.set_pointer(cursor);
+                vnc.front.end_update();
             }
-            break;
-            case 1: /* copy rect */
-            {
-                while (State::Data == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_copy_rect(buf, *this, drawable);
-                }
-            }
-            break;
-            case 2: /* RRE */
-            {
-                while (State::Data == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_rre(buf);
-                }
-                while (State::RreData == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_rre_data(buf, *this, drawable);
-                }
-            }
-            break;
-            case 5: /* Hextile */
-            {
-                LOG(LOG_INFO,
-                    "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                    this->frame_buffer_update_ctx.Bpp,
-                    this->frame_buffer_update_ctx.x,
-                    this->frame_buffer_update_ctx.y,
-                    this->frame_buffer_update_ctx.cx,
-                    this->frame_buffer_update_ctx.cy);
-            }
-            break;
-            case 16:    /* ZRLE */
-            {
-                while (State::Data == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_zrle(buf, *this);
-                }
-                while (State::ZrleData == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_zrle_data(buf, *this, drawable);
-                }
-            }
-            break;
-            case 0xffffff11: /* (-239) cursor */
-            {
-                while (State::Data == state) {
-                    buf.read_from(trans);
-                    state = this->frame_buffer_update_ctx
-                      .read_data_cursor(buf, *this, drawable);
-                }
-            }
-            break;
-            default:
-                LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
-                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-            }
+        };
+
+        if (!this->frame_buffer_update_ctx.run(buf, *this, CtxFn{*this, drawable})) {
+            return false;
         }
 
         this->update_screen(Rect(0, 0, this->width, this->height));
-    } // lib_framebuffer_update
+        return true;
+    } // lib_frame_buffer_update
 
 
     class PaletteUpdateCtx
@@ -2994,7 +2996,11 @@ private:
         /* message-type */
         switch (message_type) {
             case 0: /* framebuffer update */
-                this->lib_framebuffer_update(drawable, buf, trans);
+                this->frame_buffer_update_ctx.start(/*Bpp = */nbbytes(this->bpp));
+                while (!this->lib_frame_buffer_update(drawable, buf)
+                    && !this->lib_frame_buffer_update(drawable, buf)) {
+                    buf.read_from(trans);
+                }
             break;
             case 1: /* palette */
                 this->palette_update_ctx.start();
