@@ -1236,6 +1236,73 @@ protected:
     };
 
     PasswordCtx password_ctx;
+    struct UpAndRunningCtx
+    {
+        enum class State
+        {
+            Header,
+            FrameBufferupdate,
+            Palette,
+            ServerCutText,
+        };
+
+        void start() noexcept
+        {
+            this->state = State::Header;
+        }
+
+        bool run(Buf64k & buf, gdi::GraphicApi & drawable, mod_vnc & vnc)
+        {
+            switch (this->state)
+            {
+            case State::Header:
+                if (buf.remaining() < 1) {
+                    return false;
+                }
+
+                this->message_type = buf.av()[0];
+
+                buf.advance(1);
+
+                switch (this->message_type)
+                {
+                    case 0: /* framebuffer update */
+                        vnc.frame_buffer_update_ctx.start(/*Bpp = */nbbytes(vnc.bpp));
+                        this->state = State::FrameBufferupdate;
+                        return vnc.lib_frame_buffer_update(drawable, buf);
+                    case 1: /* palette */
+                        vnc.palette_update_ctx.start();
+                        this->state = State::Palette;
+                        return vnc.lib_palette_update(drawable, buf);
+                    case 2: /* bell */
+                        // TODO bell
+                        return true;
+                    case 3: /* clipboard */ /* ServerCutText */
+                        vnc.clipboard_data_ctx.start(
+                            vnc.enable_clipboard_down
+                         && vnc.get_channel_by_name(channel_names::cliprdr));
+                        this->state = State::ServerCutText;
+                        return vnc.lib_clip_data(buf);
+                    default:
+                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
+                        throw Error(ERR_VNC);
+                }
+                break;
+
+            case State::FrameBufferupdate: return vnc.lib_frame_buffer_update(drawable, buf);
+            case State::Palette:           return vnc.lib_palette_update(drawable, buf);
+            case State::ServerCutText:     return vnc.lib_clip_data(buf);
+            }
+
+            return false;
+        }
+
+    private:
+        State state;
+        uint8_t message_type;
+    };
+
+    UpAndRunningCtx up_and_running_ctx;
 
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
@@ -1294,7 +1361,22 @@ public:
 
             if (!this->event.waked_up_by_time) {
                 try {
-                    this->up_and_running(drawable);
+                    Buf64k buf;
+                    struct Trans : Transport
+                    {
+                        Transport & t;
+                        Trans(Transport & t) : t(t) {}
+                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                        {
+                            return this->t.partial_read(buffer, 1);
+                        }
+                    };
+                    Trans trans(this->t);
+
+                    this->up_and_running_ctx.start();
+                    while (!this->up_and_running_ctx.run(buf, drawable, *this)) {
+                        buf.read_from(trans);
+                    }
                 }
                 catch (const Error & e) {
                     LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
@@ -2065,6 +2147,48 @@ private:
         }
     }
 
+    template<class T>
+    struct BasicResult
+    {
+        static BasicResult fail() noexcept
+        {
+            return BasicResult{};
+        }
+
+        static BasicResult ok(T value) noexcept
+        {
+            return BasicResult{value};
+        }
+
+        bool operator!() const noexcept
+        {
+            return !this->is_ok;
+        }
+
+        explicit operator bool () const noexcept
+        {
+            return this->is_ok;
+        }
+
+        operator T () const noexcept
+        {
+            return this->value;
+        }
+
+    private:
+        BasicResult() noexcept
+          : is_ok(false)
+        {}
+
+        BasicResult(T value) noexcept
+          : is_ok(true)
+          , value(value)
+        {}
+
+        bool is_ok;
+        T value;
+    };
+
     struct FrameBufferUpdateCtx
     {
         enum class State
@@ -2075,6 +2199,8 @@ private:
             ZrleData,
             RreData,
         };
+
+        using Result = BasicResult<State>;
 
         FrameBufferUpdateCtx(Verbose verbose)
           : zstrm{}
@@ -2104,40 +2230,48 @@ private:
         template<class F>
         bool run(Buf64k & buf, mod_vnc & vnc, F && f)
         {
-            switch (this->state)
-            {
-            case State::Header: this->state = this->read_header(buf);
-                break;
-            case State::Encoding: this->state = this->read_encoding(buf);
-                return this->state == State::Header;
-            case State::Data:
-                switch (this->encoding)
+            Result r = Result::fail();
+
+            for (;;) {
+                switch (this->state)
                 {
-                case 0:  /* raw */
-                    this->state = this->read_data_raw(buf, f); break;
-                case 1:  /* copy rect */
-                    this->state = this->read_data_copy_rect(buf, f); break;
-                case 2:  /* RRE */
-                    this->state = this->read_data_rre(buf); break;
-                case 5: /* Hextile */ // TODO unimplemented
-                    LOG(LOG_INFO,
-                        "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                        this->Bpp, this->x, this->y, this->cx, this->cy);
-                    this->state = State::Encoding;
+                case State::Header:
+                    r = this->read_header(buf); break;
+                case State::Encoding:
+                    if (0 == this->num_recs) {
+                        return true;
+                    }
+                    r = this->read_encoding(buf);
                     break;
-                case 16: /* ZRLE */
-                    this->state = this->read_data_zrle(buf); break;
-                case 0xffffff11: /* (-239) cursor */
-                    this->state = this->read_data_cursor(buf, vnc, f); break;
-                default:
-                    LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
-                    throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                case State::Data:
+                    switch (this->encoding)
+                    {
+                    case 0:  /* raw */       r = this->read_data_raw(buf, f); break;
+                    case 1:  /* copy rect */ r = this->read_data_copy_rect(buf, f); break;
+                    case 2:  /* RRE */       r = this->read_data_rre(buf); break;
+                    case 16: /* ZRLE */      r = this->read_data_zrle(buf); break;
+                    case 0xffffff11: /* (-239) cursor */
+                                             r = this->read_data_cursor(buf, vnc, f); break;
+                    case 5: /* Hextile */ // TODO unimplemented
+                        LOG(LOG_INFO,
+                            "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                            this->Bpp, this->x, this->y, this->cx, this->cy);
+                        r = Result::ok(State::Encoding);
+                        break;
+                    default:
+                        LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
+                        throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                    }
+                    break;
+                case State::ZrleData: r = this->read_data_zrle_data(buf, f); break;
+                case State::RreData: r = this->read_data_rre_data(buf, f); break;
                 }
-                break;
-            case State::ZrleData: this->state = this->read_data_zrle_data(buf, f); break;
-            case State::RreData: this->state = this->read_data_rre_data(buf, f); break;
+
+                if (!r) {
+                    return false;
+                }
+                this->state = r;
             }
-            return false;
         }
 
     private:
@@ -2159,15 +2293,16 @@ private:
         std::unique_ptr<uint8_t[]> rre_raw;
 
         z_stream zstrm;
+
         Verbose verbose;
 
-        State read_header(Buf64k & buf) noexcept
+        Result read_header(Buf64k & buf) noexcept
         {
             const size_t sz = 3;
 
             if (buf.remaining() < sz)
             {
-                return State::Header;
+                return Result::fail();
             }
 
             InStream stream(buf.av(sz));
@@ -2175,20 +2310,16 @@ private:
             this->num_recs = stream.in_uint16_be();
 
             buf.advance(sz);
-            return State::Encoding;
+            return Result::ok(State::Encoding);
         }
 
-        State read_encoding(Buf64k & buf) noexcept
+        Result read_encoding(Buf64k & buf) noexcept
         {
-            if (!this->num_recs) {
-                return State::Header;
-            }
-
             const size_t sz = 12;
 
             if (buf.remaining() < sz)
             {
-                return State::Encoding;
+                return Result::fail();
             }
 
             InStream stream(buf.av(sz));
@@ -2203,38 +2334,39 @@ private:
 
             // TODO see why we get these empty rects ?
             // return State::Encoding;
-            return State::Data;
+            return Result::ok(State::Data);
         }
 
         template<class F>
-        State read_data_raw(Buf64k & buf, F && f)
+        Result read_data_raw(Buf64k & buf, F && f)
         {
             size_t const size_line = this->cx * this->Bpp;
             auto const av = buf.av();
 
-            if (av.size() >= size_line) {
-                auto const cy = av.size() / size_line;
-                auto const new_av = av.subarray(0, cy * size_line);
-
-                f(Rect(this->x, this->y, this->cx, cy), new_av);
-
-                this->y += cy;
-                this->cy -= cy;
-
-                buf.advance(new_av.size());
+            if (av.size() < size_line) {
+                return Result::fail();
             }
 
-            return this->cy ? State::Data : State::Encoding;
+            auto const cy = av.size() / size_line;
+            auto const new_av = av.subarray(0, cy * size_line);
+
+            f(Rect(this->x, this->y, this->cx, cy), new_av);
+
+            this->y += cy;
+            this->cy -= cy;
+
+            buf.advance(new_av.size());
+            return Result::ok(this->cy ? State::Data : State::Encoding);
         }
 
         template<class F>
-        State read_data_copy_rect(Buf64k & buf, F && f)
+        Result read_data_copy_rect(Buf64k & buf, F && f)
         {
             const size_t sz = 4;
 
             if (buf.remaining() < sz)
             {
-                return State::Data;
+                return Result::fail();
             }
 
             InStream stream_copy_rect(buf.av(sz));
@@ -2245,16 +2377,16 @@ private:
 
             f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy);
 
-            return State::Encoding;
+            return Result::ok(State::Encoding);
         }
 
-        State read_data_rre(Buf64k & buf)
+        Result read_data_rre(Buf64k & buf)
         {
             const size_t sz = 4 + this->Bpp;
 
             if (buf.remaining() < sz)
             {
-                return State::Data;
+                return Result::fail();
             }
 
             InStream stream_rre(buf.av(sz));
@@ -2274,24 +2406,24 @@ private:
 
             buf.advance(sz);
 
-            return State::RreData;
+            return Result::ok(State::RreData);
         }
 
         template<class F>
-        State read_data_rre_data(Buf64k & buf, F && f)
+        Result read_data_rre_data(Buf64k & buf, F && f)
         {
             if (!this->number_of_subrectangles_remain) {
                 // TODO used MultiRect
                 f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get());
                 this->rre_raw.reset();
-                return State::Encoding;
+                return Result::ok(State::Encoding);
             }
 
             const size_t sz = 8 + this->Bpp;
 
             if (buf.remaining() < sz)
             {
-                return State::RreData;
+                return Result::fail();
             }
 
             --this->number_of_subrectangles_remain;
@@ -2317,16 +2449,16 @@ private:
 
             buf.advance(sz);
 
-            return State::RreData;
+            return Result::ok(State::RreData);
         }
 
-        State read_data_zrle(Buf64k & buf)
+        Result read_data_zrle(Buf64k & buf)
         {
             const size_t sz = 4;
 
             if (buf.remaining() < sz)
             {
-                return State::Data;
+                return Result::fail();
             }
 
             this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
@@ -2348,15 +2480,15 @@ private:
 
             buf.advance(sz);
 
-            return State::ZrleData;
+            return Result::ok(State::ZrleData);
         }
 
         template<class F>
-        State read_data_zrle_data(Buf64k & buf, F && f)
+        Result read_data_zrle_data(Buf64k & buf, F && f)
         {
             if (buf.remaining() < this->zlib_compressed_data_length)
             {
-                return State::ZrleData;
+                return Result::fail();
             }
 
             ZRLEUpdateContext zrle_update_context;
@@ -2417,15 +2549,15 @@ private:
 
             buf.advance(this->zlib_compressed_data_length);
 
-            return State::Encoding;
+            return Result::ok(State::Encoding);
         }
 
         template<class F>
-        State read_data_cursor(Buf64k & buf, mod_vnc & vnc, F && f)
+        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, F && f)
         {
             // TODO see why we get these empty rects ?
             if (this->cx <= 0 && this->cy <= 0) {
-                return State::Encoding;
+                return Result::ok(State::Encoding);
             }
 
             // 7.7.2   Cursor Pseudo-encoding
@@ -2470,7 +2602,7 @@ private:
 
             if (buf.remaining() < sz_pixel_array + sz_bitmask)
             {
-                return State::Data;
+                return Result::fail();
             }
 
             auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
@@ -2536,7 +2668,7 @@ private:
             f(cursor);
 
             buf.advance(sz_pixel_array + sz_bitmask);
-            return State::Encoding;
+            return Result::ok(State::Encoding);
         }
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
@@ -2602,7 +2734,6 @@ private:
         return true;
     } // lib_frame_buffer_update
 
-
     class PaletteUpdateCtx
     {
         enum class State
@@ -2612,27 +2743,31 @@ private:
             SkipData,
         };
 
+        using Result = BasicResult<State>;
+
     public:
         void start()
         {
             this->state = State::Header;
+            this->num_colors = 1; // sentinel
         }
 
         bool run(Buf64k & buf) noexcept
         {
-            switch (this->state)
-            {
-                case State::Header:
-                    this->state = this->read_header(buf);
-                    break;
-                case State::Data:
-                    this->state = this->read_data(buf);
-                    return this->state == State::Header;
-                case State::SkipData:
-                    this->state = this->skip_data(buf);
-                    return this->state == State::Header;
+            for (;;) {
+                Result r = [this, &buf]{switch (this->state) {
+                    case State::Header:   return this->read_header(buf);
+                    case State::Data:     return this->read_data(buf);
+                    case State::SkipData: return this->skip_data(buf);
+                }}();
+                if (!r) {
+                    return false;
+                }
+                if (0 == this->num_colors) {
+                    return true;
+                }
+                this->state = r;
             }
-            return false;
         }
 
         BGRPalette const & get_palette() const noexcept
@@ -2648,11 +2783,11 @@ private:
 
         BGRPalette palette = BGRPalette::classic_332();
 
-        State read_header(Buf64k & buf) noexcept
+        Result read_header(Buf64k & buf) noexcept
         {
             if (buf.remaining() < 4)
             {
-                return State::Header;
+                return Result::fail();
             }
 
             InStream stream(buf.av(4));
@@ -2665,17 +2800,17 @@ private:
             if (this->first_color + this->num_colors > 256) {
                 LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n",
                     this->num_colors);
-                return State::SkipData;
+                return Result::ok(State::SkipData);
             }
 
-            return State::Data;
+            return Result::ok(State::Data);
         }
 
-        State read_data(Buf64k & buf) noexcept
+        Result read_data(Buf64k & buf) noexcept
         {
             if (buf.remaining() < 6)
             {
-                return State::Data;
+                return Result::fail();
             }
 
             InStream stream(buf.av());
@@ -2695,15 +2830,15 @@ private:
 
             buf.advance(n * 6);
 
-            return this->num_colors ? State::Data : State::Header;
+            return Result::ok(State::Data);
         }
 
-        State skip_data(Buf64k & buf) noexcept
+        Result skip_data(Buf64k & buf) noexcept
         {
             auto const n = std::min(buf.remaining(), uint16_t(this->num_colors * 6));
             this->num_colors -= n / 6;
             buf.advance(n);
-            return this->num_colors ? State::Data : State::Header;
+            return Result::ok(State::SkipData);
         }
     };
     PaletteUpdateCtx palette_update_ctx;
@@ -2767,7 +2902,6 @@ private:
         return this->front.get_channel_list().get_by_name(channel_name);
     } // get_channel_by_name
 
-
     class ClipboardDataCtx
     {
         enum class State
@@ -2776,6 +2910,8 @@ private:
             Data,
             SkipData,
         };
+
+        using Result = BasicResult<State>;
 
     public:
         explicit ClipboardDataCtx(Verbose verbose)
@@ -2787,24 +2923,26 @@ private:
         void start(bool clipboard_down_is_really_enabled) noexcept
         {
             this->clipboard_down_is_really_enabled = clipboard_down_is_really_enabled;
+            this->remaining_data_length = 1; // sentinel
             this->state = State::Header;
         }
 
         bool run(Buf64k & buf) noexcept
         {
-            switch (this->state)
-            {
-                case State::Header:
-                    this->state = this->read_header(buf);
-                    break;
-                case State::Data:
-                    this->state = this->read_data(buf);
-                    return this->state == State::Header;
-                case State::SkipData:
-                    this->state = this->skip_data(buf);
-                    return this->state == State::Header;
+            for (;;) {
+                Result r = [this, &buf]{switch (this->state) {
+                    case State::Header:   return this->read_header(buf);
+                    case State::Data:     return this->read_data(buf);
+                    case State::SkipData: return this->skip_data(buf);
+                }}();
+                if (!r) {
+                    return false;
+                }
+                if (0 == this->remaining_data_length) {
+                    return true;
+                }
+                this->state = r;
             }
-            return false;
         }
 
         bool clipboard_is_enabled() const noexcept
@@ -2839,11 +2977,10 @@ private:
 
         bool     to_rdp_clipboard_data_is_utf8_encoded;
 
-        State read_header(Buf64k & buf) noexcept
+        Result read_header(Buf64k & buf) noexcept
         {
-            if (buf.remaining() < 7)
-            {
-                return State::Header;
+            if (buf.remaining() < 7) {
+                return Result::fail();
             }
 
             InStream stream(buf.av(7));
@@ -2859,11 +2996,11 @@ private:
             this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
 
             if (!clipboard_down_is_really_enabled) {
-                return State::SkipData;
+                return Result::ok(State::SkipData);
             }
 
             if (this->data_length < this->to_rdp_clipboard_data.get_capacity()) {
-                return State::Data;
+                return Result::ok(State::Data);
             }
 
             this->to_rdp_clipboard_data.in_skip_bytes(::snprintf(
@@ -2876,11 +3013,15 @@ private:
 
             this->to_rdp_clipboard_data_is_utf8_encoded = true;
 
-            return State::SkipData;
+            return Result::ok(State::SkipData);
         }
 
-        State read_data(Buf64k & buf) noexcept
+        Result read_data(Buf64k & buf) noexcept
         {
+            if (!buf.remaining()) {
+                return Result::fail();
+            }
+
             auto const av = buf.av(std::min<uint32_t>(
                 this->remaining_data_length, buf.remaining()));
 
@@ -2890,7 +3031,7 @@ private:
             buf.advance(av.size());
 
             if (this->remaining_data_length) {
-                return State::Data;
+                return Result::ok(State::Data);
             }
 
             this->to_rdp_clipboard_data_buffer[this->data_length] = '\0';
@@ -2908,16 +3049,20 @@ private:
                 }
             }
 
-            return State::Header;
+            return Result::ok(State::Header);
         }
 
-        State skip_data(Buf64k & buf) noexcept
+        Result skip_data(Buf64k & buf) noexcept
         {
+            if (!buf.remaining()) {
+                return Result::fail();
+            }
+
             const auto number_of_bytes_to_read =
                 std::min<size_t>(this->remaining_data_length, buf.remaining());
             buf.advance(number_of_bytes_to_read);
             this->remaining_data_length -= number_of_bytes_to_read;
-            return this->remaining_data_length ? State::SkipData : State::Header;
+            return Result::ok(State::SkipData);
         }
     };
     ClipboardDataCtx clipboard_data_ctx;
@@ -2972,58 +3117,6 @@ private:
 
         return true;
     } // lib_clip_data
-
-    void up_and_running(gdi::GraphicApi & drawable)
-    {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
-        while (!buf.remaining()) {
-            buf.read_from(trans);
-        }
-        uint8_t const message_type = buf.av()[0];
-        buf.advance(1);
-
-        /* message-type */
-        switch (message_type) {
-            case 0: /* framebuffer update */
-                this->frame_buffer_update_ctx.start(/*Bpp = */nbbytes(this->bpp));
-                while (!this->lib_frame_buffer_update(drawable, buf)
-                    && !this->lib_frame_buffer_update(drawable, buf)) {
-                    buf.read_from(trans);
-                }
-            break;
-            case 1: /* palette */
-                this->palette_update_ctx.start();
-                while (!this->lib_palette_update(drawable, buf)) {
-                    buf.read_from(trans);
-                }
-            break;
-            case 2: /* bell */
-                // TODO bell
-            break;
-            case 3: /* clipboard */ /* ServerCutText */
-                this->clipboard_data_ctx.start(
-                    this->enable_clipboard_down
-                 && this->get_channel_by_name(channel_names::cliprdr));
-                while (!this->lib_clip_data(buf)) {
-                    buf.read_from(trans);
-                }
-            break;
-            default:
-                LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
-            break;
-        }
-    }
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
