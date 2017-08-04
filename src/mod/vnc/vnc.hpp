@@ -61,7 +61,6 @@ struct mod_vnc : public InternalMod, private NotifyApi
 
     /* mod data */
     char mod_name[256];
-    BGRPalette palette;
     int vnc_desktop;
     char username[256];
     char password[256];
@@ -238,7 +237,6 @@ public:
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
     , mod_name{0}
-    , palette(BGRPalette::classic_332())
     , vnc_desktop(0)
     , username{0}
     , password{0}
@@ -754,7 +752,7 @@ public:
 
         this->front.begin_update();
         RDPOpaqueRect orect(screen_rect, RDPColor{});
-        drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette));
+        drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
         this->front.end_update();
 
         this->state = UP_AND_RUNNING;
@@ -2603,7 +2601,7 @@ private:
     } // lib_framebuffer_update
 
 
-    struct PaletteUpdateCtx
+    class PaletteUpdateCtx
     {
         enum class State
         {
@@ -2611,10 +2609,44 @@ private:
             Data,
             SkipData,
         };
+
+    public:
+        void start()
+        {
+            this->state = State::Header;
+        }
+
+        bool run(Buf64k & buf) noexcept
+        {
+            switch (this->state)
+            {
+                case State::Header:
+                    this->state = this->read_header(buf);
+                    break;
+                case State::Data:
+                    this->state = this->read_data(buf);
+                    return this->state == State::Header;
+                case State::SkipData:
+                    this->state = this->skip_data(buf);
+                    return this->state == State::Header;
+            }
+            return false;
+        }
+
+        BGRPalette const & get_palette() const noexcept
+        {
+            return this->palette;
+        }
+
+    private:
+        State state;
+
         uint16_t first_color;
         uint16_t num_colors;
 
-        State read_header(Buf64k & buf)
+        BGRPalette palette = BGRPalette::classic_332();
+
+        State read_header(Buf64k & buf) noexcept
         {
             if (buf.remaining() < 4)
             {
@@ -2637,7 +2669,7 @@ private:
             return State::Data;
         }
 
-        State read_data(Buf64k & buf, BGRPalette & palette)
+        State read_data(Buf64k & buf) noexcept
         {
             if (buf.remaining() < 6)
             {
@@ -2656,7 +2688,7 @@ private:
                 const int b = stream.in_uint16_be() >> 8;
                 const int g = stream.in_uint16_be() >> 8;
                 const int r = stream.in_uint16_be() >> 8;
-                palette.set_color(this->first_color, BGRColor(b, g, r));
+                this->palette.set_color(this->first_color, BGRColor(b, g, r));
             }
 
             buf.advance(n * 6);
@@ -2664,7 +2696,7 @@ private:
             return this->num_colors ? State::Data : State::Header;
         }
 
-        State skip_data(Buf64k & buf)
+        State skip_data(Buf64k & buf) noexcept
         {
             auto const n = std::min(buf.remaining(), uint16_t(this->num_colors * 6));
             this->num_colors -= n / 6;
@@ -2674,28 +2706,18 @@ private:
     };
     PaletteUpdateCtx palette_update_ctx;
 
-    void lib_palette_update(gdi::GraphicApi & drawable, Buf64k & buf, Transport & trans)
+    bool lib_palette_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
-        using State = PaletteUpdateCtx::State;
-        auto state = State::Header;
-        while (State::Header == state) {
-            buf.read_from(trans);
-            state = this->palette_update_ctx.read_header(buf);
-        }
-        while (State::Data == state) {
-            buf.read_from(trans);
-            state = this->palette_update_ctx.read_data(buf, this->palette);
-        }
-        while (State::SkipData == state) {
-            buf.read_from(trans);
-            state = this->palette_update_ctx.skip_data(buf);
+        if (!this->palette_update_ctx.run(buf)) {
+            return false;
         }
 
-        this->front.set_palette(this->palette);
+        this->front.set_palette(this->palette_update_ctx.get_palette());
         this->front.begin_update();
-        RDPColCache cmd(0, this->palette);
-        drawable.draw(cmd);
+        drawable.draw(RDPColCache(0, this->palette_update_ctx.get_palette()));
         this->front.end_update();
+
+        return true;
     } // lib_palette_update
 
     /******************************************************************************/
@@ -2766,7 +2788,7 @@ private:
             this->state = State::Header;
         }
 
-        bool run(Buf64k & buf)
+        bool run(Buf64k & buf) noexcept
         {
             switch (this->state)
             {
@@ -2855,7 +2877,7 @@ private:
             return State::SkipData;
         }
 
-        State read_data(Buf64k & buf)
+        State read_data(Buf64k & buf) noexcept
         {
             auto const av = buf.av(std::min<uint32_t>(
                 this->remaining_data_length, buf.remaining()));
@@ -2887,7 +2909,7 @@ private:
             return State::Header;
         }
 
-        State skip_data(Buf64k & buf)
+        State skip_data(Buf64k & buf) noexcept
         {
             const auto number_of_bytes_to_read =
                 std::min<size_t>(this->remaining_data_length, buf.remaining());
@@ -2975,7 +2997,10 @@ private:
                 this->lib_framebuffer_update(drawable, buf, trans);
             break;
             case 1: /* palette */
-                this->lib_palette_update(drawable, buf, trans);
+                this->palette_update_ctx.start();
+                while (!this->lib_palette_update(drawable, buf)) {
+                    buf.read_from(trans);
+                }
             break;
             case 2: /* bell */
                 // TODO bell
