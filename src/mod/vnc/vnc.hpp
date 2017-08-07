@@ -293,8 +293,13 @@ public:
         };
 
     public:
+        void start()
+        {
+            this->state = State::Size;
+        }
+
         template<class F>
-        bool read(Buf64k & buf, F && f)
+        bool run(Buf64k & buf, F && f)
         {
             switch (this->state)
             {
@@ -318,7 +323,7 @@ public:
         }
 
     private:
-        State state = State::Size;
+        State state;
         uint32_t len;
 
         State read_size(Buf64k & buf)
@@ -368,7 +373,49 @@ public:
         }
     };
 
-    struct AuthResponseCtx
+    template<class T>
+    struct BasicResult
+    {
+        static BasicResult fail() noexcept
+        {
+            return BasicResult{};
+        }
+
+        static BasicResult ok(T value) noexcept
+        {
+            return BasicResult{value};
+        }
+
+        bool operator!() const noexcept
+        {
+            return !this->is_ok;
+        }
+
+        explicit operator bool () const noexcept
+        {
+            return this->is_ok;
+        }
+
+        operator T () const noexcept
+        {
+            return this->value;
+        }
+
+    private:
+        BasicResult() noexcept
+          : is_ok(false)
+        {}
+
+        BasicResult(T value) noexcept
+          : is_ok(true)
+          , value(value)
+        {}
+
+        bool is_ok;
+        T value;
+    };
+
+    class AuthResponseCtx
     {
         enum class State
         {
@@ -377,41 +424,64 @@ public:
             Finish,
         };
 
+        using Result = BasicResult<State>;
+
+    public:
+        void start()
+        {
+            this->state = State::Header;
+        }
+
+        template<class F> // f(bool status, array_view_u8 raison_fail)
+        bool run(Buf64k & buf, F && f)
+        {
+            switch (this->state)
+            {
+                case State::Header:
+                    if (auto r = this->read_header(buf)) {
+                        if (r == State::Finish) {
+                            f(true, array_view_u8{});
+                            return true;
+                        }
+                        this->reason.start();
+                        this->state = r;
+                        REDEMPTION_CXX_FALLTHROUGH;
+                    }
+                    else {
+                        return false;
+                    }
+                case State::ReasonFail:
+                    return this->reason.run(buf, [&f](array_view_u8 av){ f(false, av); });
+                case State::Finish:
+                    return true;
+            }
+        }
+
+    private:
         using ReasonCtx = MessageCtx<256>;
 
+        State state;
         ReasonCtx reason;
 
-        State read_header(Buf64k & buf)
+        Result read_header(Buf64k & buf)
         {
             const size_t sz = 4;
 
             if (buf.remaining() < sz)
             {
-                return State::Header;
+                return Result::fail();
             }
 
             uint32_t const i = InStream(buf.av(sz)).in_uint32_be();
 
             buf.advance(sz);
 
-            return i ? State::ReasonFail : State::Finish;
-        }
-
-        State read_reason_fail(Buf64k & buf)
-        {
-            if (this->reason.read(buf, [](array_view_u8 av){
-                LOG(LOG_INFO, "Reason for the connection failure: %.*s",
-                    int(av.size()), byte_ptr(av.data()).to_charp());
-            })) {
-                return State::Finish;
-            }
-
-            return State::ReasonFail;
+            return Result::ok(i ? State::ReasonFail : State::Finish);
         }
     };
     AuthResponseCtx auth_response_ctx;
 
-    struct MsLogonCtx
+    class MsLogonCtx
     {
         enum class State
         {
@@ -419,9 +489,23 @@ public:
             Finish,
         };
 
+    public:
+        void start() noexcept
+        {
+            this->state = State::Data;
+        }
+
+        bool run(Buf64k & buf)
+        {
+            return State::Finish == this->read_data(buf);
+        }
+
         uint64_t gen;
         uint64_t mod;
         uint64_t resp;
+
+    private:
+        State state;
 
         State read_data(Buf64k & buf)
         {
@@ -444,27 +528,11 @@ public:
     };
     MsLogonCtx ms_logon_ctx;
 
-    void ms_logon()
+    bool ms_logon(Buf64k & buf)
     {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
-        using State = MsLogonCtx::State;
-        auto state = State::Data;
-        while (State::Data == state) {
-            buf.read_from(trans);
-            state = this->ms_logon_ctx.read_data(buf);
+        if (!this->ms_logon_ctx.run(buf)) {
+            return false;
         }
-
 
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "MS-Logon with following values:");
@@ -500,53 +568,10 @@ public:
         this->t.send(out_stream.get_data(), out_stream.get_offset());
         // sec result
 
-        {
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Waiting for password ack");
-            }
-            using State = AuthResponseCtx::State;
-            auto state = State::Header;
-            while (State::Header == state) {
-                buf.read_from(trans);
-                state = this->auth_response_ctx.read_header(buf);
-            }
-            if (State::ReasonFail == state) {
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "MS LOGON password ok\n");
-                }
-                while (State::ReasonFail == state) {
-                    buf.read_from(trans);
-                    state = this->auth_response_ctx.read_reason_fail(buf);
-                }
-            }
-            else {
-                LOG(LOG_INFO, "MS LOGON password FAILED\n");
-            }
-        }
+        return true;
     }
 
     MessageCtx<8192> invalid_auth_ctx;
-
-    void invalid_auth()
-    {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
-        while (!this->invalid_auth_ctx.read(buf, [](array_view_u8 av){
-            hexdump_c(av.data(), av.size());
-        })) {
-            buf.read_from(trans);
-        }
-    }
 
     // 7.3.2   ServerInit
     // ------------------
@@ -624,7 +649,7 @@ public:
     // If the Tight Security Type is activated, the server init
     // message is extended with an interaction capabilities section.
 
-    struct ServerInitCtx
+    class ServerInitCtx
     {
         enum class State
         {
@@ -632,6 +657,33 @@ public:
             EncodingName,
         };
 
+    public:
+        void start()
+        {
+            this->state = State::PixelFormat;
+        }
+
+        bool run(Buf64k & buf, mod_vnc & vnc)
+        {
+            switch (this->state)
+            {
+            case State::PixelFormat:
+                this->state = this->read_pixel_format(buf, vnc);
+                if (this->state != State::EncodingName) {
+                    break;
+                }
+                REDEMPTION_CXX_FALLTHROUGH;
+            case State::EncodingName:
+                this->state = this->read_encoding_name(buf, vnc);
+                if (this->state == State::PixelFormat) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+    private:
+        State state;
         uint32_t lg;
 
         State read_pixel_format(Buf64k & buf, mod_vnc & vnc)
@@ -686,32 +738,6 @@ public:
         }
     };
     ServerInitCtx server_init_ctx;
-
-    void server_init()
-    {
-        Buf64k buf;
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
-        using State = ServerInitCtx::State;
-        auto state = State::PixelFormat;
-        while (State::PixelFormat == state) {
-            buf.read_from(trans);
-            state = this->server_init_ctx.read_pixel_format(buf, *this);
-        }
-        while (State::EncodingName == state) {
-            buf.read_from(trans);
-            state = this->server_init_ctx.read_encoding_name(buf, *this);
-        }
-    }
 
     void initial_clear_screen(gdi::GraphicApi & drawable)
     {
@@ -1490,62 +1516,134 @@ public:
                             LOG(LOG_INFO, "Waiting for password ack");
                         }
 
-                        using State = AuthResponseCtx::State;
-                        auto state = State::Header;
-                        while (State::Header == state) {
+                        bool password_failed = false;
+                        this->auth_response_ctx.start();
+                        while (!this->auth_response_ctx.run(buf, [this, &password_failed](bool status, byte_array bytes){
+                            if (status) {
+                                if (bool(this->verbose & Verbose::basic_trace)) {
+                                    LOG(LOG_INFO, "vnc password ok\n");
+                                }
+                            }
+                            else {
+                                LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
+                                    int(bytes.size()), bytes.to_charp());
+
+                                if (this->allow_authentification_retries)
+                                {
+                                    this->t.disconnect();
+
+                                    this->state = ASK_PASSWORD;
+                                    this->event.object_and_time = true;
+                                    this->event.set();
+
+                                    password_failed = true;
+                                }
+                                else
+                                {
+                                    throw Error(ERR_VNC_CONNECTION_ERROR);
+                                }
+                            }
+                        })) {
                             buf.read_from(trans);
-                            state = this->auth_response_ctx.read_header(buf);
                         }
-                        if (State::ReasonFail == state) {
-                            LOG(LOG_ERR, "vnc password failed");
 
-                            while (State::ReasonFail == state) {
-                                buf.read_from(trans);
-                                state = this->auth_response_ctx.read_reason_fail(buf);
-                            }
-
-                            if (this->allow_authentification_retries)
-                            {
-                                this->t.disconnect();
-
-                                this->state = ASK_PASSWORD;
-                                this->event.object_and_time = true;
-                                this->event.set();
-
-                                return;
-                            }
-                            else
-                            {
-                                throw Error(ERR_VNC_CONNECTION_ERROR);
-                            }
-                        }
-                        else {
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "vnc password ok\n");
-                            }
+                        if (password_failed) {
+                            return;
                         }
                     }
                     break;
                     case -6: // MS-LOGON
                     {
                         LOG(LOG_INFO, "VNC MS-LOGON Auth");
-                        this->ms_logon();
+
+                        Buf64k buf;
+                        struct Trans : Transport
+                        {
+                            Transport & t;
+                            Trans(Transport & t) : t(t) {}
+                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                            {
+                                return this->t.partial_read(buffer, 1);
+                            }
+                        };
+                        Trans trans(this->t);
+
+                        this->ms_logon_ctx.start();
+                        while (!this->ms_logon(buf)) {
+                            buf.read_from(trans);
+                        }
+
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            LOG(LOG_INFO, "Waiting for password ack");
+                        }
+
+                        this->auth_response_ctx.start();
+                        while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                            if (status) {
+                                if (bool(this->verbose & Verbose::basic_trace)) {
+                                    LOG(LOG_INFO, "MS LOGON password ok\n");
+                                }
+                            }
+                            else {
+                                LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
+                                    int(bytes.size()), bytes.to_charp());
+                            }
+                        })) {
+                            buf.read_from(trans);
+                        }
                     }
                     break;
                     case 0:
                     {
                         LOG(LOG_INFO, "VNC INVALID Auth");
-                        this->invalid_auth();
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
 
+                        Buf64k buf;
+                        struct Trans : Transport
+                        {
+                            Transport & t;
+                            Trans(Transport & t) : t(t) {}
+                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                            {
+                                return this->t.partial_read(buffer, 1);
+                            }
+                        };
+                        Trans trans(this->t);
+
+                        this->invalid_auth_ctx.start();
+                        while (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                            hexdump_c(av.data(), av.size());
+                        })) {
+                            buf.read_from(trans);
+                        }
+
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                     default:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
+
                 this->t.send("\x01", 1); // share flag
 
-                this->server_init();
+                // server_init()
+                {
+                    Buf64k buf;
+                    struct Trans : Transport
+                    {
+                        Transport & t;
+                        Trans(Transport & t) : t(t) {}
+                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                        {
+                            return this->t.partial_read(buffer, 1);
+                        }
+                    };
+                    Trans trans(this->t);
+
+                    this->server_init_ctx.start();
+                    while (!this->server_init_ctx.run(buf, *this)) {
+                        buf.read_from(trans);
+                    }
+                }
 
                 // should be connected
 
@@ -2146,48 +2244,6 @@ private:
             }
         }
     }
-
-    template<class T>
-    struct BasicResult
-    {
-        static BasicResult fail() noexcept
-        {
-            return BasicResult{};
-        }
-
-        static BasicResult ok(T value) noexcept
-        {
-            return BasicResult{value};
-        }
-
-        bool operator!() const noexcept
-        {
-            return !this->is_ok;
-        }
-
-        explicit operator bool () const noexcept
-        {
-            return this->is_ok;
-        }
-
-        operator T () const noexcept
-        {
-            return this->value;
-        }
-
-    private:
-        BasicResult() noexcept
-          : is_ok(false)
-        {}
-
-        BasicResult(T value) noexcept
-          : is_ok(true)
-          , value(value)
-        {}
-
-        bool is_ok;
-        T value;
-    };
 
     struct FrameBufferUpdateCtx
     {
