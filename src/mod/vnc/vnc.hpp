@@ -165,6 +165,14 @@ private:
         UP_AND_RUNNING,
         WAIT_PASSWORD,
         WAIT_SECURITY_TYPES,
+        WAIT_SECURITY_TYPES_LEVEL,
+        WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM,
+        WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE,
+        WAIT_SECURITY_TYPES_MS_LOGON,
+        WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE,
+        WAIT_SECURITY_TYPES_INVALI_AUTH,
+        SERVER_INIT,
+        SERVER_INIT_RESPONSE,
         WAIT_CLIENT_UP_AND_RUNNING
     };
 
@@ -1235,7 +1243,7 @@ protected:
         number_of_encodings = (stream.get_offset() - stream_offset) / 4;
     }
 
-    struct PasswordCtx
+    class PasswordCtx
     {
         enum class State
         {
@@ -1243,9 +1251,23 @@ protected:
             Finish,
         };
 
+    public:
         array_view_u8 server_random;
 
-        State read_random_number(Buf64k & buf)
+        void start() noexcept
+        {
+            this->state = State::RandomKey;
+        }
+
+        bool run(Buf64k & buf) noexcept
+        {
+            return State::Finish == this->read_random_number(buf);
+        }
+
+    private:
+        State state;
+
+        State read_random_number(Buf64k & buf) noexcept
         {
             const size_t sz = 16;
 
@@ -1272,7 +1294,7 @@ protected:
             ServerCutText,
         };
 
-        void start() noexcept
+        void restart() noexcept
         {
             this->state = State::Header;
         }
@@ -1324,14 +1346,52 @@ protected:
         }
 
     private:
-        State state;
+        State state = State::Header;
         uint8_t message_type;
     };
 
     UpAndRunningCtx up_and_running_ctx;
 
+    Buf64k buf;
+
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    {
+        struct Trans : Transport
+        {
+            Transport & t;
+            Trans(Transport & t) : t(t) {}
+            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+            {
+                return this->t.partial_read(buffer, 1);
+            }
+        };
+        Trans trans(this->t);
+
+        if (this->state == UP_AND_RUNNING && !this->event.waked_up_by_time) {
+            while (!this->draw_event_impl(drawable)) {
+                this->buf.read_from(trans);
+            }
+        }
+        else {
+            this->draw_event_impl(drawable);
+        }
+
+        while (
+        this->state == WAIT_SECURITY_TYPES_LEVEL||
+        this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM||
+        this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE||
+        this->state == WAIT_SECURITY_TYPES_MS_LOGON||
+        this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE||
+        this->state == WAIT_SECURITY_TYPES_INVALI_AUTH||
+        this->state == SERVER_INIT||
+        this->state == SERVER_INIT_RESPONSE)
+        this->draw_event_impl(drawable);
+        this->check_timeout();
+    }
+
+private:
+    bool draw_event_impl(gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & Verbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
@@ -1387,30 +1447,19 @@ public:
 
             if (!this->event.waked_up_by_time) {
                 try {
-                    Buf64k buf;
-                    struct Trans : Transport
-                    {
-                        Transport & t;
-                        Trans(Transport & t) : t(t) {}
-                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                        {
-                            return this->t.partial_read(buffer, 1);
-                        }
-                    };
-                    Trans trans(this->t);
-
-                    this->up_and_running_ctx.start();
-                    while (!this->up_and_running_ctx.run(buf, drawable, *this)) {
-                        buf.read_from(trans);
+                    if (!this->up_and_running_ctx.run(buf, drawable, *this)) {
+                        return false;
                     }
+                    this->up_and_running_ctx.restart();
+                    return true;
                 }
                 catch (const Error & e) {
-                    LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
+                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
                     this->event.signal = BACK_EVENT_NEXT;
                     this->front.must_be_stop_capture();
                 }
                 catch (...) {
-                    LOG(LOG_INFO, "unexpected exception raised in VNC");
+                    LOG(LOG_ERR, "unexpected exception raised in VNC");
                     this->event.signal = BACK_EVENT_NEXT;
                     this->front.must_be_stop_capture();
                 }
@@ -1438,7 +1487,6 @@ public:
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
-                Buf64k buf;
                 struct Trans : Transport
                 {
                     Transport & t;
@@ -1467,6 +1515,23 @@ public:
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
 
+                this->state = WAIT_SECURITY_TYPES_LEVEL;
+            }
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_LEVEL:
+            {
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
                 while (buf.remaining() < 4) {
                     buf.read_from(trans);
                 }
@@ -1481,365 +1546,423 @@ public:
 
                 switch (security_level){
                     case 1: // none
+                        this->state = SERVER_INIT;
                         break;
                     case 2: // the password and the server random
-                    {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Receiving VNC Server Random");
-                        }
-
-                        {
-                            using State = PasswordCtx::State;
-                            auto state = State::RandomKey;
-                            while (State::RandomKey == state) {
-                                buf.read_from(trans);
-                                state = this->password_ctx.read_random_number(buf);
-                            }
-
-                            char key[12] = {};
-
-                            // key is simply password padded with nulls
-                            strncpy(key, this->password, 8);
-                            rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
-                            auto const random_buf = this->password_ctx.server_random.data();
-                            rfbDes(random_buf, random_buf);
-                            rfbDes(random_buf + 8, random_buf + 8);
-
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "Sending Password");
-                            }
-                            this->t.send(random_buf, 16);
-                        }
-
-                        // sec result
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Waiting for password ack");
-                        }
-
-                        bool password_failed = false;
-                        this->auth_response_ctx.start();
-                        while (!this->auth_response_ctx.run(buf, [this, &password_failed](bool status, byte_array bytes){
-                            if (status) {
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "vnc password ok\n");
-                                }
-                            }
-                            else {
-                                LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
-                                    int(bytes.size()), bytes.to_charp());
-
-                                if (this->allow_authentification_retries)
-                                {
-                                    this->t.disconnect();
-
-                                    this->state = ASK_PASSWORD;
-                                    this->event.object_and_time = true;
-                                    this->event.set();
-
-                                    password_failed = true;
-                                }
-                                else
-                                {
-                                    throw Error(ERR_VNC_CONNECTION_ERROR);
-                                }
-                            }
-                        })) {
-                            buf.read_from(trans);
-                        }
-
-                        if (password_failed) {
-                            return;
-                        }
-                    }
-                    break;
+                        this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
+                        break;
                     case -6: // MS-LOGON
-                    {
-                        LOG(LOG_INFO, "VNC MS-LOGON Auth");
-
-                        Buf64k buf;
-                        struct Trans : Transport
-                        {
-                            Transport & t;
-                            Trans(Transport & t) : t(t) {}
-                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                            {
-                                return this->t.partial_read(buffer, 1);
-                            }
-                        };
-                        Trans trans(this->t);
-
-                        this->ms_logon_ctx.start();
-                        while (!this->ms_logon(buf)) {
-                            buf.read_from(trans);
-                        }
-
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Waiting for password ack");
-                        }
-
-                        this->auth_response_ctx.start();
-                        while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
-                            if (status) {
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "MS LOGON password ok\n");
-                                }
-                            }
-                            else {
-                                LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
-                                    int(bytes.size()), bytes.to_charp());
-                            }
-                        })) {
-                            buf.read_from(trans);
-                        }
-                    }
-                    break;
+                        this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                        break;
                     case 0:
-                    {
-                        LOG(LOG_INFO, "VNC INVALID Auth");
-
-                        Buf64k buf;
-                        struct Trans : Transport
-                        {
-                            Transport & t;
-                            Trans(Transport & t) : t(t) {}
-                            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                            {
-                                return this->t.partial_read(buffer, 1);
-                            }
-                        };
-                        Trans trans(this->t);
-
-                        this->invalid_auth_ctx.start();
-                        while (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
-                            hexdump_c(av.data(), av.size());
-                        })) {
-                            buf.read_from(trans);
-                        }
-
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
-                    }
+                        this->state = WAIT_SECURITY_TYPES_INVALI_AUTH;
+                        break;
                     default:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
-
-                this->t.send("\x01", 1); // share flag
-
-                // server_init()
-                {
-                    Buf64k buf;
-                    struct Trans : Transport
-                    {
-                        Transport & t;
-                        Trans(Transport & t) : t(t) {}
-                        std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                        {
-                            return this->t.partial_read(buffer, 1);
-                        }
-                    };
-                    Trans trans(this->t);
-
-                    this->server_init_ctx.start();
-                    while (!this->server_init_ctx.run(buf, *this)) {
-                        buf.read_from(trans);
-                    }
-                }
-
-                // should be connected
-
-                {
-                // 7.4.1   SetPixelFormat
-                // ----------------------
-                // Sets the format in which pixel values should be sent in
-                // FramebufferUpdate messages. If the client does not send
-                // a SetPixelFormat message then the server sends pixel values
-                // in its natural format as specified in the ServerInit message
-                // (ServerInit).
-
-                // If true-colour-flag is zero (false) then this indicates that
-                // a "colour map" is to be used. The server can set any of the
-                // entries in the colour map using the SetColourMapEntries
-                // message (SetColourMapEntries). Immediately after the client
-                // has sent this message the colour map is empty, even if
-                // entries had previously been set by the server.
-
-                // Note that a client must not have an outstanding
-                // FramebufferUpdateRequest when it sends SetPixelFormat
-                // as it would be impossible to determine if the next *
-                // FramebufferUpdate is using the new or the previous pixel
-                // format.
-
-                    StaticOutStream<20> stream;
-                    // Set Pixel format
-                    stream.out_uint8(0);
-
-                    // Padding 3 bytes
-                    stream.out_uint8(0);
-                    stream.out_uint8(0);
-                    stream.out_uint8(0);
-
-                    // VNC pixel_format capabilities
-                    // -----------------------------
-                    // bits per pixel  : 1 byte
-                    // color depth     : 1 byte
-                    // endianess       : 1 byte (0 = LE, 1 = BE)
-                    // true color flag : 1 byte
-                    // red max         : 2 bytes
-                    // green max       : 2 bytes
-                    // blue max        : 2 bytes
-                    // red shift       : 1 bytes
-                    // green shift     : 1 bytes
-                    // blue shift      : 1 bytes
-                    // padding         : 3 bytes
-
-                    // 8 bpp
-                    // -----
-                    // "\x08\x08\x00"
-                    // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                    // "\0\0\0"
-
-                    // 15 bpp
-                    // ------
-                    // "\x10\x0F\x00"
-                    // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
-                    // "\0\0\0"
-
-                    // 24 bpp
-                    // ------
-                    // "\x20\x18\x00"
-                    // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
-                    // "\0\0\0"
-
-                    // 16 bpp
-                    // ------
-                    // "\x10\x10\x00"
-                    // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
-                    // "\0\0\0"
-
-                    const char * pixel_format =
-                        "\x10" // bits per pixel  : 1 byte =  16
-                        "\x10" // color depth     : 1 byte =  16
-                        "\x00" // endianess       : 1 byte =  LE
-                        "\x01" // true color flag : 1 byte = yes
-                        "\x00\x1F" // red max     : 2 bytes = 31
-                        "\x00\x3F" // green max   : 2 bytes = 63
-                        "\x00\x1F" // blue max    : 2 bytes = 31
-                        "\x0B" // red shift       : 1 bytes = 11
-                        "\x05" // green shift     : 1 bytes =  5
-                        "\x00" // blue shift      : 1 bytes =  0
-                        "\0\0\0"; // padding      : 3 bytes
-                    stream.out_copy_bytes(pixel_format, 16);
-                    this->t.send(stream.get_data(), stream.get_offset());
-
-                    this->bpp = 16;
-                    this->depth  = 16;
-                    this->endianess = 0;
-                    this->true_color_flag = 1;
-                    this->red_max       = 0x1F;
-                    this->green_max     = 0x3F;
-                    this->blue_max      = 0x1F;
-                    this->red_shift     = 0x0B;
-                    this->green_shift   = 0x05;
-                    this->blue_shift    = 0;
-                }
-
-                // 7.4.2   SetEncodings
-                // --------------------
-
-                // Sets the encoding types in which pixel data can be sent by
-                // the server. The order of the encoding types given in this
-                // message is a hint by the client as to its preference (the
-                // first encoding specified being most preferred). The server
-                // may or may not choose to make use of this hint. Pixel data
-                // may always be sent in raw encoding even if not specified
-                // explicitly here.
-
-                // In addition to genuine encodings, a client can request
-                // "pseudo-encodings" to declare to the server that it supports
-                // certain extensions to the protocol. A server which does not
-                // support the extension will simply ignore the pseudo-encoding.
-                // Note that this means the client must assume that the server
-                // does not support the extension until it gets some extension-
-                // -specific confirmation from the server.
-                {
-                    const char * encodings           = this->encodings.c_str();
-                    uint16_t     number_of_encodings = 0;
-
-                    // SetEncodings
-                    StaticOutStream<32768> stream;
-                    stream.out_uint8(2);
-                    stream.out_uint8(0);
-
-                    uint32_t number_of_encodings_offset = stream.get_offset();
-                    stream.out_clear_bytes(2);
-
-                    this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
-
-                    if (!number_of_encodings)
-                    {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
-                        }
-
-                        stream.out_uint32_be(0);            // raw
-                        stream.out_uint32_be(1);            // copy rect
-                        stream.out_uint32_be(2);            // RRE
-                        stream.out_uint32_be(0xffffff11);   // (-239) cursor
-                        number_of_encodings = 4;
-                    }
-
-                    stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
-                    this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
-                }
-
-                switch (this->front.server_resize(this->width, this->height, this->bpp)){
-                case FrontAPI::ResizeResult::instant_done:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "no resizing needed");
-                    }
-                    // no resizing needed
-                    this->state = DO_INITIAL_CLEAR_SCREEN;
-                    this->event.object_and_time = true;
-                    this->event.set();
-                    break;
-                case FrontAPI::ResizeResult::no_need:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "no resizing needed");
-                    }
-                    // no resizing needed
-                    this->state = DO_INITIAL_CLEAR_SCREEN;
-                    this->event.object_and_time = true;
-                    this->event.set();
-                    break;
-                case FrontAPI::ResizeResult::done:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "resizing done");
-                    }
-                    // resizing done
-                    this->front_width  = this->width;
-                    this->front_height = this->height;
-
-                    this->state = WAIT_CLIENT_UP_AND_RUNNING;
-                    this->event.object_and_time = true;
-
-                    this->is_first_membelt = true;
-                    break;
-                case FrontAPI::ResizeResult::fail:
-                    // resizing failed
-                    // thow an Error ?
-                    LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-                    throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
-                }
             }
             break;
-        case WAIT_CLIENT_UP_AND_RUNNING:
-                LOG(LOG_WARNING, "Waiting for client be come up and running");
+
+        case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "Receiving VNC Server Random");
+            }
+
+            {
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->password_ctx.start();
+                while (!this->password_ctx.run(this->buf)) {
+                    buf.read_from(trans);
+                }
+
+                char key[12] = {};
+
+                // key is simply password padded with nulls
+                strncpy(key, this->password, 8);
+                rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
+                auto const random_buf = this->password_ctx.server_random.data();
+                rfbDes(random_buf, random_buf);
+                rfbDes(random_buf + 8, random_buf + 8);
+
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Sending Password");
+                }
+                this->t.send(random_buf, 16);
+            }
+            this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE:
+            {
+                // sec result
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Waiting for password ack");
+                }
+
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->auth_response_ctx.start();
+                while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                    if (status) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            LOG(LOG_INFO, "vnc password ok\n");
+                        }
+                    }
+                    else {
+                        LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
+                            int(bytes.size()), bytes.to_charp());
+
+                        if (this->allow_authentification_retries)
+                        {
+                            this->t.disconnect();
+
+                            this->state = ASK_PASSWORD;
+                            this->event.object_and_time = true;
+                            this->event.set();
+                        }
+                        else
+                        {
+                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                        }
+                    }
+                })) {
+                    buf.read_from(trans);
+                }
+
+                this->state = SERVER_INIT;
+            }
             break;
+
+        case WAIT_SECURITY_TYPES_MS_LOGON:
+            {
+                LOG(LOG_INFO, "VNC MS-LOGON Auth");
+
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->ms_logon_ctx.start();
+                while (!this->ms_logon(buf)) {
+                    buf.read_from(trans);
+                }
+            }
+            this->state = WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE:
+            {
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Waiting for password ack");
+                }
+
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->auth_response_ctx.start();
+                while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                    if (status) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            LOG(LOG_INFO, "MS LOGON password ok\n");
+                        }
+                    }
+                    else {
+                        LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
+                            int(bytes.size()), bytes.to_charp());
+                    }
+                })) {
+                    buf.read_from(trans);
+                }
+            }
+            this->state = SERVER_INIT;
+            break;
+
+        case WAIT_SECURITY_TYPES_INVALI_AUTH:
+            {
+                LOG(LOG_INFO, "VNC INVALID Auth");
+
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->invalid_auth_ctx.start();
+                while (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                    hexdump_c(av.data(), av.size());
+                })) {
+                    buf.read_from(trans);
+                }
+
+                throw Error(ERR_VNC_CONNECTION_ERROR);
+            }
+            break;
+
+        case SERVER_INIT:
+            this->t.send("\x01", 1); // share flag
+            this->state = SERVER_INIT_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case SERVER_INIT_RESPONSE:
+            {
+                struct Trans : Transport
+                {
+                    Transport & t;
+                    Trans(Transport & t) : t(t) {}
+                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
+                    {
+                        return this->t.partial_read(buffer, 1);
+                    }
+                };
+                Trans trans(this->t);
+
+                this->server_init_ctx.start();
+                while (!this->server_init_ctx.run(buf, *this)) {
+                    buf.read_from(trans);
+                }
+            }
+
+            // should be connected
+
+            {
+            // 7.4.1   SetPixelFormat
+            // ----------------------
+            // Sets the format in which pixel values should be sent in
+            // FramebufferUpdate messages. If the client does not send
+            // a SetPixelFormat message then the server sends pixel values
+            // in its natural format as specified in the ServerInit message
+            // (ServerInit).
+
+            // If true-colour-flag is zero (false) then this indicates that
+            // a "colour map" is to be used. The server can set any of the
+            // entries in the colour map using the SetColourMapEntries
+            // message (SetColourMapEntries). Immediately after the client
+            // has sent this message the colour map is empty, even if
+            // entries had previously been set by the server.
+
+            // Note that a client must not have an outstanding
+            // FramebufferUpdateRequest when it sends SetPixelFormat
+            // as it would be impossible to determine if the next *
+            // FramebufferUpdate is using the new or the previous pixel
+            // format.
+
+                StaticOutStream<20> stream;
+                // Set Pixel format
+                stream.out_uint8(0);
+
+                // Padding 3 bytes
+                stream.out_uint8(0);
+                stream.out_uint8(0);
+                stream.out_uint8(0);
+
+                // VNC pixel_format capabilities
+                // -----------------------------
+                // bits per pixel  : 1 byte
+                // color depth     : 1 byte
+                // endianess       : 1 byte (0 = LE, 1 = BE)
+                // true color flag : 1 byte
+                // red max         : 2 bytes
+                // green max       : 2 bytes
+                // blue max        : 2 bytes
+                // red shift       : 1 bytes
+                // green shift     : 1 bytes
+                // blue shift      : 1 bytes
+                // padding         : 3 bytes
+
+                // 8 bpp
+                // -----
+                // "\x08\x08\x00"
+                // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                // "\0\0\0"
+
+                // 15 bpp
+                // ------
+                // "\x10\x0F\x00"
+                // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
+                // "\0\0\0"
+
+                // 24 bpp
+                // ------
+                // "\x20\x18\x00"
+                // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+                // "\0\0\0"
+
+                // 16 bpp
+                // ------
+                // "\x10\x10\x00"
+                // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
+                // "\0\0\0"
+
+                const char * pixel_format =
+                    "\x10" // bits per pixel  : 1 byte =  16
+                    "\x10" // color depth     : 1 byte =  16
+                    "\x00" // endianess       : 1 byte =  LE
+                    "\x01" // true color flag : 1 byte = yes
+                    "\x00\x1F" // red max     : 2 bytes = 31
+                    "\x00\x3F" // green max   : 2 bytes = 63
+                    "\x00\x1F" // blue max    : 2 bytes = 31
+                    "\x0B" // red shift       : 1 bytes = 11
+                    "\x05" // green shift     : 1 bytes =  5
+                    "\x00" // blue shift      : 1 bytes =  0
+                    "\0\0\0"; // padding      : 3 bytes
+                stream.out_copy_bytes(pixel_format, 16);
+                this->t.send(stream.get_data(), stream.get_offset());
+
+                this->bpp = 16;
+                this->depth  = 16;
+                this->endianess = 0;
+                this->true_color_flag = 1;
+                this->red_max       = 0x1F;
+                this->green_max     = 0x3F;
+                this->blue_max      = 0x1F;
+                this->red_shift     = 0x0B;
+                this->green_shift   = 0x05;
+                this->blue_shift    = 0;
+            }
+
+            // 7.4.2   SetEncodings
+            // --------------------
+
+            // Sets the encoding types in which pixel data can be sent by
+            // the server. The order of the encoding types given in this
+            // message is a hint by the client as to its preference (the
+            // first encoding specified being most preferred). The server
+            // may or may not choose to make use of this hint. Pixel data
+            // may always be sent in raw encoding even if not specified
+            // explicitly here.
+
+            // In addition to genuine encodings, a client can request
+            // "pseudo-encodings" to declare to the server that it supports
+            // certain extensions to the protocol. A server which does not
+            // support the extension will simply ignore the pseudo-encoding.
+            // Note that this means the client must assume that the server
+            // does not support the extension until it gets some extension-
+            // -specific confirmation from the server.
+            {
+                const char * encodings           = this->encodings.c_str();
+                uint16_t     number_of_encodings = 0;
+
+                // SetEncodings
+                StaticOutStream<32768> stream;
+                stream.out_uint8(2);
+                stream.out_uint8(0);
+
+                uint32_t number_of_encodings_offset = stream.get_offset();
+                stream.out_clear_bytes(2);
+
+                this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
+
+                if (!number_of_encodings)
+                {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
+                        LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
+                    }
+
+                    stream.out_uint32_be(0);            // raw
+                    stream.out_uint32_be(1);            // copy rect
+                    stream.out_uint32_be(2);            // RRE
+                    stream.out_uint32_be(0xffffff11);   // (-239) cursor
+                    number_of_encodings = 4;
+                }
+
+                stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
+                this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
+            }
+
+            switch (this->front.server_resize(this->width, this->height, this->bpp)){
+            case FrontAPI::ResizeResult::instant_done:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "no resizing needed");
+                }
+                // no resizing needed
+                this->state = DO_INITIAL_CLEAR_SCREEN;
+                this->event.object_and_time = true;
+                this->event.set();
+                break;
+            case FrontAPI::ResizeResult::no_need:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "no resizing needed");
+                }
+                // no resizing needed
+                this->state = DO_INITIAL_CLEAR_SCREEN;
+                this->event.object_and_time = true;
+                this->event.set();
+                break;
+            case FrontAPI::ResizeResult::done:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "resizing done");
+                }
+                // resizing done
+                this->front_width  = this->width;
+                this->front_height = this->height;
+
+                this->state = WAIT_CLIENT_UP_AND_RUNNING;
+                this->event.object_and_time = true;
+
+                this->is_first_membelt = true;
+                break;
+            case FrontAPI::ResizeResult::fail:
+                // resizing failed
+                // thow an Error ?
+                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+            }
+            break;
+
+        case WAIT_CLIENT_UP_AND_RUNNING:
+            LOG(LOG_WARNING, "Waiting for client be come up and running");
+            break;
+
         default:
             LOG(LOG_ERR, "Unknown state=%d", this->state);
             throw Error(ERR_VNC);
         }
 
+        return false;
+    } // draw_event
+
+private:
+    void check_timeout()
+    {
         if (this->event.waked_up_by_time) {
             this->event.reset();
 
@@ -1876,7 +1999,7 @@ public:
                                            );
             }
         }
-    } // draw_event
+    }
 
 private:
     struct ZRLEUpdateContext
