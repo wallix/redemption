@@ -1456,51 +1456,15 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        struct Trans : Transport
-        {
-            Transport & t;
-            Trans(Transport & t) : t(t) {}
-            std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-            {
-                return this->t.partial_read(buffer, 1);
-            }
-        };
-        Trans trans(this->t);
-
-        LOG(LOG_INFO, "state: %d", int(this->state));
-
-        if (this->state == UP_AND_RUNNING && !this->event.is_waked_up_by_time()) {
-            while (!this->draw_event_impl(drawable)) {
-                this->buf.read_from(trans);
-            }
+        if (bool(this->verbose & Verbose::draw_event)) {
+            LOG(LOG_INFO, "vnc::draw_event");
         }
-        else if (this->state == WAIT_SECURITY_TYPES
-            || this->state == WAIT_SECURITY_TYPES_LEVEL
-            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM
-            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE
-            || this->state == WAIT_SECURITY_TYPES_MS_LOGON
-            || this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE
-            || this->state == WAIT_SECURITY_TYPES_INVALID_AUTH
-            || this->state == SERVER_INIT
-            || this->state == SERVER_INIT_RESPONSE) {
-                while (!this->draw_event_impl(drawable)) {
-                    this->buf.read_from(trans);
-            }
-        }
-        else this->draw_event_impl(drawable);
 
-        while (!this->draw_event_impl(drawable) && (
-                this->state == WAIT_SECURITY_TYPES_LEVEL
-            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM
-            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE
-            || this->state == WAIT_SECURITY_TYPES_MS_LOGON
-            || this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE
-            || this->state == WAIT_SECURITY_TYPES_INVALID_AUTH
-            || this->state == SERVER_INIT
-            || this->state == SERVER_INIT_RESPONSE)) {
-                while (!this->draw_event_impl(drawable)) {
-                    this->buf.read_from(trans);
-                }
+        if (!this->event.is_waked_up_by_time()) {
+            this->buf.read_from(this->t);
+        }
+        while (this->draw_event_impl(drawable)) {
+
         }
 
         this->check_timeout();
@@ -1509,10 +1473,6 @@ public:
 private:
     bool draw_event_impl(gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & Verbose::draw_event)) {
-            LOG(LOG_INFO, "vnc::draw_event");
-        }
-
         switch (this->state)
         {
         case ASK_PASSWORD:
@@ -1530,11 +1490,11 @@ private:
             this->screen.rdp_input_invalidate(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
-            break;
+            return true;
 
         case DO_INITIAL_CLEAR_SCREEN:
             this->initial_clear_screen(drawable);
-            break;
+            return false;
 
         case RETRY_CONNECTION:
             if (bool(this->verbose & Verbose::connection)) {
@@ -1553,8 +1513,7 @@ private:
             }
 
             this->state = WAIT_SECURITY_TYPES;
-            this->event.set_trigger_time(wait_obj::NOW);
-            break;
+            return true;
 
         case UP_AND_RUNNING:
             if (bool(this->verbose & Verbose::draw_event)) {
@@ -1563,11 +1522,10 @@ private:
 
             if (!this->event.is_waked_up_by_time()) {
                 try {
-                    if (!this->up_and_running_ctx.run(buf, drawable, *this)) {
-                        return false;
+                    while (this->up_and_running_ctx.run(buf, drawable, *this)) {
+                        this->up_and_running_ctx.restart();
                     }
-                    this->up_and_running_ctx.restart();
-                    return true;
+                    return false;
                 }
                 catch (const Error & e) {
                     LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
@@ -1587,14 +1545,14 @@ private:
             else {
                 this->update_screen(Rect(0, 0, this->width, this->height));
             }
-            break;
+            return false;
 
         case WAIT_PASSWORD:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
             this->event.reset_trigger_time();
-            break;
+            return false;
 
         case WAIT_SECURITY_TYPES:
             {
@@ -1984,7 +1942,7 @@ private:
         }
 
         return false;
-    } // draw_event
+    } // draw_event_impl
 
 private:
     void check_timeout()
@@ -2546,7 +2504,7 @@ private:
         Result read_data_raw(Buf64k & buf, F && f)
         {
             size_t const size_line = this->cx * this->Bpp;
-            auto const av = buf.av();
+            auto const av = buf.av(std::min<size_t>(buf.remaining(), size_line)); // FIXME bug with a av greater to a line
 
             if (av.size() < size_line) {
                 return Result::fail();
