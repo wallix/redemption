@@ -60,7 +60,7 @@ using FlatSelectorModVariables = vcfg::variables<
 >;
 
 
-class GridSelector : public WidgetParent
+class Selector : public WidgetParent
 {
 public:
     struct GridSelectorParams {
@@ -134,7 +134,7 @@ public:
 
 
 
-    GridSelector(gdi::GraphicApi & drawable,
+    Selector(gdi::GraphicApi & drawable,
                  const char * device_name,
                  int16_t left, int16_t top, uint16_t width, uint16_t height,
                  Widget & parent, NotifyApi* notifier,
@@ -204,13 +204,13 @@ public:
         entries[0] = "Authorization";
         entries[1] = "Target";
         entries[2] = "Protocol";
-        entries[3] = "empty";
-        entries[4] = "empty";
-        entries[5] = "empty";
-        entries[6] = "empty";
-        entries[7] = "empty";
-        entries[8] = "empty";
-        entries[9] = "empty";
+        entries[3] = "Empty";
+        entries[4] = "Empty";
+        entries[5] = "Empty";
+        entries[6] = "Empty";
+        entries[7] = "Empty";
+        entries[8] = "Empty";
+        entries[9] = "Empty";
 
         const uint16_t base_len[GRID_NB_COLUMNS_MAX] = {200, 640, 80, 80, 80, 80, 80, 80, 80, 80};
 
@@ -249,7 +249,7 @@ public:
         this->move_size_widget(left, top, width, height);
     }
 
-        ~GridSelector() override {
+        ~Selector() override {
         this->clear();
     }
 
