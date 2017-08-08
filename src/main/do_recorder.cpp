@@ -721,8 +721,6 @@ static int do_recompress(
         CryptoContext cctx_no_crypto;
 
         wrmcapture_OutMetaSequenceTransport trans(
-            true,
-            true,
             ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
             rnd,
             fstat,
@@ -1786,9 +1784,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         SequencedVideoParams sequenced_video_params;
                         FullVideoParams full_video_params;
 
+                        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
+                        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+
                         WrmParams wrm_params(
                             wrm_color_depth,
-                            wrm_trace_type,
                             cctx,
                             rnd,
                             fstat,

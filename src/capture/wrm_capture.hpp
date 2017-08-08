@@ -132,12 +132,10 @@ class MetaSeqBuf
     time_t start_sec_;
     time_t stop_sec_;
 
-    bool with_checksum;
+    CryptoContext & cctx;
 
 public:
     explicit MetaSeqBuf(
-        bool with_encryption,
-        bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
         Fstat & fstat,
@@ -149,8 +147,8 @@ public:
         const char * const extension,
         const int groupid
     )
-    : meta_buf_encrypt_transport(with_encryption, with_checksum, cctx, rnd, fstat, report_error)
-    , wrm_filter_encrypt_transport(with_encryption, with_checksum, cctx, rnd, fstat, report_error)
+    : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error)
+    , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error)
     , fstat(fstat)
     , current_filename_{}
     , filegen_(prefix, hash_prefix, filename, extension)
@@ -160,7 +158,7 @@ public:
     , hf_(hash_prefix, filename)
     , start_sec_(start_sec)
     , stop_sec_(start_sec)
-    , with_checksum(with_checksum)
+    , cctx(cctx)
     {
         //LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
     }
@@ -173,7 +171,7 @@ public:
             S_IRUSR | S_IRGRP | S_IWUSR);
         char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
         const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-        unsigned(width),  unsigned(height), with_checksum?"checksum":"nochecksum");
+        unsigned(width),  unsigned(height), this->cctx.get_with_checksum()?"checksum":"nochecksum");
         this->meta_buf_encrypt_transport.send(header1, len);
     }
 
@@ -240,7 +238,7 @@ private:
         buf.write_filename(filename);
         buf.write_stat(stat);
         buf.write_start_and_stop(this->start_sec_, this->stop_sec_);
-        if (this->with_checksum) {
+        if (this->cctx.get_with_checksum()) {
             buf.write_hashs(qhash, fhash);
         }
         buf.write_newline();
@@ -255,8 +253,6 @@ private:
 struct wrmcapture_OutMetaSequenceTransport : Transport
 {
     wrmcapture_OutMetaSequenceTransport(
-        bool with_encryption,
-        bool with_checksum,
         CryptoContext & cctx,
         Random & rnd,
         Fstat & fstat,
@@ -269,7 +265,7 @@ struct wrmcapture_OutMetaSequenceTransport : Transport
         const int groupid,
         ReportMessageApi * report_message)
     : buf(
-        with_encryption, with_checksum, cctx, rnd, fstat,
+        cctx, rnd, fstat,
         report_error_from_reporter(report_message),
         now.tv_sec, hash_path, path, basename, ".wrm", groupid)
     {
@@ -1096,10 +1092,7 @@ public:
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
-    , out((wrm_params.trace_type == TraceType::cryptofile),
-            (wrm_params.trace_type == TraceType::localfile_hashed)
-          ||(wrm_params.trace_type == TraceType::cryptofile),
-           wrm_params.cctx,
+    , out(wrm_params.cctx,
            wrm_params.rnd,
            wrm_params.fstat,
            wrm_params.record_path,

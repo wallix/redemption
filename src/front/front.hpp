@@ -879,7 +879,6 @@ public:
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
@@ -912,9 +911,6 @@ public:
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        cctx.set_master_key(ini.get<cfg::crypto::key0>());
-        cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
 
         if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
             LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
@@ -975,7 +971,6 @@ public:
 
         WrmParams wrm_params(
             this->capture_bpp,
-            wrm_trace_type,
             this->cctx,
             this->gen,
             this->fstat,
@@ -3138,6 +3133,12 @@ private:
                     this->client_info.glyph_cache_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
                         this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
+                    }
+                    if (ini.get<cfg::client::bogus_ios_glyph_support_level>() &&
+                        (this->client_info.general_caps.os_major == OSMAJORTYPE_IOS)) {
+                        LOG(LOG_INFO, "Front::process_confirm_active: Support of bogus iOS glyph support level enabled.");
+
+                        this->client_info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_NONE;
                     }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =

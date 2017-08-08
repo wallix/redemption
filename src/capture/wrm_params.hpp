@@ -35,7 +35,6 @@ class Fstat;
 struct WrmParams
 {
     uint8_t capture_bpp;
-    TraceType trace_type;
     CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
@@ -49,7 +48,6 @@ struct WrmParams
     uint32_t wrm_verbose;
 
     WrmParams(uint8_t capture_bpp,
-              TraceType trace_type,
               CryptoContext & cctx,
               Random & rnd,
               Fstat & fstat,
@@ -63,7 +61,6 @@ struct WrmParams
               // TODO Verbose::WrmCapture
               uint32_t wrm_verbose)
     : capture_bpp(capture_bpp)
-    , trace_type(trace_type)
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)
@@ -75,5 +72,6 @@ struct WrmParams
     , break_interval(break_interval)
     , wrm_compression_algorithm(wrm_compression_algorithm)
     , wrm_verbose(wrm_verbose)
-    {}
+    {
+    }
 };

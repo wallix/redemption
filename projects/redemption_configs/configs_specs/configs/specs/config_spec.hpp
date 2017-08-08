@@ -245,6 +245,8 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, type_<bool>(), "show_target_user_in_f12_message", set(false));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_new_pointer_update", set(false));
+        W.sep();
+        W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
     });
 
     W.section("mod_rdp", [&]

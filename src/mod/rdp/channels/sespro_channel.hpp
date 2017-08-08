@@ -1081,6 +1081,10 @@ public:
                 bool(this->verbose & RDPVerbose::sesprobe),
                 "SESSION_ENDING_IN_PROGRESS");
 
+//            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+//                LOG(LOG_INFO, "type=\"SESSION_ENDING_IN_PROGRESS\"");
+//            }
+
             this->session_probe_ending_in_progress = true;
         }
         else {
