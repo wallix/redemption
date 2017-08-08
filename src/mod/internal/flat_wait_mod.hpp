@@ -28,9 +28,9 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "utils/timeout.hpp"
-#include "widget2/flat_wait.hpp"
-#include "widget2/language_button.hpp"
-#include "widget2/screen.hpp"
+#include "widget/flat_wait.hpp"
+#include "widget/language_button.hpp"
+#include "widget/screen.hpp"
 
 using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
@@ -74,12 +74,12 @@ public:
     {
         this->screen.add_widget(&this->wait_widget);
         if (this->wait_widget.hasform) {
-            this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget2::focus_reason_tabkey);
+            this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget::focus_reason_tabkey);
         }
         else {
-            this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget2::focus_reason_tabkey);
+            this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget::focus_reason_tabkey);
         }
-        this->screen.set_widget_focus(&this->wait_widget, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
@@ -87,7 +87,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2 * sender, notify_event_t event) override {
+    void notify(Widget * sender, notify_event_t event) override {
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;

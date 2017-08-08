@@ -676,44 +676,44 @@ test-canonical utils/winpr/pattern.hpp ;
 
 ## Widget tests
 ## @{
-# TODO test-canonical mod/internal/widget2/columnlayout.hpp ;
-test-canonical mod/internal/widget2/composite.hpp : <library>png.o <library>png <library>crypto ;
-test-canonical mod/internal/widget2/edit.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/edit_valid.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/flat_button.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_interactive_target.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/flat_login.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget2/flat_selector2.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget2/grid.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/group_box.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/image.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget2/label.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/labelgrid.hpp : <library>crypto ;
-# TODO test-canonical mod/internal/widget2/linelayout.hpp ;
-test-canonical mod/internal/widget2/multiline.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/number_edit.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/password.hpp : <library>crypto ;
-# TODO test-canonical mod/internal/widget2/radio_list.hpp ;
-test-canonical mod/internal/widget2/screen.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/scroll.hpp : <library>crypto ;
-# TODO test-canonical mod/internal/widget2/stacklayout.hpp ;
-test-canonical mod/internal/widget2/tab.hpp ;
-test-canonical mod/internal/widget2/tooltip.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/widget.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/widget2_rect.hpp : <library>crypto ;
-test-canonical mod/internal/widget2/flat_vnc_authentification.hpp ;
-test-canonical mod/internal/widget2/language_button.hpp ;
-test-canonical mod/internal/widget2/layout.hpp ;
-test-canonical mod/internal/widget2/notify_api.hpp ;
+# TODO test-canonical mod/internal/widget/columnlayout.hpp ;
+test-canonical mod/internal/widget/composite.hpp : <library>png.o <library>png <library>crypto ;
+test-canonical mod/internal/widget/edit.hpp : <library>crypto ;
+test-canonical mod/internal/widget/edit_valid.hpp : <library>crypto ;
+test-canonical mod/internal/widget/flat_button.hpp : <library>crypto ;
+test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto ;
+test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>crypto ;
+test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>crypto ;
+test-canonical mod/internal/widget/flat_selector.hpp : <library>crypto ;
+test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>crypto ;
+test-canonical mod/internal/widget/grid.hpp : <library>crypto ;
+test-canonical mod/internal/widget/group_box.hpp : <library>crypto ;
+test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>crypto ;
+test-canonical mod/internal/widget/label.hpp : <library>crypto ;
+test-canonical mod/internal/widget/labelgrid.hpp : <library>crypto ;
+# TODO test-canonical mod/internal/widget/linelayout.hpp ;
+test-canonical mod/internal/widget/multiline.hpp : <library>crypto ;
+test-canonical mod/internal/widget/number_edit.hpp : <library>crypto ;
+test-canonical mod/internal/widget/password.hpp : <library>crypto ;
+# TODO test-canonical mod/internal/widget/radio_list.hpp ;
+test-canonical mod/internal/widget/screen.hpp : <library>crypto ;
+test-canonical mod/internal/widget/scroll.hpp : <library>crypto ;
+# TODO test-canonical mod/internal/widget/stacklayout.hpp ;
+test-canonical mod/internal/widget/tab.hpp ;
+test-canonical mod/internal/widget/tooltip.hpp : <library>crypto ;
+test-canonical mod/internal/widget/widget.hpp : <library>crypto ;
+test-canonical mod/internal/widget/widget_rect.hpp : <library>crypto ;
+test-canonical mod/internal/widget/flat_vnc_authentification.hpp ;
+test-canonical mod/internal/widget/language_button.hpp ;
+test-canonical mod/internal/widget/layout.hpp ;
+test-canonical mod/internal/widget/notify_api.hpp ;
 ## @}
 
 
 ## Widget for workflow
 ## @{
-test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget/flat_wait.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget/flat_form.hpp : <library>png <library>crypto ;
 ## @}
 
 
@@ -729,7 +729,7 @@ test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/replay_mod.hpp : <library>png ;
 test-canonical mod/internal/test_card_mod.hpp : <library>bitmap ;
 test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/flat_selector2_mod.hpp ;
+test-canonical mod/internal/flat_selector_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
 ## @}
