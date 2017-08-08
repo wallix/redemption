@@ -249,7 +249,6 @@ public:
     virtual void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
     virtual void emptyLocalBuffer() = 0;
-    virtual void send_WaveConfirmPDU() = 0;
 
 };
 

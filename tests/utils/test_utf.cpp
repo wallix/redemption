@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan,
+              Jennifer Inthavong
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test for Lightweight UTF library
@@ -837,3 +838,43 @@ RED_AUTO_TEST_CASE(TestUTF16StrLen) {
 
     RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3);
 }
+
+RED_AUTO_TEST_CASE(TestUtf16UpperCase)
+{
+    uint8_t test[] =  "\x92\x02\xaf\x03\xdb\x03\x51\x04"  /* ʒ ί ϛ ё */
+                      "\x45\x04\x64\x05\x11\x1e\x01\x1f"  /* х դ ḑ ἁ */
+                      "\x41\x1f\x45\xff\x72\x00\x54\x00"  /* ὁ ｅ r T */
+                      "\x3e\x02\xcc\x1f\x5a\xff";         /* ⱦ ῃ ｚ  */
+    /*
+    Lower    Upper case  
+    0x0292 ; 0x01B7     # LATIN CAPITAL LETTER EZH
+    0x03AF ; 0x038A     # GREEK CAPITAL LETTER IOTA WITH TONOS
+    0x03DB ; 0x03DA     # GREEK LETTER STIGMA
+    0x0451 ; 0x0401     # CYRILLIC CAPITAL LETTER IO
+
+    0x0445 ; 0x0425     # CYRILLIC CAPITAL LETTER HA
+    0x0564 ; 0x0534     # ARMENIAN CAPITAL LETTER DA
+    0x1E11 ; 0x1E10     # LATIN CAPITAL LETTER D WITH CEDILLA
+    0x1F01 ; 0x1F09     # GREEK CAPITAL LETTER ALPHA WITH DASIA
+
+    0x1F41 ; 0x1F49     # GREEK CAPITAL LETTER OMICRON WITH DASIA
+    0xFF45 ; 0xFF25     # FULLWIDTH LATIN CAPITAL LETTER E
+    0x0072 ; 0x0052     # LATIN CAPITAL LETTER R
+    0x0074 ; 0x0054     # LATIN CAPITAL LETTER T
+
+    0x023E ; 0x2C66     # LATIN SMALL LETTER T WITH DIAGONAL STROKE
+    0x1FCC ; 0x1FC3     # GREEK SMALL LETTER ETA WITH PROSGEGRAMMENI
+    0xFF5A ; 0xFF3A     # FULLWIDTH LATIN CAPITAL LETTER Z
+    */
+    int number_of_elements = sizeof(test)/sizeof(test[0])-2;
+    uint8_t expected[] ="\xb7\x01\x8A\x03\xda\x03\x01\x04"  /* Ʒ Ί Ϛ Ё */
+                        "\x25\x04\x34\x05\x10\x1e\x09\x1f"  /* Х Դ Ḑ Ἁ */
+                        "\x49\x1f\x25\xff\x52\x00\x54\x00"  /* Ὁ Ｅ R T */
+                        "\x66\x2c\xc3\x1f\x3a\xff";         /* Ⱦ ΗΙ Ｚ  */            
+    UTF16Upper(test, number_of_elements);
+
+    RED_CHECK_EQUAL(memcmp(test, expected, number_of_elements), 0);
+}
+
+
+

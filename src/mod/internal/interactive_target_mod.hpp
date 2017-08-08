@@ -27,9 +27,9 @@
 #include "core/front_api.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget2/flat_interactive_target.hpp"
-#include "mod/internal/widget2/language_button.hpp"
-#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget/flat_interactive_target.hpp"
+#include "mod/internal/widget/language_button.hpp"
+#include "mod/internal/widget/screen.hpp"
 #include "utils/translation.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
@@ -82,18 +82,18 @@ public:
         this->screen.add_widget(&this->challenge);
         this->challenge.password_edit.set_text("");
         this->screen.set_widget_focus(&this->challenge,
-                                      Widget2::focus_reason_tabkey);
+                                      Widget::focus_reason_tabkey);
         if (this->ask_device) {
             this->challenge.set_widget_focus(&this->challenge.device_edit,
-                                             Widget2::focus_reason_tabkey);
+                                             Widget::focus_reason_tabkey);
         }
         else if (this->ask_login) {
             this->challenge.set_widget_focus(&this->challenge.login_edit,
-                                             Widget2::focus_reason_tabkey);
+                                             Widget::focus_reason_tabkey);
         }
         else {
             this->challenge.set_widget_focus(&this->challenge.password_edit,
-                                             Widget2::focus_reason_tabkey);
+                                             Widget::focus_reason_tabkey);
         }
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
@@ -102,7 +102,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2* sender, notify_event_t event) override {
+    void notify(Widget* sender, notify_event_t event) override {
         (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;

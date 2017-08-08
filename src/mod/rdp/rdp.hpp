@@ -467,8 +467,6 @@ protected:
                     *(this->to_server_synchronous_sender.get()),
                     this->verbose);
 
-                    //LOG(LOG_INFO, "asynchronous_task !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
             if (this->asynchronous_tasks.empty()) {
                 this->asynchronous_task_event.full_reset();
 

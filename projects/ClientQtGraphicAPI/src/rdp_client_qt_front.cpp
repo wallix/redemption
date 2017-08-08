@@ -2811,29 +2811,6 @@ public:
     }
 
 
-    void send_WaveConfirmPDU() override {
-//         StaticOutStream<32> out_stream;
-//
-//         rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_WAVECONFIRM, 8);
-//         header_out.emit(out_stream);
-//
-//         rdpsnd::WaveConfirmPDU wc( this->sound_qt->last_wTimeStamp
-//                                  , this->sound_qt->last_cConfirmedBlockNo);
-//         wc.emit(out_stream);
-//
-//         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//         this->mod->send_to_mod_channel( channel_names::rdpsnd
-//                                       , chunk_to_send
-//                                       , out_stream.get_offset()
-//                                       , CHANNELS::CHANNEL_FLAG_LAST |
-//                                         CHANNELS::CHANNEL_FLAG_FIRST
-//                                       );
-//         if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-//             LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
-//         }
-    }
-
 
     void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
 
