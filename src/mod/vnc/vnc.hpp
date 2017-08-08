@@ -43,7 +43,7 @@
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
+#include "core/buf64k.hpp"
 
 #include <cstdlib>
 
