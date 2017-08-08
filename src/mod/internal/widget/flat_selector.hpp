@@ -38,13 +38,41 @@
 
 
 
+using FlatSelectorModVariables = vcfg::variables<
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+>;
+
 
 class GridSelector : public WidgetParent
 {
 public:
+    struct GridSelectorParams {
+        const char * label_names[GRID_NB_COLUMNS_MAX];
+        uint16_t base_len[GRID_NB_COLUMNS_MAX];
+        uint16_t nb_columns;
+    };
+
     CompositeArray composite_array;
 
     bool less_than_800;
+    const uint16_t nb_columns;
 
     WidgetLabel device_label;
 
@@ -101,8 +129,9 @@ public:
     };
 
     WidgetFlatButton * extra_button;
-    const uint16_t nb_columns;
+
     uint16_t base_len[GRID_NB_COLUMNS_MAX] = {0};
+
 
 
     GridSelector(gdi::GraphicApi & drawable,
@@ -112,60 +141,60 @@ public:
                  const char * current_page,
                  const char * number_of_page,
                  WidgetFlatButton * extra_button,
-                 const uint16_t nb_columns,
+                 uint16_t nb_columns, FlatSelectorModVariables * params,
                  Font const & font, Theme const & theme, Translation::language_t lang)
     : WidgetParent(drawable, parent, notifier)
     , less_than_800(width < 800)
-        , device_label(drawable, *this, nullptr, device_name,
-                       -10, theme.global.fgcolor, theme.global.bgcolor, font)
-        , selector_lines(drawable,
-                         *this, this, 0, 3,
-                         theme.selector_line1.bgcolor,
-                         theme.selector_line1.fgcolor,
-                         theme.selector_line2.bgcolor,
-                         theme.selector_line2.fgcolor,
-                         theme.selector_focus.bgcolor,
-                         theme.selector_focus.fgcolor,
-                         theme.selector_selected.bgcolor,
-                         theme.selector_selected.fgcolor,
-                         font, 2, -11)
-          //BEGIN WidgetPager
-        , first_page(drawable, *this, notifier, "◀◂", -15,
-                     theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, 2, font, 6, 2, true)
-        , prev_page(drawable, *this, notifier, "◀", -15,
+    , nb_columns((nb_columns > 3) ? nb_columns : 3)
+    , device_label(drawable, *this, nullptr, device_name,
+                    -10, theme.global.fgcolor, theme.global.bgcolor, font)
+    , selector_lines(drawable,
+                        *this, this, 0, this->nb_columns,
+                        theme.selector_line1.bgcolor,
+                        theme.selector_line1.fgcolor,
+                        theme.selector_line2.bgcolor,
+                        theme.selector_line2.fgcolor,
+                        theme.selector_focus.bgcolor,
+                        theme.selector_focus.fgcolor,
+                        theme.selector_selected.bgcolor,
+                        theme.selector_selected.fgcolor,
+                        font, 2, -11)
+        //BEGIN WidgetPager
+    , first_page(drawable, *this, notifier, "◀◂", -15,
                     theme.global.fgcolor, theme.global.bgcolor,
                     theme.global.focus_color, 2, font, 6, 2, true)
-        , current_page(drawable, *this, notifier,
-                       current_page ? current_page : "XXXX", -15,
-                       theme.edit.fgcolor, theme.edit.bgcolor,
-                       theme.edit.focus_color, font, -1, 1, 1)
-        , number_page(drawable, *this, nullptr,
-                      number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", -100, theme.global.fgcolor,
-                      theme.global.bgcolor, font)
-        , next_page(drawable, *this, notifier, "▶", -15,
-                    theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, 2, font, 6, 2, true)
-        , last_page(drawable, *this, notifier, "▸▶", -15,
-                    theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, 2, font, 6, 2, true)
-          //END WidgetPager
-        , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
-                 theme.global.fgcolor, theme.global.bgcolor,
-                 theme.global.focus_color, 2, font, 6, 2)
-        , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
+    , prev_page(drawable, *this, notifier, "◀", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+    , current_page(drawable, *this, notifier,
+                    current_page ? current_page : "XXXX", -15,
+                    theme.edit.fgcolor, theme.edit.bgcolor,
+                    theme.edit.focus_color, font, -1, 1, 1)
+    , number_page(drawable, *this, nullptr,
+                    number_of_page ? temporary_number_of_page(number_of_page).buffer
+                    : "/XXX", -100, theme.global.fgcolor,
+                    theme.global.bgcolor, font)
+    , next_page(drawable, *this, notifier, "▶", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+    , last_page(drawable, *this, notifier, "▸▶", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+        //END WidgetPager
+    , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
                 theme.global.fgcolor, theme.global.bgcolor,
                 theme.global.focus_color, 2, font, 6, 2)
-        , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
-                  theme.global.fgcolor, theme.global.bgcolor,
-                  theme.global.focus_color, 2, font, 6, 2)
-        , bg_color(theme.global.bgcolor)
-        , font(font)
-        , left(left)
-        , top(top)
-        , extra_button(extra_button)
-        , nb_columns(nb_columns)
+    , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
+            theme.global.fgcolor, theme.global.bgcolor,
+            theme.global.focus_color, 2, font, 6, 2)
+    , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2)
+    , bg_color(theme.global.bgcolor)
+    , font(font)
+    , left(left)
+    , top(top)
+    , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
@@ -175,8 +204,15 @@ public:
         entries[0] = "Authorization";
         entries[1] = "Target";
         entries[2] = "Protocol";
+        entries[3] = "empty";
+        entries[4] = "empty";
+        entries[5] = "empty";
+        entries[6] = "empty";
+        entries[7] = "empty";
+        entries[8] = "empty";
+        entries[9] = "empty";
 
-        const uint16_t base_len[] = {200, 64000, 80};
+        const uint16_t base_len[GRID_NB_COLUMNS_MAX] = {200, 640, 80, 80, 80, 80, 80, 80, 80, 80};
 
         for (int i = 0; i < this->nb_columns; i++) {
             this->header_label[i] = new WidgetLabel(drawable, *this, nullptr, entries[i], -10,
@@ -414,11 +450,11 @@ public:
         }
     }
 
-    void add_device(const char * device_group, const char * target_label,
-                    const char * protocol)
+    void add_device(const char ** entries)
     {
-        const char * texts[] = { device_group, target_label, protocol };
-        this->selector_lines.add_line(texts);
+        //for (int i = 0; i < this->nb_columns; i++) {
+            this->selector_lines.add_line(entries);
+        //}
     }
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
