@@ -527,8 +527,6 @@ private:
 
     CryptoContext & cctx;
     Random & rnd;
-    bool encryption;
-    bool checksum;
 
     /* Flush procedure (compression, encryption)
      * Return 0 on success, negatif on error
@@ -583,7 +581,7 @@ private:
 
     void update_hmac(uint8_t const * buf, size_t len)
     {
-        if (this->checksum){
+        if (this->cctx.get_with_checksum()){
             this->hm.update(buf, len);
             if (this->file_size < 4096) {
                 size_t remaining_size = 4096 - this->file_size;
@@ -594,19 +592,9 @@ private:
     }
 
 public:
-    ocrypto(bool encryption, bool checksum, CryptoContext & cctx, Random & rnd)
-        : cctx(cctx)
-        , rnd(rnd)
-        , encryption(encryption)
-        , checksum(checksum)
-    {
-    }
-
     ocrypto(CryptoContext & cctx, Random & rnd)
         : cctx(cctx)
         , rnd(rnd)
-        , encryption(cctx.get_with_encryption())
-        , checksum(cctx.get_with_checksum())
     {
     }
 
@@ -616,12 +604,12 @@ public:
     {
         this->file_size = 0;
         this->pos = 0;
-        if (this->checksum) {
+        if (this->cctx.get_with_checksum()) {
             this->hm.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
             this->hm4k.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
         }
 
-        if (this->encryption) {
+        if (this->cctx.get_with_encryption()) {
             unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
             this->cctx.get_derived_key(trace_key, derivator);
             unsigned char iv[32];
@@ -656,7 +644,7 @@ public:
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         size_t towrite = 0;
-        if (this->encryption) {
+        if (this->cctx.get_with_encryption()) {
             size_t buflen = sizeof(this->result_buffer);
             this->flush(this->result_buffer, buflen, towrite);
 
@@ -679,7 +667,7 @@ public:
             this->update_hmac(tmp_buf, 8);
         }
 
-        if (this->checksum) {
+        if (this->cctx.get_with_checksum()) {
             this->hm.final(fhash);
             this->hm4k.final(qhash);
 
@@ -690,7 +678,7 @@ public:
 
     ocrypto::Result write(const uint8_t * data, size_t len)
     {
-        if (!this->encryption) {
+        if (!this->cctx.get_with_encryption()) {
             this->update_hmac(data, len);
             return Result{{data, len}, len};
         }
@@ -808,8 +796,6 @@ class OutCryptoTransport : public Transport
     char tmpname[2048];
     char finalname[2048];
     std::string hash_filename;
-    bool with_encryption;
-    bool with_checksum;
     CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
@@ -818,30 +804,11 @@ class OutCryptoTransport : public Transport
 
 public:
     explicit OutCryptoTransport(
-        bool with_encryption, bool with_checksum,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat,
-        ReportError report_error = ReportError()
-    ) noexcept
-    : encrypter(with_encryption, with_checksum, cctx, rnd)
-    , out_file(invalid_fd(), std::move(report_error))
-    , with_encryption(with_encryption)
-    , with_checksum(with_checksum)
-    , cctx(cctx)
-    , rnd(rnd)
-    , fstat(fstat)
-    {
-        this->tmpname[0] = 0;
-        this->finalname[0] = 0;
-    }
-
-    explicit OutCryptoTransport(
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
         ReportError report_error = ReportError()
     ) noexcept
     : encrypter(cctx, rnd)
     , out_file(invalid_fd(), std::move(report_error))
-    , with_encryption(cctx.get_with_encryption())
-    , with_checksum(cctx.get_with_encryption() || cctx.get_with_checksum())
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)
@@ -869,7 +836,7 @@ public:
             uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
             uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
             this->close(qhash, fhash);
-            if (this->with_checksum){
+            if (this->cctx.get_with_checksum()){
                 char mes[MD_HASH::DIGEST_LENGTH*4+1+128]{};
                 char * p = mes;
                 p+= sprintf(mes, "Encrypted transport implicitly closed, hash checksums dropped :");
@@ -957,7 +924,7 @@ public:
     void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
         // Force hash result if no checksum asked
-        if (!this->with_checksum){
+        if (!this->cctx.get_with_checksum()){
             memset(qhash, 0xFF, sizeof(qhash));
             memset(fhash, 0xFF, sizeof(fhash));
         }
@@ -986,7 +953,7 @@ public:
         uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
         uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH])
     {
-        ocrypto hash_encrypter(this->with_encryption, this->with_checksum, this->cctx, this->rnd);
+        ocrypto hash_encrypter(this->cctx, this->rnd);
         OutFileTransport hash_out_file(unique_fd(::open(
             this->hash_filename.c_str(),
             O_WRONLY | O_CREAT,
@@ -1029,7 +996,7 @@ public:
         buf.write_filename(basename);
         buf.write_filename(extension);
         buf.write_stat(stat);
-        if (this->with_checksum) {
+        if (this->cctx.get_with_checksum()) {
             buf.write_hashs(qhash, fhash);
         }
         buf.write_newline();

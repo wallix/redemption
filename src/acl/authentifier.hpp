@@ -146,10 +146,12 @@ public:
             if (this->session_log_is_open) {
                 this->acl_serial->close_session_log();
             }
-            else {
-                cctx.set_master_key(ini.get<cfg::crypto::key0>());
-                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-            }
+
+            TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
+            this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+            this->cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
+            this->cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
 
             for (LogParam const & log_param : this->buffered_log_params) {
                 this->acl_serial->log4(

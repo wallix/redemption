@@ -104,10 +104,12 @@ struct CryptoContextWrapper
 {
     CryptoContext cctx;
 
-    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_encryption_scheme = false, int one_shot_encryption_scheme = false)
+    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, bool with_encryption, bool with_checksum, int old_encryption_scheme = false, int one_shot_encryption_scheme = false)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
+        cctx.set_with_encryption(with_encryption);
+        cctx.set_with_checksum(with_checksum);
         cctx.old_encryption_scheme = old_encryption_scheme;
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
     }
@@ -163,9 +165,10 @@ struct RedCryptoWriterHandle
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
     : random_wrapper(random_type)
-    , cctxw(hmac_fn, trace_fn)
-    , out_crypto_transport(with_encryption, with_checksum, cctxw.cctx, *random_wrapper.rnd, fstat)
+    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum)
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
+
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
         this->qhashhex[sizeof(this->qhashhex)-1] = 0;
         memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);

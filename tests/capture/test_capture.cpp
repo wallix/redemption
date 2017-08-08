@@ -188,9 +188,11 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
+        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
+        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+
         WrmParams wrm_params(
             24,
-            wrm_trace_type,
             cctx,
             rnd,
             fstat,
@@ -441,9 +443,11 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     SequencedVideoParams sequenced_video_params;
     FullVideoParams full_video_params;
 
+    cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
+    cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+
     WrmParams wrm_params(
         24,
-        wrm_trace_type,
         cctx,
         rnd,
         fstat,
