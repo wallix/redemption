@@ -39,7 +39,7 @@ protected:
     uint16_t nb_rows;
 
 public:
-    const uint16_t nb_columns;
+    uint16_t nb_columns;
 
 protected:
     uint16_t column_width[GRID_NB_COLUMNS_MAX];
@@ -237,6 +237,7 @@ public:
         REDASSERT(row_index <= GRID_NB_ROWS_MAX);
         return this->widgets[column_index][row_index];
     }
+    
     Widget2 * set_widget(uint16_t row_index, uint16_t column_index, Widget2 * w,
                          void * meta_data = nullptr) {
         REDASSERT(column_index <= this->nb_columns);

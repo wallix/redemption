@@ -953,6 +953,18 @@ public:
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
             }
+            {
+
+//             char entries[3][500] = { {0} };
+//
+//             std::memcpy(entries[0], this->ini.get<cfg::context::selector_group_filter>().c_str(), this->ini.get<cfg::context::selector_group_filter>().size());
+//
+//             std::memcpy(entries[1], this->ini.get<cfg::context::selector_device_filter>().c_str(), this->ini.get<cfg::context::selector_device_filter>().size());
+//
+//             std::memcpy(entries[2], this->ini.get<cfg::context::selector_proto_filter>().c_str(), this->ini.get<cfg::context::selector_proto_filter>().size());
+//
+//             const uint16_t base_len[] = {200, 64000, 80};
+
             this->set_mod(new FlatSelector2Mod(
                 this->ini,
                 this->front,
@@ -964,9 +976,11 @@ public:
                     this->front.client_info.cs_monitor
                 )),
                 this->client_execute
+              //, entries, base_len
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
+            }
             }
             break;
         case MODULE_INTERNAL_CLOSE:
