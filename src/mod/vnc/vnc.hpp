@@ -170,7 +170,7 @@ private:
         WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE,
         WAIT_SECURITY_TYPES_MS_LOGON,
         WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE,
-        WAIT_SECURITY_TYPES_INVALI_AUTH,
+        WAIT_SECURITY_TYPES_INVALID_AUTH,
         SERVER_INIT,
         SERVER_INIT_RESPONSE,
         WAIT_CLIENT_UP_AND_RUNNING
@@ -301,7 +301,7 @@ public:
         };
 
     public:
-        void start()
+        void restart()
         {
             this->state = State::Size;
         }
@@ -331,7 +331,7 @@ public:
         }
 
     private:
-        State state;
+        State state = State::Size;
         uint32_t len;
 
         State read_size(Buf64k & buf)
@@ -435,7 +435,7 @@ public:
         using Result = BasicResult<State>;
 
     public:
-        void start()
+        void restart()
         {
             this->state = State::Header;
         }
@@ -451,7 +451,7 @@ public:
                             f(true, array_view_u8{});
                             return true;
                         }
-                        this->reason.start();
+                        this->reason.restart();
                         this->state = r;
                         REDEMPTION_CXX_FALLTHROUGH;
                     }
@@ -468,7 +468,7 @@ public:
     private:
         using ReasonCtx = MessageCtx<256>;
 
-        State state;
+        State state = State::Header;
         ReasonCtx reason;
 
         Result read_header(Buf64k & buf)
@@ -498,7 +498,7 @@ public:
         };
 
     public:
-        void start() noexcept
+        void restart() noexcept
         {
             this->state = State::Data;
         }
@@ -513,7 +513,7 @@ public:
         uint64_t resp;
 
     private:
-        State state;
+        State state = State::Data;
 
         State read_data(Buf64k & buf)
         {
@@ -666,7 +666,7 @@ public:
         };
 
     public:
-        void start()
+        void restart()
         {
             this->state = State::PixelFormat;
         }
@@ -691,7 +691,7 @@ public:
         }
 
     private:
-        State state;
+        State state = State::PixelFormat;
         uint32_t lg;
 
         State read_pixel_format(Buf64k & buf, mod_vnc & vnc)
@@ -1254,7 +1254,7 @@ protected:
     public:
         array_view_u8 server_random;
 
-        void start() noexcept
+        void restart() noexcept
         {
             this->state = State::RandomKey;
         }
@@ -1265,7 +1265,7 @@ protected:
         }
 
     private:
-        State state;
+        State state = State::RandomKey;
 
         State read_random_number(Buf64k & buf) noexcept
         {
@@ -1368,25 +1368,42 @@ public:
         };
         Trans trans(this->t);
 
+        LOG(LOG_INFO, "state: %d", int(this->state));
+
         if (this->state == UP_AND_RUNNING && !this->event.waked_up_by_time) {
             while (!this->draw_event_impl(drawable)) {
                 this->buf.read_from(trans);
             }
         }
-        else {
-            this->draw_event_impl(drawable);
+        else if (this->state == WAIT_SECURITY_TYPES
+            || this->state == WAIT_SECURITY_TYPES_LEVEL
+            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM
+            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE
+            || this->state == WAIT_SECURITY_TYPES_MS_LOGON
+            || this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE
+            || this->state == WAIT_SECURITY_TYPES_INVALID_AUTH
+            || this->state == SERVER_INIT
+            || this->state == SERVER_INIT_RESPONSE) {
+                while (!this->draw_event_impl(drawable)) {
+                    this->buf.read_from(trans);
+            }
+        }
+        else this->draw_event_impl(drawable);
+
+        while (!this->draw_event_impl(drawable) && (
+                this->state == WAIT_SECURITY_TYPES_LEVEL
+            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM
+            || this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE
+            || this->state == WAIT_SECURITY_TYPES_MS_LOGON
+            || this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE
+            || this->state == WAIT_SECURITY_TYPES_INVALID_AUTH
+            || this->state == SERVER_INIT
+            || this->state == SERVER_INIT_RESPONSE)) {
+                while (!this->draw_event_impl(drawable)) {
+                    this->buf.read_from(trans);
+                }
         }
 
-        while (
-        this->state == WAIT_SECURITY_TYPES_LEVEL||
-        this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM||
-        this->state == WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE||
-        this->state == WAIT_SECURITY_TYPES_MS_LOGON||
-        this->state == WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE||
-        this->state == WAIT_SECURITY_TYPES_INVALI_AUTH||
-        this->state == SERVER_INIT||
-        this->state == SERVER_INIT_RESPONSE)
-        this->draw_event_impl(drawable);
         this->check_timeout();
     }
 
@@ -1487,21 +1504,10 @@ private:
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
                 size_t const protocol_version_len = 12;
 
-                while (buf.remaining() < protocol_version_len) {
-                    buf.read_from(trans);
+                if (buf.remaining() < protocol_version_len) {
+                    return false;
                 }
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1521,19 +1527,8 @@ private:
 
         case WAIT_SECURITY_TYPES_LEVEL:
             {
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                while (buf.remaining() < 4) {
-                    buf.read_from(trans);
+                if (buf.remaining() < 4) {
+                    return false;
                 }
                 int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
                 buf.advance(4);
@@ -1555,14 +1550,14 @@ private:
                         this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                         break;
                     case 0:
-                        this->state = WAIT_SECURITY_TYPES_INVALI_AUTH;
+                        this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
                         break;
                     default:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
             }
-            break;
+            return true;
 
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
             if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1570,21 +1565,10 @@ private:
             }
 
             {
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->password_ctx.start();
-                while (!this->password_ctx.run(this->buf)) {
-                    buf.read_from(trans);
+                if (!this->password_ctx.run(this->buf)) {
+                    return false;
                 }
+                this->password_ctx.restart();
 
                 char key[12] = {};
 
@@ -1610,19 +1594,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->auth_response_ctx.start();
-                while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "vnc password ok\n");
@@ -1646,32 +1618,22 @@ private:
                         }
                     }
                 })) {
-                    buf.read_from(trans);
+                    return false;
                 }
+                this->auth_response_ctx.restart();
 
                 this->state = SERVER_INIT;
             }
-            break;
+            return true;
 
         case WAIT_SECURITY_TYPES_MS_LOGON:
             {
                 LOG(LOG_INFO, "VNC MS-LOGON Auth");
 
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->ms_logon_ctx.start();
-                while (!this->ms_logon(buf)) {
-                    buf.read_from(trans);
+                if (!this->ms_logon(buf)) {
+                    return false;
                 }
+                this->ms_logon_ctx.restart();
             }
             this->state = WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE;
             REDEMPTION_CXX_FALLTHROUGH;
@@ -1682,19 +1644,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->auth_response_ctx.start();
-                while (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO, "MS LOGON password ok\n");
@@ -1705,37 +1655,27 @@ private:
                             int(bytes.size()), bytes.to_charp());
                     }
                 })) {
-                    buf.read_from(trans);
+                    return false;
                 }
+                this->auth_response_ctx.restart();
             }
             this->state = SERVER_INIT;
-            break;
+            return true;
 
-        case WAIT_SECURITY_TYPES_INVALI_AUTH:
+        case WAIT_SECURITY_TYPES_INVALID_AUTH:
             {
                 LOG(LOG_INFO, "VNC INVALID Auth");
 
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->invalid_auth_ctx.start();
-                while (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
                     hexdump_c(av.data(), av.size());
                 })) {
-                    buf.read_from(trans);
+                    return false;
                 }
+                this->invalid_auth_ctx.restart();
 
                 throw Error(ERR_VNC_CONNECTION_ERROR);
+                // return true;
             }
-            break;
 
         case SERVER_INIT:
             this->t.send("\x01", 1); // share flag
@@ -1744,21 +1684,10 @@ private:
 
         case SERVER_INIT_RESPONSE:
             {
-                struct Trans : Transport
-                {
-                    Transport & t;
-                    Trans(Transport & t) : t(t) {}
-                    std::size_t do_partial_read(uint8_t* buffer, std::size_t /*len*/) override
-                    {
-                        return this->t.partial_read(buffer, 1);
-                    }
-                };
-                Trans trans(this->t);
-
-                this->server_init_ctx.start();
-                while (!this->server_init_ctx.run(buf, *this)) {
-                    buf.read_from(trans);
+                if (!this->server_init_ctx.run(buf, *this)) {
+                    return false;
                 }
+                this->server_init_ctx.restart();
             }
 
             // should be connected
@@ -1946,7 +1875,7 @@ private:
                 LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
                 throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
             }
-            break;
+            return true;
 
         case WAIT_CLIENT_UP_AND_RUNNING:
             LOG(LOG_WARNING, "Waiting for client be come up and running");
