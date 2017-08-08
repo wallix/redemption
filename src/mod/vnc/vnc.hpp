@@ -26,8 +26,8 @@
 #include "main/version.hpp"
 
 #include "utils/log.hpp"
-#include "mod/internal/widget2/flat_vnc_authentification.hpp"
-#include "mod/internal/widget2/notify_api.hpp"
+#include "mod/internal/widget/flat_vnc_authentification.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "utils/diffiehellman.hpp"
@@ -1481,11 +1481,11 @@ private:
             }
             this->screen.add_widget(&this->challenge);
 
-            this->screen.set_widget_focus(&this->challenge, Widget2::focus_reason_tabkey);
+            this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
 
             this->challenge.password_edit.set_text("");
 
-            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget2::focus_reason_tabkey);
+            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
 
             this->screen.rdp_input_invalidate(this->screen.get_rect());
 
@@ -3846,7 +3846,7 @@ public:
         }
     }
 
-    void notify(Widget2* sender, notify_event_t event) override {
+    void notify(Widget* sender, notify_event_t event) override {
         (void)sender;
         switch (event) {
         case NOTIFY_SUBMIT:

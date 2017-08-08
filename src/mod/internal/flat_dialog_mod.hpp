@@ -27,9 +27,9 @@
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget2/flat_dialog.hpp"
-#include "mod/internal/widget2/language_button.hpp"
-#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget/flat_dialog.hpp"
+#include "mod/internal/widget/language_button.hpp"
+#include "mod/internal/widget/screen.hpp"
 #include "utils/timeout.hpp"
 #include "utils/translation.hpp"
 
@@ -75,12 +75,12 @@ public:
         , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
         this->screen.add_widget(&this->dialog_widget);
-        this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget2::focus_reason_tabkey);
-        this->screen.set_widget_focus(&this->dialog_widget, Widget2::focus_reason_tabkey);
+        this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->dialog_widget, Widget::focus_reason_tabkey);
         this->screen.rdp_input_invalidate(this->screen.get_rect());
 
         if (this->dialog_widget.challenge) {
-            this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget2::focus_reason_tabkey);
+            this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget::focus_reason_tabkey);
             // this->vars.get<cfg::to_send_set::insert>()(AUTHID_AUTHENTICATION_CHALLENGE);
         }
     }
@@ -89,7 +89,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2* sender, notify_event_t event) override {
+    void notify(Widget* sender, notify_event_t event) override {
         (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;

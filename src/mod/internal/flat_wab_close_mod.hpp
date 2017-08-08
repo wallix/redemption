@@ -25,8 +25,8 @@
 #include "configs/config_access.hpp"
 #include "core/front_api.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget2/flat_wab_close.hpp"
-#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget/flat_wab_close.hpp"
+#include "mod/internal/widget/screen.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/timeout.hpp"
@@ -111,8 +111,8 @@ public:
         this->front.set_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);
-        this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
-        this->screen.set_widget_focus(&this->close_widget, Widget2::focus_reason_tabkey);
+        this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->close_widget, Widget::focus_reason_tabkey);
 
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
@@ -121,7 +121,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2* sender, notify_event_t event) override {
+    void notify(Widget* sender, notify_event_t event) override {
         (void)sender;
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;

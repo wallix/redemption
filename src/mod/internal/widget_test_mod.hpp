@@ -23,8 +23,8 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget2/notify_api.hpp"
-#include "mod/internal/widget2/widget_test.hpp"
+#include "mod/internal/widget/notify_api.hpp"
+#include "mod/internal/widget/widget_test.hpp"
 #include "mod/mod_api.hpp"
 
 #include "configs/config_access.hpp"
@@ -73,7 +73,7 @@ public:
         this->screen.add_widget(&this->widget_test);
 
         this->screen.set_widget_focus(&this->widget_test,
-            Widget2::focus_reason_tabkey);
+            Widget::focus_reason_tabkey);
 
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
@@ -83,7 +83,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2*, notify_event_t) override {}
+    void notify(Widget*, notify_event_t) override {}
 
     void process_managed_mod_event(time_t now, wait_obj& /*event*/, gdi::GraphicApi& gapi) {
         mod_api& mod = this->widget_test.get_managed_mod();
