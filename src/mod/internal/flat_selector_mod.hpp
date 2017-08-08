@@ -37,7 +37,7 @@ class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 //     WidgetSelectorFlat selector;
-    GridSelector selector;
+    Selector selector;
 
 
     int current_page;
@@ -95,7 +95,7 @@ public:
             vars.is_asked<cfg::context::selector_number_of_pages>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
             &this->language_button,
-            1, &vars,
+            3, &vars,
             vars.get<cfg::font>(),
             vars.get<cfg::theme>(),
             language(vars))
