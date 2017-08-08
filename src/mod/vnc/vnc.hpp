@@ -2503,15 +2503,14 @@ private:
         template<class F>
         Result read_data_raw(Buf64k & buf, F && f)
         {
-            size_t const size_line = this->cx * this->Bpp;
-            auto const av = buf.av(std::min<size_t>(buf.remaining(), size_line)); // FIXME bug with a av greater to a line
+            size_t const line_size = this->cx * this->Bpp;
 
-            if (av.size() < size_line) {
+            if (buf.remaining() < line_size) {
                 return Result::fail();
             }
 
-            auto const cy = av.size() / size_line;
-            auto const new_av = av.subarray(0, cy * size_line);
+            auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
+            auto const new_av = buf.av(cy * line_size);
 
             f(Rect(this->x, this->y, this->cx, cy), new_av);
 

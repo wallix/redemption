@@ -40,7 +40,7 @@ struct Buf64k
 
     array_view_u8 av() noexcept
     {
-        return {this->buf, this->remaining()};
+        return {this->buf + this->idx, this->remaining()};
     }
 
     array_view_u8 av(std::size_t n) noexcept
