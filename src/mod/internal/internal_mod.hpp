@@ -21,7 +21,7 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "widget2/screen.hpp"
+#include "widget/screen.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 

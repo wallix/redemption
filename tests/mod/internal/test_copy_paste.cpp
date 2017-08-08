@@ -29,8 +29,8 @@
 #include "test_only/mod/fake_draw.hpp"
 #include "core/font.hpp"
 #include "mod/internal/copy_paste.hpp"
-#include "mod/internal/widget2/edit.hpp"
-#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget/edit.hpp"
+#include "mod/internal/widget/screen.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/check_sig.hpp"
 
@@ -114,7 +114,7 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    void notify(Widget2 * sender, notify_event_t event) override {
+    void notify(Widget * sender, notify_event_t event) override {
         RED_REQUIRE(sender);
         copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
     }

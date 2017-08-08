@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
     ini.set_acl<cfg::context::module>("login");
 
     res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET2_LOGIN);
+    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
 
     ini.set_acl<cfg::globals::auth_user>("user");
     ini.set_acl<cfg::context::password>("securepassword");
@@ -47,12 +47,12 @@ RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
     ini.set_acl<cfg::globals::target_user>("rdp internal internal");
     ini.set_acl<cfg::context::module>("selector");
     res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET2_SELECTOR);
+    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_SELECTOR);
 
     ini.ask<cfg::context::password>();
     ini.set_acl<cfg::context::module>("login");
     res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET2_LOGIN);
+    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
 
     ini.set_acl<cfg::globals::auth_user>("user");
     ini.set_acl<cfg::context::password>("securepassword");

@@ -27,9 +27,9 @@
 #include "core/front_api.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget2/flat_login.hpp"
-#include "mod/internal/widget2/language_button.hpp"
-#include "mod/internal/widget2/notify_api.hpp"
+#include "mod/internal/widget/flat_login.hpp"
+#include "mod/internal/widget/language_button.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "utils/timeout.hpp"
 
 # include <chrono>
@@ -96,11 +96,11 @@ public:
         this->login.login_edit.set_text(username);
         this->login.password_edit.set_text(password);
 
-        this->screen.set_widget_focus(&this->login, Widget2::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->login, Widget::focus_reason_tabkey);
 
-        this->login.set_widget_focus(&this->login.login_edit, Widget2::focus_reason_tabkey);
+        this->login.set_widget_focus(&this->login.login_edit, Widget::focus_reason_tabkey);
         if (username[0] != 0){
-            this->login.set_widget_focus(&this->login.password_edit, Widget2::focus_reason_tabkey);
+            this->login.set_widget_focus(&this->login.password_edit, Widget::focus_reason_tabkey);
         }
 
         this->screen.rdp_input_invalidate(this->screen.get_rect());
@@ -110,7 +110,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget2* sender, notify_event_t event) override {
+    void notify(Widget* sender, notify_event_t event) override {
         switch (event) {
         case NOTIFY_SUBMIT:
             LOG(LOG_INFO, "asking for selector");
