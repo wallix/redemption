@@ -137,6 +137,7 @@ public:
             );
 
             ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
+
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
 
@@ -167,6 +168,7 @@ public:
             // to multiple simultaneous fronts and mods. It should also simplify
             // module manager. Complexity of module transition should be hidden behind module
             // managers
+
 
             while (run_session) {
                 unsigned max = 0;

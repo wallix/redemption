@@ -47,8 +47,7 @@ struct WidgetLabelGrid : public WidgetGrid {
                      bg_color_selection, fg_color_selection, border, group_id)
         , toDelete()
         , font(font)
-    {
-    }
+    {}
 
     ~WidgetLabelGrid() override {
         this->clean_labels();

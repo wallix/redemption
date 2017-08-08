@@ -55,7 +55,8 @@ using FlatSelector2ModVariables = vcfg::variables<
 class FlatSelector2Mod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
-    WidgetSelectorFlat2 selector;
+//     WidgetSelectorFlat2 selector;
+    GridSelector selector;
 
 
     int current_page;
@@ -81,30 +82,60 @@ class FlatSelector2Mod : public LocallyIntegrableMod, public NotifyApi
 
     int selector_lines_per_page_saved = 0;
 
+
+//      const uint16_t base_len[3] = {200, 64000, 80};
+
+
+
+
 public:
     FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, front, front, this->font(), this->theme())
-        , selector(
-            front, temporary_login(vars).buffer,
+
+//         , selector(
+//             front, temporary_login(vars).buffer,
+//             widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+//             this->screen, this,
+//             vars.is_asked<cfg::context::selector_current_page>()
+//                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
+//             vars.is_asked<cfg::context::selector_number_of_pages>()
+//                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
+//             vars.get<cfg::context::selector_group_filter>().c_str(),
+//             vars.get<cfg::context::selector_device_filter>().c_str(),
+//             vars.get<cfg::context::selector_proto_filter>().c_str(),
+//             &this->language_button,
+//             vars.get<cfg::font>(),
+//             vars.get<cfg::theme>(),
+//             language(vars))
+
+        , selector(front, temporary_login(vars).buffer,
             widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
             vars.is_asked<cfg::context::selector_current_page>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
             vars.is_asked<cfg::context::selector_number_of_pages>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
-            vars.get<cfg::context::selector_group_filter>().c_str(),
-            vars.get<cfg::context::selector_device_filter>().c_str(),
-            vars.get<cfg::context::selector_proto_filter>().c_str(),
             &this->language_button,
+            3, 
             vars.get<cfg::font>(),
             vars.get<cfg::theme>(),
             language(vars))
+
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , vars(vars)
         , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     {
+
+//         // GRID SELECTOR
+//         this->selector.add_column(this->vars.get<cfg::context::selector_group_filter>().c_str(), 200);
+//         this->selector.add_column(this->vars.get<cfg::context::selector_device_filter>().c_str(), 64000);
+//         this->selector.add_column(this->vars.get<cfg::context::selector_proto_filter>().c_str(), 80);
+//
+//         this->selector.move_size_widget(widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy);
+//         // GRID SELECTOR
+
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
         this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
@@ -128,9 +159,18 @@ public:
     void ask_page()
     {
         this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
-        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
-        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
-        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
+
+
+        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filter[0]->get_text());
+        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filter[1]->get_text());
+        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filter[2]->get_text());
+
+
+//         this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
+//         this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
+//         this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
+
+
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::selector>();
