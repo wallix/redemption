@@ -72,9 +72,10 @@
 #include "core/RDP/capabilities/largepointer.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDPEA/audio_output.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "core/RDP/tdpu_buffer.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "capture/transparentrecorder.hpp"
 
 #include "core/client_info.hpp"
@@ -695,6 +696,7 @@ protected:
     bool   session_disconnection_logged = false;
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
+    RDPECLIP::CliprdrLogState cliprdrLogStatus;
 
     class AsynchronousTaskEventHandler : public EventHandler::CB {
         mod_rdp& mod_;
@@ -2063,6 +2065,12 @@ private:
                                      InStream & chunk, size_t length, uint32_t flags) {
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            InStream clone = chunk.clone();
+            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+        }
+
         if (this->session_probe_launcher) {
             if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
                 return;
@@ -2144,6 +2152,12 @@ private:
         uint8_t const * chunk, std::size_t chunk_size,
         size_t length, uint32_t flags
     ) {
+        if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+            InStream clone(chunk, chunk_size);
+            rdpsnd::streamLogClient(clone, flags);
+        }
+
+
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
@@ -2243,8 +2257,9 @@ public:
         if ((this->state == MOD_RDP_NEGO) &&
             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
              (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
-            this->event.object_and_time = true;
-            this->event.set();
+            // this->event.object_and_time = true;
+            // this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
         return this->event;
     }
@@ -3597,6 +3612,11 @@ public:
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
+                if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+                    InStream clone = sec.payload.clone();
+                    rdpsnd::streamLogServer(clone, flags);
+                }
+
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );
@@ -3738,7 +3758,10 @@ public:
                             if (!this->already_upped_and_running) {
                                 this->do_enable_session_probe();
 
-                                this->event.object_and_time = (this->open_session_timeout.count() > 0);
+                                //this->event.object_and_time = (this->open_session_timeout.count() > 0);
+                                if (this->open_session_timeout.count() > 0) {
+                                    this->event.set_trigger_time(wait_obj::NOW);
+                                }
 
                                 this->already_upped_and_running = true;
                             }
@@ -4031,7 +4054,7 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        bool waked_up_by_time = this->event.waked_up_by_time;
+        bool waked_up_by_time = this->event.is_waked_up_by_time();
 
         if (!waked_up_by_time) {
             this->buf.load_data(this->nego.trans.get_transport());
@@ -4225,7 +4248,8 @@ public:
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
                 LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED");
-                this->event.set(1000000);
+//                this->event.set(1000000);
+                this->event.set_trigger_time(1000000);
             break;
             case Timeout::TIMEOUT_INACTIVE:
                 LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE");
@@ -5883,7 +5907,8 @@ public:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
-            this->event.reset();
+//            this->event.reset();
+            this->event.reset_trigger_time();
         }
 
         if (this->enable_session_probe) {
@@ -7430,7 +7455,8 @@ private:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
                 now, this->open_session_timeout.count());
-            this->event.set(1000000);
+//            this->event.set(1000000);
+            this->event.set_trigger_time(1000000);
         }
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
@@ -7565,6 +7591,11 @@ private:
     ) {
         (void)cliprdr_channel;
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            InStream clone = stream.clone();
+            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+        }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 

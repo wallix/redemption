@@ -274,7 +274,8 @@ public:
 
                                     if (BACK_EVENT_NONE != event.signal) {
                                         signal = event.signal;
-                                        event.reset();
+//                                        event.reset();
+                                        event.reset_trigger_time();
                                     }
                                 }
                             }
@@ -285,7 +286,8 @@ public:
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
                                     signal = mm.mod->get_event().signal;
-                                    mm.mod->get_event().reset();
+//                                    mm.mod->get_event().reset();
+                                    mm.mod->get_event().reset_trigger_time();
                                 }
                             }
                         }
@@ -296,7 +298,8 @@ public:
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     signal = BACK_EVENT_RETRY_CURRENT;
-                                    mm.mod->get_event().reset();
+//                                    mm.mod->get_event().reset();
+                                    mm.mod->get_event().reset_trigger_time();
                                 }
                                 else if (this->acl_serial) {
                                     this->authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
@@ -312,13 +315,15 @@ public:
                                 }
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset();
+//                                mm.mod->get_event().reset();
+                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset();
+//                                mm.mod->get_event().reset();
+                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RDP_SERVER_REDIR) {
                                 // SET new target in ini
@@ -346,7 +351,8 @@ public:
                                 this->authentifier.report("SERVER_REDIRECTION", message);
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset();
+//                                mm.mod->get_event().reset();
+                                mm.mod->get_event().reset_trigger_time();
                             }
                             else {
                                 throw;
@@ -464,7 +470,8 @@ public:
                             );
                         }
                         else if (signal == BACK_EVENT_STOP) {
-                            mm.mod->get_event().reset();
+//                            mm.mod->get_event().reset();
+                            mm.mod->get_event().reset_trigger_time();
                             run_session = false;
                         }
                         if (mm.last_module) {

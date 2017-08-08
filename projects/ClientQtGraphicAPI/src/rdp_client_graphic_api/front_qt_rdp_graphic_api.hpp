@@ -414,11 +414,11 @@ public:
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
 
             if (this->_callback) {
-                if (this->_callback->get_event().set_state) {
+                if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    int time_to_wake = (this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000
-                    + (this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000;
-
+                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
+                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
+//                     this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
@@ -450,12 +450,12 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
-        this->_callback->get_event().waked_up_by_time = false;
+        this->_callback->get_event().set_waked_up_by_time(false);
         this->call_draw_event();
     }
 
     void call_draw_event_timer() {
-        this->_callback->get_event().waked_up_by_time = true;
+        this->_callback->get_event().set_waked_up_by_time(true);
         this->call_draw_event();
     }
 
@@ -465,10 +465,12 @@ public Q_SLOTS:
             this->_front->callback();
 
             if (this->_callback) {
-                if (this->_callback->get_event().set_state) {
+                if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    int time_to_wake = ((this->_callback->get_event().trigger_time.tv_usec - now.tv_usec) / 1000)
-                    + ((this->_callback->get_event().trigger_time.tv_sec - now.tv_sec) * 1000);
+                    int time_to_wake = ((this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000)
+                    + ((this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000);
+
+                    this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
@@ -483,9 +485,6 @@ public Q_SLOTS:
             }
         }
     }
-
-
-
 
 
 };
@@ -1333,7 +1332,7 @@ private:
                 this->movie_timer_label.setText(movie_real_time);
                 this->show_video_real_time_hms();
                 this->barRepaint(this->current_time_movie, QColor(Qt::green));
-                this->slotRepaint();
+                this->slotRepainMatch();
 
                 switch (this->_front->replay_mod->get_wrm_version()) {
 
@@ -1350,7 +1349,7 @@ private:
                         if (this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
                             this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
                             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
-                            this->slotRepaint();
+                            this->slotRepainMatch();
 
                             this->movie_time_start = tvtime();
                             timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
@@ -1435,7 +1434,7 @@ public Q_SLOTS:
 
         if (!this->_front->replay_mod->get_break_privplay_client()) {
             if (!this->_front->replay_mod->play_client()) {
-                this->slotRepainMatcht();
+                this->slotRepainMatch();
             }
         }
 
@@ -1467,7 +1466,7 @@ public Q_SLOTS:
         this->repaint();
     }
 
-    void slotRepainMatcht() {
+    void slotRepainMatch() {
         QPainter match_painter(&(this->_match_pixmap));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
         match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
@@ -1503,7 +1502,7 @@ public Q_SLOTS:
 
         if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
             this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
-            this->slotRepaint();
+            this->slotRepainMatch();
         }
     }
 

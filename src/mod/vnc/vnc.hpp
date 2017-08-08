@@ -43,7 +43,7 @@
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
-#include "core/RDP/tdpu_buffer.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 
 #include <cstdlib>
 
@@ -782,7 +782,7 @@ public:
         this->update_screen(screen_rect);
         this->lib_open_clip_channel();
 
-        this->event.object_and_time = false;
+        this->event.reset_trigger_time();
         if (bool(this->verbose & Verbose::connection)) {
             LOG(LOG_INFO, "VNC screen cleaning ok\n");
         }
@@ -953,7 +953,7 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-        this->event.set(1000);
+        this->event.set_trigger_time(1000);
     }
 
     void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
@@ -1055,9 +1055,108 @@ public:
                 }
                 break;
 
-            default:
-                this->keyMapSym_event(device_flags, param1, downflag);
+            case 0x0407: // GERMAN
+                // TODO treat problematic case
+                switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+                }
                 break;
+
+            case 0x0409: // United States
+                // TODO treat problematic case
+                switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+                }
+                break;
+
+           case 0x0410: // Italian
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x0419: // Russian
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x041d: // Swedish
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x046e: // Luxemburgish
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x0807: // German Swizerland
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x0809: // English UK
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x080c: // French Belgium
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x0813: // Dutch Belgium
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            case 0x100c: // French Swizerland
+               // TODO treat problematic case
+               switch (param1) {
+                    default:
+                        this->keyMapSym_event(device_flags, param1, downflag);
+                        break;
+               }
+               break;
+
+            default:
+               this->keyMapSym_event(device_flags, param1, downflag);
+               break;
         }
     }
 
@@ -1099,7 +1198,7 @@ protected:
 
             this->t.send(stream.get_data(), stream.get_offset());
 
-            this->event.set(1000);
+            this->event.set_trigger_time(1000);
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -1370,7 +1469,7 @@ public:
 
         LOG(LOG_INFO, "state: %d", int(this->state));
 
-        if (this->state == UP_AND_RUNNING && !this->event.waked_up_by_time) {
+        if (this->state == UP_AND_RUNNING && !this->event.is_waked_up_by_time()) {
             while (!this->draw_event_impl(drawable)) {
                 this->buf.read_from(trans);
             }
@@ -1454,7 +1553,7 @@ private:
             }
 
             this->state = WAIT_SECURITY_TYPES;
-            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
             break;
 
         case UP_AND_RUNNING:
@@ -1462,7 +1561,7 @@ private:
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
 
-            if (!this->event.waked_up_by_time) {
+            if (!this->event.is_waked_up_by_time()) {
                 try {
                     if (!this->up_and_running_ctx.run(buf, drawable, *this)) {
                         return false;
@@ -1482,7 +1581,7 @@ private:
                 }
 
                 if (this->event.signal != BACK_EVENT_NEXT) {
-                    this->event.set(1000);
+                    this->event.set_trigger_time(1000);
                 }
             }
             else {
@@ -1494,8 +1593,7 @@ private:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
-            this->event.object_and_time = false;
-            this->event.reset();
+            this->event.reset_trigger_time();
             break;
 
         case WAIT_SECURITY_TYPES:
@@ -1609,8 +1707,9 @@ private:
                             this->t.disconnect();
 
                             this->state = ASK_PASSWORD;
-                            this->event.object_and_time = true;
-                            this->event.set();
+                            // this->event.object_and_time = true;
+                            // this->event.set();
+                            this->event.set_trigger_time(wait_obj::NOW);
                         }
                         else
                         {
@@ -1844,8 +1943,7 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-                this->event.object_and_time = true;
-                this->event.set();
+                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::no_need:
                 if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1853,8 +1951,7 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-                this->event.object_and_time = true;
-                this->event.set();
+                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::done:
                 if (bool(this->verbose & Verbose::basic_trace)) {
@@ -1865,7 +1962,7 @@ private:
                 this->front_height = this->height;
 
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
-                this->event.object_and_time = true;
+                this->event.set_trigger_time(wait_obj::NOW);
 
                 this->is_first_membelt = true;
                 break;
@@ -1892,8 +1989,8 @@ private:
 private:
     void check_timeout()
     {
-        if (this->event.waked_up_by_time) {
-            this->event.reset();
+        if (this->event.is_waked_up_by_time()) {
+            this->event.reset_trigger_time();
 
             if (this->clipboard_requesting_for_data_is_delayed) {
                 //const uint64_t usnow = ustime();
@@ -3409,8 +3506,7 @@ private:
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
-                            this->event.object_and_time = true;
-                            this->event.set(MINIMUM_TIMEVAL - timeval_diff);
+                            this->event.set_trigger_time(MINIMUM_TIMEVAL - timeval_diff);
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
@@ -3789,7 +3885,7 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
     }
 
@@ -3805,11 +3901,11 @@ public:
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
-            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
             break;
         case NOTIFY_CANCEL:
             this->event.signal = BACK_EVENT_NEXT;
-            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
 
             this->screen.clear();
             break;

@@ -1044,9 +1044,9 @@ enum : int {
         , yDest(0)
         , xDest(0)
         {
-            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            //REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+//             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+//             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void emit(OutStream & stream) const {
@@ -1078,9 +1078,9 @@ enum : int {
             this->xDest = stream.in_uint16_le();
 
             this->bitmapInfoHeader.recv(stream);
-            REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-            REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-            REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            //REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+//             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+//             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void log() const {

@@ -308,7 +308,8 @@ public:
         if (this->ini.get<cfg::context::forcemodule>() &&
             !this->is_connected()) {
             this->mod->get_event().signal = BACK_EVENT_NEXT;
-            this->mod->get_event().set();
+//            this->mod->get_event().set();
+            this->mod->get_event().set_trigger_time(wait_obj::NOW);
             this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }
@@ -796,7 +797,8 @@ public:
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
-        this->no_mod.get_event().reset();
+//        this->no_mod.get_event().reset();
+        this->no_mod.get_event().reset_trigger_time();
         this->mod = &this->no_mod;
     }
 
@@ -1208,6 +1210,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1219,6 +1222,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1275,6 +1279,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (3)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1286,6 +1291,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (4)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1573,6 +1579,7 @@ public:
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (5)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -1584,6 +1591,7 @@ public:
                     report_message.log4(false, "CONNECTION_FAILED");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    LOG(LOG_ERR, "Failed to connect to remote TCP host (6)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 

@@ -358,13 +358,21 @@ exe vncclient
 
 exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
+        video_capture
+        capture
         program_options.o
+        bitmap_from_file.o
+        png.o
         bitmap.o
+        d3des.o
         openssl
         crypto
         png
         z
         dl
+
+        ocr/<link>static
+
         snappy
         krb5
         gssglue

@@ -402,7 +402,8 @@ public:
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
-            mm.mod->get_event().reset();
+//            mm.mod->get_event().reset();
+            mm.mod->get_event().reset_trigger_time();
             return false;
         }
 
@@ -473,7 +474,8 @@ public:
                 // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
                 mm.mod->refresh_context();
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
-                mm.mod->get_event().set();
+//                mm.mod->get_event().set();
+                mm.mod->get_event().set_trigger_time(wait_obj::NOW);
             }
             else if ((signal == BACK_EVENT_NEXT)
                     || (signal == BACK_EVENT_RETRY_CURRENT)
@@ -669,6 +671,7 @@ private:
                 }
                 else if (!this->has_next_buffer) {
                     if (key_buf_len) {
+                        LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (1)");
                         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                     }
                     return nullptr;
@@ -765,6 +768,7 @@ private:
 
         void read_packet() {
             if (!this->has_next_buffer) {
+                LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (2)");
                 throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
             }
             this->safe_read_packet();
@@ -827,6 +831,7 @@ public:
                 }
                 else {
                     reader.hexdump();
+                    LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (3)");
                     throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                 }
             }

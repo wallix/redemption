@@ -53,7 +53,8 @@ public:
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
-            this->event.set();
+//            this->event.set();
+            this->event.set_trigger_time(wait_obj::NOW);
         }
     }
 
@@ -68,7 +69,8 @@ public:
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         (void)now;
         this->draw(drawable);
-        this->event.reset();
+//        this->event.reset();
+        this->event.reset_trigger_time();
     }
 
     bool is_up_and_running() override { return true; }

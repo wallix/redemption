@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan,
+              Jennifer Inthavong
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    stream object, used for input / output communication between
@@ -28,6 +29,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include "./unicode_case_conversion.h"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -135,25 +137,19 @@ static inline size_t UTF8Len(const uint8_t * source)
 
 static inline void UTF16Upper(uint8_t * source, size_t max_len)
 {
-    size_t i_s = 0;
-    for (size_t i = 0 ; i < max_len ; i++){
-        uint8_t lo = source[i_s];
-        uint8_t hi = source[i_s+1];
-        if (hi == 0) {
-            if (lo >= 0x61 && lo <= 0x7A) {
-                // latin characters (ascii)
-                source[i_s] -= 0x20;
-            }
-            if (lo >= 0xe0 && lo <= 0xfe) {
-                // some common latin characters with accent
-                source[i_s] -= 0x20;
-            }
-            if (lo == 0xff) { // ÿ
-                source[i_s] = 0x78;
-                source[i_s+1] = 0x01;
+    for (size_t i = 0 ; i < max_len ; i=i+2){
+        unsigned int wc = source[i];
+        wc += source[i+1] << 8;
+
+        for (unsigned int  j = 0 ; j < sizeof(lowers)/sizeof(lowers[0]); j++){
+            unsigned short c = lowers[j];
+            if (wc == c) {
+                source[i] = uppers[j] & 0xFF;
+                source[i+1] = 0;
+                source[i+1] = (uppers[j] >> 8) & 0x00FF;
+                break;
             }
         }
-        i_s += 2;
     }
 }
 

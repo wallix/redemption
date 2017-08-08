@@ -195,12 +195,18 @@ RED_AUTO_TEST_CASE(TestFront)
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod;
 
-        front.get_event().waked_up_by_time = true;
+//        front.get_event().waked_up_by_time = true;
+        front.get_event().set_trigger_time(wait_obj::NOW);
+        bool is_set = front.get_event().is_set();
+        RED_CHECK(true == is_set);
+        RED_CHECK(front.get_event().is_waked_up_by_time());
 
         while (front.up_and_running == 0) {
             front.incoming(no_mod, now);
 
-            front.get_event().waked_up_by_time = false;
+//            front.get_event().waked_up_by_time = false;
+            front.get_event().reset_trigger_time();
+            RED_CHECK(!front.get_event().is_waked_up_by_time());
         }
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
@@ -417,12 +423,18 @@ RED_AUTO_TEST_CASE(TestFront2)
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod;
 
-        front.get_event().waked_up_by_time = true;
+//        front.get_event().waked_up_by_time = true;
+        front.get_event().set_trigger_time(wait_obj::NOW);
+        bool is_set = front.get_event().is_set();
+        RED_CHECK(true == is_set);
+        RED_CHECK(front.get_event().is_waked_up_by_time());
 
         while (front.up_and_running == 0) {
             front.incoming(no_mod, now);
 
-            front.get_event().waked_up_by_time = false;
+//            front.get_event().waked_up_by_time = false;
+            front.get_event().reset_trigger_time();
+            RED_CHECK(!front.get_event().is_waked_up_by_time());
         }
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

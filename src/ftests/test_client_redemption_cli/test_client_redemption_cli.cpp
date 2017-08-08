@@ -35,7 +35,7 @@
 
 
 
-int run_mod(mod_api &, TestClientCLI &, int, EventList &, bool, std::chrono::milliseconds, bool);
+int run_mod(mod_api *, TestClientCLI &, int, EventList &, bool, std::chrono::milliseconds, bool);
 void print_help();
 
 ///////////////////////////////
@@ -58,6 +58,7 @@ int main(int argc, char** argv)
     info.cs_monitor.monitorCount = 1;
     //info.encryptionLevel = 1;
     int verbose(0);
+    bool protocol_is_VNC = false;
     std::string userName;
     std::string ip;
     std::string userPwd;
@@ -139,7 +140,6 @@ int main(int argc, char** argv)
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                , to_verbose_flags(0)
                                );
-
     mod_rdp_params.enable_tls = true;
     mod_rdp_params.enable_nla = true;
     mod_rdp_params.device_id = "device_id";
@@ -221,6 +221,8 @@ int main(int argc, char** argv)
         "--multi_mon",
         "--adj_perf_rec",
         "--outpath"
+        "--vnc"
+        "--VNC"
     };
 
 
@@ -746,6 +748,11 @@ int main(int argc, char** argv)
                     i++;
                 }
                 break;
+            case 73:                                        // --vnc
+            case 74:                                        // --VNC
+                protocol_is_VNC = true;
+                port = 5900;
+                break;
         }
 
     }
@@ -905,6 +912,10 @@ int main(int argc, char** argv)
         LCGRandom gen(0); // To always get the same client random, in tests
         TimeSystem timeSystem;
 
+        // for VNC
+        NullReportMessage reportMessage;
+        Theme      theme;
+
         front.connection_time = tvtime();
         struct : NullReportMessage {
             void report(const char* reason, const char* /*message*/) override
@@ -917,28 +928,68 @@ int main(int argc, char** argv)
 
             bool is_closed = false;
         } report_message;
-        mod_rdp mod(
-            socket
-          , front
-          , info
-          , ini.get_ref<cfg::mod_rdp::redir_info>()
-          , gen
-          , timeSystem
-          , mod_rdp_params
-          , authentifier
-          , report_message
-          , ini
-        );
 
-        front._to_server_sender._callback = &mod;
-        front._callback = &mod;
-        GCC::UserData::CSSecurity & cs_security = mod.cs_security;
-        cs_security.encryptionMethods = encryptionMethods;
+        mod_api * mod;
+        GCC::UserData::SCCore sc_core;
+        GCC::UserData::SCSecurity sc_sec1;
+
+        if (protocol_is_VNC) {
+
+            mod = new mod_vnc( socket
+                            , userName.c_str()
+                            , userPwd.c_str()
+                            , front
+                            , info.width
+                            , info.height
+                            , ini.get<cfg::font>()
+                            , ""
+                            , ""
+                            , theme
+                            , info.keylayout
+                            , 0
+                            , true
+                            , true
+                            , "0,1,-239"
+                            , false
+                            , true
+                            , mod_vnc::ClipboardEncodingType::UTF8
+                            , VncBogusClipboardInfiniteLoop::delayed
+                            , reportMessage
+                            , false
+                            , to_verbose_flags(verbose));
+
+        } else {
+            mod = new mod_rdp (
+                        socket
+                        , front
+                        , info
+                        , ini.get_ref<cfg::mod_rdp::redir_info>()
+                        , gen
+                        , timeSystem
+                        , mod_rdp_params
+                        , authentifier
+                        , report_message
+                        , ini
+                        );
+
+            GCC::UserData::CSSecurity & cs_security = reinterpret_cast<mod_rdp *>(mod)->cs_security;
+            cs_security.encryptionMethods = encryptionMethods;
+
+            sc_core = reinterpret_cast<mod_rdp *>(mod)->sc_core;
+            sc_sec1 = reinterpret_cast<mod_rdp *>(mod)->sc_sec1;
+        }
+
+        front._to_server_sender._callback = mod;
+        front._callback = mod;
+
+        if (!mod) {
+            std::cout << " Error: Failed during mod initialization. \n";
+        }
 
         try {
-            while (!mod.is_up_and_running()) {
+            while (!mod->is_up_and_running()) {
                 // std::cout <<  " Early negociations... " <<"\n";
-                mod.draw_event(time(nullptr), front);
+                mod->draw_event(time(nullptr), front);
             }
         } catch (const Error & e) {
             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
@@ -950,11 +1001,11 @@ int main(int argc, char** argv)
         std::cout << " Early negociations completes.\n";
 
 
-        if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
+        if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO && !protocol_is_VNC) {
             std::cout << " ================================" << "\n";
             std::cout << " ======= Server Core Info =======" << "\n";
             std::cout << " ================================" << "\n";
-            GCC::UserData::SCCore sc_core = mod.sc_core;
+
             std::cout << " userDataType = " << sc_core.userDataType << "\n";
             std::cout << " length = " << sc_core.length << "\n";
             std::cout << " version = " << sc_core.version << "\n";
@@ -963,11 +1014,11 @@ int main(int argc, char** argv)
             std::cout << std::endl;
         }
 
-        if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
+        if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO && !protocol_is_VNC) {
             std::cout << " ================================" << "\n";
             std::cout << " ===== Server Security Info =====" << "\n";
             std::cout << " ================================" << "\n";
-            GCC::UserData::SCSecurity & sc_sec1 = mod.sc_sec1;
+
             std::cout << " userDataType = " << sc_sec1.userDataType << "\n";
             std::cout << " length = " << sc_sec1.length << "\n";
             std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << "\n";
@@ -1122,7 +1173,7 @@ int main(int argc, char** argv)
 
         front.disconnect();
         if (!report_message.is_closed) {
-            mod.disconnect(tvtime().tv_sec);
+            mod->disconnect(tvtime().tv_sec);
         }
     }
 
@@ -1215,14 +1266,14 @@ void print_help() {
 
 
 
-int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(mod_api * mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
     while (front.is_pipe_ok)
     {
-        if (mod.logged_on == mod_api::CLIENT_LOGGED) {
-            mod.logged_on = mod_api::CLIENT_UNLOGGED;
+        if (mod->logged_on == mod_api::CLIENT_LOGGED) {
+            mod->logged_on = mod_api::CLIENT_UNLOGGED;
 
             std::cout << " RDP Session Log On." << std::endl;
             if (quick_connection_test) {
@@ -1246,9 +1297,9 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
         io_fd_zero(wfds);
         timeval timeout = time_mark;
 
-        mod.get_event().wait_on_fd(sck, rfds, max, timeout);
+        mod->get_event().wait_on_fd(sck, rfds, max, timeout);
 
-        if (mod.get_event().is_set(sck, rfds)) {
+        if (mod->get_event().is_set(sck, rfds)) {
             timeout.tv_sec  = 2;
             timeout.tv_usec = 0;
         }
@@ -1265,9 +1316,9 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
             return 9;
         }
 
-        if (mod.get_event().is_set(sck, rfds)) {
+        if (mod->get_event().is_set(sck, rfds)) {
             //std::cout << "RDP CLIENT :: draw_event" << "\n";
-            mod.draw_event(time(nullptr), front);
+            mod->draw_event(time(nullptr), front);
         }
 
         // if (front.is_running()) {

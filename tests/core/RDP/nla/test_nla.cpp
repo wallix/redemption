@@ -23,7 +23,7 @@
 
 #define LOGNULL
 #include "core/RDP/nla/nla.hpp"
-#include "core/RDP/tdpu_buffer.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 

@@ -23,6 +23,8 @@
 
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "core/channel_list.hpp"
+
 
 namespace rdpsnd {
 
@@ -422,6 +424,7 @@ enum : uint16_t {
     WAVE_FORMAT_MULAW  = 0x0007,
     WAVE_FORMAT_AAC    = 0xa106,
 
+    // The following codecs are NOT supported by default on Windows:
     WAVE_FORMAT_DSPGROUP_TRUESPEECH = 0x0022,
     WAVE_FORMAT_MPEGLAYER3          = 0x0055,
     WAVE_FORMAT_VOXWARE_AC10        = 0x0071,
@@ -740,6 +743,16 @@ enum : uint16_t {
     HIGH_QUALITY    = 0x0002
 };
 
+static inline const char * get_wQualityMode_name(uint16_t wQualityMode) {
+    switch (wQualityMode) {
+        case DYNAMIC_QUALITY: return "DYNAMIC_QUALITY";
+        case MEDIUM_QUALITY: return "MEDIUM_QUALITY";
+        case HIGH_QUALITY: return "HIGH_QUALITY";
+    }
+
+    return "unknow";
+}
+
 struct QualityModePDU {
 
     uint16_t wQualityMode;
@@ -751,11 +764,11 @@ struct QualityModePDU {
 
     void emit(OutStream & stream) {
         stream.out_uint16_le(this->wQualityMode);
-        //stream.out_clear_bytes(2);
+        stream.out_clear_bytes(2);
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 2;           // wQualityMode(4) + Reserved(2)
+        const unsigned expected = 4;           // wQualityMode(2) + Reserved(2)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
                 "Truncated QualityModePDU (0): expected=%u remains=%zu",
@@ -763,12 +776,12 @@ struct QualityModePDU {
             throw Error(ERR_FSCC_DATA_TRUNCATED);
         }
         this->wQualityMode = stream.in_uint16_le();
-        //stream.in_skip_bytes(2);
+        stream.in_skip_bytes(2);
     }
 
     void log() {
         LOG(LOG_INFO, "     Quality Mode PDU:");
-        LOG(LOG_INFO, "          * wQualityMode = 0x%04x (2 bytes)", this->wQualityMode);;
+        LOG(LOG_INFO, "          * wQualityMode = 0x%04x (2 bytes): %s", this->wQualityMode, get_wQualityMode_name(this->wQualityMode));
         LOG(LOG_INFO, "          * Reserved - (2 bytes)  NOT USED");
     }
 
@@ -1309,6 +1322,144 @@ struct PitchPDU {
         LOG(LOG_INFO, "          * Pitch = 0x%08x (4 bytes)", this->Pitch);
     }
 };
+
+
+
+static inline void streamLogClient(InStream & stream, int flag) {
+    if ( flag & CHANNELS::CHANNEL_FLAG_FIRST) {
+        LOG(LOG_INFO, "received from Client:");
+        RDPSNDPDUHeader header;
+        header.receive(stream);
+        header.log();
+
+        switch (header.msgType) {
+
+            case SNDC_FORMATS:
+            {
+                ClientAudioFormatsandVersionHeader safsvh;
+                safsvh.receive(stream);
+                safsvh.log();
+                for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
+                    rdpsnd::AudioFormat format;
+                    format.receive(stream);
+                    format.log();
+                }
+            }
+                break;
+
+            case SNDC_TRAINING:
+            {
+                TrainingConfirmPDU train;
+                train.receive(stream);
+                train.log();
+            }
+                break;
+
+            case SNDC_QUALITYMODE:
+            {
+                QualityModePDU qm;
+                qm.receive(stream);
+                qm.log();
+            }
+                break;
+
+            default: LOG(LOG_WARNING, "Client RDPSND Unknow PDU with length = %zu", header.BodySize);
+                break;
+        }
+        LOG(LOG_INFO, "");
+    }
+}
+
+
+
+static inline void streamLogServer(InStream & stream, int flag) {
+
+    if ( flag & CHANNELS::CHANNEL_FLAG_FIRST) {
+        LOG(LOG_INFO, "received from Server:");
+        RDPSNDPDUHeader header;
+        header.receive(stream);
+        header.log();
+
+        switch (header.msgType) {
+
+            case SNDC_FORMATS:
+            {
+                ServerAudioFormatsandVersionHeader safsvh;
+                safsvh.receive(stream);
+                safsvh.log();
+                for (uint16_t i = 0; i < safsvh.wNumberOfFormats; i++) {
+                    rdpsnd::AudioFormat format;
+                    format.receive(stream);
+                    format.log();
+                }
+            }
+                break;
+
+            case SNDC_TRAINING:
+            {
+                TrainingPDU train;
+                train.receive(stream);
+                train.log();
+            }
+                break;
+
+            case SNDC_WAVE:
+            {
+                WaveInfoPDU wi;
+                wi.receive(stream);
+                wi.log();
+            }
+                break;
+
+            case SNDC_CLOSE:
+            {
+                LOG(LOG_INFO, "Server RDPSDN SNDC_CLOSE");
+            }
+                break;
+
+            case SNDC_SETVOLUME:
+            {
+                VolumePDU v;
+                v.receive(stream);
+                v.log();
+            }
+                break;
+
+            case SNDC_SETPITCH:
+            {
+                PitchPDU p;
+                p.receive(stream);
+                p.log();
+            }
+                break;
+
+            case SNDC_QUALITYMODE:
+            {
+                QualityModePDU qm;
+                qm.receive(stream);
+                qm.log();
+            }
+                break;
+
+            case SNDC_WAVE2:
+            {
+                Wave2PDU w2;
+                w2.receive(stream);
+                w2.log();
+            }
+                break;
+
+            default:
+                if (header.BodySize ==  0 && header.msgType ==  0) {
+                    LOG(LOG_INFO, "Server RDPSDN SNDC_WAVE");
+                } else {
+                    LOG(LOG_WARNING, "Server RDPSND Unknow PDU with length = %zu", header.BodySize);
+                }
+                break;
+        }
+        LOG(LOG_INFO, "");
+    }
+}
 
 
 }

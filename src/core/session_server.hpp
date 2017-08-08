@@ -124,6 +124,7 @@ public:
 
                 if (0 != strcmp(source_ip, "127.0.0.1")){
                     // do not log early messages for localhost (to avoid tracing in watchdog)
+                    LOG(LOG_INFO, "Redemption " VERSION);
                     LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
                 }
 
