@@ -463,6 +463,8 @@ public:
                 case State::Finish:
                     return true;
             }
+
+            REDEMPTION_UNREACHABLE();
         }
 
     private:
@@ -2917,11 +2919,15 @@ private:
         bool run(Buf64k & buf) noexcept
         {
             for (;;) {
-                Result r = [this, &buf]{switch (this->state) {
-                    case State::Header:   return this->read_header(buf);
-                    case State::Data:     return this->read_data(buf);
-                    case State::SkipData: return this->skip_data(buf);
-                }}();
+                Result r = [this, &buf]{
+                    switch (this->state) {
+                        case State::Header:   return this->read_header(buf);
+                        case State::Data:     return this->read_data(buf);
+                        case State::SkipData: return this->skip_data(buf);
+                    }
+                    REDEMPTION_UNREACHABLE();
+                }();
+
                 if (!r) {
                     return false;
                 }
@@ -3092,11 +3098,15 @@ private:
         bool run(Buf64k & buf) noexcept
         {
             for (;;) {
-                Result r = [this, &buf]{switch (this->state) {
-                    case State::Header:   return this->read_header(buf);
-                    case State::Data:     return this->read_data(buf);
-                    case State::SkipData: return this->skip_data(buf);
-                }}();
+                Result r = [this, &buf]{
+                    switch (this->state) {
+                        case State::Header:   return this->read_header(buf);
+                        case State::Data:     return this->read_data(buf);
+                        case State::SkipData: return this->skip_data(buf);
+                    }
+                    REDEMPTION_UNREACHABLE();
+                }();
+
                 if (!r) {
                     return false;
                 }

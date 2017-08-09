@@ -684,7 +684,7 @@ test-canonical mod/internal/widget/flat_button.hpp : <library>crypto ;
 test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto ;
 test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>crypto ;
 test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget/flat_selector.hpp : <library>crypto ;
+test-canonical mod/internal/widget/selector.hpp : <library>crypto ;
 test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>crypto ;
 test-canonical mod/internal/widget/grid.hpp : <library>crypto ;
 test-canonical mod/internal/widget/group_box.hpp : <library>crypto ;
@@ -729,7 +729,7 @@ test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/replay_mod.hpp : <library>png ;
 test-canonical mod/internal/test_card_mod.hpp : <library>bitmap ;
 test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/flat_selector_mod.hpp ;
+test-canonical mod/internal/selector_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
 ## @}

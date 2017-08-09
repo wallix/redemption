@@ -27,23 +27,43 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget/flat_selector.hpp"
+#include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
 
+using SelectorModVariables = vcfg::variables<
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
+>;
 
 
-class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
+class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 //     WidgetSelectorFlat selector;
-    Selector selector;
+    WidgetSelector selector;
 
 
     int current_page;
     int number_page;
 
-    FlatSelectorModVariables vars;
+    SelectorModVariables vars;
 
     CopyPaste copy_paste;
 
@@ -52,7 +72,7 @@ class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
     struct temporary_login {
         char buffer[256];
 
-        explicit temporary_login(FlatSelectorModVariables vars) {
+        explicit temporary_login(SelectorModVariables vars) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
                      "%s@%s",
@@ -67,7 +87,7 @@ class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
 
 
 public:
-    FlatSelectorMod(FlatSelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
+    SelectorMod(SelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, front, front, this->font(), this->theme())
 
@@ -95,7 +115,7 @@ public:
             vars.is_asked<cfg::context::selector_number_of_pages>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
             &this->language_button,
-            3, &vars,
+            3,                                              //&vars,
             vars.get<cfg::font>(),
             vars.get<cfg::theme>(),
             language(vars))
@@ -121,7 +141,7 @@ public:
         this->selector.rdp_input_invalidate(this->selector.get_rect());
     }
 
-    ~FlatSelectorMod() override {
+    ~SelectorMod() override {
         this->screen.clear();
     }
 

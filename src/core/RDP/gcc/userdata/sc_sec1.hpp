@@ -489,6 +489,9 @@ struct SCSecurity {
         }
     }
 
+    SCSecurity(SCSecurity const &) = delete;
+    SCSecurity & operator = (SCSecurity const &) = delete;
+
     ~SCSecurity(){
         for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
             if (this->x509.cert[i].cert){
