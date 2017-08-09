@@ -53,10 +53,15 @@ using SelectorModVariables = vcfg::variables<
 >;
 
 
+
+
+
 class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 //     WidgetSelectorFlat selector;
+
+    WidgetSelectorParams selector_params;
     WidgetSelector selector;
 
 
@@ -85,7 +90,6 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 
 
 
-
 public:
     SelectorMod(SelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
@@ -107,6 +111,22 @@ public:
 //             vars.get<cfg::theme>(),
 //             language(vars))
 
+        , selector_params( [&]() -> const WidgetSelectorParams {
+            WidgetSelectorParams params;
+
+            params.nb_columns = 3;
+
+            params.base_len[0] = 200;
+            params.base_len[1] = 64000;
+            params.base_len[2] = 80;
+            params.base_len[3] = 80;
+
+            params.label[0] = "Authorization";
+            params.label[1] = "Target";
+            params.label[2] = "Protocol";
+            params.label[3] = "Test";
+
+            return params; }() )
         , selector(front, temporary_login(vars).buffer,
             widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
             this->screen, this,
@@ -115,7 +135,7 @@ public:
             vars.is_asked<cfg::context::selector_number_of_pages>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
             &this->language_button,
-            3,                                              //&vars,
+            this->selector_params,                       //&vars,
             vars.get<cfg::font>(),
             vars.get<cfg::theme>(),
             language(vars))
@@ -150,9 +170,9 @@ public:
         this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
 
 
-        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filter[0]->get_text());
-        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filter[1]->get_text());
-        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filter[2]->get_text());
+        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filter[0].get_text());
+        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filter[1].get_text());
+        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filter[2].get_text());
 
 
 //         this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
@@ -196,8 +216,8 @@ public:
                 uint16_t row_index = 0;
                 uint16_t column_index = 0;
                 this->selector.selector_lines.get_selection(row_index, column_index);
-                const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat::IDX_TARGET);
-                const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelectorFlat::IDX_TARGETGROUP);
+                const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
+                const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
                          target, groups, this->vars.get<cfg::globals::auth_user>().c_str());
                 this->vars.set_acl<cfg::globals::auth_user>(buffer);
@@ -264,7 +284,7 @@ public:
 
         this->number_page = vars.get<cfg::context::selector_number_of_pages>();
         snprintf(buffer, sizeof(buffer), "%d", this->number_page);
-        this->selector.number_page.set_text(WidgetSelectorFlat::temporary_number_of_page(buffer).buffer);
+        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
 
         this->selector.selector_lines.clear();
 

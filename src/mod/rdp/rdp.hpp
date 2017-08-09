@@ -1910,7 +1910,7 @@ public:
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint8_t flag) override {
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
         }
@@ -1925,9 +1925,9 @@ public:
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
-//         if (!(MOUSE_FLAG_MOVE & device_flags)) {
-//             LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
-//         }
+        //if (!(MOUSE_FLAG_MOVE & device_flags)) {
+        //    LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
+        //}
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
@@ -6475,7 +6475,7 @@ public:
                     break;
 
                 case RDP_INPUT_UNICODE:
-                    FastPath::KeyboardEventUniCode_Send(stream, device_flags, param1);
+                    FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_SYNCHRONIZE:

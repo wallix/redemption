@@ -66,6 +66,23 @@ public:
         this->set_text(text);
     }
 
+    WidgetLabel(const WidgetLabel & label)
+        : Widget(label.drawable, label.parent, label.notifier, label.group_id)
+        , initial_x_text(label.initial_x_text)
+        , x_text(label.x_text)
+        , y_text(label.y_text)
+        , bg_color(label.bg_color)
+        , fg_color(label.fg_color)
+        , tool(false)
+        , w_border(label.x_text)
+        , h_border(label.y_text)
+        , font(label.font)
+    {
+        this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
+        this->set_text(label.get_text());
+    }
+
     ~WidgetLabel() override {
     }
 

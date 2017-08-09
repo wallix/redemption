@@ -51,6 +51,7 @@ namespace cfg {
         struct codec_id;
         struct video_quality;
         struct large_pointer_support;
+        struct unicode_keyboard_event_support;
     };
 
     struct session_log {

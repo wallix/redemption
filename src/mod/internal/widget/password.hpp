@@ -204,4 +204,13 @@ public:
             }
         }
     }
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        WidgetEdit::rdp_input_unicode(unicode, flag);
+        this->set_masked_text();
+
+        this->masked_text.shift_text(this->edit_pos * this->w_char);
+
+        this->rdp_input_invalidate(this->get_rect());
+    }
 };

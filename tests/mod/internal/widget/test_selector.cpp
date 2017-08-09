@@ -48,8 +48,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, 3, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
     const char * add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
                            "RDP", "", "", "", "", "", "", ""};
@@ -106,9 +114,17 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
     WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-                                "1", "1",  extra_button, 3, font, Theme(), Translation::EN);
+                                "1", "1",  extra_button, params, font, Theme(), Translation::EN);
 
     const char * add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
                            "RDP", "", "", "", "", "", "", ""};
@@ -166,8 +182,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, 3, font,  Theme(), Translation::EN);
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font,  Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
@@ -191,8 +215,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, 3, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -220,8 +252,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, 3, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -248,8 +288,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, 3, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
     const char * add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
                            "RDP", "", "", "", "", "", "", ""};
@@ -370,8 +418,17 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.base_len[0] = 200;
+    params.base_len[1] = 64000;
+    params.base_len[2] = 80;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, 3, font, Theme(), Translation::EN);
+
+    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
     const char * add1[] = {"reptile", "snake@10.10.14.111",
                            "RDP", "", "", "", "", "", "", ""};
@@ -400,8 +457,8 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.selector_lines.set_selection(0);
 
-    curx = selector.edit_filter[0]->x() + 2;
-    cury = selector.edit_filter[0]->y() + 2;
+    curx = selector.edit_filter[0].x() + 2;
+    cury = selector.edit_filter[0].y() + 2;
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                              curx, cury,
                              nullptr);
