@@ -186,7 +186,7 @@ public:
         entries[8] = "Empty";
         entries[9] = "Empty";
 
-        const uint16_t base_len[GRID_NB_COLUMNS_MAX] = {200, 640, 80, 80, 80, 80, 80, 80, 80, 80};
+        const uint16_t base_len[GRID_NB_COLUMNS_MAX] = {200, 64000, 80, 80, 80, 80, 80, 80, 80, 80};
 
         for (int i = 0; i < this->nb_columns; i++) {
             this->header_label[i] = new WidgetLabel(drawable, *this, nullptr, entries[i], -10,
@@ -221,6 +221,11 @@ public:
         }
 
         this->move_size_widget(left, top, width, height);
+
+        for (int i = 0; i < this->nb_columns; i++) {
+            LOG(LOG_INFO, "edit filter %d x=%u y=%u cx=%u cy=%u", i, this->edit_filter[i]->x(), this->edit_filter[i]->y(), this->edit_filter[i]->cx(), this->edit_filter[i]->cy());
+
+        }
     }
 
     ~WidgetSelector() override {
@@ -336,7 +341,7 @@ private:
                 this->header_label[i]->set_xy(this->left + offset, labels_y);
                 this->edit_filter[i]->set_xy(this->header_label[i]->x(), filters_y);
                 this->edit_filter[i]->set_wh(
-                    this->header_label[i]->cx() - FILTER_SEPARATOR,
+                    this->header_label[i]->cx() - ((i == this->nb_columns-1) ? 0 : FILTER_SEPARATOR),
                     this->edit_filter[i]->cy());
                 offset += this->header_label[i]->cx();
             }
@@ -424,11 +429,8 @@ public:
         }
     }
 
-    void add_device(const char ** entries)
-    {
-        //for (int i = 0; i < this->nb_columns; i++) {
-            this->selector_lines.add_line(entries);
-        //}
+    void add_device(const char ** entries) {
+        this->selector_lines.add_line(entries);
     }
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
@@ -712,6 +714,10 @@ public:
         }
 
         this->rearrange();
+
+        LOG(LOG_INFO, "filter_target_group x=%u y=%u cx=%u cy=%u", this->filter_target_group.x(), this->filter_target_group.y(), this->filter_target_group.cx(), this->filter_target_group.cy());
+        LOG(LOG_INFO, "filter_target x=%u y=%u cx=%u cy=%u", this->filter_target.x(), this->filter_target.y(), this->filter_target.cx(), this->filter_target.cy());
+        LOG(LOG_INFO, "filter_protocol x=%u y=%u cx=%u cy=%u", this->filter_protocol.x(), this->filter_protocol.y(), this->filter_protocol.cx(), this->filter_protocol.cy());
     }
 
     BGRColor get_bg_color() const override {
@@ -868,12 +874,16 @@ public:
         }
     }
 
-    void add_device(const char * device_group, const char * target_label,
-                    const char * protocol)
-    {
-        const char * texts[] = { device_group, target_label, protocol };
-        this->selector_lines.add_line(texts);
+    void add_device(const char ** entries) {
+        this->selector_lines.add_line(entries);
     }
+
+//     void add_device(const char * device_group, const char * target_label,
+//                     const char * protocol)
+//     {
+//         const char * texts[] = { device_group, target_label, protocol };
+//         this->selector_lines.add_line(texts);
+//     }
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){

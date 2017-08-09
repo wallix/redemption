@@ -3119,7 +3119,7 @@ public:
 
                 WrmParams wrmParams(
                       this->info.bpp
-                    , TraceType::localfile
+//                     , TraceType::localfile
                     , cctx
                     , gen
                     , this->fstat
