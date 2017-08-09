@@ -317,7 +317,7 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) override
+    void log4(const char * type, const char * extra) override
     {
         /* Log to file */
         if (this->ini.get<cfg::session_log::session_log_redirection>()) {
@@ -343,13 +343,6 @@ public:
                 ct.send(extra, strlen(extra));
             }
             ct.send("\"\n", 2);
-        }
-
-        /* Log to syslog */
-        if (duplicate_with_pid) {
-            LOG(LOG_INFO, "type=\"%s\"%s%s", type, 
-                    ((extra && *extra) ? " " : ""),
-                    ((extra && *extra) ? extra : ""));
         }
 
         /* Log to SIEM (redirected syslog) */

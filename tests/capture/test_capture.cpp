@@ -2252,8 +2252,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     struct : NullReportMessage {
         std::string s;
 
-        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
-            (void)duplicate_with_pid;
+        void log4(const char* type, const char* extra) override {
             (void)type;
             RED_REQUIRE(extra);
             s += extra;

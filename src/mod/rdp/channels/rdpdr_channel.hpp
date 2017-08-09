@@ -1535,10 +1535,11 @@ public:
                                 device_type);
                             info += "'";
 
-                            this->report_message.log4(
-                                !this->param_dont_log_data_into_syslog,
-                                "DRIVE_REDIRECTION_USE",
-                                info.c_str());
+                            this->report_message.log4("DRIVE_REDIRECTION_USE", info.c_str());
+                                
+                            if (!this->param_dont_log_data_into_syslog) {
+                                LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_USE\" %s", info.c_str());
+                            }
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message("UseRedirectedDevice=");
@@ -1670,10 +1671,11 @@ public:
                                     append_escaped_delimiters(info, target_info.file_path);
                                     info += "\"";
 
-                                    this->report_message.log4(
-                                        !this->param_dont_log_data_into_syslog,
-                                        "DRIVE_REDIRECTION_READ",
-                                        info.c_str());
+                                    this->report_message.log4("DRIVE_REDIRECTION_READ", info.c_str());
+
+                                    if (!this->param_dont_log_data_into_syslog) {
+                                        LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_READ\" %s", info.c_str());
+                                    }
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message("ReadRedirectedFileSystem=");
@@ -1713,10 +1715,11 @@ public:
                                 append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
-                                this->report_message.log4(
-                                    !this->param_dont_log_data_into_syslog,
-                                    "DRIVE_REDIRECTION_WRITE",
-                                    info.c_str());
+                                this->report_message.log4("DRIVE_REDIRECTION_WRITE", info.c_str());
+
+                                if (!this->param_dont_log_data_into_syslog) {
+                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_WRITE\" %s", info.c_str());
+                                }
 
                                 if (!this->param_dont_log_data_into_wrm) {
                                     std::string message("WriteRedirectedFileSystem=");
@@ -1767,10 +1770,11 @@ public:
                                 append_escaped_delimiters(info, target_info.file_path);
                                 info += "\"";
 
-                                this->report_message.log4(
-                                    !this->param_dont_log_data_into_syslog,
-                                    "DRIVE_REDIRECTION_DELETE",
-                                    info.c_str());
+                                this->report_message.log4("DRIVE_REDIRECTION_DELETE", info.c_str());
+
+                                if (!this->param_dont_log_data_into_syslog) {
+                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_DELETE\" %s", info.c_str());
+                                }
                             }
                         }
                         break;
@@ -1786,10 +1790,12 @@ public:
                                 append_escaped_delimiters(info, file_path);
                                 info += "\"";
 
-                                this->report_message.log4(
-                                    !this->param_dont_log_data_into_syslog,
-                                    "DRIVE_REDIRECTION_RENAME",
-                                    info.c_str());
+                                this->report_message.log4("DRIVE_REDIRECTION_RENAME", info.c_str());
+
+                                if (!this->param_dont_log_data_into_syslog) {
+                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_RENAME\" %s", info.c_str());
+                                }
+                                    
                             }
                         }
                         break;

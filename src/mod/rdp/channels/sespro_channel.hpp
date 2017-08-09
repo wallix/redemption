@@ -1077,13 +1077,11 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->report_message.log4(
-                bool(this->verbose & RDPVerbose::sesprobe),
-                "SESSION_ENDING_IN_PROGRESS");
+            this->report_message.log4("SESSION_ENDING_IN_PROGRESS");
 
-//            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-//                LOG(LOG_INFO, "type=\"SESSION_ENDING_IN_PROGRESS\"");
-//            }
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                LOG(LOG_INFO, "type=\"SESSION_ENDING_IN_PROGRESS\"");
+            }
 
             this->session_probe_ending_in_progress = true;
         }
@@ -1119,9 +1117,11 @@ public:
                     std::string info;
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
-                    this->report_message.log4(
-                        bool(this->verbose & RDPVerbose::sesprobe),
-                        order.c_str(), info.c_str());
+                    this->report_message.log4(order.c_str(), info.c_str());
+
+                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                        LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                    }
 
                     if (parameters.size() == 1) {
                         this->front.set_focus_on_password_textbox(
@@ -1135,9 +1135,11 @@ public:
                     std::string info;
                     info += "status=\""; append_escaped_delimiters(info, parameters[0]);
                     info += '"';
-                    this->report_message.log4(
-                        bool(this->verbose & RDPVerbose::sesprobe),
-                        order.c_str(), info.c_str());
+                    this->report_message.log4(order.c_str(), info.c_str());
+
+                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                        LOG(LOG_INFO, "type=\"UAC_PROMPT_BECOME_VISIBLE\" %s", info.c_str());
+                    }
 
                     if (parameters.size() == 1) {
                         this->front.set_consent_ui_visible(
@@ -1153,9 +1155,11 @@ public:
                         info += "identifier=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" display_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4("INPUT_LANGUAGE", info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"INPUT_LANGUAGE\" %s", info.c_str());
+                        }
 
                         this->front.set_keylayout(
                             ::strtol(parameters[0].c_str(), nullptr, 16));
@@ -1170,9 +1174,11 @@ public:
                         std::string info;
                         info += "command_line=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4(order.c_str(), info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                        }
                     }
                     else {
                         message_format_invalid = true;
@@ -1184,9 +1190,11 @@ public:
                         info += "application_name=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" RawResult=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4(order.c_str(), info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"STARTUP_APPLICATION_FAIL_TO_RUN\" %s", info.c_str());
+                        }
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application \"%s\"! RawResult=%s",
@@ -1198,33 +1206,47 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED") ||
-                         !order.compare("OUTBOUND_CONNECTION_DETECTED")) {
-                    bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED"));
+                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED")) {
+                    if (parameters.size() == 2) {
+                        std::string info;
+                        info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
+                        info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
+                        info += '"';
+                        this->report_message.log4("OUTBOUND_CONNECTION_BLOCKED", info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"OUTBOUND_CONNECTION_BLOCKED\" %s", info.c_str());
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("OUTBOUND_CONNECTION_DETECTED")) {
 
                     if (parameters.size() == 2) {
                         std::string info;
                         info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4(order.c_str(), info.c_str());
 
-                        if (deny) {
-                            char message[4096];
-
-                            REDEMPTION_DIAGNOSTIC_PUSH
-                            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-                            std::snprintf(message, sizeof(message),
-                                TR(trkeys::process_interrupted_security_policies,
-                                   this->param_lang),
-                                parameters[1].c_str());
-                            REDEMPTION_DIAGNOSTIC_POP
-
-                            std::string string_message = message;
-                            this->mod.display_osd_message(string_message);
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
                         }
+
+                        char message[4096];
+
+                        REDEMPTION_DIAGNOSTIC_PUSH
+                        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+                        std::snprintf(message, sizeof(message),
+                            TR(trkeys::process_interrupted_security_policies,
+                               this->param_lang),
+                            parameters[1].c_str());
+                        REDEMPTION_DIAGNOSTIC_POP
+
+                        std::string string_message = message;
+                        this->mod.display_osd_message(string_message);
                     }
                     else {
                         message_format_invalid = true;
@@ -1255,9 +1277,11 @@ public:
                             info += "\" dst_addr=\""; append_escaped_delimiters(info, parameters[3]);
                             info += "\" dst_port=\""; append_escaped_delimiters(info, parameters[4]);
                             info += '"';
-                            this->report_message.log4(
-                                bool(this->verbose & RDPVerbose::sesprobe),
-                                order.c_str(), info.c_str());
+                            this->report_message.log4(order.c_str(), info.c_str());
+
+                            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                                LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            }
 
                             if (deny) {
                                 if (::strtoul(parameters[5].c_str(), nullptr, 10)) {
@@ -1307,9 +1331,11 @@ public:
                             info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
                             info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
                             info += '"';
-                            this->report_message.log4(
-                                bool(this->verbose & RDPVerbose::sesprobe),
-                                order.c_str(), info.c_str());
+                            this->report_message.log4(order.c_str(), info.c_str());
+
+                            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                                LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            }
 
                             if (deny) {
                                 if (::strtoul(parameters[3].c_str(), nullptr, 10)) {
@@ -1343,9 +1369,12 @@ public:
                         std::string info;
                         info += "source=\"Probe\" window=\""; append_escaped_delimiters(info, parameters[0]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            "TITLE_BAR", info.c_str());
+                        this->report_message.log4("TITLE_BAR", info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"TITLE_BAR\" %s", info.c_str());
+                        }
+                            
                     }
                     else {
                         message_format_invalid = true;
@@ -1357,9 +1386,12 @@ public:
                         info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" button=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4(order.c_str(), info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                        }
+                            
                     }
                     else {
                         message_format_invalid = true;
@@ -1371,9 +1403,12 @@ public:
                         info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
                         info += "\" edit=\""; append_escaped_delimiters(info, parameters[1]);
                         info += '"';
-                        this->report_message.log4(
-                            bool(this->verbose & RDPVerbose::sesprobe),
-                            order.c_str(), info.c_str());
+                        this->report_message.log4(order.c_str(), info.c_str());
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                        }
+
                     }
                     else {
                         message_format_invalid = true;

@@ -624,37 +624,48 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
-                        "CERTIFICATE_CHECK_SUCCESS",
-                        "description=\"Connexion to server allowed\""
-                    );
+                this->report_message.log4("CERTIFICATE_CHECK_SUCCESS",
+                        "description=\"Connexion to server allowed\"");
+
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "type=\"CERTIFICATE_CHECK_SUCCESS\" "
+                        "description=\"Connexion to server allowed\"");
+                }
             }
         }
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
-                        "SERVER_CERTIFICATE_NEW",
-                        "description=\"New X.509 certificate created\""
-                    );
+                this->report_message.log4("SERVER_CERTIFICATE_NEW",
+                        "description=\"New X.509 certificate created\"");
+                        
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_NEW\" "
+                                  "description=\"New X.509 certificate created\"");
+                }
             }
         }
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
-                        "SERVER_CERTIFICATE_MATCH_SUCCESS",
-                        "description=\"X.509 server certificate match\""
-                    );
+                this->report_message.log4("SERVER_CERTIFICATE_MATCH_SUCCESS",
+                        "description=\"X.509 server certificate match\"");
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_MATCH_SUCCESS\" "
+                                  "description=\"X.509 server certificate match\"");
+                }
             }
         }
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
-                        "SERVER_CERTIFICATE_MATCH_FAILURE",
-                        "description=\"X.509 server certificate match failure\""
-                    );
+                this->report_message.log4("SERVER_CERTIFICATE_MATCH_FAILURE",
+                        "description=\"X.509 server certificate match failure\"");
+                        
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_MATCH_FAILURE\" "
+                                  "description=\"X.509 server certificate match failure\"");
+                }
             }
         }
 
@@ -665,9 +676,12 @@ protected:
                     append_escaped_delimiters(extra, str_error);
                 }
                 extra += "\\\"\"";
-                this->report_message.log4(bool(this->verbose & RDPVerbose::basic_trace),
-                        "SERVER_CERTIFICATE_ERROR",
-                        extra.c_str());
+                this->report_message.log4("SERVER_CERTIFICATE_ERROR", extra.c_str());
+
+                if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_ERROR\" %s", extra.c_str()); 
+                }
+                        
             }
         }
     } server_notifier;
@@ -3563,7 +3577,7 @@ public:
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
-                this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
+                this->report_message.log4("SESSION_DISCONNECTION", extra);
                 this->session_disconnection_logged = true;
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
@@ -3740,7 +3754,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                this->report_message.log4("SESSION_ESTABLISHED_SUCCESSFULLY");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -7483,7 +7497,7 @@ public:
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 
-            this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
+            this->report_message.log4("SESSION_DISCONNECTION", extra);
             this->session_disconnection_logged = true;
         }
     }

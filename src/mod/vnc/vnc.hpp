@@ -766,7 +766,7 @@ public:
         cursor.update_bw();
         this->front.set_pointer(cursor);
 
-        this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+        this->report_message.log4("SESSION_ESTABLISHED_SUCCESSFULLY");
 
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
 
@@ -3913,7 +3913,7 @@ public:
                         ((int(seconds) % 3600) / 60),
                         (int(seconds) % 60));
 
-        this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
+        this->report_message.log4("SESSION_DISCONNECTION", extra);
     }
 
     Dimension get_dim() const override
