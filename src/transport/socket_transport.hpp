@@ -389,12 +389,7 @@ private:
             return res;
         }
 
-        ssize_t res = 0;
-
-        // TODO (temporary) test on EAGAIN
-        while ((res = ::recv(this->sck, data, len, 0)) == -1
-            && errno == EAGAIN) {
-        }
+        ssize_t const res = ::recv(this->sck, data, len, 0);
         switch (res) {
             case -1: /* error, maybe EAGAIN */ {
                 int err = errno;
