@@ -115,10 +115,12 @@ public:
 
     void set_with_encryption (bool encryption) {
         this->with_encryption = encryption;
+        this->with_checksum |= this->with_encryption;
+
     }
 
     void set_with_checksum (bool checksum) {
-        this->with_checksum = checksum;
+        this->with_checksum = checksum | this->with_encryption ;
     }
 
     bool get_with_encryption () {
@@ -126,7 +128,7 @@ public:
     }
 
     bool get_with_checksum () {
-        return this->with_checksum;
+        return this->with_checksum || this->with_encryption;
     }
 private:
     // force extension to "mwrm" if it's .log

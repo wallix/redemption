@@ -1120,6 +1120,7 @@ test-canonical core/server_notifier_api.hpp ;
 test-canonical core/session.hpp : <library>png <library>crypto <library>z <library>snappy <library>dl ;
 test-canonical core/session_server.hpp :  <library>png <library>crypto <library>z <library>snappy <library>dl ;
 test-canonical core/wait_obj.hpp ;
+test-canonical core/buf64k.hpp ;
 ## @}
 
 

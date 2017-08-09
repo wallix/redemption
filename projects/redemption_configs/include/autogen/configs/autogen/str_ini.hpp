@@ -235,6 +235,8 @@
 
 "#enable_new_pointer_update = 0\n\n"
 
+"#bogus_ios_glyph_support_level = 1\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"

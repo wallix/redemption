@@ -20,84 +20,12 @@
 
 #pragma once
 
+#include "core/RDP/x224.hpp"
+#include "core/buf64k.hpp"
 #include "transport/transport.hpp"
 #include "utils/parse.hpp"
-#include "cxx/cxx.hpp"
-#include "x224.hpp"
 
 #include <cstring>
-
-struct Buf64k
-{
-    REDEMPTION_NON_COPYABLE(Buf64k);
-
-    Buf64k() = default;
-
-    uint16_t remaining() const noexcept
-    {
-        return uint16_t(this->len - this->idx);
-    }
-
-    array_view_u8 av(std::size_t n) noexcept
-    {
-        assert(n <= this->remaining());
-        return {this->buf + this->idx, n};
-    }
-
-    array_view_const_u8 av(std::size_t n) const noexcept
-    {
-        assert(n <= this->remaining());
-        return {this->buf + this->idx, n};
-    }
-
-    array_view_u8 sub(std::size_t i, std::size_t n) noexcept
-    {
-        assert(n <= this->remaining());
-        return {this->buf + this->idx + i, n};
-    }
-
-    array_view_const_u8 sub(std::size_t i, std::size_t n) const noexcept
-    {
-        assert(n <= this->remaining());
-        return {this->buf + this->idx + i, n};
-    }
-
-    void advance(std::size_t n) noexcept
-    {
-        assert(n <= this->remaining());
-        this->idx += n;
-    }
-
-    array_view_u8 get_buffer_and_advance(std::size_t n) noexcept
-    {
-        auto av = this->av(n);
-        this->advance(n);
-        return av;
-    }
-
-    void read_from(InTransport trans)
-    {
-        if (this->idx == this->len) {
-            this->len = trans.partial_read(this->buf, max_len);
-            this->idx = 0;
-        }
-        else {
-            if (this->idx) {
-                std::memmove(this->buf, this->buf + this->idx, this->remaining());
-                this->len -= this->idx;
-                this->idx = 0;
-            }
-            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
-        }
-    }
-
-private:
-    static constexpr std::size_t max_len = uint16_t(~uint16_t{});
-    uint8_t buf[max_len];
-    uint16_t len = 0;
-    uint16_t idx = 0;
-};
-
 
 namespace Extractors
 {

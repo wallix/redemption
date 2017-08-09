@@ -39,10 +39,11 @@
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/report_message_api.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "transport/socket_transport.hpp"
 #include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
+#include "utils/verbose_flags.hpp"
+#include "core/buf64k.hpp"
 
 #include <cstdlib>
 
@@ -60,7 +61,6 @@ struct mod_vnc : public InternalMod, private NotifyApi
 
     /* mod data */
     char mod_name[256];
-    BGRPalette palette;
     int vnc_desktop;
     char username[256];
     char password[256];
@@ -147,10 +147,6 @@ public:
 private:
     KeymapSym  keymapSym;
 
-    uint8_t to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
-    InStream to_rdp_clipboard_data;
-    bool     to_rdp_clipboard_data_is_utf8_encoded;
-
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
     uint32_t to_vnc_clipboard_data_size;
     uint32_t to_vnc_clipboard_data_remaining;
@@ -162,8 +158,6 @@ private:
     bool client_use_long_format_names = false;
     bool server_use_long_format_names = true;
 
-    z_stream zstrm;
-
     enum {
         ASK_PASSWORD,
         DO_INITIAL_CLEAR_SCREEN,
@@ -171,6 +165,14 @@ private:
         UP_AND_RUNNING,
         WAIT_PASSWORD,
         WAIT_SECURITY_TYPES,
+        WAIT_SECURITY_TYPES_LEVEL,
+        WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM,
+        WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE,
+        WAIT_SECURITY_TYPES_MS_LOGON,
+        WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE,
+        WAIT_SECURITY_TYPES_INVALID_AUTH,
+        SERVER_INIT,
+        SERVER_INIT_RESPONSE,
         WAIT_CLIENT_UP_AND_RUNNING
     };
 
@@ -191,8 +193,6 @@ private:
 private:
     bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
-
-    const bool is_socket_transport;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
@@ -215,7 +215,6 @@ private:
     int keylayout;
 
 public:
-    //==============================================================================================================
     mod_vnc( Transport & t
            , const char * username
            , const char * password
@@ -232,56 +231,42 @@ public:
            , bool clipboard_down
            , const char * encodings
            , bool allow_authentification_retries
-           , bool is_socket_transport
+           , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
            , Verbose verbose
            )
-    //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
     , mod_name{0}
-    , palette(BGRPalette::classic_332())
     , vnc_desktop(0)
     , username{0}
     , password{0}
     , t(t)
     , verbose(verbose)
     , keymapSym(static_cast<uint32_t>(verbose))
-    , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
-    , to_rdp_clipboard_data_is_utf8_encoded(false)
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
     , allow_authentification_retries(allow_authentification_retries || !(*password))
-    , is_socket_transport(is_socket_transport)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
+    , frame_buffer_update_ctx(verbose)
+    , clipboard_data_ctx(verbose)
     {
-    //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         ::time(&this->beginning);
 
-        memset(&zstrm, 0, sizeof(zstrm));
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-        if (inflateInit(&this->zstrm) != Z_OK)
-        REDEMPTION_DIAGNOSTIC_POP
-        {
-            LOG(LOG_ERR, "vnc zlib initialization failed");
-
-            throw Error(ERR_VNC_ZLIB_INITIALIZATION);
-        }
         // TODO init layout sym with apple layout
         if (this->server_is_apple) {
             keymapSym.init_layout_sym(0x0409);
@@ -297,37 +282,280 @@ public:
         LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
-    //==============================================================================================================
     ~mod_vnc() override {
-        inflateEnd(&this->zstrm);
-
-        // TODO mod_vnc isn't owner of sck
-        if (this->is_socket_transport) {
-            auto & st = static_cast<SocketTransport&>(this->t);
-            if (st.sck > 0){
-                close(st.sck);
-            }
-        }
-
         this->screen.clear();
     }
 
     int get_fd() const override { return this->t.get_fd(); }
 
-    void ms_logon(uint64_t gen, uint64_t mod, uint64_t resp) {
+    template<std::size_t MaxLen>
+    class MessageCtx
+    {
+        static_assert(MaxLen < 32*1024, "inefficient");
+
+        enum State
+        {
+            Size,
+            Data,
+            Strip,
+        };
+
+    public:
+        void restart()
+        {
+            this->state = State::Size;
+        }
+
+        template<class F>
+        bool run(Buf64k & buf, F && f)
+        {
+            switch (this->state)
+            {
+                case State::Size:
+                    this->state = this->read_size(buf);
+                    break;
+                case State::Data:
+                    this->state = this->read_data(buf, f);
+                    if (this->state == State::Size) {
+                        return true;
+                    }
+                    break;
+                case State::Strip:
+                    this->state = this->strip_data(buf);
+                    if (this->state == State::Size) {
+                        return true;
+                    }
+                    break;
+            }
+            return false;
+        }
+
+    private:
+        State state = State::Size;
+        uint32_t len;
+
+        State read_size(Buf64k & buf)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Size;
+            }
+
+            this->len = InStream(buf.av(sz)).in_uint32_be();
+
+            buf.advance(sz);
+
+            return State::Data;
+        }
+
+        template<class F>
+        State read_data(Buf64k & buf, F & f)
+        {
+            const size_t sz = std::min<size_t>(MaxLen, this->len);
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            f(array_view_u8{buf.av().data(), sz});
+            buf.advance(sz);
+
+            if (sz == this->len) {
+                return State::Size;
+            }
+
+            this->len -= MaxLen;
+            return State::Strip;
+        }
+
+        State strip_data(Buf64k & buf)
+        {
+            const size_t sz = std::min<size_t>(buf.remaining(), this->len);
+            this->len -= sz;
+            buf.advance(sz);
+
+            return this->len ? State::Strip : State::Size;
+        }
+    };
+
+    template<class T>
+    struct BasicResult
+    {
+        static BasicResult fail() noexcept
+        {
+            return BasicResult{};
+        }
+
+        static BasicResult ok(T value) noexcept
+        {
+            return BasicResult{value};
+        }
+
+        bool operator!() const noexcept
+        {
+            return !this->is_ok;
+        }
+
+        explicit operator bool () const noexcept
+        {
+            return this->is_ok;
+        }
+
+        operator T () const noexcept
+        {
+            return this->value;
+        }
+
+    private:
+        BasicResult() noexcept
+          : is_ok(false)
+        {}
+
+        BasicResult(T value) noexcept
+          : is_ok(true)
+          , value(value)
+        {}
+
+        bool is_ok;
+        T value;
+    };
+
+    class AuthResponseCtx
+    {
+        enum class State
+        {
+            Header,
+            ReasonFail,
+            Finish,
+        };
+
+        using Result = BasicResult<State>;
+
+    public:
+        void restart()
+        {
+            this->state = State::Header;
+        }
+
+        template<class F> // f(bool status, array_view_u8 raison_fail)
+        bool run(Buf64k & buf, F && f)
+        {
+            switch (this->state)
+            {
+                case State::Header:
+                    if (auto r = this->read_header(buf)) {
+                        if (r == State::Finish) {
+                            f(true, array_view_u8{});
+                            return true;
+                        }
+                        this->reason.restart();
+                        this->state = r;
+                        REDEMPTION_CXX_FALLTHROUGH;
+                    }
+                    else {
+                        return false;
+                    }
+                case State::ReasonFail:
+                    return this->reason.run(buf, [&f](array_view_u8 av){ f(false, av); });
+                case State::Finish:
+                    return true;
+            }
+        }
+
+    private:
+        using ReasonCtx = MessageCtx<256>;
+
+        State state = State::Header;
+        ReasonCtx reason;
+
+        Result read_header(Buf64k & buf)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            uint32_t const i = InStream(buf.av(sz)).in_uint32_be();
+
+            buf.advance(sz);
+
+            return Result::ok(i ? State::ReasonFail : State::Finish);
+        }
+    };
+    AuthResponseCtx auth_response_ctx;
+
+    class MsLogonCtx
+    {
+        enum class State
+        {
+            Data,
+            Finish,
+        };
+
+    public:
+        void restart() noexcept
+        {
+            this->state = State::Data;
+        }
+
+        bool run(Buf64k & buf)
+        {
+            return State::Finish == this->read_data(buf);
+        }
+
+        uint64_t gen;
+        uint64_t mod;
+        uint64_t resp;
+
+    private:
+        State state = State::Data;
+
+        State read_data(Buf64k & buf)
+        {
+            const size_t sz = 24;
+
+            if (buf.remaining() < sz)
+            {
+                return State::Data;
+            }
+
+            InStream stream(buf.av(sz));
+            this->gen = stream.in_uint64_be();
+            this->mod = stream.in_uint64_be();
+            this->resp = stream.in_uint64_be();
+
+            buf.advance(sz);
+
+            return State::Finish;
+        }
+    };
+    MsLogonCtx ms_logon_ctx;
+
+    bool ms_logon(Buf64k & buf)
+    {
+        if (!this->ms_logon_ctx.run(buf)) {
+            return false;
+        }
+
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "MS-Logon with following values:");
-            LOG(LOG_INFO, "Gen=%" PRIu64, gen);
-            LOG(LOG_INFO, "Mod=%" PRIu64, mod);
-            LOG(LOG_INFO, "Resp=%" PRIu64, resp);
+            LOG(LOG_INFO, "Gen=%" PRIu64, this->ms_logon_ctx.gen);
+            LOG(LOG_INFO, "Mod=%" PRIu64, this->ms_logon_ctx.mod);
+            LOG(LOG_INFO, "Resp=%" PRIu64, this->ms_logon_ctx.resp);
         }
-        DiffieHellman dh(gen, mod);
+
+        DiffieHellman dh(this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
         uint64_t pub = dh.createInterKey();
 
         StaticOutStream<32768> out_stream;
         out_stream.out_uint64_be(pub);
 
-        uint64_t key = dh.createEncryptionKey(resp);
+        uint64_t key = dh.createEncryptionKey(this->ms_logon_ctx.resp);
         uint8_t keybuffer[8] = {};
         dh.uint64_to_uint8p(key, keybuffer);
 
@@ -347,41 +575,278 @@ public:
 
         this->t.send(out_stream.get_data(), out_stream.get_offset());
         // sec result
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Waiting for password ack");
-        }
 
-        auto in_uint32_be = [&]{
-            uint8_t buf_stream[4];
-            this->t.recv_boom(buf_stream, 4);
-            return Parse(buf_stream).in_uint32_be();
+        return true;
+    }
 
+    MessageCtx<8192> invalid_auth_ctx;
+
+    // 7.3.2   ServerInit
+    // ------------------
+    // After receiving the ClientInit message, the server sends a
+    // ServerInit message. This tells the client the width and
+    // height of the server's framebuffer, its pixel format and the
+    // name associated with the desktop:
+
+    // framebuffer-width  : 2 bytes
+    // framebuffer-height : 2 bytes
+
+    // PIXEL_FORMAT       : 16 bytes
+    // VNC pixel_format capabilities
+    // -----------------------------
+    // Server-pixel-format specifies the server's natural pixel
+    // format. This pixel format will be used unless the client
+    // requests a different format using the SetPixelFormat message
+    // (SetPixelFormat).
+
+    // PIXEL_FORMAT::bits per pixel  : 1 byte
+    // PIXEL_FORMAT::color depth     : 1 byte
+
+    // Bits-per-pixel is the number of bits used for each pixel
+    // value on the wire. This must be greater than or equal to the
+    // depth which is the number of useful bits in the pixel value.
+    // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
+    // pixels are not yet supported.
+
+    // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
+
+    // Big-endian-flag is non-zero (true) if multi-byte pixels are
+    // interpreted as big endian. Of course this is meaningless
+    // for 8 bits-per-pixel.
+
+    // PIXEL_FORMAT::true color flag : 1 byte
+    // PIXEL_FORMAT::red max         : 2 bytes
+    // PIXEL_FORMAT::green max       : 2 bytes
+    // PIXEL_FORMAT::blue max        : 2 bytes
+    // PIXEL_FORMAT::red shift       : 1 bytes
+    // PIXEL_FORMAT::green shift     : 1 bytes
+    // PIXEL_FORMAT::blue shift      : 1 bytes
+
+    // If true-colour-flag is non-zero (true) then the last six
+    // items specify how to extract the red, green and blue
+    // intensities from the pixel value. Red-max is the maximum
+    // red value (= 2^n - 1 where n is the number of bits used
+    // for red). Note this value is always in big endian order.
+    // Red-shift is the number of shifts needed to get the red
+    // value in a pixel to the least significant bit. Green-max,
+    // green-shift and blue-max, blue-shift are similar for green
+    // and blue. For example, to find the red value (between 0 and
+    // red-max) from a given pixel, do the following:
+
+    // * Swap the pixel value according to big-endian-flag (e.g.
+    // if big-endian-flag is zero (false) and host byte order is
+    // big endian, then swap).
+    // * Shift right by red-shift.
+    // * AND with red-max (in host byte order).
+
+    // If true-colour-flag is zero (false) then the server uses
+    // pixel values which are not directly composed from the red,
+    // green and blue intensities, but which serve as indices into
+    // a colour map. Entries in the colour map are set by the
+    // server using the SetColourMapEntries message
+    // (SetColourMapEntries).
+
+    // PIXEL_FORMAT::padding         : 3 bytes
+
+    // name-length        : 4 bytes
+    // name-string        : variable
+
+    // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
+
+    // TODO not yet supported
+    // If the Tight Security Type is activated, the server init
+    // message is extended with an interaction capabilities section.
+
+    class ServerInitCtx
+    {
+        enum class State
+        {
+            PixelFormat,
+            EncodingName,
         };
-        uint32_t i = in_uint32_be();
-        if (i != 0u) {
-            // vnc password failed
-            LOG(LOG_INFO, "MS LOGON password FAILED\n");
-            // Optionnal
-            try {
-                uint32_t reason_length = in_uint32_be();
 
-                char   reason[256];
-                char * preason = reason;
-
-                this->t.recv_boom(preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
-                preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
-                *preason = 0;
-
-                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
-            }
-            catch (Error const &) {
-            }
-        } else {
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "MS LOGON password ok\n");
-            }
+    public:
+        void restart()
+        {
+            this->state = State::PixelFormat;
         }
 
+        bool run(Buf64k & buf, mod_vnc & vnc)
+        {
+            switch (this->state)
+            {
+            case State::PixelFormat:
+                this->state = this->read_pixel_format(buf, vnc);
+                if (this->state != State::EncodingName) {
+                    break;
+                }
+                REDEMPTION_CXX_FALLTHROUGH;
+            case State::EncodingName:
+                this->state = this->read_encoding_name(buf, vnc);
+                if (this->state == State::PixelFormat) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+    private:
+        State state = State::PixelFormat;
+        uint32_t lg;
+
+        State read_pixel_format(Buf64k & buf, mod_vnc & vnc)
+        {
+            const size_t sz = 24;
+
+            if (buf.remaining() < sz)
+            {
+                return State::PixelFormat;
+            }
+
+            InStream stream(buf.av(sz));
+            vnc.width = stream.in_uint16_be();
+            vnc.height = stream.in_uint16_be();
+            vnc.bpp    = stream.in_uint8();
+            vnc.depth  = stream.in_uint8();
+            vnc.endianess = stream.in_uint8();
+            vnc.true_color_flag = stream.in_uint8();
+            vnc.red_max = stream.in_uint16_be();
+            vnc.green_max = stream.in_uint16_be();
+            vnc.blue_max = stream.in_uint16_be();
+            vnc.red_shift = stream.in_uint8();
+            vnc.green_shift = stream.in_uint8();
+            vnc.blue_shift = stream.in_uint8();
+            stream.in_skip_bytes(3); // skip padding
+
+            // LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+
+            this->lg = stream.in_uint32_be();
+
+            if (this->lg > sizeof(vnc.mod_name)-1) {
+                LOG(LOG_ERR, "VNC connection error");
+                throw Error(ERR_VNC_CONNECTION_ERROR);
+            }
+
+            buf.advance(sz);
+            return State::EncodingName;
+        }
+
+        State read_encoding_name(Buf64k & buf, mod_vnc & vnc)
+        {
+            if (buf.remaining() < this->lg)
+            {
+                return State::EncodingName;
+            }
+
+            memcpy(vnc.mod_name, buf.av().data(), this->lg);
+            vnc.mod_name[this->lg] = 0;
+
+            buf.advance(this->lg);
+            return State::PixelFormat;
+        }
+    };
+    ServerInitCtx server_init_ctx;
+
+    void initial_clear_screen(gdi::GraphicApi & drawable)
+    {
+        if (bool(this->verbose & Verbose::connection)) {
+            LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
+        }
+        // set almost null cursor, this is the little dot cursor
+        Pointer cursor;
+        cursor.x = 3;
+        cursor.y = 3;
+        // cursor.bpp = 24;
+        cursor.width = 32;
+        cursor.height = 32;
+        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+        memset(cursor.mask, 0xff, 32 * (32 / 8));
+        cursor.update_bw();
+        this->front.set_pointer(cursor);
+
+        this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+
+        LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+
+        Rect const screen_rect(0, 0, this->width, this->height);
+
+        this->front.begin_update();
+        RDPOpaqueRect orect(screen_rect, RDPColor{});
+        drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
+        this->front.end_update();
+
+        this->state = UP_AND_RUNNING;
+        this->front.can_be_start_capture();
+        this->update_screen(screen_rect);
+        this->lib_open_clip_channel();
+
+        this->event.reset_trigger_time();
+        if (bool(this->verbose & Verbose::connection)) {
+            LOG(LOG_INFO, "VNC screen cleaning ok\n");
+        }
+
+        RDPECLIP::GeneralCapabilitySet general_caps(
+            RDPECLIP::CB_CAPS_VERSION_1,
+            this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "Server use %s format name",
+                (this->server_use_long_format_names ? "long" : "short"));
+        }
+
+        RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
+                1,
+                RDPECLIP::GeneralCapabilitySet::size()
+            );
+
+        StaticOutStream<1024> out_s;
+
+        clip_cap_pdu.emit(out_s);
+        general_caps.emit(out_s);
+
+        size_t length     = out_s.get_offset();
+        size_t chunk_size = length;
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
+                clip_cap_pdu.header.msgType()
+                );
+        }
+
+        this->send_to_front_channel( channel_names::cliprdr
+                                   , out_s.get_data()
+                                   , length
+                                   , chunk_size
+                                   ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                     | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
+
+        RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
+
+        out_s.rewind();
+
+        server_monitor_ready_pdu.emit(out_s);
+
+        length     = out_s.get_offset();
+        chunk_size = length;
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
+                RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
+                server_monitor_ready_pdu.header.msgType()
+                );
+        }
+
+        this->send_to_front_channel( channel_names::cliprdr
+                                   , out_s.get_data()
+                                   , length
+                                   , chunk_size
+                                   ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                     | CHANNELS::CHANNEL_FLAG_LAST
+                                   );
     }
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
@@ -488,7 +953,6 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-//        this->event.set(1000);
         this->event.set_trigger_time(1000);
     }
 
@@ -734,7 +1198,6 @@ protected:
 
             this->t.send(stream.get_data(), stream.get_offset());
 
-//            this->event.set(1000);
             this->event.set_trigger_time(1000);
         };
 
@@ -879,12 +1342,137 @@ protected:
         number_of_encodings = (stream.get_offset() - stream_offset) / 4;
     }
 
+    class PasswordCtx
+    {
+        enum class State
+        {
+            RandomKey,
+            Finish,
+        };
+
+    public:
+        array_view_u8 server_random;
+
+        void restart() noexcept
+        {
+            this->state = State::RandomKey;
+        }
+
+        bool run(Buf64k & buf) noexcept
+        {
+            return State::Finish == this->read_random_number(buf);
+        }
+
+    private:
+        State state = State::RandomKey;
+
+        State read_random_number(Buf64k & buf) noexcept
+        {
+            const size_t sz = 16;
+
+            if (buf.remaining() < sz)
+            {
+                return State::RandomKey;
+            }
+
+            this->server_random = buf.av(sz);
+
+            buf.advance(sz);
+            return State::Finish;
+        }
+    };
+
+    PasswordCtx password_ctx;
+    struct UpAndRunningCtx
+    {
+        enum class State
+        {
+            Header,
+            FrameBufferupdate,
+            Palette,
+            ServerCutText,
+        };
+
+        void restart() noexcept
+        {
+            this->state = State::Header;
+        }
+
+        bool run(Buf64k & buf, gdi::GraphicApi & drawable, mod_vnc & vnc)
+        {
+            switch (this->state)
+            {
+            case State::Header:
+                if (buf.remaining() < 1) {
+                    return false;
+                }
+
+                this->message_type = buf.av()[0];
+
+                buf.advance(1);
+
+                switch (this->message_type)
+                {
+                    case 0: /* framebuffer update */
+                        vnc.frame_buffer_update_ctx.start(/*Bpp = */nbbytes(vnc.bpp));
+                        this->state = State::FrameBufferupdate;
+                        return vnc.lib_frame_buffer_update(drawable, buf);
+                    case 1: /* palette */
+                        vnc.palette_update_ctx.start();
+                        this->state = State::Palette;
+                        return vnc.lib_palette_update(drawable, buf);
+                    case 2: /* bell */
+                        // TODO bell
+                        return true;
+                    case 3: /* clipboard */ /* ServerCutText */
+                        vnc.clipboard_data_ctx.start(
+                            vnc.enable_clipboard_down
+                         && vnc.get_channel_by_name(channel_names::cliprdr));
+                        this->state = State::ServerCutText;
+                        return vnc.lib_clip_data(buf);
+                    default:
+                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
+                        throw Error(ERR_VNC);
+                }
+                break;
+
+            case State::FrameBufferupdate: return vnc.lib_frame_buffer_update(drawable, buf);
+            case State::Palette:           return vnc.lib_palette_update(drawable, buf);
+            case State::ServerCutText:     return vnc.lib_clip_data(buf);
+            }
+
+            return false;
+        }
+
+    private:
+        State state = State::Header;
+        uint8_t message_type;
+    };
+
+    UpAndRunningCtx up_and_running_ctx;
+
+    Buf64k buf;
+
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        (void)now;
+    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    {
         if (bool(this->verbose & Verbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
+
+        if (!this->event.is_waked_up_by_time()) {
+            this->buf.read_from(this->t);
+        }
+        while (this->draw_event_impl(drawable)) {
+
+        }
+
+        this->check_timeout();
+    }
+
+private:
+    bool draw_event_impl(gdi::GraphicApi & drawable)
+    {
         switch (this->state)
         {
         case ASK_PASSWORD:
@@ -902,114 +1490,22 @@ public:
             this->screen.rdp_input_invalidate(this->screen.get_rect());
 
             this->state = WAIT_PASSWORD;
-            break;
+            return true;
+
         case DO_INITIAL_CLEAR_SCREEN:
-            {
-                if (bool(this->verbose & Verbose::connection)) {
-                    LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
-                }
-                // set almost null cursor, this is the little dot cursor
-                Pointer cursor;
-                cursor.x = 3;
-                cursor.y = 3;
-//                cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
-                memset(cursor.data + 31 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 30 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 29 * (32 * 3), 0xff, 9);
-                memset(cursor.mask, 0xff, 32 * (32 / 8));
-                cursor.update_bw();
-                this->front.set_pointer(cursor);
+            this->initial_clear_screen(drawable);
+            return false;
 
-                this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
-
-                LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-                this->front.begin_update();
-                RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), RDPColor{});
-                drawable.draw(orect, Rect(0, 0, this->width, this->height), gdi::ColorCtx::from_bpp(this->bpp, this->palette));
-                this->front.end_update();
-
-                this->state = UP_AND_RUNNING;
-                this->front.can_be_start_capture();
-                this->update_screen(Rect(0, 0, this->width, this->height));
-                this->lib_open_clip_channel();
-
-//                this->event.object_and_time = false;
-                this->event.reset_trigger_time();
-                if (bool(this->verbose & Verbose::connection)) {
-                    LOG(LOG_INFO, "VNC screen cleaning ok\n");
-                }
-
-                RDPECLIP::GeneralCapabilitySet general_caps(
-                    RDPECLIP::CB_CAPS_VERSION_1,
-                    this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Server use %s format name",
-                        (this->server_use_long_format_names ? "long" : "short"));
-                }
-
-                RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
-                        1,
-                        RDPECLIP::GeneralCapabilitySet::size()
-                    );
-
-                StaticOutStream<1024> out_s;
-
-                clip_cap_pdu.emit(out_s);
-                general_caps.emit(out_s);
-
-                size_t length     = out_s.get_offset();
-                size_t chunk_size = length;
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
-                        clip_cap_pdu.header.msgType()
-                        );
-                }
-
-                this->send_to_front_channel( channel_names::cliprdr
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-
-                RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-
-                out_s.rewind();
-
-                server_monitor_ready_pdu.emit(out_s);
-
-                length     = out_s.get_offset();
-                chunk_size = length;
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                        RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
-                        server_monitor_ready_pdu.header.msgType()
-                        );
-                }
-
-                this->send_to_front_channel( channel_names::cliprdr
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                             | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
-            }
-            break;
         case RETRY_CONNECTION:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
             {
-                this->t.connect();
+                if (!this->t.connect()) {
+                    LOG(LOG_ERR, "VNC connection error");
+                    throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
             }
             catch (Error const &)
             {
@@ -1017,80 +1513,81 @@ public:
             }
 
             this->state = WAIT_SECURITY_TYPES;
-//            this->event.set();
-            this->event.set_trigger_time(wait_obj::NOW);
-            break;
+            return true;
+
         case UP_AND_RUNNING:
             if (bool(this->verbose & Verbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
+
             if (!this->event.is_waked_up_by_time()) {
                 try {
-                    uint8_t type; /* message-type */
-                    this->t.recv_boom(&type, 1);
-                    switch (type) {
-                        case 0: /* framebuffer update */
-                            this->lib_framebuffer_update(drawable);
-                        break;
-                        case 1: /* palette */
-                            this->lib_palette_update(drawable);
-                        break;
-                        case 3: /* clipboard */ /* ServerCutText */
-                            this->lib_clip_data();
-                        break;
-                        default:
-                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
-                        break;
+                    while (this->up_and_running_ctx.run(buf, drawable, *this)) {
+                        this->up_and_running_ctx.restart();
                     }
+                    return false;
                 }
                 catch (const Error & e) {
-                    LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
+                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
                     this->event.signal = BACK_EVENT_NEXT;
                     this->front.must_be_stop_capture();
                 }
                 catch (...) {
-                    LOG(LOG_INFO, "unexpected exception raised in VNC");
+                    LOG(LOG_ERR, "unexpected exception raised in VNC");
                     this->event.signal = BACK_EVENT_NEXT;
                     this->front.must_be_stop_capture();
                 }
+
                 if (this->event.signal != BACK_EVENT_NEXT) {
-//                    this->event.set(1000);
                     this->event.set_trigger_time(1000);
                 }
             }
             else {
                 this->update_screen(Rect(0, 0, this->width, this->height));
             }
-            break;
+            return false;
+
         case WAIT_PASSWORD:
             if (bool(this->verbose & Verbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
-//            this->event.object_and_time = false;
-//            this->event.reset();
             this->event.reset_trigger_time();
-            break;
+            return false;
+
         case WAIT_SECURITY_TYPES:
             {
                 if (bool(this->verbose & Verbose::connection)) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
-                /* protocol version */
-                uint8_t server_protoversion[12];
-                this->t.recv_boom(server_protoversion, 12);
-                server_protoversion[11] = 0;
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Server Protocol Version=%s\n", server_protoversion);
+                size_t const protocol_version_len = 12;
+
+                if (buf.remaining() < protocol_version_len) {
+                    return false;
                 }
+
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    // protocol_version_len - zero terminal
+                    LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
+                        int(protocol_version_len-1), buf.av().data());
+                }
+
+                buf.advance(protocol_version_len);
+
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
 
-                int32_t const security_level = [this](){
-                    uint8_t buf[4];
-                    this->t.recv_boom(buf, sizeof(buf));
-                    return Parse(buf).in_sint32_be();
-                }();
+                this->state = WAIT_SECURITY_TYPES_LEVEL;
+            }
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_LEVEL:
+            {
+                if (buf.remaining() < 4) {
+                    return false;
+                }
+                int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
+                buf.advance(4);
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
@@ -1100,423 +1597,357 @@ public:
 
                 switch (security_level){
                     case 1: // none
+                        this->state = SERVER_INIT;
                         break;
                     case 2: // the password and the server random
-                    {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Receiving VNC Server Random");
-                        }
-                        uint8_t buf[16];
-                        auto recv = [&](size_t len) {
-                            this->t.recv_boom(buf, len);
-                        };
-                        recv(16);
-
-                        // taken from vncauth.c
-                        {
-                            char key[12] = {};
-
-                            // key is simply password padded with nulls
-                            strncpy(key, this->password, 8);
-                            rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
-                            rfbDes(buf, buf);
-                            rfbDes(buf + 8, buf + 8);
-                        }
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Sending Password");
-                        }
-                        this->t.send(buf, 16);
-
-                        // sec result
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_INFO, "Waiting for password ack");
-                        }
-                        recv(4);
-                        int i = Parse(buf).in_uint32_be();
-                        if (i != 0) {
-                            // vnc password failed
-                            // Optionnal
-                            try
-                            {
-                                recv(4);
-                                uint32_t reason_length = Parse(buf).in_uint32_be();
-
-                                char   reason[256];
-                                char * preason = reason;
-
-                                this->t.recv_boom(preason,
-                                                std::min<size_t>(sizeof(reason) - 1, reason_length));
-                                preason += std::min<size_t>(sizeof(reason) - 1, reason_length);
-                                *preason = 0;
-
-                                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
-                            }
-                            catch (const Error &)
-                            {
-                            }
-
-                            if (this->allow_authentification_retries)
-                            {
-                                LOG(LOG_ERR, "vnc password failed");
-
-                                this->t.disconnect();
-
-                                this->state = ASK_PASSWORD;
-//                                this->event.object_and_time = true;
-//                                this->event.set();
-                                this->event.set_trigger_time(wait_obj::NOW);
-
-                                return;
-                            }
-                            else
-                            {
-                                LOG(LOG_ERR, "vnc password failed");
-                                throw Error(ERR_VNC_CONNECTION_ERROR);
-                            }
-                        } else {
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                LOG(LOG_INFO, "vnc password ok\n");
-                            }
-                        }
-                    }
-                    break;
+                        this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
+                        break;
                     case -6: // MS-LOGON
-                    {
-                        LOG(LOG_INFO, "VNC MS-LOGON Auth");
-                        uint8_t buf[8+8+8];
-                        this->t.recv_boom(buf, sizeof(buf));
-                        InStream stream(buf);
-                        uint64_t gen = stream.in_uint64_be();
-                        uint64_t mod = stream.in_uint64_be();
-                        uint64_t resp = stream.in_uint64_be();
-                        this->ms_logon(gen, mod, resp);
-                    }
-                    break;
+                        this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                        break;
                     case 0:
-                    {
-                        LOG(LOG_INFO, "VNC INVALID Auth");
-                        uint8_t buf[8192];
-                        this->t.recv_boom(buf, 4);
-                        size_t reason_length = Parse(buf).in_uint32_be();
-                        this->t.recv_boom(buf, reason_length);
-                        hexdump_c(buf, reason_length);
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
-
-                    }
+                        this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
+                        break;
                     default:
                         LOG(LOG_ERR, "vnc unexpected security level");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
-                this->t.send("\x01", 1); // share flag
+            }
+            return true;
 
-                // 7.3.2   ServerInit
-                // ------------------
-                // After receiving the ClientInit message, the server sends a
-                // ServerInit message. This tells the client the width and
-                // height of the server's framebuffer, its pixel format and the
-                // name associated with the desktop:
+        case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "Receiving VNC Server Random");
+            }
 
-                // framebuffer-width  : 2 bytes
-                // framebuffer-height : 2 bytes
+            {
+                if (!this->password_ctx.run(this->buf)) {
+                    return false;
+                }
+                this->password_ctx.restart();
 
-                // PIXEL_FORMAT       : 16 bytes
+                char key[12] = {};
+
+                // key is simply password padded with nulls
+                strncpy(key, this->password, 8);
+                rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
+                auto const random_buf = this->password_ctx.server_random.data();
+                rfbDes(random_buf, random_buf);
+                rfbDes(random_buf + 8, random_buf + 8);
+
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Sending Password");
+                }
+                this->t.send(random_buf, 16);
+            }
+            this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE:
+            {
+                // sec result
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Waiting for password ack");
+                }
+
+                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                    if (status) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            LOG(LOG_INFO, "vnc password ok\n");
+                        }
+                    }
+                    else {
+                        LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
+                            int(bytes.size()), bytes.to_charp());
+
+                        if (this->allow_authentification_retries)
+                        {
+                            this->t.disconnect();
+
+                            this->state = ASK_PASSWORD;
+                            // this->event.object_and_time = true;
+                            // this->event.set();
+                            this->event.set_trigger_time(wait_obj::NOW);
+                        }
+                        else
+                        {
+                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                        }
+                    }
+                })) {
+                    return false;
+                }
+                this->auth_response_ctx.restart();
+
+                this->state = SERVER_INIT;
+            }
+            return true;
+
+        case WAIT_SECURITY_TYPES_MS_LOGON:
+            {
+                LOG(LOG_INFO, "VNC MS-LOGON Auth");
+
+                if (!this->ms_logon(buf)) {
+                    return false;
+                }
+                this->ms_logon_ctx.restart();
+            }
+            this->state = WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE:
+            {
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "Waiting for password ack");
+                }
+
+                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                    if (status) {
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            LOG(LOG_INFO, "MS LOGON password ok\n");
+                        }
+                    }
+                    else {
+                        LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
+                            int(bytes.size()), bytes.to_charp());
+                    }
+                })) {
+                    return false;
+                }
+                this->auth_response_ctx.restart();
+            }
+            this->state = SERVER_INIT;
+            return true;
+
+        case WAIT_SECURITY_TYPES_INVALID_AUTH:
+            {
+                LOG(LOG_INFO, "VNC INVALID Auth");
+
+                if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                    hexdump_c(av.data(), av.size());
+                })) {
+                    return false;
+                }
+                this->invalid_auth_ctx.restart();
+
+                throw Error(ERR_VNC_CONNECTION_ERROR);
+                // return true;
+            }
+
+        case SERVER_INIT:
+            this->t.send("\x01", 1); // share flag
+            this->state = SERVER_INIT_RESPONSE;
+            REDEMPTION_CXX_FALLTHROUGH;
+
+        case SERVER_INIT_RESPONSE:
+            {
+                if (!this->server_init_ctx.run(buf, *this)) {
+                    return false;
+                }
+                this->server_init_ctx.restart();
+            }
+
+            // should be connected
+
+            {
+            // 7.4.1   SetPixelFormat
+            // ----------------------
+            // Sets the format in which pixel values should be sent in
+            // FramebufferUpdate messages. If the client does not send
+            // a SetPixelFormat message then the server sends pixel values
+            // in its natural format as specified in the ServerInit message
+            // (ServerInit).
+
+            // If true-colour-flag is zero (false) then this indicates that
+            // a "colour map" is to be used. The server can set any of the
+            // entries in the colour map using the SetColourMapEntries
+            // message (SetColourMapEntries). Immediately after the client
+            // has sent this message the colour map is empty, even if
+            // entries had previously been set by the server.
+
+            // Note that a client must not have an outstanding
+            // FramebufferUpdateRequest when it sends SetPixelFormat
+            // as it would be impossible to determine if the next *
+            // FramebufferUpdate is using the new or the previous pixel
+            // format.
+
+                StaticOutStream<20> stream;
+                // Set Pixel format
+                stream.out_uint8(0);
+
+                // Padding 3 bytes
+                stream.out_uint8(0);
+                stream.out_uint8(0);
+                stream.out_uint8(0);
+
                 // VNC pixel_format capabilities
                 // -----------------------------
-                // Server-pixel-format specifies the server's natural pixel
-                // format. This pixel format will be used unless the client
-                // requests a different format using the SetPixelFormat message
-                // (SetPixelFormat).
+                // bits per pixel  : 1 byte
+                // color depth     : 1 byte
+                // endianess       : 1 byte (0 = LE, 1 = BE)
+                // true color flag : 1 byte
+                // red max         : 2 bytes
+                // green max       : 2 bytes
+                // blue max        : 2 bytes
+                // red shift       : 1 bytes
+                // green shift     : 1 bytes
+                // blue shift      : 1 bytes
+                // padding         : 3 bytes
 
-                // PIXEL_FORMAT::bits per pixel  : 1 byte
-                // PIXEL_FORMAT::color depth     : 1 byte
+                // 8 bpp
+                // -----
+                // "\x08\x08\x00"
+                // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                // "\0\0\0"
 
-                // Bits-per-pixel is the number of bits used for each pixel
-                // value on the wire. This must be greater than or equal to the
-                // depth which is the number of useful bits in the pixel value.
-                // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
-                // pixels are not yet supported.
+                // 15 bpp
+                // ------
+                // "\x10\x0F\x00"
+                // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
+                // "\0\0\0"
 
-                // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
+                // 24 bpp
+                // ------
+                // "\x20\x18\x00"
+                // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+                // "\0\0\0"
 
-                // Big-endian-flag is non-zero (true) if multi-byte pixels are
-                // interpreted as big endian. Of course this is meaningless
-                // for 8 bits-per-pixel.
+                // 16 bpp
+                // ------
+                // "\x10\x10\x00"
+                // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
+                // "\0\0\0"
 
-                // PIXEL_FORMAT::true color flag : 1 byte
-                // PIXEL_FORMAT::red max         : 2 bytes
-                // PIXEL_FORMAT::green max       : 2 bytes
-                // PIXEL_FORMAT::blue max        : 2 bytes
-                // PIXEL_FORMAT::red shift       : 1 bytes
-                // PIXEL_FORMAT::green shift     : 1 bytes
-                // PIXEL_FORMAT::blue shift      : 1 bytes
+                const char * pixel_format =
+                    "\x10" // bits per pixel  : 1 byte =  16
+                    "\x10" // color depth     : 1 byte =  16
+                    "\x00" // endianess       : 1 byte =  LE
+                    "\x01" // true color flag : 1 byte = yes
+                    "\x00\x1F" // red max     : 2 bytes = 31
+                    "\x00\x3F" // green max   : 2 bytes = 63
+                    "\x00\x1F" // blue max    : 2 bytes = 31
+                    "\x0B" // red shift       : 1 bytes = 11
+                    "\x05" // green shift     : 1 bytes =  5
+                    "\x00" // blue shift      : 1 bytes =  0
+                    "\0\0\0"; // padding      : 3 bytes
+                stream.out_copy_bytes(pixel_format, 16);
+                this->t.send(stream.get_data(), stream.get_offset());
 
-                // If true-colour-flag is non-zero (true) then the last six
-                // items specify how to extract the red, green and blue
-                // intensities from the pixel value. Red-max is the maximum
-                // red value (= 2^n - 1 where n is the number of bits used
-                // for red). Note this value is always in big endian order.
-                // Red-shift is the number of shifts needed to get the red
-                // value in a pixel to the least significant bit. Green-max,
-                // green-shift and blue-max, blue-shift are similar for green
-                // and blue. For example, to find the red value (between 0 and
-                // red-max) from a given pixel, do the following:
-
-                // * Swap the pixel value according to big-endian-flag (e.g.
-                // if big-endian-flag is zero (false) and host byte order is
-                // big endian, then swap).
-                // * Shift right by red-shift.
-                // * AND with red-max (in host byte order).
-
-                // If true-colour-flag is zero (false) then the server uses
-                // pixel values which are not directly composed from the red,
-                // green and blue intensities, but which serve as indices into
-                // a colour map. Entries in the colour map are set by the
-                // server using the SetColourMapEntries message
-                // (SetColourMapEntries).
-
-                // PIXEL_FORMAT::padding         : 3 bytes
-
-                // name-length        : 4 bytes
-                // name-string        : variable
-
-                // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
-
-                // TODO not yet supported
-                // If the Tight Security Type is activated, the server init
-                // message is extended with an interaction capabilities section.
-
-                {
-                    uint8_t buf[24];
-                    this->t.recv_boom(buf, sizeof(buf));  // server init
-
-                    InStream stream(buf);
-                    this->width = stream.in_uint16_be();
-                    this->height = stream.in_uint16_be();
-                    this->bpp    = stream.in_uint8();
-                    this->depth  = stream.in_uint8();
-                    this->endianess = stream.in_uint8();
-                    this->true_color_flag = stream.in_uint8();
-                    this->red_max = stream.in_uint16_be();
-                    this->green_max = stream.in_uint16_be();
-                    this->blue_max = stream.in_uint16_be();
-                    this->red_shift = stream.in_uint8();
-                    this->green_shift = stream.in_uint8();
-                    this->blue_shift = stream.in_uint8();
-                    stream.in_skip_bytes(3); // skip padding
-
-                    // LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
-
-                    int lg = stream.in_uint32_be();
-
-                    if (lg > 255 || lg < 0) {
-                        LOG(LOG_ERR, "VNC connection error");
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
-                    }
-                    this->t.recv_boom(this->mod_name, lg);
-                    this->mod_name[lg] = 0;
-                    // LOG(LOG_INFO, "VNC received: mod_name='%s'", this->mod_name);
-                }
-
-                // should be connected
-
-                {
-                // 7.4.1   SetPixelFormat
-                // ----------------------
-                // Sets the format in which pixel values should be sent in
-                // FramebufferUpdate messages. If the client does not send
-                // a SetPixelFormat message then the server sends pixel values
-                // in its natural format as specified in the ServerInit message
-                // (ServerInit).
-
-                // If true-colour-flag is zero (false) then this indicates that
-                // a "colour map" is to be used. The server can set any of the
-                // entries in the colour map using the SetColourMapEntries
-                // message (SetColourMapEntries). Immediately after the client
-                // has sent this message the colour map is empty, even if
-                // entries had previously been set by the server.
-
-                // Note that a client must not have an outstanding
-                // FramebufferUpdateRequest when it sends SetPixelFormat
-                // as it would be impossible to determine if the next *
-                // FramebufferUpdate is using the new or the previous pixel
-                // format.
-
-                    StaticOutStream<20> stream;
-                    // Set Pixel format
-                    stream.out_uint8(0);
-
-                    // Padding 3 bytes
-                    stream.out_uint8(0);
-                    stream.out_uint8(0);
-                    stream.out_uint8(0);
-
-                    // VNC pixel_format capabilities
-                    // -----------------------------
-                    // bits per pixel  : 1 byte
-                    // color depth     : 1 byte
-                    // endianess       : 1 byte (0 = LE, 1 = BE)
-                    // true color flag : 1 byte
-                    // red max         : 2 bytes
-                    // green max       : 2 bytes
-                    // blue max        : 2 bytes
-                    // red shift       : 1 bytes
-                    // green shift     : 1 bytes
-                    // blue shift      : 1 bytes
-                    // padding         : 3 bytes
-
-                    // 8 bpp
-                    // -----
-                    // "\x08\x08\x00"
-                    // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                    // "\0\0\0"
-
-                    // 15 bpp
-                    // ------
-                    // "\x10\x0F\x00"
-                    // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
-                    // "\0\0\0"
-
-                    // 24 bpp
-                    // ------
-                    // "\x20\x18\x00"
-                    // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
-                    // "\0\0\0"
-
-                    // 16 bpp
-                    // ------
-                    // "\x10\x10\x00"
-                    // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
-                    // "\0\0\0"
-
-                    const char * pixel_format =
-                        "\x10" // bits per pixel  : 1 byte =  16
-                        "\x10" // color depth     : 1 byte =  16
-                        "\x00" // endianess       : 1 byte =  LE
-                        "\x01" // true color flag : 1 byte = yes
-                        "\x00\x1F" // red max     : 2 bytes = 31
-                        "\x00\x3F" // green max   : 2 bytes = 63
-                        "\x00\x1F" // blue max    : 2 bytes = 31
-                        "\x0B" // red shift       : 1 bytes = 11
-                        "\x05" // green shift     : 1 bytes =  5
-                        "\x00" // blue shift      : 1 bytes =  0
-                        "\0\0\0"; // padding      : 3 bytes
-                    stream.out_copy_bytes(pixel_format, 16);
-                    this->t.send(stream.get_data(), stream.get_offset());
-
-                    this->bpp = 16;
-                    this->depth  = 16;
-                    this->endianess = 0;
-                    this->true_color_flag = 1;
-                    this->red_max       = 0x1F;
-                    this->green_max     = 0x3F;
-                    this->blue_max      = 0x1F;
-                    this->red_shift     = 0x0B;
-                    this->green_shift   = 0x05;
-                    this->blue_shift    = 0;
-                }
-
-                // 7.4.2   SetEncodings
-                // --------------------
-
-                // Sets the encoding types in which pixel data can be sent by
-                // the server. The order of the encoding types given in this
-                // message is a hint by the client as to its preference (the
-                // first encoding specified being most preferred). The server
-                // may or may not choose to make use of this hint. Pixel data
-                // may always be sent in raw encoding even if not specified
-                // explicitly here.
-
-                // In addition to genuine encodings, a client can request
-                // "pseudo-encodings" to declare to the server that it supports
-                // certain extensions to the protocol. A server which does not
-                // support the extension will simply ignore the pseudo-encoding.
-                // Note that this means the client must assume that the server
-                // does not support the extension until it gets some extension-
-                // -specific confirmation from the server.
-                {
-                    const char * encodings           = this->encodings.c_str();
-                    uint16_t     number_of_encodings = 0;
-
-                    // SetEncodings
-                    StaticOutStream<32768> stream;
-                    stream.out_uint8(2);
-                    stream.out_uint8(0);
-
-                    uint32_t number_of_encodings_offset = stream.get_offset();
-                    stream.out_clear_bytes(2);
-
-                    this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
-
-                    if (!number_of_encodings)
-                    {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
-                            LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
-                        }
-
-                        stream.out_uint32_be(0);            // raw
-                        stream.out_uint32_be(1);            // copy rect
-                        stream.out_uint32_be(2);            // RRE
-                        stream.out_uint32_be(0xffffff11);   // (-239) cursor
-                        number_of_encodings = 4;
-                    }
-
-                    stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
-                    this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
-                }
-
-                switch (this->front.server_resize(this->width, this->height, this->bpp)){
-                case FrontAPI::ResizeResult::instant_done:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "no resizing needed");
-                    }
-                    // no resizing needed
-                    this->state = DO_INITIAL_CLEAR_SCREEN;
-//                    this->event.object_and_time = true;
-//                    this->event.set();
-                    this->event.set_trigger_time(wait_obj::NOW);
-                    break;
-                case FrontAPI::ResizeResult::no_need:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "no resizing needed");
-                    }
-                    // no resizing needed
-                    this->state = DO_INITIAL_CLEAR_SCREEN;
-//                    this->event.object_and_time = true;
-//                    this->event.set();
-                    this->event.set_trigger_time(wait_obj::NOW);
-                    break;
-                case FrontAPI::ResizeResult::done:
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "resizing done");
-                    }
-                    // resizing done
-                    this->front_width  = this->width;
-                    this->front_height = this->height;
-
-                    this->state = WAIT_CLIENT_UP_AND_RUNNING;
-//                    this->event.object_and_time = true;
-                    this->event.set_trigger_time(wait_obj::NOW);
-
-                    this->is_first_membelt = true;
-                    break;
-                case FrontAPI::ResizeResult::fail:
-                    // resizing failed
-                    // thow an Error ?
-                    LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-                    throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
-                }
+                this->bpp = 16;
+                this->depth  = 16;
+                this->endianess = 0;
+                this->true_color_flag = 1;
+                this->red_max       = 0x1F;
+                this->green_max     = 0x3F;
+                this->blue_max      = 0x1F;
+                this->red_shift     = 0x0B;
+                this->green_shift   = 0x05;
+                this->blue_shift    = 0;
             }
-            break;
+
+            // 7.4.2   SetEncodings
+            // --------------------
+
+            // Sets the encoding types in which pixel data can be sent by
+            // the server. The order of the encoding types given in this
+            // message is a hint by the client as to its preference (the
+            // first encoding specified being most preferred). The server
+            // may or may not choose to make use of this hint. Pixel data
+            // may always be sent in raw encoding even if not specified
+            // explicitly here.
+
+            // In addition to genuine encodings, a client can request
+            // "pseudo-encodings" to declare to the server that it supports
+            // certain extensions to the protocol. A server which does not
+            // support the extension will simply ignore the pseudo-encoding.
+            // Note that this means the client must assume that the server
+            // does not support the extension until it gets some extension-
+            // -specific confirmation from the server.
+            {
+                const char * encodings           = this->encodings.c_str();
+                uint16_t     number_of_encodings = 0;
+
+                // SetEncodings
+                StaticOutStream<32768> stream;
+                stream.out_uint8(2);
+                stream.out_uint8(0);
+
+                uint32_t number_of_encodings_offset = stream.get_offset();
+                stream.out_clear_bytes(2);
+
+                this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
+
+                if (!number_of_encodings)
+                {
+                    if (bool(this->verbose & Verbose::basic_trace)) {
+                        LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
+                    }
+
+                    stream.out_uint32_be(0);            // raw
+                    stream.out_uint32_be(1);            // copy rect
+                    stream.out_uint32_be(2);            // RRE
+                    stream.out_uint32_be(0xffffff11);   // (-239) cursor
+                    number_of_encodings = 4;
+                }
+
+                stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
+                this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
+            }
+
+            switch (this->front.server_resize(this->width, this->height, this->bpp)){
+            case FrontAPI::ResizeResult::instant_done:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "no resizing needed");
+                }
+                // no resizing needed
+                this->state = DO_INITIAL_CLEAR_SCREEN;
+                this->event.set_trigger_time(wait_obj::NOW);
+                break;
+            case FrontAPI::ResizeResult::no_need:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "no resizing needed");
+                }
+                // no resizing needed
+                this->state = DO_INITIAL_CLEAR_SCREEN;
+                this->event.set_trigger_time(wait_obj::NOW);
+                break;
+            case FrontAPI::ResizeResult::done:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "resizing done");
+                }
+                // resizing done
+                this->front_width  = this->width;
+                this->front_height = this->height;
+
+                this->state = WAIT_CLIENT_UP_AND_RUNNING;
+                this->event.set_trigger_time(wait_obj::NOW);
+
+                this->is_first_membelt = true;
+                break;
+            case FrontAPI::ResizeResult::fail:
+                // resizing failed
+                // thow an Error ?
+                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+            }
+            return true;
+
         case WAIT_CLIENT_UP_AND_RUNNING:
-                LOG(LOG_WARNING, "Waiting for client be come up and running");
+            LOG(LOG_WARNING, "Waiting for client be come up and running");
             break;
+
         default:
             LOG(LOG_ERR, "Unknown state=%d", this->state);
             throw Error(ERR_VNC);
         }
 
+        return false;
+    } // draw_event_impl
+
+private:
+    void check_timeout()
+    {
         if (this->event.is_waked_up_by_time()) {
-//            this->event.reset();
             this->event.reset_trigger_time();
 
             if (this->clipboard_requesting_for_data_is_delayed) {
@@ -1552,7 +1983,7 @@ public:
                                            );
             }
         }
-    } // draw_event
+    }
 
 private:
     struct ZRLEUpdateContext
@@ -1920,371 +2351,672 @@ private:
             }
         }
     }
-    //==============================================================================================================
-    void lib_framebuffer_update(gdi::GraphicApi & drawable) {
-    //==============================================================================================================
-        uint8_t data_rec[256];
-        InStream stream_rec(data_rec);
-        uint8_t * end = data_rec;
-        this->t.recv_boom(end, 3);
-        end += 3;
-        stream_rec.in_skip_bytes(1);
-        size_t num_recs = stream_rec.in_uint16_be();
 
-        uint8_t Bpp = nbbytes(this->bpp);
-        for (size_t i = 0; i < num_recs; i++) {
-            stream_rec = InStream(data_rec);
-            end = data_rec;
-            this->t.recv_boom(end, 12);
-            end += 12;
-            const uint16_t x = stream_rec.in_uint16_be();
-            const uint16_t y = stream_rec.in_uint16_be();
-            const uint16_t cx = stream_rec.in_uint16_be();
-            const uint16_t cy = stream_rec.in_uint16_be();
-            const uint32_t encoding = stream_rec.in_uint32_be();
+    struct FrameBufferUpdateCtx
+    {
+        enum class State
+        {
+            Header,
+            Encoding,
+            Data,
+            ZrleData,
+            RreData,
+        };
 
-            switch (encoding) {
-            case 0: /* raw */
+        using Result = BasicResult<State>;
+
+        FrameBufferUpdateCtx(Verbose verbose)
+          : zstrm{}
+          , verbose(verbose)
+        {
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+            if (inflateInit(&this->zstrm) != Z_OK)
+            REDEMPTION_DIAGNOSTIC_POP
             {
-                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * 16 * Bpp]);
-                if (!raw) {
-                    LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
-                    throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
-                }
-
-                update_lock<FrontAPI> lock(this->front);
-                for (uint16_t yy = y ; yy < y + cy ; yy += 16) {
-                    uint8_t * tmp = raw.get();
-                    uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
-                    this->t.recv_boom(tmp, cyy*cx*Bpp);
-                    //LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
-                    this->draw_tile(Rect(x, yy, cx, cyy), raw.get(), drawable);
-                }
+                LOG(LOG_ERR, "vnc zlib initialization failed");
+                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
             }
-            break;
-            case 1: /* copy rect */
-            {
-                uint8_t data_copy_rect[4];
-                InStream stream_copy_rect(data_copy_rect);
-                uint8_t * end = data_copy_rect;
-                this->t.recv_boom(end, 4);
-                const int srcx = stream_copy_rect.in_uint16_be();
-                const int srcy = stream_copy_rect.in_uint16_be();
-                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                update_lock<FrontAPI> lock(this->front);
-                drawable.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
-            }
-            break;
-            case 2: /* RRE */
-            {
-                //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                std::unique_ptr<uint8_t[]> raw(new(std::nothrow) uint8_t[cx * cy * Bpp]);
-                if (!raw) {
-                    LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
-                    throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
+        }
+
+        ~FrameBufferUpdateCtx()
+        {
+            inflateEnd(&this->zstrm);
+        }
+
+        void start(uint8_t Bpp)
+        {
+            this->Bpp = Bpp;
+            this->state = State::Header;
+        }
+
+        template<class F>
+        bool run(Buf64k & buf, mod_vnc & vnc, F && f)
+        {
+            Result r = Result::fail();
+
+            for (;;) {
+                switch (this->state)
+                {
+                case State::Header:
+                    r = this->read_header(buf); break;
+                case State::Encoding:
+                    if (0 == this->num_recs) {
+                        return true;
+                    }
+                    r = this->read_encoding(buf);
+                    break;
+                case State::Data:
+                    switch (this->encoding)
+                    {
+                    case 0:  /* raw */       r = this->read_data_raw(buf, f); break;
+                    case 1:  /* copy rect */ r = this->read_data_copy_rect(buf, f); break;
+                    case 2:  /* RRE */       r = this->read_data_rre(buf); break;
+                    case 16: /* ZRLE */      r = this->read_data_zrle(buf); break;
+                    case 0xffffff11: /* (-239) cursor */
+                                             r = this->read_data_cursor(buf, vnc, f); break;
+                    case 5: /* Hextile */ // TODO unimplemented
+                        LOG(LOG_INFO,
+                            "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                            this->Bpp, this->x, this->y, this->cx, this->cy);
+                        r = Result::ok(State::Encoding);
+                        break;
+                    default:
+                        LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
+                        throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                    }
+                    break;
+                case State::ZrleData: r = this->read_data_zrle_data(buf, f); break;
+                case State::RreData: r = this->read_data_rre_data(buf, f); break;
                 }
 
-                uint8_t data_rre[256];
-                InStream stream_rre(data_rre);
+                if (!r) {
+                    return false;
+                }
+                this->state = r;
+            }
+        }
 
-                uint8_t * end = data_rre;
-                this->t.recv_boom(end,
-                      4   /* number-of-subrectangles */
-                    + Bpp /* background-pixel-value */
-                    );
-                end += 4 + Bpp;
+    private:
+        uint8_t Bpp;
 
-                uint32_t number_of_subrectangles_remain = stream_rre.in_uint32_be();
+        State state;
 
-                uint8_t const * bytes_per_pixel = stream_rre.get_current();
+        uint16_t num_recs;
 
-                for (uint8_t * point_cur = raw.get(), * point_end = point_cur + cx * cy * Bpp;
-                     point_cur < point_end; point_cur += Bpp) {
+        uint16_t x;
+        uint16_t y;
+        uint16_t cx;
+        uint16_t cy;
+        uint32_t encoding;
+
+        uint32_t zlib_compressed_data_length;
+
+        uint32_t number_of_subrectangles_remain;
+        std::unique_ptr<uint8_t[]> rre_raw;
+
+        z_stream zstrm;
+
+        Verbose verbose;
+
+        Result read_header(Buf64k & buf) noexcept
+        {
+            const size_t sz = 3;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            InStream stream(buf.av(sz));
+            stream.in_skip_bytes(1);
+            this->num_recs = stream.in_uint16_be();
+
+            buf.advance(sz);
+            return Result::ok(State::Encoding);
+        }
+
+        Result read_encoding(Buf64k & buf) noexcept
+        {
+            const size_t sz = 12;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            InStream stream(buf.av(sz));
+            this->x = stream.in_uint16_be();
+            this->y = stream.in_uint16_be();
+            this->cx = stream.in_uint16_be();
+            this->cy = stream.in_uint16_be();
+            this->encoding = stream.in_uint32_be();
+
+            --this->num_recs;
+            buf.advance(sz);
+
+            // TODO see why we get these empty rects ?
+            // return State::Encoding;
+            return Result::ok(State::Data);
+        }
+
+        template<class F>
+        Result read_data_raw(Buf64k & buf, F && f)
+        {
+            size_t const line_size = this->cx * this->Bpp;
+
+            if (buf.remaining() < line_size) {
+                return Result::fail();
+            }
+
+            auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
+            auto const new_av = buf.av(cy * line_size);
+
+            f(Rect(this->x, this->y, this->cx, cy), new_av);
+
+            this->y += cy;
+            this->cy -= cy;
+
+            buf.advance(new_av.size());
+            return Result::ok(this->cy ? State::Data : State::Encoding);
+        }
+
+        template<class F>
+        Result read_data_copy_rect(Buf64k & buf, F && f)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            InStream stream_copy_rect(buf.av(sz));
+            uint16_t const srcx = stream_copy_rect.in_uint16_be();
+            uint16_t const srcy = stream_copy_rect.in_uint16_be();
+
+            buf.advance(sz);
+
+            f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy);
+
+            return Result::ok(State::Encoding);
+        }
+
+        Result read_data_rre(Buf64k & buf)
+        {
+            const size_t sz = 4 + this->Bpp;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            InStream stream_rre(buf.av(sz));
+            this->number_of_subrectangles_remain = stream_rre.in_uint32_be();
+
+            //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+            this->rre_raw.reset(new(std::nothrow) uint8_t[cx * cy * Bpp]);
+            if (!this->rre_raw) {
+                LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
+                throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
+            }
+
+            for (uint8_t * point_cur = this->rre_raw.get(), * point_end = point_cur + cx * cy * Bpp;
+                    point_cur < point_end; point_cur += Bpp) {
+                memcpy(point_cur, stream_rre.get_current(), Bpp);
+            }
+
+            buf.advance(sz);
+
+            return Result::ok(State::RreData);
+        }
+
+        template<class F>
+        Result read_data_rre_data(Buf64k & buf, F && f)
+        {
+            if (!this->number_of_subrectangles_remain) {
+                // TODO used MultiRect
+                f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get());
+                this->rre_raw.reset();
+                return Result::ok(State::Encoding);
+            }
+
+            const size_t sz = 8 + this->Bpp;
+
+            if (buf.remaining() < sz)
+            {
+                return Result::fail();
+            }
+
+            --this->number_of_subrectangles_remain;
+
+            InStream subrectangles(buf.av(sz));
+            auto bytes_per_pixel = subrectangles.get_current();
+            subrectangles.in_skip_bytes(Bpp);
+            auto subrec_x        = subrectangles.in_uint16_be();
+            auto subrec_y        = subrectangles.in_uint16_be();
+            auto subrec_width    = subrectangles.in_uint16_be();
+            auto subrec_height   = subrectangles.in_uint16_be();
+
+            auto ling_boundary = cx * Bpp;
+            auto point_line_cur = this->rre_raw.get() + subrec_y * ling_boundary;
+            auto point_line_end = point_line_cur + subrec_height * ling_boundary;
+            for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
+                for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
+                        * point_end = point_cur + subrec_width * Bpp;
+                        point_cur < point_end; point_cur += Bpp) {
                     memcpy(point_cur, bytes_per_pixel, Bpp);
                 }
-
-                uint8_t    subrectangles_buf[65535];
-                uint16_t   subrec_x, subrec_y, subrec_width, subrec_height;
-                uint8_t  * point_line_cur;
-                uint8_t  * point_line_end;
-                uint32_t   i;
-                uint32_t   ling_boundary;
-
-                while (number_of_subrectangles_remain > 0) {
-                    auto number_of_subrectangles_read = std::min<uint32_t>(4096, number_of_subrectangles_remain);
-
-                    InStream subrectangles(subrectangles_buf);
-                    end = subrectangles_buf;
-                    this->t.recv_boom(end, (Bpp + 8) * number_of_subrectangles_read);
-
-                    number_of_subrectangles_remain -= number_of_subrectangles_read;
-
-                    for (i = 0; i < number_of_subrectangles_read; i++) {
-                        bytes_per_pixel = subrectangles.get_current();
-                        subrectangles.in_skip_bytes(Bpp);
-                        subrec_x        = subrectangles.in_uint16_be();
-                        subrec_y        = subrectangles.in_uint16_be();
-                        subrec_width    = subrectangles.in_uint16_be();
-                        subrec_height   = subrectangles.in_uint16_be();
-
-                        ling_boundary = cx * Bpp;
-                        point_line_cur = raw.get() + subrec_y * ling_boundary;
-                        point_line_end = point_line_cur + subrec_height * ling_boundary;
-                        for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-                            for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
-                                 * point_end = point_cur + subrec_width * Bpp;
-                                 point_cur < point_end; point_cur += Bpp) {
-                                memcpy(point_cur, bytes_per_pixel, Bpp);
-                            }
-                        }
-                    }
-                }
-
-                update_lock<FrontAPI> lock(this->front);
-                this->draw_tile(Rect(x, y, cx, cy), raw.get(), drawable);
             }
-            break;
-            case 5: /* Hextile */
-                LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-            break;
-            case 16:    /* ZRLE */
+
+            buf.advance(sz);
+
+            return Result::ok(State::RreData);
+        }
+
+        Result read_data_zrle(Buf64k & buf)
+        {
+            const size_t sz = 4;
+
+            if (buf.remaining() < sz)
             {
-                uint8_t data_zrle[4];
-                uint8_t * end = data_zrle;
-
-                //LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-                this->t.recv_boom(end, 4);
-
-                uint32_t zlib_compressed_data_length = Parse(data_zrle).in_uint32_be();
-
-                if (bool(this->verbose & Verbose::basic_trace))
-                {
-                    LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
-                        zlib_compressed_data_length);
-                }
-
-                if (zlib_compressed_data_length > 65536)
-                {
-                    LOG(LOG_ERR,
-                        "VNC Encoding: ZRLE, compressed data buffer too small "
-                            "(65536 < %" PRIu32 ")",
-                        zlib_compressed_data_length);
-                    throw Error(ERR_BUFFER_TOO_SMALL);
-                }
-
-                uint8_t zlib_compressed_data[65536];
-                end = zlib_compressed_data;
-                this->t.recv_boom(end, zlib_compressed_data_length);
-                REDASSERT(end - zlib_compressed_data == 0);
-
-                ZRLEUpdateContext zrle_update_context;
-
-                zrle_update_context.Bpp       = Bpp;
-                zrle_update_context.x         = x;
-                zrle_update_context.cx        = cx;
-                zrle_update_context.cx_remain = cx;
-                zrle_update_context.cy_remain = cy;
-                zrle_update_context.tile_x    = x;
-                zrle_update_context.tile_y    = y;
-
-                zstrm.avail_in = zlib_compressed_data_length;
-                zstrm.next_in  = zlib_compressed_data;
-
-                while (zstrm.avail_in > 0)
-                {
-                    constexpr std::size_t reserved_leading_space = 16384;
-                    constexpr std::size_t total_size = 49152;
-                    constexpr std::size_t data_size = total_size - reserved_leading_space;
-
-                    uint8_t zlib_uncompressed_data_buffer[total_size];
-
-                    uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
-
-                    zstrm.avail_out = data_size;
-                    zstrm.next_out  = data;
-
-                    int zlib_result = inflate(&zstrm, Z_NO_FLUSH);
-
-                    if (zlib_result != Z_OK)
-                    {
-                        LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
-                        throw Error(ERR_VNC_ZLIB_INFLATE);
-                    }
-
-                    InStream zlib_uncompressed_data_stream(data, data_size - zstrm.avail_out);
-
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO,
-                            "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
-                            zlib_uncompressed_data_stream.in_remain(),
-                            zrle_update_context.data_remain.get_offset());
-                    }
-
-                    if (zrle_update_context.data_remain.get_offset())
-                    {
-                        auto sz = zrle_update_context.data_remain.get_offset();
-                        data -= sz;
-                        memcpy(data, zrle_update_context.data_remain.get_data(), sz);
-                        zlib_uncompressed_data_stream = InStream(data, data_size - zstrm.avail_out + sz);
-
-                        zrle_update_context.data_remain.rewind();
-                    }
-
-                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context, drawable);
-                }
+                return Result::fail();
             }
-            break;
-            case 0xffffff11: /* (-239) cursor */
-            // TODO see why we get these empty rects ?
-            if (cx > 0 && cy > 0) {
-                // 7.7.2   Cursor Pseudo-encoding
-                // ------------------------------
 
-                // A client which requests the Cursor pseudo-encoding is
-                // declaring that it is capable of drawing a mouse cursor
-                // locally. This can significantly improve perceived performance
-                // over slow links.
+            this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
 
-                // The server sets the cursor shape by sending a pseudo-rectangle
-                // with the Cursor pseudo-encoding as part of an update.
+            if (bool(this->verbose & Verbose::basic_trace))
+            {
+                LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
+                    this->zlib_compressed_data_length);
+            }
 
-                // x, y : The pseudo-rectangle's x-position and y-position
-                // indicate the hotspot of the cursor,
+            if (this->zlib_compressed_data_length > 65536)
+            {
+                LOG(LOG_ERR,
+                    "VNC Encoding: ZRLE, compressed data buffer too small "
+                        "(65536 < %" PRIu32 ")",
+                    this->zlib_compressed_data_length);
+                throw Error(ERR_BUFFER_TOO_SMALL);
+            }
 
-                // cx, cy : width and height indicate the width and height of
-                // the cursor in pixels.
+            buf.advance(sz);
 
-                // The data consists of width * height pixel values followed by
-                // a bitmask.
+            return Result::ok(State::ZrleData);
+        }
 
-                // PIXEL array : width * height * bytesPerPixel
-                // bitmask     : floor((width + 7) / 8) * height
+        template<class F>
+        Result read_data_zrle_data(Buf64k & buf, F && f)
+        {
+            if (buf.remaining() < this->zlib_compressed_data_length)
+            {
+                return Result::fail();
+            }
 
-                // The bitmask consists of left-to-right, top-to-bottom
-                // scanlines, where each scanline is padded to a whole number of
-                // bytes. Within each byte the most significant bit represents
-                // the leftmost pixel, with a 1-bit meaning the corresponding
-                // pixel in the cursor is valid.
+            ZRLEUpdateContext zrle_update_context;
 
-                const int sz_pixel_array = cx * cy * Bpp;
-                const int sz_bitmask = nbbytes(cx) * cy;
-                StreamBufMaker<65536> cursor_buf_maker;
-                auto cursor_buf = cursor_buf_maker.reserve(sz_pixel_array + sz_bitmask);
-                const uint8_t *vnc_pointer_data = cursor_buf;
-                const uint8_t *vnc_pointer_mask = cursor_buf + sz_pixel_array;
+            zrle_update_context.Bpp       = Bpp;
+            zrle_update_context.x         = x;
+            zrle_update_context.cx        = cx;
+            zrle_update_context.cx_remain = cx;
+            zrle_update_context.cy_remain = cy;
+            zrle_update_context.tile_x    = x;
+            zrle_update_context.tile_y    = y;
+
+            this->zstrm.avail_in = this->zlib_compressed_data_length;
+            this->zstrm.next_in  = buf.av().data();
+
+            while (this->zstrm.avail_in > 0)
+            {
+                constexpr std::size_t reserved_leading_space = 16384;
+                constexpr std::size_t total_size = 49152;
+                constexpr std::size_t data_size = total_size - reserved_leading_space;
+
+                uint8_t zlib_uncompressed_data_buffer[total_size];
+
+                uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
+
+                this->zstrm.avail_out = data_size;
+                this->zstrm.next_out  = data;
+
+                int zlib_result = inflate(&this->zstrm, Z_NO_FLUSH);
+
+                if (zlib_result != Z_OK)
                 {
-                    auto end = cursor_buf;
-                    this->t.recv_boom(end, sz_pixel_array + sz_bitmask);
+                    LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
+                    throw Error(ERR_VNC_ZLIB_INFLATE);
                 }
 
-                Pointer cursor;
-                //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
-                cursor.x = x;
-                cursor.y = y;
-//                cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
-                // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-                if (cx == 1 && cy == 1) {
-                    // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
-                    memset(cursor.data, 0, sizeof(cursor.data));
-                    cursor.data[2883] = 0xFF;
-                    cursor.data[2884] = 0xFF;
-                    cursor.data[2885] = 0xFF;
-                    memset(cursor.mask, 0xFF, sizeof(cursor.mask));
-                    cursor.mask[116] = 0x1F;
-                    cursor.mask[120] = 0x1F;
-                    cursor.mask[124] = 0x1F;
+                InStream zlib_uncompressed_data_stream(data, data_size - this->zstrm.avail_out);
+
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO,
+                        "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
+                        zlib_uncompressed_data_stream.in_remain(),
+                        zrle_update_context.data_remain.get_offset());
                 }
-                else {
-                    // clear target cursor mask
-                    for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                        for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                        }
+
+                if (zrle_update_context.data_remain.get_offset())
+                {
+                    auto sz = zrle_update_context.data_remain.get_offset();
+                    data -= sz;
+                    memcpy(data, zrle_update_context.data_remain.get_data(), sz);
+                    zlib_uncompressed_data_stream = InStream(data, data_size - this->zstrm.avail_out + sz);
+
+                    zrle_update_context.data_remain.rewind();
+                }
+
+                f(zlib_uncompressed_data_stream, zrle_update_context);
+            }
+
+            buf.advance(this->zlib_compressed_data_length);
+
+            return Result::ok(State::Encoding);
+        }
+
+        template<class F>
+        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, F && f)
+        {
+            // TODO see why we get these empty rects ?
+            if (this->cx <= 0 && this->cy <= 0) {
+                return Result::ok(State::Encoding);
+            }
+
+            // 7.7.2   Cursor Pseudo-encoding
+            // ------------------------------
+
+            // A client which requests the Cursor pseudo-encoding is
+            // declaring that it is capable of drawing a mouse cursor
+            // locally. This can significantly improve perceived performance
+            // over slow links.
+
+            // The server sets the cursor shape by sending a pseudo-rectangle
+            // with the Cursor pseudo-encoding as part of an update.
+
+            // x, y : The pseudo-rectangle's x-position and y-position
+            // indicate the hotspot of the cursor,
+
+            // cx, cy : width and height indicate the width and height of
+            // the cursor in pixels.
+
+            // The data consists of width * height pixel values followed by
+            // a bitmask.
+
+            // PIXEL array : width * height * bytesPerPixel
+            // bitmask     : floor((width + 7) / 8) * height
+
+            // The bitmask consists of left-to-right, top-to-bottom
+            // scanlines, where each scanline is padded to a whole number of
+            // bytes. Within each byte the most significant bit represents
+            // the leftmost pixel, with a 1-bit meaning the corresponding
+            // pixel in the cursor is valid.
+
+            const int sz_pixel_array = this->cx * this->cy * this->Bpp;
+            const int sz_bitmask = nbbytes(this->cx) * this->cy;
+
+            if (sz_pixel_array + sz_bitmask > 65536)
+            {
+                LOG(LOG_ERR,
+                    "VNC Encoding: Cursor, data buffer too small (65536 < %d)",
+                    sz_pixel_array + sz_bitmask);
+                throw Error(ERR_BUFFER_TOO_SMALL);
+            }
+
+            if (buf.remaining() < sz_pixel_array + sz_bitmask)
+            {
+                return Result::fail();
+            }
+
+            auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
+            const uint8_t * vnc_pointer_data = cursor_buf;
+            const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
+
+            Pointer cursor;
+            //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
+            cursor.x = x;
+            cursor.y = y;
+            // cursor.bpp = 24;
+            cursor.width = 32;
+            cursor.height = 32;
+            // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
+            if (cx == 1 && cy == 1) {
+                // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
+                memset(cursor.data, 0, sizeof(cursor.data));
+                cursor.data[2883] = 0xFF;
+                cursor.data[2884] = 0xFF;
+                cursor.data[2885] = 0xFF;
+                memset(cursor.mask, 0xFF, sizeof(cursor.mask));
+                cursor.mask[116] = 0x1F;
+                cursor.mask[120] = 0x1F;
+                cursor.mask[124] = 0x1F;
+            }
+            else {
+                // clear target cursor mask
+                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
+                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
+                        cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                     }
-                    // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
-                    // copy vnc pointer and mask to rdp pointer and mask
+                }
+                // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
+                // copy vnc pointer and mask to rdp pointer and mask
 
-                    for (int yy = 0; yy < cy; yy++) {
-                        for (int xx = 0 ; xx < cx ; xx++){
-                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                                if ((yy < 32) && (xx < 32)){
-                                    cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                    int pixel = 0;
-                                    for (int tt = 0 ; tt < Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
-                                    }
-                                    // TODO temporary: force black cursor
-                                    int red   = (pixel >> this->red_shift) & red_max;
-                                    int green = (pixel >> this->green_shift) & green_max;
-                                    int blue  = (pixel >> this->blue_shift) & blue_max;
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
+                for (int yy = 0; yy < cy; yy++) {
+                    for (int xx = 0 ; xx < cx ; xx++){
+                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                            if ((yy < 32) && (xx < 32)){
+                                cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                int pixel = 0;
+                                for (int tt = 0 ; tt < Bpp; tt++){
+                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                 }
+                                // TODO temporary: force black cursor
+                                int red   = (pixel >> vnc.red_shift) & vnc.red_max;
+                                int green = (pixel >> vnc.green_shift) & vnc.green_max;
+                                int blue  = (pixel >> vnc.blue_shift) & vnc.blue_max;
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
+                                cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
                             }
                         }
                     }
-                    /* keep these in 32x32, vnc cursor can be alot bigger */
-                    /* (anyway hotspot is usually 0, 0)                   */
-                    //if (x > 31) { x = 31; }
-                    //if (y > 31) { y = 31; }
                 }
-                cursor.update_bw();
-                // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-                this->front.begin_update();
-                this->front.set_pointer(cursor);
-                this->front.end_update();
+                /* keep these in 32x32, vnc cursor can be alot bigger */
+                /* (anyway hotspot is usually 0, 0)                   */
+                //if (x > 31) { x = 31; }
+                //if (y > 31) { y = 31; }
             }
-            break;
-            default:
-                LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
-                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+            cursor.update_bw();
+            // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
+            f(cursor);
+
+            buf.advance(sz_pixel_array + sz_bitmask);
+            return Result::ok(State::Encoding);
+        }
+    };
+    FrameBufferUpdateCtx frame_buffer_update_ctx;
+
+    bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
+    {
+        struct CtxFn
+        {
+            mod_vnc & vnc;
+            gdi::GraphicApi & drawable;
+
+            // raw_fn
+            void operator()(Rect rect, array_view_const_u8 av)
+            {
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(rect, av.data(), drawable);
             }
+
+            // copy_rect_fn
+            void operator()(Rect rect, uint16_t srcx, uint16_t srcy)
+            {
+                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+                update_lock<FrontAPI> lock(vnc.front);
+                drawable.draw(
+                    RDPScrBlt(rect, 0xCC, srcx, srcy),
+                    Rect(0, 0, vnc.front_width, vnc.front_height)
+                );
+            }
+
+            // rre_fn
+            void operator()(Rect rect, uint8_t const * bitmap_data)
+            {
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(rect, bitmap_data, drawable);
+            }
+
+            // zrle_fn
+            void operator()(
+                InStream & zlib_uncompressed_data_stream,
+                ZRLEUpdateContext & zrle_update_context
+            ){
+                vnc.lib_framebuffer_update_zrle(
+                    zlib_uncompressed_data_stream,
+                    zrle_update_context,
+                    drawable
+                );
+            }
+
+            // cursor_fn
+            void operator()(Pointer const & cursor)
+            {
+                vnc.front.begin_update();
+                vnc.front.set_pointer(cursor);
+                vnc.front.end_update();
+            }
+        };
+
+        if (!this->frame_buffer_update_ctx.run(buf, *this, CtxFn{*this, drawable})) {
+            return false;
         }
 
         this->update_screen(Rect(0, 0, this->width, this->height));
-    } // lib_framebuffer_update
+        return true;
+    } // lib_frame_buffer_update
 
-    //==============================================================================================================
-    void lib_palette_update(gdi::GraphicApi & drawable) {
-    //==============================================================================================================
-        uint8_t buf[5];
-        InStream stream(buf);
+    class PaletteUpdateCtx
+    {
+        enum class State
         {
-            auto end = buf;
-            this->t.recv_boom(end, 5);
-        }
-        stream.in_skip_bytes(1);
-        int first_color = stream.in_uint16_be();
-        int num_colors = stream.in_uint16_be();
+            Header,
+            Data,
+            SkipData,
+        };
 
-        uint8_t buf2[8192];
-        InStream stream2(buf2);
+        using Result = BasicResult<State>;
+
+    public:
+        void start()
         {
-            auto end = buf2;
-            this->t.recv_boom(end, num_colors * 6);
+            this->state = State::Header;
+            this->num_colors = 1; // sentinel
         }
 
-        if (num_colors <= 256) {
-            for (int i = 0; i < num_colors; i++) {
-                const int b = stream2.in_uint16_be() >> 8;
-                const int g = stream2.in_uint16_be() >> 8;
-                const int r = stream2.in_uint16_be() >> 8;
-                this->palette.set_color(first_color + i, BGRColor(b, g, r));
+        bool run(Buf64k & buf) noexcept
+        {
+            for (;;) {
+                Result r = [this, &buf]{switch (this->state) {
+                    case State::Header:   return this->read_header(buf);
+                    case State::Data:     return this->read_data(buf);
+                    case State::SkipData: return this->skip_data(buf);
+                }}();
+                if (!r) {
+                    return false;
+                }
+                if (0 == this->num_colors) {
+                    return true;
+                }
+                this->state = r;
             }
         }
-        else {
-            LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
+
+        BGRPalette const & get_palette() const noexcept
+        {
+            return this->palette;
         }
 
-        this->front.set_palette(this->palette);
+    private:
+        State state;
+
+        uint16_t first_color;
+        uint16_t num_colors;
+
+        BGRPalette palette = BGRPalette::classic_332();
+
+        Result read_header(Buf64k & buf) noexcept
+        {
+            if (buf.remaining() < 4)
+            {
+                return Result::fail();
+            }
+
+            InStream stream(buf.av(4));
+            stream.in_skip_bytes(1);
+            this->first_color = stream.in_uint16_be();
+            this->num_colors = stream.in_uint16_be();
+
+            buf.advance(4);
+
+            if (this->first_color + this->num_colors > 256) {
+                LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n",
+                    this->num_colors);
+                return Result::ok(State::SkipData);
+            }
+
+            return Result::ok(State::Data);
+        }
+
+        Result read_data(Buf64k & buf) noexcept
+        {
+            if (buf.remaining() < 6)
+            {
+                return Result::fail();
+            }
+
+            InStream stream(buf.av());
+            uint16_t const n = std::min<uint16_t>(
+                stream.get_capacity() / 6,
+                this->num_colors
+            );
+            this->num_colors -= n;
+
+            uint16_t const max = n + this->first_color;
+            for (; this->first_color < max; ++this->first_color) {
+                const int b = stream.in_uint16_be() >> 8;
+                const int g = stream.in_uint16_be() >> 8;
+                const int r = stream.in_uint16_be() >> 8;
+                this->palette.set_color(this->first_color, BGRColor(b, g, r));
+            }
+
+            buf.advance(n * 6);
+
+            return Result::ok(State::Data);
+        }
+
+        Result skip_data(Buf64k & buf) noexcept
+        {
+            auto const n = std::min(buf.remaining(), uint16_t(this->num_colors * 6));
+            this->num_colors -= n / 6;
+            buf.advance(n);
+            return Result::ok(State::SkipData);
+        }
+    };
+    PaletteUpdateCtx palette_update_ctx;
+
+    bool lib_palette_update(gdi::GraphicApi & drawable, Buf64k & buf)
+    {
+        if (!this->palette_update_ctx.run(buf)) {
+            return false;
+        }
+
+        this->front.set_palette(this->palette_update_ctx.get_palette());
         this->front.begin_update();
-        RDPColCache cmd(0, this->palette);
-        drawable.draw(cmd);
+        drawable.draw(RDPColCache(0, this->palette_update_ctx.get_palette()));
         this->front.end_update();
+
+        return true;
     } // lib_palette_update
 
     /******************************************************************************/
@@ -2332,6 +3064,171 @@ private:
         return this->front.get_channel_list().get_by_name(channel_name);
     } // get_channel_by_name
 
+    class ClipboardDataCtx
+    {
+        enum class State
+        {
+            Header,
+            Data,
+            SkipData,
+        };
+
+        using Result = BasicResult<State>;
+
+    public:
+        explicit ClipboardDataCtx(Verbose verbose)
+          : verbose(verbose)
+          , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
+          , to_rdp_clipboard_data_is_utf8_encoded(false)
+        {}
+
+        void start(bool clipboard_down_is_really_enabled) noexcept
+        {
+            this->clipboard_down_is_really_enabled = clipboard_down_is_really_enabled;
+            this->remaining_data_length = 1; // sentinel
+            this->state = State::Header;
+        }
+
+        bool run(Buf64k & buf) noexcept
+        {
+            for (;;) {
+                Result r = [this, &buf]{switch (this->state) {
+                    case State::Header:   return this->read_header(buf);
+                    case State::Data:     return this->read_data(buf);
+                    case State::SkipData: return this->skip_data(buf);
+                }}();
+                if (!r) {
+                    return false;
+                }
+                if (0 == this->remaining_data_length) {
+                    return true;
+                }
+                this->state = r;
+            }
+        }
+
+        bool clipboard_is_enabled() const noexcept
+        {
+            return this->clipboard_down_is_really_enabled;
+        }
+
+        array_view_const_u8 clipboard_data() const noexcept
+        {
+            return {
+                this->to_rdp_clipboard_data.get_data(),
+                this->to_rdp_clipboard_data.get_offset()
+            };
+        }
+
+        bool clipboard_data_is_utf8_encoded() const noexcept
+        {
+            return this->to_rdp_clipboard_data_is_utf8_encoded;
+        }
+
+    private:
+        State    state;
+        Verbose  verbose;
+
+        bool     clipboard_down_is_really_enabled;
+
+        uint32_t data_length;
+        uint32_t remaining_data_length;
+
+        uint8_t  to_rdp_clipboard_data_buffer[MAX_CLIPBOARD_DATA_SIZE];
+        InStream to_rdp_clipboard_data; // NOTE can be array_view
+
+        bool     to_rdp_clipboard_data_is_utf8_encoded;
+
+        Result read_header(Buf64k & buf) noexcept
+        {
+            if (buf.remaining() < 7) {
+                return Result::fail();
+            }
+
+            InStream stream(buf.av(7));
+            stream.in_skip_bytes(3);                   // padding(3)
+            this->data_length = stream.in_uint32_be(); // length(4)
+            this->remaining_data_length = this->data_length;
+            buf.advance(7);
+
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
+            }
+
+            this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
+
+            if (!clipboard_down_is_really_enabled) {
+                return Result::ok(State::SkipData);
+            }
+
+            if (this->data_length < this->to_rdp_clipboard_data.get_capacity()) {
+                return Result::ok(State::Data);
+            }
+
+            this->to_rdp_clipboard_data.in_skip_bytes(::snprintf(
+                ::char_ptr_cast(this->to_rdp_clipboard_data_buffer),
+                this->to_rdp_clipboard_data.get_capacity(),
+                "The text was too long to fit in the clipboard buffer. "
+                "The buffer size is limited to %zu bytes.",
+                this->to_rdp_clipboard_data.get_capacity()
+            ) + 1 /* Null character */);
+
+            this->to_rdp_clipboard_data_is_utf8_encoded = true;
+
+            return Result::ok(State::SkipData);
+        }
+
+        Result read_data(Buf64k & buf) noexcept
+        {
+            if (!buf.remaining()) {
+                return Result::fail();
+            }
+
+            auto const av = buf.av(std::min<uint32_t>(
+                this->remaining_data_length, buf.remaining()));
+
+            auto const buf_pos = this->data_length - this->remaining_data_length;
+            memcpy(this->to_rdp_clipboard_data_buffer + buf_pos, av.data(), av.size());
+            this->remaining_data_length -= av.size();
+            buf.advance(av.size());
+
+            if (this->remaining_data_length) {
+                return Result::ok(State::Data);
+            }
+
+            this->to_rdp_clipboard_data_buffer[this->data_length] = '\0';
+            this->to_rdp_clipboard_data.in_skip_bytes(this->data_length);
+
+            this->to_rdp_clipboard_data_is_utf8_encoded =
+                ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), this->data_length);
+
+            if (bool(this->verbose & Verbose::basic_trace)) {
+                LOG(LOG_INFO,
+                    "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
+                    (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
+                if (this->data_length <= 64) {
+                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
+                }
+            }
+
+            return Result::ok(State::Header);
+        }
+
+        Result skip_data(Buf64k & buf) noexcept
+        {
+            if (!buf.remaining()) {
+                return Result::fail();
+            }
+
+            const auto number_of_bytes_to_read =
+                std::min<size_t>(this->remaining_data_length, buf.remaining());
+            buf.advance(number_of_bytes_to_read);
+            this->remaining_data_length -= number_of_bytes_to_read;
+            return Result::ok(State::SkipData);
+        }
+    };
+    ClipboardDataCtx clipboard_data_ctx;
+
     //******************************************************************************
     // Entry point for VNC server clipboard content reception
     // Conversion to RDP behaviour :
@@ -2339,74 +3236,13 @@ private:
     //  - send a notification to the front (Format List PDU) that the server clipboard
     //    status has changed
     //******************************************************************************
-    //==============================================================================================================
-    void lib_clip_data(void) {
-        this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
-        {
-            auto end = this->to_rdp_clipboard_data_buffer;
-            this->t.recv_boom(end, 7);
-        }
-        this->to_rdp_clipboard_data.in_skip_bytes(3);   // padding(3)
-        const uint32_t clipboard_data_length =          // length(4)
-            this->to_rdp_clipboard_data.in_uint32_be();
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", clipboard_data_length);
+    bool lib_clip_data(Buf64k & buf)
+    {
+        if (!this->clipboard_data_ctx.run(buf)) {
+            return false;
         }
 
-        uint32_t remaining_clipboard_data_length = clipboard_data_length;
-
-        const bool clipboard_down_is_really_enabled =
-            (this->enable_clipboard_down && this->get_channel_by_name(channel_names::cliprdr));
-        if (clipboard_down_is_really_enabled) {
-            this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
-
-            if (clipboard_data_length < this->to_rdp_clipboard_data.get_capacity()) {
-                auto end = this->to_rdp_clipboard_data_buffer;
-                this->t.recv_boom(end, clipboard_data_length);  // Clipboard data.
-                end += clipboard_data_length;
-                *end++ = '\0';  // Null character.
-                this->to_rdp_clipboard_data.in_skip_bytes(end - this->to_rdp_clipboard_data.get_data());
-
-                remaining_clipboard_data_length = 0;
-
-                this->to_rdp_clipboard_data_is_utf8_encoded =
-                    ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), clipboard_data_length);
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
-                        (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
-                    if (clipboard_data_length <= 64) {
-                        hexdump_c(this->to_rdp_clipboard_data.get_data(), clipboard_data_length);
-                    }
-                }
-            }
-            else {
-                this->to_rdp_clipboard_data.in_skip_bytes(
-                    ::snprintf(::char_ptr_cast(this->to_rdp_clipboard_data_buffer),
-                               this->to_rdp_clipboard_data.get_capacity(),
-                               "The text was too long to fit in the clipboard buffer. "
-                                   "The buffer size is limited to %u bytes.",
-                               static_cast<uint32_t>(this->to_rdp_clipboard_data.get_capacity())) +
-                    1   // Null character.
-                );
-
-                this->to_rdp_clipboard_data_is_utf8_encoded = true;
-            }
-        }
-
-        while (remaining_clipboard_data_length) {
-            char drop[4096];
-
-            char * end = drop;
-
-            const uint32_t number_of_bytes_to_read =
-                std::min<uint32_t>(remaining_clipboard_data_length, sizeof(drop));
-
-            this->t.recv_boom(end, sizeof(number_of_bytes_to_read));
-            remaining_clipboard_data_length -= number_of_bytes_to_read;
-        }
-
-        if (clipboard_down_is_really_enabled) {
+        if (this->clipboard_data_ctx.clipboard_is_enabled()) {
             if (bool(this->verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO,
                     "mod_vnc::lib_clip_data: Sending Format List PDU (%d) to client.",
@@ -2416,20 +3252,21 @@ private:
             RDPECLIP::FormatListPDU format_list_pdu;
             StaticOutStream<256>    out_s;
 
-            const bool unicodetext = this->to_rdp_clipboard_data_is_utf8_encoded;
-
-            format_list_pdu.emit_ex(out_s, unicodetext);
+            format_list_pdu.emit_ex(
+                out_s,
+                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
+            );
 
             size_t length     = out_s.get_offset();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
-            this->send_to_front_channel(channel_names::cliprdr,
-                                        out_s.get_data(),
-                                        length,
-                                        chunk_size,
-                                          CHANNELS::CHANNEL_FLAG_FIRST
-                                        | CHANNELS::CHANNEL_FLAG_LAST
-                                       );
+            this->send_to_front_channel(
+                channel_names::cliprdr,
+                out_s.get_data(),
+                length,
+                chunk_size,
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
+            );
 
             this->clipboard_owned_by_client = false;
 
@@ -2439,6 +3276,8 @@ private:
         else {
             LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
         }
+
+        return true;
     } // lib_clip_data
 
     void send_to_mod_channel(
@@ -2624,8 +3463,6 @@ private:
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
-//                            this->event.object_and_time = true;
-//                            this->event.set(MINIMUM_TIMEVAL - timeval_diff);
                             this->event.set_trigger_time(MINIMUM_TIMEVAL - timeval_diff);
 
                             this->clipboard_requesting_for_data_is_delayed = true;
@@ -2730,9 +3567,8 @@ private:
                                                    );
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             LOG(LOG_INFO,
-                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d) - chunk_size=%u",
-                                RDPECLIP::CB_FORMAT_DATA_RESPONSE,
-                                static_cast<uint32_t>(chunk_size));
+                                "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%d) - chunk_size=%zu",
+                                RDPECLIP::CB_FORMAT_DATA_RESPONSE, chunk_size);
                         }
 
                         send_flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
@@ -2761,11 +3597,11 @@ private:
                 }
 
                 if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT) &&
-                    !this->to_rdp_clipboard_data_is_utf8_encoded) {
+                    !this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                         // clipHeader(8)
-                            this->to_rdp_clipboard_data.get_offset() * 2 +    // data
+                            this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
                             1                                           // Null character
                         );
 
@@ -2776,11 +3612,11 @@ private:
 
                     const size_t to_rdp_clipboard_data_length =
                         ::linux_to_windows_newline_convert(
-                                ::char_ptr_cast(this->to_rdp_clipboard_data.get_data()),
-                                this->to_rdp_clipboard_data.get_offset(),
-                                ::char_ptr_cast(out_data_stream.get_data()),
-                                out_data_stream.get_capacity()
-                            );
+                            ::char_ptr_cast(this->clipboard_data_ctx.clipboard_data().data()),
+                            this->clipboard_data_ctx.clipboard_data().size(),
+                            ::char_ptr_cast(out_data_stream.get_data()),
+                            out_data_stream.get_capacity()
+                        );
                     out_data_stream.out_skip_bytes(to_rdp_clipboard_data_length);
 
                     const bool response_ok = true;
@@ -2800,31 +3636,31 @@ private:
                 else if (format_data_request_pdu.requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
-                            8 +                                         // clipHeader(8)
-                            this->to_rdp_clipboard_data.get_offset() * 4 +    // data
-                            1                                           // Null character
-                        );
+                        8 +                                         // clipHeader(8)
+                        this->clipboard_data_ctx.clipboard_data().size() * 4 +    // data
+                        1                                           // Null character
+                    );
 
                     OutStream out_data_stream(
-                            out_stream.get_data() + 8 /* clipHeader(8) */,
-                            out_stream.get_capacity() - 8 /* clipHeader(8) */
-                        );
+                        out_stream.get_data() + 8 /* clipHeader(8) */,
+                        out_stream.get_capacity() - 8 /* clipHeader(8) */
+                    );
 
                     size_t utf16_data_length;
-                    if (this->to_rdp_clipboard_data_is_utf8_encoded) {
+                    if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                         utf16_data_length = UTF8toUTF16_CrLf(
-                                this->to_rdp_clipboard_data.get_data(),
-                                out_data_stream.get_data(),
-                                out_data_stream.get_capacity()
-                            );
+                            this->clipboard_data_ctx.clipboard_data().data(),
+                            out_data_stream.get_data(),
+                            out_data_stream.get_capacity()
+                        );
                     }
                     else {
                         utf16_data_length = Latin1toUTF16(
-                                this->to_rdp_clipboard_data.get_data(),
-                                this->to_rdp_clipboard_data.get_offset(),
-                                out_data_stream.get_data(),
-                                out_data_stream.get_capacity()
-                            );
+                            this->clipboard_data_ctx.clipboard_data().data(),
+                            this->clipboard_data_ctx.clipboard_data().size(),
+                            out_data_stream.get_data(),
+                            out_data_stream.get_capacity()
+                        );
                     }
 
                     out_data_stream.out_skip_bytes(utf16_data_length);
@@ -2910,9 +3746,9 @@ private:
                                 ::snprintf(latin1_overflow_message_buffer,
                                            latin1_overflow_message_buffer_length,
                                            "The data was too large to fit into the clipboard buffer. "
-                                               "The buffer size is limited to %u bytes. "
-                                               "The length of data is %u bytes.",
-                                           static_cast<uint32_t>(this->to_vnc_clipboard_data.get_capacity()),
+                                               "The buffer size is limited to %zu bytes. "
+                                               "The length of data is %" PRIu32 " bytes.",
+                                           this->to_vnc_clipboard_data.get_capacity(),
                                            this->to_vnc_clipboard_data_size);
 
                             this->to_vnc_clipboard_data.out_skip_bytes(latin1_overflow_message_length);
@@ -3006,7 +3842,6 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
         }
     }
@@ -3023,12 +3858,10 @@ public:
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             break;
         case NOTIFY_CANCEL:
             this->event.signal = BACK_EVENT_NEXT;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
 
             this->screen.clear();

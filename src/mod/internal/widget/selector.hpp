@@ -33,6 +33,7 @@
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "gdi/graphic_api.hpp"
+#include "configs/config_access.hpp"
 
 
 

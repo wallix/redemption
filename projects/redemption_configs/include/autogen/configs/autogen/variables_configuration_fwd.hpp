@@ -85,6 +85,7 @@ namespace cfg {
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;
         struct enable_new_pointer_update;
+        struct bogus_ios_glyph_support_level;
     };
 
     struct mod_rdp {
