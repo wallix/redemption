@@ -89,6 +89,48 @@ public:
         this->pointer_flag = Pointer::POINTER_EDIT;
     }
 
+    WidgetEdit(const WidgetEdit& edit)
+      : Widget(edit.drawable, edit.parent, edit.notifier, edit.group_id)
+    , label(edit.label)
+    , w_text(0)
+    , h_text(0)
+    , cursor_color(0x888888)
+    , focus_color(edit.focus_color)
+    , drawall(false)
+    , draw_border_focus(true)
+    , font(edit.font)
+    {
+        if (edit.get_text()) {
+            this->buffer_size = strlen(edit.get_text());
+            this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
+            this->edit_pos = edit.edit_pos;
+            this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
+            this->cursor_px_pos = 0;
+            char c = this->label.buffer[this->edit_buffer_pos];
+            this->label.buffer[this->edit_buffer_pos] = 0;
+            gdi::TextMetrics tm1(this->font, this->label.buffer);
+            this->w_text = tm1.width;
+            this->cursor_px_pos = this->w_text;
+            this->label.buffer[this->edit_buffer_pos] = c;
+            // TODO: tm.height unused ?
+            gdi::TextMetrics tm2(this->font, &this->label.buffer[this->edit_buffer_pos]);
+            this->w_text += tm2.width;
+        } else {
+            this->buffer_size = 0;
+            this->num_chars = 0;
+            this->edit_buffer_pos = 0;
+            this->edit_pos = 0;
+            this->cursor_px_pos = 0;
+        }
+
+        // TODO: tm.width unused ?
+        gdi::TextMetrics tm(this->font, "Édp");
+        this->h_text = tm.height;
+        this->h_text -= 1;
+
+        this->pointer_flag = Pointer::POINTER_EDIT;
+    }
+
     Dimension get_optimal_dim() override {
         Dimension dim = this->label.get_optimal_dim();
 
