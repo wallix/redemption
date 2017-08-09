@@ -112,9 +112,6 @@ public:
 
     bool has_pending_data() const
     {
-        if (this->recv_buf_size - this->recv_buf_index) {
-            return true;
-        }
         return this->tls && SSL_pending(this->tls->allocated_ssl);
     }
 
@@ -231,32 +228,6 @@ public:
         return true;
     }
 
-    bool can_recv()
-    {
-        if (this->recv_buf_size - this->recv_buf_index) {
-            return true;
-        }
-
-        int rv = 0;
-        fd_set rfds;
-
-        io_fd_zero(rfds);
-        if (this->sck > 0) {
-            io_fd_set(this->sck, rfds);
-            timeval time { 0, 0 };
-            rv = select(this->sck + 1, &rfds, nullptr, nullptr, &time); /* don't wait */
-            if (rv > 0) {
-                int opt;
-                unsigned int opt_len = sizeof(opt);
-
-                if (getsockopt(this->sck, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
-                    rv = (opt == 0);
-                }
-            }
-        }
-        return rv;
-    }
-
     size_t do_partial_read(uint8_t * buffer, size_t len) override
     {
         if (bool(this->verbose & Verbose::dump)) {
@@ -338,32 +309,13 @@ public:
     }
 
 private:
-    uint8_t recv_buf[64 * 1024];
-    size_t recv_buf_size = 0;
-    size_t recv_buf_index = 0;
-
     ssize_t privrecv(uint8_t * data, size_t const len)
     {
-        size_t buf_remaining = this->recv_buf_size - this->recv_buf_index;
-        if (len <= buf_remaining) {
-            memcpy(data, this->recv_buf + this->recv_buf_index, len);
-            this->recv_buf_index += len;
-            return len;
-        }
-
         size_t remaining_len = len;
-
-        if (buf_remaining) {
-            memcpy(data, this->recv_buf + this->recv_buf_index, buf_remaining);
-            remaining_len -= buf_remaining;
-            data += buf_remaining;
-            this->recv_buf_index += buf_remaining;
-        }
 
         if (this->tls) {
             while (remaining_len > 0) {
-                ssize_t const res = this->tls->privpartial_recv_tls(
-                    this->recv_buf, sizeof(this->recv_buf));
+                ssize_t const res = this->tls->privpartial_recv_tls(data, remaining_len);
 
                 if (res <= 0) {
                     if (res == 0) {
@@ -376,24 +328,15 @@ private:
                     return res;
                 }
 
-                if (remaining_len <= size_t(res)) {
-                    memcpy(data, this->recv_buf, remaining_len);
-                    this->recv_buf_size = res;
-                    this->recv_buf_index = remaining_len;
-                    remaining_len = 0;
-                }
-                else {
-                    memcpy(data, this->recv_buf, res);
-                    remaining_len -= res;
-                    data += res;
-                }
+                remaining_len -= res;
+                data += res;
             }
 
             return len;
         }
 
         while (remaining_len > 0) {
-            ssize_t res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0);
+            ssize_t res = ::recv(this->sck, data, remaining_len, 0);
             switch (res) {
                 case -1: /* error, maybe EAGAIN */
                     if (try_again(errno)) {
@@ -414,17 +357,9 @@ private:
                     // not need to process the received data as it will end badly
                     return -1;
                 default: /* some data received */
-                    if (remaining_len <= size_t(res)) {
-                        memcpy(data, this->recv_buf, remaining_len);
-                        this->recv_buf_size = res;
-                        this->recv_buf_index = remaining_len;
-                        remaining_len = 0;
-                    }
-                    else {
-                        memcpy(data, this->recv_buf, res);
-                        remaining_len -= res;
-                        data += res;
-
+                    remaining_len -= res;
+                    data += res;
+                    if (remaining_len) {
                         fd_set fds;
                         struct timeval time = { 1, 0 };
                         io_fd_zero(fds);
@@ -444,36 +379,11 @@ private:
 
     ssize_t privpartial_recv(uint8_t * data, size_t const len)
     {
-        size_t buf_remaining = this->recv_buf_size - this->recv_buf_index;
-        if (len <= buf_remaining) {
-            memcpy(data, this->recv_buf + this->recv_buf_index, len);
-            this->recv_buf_index += len;
-            return len;
-        }
-
-        if (buf_remaining) {
-            memcpy(data, this->recv_buf + this->recv_buf_index, buf_remaining);
-            data += buf_remaining;
-            this->recv_buf_index += buf_remaining;
-            return buf_remaining;
-        }
-
         if (this->tls) {
-            ssize_t const res = this->tls->privpartial_recv_tls(
-                this->recv_buf, sizeof(this->recv_buf));
+            ssize_t const res = this->tls->privpartial_recv_tls(data, len);
 
             if (res <= 0) {
                 return res;
-            }
-
-            if (len <= size_t(res)) {
-                memcpy(data, this->recv_buf, len);
-                this->recv_buf_size = res;
-                this->recv_buf_index = len;
-            }
-            else {
-                memcpy(data, this->recv_buf, res);
-                data += res;
             }
 
             return res;
@@ -482,7 +392,7 @@ private:
         ssize_t res = 0;
 
         // TODO (temporary) test on EAGAIN
-        while ((res = ::recv(this->sck, this->recv_buf, sizeof(this->recv_buf), 0)) == -1
+        while ((res = ::recv(this->sck, data, len, 0)) == -1
             && errno == EAGAIN) {
         }
         switch (res) {
@@ -498,16 +408,6 @@ private:
                 // not need to process the received data as it will end badly
                 return -1;
             default: /* some data received */
-                if (len <= size_t(res)) {
-                    memcpy(data, this->recv_buf, len);
-                    this->recv_buf_size = res;
-                    this->recv_buf_index = len;
-                    return len;
-                }
-                else {
-                    memcpy(data, this->recv_buf, res);
-                    data += res;
-                }
                 return res;
         }
     }
