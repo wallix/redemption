@@ -1235,6 +1235,18 @@ public:
                             LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
                         }
 
+//                        auto info = key_qvalue_pairs({
+//                            {"type", "OUTBOUND_CONNECTION_DETECTED"},
+//                            {"rule", parameters[0]},
+//                            {"application_name", parameters[1]}
+//                            });
+//                            
+//                        this->report_message.log5(info);
+//                        
+//                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+//                            LOG(LOG_INFO, "%s", info);
+//                        }
+
                         char message[4096];
 
                         REDEMPTION_DIAGNOSTIC_PUSH

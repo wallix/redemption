@@ -833,6 +833,7 @@ test-canonical core/RDP/x224.hpp ;
 ## @}
 
 test-canonical utils/word_identification.hpp ;
+test-canonical utils/key_qvalue_pairs.hpp ;
 
 ## Gcc
 ## @{
