@@ -33,11 +33,6 @@
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "gdi/graphic_api.hpp"
-#include "configs/config_access.hpp"
-
-
-
-
 
 
 class WidgetSelector : public WidgetParent
@@ -115,7 +110,7 @@ public:
                    const char * current_page,
                    const char * number_of_page,
                    WidgetFlatButton * extra_button,
-                   uint16_t nb_columns,                     //SelectorModVariables * params,
+                   uint16_t nb_columns,
                    Font const & font, Theme const & theme, Translation::language_t lang)
     : WidgetParent(drawable, parent, notifier)
     , less_than_800(width < 800)
