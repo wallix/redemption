@@ -930,8 +930,11 @@ int main(int argc, char** argv)
         } report_message;
 
         mod_api * mod;
-        GCC::UserData::SCCore sc_core;
-        GCC::UserData::SCSecurity sc_sec1;
+        GCC::UserData::SCCore const original_sc_core;
+        GCC::UserData::SCSecurity const original_sc_sec1;
+
+        non_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
+        non_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
 
         if (protocol_is_VNC) {
 
@@ -959,7 +962,7 @@ int main(int argc, char** argv)
                             , to_verbose_flags(verbose));
 
         } else {
-            mod = new mod_rdp (
+            auto * rdp = new mod_rdp (
                         socket
                         , front
                         , info
@@ -971,12 +974,13 @@ int main(int argc, char** argv)
                         , report_message
                         , ini
                         );
+            mod = rdp;
 
-            GCC::UserData::CSSecurity & cs_security = reinterpret_cast<mod_rdp *>(mod)->cs_security;
+            GCC::UserData::CSSecurity & cs_security = rdp->cs_security;
             cs_security.encryptionMethods = encryptionMethods;
 
-            sc_core = reinterpret_cast<mod_rdp *>(mod)->sc_core;
-            sc_sec1 = reinterpret_cast<mod_rdp *>(mod)->sc_sec1;
+            sc_core_ptr = &rdp->sc_core;
+            sc_sec1_ptr = &rdp->sc_sec1;
         }
 
         front._to_server_sender._callback = mod;
@@ -1006,11 +1010,11 @@ int main(int argc, char** argv)
             std::cout << " ======= Server Core Info =======" << "\n";
             std::cout << " ================================" << "\n";
 
-            std::cout << " userDataType = " << sc_core.userDataType << "\n";
-            std::cout << " length = " << sc_core.length << "\n";
-            std::cout << " version = " << sc_core.version << "\n";
-            std::cout << " clientRequestedProtocols = " << sc_core.clientRequestedProtocols << "\n";
-            std::cout << " earlyCapabilityFlags = " << sc_core.earlyCapabilityFlags << "\n";
+            std::cout << " userDataType = " << sc_core_ptr->userDataType << "\n";
+            std::cout << " length = " << sc_core_ptr->length << "\n";
+            std::cout << " version = " << sc_core_ptr->version << "\n";
+            std::cout << " clientRequestedProtocols = " << sc_core_ptr->clientRequestedProtocols << "\n";
+            std::cout << " earlyCapabilityFlags = " << sc_core_ptr->earlyCapabilityFlags << "\n";
             std::cout << std::endl;
         }
 
@@ -1019,16 +1023,16 @@ int main(int argc, char** argv)
             std::cout << " ===== Server Security Info =====" << "\n";
             std::cout << " ================================" << "\n";
 
-            std::cout << " userDataType = " << sc_sec1.userDataType << "\n";
-            std::cout << " length = " << sc_sec1.length << "\n";
-            std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << "\n";
-            std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << "\n";
-            std::cout << " serverRandomLen = " << sc_sec1.serverRandomLen << "\n";
-            std::cout << " serverCertLen = " << sc_sec1.serverCertLen << "\n";
-            std::cout << " dwVersion = " << sc_sec1.dwVersion << "\n";
-            std::cout << " temporary = " << sc_sec1.temporary << "\n";
+            std::cout << " userDataType = " << sc_sec1_ptr->userDataType << "\n";
+            std::cout << " length = " << sc_sec1_ptr->length << "\n";
+            std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod) << "\n";
+            std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel) << "\n";
+            std::cout << " serverRandomLen = " << sc_sec1_ptr->serverRandomLen << "\n";
+            std::cout << " serverCertLen = " << sc_sec1_ptr->serverCertLen << "\n";
+            std::cout << " dwVersion = " << sc_sec1_ptr->dwVersion << "\n";
+            std::cout << " temporary = " << sc_sec1_ptr->temporary << "\n";
 
-            auto print_hex_data = [&sc_sec1](array_view_const_u8 av){
+            auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
                 for (size_t i = 0; i < av.size(); i++) {
                     if ((i % 16) == 0 && i != 0) {
                         std::cout << "\n                ";
@@ -1037,24 +1041,24 @@ int main(int argc, char** argv)
                     if (av[i] < 0x10) {
                         std::cout << "0";
                     }
-                    std::cout << std::hex << int(sc_sec1.serverRandom[i]) << std::dec << " ";
+                    std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
                 }
                 std::cout << "\n";
                 std::cout << "\n";
             };
 
-            std::cout << " serverRandom : "; print_hex_data(sc_sec1.serverRandom);
-            std::cout << " pri_exp : "; print_hex_data(sc_sec1.pri_exp);
-            std::cout << " pub_sig : "; print_hex_data(sc_sec1.pub_sig);
+            std::cout << " serverRandom : "; print_hex_data(sc_sec1_ptr->serverRandom);
+            std::cout << " pri_exp : "; print_hex_data(sc_sec1_ptr->pri_exp);
+            std::cout << " pub_sig : "; print_hex_data(sc_sec1_ptr->pub_sig);
 
             std::cout << " proprietaryCertificate : " << "\n";
-            std::cout << "     dwSigAlgId = " << sc_sec1.proprietaryCertificate.dwSigAlgId << "\n";
-            std::cout << "     dwKeyAlgId = " << sc_sec1.proprietaryCertificate.dwKeyAlgId << "\n";
-            std::cout << "     wPublicKeyBlobType = " << sc_sec1.proprietaryCertificate.wPublicKeyBlobType << "\n";
-            std::cout << "     wPublicKeyBlobLen = " << sc_sec1.proprietaryCertificate.wPublicKeyBlobLen << "\n";
+            std::cout << "     dwSigAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwSigAlgId << "\n";
+            std::cout << "     dwKeyAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId << "\n";
+            std::cout << "     wPublicKeyBlobType = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType << "\n";
+            std::cout << "     wPublicKeyBlobLen = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen << "\n";
             std::cout << "\n";
             std::cout << "     RSAPK : " << "\n";
-            std::cout << "        magic = " << sc_sec1.proprietaryCertificate.RSAPK.magic << "\n";
+            std::cout << "        magic = " << sc_sec1_ptr->proprietaryCertificate.RSAPK.magic << "\n";
             std::cout << "\n" << std::endl;
 
         }

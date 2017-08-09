@@ -25,6 +25,7 @@
 
 // #define LOGNULL
 // #define LOGPRINT
+#include <numeric>
 #include "core/buf64k.hpp"
 
 struct BlockTransport : Transport

@@ -216,6 +216,10 @@ public:
         this->editbox->rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        this->editbox->rdp_input_unicode(unicode, flag);
+    }
+
     void notify(Widget* widget, NotifyApi::notify_event_t event) override {
         if (event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);

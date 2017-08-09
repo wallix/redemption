@@ -466,18 +466,18 @@ private:
     void log_file_descriptor(RDPECLIP::FileDescriptor fd)
     {
         auto const file_size_str = std::to_string(fd.file_size());
-        std::string message("file_name=\""); append_escaped_delimiters(message, fd.fileName());
-        message += "\" size=\""; message += file_size_str;
-        message += '"';
+        std::string info("file_name=\""); append_escaped_delimiters(info, fd.fileName());
+        info += "\" size=\""; info += file_size_str;
+        info += '"';
 
-        this->report_message.log4(
-            !this->param_dont_log_data_into_syslog,
-            "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
-            message.c_str());
+        this->report_message.log4("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", info.c_str());
+            
+        if (!this->param_dont_log_data_into_syslog){
+            LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION\" %s", info.c_str());
+        }
 
         if (!this->param_dont_log_data_into_wrm) {
-            message.clear();
-            message += "SendFileToServerClipboard=";
+            std::string message("SendFileToServerClipboard=");
             message += fd.fileName();
             message += '<';
             message += file_size_str;
@@ -1045,10 +1045,12 @@ public:
                 info += std::to_string(fd.file_size());
                 info += "\"";
 
-                this->report_message.log4(
-                    !this->param_dont_log_data_into_syslog,
-                    "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                    info.c_str());
+                this->report_message.log4("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", info.c_str());
+                    
+                if (!this->param_dont_log_data_into_syslog){
+                    LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION\" %s", info.c_str());
+                }
+                    
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
@@ -1077,10 +1079,11 @@ public:
                 info += std::to_string(fd.file_size());
                 info += "\"";
 
-                this->report_message.log4(
-                    !this->param_dont_log_data_into_syslog,
-                    "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
-                    info.c_str());
+                this->report_message.log4("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", info.c_str());
+
+                if (!this->param_dont_log_data_into_syslog){
+                    LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION\" %s", info.c_str());
+                }
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");

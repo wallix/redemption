@@ -358,7 +358,6 @@ public:
         return this->bg_color;
     }
 
-
 private:
     void rearrange() {
 

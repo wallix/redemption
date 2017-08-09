@@ -132,6 +132,11 @@ public:
         (void)param4;
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        (void)unicode;
+        (void)flag;
+    }
+
     // - mouve event (mouse moves or a button went up or down)
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         (void)device_flags;

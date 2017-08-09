@@ -153,8 +153,7 @@ RED_AUTO_TEST_CASE(report_notify)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
-            RED_CHECK_EQUAL(duplicate_with_pid, false);
+        void log4(const char* type, const char* extra) override {
             RED_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
             RED_CHECK_EQUAL(extra, "pattern=\"$kbd:c| cacao\"");
             this->has_log = true;
@@ -175,8 +174,7 @@ RED_AUTO_TEST_CASE(report_kill)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log4(bool duplicate_with_pid, const char* type, const char* extra) override {
-            RED_CHECK_EQUAL(duplicate_with_pid, false);
+        void log4(const char* type, const char* extra) override {
             RED_CHECK_EQUAL(type, "KILL_PATTERN_DETECTED");
             RED_CHECK_EQUAL(extra, "pattern=\"$ocr:c| cacao\"");
             this->has_log = true;

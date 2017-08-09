@@ -463,6 +463,8 @@ public:
                 case State::Finish:
                     return true;
             }
+
+            REDEMPTION_UNREACHABLE();
         }
 
     private:
@@ -766,7 +768,7 @@ public:
         cursor.update_bw();
         this->front.set_pointer(cursor);
 
-        this->report_message.log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
+        this->report_message.log4("SESSION_ESTABLISHED_SUCCESSFULLY");
 
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
 
@@ -913,8 +915,11 @@ public:
         } else {
             this->keyMapSym_event(device_flags, param1, downflag);
         }
-
     } // rdp_input_scancode
+
+    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override {
+        LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
+    }
 
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
@@ -2917,11 +2922,15 @@ private:
         bool run(Buf64k & buf) noexcept
         {
             for (;;) {
-                Result r = [this, &buf]{switch (this->state) {
-                    case State::Header:   return this->read_header(buf);
-                    case State::Data:     return this->read_data(buf);
-                    case State::SkipData: return this->skip_data(buf);
-                }}();
+                Result r = [this, &buf]{
+                    switch (this->state) {
+                        case State::Header:   return this->read_header(buf);
+                        case State::Data:     return this->read_data(buf);
+                        case State::SkipData: return this->skip_data(buf);
+                    }
+                    REDEMPTION_UNREACHABLE();
+                }();
+
                 if (!r) {
                     return false;
                 }
@@ -3092,11 +3101,15 @@ private:
         bool run(Buf64k & buf) noexcept
         {
             for (;;) {
-                Result r = [this, &buf]{switch (this->state) {
-                    case State::Header:   return this->read_header(buf);
-                    case State::Data:     return this->read_data(buf);
-                    case State::SkipData: return this->skip_data(buf);
-                }}();
+                Result r = [this, &buf]{
+                    switch (this->state) {
+                        case State::Header:   return this->read_header(buf);
+                        case State::Data:     return this->read_data(buf);
+                        case State::SkipData: return this->skip_data(buf);
+                    }
+                    REDEMPTION_UNREACHABLE();
+                }();
+
                 if (!r) {
                     return false;
                 }
@@ -3913,7 +3926,7 @@ public:
                         ((int(seconds) % 3600) / 60),
                         (int(seconds) % 60));
 
-        this->report_message.log4(false, "SESSION_DISCONNECTION", extra);
+        this->report_message.log4("SESSION_DISCONNECTION", extra);
     }
 
     Dimension get_dim() const override

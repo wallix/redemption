@@ -182,6 +182,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "large_pointer_support", set(true));
+        W.sep();
+
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "unicode_keyboard_event_support", set(false));
     });
 
     W.section("session_log", [&]
@@ -246,6 +249,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_new_pointer_update", set(false));
         W.sep();
+
         W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
     });
 

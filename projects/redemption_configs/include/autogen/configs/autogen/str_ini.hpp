@@ -120,6 +120,8 @@
 "#_advanced\n"
 "#large_pointer_support = 1\n\n"
 
+"#unicode_keyboard_event_support = 0\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"

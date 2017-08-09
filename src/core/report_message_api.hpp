@@ -26,7 +26,7 @@ struct ReportMessageApi : noncopyable
 {
     virtual void report(const char * reason, const char * message) = 0;
 
-    virtual void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) = 0;
+    virtual void log4(const char * type, const char * extra = nullptr) = 0;
 
     virtual void update_inactivity_timeout() = 0;
 
@@ -43,9 +43,8 @@ struct NullReportMessage : ReportMessageApi
         (void)message;
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override
+    void log4(const char * type, const char * extra = nullptr) override
     {
-        (void)duplicate_with_pid;
         (void)type;
         (void)extra;
     }

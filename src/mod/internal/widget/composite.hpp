@@ -547,6 +547,12 @@ public:
         }
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        if (this->current_focus) {
+            this->current_focus->rdp_input_unicode(unicode, flag);
+        }
+    }
+
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         Widget * w = this->widget_at_pos(x, y);
 
