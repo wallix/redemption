@@ -46,7 +46,6 @@ class Authentifier : public AuthApi, public ReportMessageApi
     Inifile & ini;
     CryptoContext & cctx;
 
-public:
     bool connected_to_acl;
     AclSerializer * acl_serial;
 
@@ -71,8 +70,8 @@ public:
 
     void set_acl_serial(AclSerializer * acl_serial)
     {
-        this->connected_to_acl = true;
         this->acl_serial = acl_serial;
+        this->connected_to_acl = bool(acl_serial);
     }
 
     ~Authentifier() override {

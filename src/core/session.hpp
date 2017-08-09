@@ -57,47 +57,27 @@
 #include "configs/config.hpp"
 
 
-
-enum {
-    // before anything else : exchange of credentials
-//    SESSION_STATE_RSA_KEY_HANDSHAKE,
-    // initial state no module loaded, init not done
-    SESSION_STATE_ENTRY,
-    // no module loaded
-    // init_done
-    // login window destoyed if necessary
-    // user clicked on OK to run module  or provided connection info on cmd line
-    // but did not received credentials yet
-    SESSION_STATE_WAITING_FOR_NEXT_MODULE,
-    // a module is loaded and active but required some action
-    // involving requesting remote context
-    SESSION_STATE_WAITING_FOR_CONTEXT,
-    // init_done, module loaded and running
-    SESSION_STATE_RUNNING,
-    // display dialog when connection is closed
-    SESSION_STATE_CLOSE_CONNECTION,
-    // disconnect session
-    SESSION_STATE_STOP
-};
-
 class Session
 {
-    Inifile  & ini;
-    int internal_state;
-
-    // optimized vtable
-    struct FinalFront final : Front
+    struct Acl
     {
-        using Front::Front;
+        SocketTransport auth_trans;
+        wait_obj        auth_event;
+        AclSerializer   acl_serial;
+
+        Acl(Inifile & ini, int client_sck, time_t now,
+            CryptoContext & cctx, Random & rnd, Fstat & fstat)
+        : auth_trans(
+            "Authentifier", client_sck,
+            ini.get<cfg::globals::authfile>().c_str(), 0,
+            to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , acl_serial(
+            ini, now, this->auth_trans, cctx, rnd, fstat,
+            to_verbose_flags(ini.get<cfg::debug::auth>()))
+        {}
     };
-    FinalFront * front;
 
-    TimeSystem timeobj;
-
-    // TODO: auth_trans and auth_event can probably move into acl
-    SocketTransport * auth_trans   = nullptr;
-    wait_obj        * auth_event   = nullptr;
-    AclSerializer   * acl_serial   = nullptr;
+    Inifile & ini;
 
           time_t   perf_last_info_collect_time;
     const pid_t    perf_pid;
@@ -105,38 +85,35 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
-    Authentifier authentifier;
-
 public:
     Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : ini(ini)
         , perf_last_info_collect_time(0)
         , perf_pid(getpid())
         , perf_file(nullptr)
-        , authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()))
     {
+        TRANSLATIONCONF.set_ini(&ini);
+
+        SocketTransport front_trans(
+            "RDP Client", sck, "", 0,
+            to_verbose_flags(this->ini.get<cfg::debug::front>())
+        );
+
+        const bool mem3blt_support = true;
+
+        Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
+        time_t now = time(nullptr);
+
+        Front front(
+            front_trans, rnd, this->ini, cctx, authentifier,
+            this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
+        );
+
+        std::unique_ptr<Acl> acl;
+
         try {
-
-            TRANSLATIONCONF.set_ini(&ini);
-
-            SocketTransport front_trans(
-                "RDP Client", sck, "", 0,
-                to_verbose_flags(this->ini.get<cfg::debug::front>())
-            );
-
-            this->internal_state = SESSION_STATE_ENTRY;
-
-            const bool mem3blt_support = true;
-
-            time_t now = time(nullptr);
-
-            // TODO local variable
-            this->front = new FinalFront(
-                front_trans, rnd, this->ini, cctx, authentifier,
-                this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
-            );
-
-            ModuleManager mm(*this->front, this->ini, rnd, this->timeobj);
+            TimeSystem timeobj;
+            ModuleManager mm(front, this->ini, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -179,15 +156,15 @@ public:
                 io_fd_zero(wfds);
                 timeval timeout = time_mark;
 
-                if (mm.mod->is_up_and_running() || !this->front->up_and_running) {
-                    this->front->get_event().wait_on_fd(front_trans.sck, rfds, max, timeout);
-                    if (this->front->capture) {
-                        this->front->capture->get_capture_event().wait_on_timeout(timeout);
+                if (mm.mod->is_up_and_running() || !front.up_and_running) {
+                    front.get_event().wait_on_fd(front_trans.sck, rfds, max, timeout);
+                    if (front.capture) {
+                        front.capture->get_capture_event().wait_on_timeout(timeout);
                     }
                 }
 
-                if (this->auth_event && this->auth_trans && (INVALID_SOCKET != this->auth_trans->sck)) {
-                    this->auth_event->wait_on_fd(this->auth_trans->sck, rfds, max, timeout);
+                if (acl && (INVALID_SOCKET != acl->auth_trans.sck)) {
+                    acl->auth_event.wait_on_fd(acl->auth_trans.sck, rfds, max, timeout);
                 }
 
                 mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
@@ -201,7 +178,7 @@ public:
 
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
-                 || (this->auth_trans && this->auth_trans->has_pending_data())) {
+                 || (acl && acl->auth_trans.has_pending_data())) {
                     timeout = {0, 0};
                 }
 
@@ -226,9 +203,9 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (front_trans.is_set(this->front->get_event(), rfds)) {
+                if (front_trans.is_set(front.get_event(), rfds)) {
                     try {
-                        this->front->incoming(mm.get_callback(), now);
+                        front.incoming(mm.get_callback(), now);
                     } catch (Error & e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {
                             front_signal = BACK_EVENT_NEXT;
@@ -255,10 +232,10 @@ public:
                 }
 
                 try {
-                    if (this->front->up_and_running) {
+                    if (front.up_and_running) {
                         // new value incoming from authentifier
                         if (this->ini.check_from_acl()) {
-                            this->front->update_config(ini.get<cfg::video::rt_display>());
+                            front.update_config(ini.get<cfg::video::rt_display>());
                             mm.check_module();
                         }
 
@@ -272,11 +249,10 @@ public:
                                 wait_obj& event = event_handler.get_event();
 
                                 if (event.is_set(event_handler.get_fd(), rfds)) {
-                                    event_handler(now, mm.get_graphic_wrapper(*this->front));
+                                    event_handler(now, mm.get_graphic_wrapper(front));
 
                                     if (BACK_EVENT_NONE != event.signal) {
                                         signal = event.signal;
-//                                        event.reset();
                                         event.reset_trigger_time();
                                     }
                                 }
@@ -284,11 +260,10 @@ public:
 
                             // Process incoming module trafic
                             if ((BACK_EVENT_NONE == signal) && mm.is_set_event(rfds)) {
-                                mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
+                                mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
                                     signal = mm.mod->get_event().signal;
-//                                    mm.mod->get_event().reset();
                                     mm.mod->get_event().reset_trigger_time();
                                 }
                             }
@@ -300,11 +275,10 @@ public:
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     signal = BACK_EVENT_RETRY_CURRENT;
-//                                    mm.mod->get_event().reset();
                                     mm.mod->get_event().reset_trigger_time();
                                 }
-                                else if (this->acl_serial) {
-                                    this->authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
+                                else if (acl) {
+                                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
                                 }
                                 else {
                                     throw;
@@ -317,14 +291,12 @@ public:
                                 }
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-//                                mm.mod->get_event().reset();
                                 mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-//                                mm.mod->get_event().reset();
                                 mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RDP_SERVER_REDIR) {
@@ -350,37 +322,34 @@ public:
                                 this->ini.set_acl<cfg::context::target_host>(host);
                                 char message[768] = {};
                                 sprintf(message, "%s@%s", change_user, host);
-                                this->authentifier.report("SERVER_REDIRECTION", message);
+                                authentifier.report("SERVER_REDIRECTION", message);
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-//                                mm.mod->get_event().reset();
                                 mm.mod->get_event().reset_trigger_time();
                             }
                             else {
                                 throw;
                             }
                         }
-                        if (this->front->capture && this->front->capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
-                            this->front->periodic_snapshot();
+                        if (front.capture && front.capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
+                            front.periodic_snapshot();
                         }
 
                         // Incoming data from ACL, or opening authentifier
-                        if (!this->acl_serial) {
+                        if (!acl) {
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
-
-                                    std::string authtarget = this->ini.get<cfg::globals::authfile>();
+                                    std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
                                     size_t pos = authtarget.find(':');
                                     int client_sck = (pos == std::string::npos)
-                                           ? local_connect(authtarget.c_str(), 30, 1000)
-                                           : [&](){
-                                                // TODO: add some explicit error checking
-                                                std::string ip = authtarget.substr(0, pos);
-                                                int port = std::atoi(
-                                                        authtarget.substr(pos+1, std::string::npos).c_str());
-                                                return ip_connect(ip.c_str(), port, 30, 1000);
-                                            }();
+                                        ? local_connect(authtarget.c_str(), 30, 1000)
+                                        : [&](){
+                                            // TODO: add some explicit error checking
+                                            std::string ip = authtarget.substr(0, pos);
+                                            int port = std::atoi(authtarget.c_str() + pos+1);
+                                            return ip_connect(ip.c_str(), port, 30, 1000);
+                                        }();
                                     if (client_sck == -1) {
                                         LOG(LOG_ERR,
                                             "Failed to connect to authentifier (%s)",
@@ -388,53 +357,24 @@ public:
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
-                                    this->auth_trans = new SocketTransport( "Authentifier"
-                                                    , client_sck
-                                                    , ini.get<cfg::globals::authfile>().c_str()
-                                                    , 0
-                                                    , to_verbose_flags(ini.get<cfg::debug::auth>())
-                                                    );
-
-//                                    bool encryption, checksum;
-//                                    TraceType trace_type = ini.get<cfg::globals::trace_type>();
-//                                    switch(trace_type) {
-//                                        case TraceType::localfile :
-//                                                encryption = false;
-//                                                checksum = false;
-//                                                break;
-//                                        case TraceType::cryptofile :
-//                                                encryption = true;
-//                                                checksum = true;
-//                                                break;
-//                                        default : /* localfile_hashed */
-//                                                encryption = false;
-//                                                checksum = true;
-//                                                break;
-//                                    }
-//                                    cctx.set_with_encryption(encryption);
-//                                    cctx.set_with_checksum(checksum);
-
                                     // now is authentifier start time
-                                    this->acl_serial = new AclSerializer(
-                                        ini, now, *this->auth_trans, cctx, rnd, fstat,
-                                        to_verbose_flags(ini.get<cfg::debug::auth>()));
-                                    this->authentifier.set_acl_serial(this->acl_serial);
-                                    this->auth_event = new wait_obj();
+                                    acl.reset(new Acl(
+                                        ini, client_sck, now, cctx, rnd, fstat
+                                    ));
+                                    authentifier.set_acl_serial(&acl->acl_serial);
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
-                                    mm.invoke_close_box("No authentifier available",signal, now, this->authentifier, this->authentifier);
+                                    mm.invoke_close_box("No authentifier available",signal, now, authentifier, authentifier);
                                 }
                             }
                         }
                         else {
-                            if (this->acl_serial
-                            && this->auth_event
-                            && this->auth_trans
-                            && (INVALID_SOCKET != this->auth_trans->sck)
-                            && this->auth_trans->is_set(*this->auth_event, rfds)) {
+                            if (acl
+                            && (INVALID_SOCKET != acl->auth_trans.sck)
+                            && acl->auth_trans.is_set(acl->auth_event, rfds)) {
                                 // authentifier received updated values
-                                this->acl_serial->receive();
+                                acl->acl_serial.receive();
                             }
                         }
                         if (enable_osd) {
@@ -465,38 +405,31 @@ public:
                             }
                         }
 
-                        if (this->acl_serial) {
-                            run_session = this->acl_serial->check(
-                                this->authentifier, this->authentifier, mm,
-                                now, signal, front_signal, this->front->has_user_activity
+                        if (acl) {
+                            run_session = acl->acl_serial.check(
+                                authentifier, authentifier, mm,
+                                now, signal, front_signal, front.has_user_activity
                             );
                         }
                         else if (signal == BACK_EVENT_STOP) {
-//                            mm.mod->get_event().reset();
                             mm.mod->get_event().reset_trigger_time();
                             run_session = false;
                         }
                         if (mm.last_module) {
-                            delete this->auth_event;
-                            this->auth_event = nullptr;
-                            delete this->acl_serial;
-                            this->authentifier.connected_to_acl = false;
-                            this->authentifier.acl_serial = nullptr;
-                            this->acl_serial = nullptr;
-                            delete this->auth_trans;
-                            this->auth_trans = nullptr;
+                            authentifier.set_acl_serial(nullptr);
+                            acl.reset();
                         }
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(e.errmsg(), signal, now, this->authentifier, this->authentifier);
+                    mm.invoke_close_box(e.errmsg(), signal, now, authentifier, authentifier);
                 };
             }
             if (mm.mod) {
                 mm.mod->disconnect(time(nullptr));
             }
-            this->front->disconnect();
+            front.disconnect();
         }
         catch (const Error & e) {
             LOG(LOG_INFO, "Session::Session Init exception = %d!\n", e.id);
@@ -509,7 +442,7 @@ public:
         && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
-        this->front->must_be_stop_capture();
+        front.must_be_stop_capture();
     }
 
     Session(Session const &) = delete;
@@ -521,16 +454,6 @@ public:
         if (this->perf_file) {
             ::fclose(this->perf_file);
         }
-        delete this->front;
-        this->front = nullptr;
-        delete this->auth_event;
-        this->auth_event = nullptr;
-        delete this->acl_serial;
-        this->authentifier.connected_to_acl = false;
-        this->authentifier.acl_serial = nullptr;
-        this->acl_serial = nullptr;
-        delete this->auth_trans;
-        this->auth_trans = nullptr;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
