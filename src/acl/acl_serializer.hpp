@@ -317,15 +317,8 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra) override
+    void log4(const char * type, const char * extra) override
     {
-        const bool session_log = this->ini.get<cfg::session_log::enable_session_log>();
-        if (!duplicate_with_pid && !session_log) return;
-
-        if (extra && !*extra) {
-            extra = nullptr;
-        }
-
         /* Log to file */
         if (this->ini.get<cfg::session_log::session_log_redirection>()) {
             if(!ct.is_open()) {
@@ -333,6 +326,7 @@ public:
                 char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
                 char const * basename = basename_len(filename, base_len);
                 auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
+                
                 ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
             }
 
@@ -344,18 +338,15 @@ public:
 
             ct.send("type=\"", 6);
             ct.send(type, strlen(type));
-            if(extra) {
+            if(extra && *extra) {
                 ct.send(" ", 1);
                 ct.send(extra, strlen(extra));
             }
             ct.send("\"\n", 2);
         }
 
-        /* Log to syslog */
-        if (duplicate_with_pid) {
-            LOG(LOG_INFO, "type=\"%s\"%s%s", type, (extra ? " " : ""), (extra ? extra : ""));
-        }
-        if (session_log) {
+        /* Log to SIEM (redirected syslog) */
+        if (this->ini.get<cfg::session_log::enable_session_log>()) {
             LOG_SIEM(
                 LOG_INFO
               , "[%s Session] "
@@ -379,7 +370,7 @@ public:
               , this->ini.get<cfg::globals::target_device>().c_str()
               , this->ini.get<cfg::context::target_service>().c_str()
               , this->ini.get<cfg::globals::target_user>().c_str()
-              , (extra ? " " : ""), (extra ? extra : "")
+              , ((extra && *extra) ? " " : ""), ((extra && *extra) ? extra : "")
             );
         }
     }

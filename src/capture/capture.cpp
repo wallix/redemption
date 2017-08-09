@@ -543,7 +543,9 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset()) {
             memcpy(this->kbd_stream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
-            this->report_message.log4(false, "KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
+            
+            // TODO: FIXME potential trouble with quotes
+            this->report_message.log4("KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
             this->kbd_stream.rewind();
         }
     }

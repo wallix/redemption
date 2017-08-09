@@ -64,7 +64,10 @@ RED_AUTO_TEST_CASE(TestEncryption1)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(true, true, cctx, rnd);
+    cctx.set_with_encryption(true);
+    cctx.set_with_checksum(true);
+
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -132,7 +135,10 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(true, true, cctx, rnd);
+    cctx.set_with_encryption(true);
+    cctx.set_with_checksum(true);
+
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -242,7 +248,10 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(true, true, cctx, rnd);
+    cctx.set_with_encryption(true);
+    cctx.set_with_checksum(true);
+
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -371,7 +380,10 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(false, true, cctx, rnd);
+    cctx.set_with_encryption(false);
+    cctx.set_with_checksum(true);
+
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -458,7 +470,10 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(false, false, cctx, rnd);
+    cctx.set_with_encryption(false);
+    cctx.set_with_checksum(false);
+
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -533,7 +548,9 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    ocrypto encrypter(false, true, cctx, rnd);
+    cctx.set_with_encryption(false);
+    cctx.set_with_checksum(true);
+    ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
     ocrypto::Result res = encrypter.open(make_array_view(derivator));
@@ -625,7 +642,10 @@ struct TestCryptoCtx
         ::unlink(hash_finalname);
         char tmpname[256];
         {
-            OutCryptoTransport ct(with_encryption, with_checksum, cctx, rnd, fstat);
+            cctx.set_with_encryption(with_encryption);
+            cctx.set_with_checksum(with_checksum);
+
+            OutCryptoTransport ct(cctx, rnd, fstat);
             ct.open(finalname, hash_finalname, 0);
             ::strcpy(tmpname, ct.get_tmp());
             ct.send("We write, ", 10);
@@ -646,7 +666,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
     TestCryptoCtx enc_check    (true,  true);
     TestCryptoCtx noenc_check  (false, true);
     TestCryptoCtx noenc_nocheck(false, false);
-    TestCryptoCtx enc_nocheck  (true,  false);
+    // encryption/nocheck is now impossible, setting encryption on cctx forces checksum
 
     RED_CHECK_MEM_AA(enc_check.fhash, enc_check.qhash);
     RED_CHECK_MEM_AC(
@@ -670,13 +690,6 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransport)
         "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
         "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
     );
-
-    RED_CHECK_MEM_AA(enc_nocheck.fhash, enc_nocheck.qhash);
-    RED_CHECK_MEM_AC(
-        enc_nocheck.qhash,
-        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
-        "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
-    );
 }
 
 
@@ -694,7 +707,10 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportBigFile)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         char buf[200000]{};
@@ -732,7 +748,10 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
     const char * finalname = "encrypted.txt";
     const char * hash_finalname = "hash_encrypted.txt";
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, and again, and so on.", 31);
@@ -763,7 +782,10 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
 
         ct.open(finalname1, hash_finalname1, 0);
         ::strcpy(tmpname1, ct.get_tmp());
@@ -802,7 +824,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
     ::unlink(hash_finalname);
     char tmpname[256];
     {
-        OutCryptoTransport ct(false, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(false);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, and again, and so on.", 31);
@@ -876,7 +901,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+    
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send(randomSample, sizeof(randomSample));
@@ -951,7 +979,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send("We write, ", 10);
@@ -1030,7 +1061,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
     const char * hash_finalname = "./hash_clear.txt";
     char tmpname[256];
     {
-        OutCryptoTransport ct(false, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(false);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send(clearSample, sizeof(clearSample));
@@ -1097,7 +1131,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 
     char tmpname[256];
     {
-        OutCryptoTransport ct(false, true, cctx, rnd, fstat);
+        cctx.set_with_encryption(false);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
         ct.send(clearSample, sizeof(clearSample));
@@ -1167,7 +1204,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
     {
-        OutCryptoTransport ct(false, false, cctx, rnd, fstat);
+        cctx.set_with_encryption(false);
+        cctx.set_with_checksum(false);
+    
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(encrypted_file, hash_encrypted_file, 0);
         ct.send(original_contents.data(), original_contents.size());
     }
@@ -1217,7 +1257,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH] = {};
     {
-        OutCryptoTransport ct(true, true, cctx, rnd, fstat);
+    
+        cctx.set_with_encryption(true);
+        cctx.set_with_checksum(true);
+
+        OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(encrypted_file, hash_encrypted_file, 0);
         ct.send(original_contents.data(), original_contents.size());
         ct.close(qhash, fhash);

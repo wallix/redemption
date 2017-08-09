@@ -28,8 +28,6 @@
 #include "number_edit.hpp"
 #include "image.hpp"
 #include "labelgrid.hpp"
-// #include "headergrid.hpp"
-
 
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
@@ -37,14 +35,13 @@
 #include "gdi/graphic_api.hpp"
 
 
-
-
-class GridSelector : public WidgetParent
+class WidgetSelector : public WidgetParent
 {
 public:
     CompositeArray composite_array;
 
     bool less_than_800;
+    const uint16_t nb_columns;
 
     WidgetLabel device_label;
 
@@ -100,71 +97,72 @@ public:
     };
 
     WidgetFlatButton * extra_button;
-    const uint16_t nb_columns;
+
     uint16_t base_len[GRID_NB_COLUMNS_MAX] = {0};
 
 
-    GridSelector(gdi::GraphicApi & drawable,
-                 const char * device_name,
-                 int16_t left, int16_t top, uint16_t width, uint16_t height,
-                 Widget & parent, NotifyApi* notifier,
-                 const char * current_page,
-                 const char * number_of_page,
-                 WidgetFlatButton * extra_button,
-                 const uint16_t nb_columns,
-                 Font const & font, Theme const & theme, Translation::language_t lang)
+
+    WidgetSelector(gdi::GraphicApi & drawable,
+                   const char * device_name,
+                   int16_t left, int16_t top, uint16_t width, uint16_t height,
+                   Widget & parent, NotifyApi* notifier,
+                   const char * current_page,
+                   const char * number_of_page,
+                   WidgetFlatButton * extra_button,
+                   uint16_t nb_columns,
+                   Font const & font, Theme const & theme, Translation::language_t lang)
     : WidgetParent(drawable, parent, notifier)
     , less_than_800(width < 800)
-        , device_label(drawable, *this, nullptr, device_name,
-                       -10, theme.global.fgcolor, theme.global.bgcolor, font)
-        , selector_lines(drawable,
-                         *this, this, 0, 3,
-                         theme.selector_line1.bgcolor,
-                         theme.selector_line1.fgcolor,
-                         theme.selector_line2.bgcolor,
-                         theme.selector_line2.fgcolor,
-                         theme.selector_focus.bgcolor,
-                         theme.selector_focus.fgcolor,
-                         theme.selector_selected.bgcolor,
-                         theme.selector_selected.fgcolor,
-                         font, 2, -11)
-          //BEGIN WidgetPager
-        , first_page(drawable, *this, notifier, "◀◂", -15,
-                     theme.global.fgcolor, theme.global.bgcolor,
-                     theme.global.focus_color, 2, font, 6, 2, true)
-        , prev_page(drawable, *this, notifier, "◀", -15,
+    , nb_columns((nb_columns > 3) ? nb_columns : 3)
+    , device_label(drawable, *this, nullptr, device_name,
+                    -10, theme.global.fgcolor, theme.global.bgcolor, font)
+    , selector_lines(drawable,
+                        *this, this, 0, this->nb_columns,
+                        theme.selector_line1.bgcolor,
+                        theme.selector_line1.fgcolor,
+                        theme.selector_line2.bgcolor,
+                        theme.selector_line2.fgcolor,
+                        theme.selector_focus.bgcolor,
+                        theme.selector_focus.fgcolor,
+                        theme.selector_selected.bgcolor,
+                        theme.selector_selected.fgcolor,
+                        font, 2, -11)
+        //BEGIN WidgetPager
+    , first_page(drawable, *this, notifier, "◀◂", -15,
                     theme.global.fgcolor, theme.global.bgcolor,
                     theme.global.focus_color, 2, font, 6, 2, true)
-        , current_page(drawable, *this, notifier,
-                       current_page ? current_page : "XXXX", -15,
-                       theme.edit.fgcolor, theme.edit.bgcolor,
-                       theme.edit.focus_color, font, -1, 1, 1)
-        , number_page(drawable, *this, nullptr,
-                      number_of_page ? temporary_number_of_page(number_of_page).buffer
-                      : "/XXX", -100, theme.global.fgcolor,
-                      theme.global.bgcolor, font)
-        , next_page(drawable, *this, notifier, "▶", -15,
-                    theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, 2, font, 6, 2, true)
-        , last_page(drawable, *this, notifier, "▸▶", -15,
-                    theme.global.fgcolor, theme.global.bgcolor,
-                    theme.global.focus_color, 2, font, 6, 2, true)
-          //END WidgetPager
-        , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
-                 theme.global.fgcolor, theme.global.bgcolor,
-                 theme.global.focus_color, 2, font, 6, 2)
-        , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
+    , prev_page(drawable, *this, notifier, "◀", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+    , current_page(drawable, *this, notifier,
+                    current_page ? current_page : "XXXX", -15,
+                    theme.edit.fgcolor, theme.edit.bgcolor,
+                    theme.edit.focus_color, font, -1, 1, 1)
+    , number_page(drawable, *this, nullptr,
+                    number_of_page ? temporary_number_of_page(number_of_page).buffer
+                    : "/XXX", -100, theme.global.fgcolor,
+                    theme.global.bgcolor, font)
+    , next_page(drawable, *this, notifier, "▶", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+    , last_page(drawable, *this, notifier, "▸▶", -15,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2, true)
+        //END WidgetPager
+    , logout(drawable, *this, this, TR(trkeys::logout, lang), -16,
                 theme.global.fgcolor, theme.global.bgcolor,
                 theme.global.focus_color, 2, font, 6, 2)
-        , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
-                  theme.global.fgcolor, theme.global.bgcolor,
-                  theme.global.focus_color, 2, font, 6, 2)
-        , bg_color(theme.global.bgcolor)
-        , font(font)
-        , left(left)
-        , top(top)
-        , extra_button(extra_button)
-        , nb_columns(nb_columns)
+    , apply(drawable, *this, this, TR(trkeys::filter, lang), -12,
+            theme.global.fgcolor, theme.global.bgcolor,
+            theme.global.focus_color, 2, font, 6, 2)
+    , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
+                theme.global.fgcolor, theme.global.bgcolor,
+                theme.global.focus_color, 2, font, 6, 2)
+    , bg_color(theme.global.bgcolor)
+    , font(font)
+    , left(left)
+    , top(top)
+    , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
@@ -174,8 +172,15 @@ public:
         entries[0] = "Authorization";
         entries[1] = "Target";
         entries[2] = "Protocol";
+        entries[3] = "Empty";
+        entries[4] = "Empty";
+        entries[5] = "Empty";
+        entries[6] = "Empty";
+        entries[7] = "Empty";
+        entries[8] = "Empty";
+        entries[9] = "Empty";
 
-        const uint16_t base_len[] = {200, 64000, 80};
+        const uint16_t base_len[GRID_NB_COLUMNS_MAX] = {200, 64000, 80, 80, 80, 80, 80, 80, 80, 80};
 
         for (int i = 0; i < this->nb_columns; i++) {
             this->header_label[i] = std::make_unique<WidgetLabel>(drawable, *this, nullptr, entries[i], -10,
@@ -210,9 +215,14 @@ public:
         }
 
         this->move_size_widget(left, top, width, height);
+
+        for (int i = 0; i < this->nb_columns; i++) {
+            LOG(LOG_INFO, "edit filter %d x=%u y=%u cx=%u cy=%u", i, this->edit_filter[i]->x(), this->edit_filter[i]->y(), this->edit_filter[i]->cx(), this->edit_filter[i]->cy());
+
+        }
     }
 
-    ~GridSelector() override {
+    ~WidgetSelector() override {
         this->clear();
     }
 
@@ -286,7 +296,6 @@ public:
         return this->bg_color;
     }
 
-
 private:
     void rearrange() {
 
@@ -325,7 +334,7 @@ private:
                 this->header_label[i]->set_xy(this->left + offset, labels_y);
                 this->edit_filter[i]->set_xy(this->header_label[i]->x(), filters_y);
                 this->edit_filter[i]->set_wh(
-                    this->header_label[i]->cx() - FILTER_SEPARATOR,
+                    this->header_label[i]->cx() - ((i == this->nb_columns-1) ? 0 : FILTER_SEPARATOR),
                     this->edit_filter[i]->cy());
                 offset += this->header_label[i]->cx();
             }
@@ -413,11 +422,8 @@ public:
         }
     }
 
-    void add_device(const char * device_group, const char * target_label,
-                    const char * protocol)
-    {
-        const char * texts[] = { device_group, target_label, protocol };
-        this->selector_lines.add_line(texts);
+    void add_device(const char ** entries) {
+        this->selector_lines.add_line(entries);
     }
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
@@ -701,6 +707,10 @@ public:
         }
 
         this->rearrange();
+
+        LOG(LOG_INFO, "filter_target_group x=%u y=%u cx=%u cy=%u", this->filter_target_group.x(), this->filter_target_group.y(), this->filter_target_group.cx(), this->filter_target_group.cy());
+        LOG(LOG_INFO, "filter_target x=%u y=%u cx=%u cy=%u", this->filter_target.x(), this->filter_target.y(), this->filter_target.cx(), this->filter_target.cy());
+        LOG(LOG_INFO, "filter_protocol x=%u y=%u cx=%u cy=%u", this->filter_protocol.x(), this->filter_protocol.y(), this->filter_protocol.cx(), this->filter_protocol.cy());
     }
 
     BGRColor get_bg_color() const override {
@@ -857,12 +867,16 @@ public:
         }
     }
 
-    void add_device(const char * device_group, const char * target_label,
-                    const char * protocol)
-    {
-        const char * texts[] = { device_group, target_label, protocol };
-        this->selector_lines.add_line(texts);
+    void add_device(const char ** entries) {
+        this->selector_lines.add_line(entries);
     }
+
+//     void add_device(const char * device_group, const char * target_label,
+//                     const char * protocol)
+//     {
+//         const char * texts[] = { device_group, target_label, protocol };
+//         this->selector_lines.add_line(texts);
+//     }
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
         if (keymap->nb_kevent_available() > 0){

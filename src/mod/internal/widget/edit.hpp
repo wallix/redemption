@@ -21,12 +21,13 @@
 
 #pragma once
 
-#include "widget.hpp"
-#include "label.hpp"
+#include "core/RDP/slowpath.hpp"
+#include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
+#include "mod/internal/widget/label.hpp"
+#include "mod/internal/widget/widget.hpp"
 #include "utils/colors.hpp"
 #include "utils/sugar/cast.hpp"
-#include "gdi/graphic_api.hpp"
 
 class WidgetEdit : public Widget {
 public:

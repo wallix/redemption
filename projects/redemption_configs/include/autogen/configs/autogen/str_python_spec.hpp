@@ -120,6 +120,8 @@
 "#_advanced\n"
 "large_pointer_support = boolean(default=True)\n\n"
 
+"unicode_keyboard_event_support = boolean(default=False)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"

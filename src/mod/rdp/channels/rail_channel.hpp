@@ -952,9 +952,7 @@ public:
                 std::string info("ExeOrFile=\"");
                 append_escaped_delimiters(info, serpdu.ExeOrFile());
                 info += "\"";
-                this->report_message.log4(
-                    false,
-                    "CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+                this->report_message.log4("CLIENT_EXECUTE_REMOTEAPP", info.c_str());
             }
         }
 

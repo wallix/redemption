@@ -36,7 +36,6 @@ class Authentifier : public AuthApi, public ReportMessageApi
 {
     struct LogParam
     {
-        bool duplicate_with_pid;
         std::string type;
         std::string extra;
     };
@@ -114,13 +113,14 @@ public:
         }
     }
 
-    void log4(bool duplicate_with_pid, const char * type, const char * extra = nullptr) override
+    void log4(const char * type, const char * extra = nullptr) override
     {
+        // TODO: should we delay logs sent to SIEM ?
         if (this->connected_to_acl && this->session_log_is_open) {
-            this->acl_serial->log4(duplicate_with_pid, type, extra);
+            this->acl_serial->log4(type, extra);
         }
         else {
-            this->buffered_log_params.push_back({duplicate_with_pid, type, extra ? extra : ""});
+            this->buffered_log_params.push_back({type, extra ? extra : ""});
         }
     }
 
@@ -146,14 +146,15 @@ public:
             if (this->session_log_is_open) {
                 this->acl_serial->close_session_log();
             }
-            else {
-                cctx.set_master_key(ini.get<cfg::crypto::key0>());
-                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-            }
+
+            TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
+            this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
+            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+            this->cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
+            this->cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
 
             for (LogParam const & log_param : this->buffered_log_params) {
                 this->acl_serial->log4(
-                    log_param.duplicate_with_pid,
                     log_param.type.c_str(),
                     log_param.extra.c_str()
                 );

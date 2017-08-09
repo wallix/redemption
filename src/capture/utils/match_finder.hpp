@@ -221,8 +221,7 @@ public:
         std::string extra = "pattern=\"";
         append_escaped_delimiters(extra, message);
         extra += "\"";
-        report_message.log4(false,
-            (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
+        report_message.log4((is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
             extra.c_str());
 
         report_message.report(

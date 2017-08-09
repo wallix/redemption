@@ -27,11 +27,11 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget/flat_selector.hpp"
+#include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
 
-using FlatSelector2ModVariables = vcfg::variables<
+using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
     vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
     vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
@@ -52,17 +52,18 @@ using FlatSelector2ModVariables = vcfg::variables<
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
-class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
+
+class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 //     WidgetSelectorFlat selector;
-    GridSelector selector;
+    WidgetSelector selector;
 
 
     int current_page;
     int number_page;
 
-    FlatSelector2ModVariables vars;
+    SelectorModVariables vars;
 
     CopyPaste copy_paste;
 
@@ -71,7 +72,7 @@ class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
     struct temporary_login {
         char buffer[256];
 
-        explicit temporary_login(FlatSelector2ModVariables vars) {
+        explicit temporary_login(SelectorModVariables vars) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
                      "%s@%s",
@@ -86,7 +87,7 @@ class FlatSelectorMod : public LocallyIntegrableMod, public NotifyApi
 
 
 public:
-    FlatSelectorMod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
+    SelectorMod(SelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, front, front, this->font(), this->theme())
 
@@ -114,7 +115,7 @@ public:
             vars.is_asked<cfg::context::selector_number_of_pages>()
                 ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
             &this->language_button,
-            3,
+            3,                                              //&vars,
             vars.get<cfg::font>(),
             vars.get<cfg::theme>(),
             language(vars))
@@ -140,7 +141,7 @@ public:
         this->selector.rdp_input_invalidate(this->selector.get_rect());
     }
 
-    ~FlatSelectorMod() override {
+    ~SelectorMod() override {
         this->screen.clear();
     }
 
@@ -299,7 +300,10 @@ private:
             targets[size_targets] = '\0';
             protocols[size_protocols] = '\0';
 
-            this->selector.add_device(groups, targets, protocols);
+            //this->selector.add_device(groups, targets, protocols);
+
+            const char * texts[] = { groups, targets, protocols,  "", "", "", "", "", "", ""};
+            this->selector.add_device(texts);
 
             groups[size_groups] = c_group;
             targets[size_targets] = c_target;
@@ -320,7 +324,11 @@ private:
         if (this->selector.selector_lines.get_nb_rows() == 0) {
             this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
-            this->selector.add_device("", TR(trkeys::no_results, language(this->vars)), "");
+
+            const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), "", "", "", "", "", "", "", ""};
+            this->selector.add_device(texts);
+
+            //this->selector.add_device("", TR(trkeys::no_results, language(this->vars)), "", "");
         } else {
             this->selector.selector_lines.tab_flag = Widget::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget::NORMAL_FOCUS;
