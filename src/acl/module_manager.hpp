@@ -45,7 +45,7 @@
 #include "utils/pattutils.hpp"
 
 #include "mod/internal/flat_login_mod.hpp"
-#include "mod/internal/flat_selector_mod.hpp"
+#include "mod/internal/selector_mod.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
@@ -955,17 +955,7 @@ public:
             }
             {
 
-//             char entries[3][500] = { {0} };
-//
-//             std::memcpy(entries[0], this->ini.get<cfg::context::selector_group_filter>().c_str(), this->ini.get<cfg::context::selector_group_filter>().size());
-//
-//             std::memcpy(entries[1], this->ini.get<cfg::context::selector_device_filter>().c_str(), this->ini.get<cfg::context::selector_device_filter>().size());
-//
-//             std::memcpy(entries[2], this->ini.get<cfg::context::selector_proto_filter>().c_str(), this->ini.get<cfg::context::selector_proto_filter>().size());
-//
-//             const uint16_t base_len[] = {200, 64000, 80};
-
-            this->set_mod(new FlatSelectorMod(
+            this->set_mod(new SelectorMod(
                 this->ini,
                 this->front,
                 this->front.client_info.width,
@@ -976,7 +966,6 @@ public:
                     this->front.client_info.cs_monitor
                 )),
                 this->client_execute
-              //, entries, base_len
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");

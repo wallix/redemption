@@ -28,8 +28,6 @@
 #include "number_edit.hpp"
 #include "image.hpp"
 #include "labelgrid.hpp"
-// #include "headergrid.hpp"
-
 
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
@@ -38,37 +36,12 @@
 
 
 
-using FlatSelectorModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
-    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
-    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask | vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask | vcfg::accessmode::get>,
-    vcfg::var<cfg::context::password,                   vcfg::accessmode::ask>,
-    vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
-    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
-    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::get | vcfg::accessmode::set>,
-    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
-    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
-    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
-    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
->;
 
 
-class Selector : public WidgetParent
+
+class WidgetSelector : public WidgetParent
 {
 public:
-    struct GridSelectorParams {
-        const char * label_names[GRID_NB_COLUMNS_MAX];
-        uint16_t base_len[GRID_NB_COLUMNS_MAX];
-        uint16_t nb_columns;
-    };
-
     CompositeArray composite_array;
 
     bool less_than_800;
@@ -134,15 +107,15 @@ public:
 
 
 
-    Selector(gdi::GraphicApi & drawable,
-                 const char * device_name,
-                 int16_t left, int16_t top, uint16_t width, uint16_t height,
-                 Widget & parent, NotifyApi* notifier,
-                 const char * current_page,
-                 const char * number_of_page,
-                 WidgetFlatButton * extra_button,
-                 uint16_t nb_columns, FlatSelectorModVariables * params,
-                 Font const & font, Theme const & theme, Translation::language_t lang)
+    WidgetSelector(gdi::GraphicApi & drawable,
+                   const char * device_name,
+                   int16_t left, int16_t top, uint16_t width, uint16_t height,
+                   Widget & parent, NotifyApi* notifier,
+                   const char * current_page,
+                   const char * number_of_page,
+                   WidgetFlatButton * extra_button,
+                   uint16_t nb_columns,                     //SelectorModVariables * params,
+                   Font const & font, Theme const & theme, Translation::language_t lang)
     : WidgetParent(drawable, parent, notifier)
     , less_than_800(width < 800)
     , nb_columns((nb_columns > 3) ? nb_columns : 3)
@@ -249,7 +222,7 @@ public:
         this->move_size_widget(left, top, width, height);
     }
 
-        ~Selector() override {
+    ~WidgetSelector() override {
         this->clear();
     }
 
