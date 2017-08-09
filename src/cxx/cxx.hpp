@@ -22,6 +22,8 @@
 
 // https://github.com/jonathanpoelen/falcon.cxx/blob/master/include/falcon/cxx/cxx.hpp
 
+#include "cxx/compiler_version.hpp"
+
 
 #define REDEMPTION_CXX_STD_11 201103
 #define REDEMPTION_CXX_STD_14 201402
@@ -155,5 +157,34 @@
 #  define REDEMPTION_ALWAYS_INLINE
 #  define REDEMPTION_LIB_EXPORT // REDEMPTION_WARNING("Unknown dynamic link import semantics.")
 # endif
+#endif
+
+// REDEMPTION_UNREACHABLE / REDEMPTION_UNREACHABLE_IF
+#ifndef NDEBUG
+# define REDEMPTION_UNREACHABLE() assert(!"Unreachable code reached.")
+# define REDEMPTION_UNREACHABLE_IF(condition) \
+  assert((condition) && "Unreachable code reached.")
+#else
+# define REDEMPTION_UNREACHABLE_IF(condition) \
+  do { if (condition) REDEMPTION_UNREACHABLE(); } while (0)
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+// https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+# if !defined(REDEMPTION_UNREACHABLE) \
+  && ( REDEMPTION_COMP_GNUC >= REDEMPTION_VERSION_NUMBER(4, 5, 0) \
+    || defined(__clang__))
+#  define REDEMPTION_UNREACHABLE() __builtin_unreachable()
+# endif
+#else
+# ifdef _MSC_VER && _MSC_VER >= 1900
+#  if !defined REDEMPTION_UNREACHABLE && _MSC_VER >= 1900
+#   define REDEMPTION_UNREACHABLE() __assume(0)
+#  endif
+# endif
+#endif
+
+#ifndef REDEMPTION_UNREACHABLE
+# define REDEMPTION_UNREACHABLE() do { } while (0)
 #endif
 //@}
