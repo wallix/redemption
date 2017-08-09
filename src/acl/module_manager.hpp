@@ -538,6 +538,10 @@ private:
             }
         }
 
+        void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+            this->mm.internal_mod->rdp_input_unicode(unicode, flag);
+        }
+
         void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
         {
             if (!this->try_input_mouse(device_flags, x, y, keymap)) {
@@ -725,6 +729,10 @@ private:
             }
 
             Mod::rdp_input_mouse(device_flags, x, y, keymap);
+        }
+
+        void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+            Mod::rdp_input_unicode(unicode, flag);
         }
 
         void rdp_input_invalidate(const Rect r) override

@@ -187,6 +187,13 @@ public:
         WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        if (this->tooltip) {
+            this->hide_tooltip();
+        }
+        WidgetParent::rdp_input_unicode(unicode, flag);
+    }
+
     void allow_mouse_pointer_change(bool allow) {
         this->allow_mouse_pointer_change_ = allow;
     }

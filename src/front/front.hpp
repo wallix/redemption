@@ -2376,16 +2376,29 @@ public:
                                     se.eventFlags);
                             }
 
-                            this->keymap.synchronize(se.eventFlags & 0xFFFF);
+                            this->keymap.synchronize(se.eventFlags);
                             if (this->up_and_running) {
-                                cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                                cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
                                 this->has_user_activity = true;
                             }
                         }
                         break;
 
-                        //case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
-                        //break;
+                        case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                        {
+                            FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
+
+                            if (bool(this->verbose & Verbose::basic_trace3)) {
+                                LOG(LOG_INFO, "Front::incoming: Received Fast-Path PUD, unicode unicode=0x%04X",
+                                    uke.unicodeCode);
+                            }
+
+                            if (this->up_and_running) {
+                                cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
+                                this->has_user_activity = true;
+                            }
+                        }
+                        break;
 
                         default:
                             LOG(LOG_INFO,
@@ -2868,6 +2881,7 @@ private:
                 // Slow/Fast-path
                 input_caps.inputFlags          =
                     INPUT_FLAG_SCANCODES
+                    | INPUT_FLAG_UNICODE
                     | (  this->client_fastpath_input_event_support
                     ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
                 input_caps.keyboardLayout      = 0;
@@ -3713,6 +3727,22 @@ private:
                         }
                         break;
 
+                        case SlowPath::INPUT_EVENT_UNICODE:
+                        {
+                            SlowPath::UnicodeKeyboardEvent_Recv uke(ie.payload);
+
+                            if (bool(this->verbose & Verbose::basic_trace3)) {
+                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_UNICODE eventTime=%u unicodeCode=0x%04X",
+                                    ie.eventTime, uke.unicodeCode);
+                            }
+                            // happens when client gets focus and sends key modifier info
+                            if (this->up_and_running) {
+                                cb.rdp_input_unicode(uke.unicodeCode, uke.keyboardFlags);
+                                this->has_user_activity = true;
+                            }
+                        }
+                        break;
+
                         default:
                             LOG(LOG_WARNING, "Front::process_data: Unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
                         break;
@@ -4264,10 +4294,10 @@ protected:
                     }
 
                     if (fc) {
-                        const int16_t x = cmd.bk.x + draw_pos_ref;
+                        const int16_t x = cmd.bk.x + draw_pos_ref + fc.offset;
                         const int16_t y = cmd.bk.y;
 
-                        const Rect rect = clip.intersect(Rect(x, y, fc.width, fc.height));
+                        const Rect rect = Rect(x, y, fc.width, fc.height);
                         if (rect.cx != 0 && rect.cy != 0) {
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 

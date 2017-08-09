@@ -449,17 +449,6 @@ namespace FastPath {
         }
     };
 
-    struct KeyboardEventUniCode_Send {
-        KeyboardEventUniCode_Send(OutStream & stream, uint8_t eventFlags, uint16_t uniCode) {
-            stream.out_uint8(                          // eventHeader
-                  (FASTPATH_INPUT_EVENT_UNICODE  << 5)
-                | eventFlags
-            );
-
-            stream.out_uint16_le(uniCode);
-        }
-    };
-
     struct KeyboardEvent_Send {
         KeyboardEvent_Send(OutStream & stream, uint8_t eventFlags, uint8_t keyCode) {
             stream.out_uint8(                          // eventHeader
@@ -490,16 +479,48 @@ namespace FastPath {
         }
     };
 
+// [MS-RDPBCGR] - 2.2.8.1.2.2.2 Fast-Path Unicode Keyboard Event
+//  (TS_FP_UNICODE_KEYBOARD_EVENT)
+// =============================================================
+
+// The TS_FP_UNICODE_KEYBOARD_EVENT structure is the fast-path variant of the
+//  TS_UNICODE_KEYBOARD_EVENT (section 2.2.8.1.1.3.1.1.2) structure. Support
+//  for the Unicode Keyboard Event is advertised in the Input Capability Set
+//  (section 2.2.7.1.6).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  eventHeader  |          unicodeCode          |
+// +---------------+-------------------------------+
+
+// eventHeader (1 byte): An 8-bit unsigned integer. The format of this field
+//  is the same as the eventHeader byte field, specified in section
+//  2.2.8.1.2.2. The eventCode bitfield (3 bits in size) MUST be set to
+//  FASTPATH_INPUT_EVENT_UNICODE (4). The eventFlags bitfield (5 bits in
+//  size) contains flags describing the keyboard event.
+
+//  +---------------------------------+--------------------------------------+
+//  | 5-Bit Codes                     | Meaning                              |
+//  +---------------------------------+--------------------------------------+
+//  | FASTPATH_INPUT_KBDFLAGS_RELEASE | The absence of this flag indicates a |
+//  | 0x01                            | key-down event, whereas its presence |
+//  |                                 | indicates a key-release event.       |
+//  +---------------------------------+--------------------------------------+
+
+// unicodeCode (2 bytes): A 16-bit unsigned integer. The Unicode character
+//  input code.
 
     struct UnicodeKeyboardEvent_Recv {
         uint8_t  eventFlags;
         uint16_t spKeyboardFlags; // Slow-path compatible flags
-        uint8_t  unicodeCode[2];
+        uint16_t unicodeCode;
 
         UnicodeKeyboardEvent_Recv(InStream & stream, uint8_t eventHeader)
         : eventFlags(0)
         , spKeyboardFlags(0)
-        , unicodeCode() {
+        , unicodeCode(0) {
             uint8_t eventCode = (eventHeader & 0xE0) >> 5;
             if (eventCode != FASTPATH_INPUT_EVENT_UNICODE) {
                 LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: unexpected event code, expected=0x%X got=0x%X",
@@ -509,12 +530,12 @@ namespace FastPath {
 
             this->eventFlags = eventHeader & 0x1F;
 
-            // if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
-            //     this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
-            // }
+            //if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
+            //    this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
+            //}
             this->spKeyboardFlags = (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE) ?
                                     SlowPath::KBDFLAGS_RELEASE :
-                                    SlowPath::KBDFLAGS_DOWN;
+                                    0;
 
             if (!stream.in_check_rem(2)) {
                 LOG(LOG_ERR, "FastPath::UnicodeKeyboardEvent_Recv: data truncated, expected=2 remains=%zu",
@@ -522,10 +543,26 @@ namespace FastPath {
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-            stream.in_copy_bytes(this->unicodeCode, sizeof(this->unicodeCode));
+            this->unicodeCode = stream.in_uint16_le();
         }
     };
 
+    struct UniCodeKeyboardEvent_Send {
+        UniCodeKeyboardEvent_Send(OutStream & stream, uint16_t spKeyboardFlags, uint16_t uniCode) {
+            uint8_t eventFlags = 0;
+
+            if (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) {
+                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_RELEASE;
+            }
+
+            stream.out_uint8(                          // eventHeader
+                  (FASTPATH_INPUT_EVENT_UNICODE  << 5)
+                | eventFlags
+            );
+
+            stream.out_uint16_le(uniCode);
+        }
+    };
 
 // [MS-RDPBCGR] - 2.2.8.1.2.2.3 Fast-Path Mouse Event (TS_FP_POINTER_EVENT)
 // ========================================================================

@@ -597,4 +597,30 @@ public:
             }
         }
     }
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        if (flag & SlowPath::KBDFLAGS_RELEASE) {
+            return;
+        }
+
+        uint8_t utf8[8];
+        size_t utf8_length = UTF16toUTF8(&unicode, 1, utf8, sizeof(utf8) - 1);
+        utf8[utf8_length] = 0;
+
+        UTF8InsertAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos),
+            0, utf8, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
+        size_t tmp = this->edit_buffer_pos;
+        size_t pxtmp = this->cursor_px_pos;
+        this->increment_edit_pos();
+        this->buffer_size += this->edit_buffer_pos - tmp;
+        this->num_chars++;
+        this->send_notify(NOTIFY_TEXT_CHANGED);
+        this->w_text += this->cursor_px_pos - pxtmp;
+        this->update_draw_cursor(Rect(
+            this->x() + pxtmp + this->label.x_text + 1,
+            this->y() + this->label.y_text + 1,
+            this->w_text - pxtmp + 1,
+            this->h_text
+            ));
+    }
 };

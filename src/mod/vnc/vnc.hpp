@@ -448,8 +448,11 @@ public:
         } else {
             this->keyMapSym_event(device_flags, param1, downflag);
         }
-
     } // rdp_input_scancode
+
+    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override {
+        LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
+    }
 
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {

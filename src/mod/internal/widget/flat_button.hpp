@@ -217,6 +217,15 @@ public:
         }
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        if (!(flag & SlowPath::KBDFLAGS_RELEASE) && (unicode == 0x0020)) {
+            this->send_notify(this->event);
+        }
+        else {
+            Widget::rdp_input_unicode(unicode, flag);
+        }
+    }
+
     Dimension get_optimal_dim() override {
         Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
         return Dimension(dm.w + (this->border_width * 2 - 1), dm.h + (this->border_width * 2 - 1));

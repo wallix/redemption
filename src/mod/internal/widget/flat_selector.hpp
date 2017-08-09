@@ -48,9 +48,8 @@ public:
 
     WidgetLabel device_label;
 
-    WidgetLabel * header_label[GRID_NB_COLUMNS_MAX];
-    WidgetEdit * edit_filter[GRID_NB_COLUMNS_MAX];
-
+    std::unique_ptr<WidgetLabel> header_label[GRID_NB_COLUMNS_MAX];
+    std::unique_ptr<WidgetEdit>  edit_filter[GRID_NB_COLUMNS_MAX];
 
     WidgetLabelGrid selector_lines;
 
@@ -179,19 +178,19 @@ public:
         const uint16_t base_len[] = {200, 64000, 80};
 
         for (int i = 0; i < this->nb_columns; i++) {
-            this->header_label[i] = new WidgetLabel(drawable, *this, nullptr, entries[i], -10,
+            this->header_label[i] = std::make_unique<WidgetLabel>(drawable, *this, nullptr, entries[i], -10,
                          theme.selector_label.fgcolor,
                          theme.selector_label.bgcolor, font, 5);
 
-            this->edit_filter[i] = new WidgetEdit(drawable, *this, this,
+            this->edit_filter[i] = std::make_unique<WidgetEdit>(drawable, *this, this,
                               nullptr, -12,
                               theme.edit.fgcolor, theme.edit.bgcolor,
                               theme.edit.focus_color, font, -1, 1, 1);
 
             this->base_len[i] = base_len[i];
 
-            this->add_widget(this->header_label[i]);
-            this->add_widget(this->edit_filter[i]);
+            this->add_widget(this->header_label[i].get());
+            this->add_widget(this->edit_filter[i].get());
         }
 
         this->add_widget(&this->apply);
@@ -213,7 +212,7 @@ public:
         this->move_size_widget(left, top, width, height);
     }
 
-        ~GridSelector() override {
+    ~GridSelector() override {
         this->clear();
     }
 
