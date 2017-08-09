@@ -59,7 +59,7 @@ private:
 
 public:
     bool is_trigger_time_set() const {
-        return (this->trigger_time != ::timeval({ 0, 0 }));
+        return this->trigger_time != timeval{0, 0};
     }
 
     bool is_waked_up_by_time() const {
@@ -83,7 +83,7 @@ public:
     {
         this->waked_up_by_time = false;
 
-        this->trigger_time = ::timeval({ 0, 0 });
+        this->trigger_time = timeval{0, 0};
     }
 
     void set_trigger_time(std::chrono::microseconds idle_usec)
@@ -144,9 +144,7 @@ public:
             max = (static_cast<unsigned>(fd) > max) ? fd : max;
         }
 
-        if (fd <= INVALID_SOCKET || this->is_trigger_time_set()) {
-            this->wait_on_timeout(timeout);
-        }
+        this->wait_on_timeout(timeout);
     }
 
     bool is_set(int fd, fd_set & rfds)
