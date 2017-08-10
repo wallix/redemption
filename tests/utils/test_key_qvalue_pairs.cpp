@@ -33,32 +33,38 @@
 
 RED_AUTO_TEST_CASE(Test_KVPairs1)
 {
-    kv_pair pairs[] = {kv_pair{"type", "INPUT"}};
+    kv_pair pairs[] = {{"type", "INPUT"}};
+    RED_CHECK_EQUAL(std::string("type=\"INPUT\""), key_qvalue_pairs(pairs));
+}
+
+RED_AUTO_TEST_CASE(Test_KVPairs1av)
+{
+    kv_pair pairs[] = {{cstr_array_view("type"), make_array_view("INPUT!BEURK", 5)}};
     RED_CHECK_EQUAL(std::string("type=\"INPUT\""), key_qvalue_pairs(pairs));
 }
 
 RED_AUTO_TEST_CASE(Test_KVPairs1quote)
 {
-    kv_pair pairs[] = {kv_pair{"type", "INPUT"}};
+    kv_pair pairs[] = {{"type", "INPUT"}};
     RED_CHECK_EQUAL(std::string("type=\"INPUT\""), key_qvalue_pairs(pairs));
 }
 
 RED_AUTO_TEST_CASE(Test_KVPairs1quote_bis)
 {
-    kv_pair pairs[] = {kv_pair{"type", "IN\"PUT"}};
+    kv_pair pairs[] = {{"type", "IN\"PUT"}};
     RED_CHECK_EQUAL(std::string("type=\"IN\\\"PUT\""), key_qvalue_pairs(pairs));
 }
 
 RED_AUTO_TEST_CASE(Test_KVPairs2)
 {
-    kv_pair pairs[] = {kv_pair{"type", "INPUT"}, kv_pair{"data", "xxxyyy"}};
+    kv_pair pairs[] = {{"type", "INPUT"}, {"data", "xxxyyy"}};
 
     RED_CHECK_EQUAL(std::string("type=\"INPUT\" data=\"xxxyyy\""), key_qvalue_pairs(pairs));
 }
 
 RED_AUTO_TEST_CASE(Test_KVPairs3)
 {
-    kv_pair pairs[] = {kv_pair{"type", "INPUT"}, kv_pair{"data", "xxxyyy"}, kv_pair{"field", "data"}};
+    kv_pair pairs[] = {{"type", "INPUT"}, {"data", "xxxyyy"}, {"field", "data"}};
 
     RED_CHECK_EQUAL(std::string("type=\"INPUT\" data=\"xxxyyy\" field=\"data\""), key_qvalue_pairs(pairs));
 }
@@ -66,6 +72,6 @@ RED_AUTO_TEST_CASE(Test_KVPairs3)
 RED_AUTO_TEST_CASE(Test_KVPairs_noarray)
 {
     RED_CHECK_EQUAL(std::string("type=\"INPUT\" data=\"xxxyyy\" field=\"data\""),
-                    key_qvalue_pairs({kv_pair{"type", "INPUT"}, kv_pair{"data", "xxxyyy"}, kv_pair{"field", "data"}}));
+                    key_qvalue_pairs({{"type", "INPUT"}, {"data", "xxxyyy"}, {"field", "data"}}));
 }
 

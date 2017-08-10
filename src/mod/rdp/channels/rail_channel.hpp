@@ -949,10 +949,13 @@ public:
         else {
             if (!this->session_probe_channel ||
                 this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
-                std::string info("ExeOrFile=\"");
-                append_escaped_delimiters(info, serpdu.ExeOrFile());
-                info += "\"";
-                this->report_message.log4("CLIENT_EXECUTE_REMOTEAPP", info.c_str());
+
+                auto info = key_qvalue_pairs({
+                    {"type", "CLIENT_EXECUTE_REMOTEAPP"},
+                    {"ExeOrFile", serpdu.ExeOrFile()},
+                    });
+                   
+                this->report_message.log5(info);
             }
         }
 

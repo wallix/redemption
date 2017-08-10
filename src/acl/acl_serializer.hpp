@@ -30,6 +30,7 @@
 
 #include "utils/sugar/exchange.hpp"
 #include "utils/stream.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 #include "configs/config.hpp"
 #include "core/authid.hpp"
 #include "transport/transport.hpp"
@@ -317,7 +318,7 @@ public:
         }
     }
 
-    void log4(const char * type, const char * extra) override
+    void log5(const std::string & info) override
     {
         /* Log to file */
         if (this->ini.get<cfg::session_log::session_log_redirection>()) {
@@ -336,102 +337,35 @@ public:
                 ct.send(mbstr, strlen(mbstr));
             }
 
-            ct.send("type=\"", 6);
-            ct.send(type, strlen(type));
-            if(extra && *extra) {
-                ct.send(" ", 1);
-                ct.send(extra, strlen(extra));
-            }
-            ct.send("\"\n", 2);
+            ct.send(info.c_str(), info.size());
+            ct.send("\n", 1);
         }
 
         /* Log to SIEM (redirected syslog) */
+        auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
+                  this->ini.get<cfg::context::target_host>() :
+                  this->ini.get<cfg::context::ip_target>());
+
+        auto session_info = key_qvalue_pairs({
+            {"session_id", this->ini.get<cfg::context::session_id>()},
+            {"client_ip",  this->ini.get<cfg::globals::host>()},
+            {"target_ip",  target_ip},
+            {"user",       this->ini.get<cfg::globals::auth_user>()},
+            {"device",     this->ini.get<cfg::globals::target_device>()},
+            {"service",    this->ini.get<cfg::context::target_service>()},
+            {"account",    this->ini.get<cfg::globals::target_user>()},
+            });
+
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
             LOG_SIEM(
                 LOG_INFO
-              , "[%s Session] "
-                "type=\"%s\" "
-                "session_id=\"%s\" "
-                "client_ip=\"%s\" "
-                "target_ip=\"%s\" "
-                "user=\"%s\" "
-                "device=\"%s\" "
-                "service=\"%s\" "
-                "account=\"%s\""
-                "%s%s"
+              , "[%s Session] %s %s"
               , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
-              , type
-              , this->ini.get<cfg::context::session_id>().c_str()
-              , this->ini.get<cfg::globals::host>().c_str()
-              , (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-                  this->ini.get<cfg::context::target_host>().c_str() :
-                  this->ini.get<cfg::context::ip_target>().c_str())
-              , this->ini.get<cfg::globals::auth_user>().c_str()
-              , this->ini.get<cfg::globals::target_device>().c_str()
-              , this->ini.get<cfg::context::target_service>().c_str()
-              , this->ini.get<cfg::globals::target_user>().c_str()
-              , ((extra && *extra) ? " " : ""), ((extra && *extra) ? extra : "")
-            );
+              , session_info.c_str()
+              , info.c_str());
         }
     }
 
-//    void log5(const std::string & info) override
-//    {
-//        /* Log to file */
-//        if (this->ini.get<cfg::session_log::session_log_redirection>()) {
-//            if(!ct.is_open()) {
-//                size_t base_len = 0;
-//                char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
-//                char const * basename = basename_len(filename, base_len);
-//                auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
-//                
-//                ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
-//            }
-
-//            std::time_t t = std::time(nullptr);
-//            char mbstr[100];
-//            if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
-//                ct.send(mbstr, strlen(mbstr));
-//            }
-
-//            ct.send("type=\"", 6);
-//            ct.send(type, strlen(type));
-//            if(extra && *extra) {
-//                ct.send(" ", 1);
-//                ct.send(extra, strlen(extra));
-//            }
-//            ct.send("\"\n", 2);
-//        }
-
-//        /* Log to SIEM (redirected syslog) */
-//        if (this->ini.get<cfg::session_log::enable_session_log>()) {
-//            LOG_SIEM(
-//                LOG_INFO
-//              , "[%s Session] "
-//                "type=\"%s\" "
-//                "session_id=\"%s\" "
-//                "client_ip=\"%s\" "
-//                "target_ip=\"%s\" "
-//                "user=\"%s\" "
-//                "device=\"%s\" "
-//                "service=\"%s\" "
-//                "account=\"%s\""
-//                "%s%s"
-//              , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
-//              , type
-//              , this->ini.get<cfg::context::session_id>().c_str()
-//              , this->ini.get<cfg::globals::host>().c_str()
-//              , (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-//                  this->ini.get<cfg::context::target_host>().c_str() :
-//                  this->ini.get<cfg::context::ip_target>().c_str())
-//              , this->ini.get<cfg::globals::auth_user>().c_str()
-//              , this->ini.get<cfg::globals::target_device>().c_str()
-//              , this->ini.get<cfg::context::target_service>().c_str()
-//              , this->ini.get<cfg::globals::target_user>().c_str()
-//              , ((extra && *extra) ? " " : ""), ((extra && *extra) ? extra : "")
-//            );
-//        }
-//    }
 
     void close_session_log()
     {
