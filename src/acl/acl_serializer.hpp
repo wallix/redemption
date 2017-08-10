@@ -326,7 +326,7 @@ public:
                 char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
                 char const * basename = basename_len(filename, base_len);
                 auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
-                
+
                 ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
             }
 
@@ -384,7 +384,7 @@ public:
 //                char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
 //                char const * basename = basename_len(filename, base_len);
 //                auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
-//                
+//
 //                ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
 //            }
 
@@ -554,9 +554,12 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
                     return true;
+//                     this->keepalive.stop();
+//                     next_state = MODULE_INTERNAL_WIDGET_SELECTOR;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
+//                     next_state = MODULE_INTERNAL_WIDGET_SELECTOR;
                 }
                 if (mm.mod) {
                     mm.mod->disconnect(now);

@@ -114,17 +114,17 @@ public:
         , selector_params( [&]() -> const WidgetSelectorParams {
             WidgetSelectorParams params;
 
-            params.nb_columns = 3;
+            params.nb_columns = 4;
 
             params.base_len[0] = 200;
             params.base_len[1] = 64000;
             params.base_len[2] = 80;
-            params.base_len[3] = 80;
+            params.base_len[3] = 100;
 
             params.label[0] = "Authorization";
             params.label[1] = "Target";
             params.label[2] = "Protocol";
-            params.label[3] = "Test";
+            params.label[3] = "Description";
 
             return params; }() )
         , selector(front, temporary_login(vars).buffer,
@@ -169,16 +169,13 @@ public:
     {
         this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
 
-
         this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filter[0].get_text());
         this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filter[1].get_text());
         this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filter[2].get_text());
 
-
 //         this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
 //         this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
 //         this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
-
 
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
@@ -304,8 +301,7 @@ private:
         char * groups    = const_cast<char *>(this->vars.get<cfg::globals::target_user>().c_str());
         char * targets   = const_cast<char *>(this->vars.get<cfg::globals::target_device>().c_str());
         char * protocols = const_cast<char *>(this->vars.get<cfg::context::target_protocol>().c_str());
-        for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>();
-             index++) {
+        for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>(); index++) {
             size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
                 break;
