@@ -564,8 +564,8 @@ enum {
 };
 
 
-static inline const char * get_generalFlags_names(uint32_t generalFlags) {
-    std::string str;
+static inline const std::string get_generalFlags_names(uint32_t generalFlags) {
+        std::string str;
         (generalFlags & CB_CAPSTYPE_GENERAL) ? str+="CB_CAPSTYPE_GENERAL " :str;
         (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? str+="CB_USE_LONG_FORMAT_NAMES " :str;
         (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? str+="CB_STREAM_FILECLIP_ENABLED " :str;
@@ -573,7 +573,7 @@ static inline const char * get_generalFlags_names(uint32_t generalFlags) {
         (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? str+="CB_FILECLIP_NO_FILE_PATHS " : str;
         (generalFlags & CB_CAN_LOCK_CLIPDATA) ? str+="CB_CAN_LOCK_CLIPDATA " : str;
 
-        return str.c_str();
+        return str;
 }
 
 // If the General Capability Set is not present in the Clipboard Capabilities
