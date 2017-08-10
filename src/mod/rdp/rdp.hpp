@@ -633,9 +633,9 @@ protected:
                     {"type", "CERTIFICATE_CHECK_SUCCESS"},
                     {"description", "Connexion to server allowed"},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -648,9 +648,9 @@ protected:
                     {"type", "SERVER_CERTIFICATE_NEW"},
                     {"description", "New X.509 certificate created"},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -663,9 +663,9 @@ protected:
                     {"type", "SERVER_CERTIFICATE_MATCH_SUCCESS"},
                     {"description", "X.509 server certificate match"},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -678,9 +678,9 @@ protected:
                     {"type", "SERVER_CERTIFICATE_MATCH_FAILURE"},
                     {"description", "X.509 server certificate match failure"},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -689,16 +689,16 @@ protected:
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-            
+
                 const std::string description = std::string("X.509 server certificate internal error: ")
                                               + std::string(str_error);
                 auto info = key_qvalue_pairs({
                     {"type", "SERVER_CERTIFICATE_ERROR"},
                     {"description", description},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -2290,8 +2290,6 @@ public:
         if ((this->state == MOD_RDP_NEGO) &&
             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
              (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
-            // this->event.object_and_time = true;
-            // this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
         }
         return this->event;
@@ -3605,9 +3603,9 @@ public:
                     {"type", "SESSION_DISCONNECTION"},
                     {"duration", duration},
                     });
-                   
+
                 this->report_message.log5(info);
-                
+
                 if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -3803,7 +3801,6 @@ public:
                             if (!this->already_upped_and_running) {
                                 this->do_enable_session_probe();
 
-                                //this->event.object_and_time = (this->open_session_timeout.count() > 0);
                                 if (this->open_session_timeout.count() > 0) {
                                     this->event.set_trigger_time(wait_obj::NOW);
                                 }
@@ -7534,7 +7531,7 @@ public:
                 {"type", "SESSION_DISCONNECTION"},
                 {"duration", extra},
                 });
-               
+
             this->report_message.log5(info);
 
             this->session_disconnection_logged = true;

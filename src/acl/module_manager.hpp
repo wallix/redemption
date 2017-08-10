@@ -1521,18 +1521,17 @@ public:
                         report_message,
                         this->ini
                     );
+                    std::unique_ptr<mod_api> managed_mod(new_mod);
 
                     rdp_api*       rdpapi = new_mod;
                     windowing_api* winapi = new_mod->get_windowing_api();
 
-                    std::unique_ptr<mod_api> managed_mod(new_mod);
-
                     if (host_mod_in_widget) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
-                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        std::string target_info = this->ini.get<cfg::context::target_str>();
                         target_info += ":";
-                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+                        target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                         this->client_execute.set_target_info(target_info.c_str());
 

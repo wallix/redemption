@@ -897,7 +897,7 @@ int main(int argc, char** argv)
 
         unique_fd auto_close_sck{sck};
 
-        std::string error_message; // TODO actually not use
+        std::string error_message;
         SocketTransport socket(
             userName.c_str()
           , sck
@@ -986,13 +986,9 @@ int main(int argc, char** argv)
         front._to_server_sender._callback = mod;
         front._callback = mod;
 
-        if (!mod) {
-            std::cout << " Error: Failed during mod initialization. \n";
-        }
-
         try {
             while (!mod->is_up_and_running()) {
-                // std::cout <<  " Early negociations... " <<"\n";
+                // std::cout << " Early negociations...\n";
                 mod->draw_event(time(nullptr), front);
             }
         } catch (const Error & e) {
