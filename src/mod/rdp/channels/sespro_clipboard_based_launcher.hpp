@@ -91,7 +91,6 @@ public:
     {}
 
     wait_obj* get_event() override {
-//        if (this->event.object_and_time) {
         if (this->event.is_trigger_time_set()) {
             return &this->event;
         }
@@ -124,9 +123,6 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-//            this->event.object_and_time = true;
-
-//            this->event.set(this->clipboard_initialization_delay);
             this->event.set_trigger_time(this->clipboard_initialization_delay);
         }
 
@@ -190,7 +186,6 @@ public:
 
                 this->state = State::RUN_WIN_D_D_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -204,7 +199,6 @@ public:
 
                 this->state = State::RUN_WIN_D_D_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -219,7 +213,6 @@ public:
 
                 this->state = State::RUN_WIN_D_WIN_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -235,7 +228,6 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -249,7 +241,6 @@ public:
 
                 this->state = State::RUN_WIN_R_R_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -263,7 +254,6 @@ public:
 
                 this->state = State::RUN_WIN_R_R_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -278,7 +268,6 @@ public:
 
                 this->state = State::RUN_WIN_R_WIN_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -294,14 +283,12 @@ public:
 
                 this->state = State::CLIPBOARD;
 
-//                this->event.set(this->long_delay);
                 this->event.set_trigger_time(this->long_delay);
             break;
 
             case State::CLIPBOARD:
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -315,7 +302,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -329,7 +315,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_A_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -344,7 +329,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -359,7 +343,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -373,7 +356,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_DOWN;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -387,7 +369,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_V_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -402,7 +383,6 @@ public:
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -417,7 +397,6 @@ public:
 
                 this->state = State::ENTER;
 
-//                this->event.set(this->long_delay);
                 this->event.set_trigger_time(this->long_delay);
             break;
 
@@ -435,7 +414,6 @@ public:
 
                 this->state = State::ENTER_UP;
 
-//                this->event.set(this->short_delay);
                 this->event.set_trigger_time(this->short_delay);
             break;
 
@@ -448,12 +426,9 @@ public:
                                          param4,
                                          keymap);
 
-//                this->event.object_and_time = false;
-
                 this->state = State::WAIT;
 
-//                this->event.set(this->short_delay);
-                this->event.set_trigger_time(this->short_delay);
+                this->event.reset_trigger_time();
             break;
 
             case State::START:
@@ -519,7 +494,6 @@ public:
                     }
                 }
 
-//                this->event.object_and_time = false;
                 this->event.reset_trigger_time();
             break;
 
@@ -527,6 +501,7 @@ public:
             case State::WAIT:
             case State::STOP:
             default:
+                LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: State=%d", this->state);
                 REDASSERT(false);
             break;
         }   // switch (this->state)
@@ -605,9 +580,6 @@ public:
 
         this->state = State::RUN_WIN_D_WIN_DOWN;
 
-//        this->event.object_and_time = true;
-
-//        this->event.set(this->short_delay);
         this->event.set_trigger_time(this->short_delay);
 
         return false;
@@ -682,7 +654,6 @@ public:
 
         this->state = State::STOP;
 
-//        this->event.object_and_time = false;
         this->event.reset_trigger_time();
 
         if (!bLaunchSuccessful) {
@@ -739,7 +710,6 @@ private:
         if (!this->format_data_requested) {
             this->state = State::RUN_WIN_D_WIN_DOWN;
 
-//            this->event.set(this->short_delay);
             this->event.set_trigger_time(this->short_delay);
 
             return;
@@ -747,7 +717,6 @@ private:
 
         this->state = State::ENTER_DOWN;
 
-//        this->event.set(this->short_delay);
         this->event.set_trigger_time(this->short_delay);
     }
 
@@ -780,10 +749,6 @@ private:
                                         CHANNELS::CHANNEL_FLAG_FIRST
                                       | CHANNELS::CHANNEL_FLAG_LAST
                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-
-//        this->state = State::RUN;
-
-//        this->event.set(this->short_delay);
     }
 
     void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 *) {

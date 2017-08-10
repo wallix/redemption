@@ -142,6 +142,7 @@ namespace cfg {
         struct server_cert_error_message;
         struct hide_client_name;
         struct clean_up_32_bpp_cursor;
+        struct bogus_ios_rdpdr_virtual_channel;
     };
 
     struct mod_vnc {
