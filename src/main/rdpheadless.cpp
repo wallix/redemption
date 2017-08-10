@@ -34,8 +34,8 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-
-int run_mod(mod_api *, TestClientCLI &, int, EventList &, bool, std::chrono::milliseconds, bool);
+int wait_and_draw_event(int sck, mod_api &, FrontAPI &, timeval timeout);
+int run_mod(mod_api &, TestClientCLI &, int sck, EventList &, bool, std::chrono::milliseconds, bool);
 void print_help();
 
 ///////////////////////////////
@@ -989,7 +989,9 @@ int main(int argc, char** argv)
         try {
             while (!mod->is_up_and_running()) {
                 // std::cout << " Early negociations...\n";
-                mod->draw_event(time(nullptr), front);
+                if (int err = wait_and_draw_event(sck, *mod, front, {3, 0})) {
+                    return err;
+                }
             }
         } catch (const Error & e) {
             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
@@ -1160,13 +1162,16 @@ int main(int argc, char** argv)
 
         if ((input_connection_data_complete & TestClientCLI::LOG_COMPLETE) || quick_connection_test) {
             try {
-                main_return = run_mod(mod, front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
+                main_return = run_mod(*mod, front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
                 // std::cout << "RDP Headless end." <<  std::endl;
             }
-            catch (Error const &)
+            catch (Error const & e)
             {
                 if (report_message.is_closed) {
                     main_return = 0;
+                }
+                else {
+                    std::cerr << e.errmsg() << std::endl;
                 }
             }
         }
@@ -1266,14 +1271,14 @@ void print_help() {
 
 
 
-int run_mod(mod_api * mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
     while (front.is_pipe_ok)
     {
-        if (mod->logged_on == mod_api::CLIENT_LOGGED) {
-            mod->logged_on = mod_api::CLIENT_UNLOGGED;
+        if (mod.logged_on == mod_api::CLIENT_LOGGED) {
+            mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
             std::cout << " RDP Session Log On." << std::endl;
             if (quick_connection_test) {
@@ -1289,41 +1294,44 @@ int run_mod(mod_api * mod, TestClientCLI & front, int sck, EventList & /*al*/, b
             }
         }
 
-        unsigned max = 0;
-        fd_set   rfds;
-        fd_set   wfds;
-
-        io_fd_zero(rfds);
-        io_fd_zero(wfds);
-        timeval timeout = time_mark;
-
-        mod->get_event().wait_on_fd(sck, rfds, max, timeout);
-
-        if (mod->get_event().is_set(sck, rfds)) {
-            timeout.tv_sec  = 2;
-            timeout.tv_usec = 0;
-        }
-
-        int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-        // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-
-            std::cerr << "RDP CLIENT :: errno = " <<  errno << "\n";
-            return 9;
-        }
-
-        if (mod->get_event().is_set(sck, rfds)) {
-            //std::cout << "RDP CLIENT :: draw_event" << "\n";
-            mod->draw_event(time(nullptr), front);
+        if (int err = wait_and_draw_event(sck, mod, front, time_mark)) {
+            return err;
         }
 
         // if (front.is_running()) {
         //     al.emit();
         // }
+    }
+
+    return 0;
+}
+
+
+int wait_and_draw_event(int sck, mod_api & mod, FrontAPI & front, timeval timeout)
+{
+    unsigned max = 0;
+    fd_set   rfds;
+
+    io_fd_zero(rfds);
+
+    auto & event = mod.get_event();
+    event.wait_on_fd(sck, rfds, max, timeout);
+
+    int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
+    // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
+
+    if (num < 0) {
+        if (errno == EINTR) {
+            return 0;
+            //continue;
+        }
+
+        std::cerr << "RDP CLIENT :: errno = " <<  errno << "\n";
+        return 9;
+    }
+
+    if (event.is_set(sck, rfds)) {
+        mod.draw_event(time(nullptr), front);
     }
 
     return 0;

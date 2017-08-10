@@ -2287,11 +2287,6 @@ private:
 
 public:
     wait_obj& get_event() override {
-        if ((this->state == MOD_RDP_NEGO) &&
-            ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
-             (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
-            this->event.set_trigger_time(wait_obj::NOW);
-        }
         return this->event;
     }
 
@@ -2585,6 +2580,7 @@ public:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->nego.send_negotiation_request();
             this->nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+            this->event.reset_trigger_time();
             break;
 
         case RdpNego::NEGO_STATE_NEGOCIATE:
@@ -5949,7 +5945,6 @@ public:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
-//            this->event.reset();
             this->event.reset_trigger_time();
         }
 
@@ -7497,7 +7492,6 @@ private:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
                 now, this->open_session_timeout.count());
-//            this->event.set(1000000);
             this->event.set_trigger_time(1000000);
         }
         if (bool(this->verbose & RDPVerbose::basic_trace)){
