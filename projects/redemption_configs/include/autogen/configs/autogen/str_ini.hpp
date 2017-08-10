@@ -478,6 +478,8 @@
 "#_advanced\n"
 "#clean_up_32_bpp_cursor = 0\n\n"
 
+"#bogus_ios_rdpdr_virtual_channel = 1\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"

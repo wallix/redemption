@@ -176,6 +176,8 @@ struct ModRDPParams {
 
     bool use_session_probe_to_launch_remote_program = true;
 
+    bool bogus_ios_rdpdr_virtual_channel = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -346,6 +348,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%d",     static_cast<unsigned>, rail_disconnect_message_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_session_probe_to_launch_remote_program);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

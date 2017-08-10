@@ -370,6 +370,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "clean_up_32_bpp_cursor", set(false));
         W.sep();
+
+        W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_rdpdr_virtual_channel", set(true));
     });
 
     W.section("mod_vnc", [&]

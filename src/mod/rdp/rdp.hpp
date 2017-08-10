@@ -349,6 +349,8 @@ protected:
 
     const bool                        use_session_probe_to_launch_remote_program;
 
+    const bool                        bogus_ios_rdpdr_virtual_channel;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -506,7 +508,10 @@ protected:
                 !this->file_system_to_server_sender);
 
             this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
+                (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
+                  !this->bogus_ios_rdpdr_virtual_channel) ?
+                 this->create_to_client_sender(channel_names::rdpdr) :
+                 nullptr);
             this->file_system_to_server_sender =
                 this->create_to_server_sender(channel_names::rdpdr);
 
@@ -899,6 +904,7 @@ public:
                                                       !info.alternate_shell[0]))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
+        , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -2423,8 +2429,10 @@ public:
                     bool has_rdpsnd_channel  = false;
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
+
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
-                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
                                  ((channel_item.name == channel_names::rdpdr ||
@@ -2439,7 +2447,8 @@ public:
                             ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                         }
                         else {
-                            ::memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
