@@ -508,7 +508,10 @@ protected:
                 !this->file_system_to_server_sender);
 
             this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
+                (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
+                  !this->bogus_ios_rdpdr_virtual_channel) ?
+                 this->create_to_client_sender(channel_names::rdpdr) :
+                 nullptr);
             this->file_system_to_server_sender =
                 this->create_to_server_sender(channel_names::rdpdr);
 
@@ -2412,14 +2415,9 @@ public:
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
-                        if ((this->client_general_caps.os_major == OSMAJORTYPE_IOS) &&
-                            this->bogus_ios_rdpdr_virtual_channel &&
-                            (channel_item.name == channel_names::rdpdr)) {
-                            continue;
-                        }
-
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
-                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
                                  ((channel_item.name == channel_names::rdpdr ||
@@ -2434,7 +2432,8 @@ public:
                             ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                         }
                         else {
-                            ::memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
