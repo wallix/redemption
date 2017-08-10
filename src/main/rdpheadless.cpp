@@ -22,7 +22,7 @@
 
 #include "configs/config.hpp"
 
-#include "test_client_redemption_cli.hpp"
+#include "main/rdpheadless.hpp"
 #include "utils/timeval_ops.hpp"
 
 #include "test_only/lcg_random.hpp"
@@ -220,8 +220,8 @@ int main(int argc, char** argv)
         "--bogus_rectc",
         "--multi_mon",
         "--adj_perf_rec",
-        "--outpath"
-        "--vnc"
+        "--outpath",
+        "--vnc",
         "--VNC"
     };
 
