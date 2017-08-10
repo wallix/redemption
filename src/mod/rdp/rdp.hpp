@@ -349,6 +349,8 @@ protected:
 
     const bool                        use_session_probe_to_launch_remote_program;
 
+    const bool                        bogus_ios_rdpdr_virtual_channel;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -638,7 +640,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
                 this->report_message.log4("SERVER_CERTIFICATE_NEW",
                         "description=\"New X.509 certificate created\"");
-                        
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_NEW\" "
                                   "description=\"New X.509 certificate created\"");
@@ -661,7 +663,7 @@ protected:
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
                 this->report_message.log4("SERVER_CERTIFICATE_MATCH_FAILURE",
                         "description=\"X.509 server certificate match failure\"");
-                        
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
                     LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_MATCH_FAILURE\" "
                                   "description=\"X.509 server certificate match failure\"");
@@ -679,9 +681,9 @@ protected:
                 this->report_message.log4("SERVER_CERTIFICATE_ERROR", extra.c_str());
 
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_ERROR\" %s", extra.c_str()); 
+                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_ERROR\" %s", extra.c_str());
                 }
-                        
+
             }
         }
     } server_notifier;
@@ -884,6 +886,7 @@ public:
                                                       !info.alternate_shell[0]))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
+        , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -2408,6 +2411,13 @@ public:
                     bool has_rdpsnd_channel  = false;
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
+
+                        if ((this->client_general_caps.os_major == OSMAJORTYPE_IOS) &&
+                            this->bogus_ios_rdpdr_virtual_channel &&
+                            (channel_item.name == channel_names::rdpdr)) {
+                            continue;
+                        }
+
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
                             memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
                         }

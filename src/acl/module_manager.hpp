@@ -1468,6 +1468,8 @@ public:
                 mod_rdp_params.use_session_probe_to_launch_remote_program
                                                                    = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
+                mod_rdp_params.bogus_ios_rdpdr_virtual_channel     = this->ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
+
                 try {
                     const char * const name = "RDP Target";
 
