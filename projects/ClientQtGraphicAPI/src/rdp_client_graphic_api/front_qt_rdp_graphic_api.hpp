@@ -3200,9 +3200,13 @@ public:
 
     void disconnect(std::string const & error) override {
 
+
+
         if (this->mod_qt != nullptr) {
             this->mod_qt->disconnect(true);
         }
+
+        this->must_be_stop_capture();
 
         this->form->set_IPField(this->target_IP);
         this->form->set_portField(this->port);
