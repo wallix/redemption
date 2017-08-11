@@ -28,6 +28,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/pattutils.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 
 #include <memory>
 #include <cstring>
@@ -218,11 +219,13 @@ public:
         snprintf(message, sizeof(message), "$%s:%s|%s",
             ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
 
-        std::string extra = "pattern=\"";
-        append_escaped_delimiters(extra, message);
-        extra += "\"";
-        report_message.log4((is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
-            extra.c_str());
+        auto pattern_detection_type = (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED");
+        auto info = key_qvalue_pairs({
+            {"type", pattern_detection_type},
+            {"pattern", message},
+            });
+           
+        report_message.log5(info);
 
         report_message.report(
             (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),

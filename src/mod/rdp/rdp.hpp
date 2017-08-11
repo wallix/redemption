@@ -508,7 +508,10 @@ protected:
                 !this->file_system_to_server_sender);
 
             this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
+                (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
+                  !this->bogus_ios_rdpdr_virtual_channel) ?
+                 this->create_to_client_sender(channel_names::rdpdr) :
+                 nullptr);
             this->file_system_to_server_sender =
                 this->create_to_server_sender(channel_names::rdpdr);
 
@@ -626,64 +629,79 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                this->report_message.log4("CERTIFICATE_CHECK_SUCCESS",
-                        "description=\"Connexion to server allowed\"");
+                auto info = key_qvalue_pairs({
+                    {"type", "CERTIFICATE_CHECK_SUCCESS"},
+                    {"description", "Connexion to server allowed"},
+                    });
+
+                this->report_message.log5(info);
 
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"CERTIFICATE_CHECK_SUCCESS\" "
-                        "description=\"Connexion to server allowed\"");
+                    LOG(LOG_INFO, "%s", info);
                 }
             }
         }
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                this->report_message.log4("SERVER_CERTIFICATE_NEW",
-                        "description=\"New X.509 certificate created\"");
+                auto info = key_qvalue_pairs({
+                    {"type", "SERVER_CERTIFICATE_NEW"},
+                    {"description", "New X.509 certificate created"},
+                    });
+
+                this->report_message.log5(info);
 
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_NEW\" "
-                                  "description=\"New X.509 certificate created\"");
+                    LOG(LOG_INFO, "%s", info);
                 }
             }
         }
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                this->report_message.log4("SERVER_CERTIFICATE_MATCH_SUCCESS",
-                        "description=\"X.509 server certificate match\"");
+                auto info = key_qvalue_pairs({
+                    {"type", "SERVER_CERTIFICATE_MATCH_SUCCESS"},
+                    {"description", "X.509 server certificate match"},
+                    });
+
+                this->report_message.log5(info);
+
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_MATCH_SUCCESS\" "
-                                  "description=\"X.509 server certificate match\"");
+                    LOG(LOG_INFO, "%s", info);
                 }
             }
         }
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-                this->report_message.log4("SERVER_CERTIFICATE_MATCH_FAILURE",
-                        "description=\"X.509 server certificate match failure\"");
+                auto info = key_qvalue_pairs({
+                    {"type", "SERVER_CERTIFICATE_MATCH_FAILURE"},
+                    {"description", "X.509 server certificate match failure"},
+                    });
+
+                this->report_message.log5(info);
 
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_MATCH_FAILURE\" "
-                                  "description=\"X.509 server certificate match failure\"");
+                    LOG(LOG_INFO, "%s", info);
                 }
             }
         }
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-                std::string extra("description=\"X.509 server certificate internal error: \\\"");
-                if (str_error) {
-                    append_escaped_delimiters(extra, str_error);
-                }
-                extra += "\\\"\"";
-                this->report_message.log4("SERVER_CERTIFICATE_ERROR", extra.c_str());
+
+                const std::string description = std::string("X.509 server certificate internal error: ")
+                                              + std::string(str_error);
+                auto info = key_qvalue_pairs({
+                    {"type", "SERVER_CERTIFICATE_ERROR"},
+                    {"description", description},
+                    });
+
+                this->report_message.log5(info);
 
                 if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "type=\"SERVER_CERTIFICATE_ERROR\" %s", extra.c_str());
+                    LOG(LOG_INFO, "%s", info);
                 }
-
             }
         }
     } server_notifier;
@@ -2269,13 +2287,6 @@ private:
 
 public:
     wait_obj& get_event() override {
-        if ((this->state == MOD_RDP_NEGO) &&
-            ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
-             (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
-            // this->event.object_and_time = true;
-            // this->event.set();
-            this->event.set_trigger_time(wait_obj::NOW);
-        }
         return this->event;
     }
 
@@ -2412,14 +2423,9 @@ public:
                     for (size_t index = 0; index < num_channels; index++) {
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
-                        if ((this->client_general_caps.os_major == OSMAJORTYPE_IOS) &&
-                            this->bogus_ios_rdpdr_virtual_channel &&
-                            (channel_item.name == channel_names::rdpdr)) {
-                            continue;
-                        }
-
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
-                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
                                  ((channel_item.name == channel_names::rdpdr ||
@@ -2434,7 +2440,8 @@ public:
                             ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                         }
                         else {
-                            ::memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            ::memset(cs_net.channelDefArray[index].name, 0,
+                                sizeof(cs_net.channelDefArray[index].name));
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
@@ -2573,6 +2580,7 @@ public:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->nego.send_negotiation_request();
             this->nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+            this->event.reset_trigger_time();
             break;
 
         case RdpNego::NEGO_STATE_NEGOCIATE:
@@ -3582,12 +3590,21 @@ public:
             if (!this->session_disconnection_logged) {
                 double seconds = ::difftime(now, this->beginning);
 
-                char extra[1024];
-                snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+                char duration[1024];
+                snprintf(duration, sizeof(duration), "%02d:%02d:%02d",
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
-                this->report_message.log4("SESSION_DISCONNECTION", extra);
+                auto info = key_qvalue_pairs({
+                    {"type", "SESSION_DISCONNECTION"},
+                    {"duration", duration},
+                    });
+
+                this->report_message.log5(info);
+
+                if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                    LOG(LOG_INFO, "%s", info);
+                }
                 this->session_disconnection_logged = true;
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
@@ -3764,7 +3781,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log4("SESSION_ESTABLISHED_SUCCESSFULLY");
+                                this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3780,7 +3797,6 @@ public:
                             if (!this->already_upped_and_running) {
                                 this->do_enable_session_probe();
 
-                                //this->event.object_and_time = (this->open_session_timeout.count() > 0);
                                 if (this->open_session_timeout.count() > 0) {
                                     this->event.set_trigger_time(wait_obj::NOW);
                                 }
@@ -5929,7 +5945,6 @@ public:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
-//            this->event.reset();
             this->event.reset_trigger_time();
         }
 
@@ -7477,7 +7492,6 @@ private:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
                 now, this->open_session_timeout.count());
-//            this->event.set(1000000);
             this->event.set_trigger_time(1000000);
         }
         if (bool(this->verbose & RDPVerbose::basic_trace)){
@@ -7507,7 +7521,13 @@ public:
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 
-            this->report_message.log4("SESSION_DISCONNECTION", extra);
+            auto info = key_qvalue_pairs({
+                {"type", "SESSION_DISCONNECTION"},
+                {"duration", extra},
+                });
+
+            this->report_message.log5(info);
+
             this->session_disconnection_logged = true;
         }
     }

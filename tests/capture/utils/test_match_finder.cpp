@@ -153,9 +153,8 @@ RED_AUTO_TEST_CASE(report_notify)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log4(const char* type, const char* extra) override {
-            RED_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
-            RED_CHECK_EQUAL(extra, "pattern=\"$kbd:c| cacao\"");
+        void log5(const std::string & info) override {
+            RED_CHECK_EQUAL(info, "type=\"NOTIFY_PATTERN_DETECTED\" pattern=\"$kbd:c| cacao\"");
             this->has_log = true;
         }
         void report(const char* reason, const char* message) override {
@@ -174,9 +173,8 @@ RED_AUTO_TEST_CASE(report_kill)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log4(const char* type, const char* extra) override {
-            RED_CHECK_EQUAL(type, "KILL_PATTERN_DETECTED");
-            RED_CHECK_EQUAL(extra, "pattern=\"$ocr:c| cacao\"");
+        void log5(const std::string & info) override {
+            RED_CHECK_EQUAL(info, "type=\"KILL_PATTERN_DETECTED\" pattern=\"$ocr:c| cacao\"");
             this->has_log = true;
         }
         void report(const char* reason, const char* message) override {

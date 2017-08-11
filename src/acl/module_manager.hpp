@@ -1218,7 +1218,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1231,7 +1231,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
 
                 if (client_sck == -1){
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
@@ -1287,7 +1287,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1300,7 +1300,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (4)");
@@ -1521,18 +1521,17 @@ public:
                         report_message,
                         this->ini
                     );
+                    std::unique_ptr<mod_api> managed_mod(new_mod);
 
                     rdp_api*       rdpapi = new_mod;
                     windowing_api* winapi = new_mod->get_windowing_api();
 
-                    std::unique_ptr<mod_api> managed_mod(new_mod);
-
                     if (host_mod_in_widget) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
-                        std::string target_info = this->ini.get<cfg::context::target_str>().c_str();
+                        std::string target_info = this->ini.get<cfg::context::target_str>();
                         target_info += ":";
-                        target_info += this->ini.get<cfg::globals::primary_user_id>().c_str();
+                        target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                         this->client_execute.set_target_info(target_info.c_str());
 
@@ -1561,7 +1560,7 @@ public:
                     report_message.update_inactivity_timeout();
                 }
                 catch (...) {
-                    report_message.log4("SESSION_CREATION_FAILED");
+                    report_message.log5("type=\"SESSION_CREATION_FAILED\"");
 
                     throw;
                 }
@@ -1589,7 +1588,7 @@ public:
                 in_addr s4_sin_addr;
                 int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     // TODO: actually this is DNS Failure or invalid address
@@ -1602,7 +1601,7 @@ public:
                 int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
-                    report_message.log4("CONNECTION_FAILED");
+                    report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (6)");
@@ -1682,7 +1681,7 @@ public:
                     }
                 }
                 catch (...) {
-                    report_message.log4("SESSION_CREATION_FAILED");
+                    report_message.log5("type=\"SESSION_CREATION_FAILED\"");
 
                     throw;
                 }
