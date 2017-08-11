@@ -41,23 +41,6 @@ int main(int argc, char** argv)
     UdevRandom rnd;
     Fstat fstat;
 
-    LOG(LOG_INFO, "HASH_PATH: \"%s\"", HASH_PATH);
-    LOG(LOG_INFO, "RECORD_PATH: \"%s\"", RECORD_PATH);
-    LOG(LOG_INFO, "RECORD_TMP_PATH: \"%s\"", RECORD_TMP_PATH);
-    LOG(LOG_INFO, "FLV_PATH: \"%s\"", FLV_PATH);
-    LOG(LOG_INFO, "OCR_PATH: \"%s\"", OCR_PATH);
-    LOG(LOG_INFO, "PNG_PATH: \"%s\"", PNG_PATH);
-    LOG(LOG_INFO, "WRM_PATH: \"%s\"", WRM_PATH);
-    LOG(LOG_INFO, "LICENSE_PATH: \"%s\"", LICENSE_PATH);
-    LOG(LOG_INFO, "CERTIF_PATH: \"%s\"", CERTIF_PATH);
-    LOG(LOG_INFO, "PERSISTENT_PATH: \"%s\"", PERSISTENT_PATH);
-    LOG(LOG_INFO, "DRIVE_REDIRECTION_PATH: \"%s\"", DRIVE_REDIRECTION_PATH);
-    LOG(LOG_INFO, "PID_PATH: \"%s\"", PID_PATH);
-    LOG(LOG_INFO, "SHARE_PATH: \"%s\"", SHARE_PATH);
-    LOG(LOG_INFO, "CFG_PATH: \"%s\"", CFG_PATH);
-//     LOG(LOG_INFO, "CFG_THEMES_PATH: \"%s\"", CFG_THEMES_PATH);
-
-
     return app_proxy(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
