@@ -247,7 +247,7 @@ public:
         }
         else if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
-            return MODULE_INTERNAL_CLOSE;
+            return MODULE_INTERNAL_CLOSE_BACK;
         }
         else if (module_cstr == STRMODULE_CLOSE_BACK) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
@@ -975,9 +975,9 @@ public:
                 )),
                 this->client_execute
             ));
-            if (bool(this->verbose & Verbose::new_mod)) {
+            //if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
-            }
+            //}
             }
             break;
         case MODULE_INTERNAL_CLOSE:
