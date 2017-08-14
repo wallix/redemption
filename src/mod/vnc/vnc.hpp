@@ -23,6 +23,10 @@
 
 #pragma once
 
+#include <cstdlib>
+
+#include <zlib.h>
+
 #include "main/version.hpp"
 
 #include "utils/log.hpp"
@@ -44,10 +48,7 @@
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
 #include "core/buf64k.hpp"
-
-#include <cstdlib>
-
-#include <zlib.h>
+#include "utils/key_qvalue_pairs.hpp"
 
 
 // got extracts of VNC documentation from
@@ -768,7 +769,7 @@ public:
         cursor.update_bw();
         this->front.set_pointer(cursor);
 
-        this->report_message.log4("SESSION_ESTABLISHED_SUCCESSFULLY");
+        this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
 
@@ -3919,12 +3920,17 @@ public:
         LOG(LOG_INFO, "Client disconnect");
 
         char extra[1024];
-        snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+        snprintf(extra, sizeof(extra), "%02d:%02d:%02d",
                         (int(seconds) / 3600),
                         ((int(seconds) % 3600) / 60),
                         (int(seconds) % 60));
 
-        this->report_message.log4("SESSION_DISCONNECTION", extra);
+        auto info = key_qvalue_pairs({
+            {"type", "SESSION_DISCONNECTION"},
+            {"duration", extra},
+            });
+           
+        this->report_message.log5(info);
     }
 
     Dimension get_dim() const override

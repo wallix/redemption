@@ -23,23 +23,54 @@
 #include "utils/sugar/array_view.hpp"
 
 #include <cstring>
+#include <numeric>
+#include <utility>
 
-typedef std::tuple<const char * const, const char * const> const kv_pair;
+//typedef std::tuple<const char * const, const char * const> const kv_pair;
+class charp_or_string {
+public:
+    const array_view_const_char data;
+    charp_or_string(const char * const data) 
+        : data(data, strlen(data)){}
+    charp_or_string(const array_view_const_char data) 
+        : data(data) {}
+};
+
+class kv_pair_ {
+public:
+    array_view_const_char key;
+    array_view_const_char value;
+    template<class T, class U> kv_pair_(T const & key, U const & value)
+        : key{charp_or_string(key).data}
+        , value{charp_or_string(value).data}
+    {
+    }
+};
+
+typedef const kv_pair_ kv_pair;
+//using kv_pair = const kv_pair_;
 
 // Precondition: input array view should never be empty
 // internal pointers should never be nullptr
 inline std::string key_qvalue_pairs(array_view<kv_pair> pairs)
 {
     std::string buffer;
+
+    // Ensure string is large enough for our use, to avoid useless internal resize
+    size_t maj = std::accumulate(pairs.begin(), pairs.end(), size_t{0}, 
+        [](size_t acc, kv_pair p){return acc + p.key.size()+p.value.size()+8;});
+    // reserve some space for 8 quoted chars inside value
+    // if there is more string is on it's own and will spend slightly more time
+    buffer.reserve(maj+8);
+    
     for (auto p: pairs){
-        buffer += std::get<0>(p);
+        buffer.append(p.key.data(), p.key.size());
         buffer += "=\"" ;
-        auto pp = std::get<1>(p);
-        for (; *pp ; pp++){
-            if (*pp == '\\' || *pp == '\"') {
+        for (auto c : p.value){
+            if (c == '\\' || c == '\"') {
                 buffer += '\\';
             }
-            buffer += *pp;
+            buffer += c;
         }
         buffer += "\" ";
     }

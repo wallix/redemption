@@ -146,14 +146,14 @@ public:
             // module manager. Complexity of module transition should be hidden behind module
             // managers
 
+            // fd_set wfds;
+            // io_fd_zero(wfds);
 
             while (run_session) {
                 unsigned max = 0;
                 fd_set rfds;
-                fd_set wfds;
 
                 io_fd_zero(rfds);
-                io_fd_zero(wfds);
                 timeval timeout = time_mark;
 
                 if (mm.mod->is_up_and_running() || !front.up_and_running) {
@@ -182,7 +182,7 @@ public:
                     timeout = {0, 0};
                 }
 
-                int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
+                int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
                 if (num < 0) {
                     if (errno == EINTR) {

@@ -2252,10 +2252,8 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     struct : NullReportMessage {
         std::string s;
 
-        void log4(const char* type, const char* extra) override {
-            (void)type;
-            RED_REQUIRE(extra);
-            s += extra;
+        void log5(const std::string &info) override {
+            s += info;
         }
     } report_message;
 
@@ -2264,10 +2262,11 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
     {
         kbd_capture.kbd_input(time, 'a');
+        // flush report buffer then empty buffer
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(report_message.s.size(), 8);
-        RED_CHECK_EQUAL("data='a'", report_message.s);
+        RED_CHECK_EQUAL(report_message.s.size(), 25);
+        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -2291,8 +2290,8 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL(report_message.s.size(), 8);
-        RED_CHECK_EQUAL("data='a'", report_message.s);
+        RED_CHECK_EQUAL(report_message.s.size(), 25);
+        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
         report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');

@@ -542,10 +542,13 @@ public:
 
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            memcpy(this->kbd_stream.get_current(), session_log_suffix().data(), session_log_suffix().size() + 1);
+            auto info = key_qvalue_pairs({
+                {"type","KBD_INPUT"},
+                {"data", make_array_view(byte_ptr(this->kbd_stream.get_data()).to_charp(), this->kbd_stream.get_offset())},
+                });
 
-            // TODO: FIXME potential trouble with quotes
-            this->report_message.log4("KBD_INPUT", reinterpret_cast<char const *>(this->buffer));
+            this->report_message.log5(info);
+
             this->kbd_stream.rewind();
         }
     }

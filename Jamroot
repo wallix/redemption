@@ -357,7 +357,7 @@ exe vncclient
     ;
 
 exe rdpheadless
-    : $(REDEMPTION_SRC_PATH)/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
+    : $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
         video_capture
         capture
         program_options.o

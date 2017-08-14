@@ -29,6 +29,7 @@
 #include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 
 #include <memory>
 
@@ -466,14 +467,16 @@ private:
     void log_file_descriptor(RDPECLIP::FileDescriptor fd)
     {
         auto const file_size_str = std::to_string(fd.file_size());
-        std::string info("file_name=\""); append_escaped_delimiters(info, fd.fileName());
-        info += "\" size=\""; info += file_size_str;
-        info += '"';
+        auto const info = key_qvalue_pairs({
+            {"type", "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"},
+            {"file_name", fd.fileName()},
+            {"size", file_size_str}
+            });
+           
+        this->report_message.log5(info);
 
-        this->report_message.log4("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", info.c_str());
-            
         if (!this->param_dont_log_data_into_syslog){
-            LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION\" %s", info.c_str());
+            LOG(LOG_INFO, "%s", info);
         }
 
         if (!this->param_dont_log_data_into_wrm) {
@@ -1039,18 +1042,18 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name=\"");
-                append_escaped_delimiters(info, fd.fileName());
-                info += "\" size=\"";
-                info += std::to_string(fd.file_size());
-                info += "\"";
+                auto const file_size_str = std::to_string(fd.file_size());
+                auto const info = key_qvalue_pairs({
+                    {"type", "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"},
+                    {"file_name", fd.fileName()},
+                    {"size", file_size_str}
+                    });
+                   
+                this->report_message.log5(info);
 
-                this->report_message.log4("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", info.c_str());
-                    
                 if (!this->param_dont_log_data_into_syslog){
-                    LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION\" %s", info.c_str());
+                    LOG(LOG_INFO, "%s", info);
                 }
-                    
 
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message("SendFileToClientClipboard=");
@@ -1073,16 +1076,17 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                std::string info("file_name=\"");
-                append_escaped_delimiters(info, fd.fileName());
-                info += "\" size=\"";
-                info += std::to_string(fd.file_size());
-                info += "\"";
-
-                this->report_message.log4("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", info.c_str());
+                auto const file_size_str = std::to_string(fd.file_size());
+                auto const info = key_qvalue_pairs({
+                    {"type", "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"},
+                    {"file_name", fd.fileName()},
+                    {"size", file_size_str}
+                    });
+                   
+                this->report_message.log5(info);
 
                 if (!this->param_dont_log_data_into_syslog){
-                    LOG(LOG_INFO, "type=\"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION\" %s", info.c_str());
+                    LOG(LOG_INFO, "%s", info);
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {

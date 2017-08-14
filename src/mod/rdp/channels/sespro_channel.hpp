@@ -1067,10 +1067,15 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->report_message.log4("SESSION_ENDING_IN_PROGRESS");
+
+            auto info = key_qvalue_pairs({
+                {"type",   "SESSION_ENDING_IN_PROGRESS"},
+            });
+
+            this->report_message.log5(info);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO, "type=\"SESSION_ENDING_IN_PROGRESS\"");
+                LOG(LOG_INFO, "%s", info);
             }
 
             this->session_probe_ending_in_progress = true;
@@ -1104,13 +1109,16 @@ public:
                 }
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
-                    std::string info;
-                    info += "status=\""; append_escaped_delimiters(info, parameters[0]);
-                    info += '"';
-                    this->report_message.log4(order.c_str(), info.c_str());
+
+                    auto info = key_qvalue_pairs({
+                        {"type",   "PASSWORD_TEXT_BOX_GET_FOCUS"},
+                        {"status", parameters[0]},
+                    });
+
+                    this->report_message.log5(info);
 
                     if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                        LOG(LOG_INFO, "%s", info);
                     }
 
                     if (parameters.size() == 1) {
@@ -1122,18 +1130,19 @@ public:
                     }
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
-                    std::string info;
-                    info += "status=\""; append_escaped_delimiters(info, parameters[0]);
-                    info += '"';
-                    this->report_message.log4(order.c_str(), info.c_str());
-
-                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO, "type=\"UAC_PROMPT_BECOME_VISIBLE\" %s", info.c_str());
-                    }
-
                     if (parameters.size() == 1) {
-                        this->front.set_consent_ui_visible(
-                            !parameters[0].compare("yes"));
+                        auto info = key_qvalue_pairs({
+                            {"type",   "UAC_PROMPT_BECOME_VISIBLE"},
+                            {"status", parameters[0]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+
+                        this->front.set_consent_ui_visible(!parameters[0].compare("yes"));
                     }
                     else {
                         message_format_invalid = true;
@@ -1141,14 +1150,16 @@ public:
                 }
                 else if (!order.compare("INPUT_LANGUAGE")) {
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "identifier=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" display_name=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4("INPUT_LANGUAGE", info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",         "INPUT_LANGUAGE"},
+                            {"identifier",   parameters[0]},
+                            {"display_name", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"INPUT_LANGUAGE\" %s", info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
 
                         this->front.set_keylayout(
@@ -1161,13 +1172,15 @@ public:
                 else if (!order.compare("NEW_PROCESS") ||
                          !order.compare("COMPLETED_PROCESS")) {
                     if (parameters.size() == 1) {
-                        std::string info;
-                        info += "command_line=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += '"';
-                        this->report_message.log4(order.c_str(), info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",         order.c_str()},
+                            {"command_line", parameters[0]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
                     }
                     else {
@@ -1176,19 +1189,21 @@ public:
                 }
                 else if (!order.compare("STARTUP_APPLICATION_FAIL_TO_RUN")) {
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "application_name=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" RawResult=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4(order.c_str(), info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",             "STARTUP_APPLICATION_FAIL_TO_RUN"},
+                            {"application_name", parameters[0]},
+                            {"RawResult",        parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"STARTUP_APPLICATION_FAIL_TO_RUN\" %s", info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
 
                         LOG(LOG_ERR,
-                            "Session Probe failed to run startup application \"%s\"! RawResult=%s",
-                            parameters[0].c_str(), parameters[1].c_str());
+                            "Session Probe failed to run startup application: %s", info);
+
                         this->report_message.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
@@ -1198,14 +1213,16 @@ public:
                 }
                 else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED")) {
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4("OUTBOUND_CONNECTION_BLOCKED", info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",             "OUTBOUND_CONNECTION_BLOCKED"},
+                            {"rule",             parameters[0]},
+                            {"application_name", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"OUTBOUND_CONNECTION_BLOCKED\" %s", info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
                     }
                     else {
@@ -1213,29 +1230,18 @@ public:
                     }
                 }
                 else if (!order.compare("OUTBOUND_CONNECTION_DETECTED")) {
-
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "rule=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" application_name=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4(order.c_str(), info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type", "OUTBOUND_CONNECTION_DETECTED"},
+                            {"rule", parameters[0]},
+                            {"application_name", parameters[1]}
+                            });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
-
-//                        auto info = key_qvalue_pairs({
-//                            {"type", "OUTBOUND_CONNECTION_DETECTED"},
-//                            {"rule", parameters[0]},
-//                            {"application_name", parameters[1]}
-//                            });
-//
-//                        this->report_message.log5(info);
-//
-//                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-//                            LOG(LOG_INFO, "%s", info);
-//                        }
 
                         char message[4096];
 
@@ -1243,7 +1249,7 @@ public:
                         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
                         std::snprintf(message, sizeof(message),
                             TR(trkeys::process_interrupted_security_policies,
-                               this->param_lang),
+                                this->param_lang),
                             parameters[1].c_str());
                         REDEMPTION_DIAGNOSTIC_POP
 
@@ -1272,17 +1278,19 @@ public:
                                 description);
 
                         if (result) {
-                            std::string info;
-                            info += "rule=\""; append_escaped_delimiters(info, description);
-                            info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
-                            info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
-                            info += "\" dst_addr=\""; append_escaped_delimiters(info, parameters[3]);
-                            info += "\" dst_port=\""; append_escaped_delimiters(info, parameters[4]);
-                            info += '"';
-                            this->report_message.log4(order.c_str(), info.c_str());
+                            auto info = key_qvalue_pairs({
+                                {"type",         order.c_str()},
+                                {"rule",         description},
+                                {"app_name",     parameters[1]},
+                                {"app_cmd_line", parameters[2]},
+                                {"dst_addr",     parameters[3]},
+                                {"dst_port",     parameters[4]},
+                                });
+
+                            this->report_message.log5(info);
 
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                                LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                                LOG(LOG_INFO, "%s", info);
                             }
 
                             if (deny) {
@@ -1328,15 +1336,17 @@ public:
                                 type, pattern, description);
 
                         if (result) {
-                            std::string info;
-                            info += "rule=\""; append_escaped_delimiters(info, description);
-                            info += "\" app_name=\""; append_escaped_delimiters(info, parameters[1]);
-                            info += "\" app_cmd_line=\""; append_escaped_delimiters(info, parameters[2]);
-                            info += '"';
-                            this->report_message.log4(order.c_str(), info.c_str());
+                            auto info = key_qvalue_pairs({
+                                {"type",         order.c_str()},
+                                {"rule",         description},
+                                {"app_name",     parameters[1]},
+                                {"app_cmd_line", parameters[2]},
+                                });
+
+                            this->report_message.log5(info);
 
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                                LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                                LOG(LOG_INFO, "%s", info);
                             }
 
                             if (deny) {
@@ -1368,15 +1378,21 @@ public:
                 }
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
                     if ((parameters.size() == 2) || (parameters.size() == 3)) {
-                        std::string info;
-                        info += "source=\"Probe\" window=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += '"';
-                        this->report_message.log4("TITLE_BAR", info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",       "TITLE_BAR"},
+                            {"source",     "Probe"},
+                            {"window",     parameters[0]},
+                            });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"TITLE_BAR\" %s", info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 18019d85e4b68234cb7683ccef448c03a5fdb415
                     }
                     else {
                         message_format_invalid = true;
@@ -1384,16 +1400,21 @@ public:
                 }
                 else if (!order.compare("BUTTON_CLICKED")) {
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" button=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4(order.c_str(), info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",       "BUTTON_CLICKED"},
+                            {"window",     parameters[0]},
+                            {"button",     parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 18019d85e4b68234cb7683ccef448c03a5fdb415
                     }
                     else {
                         message_format_invalid = true;
@@ -1401,16 +1422,17 @@ public:
                 }
                 else if (!order.compare("EDIT_CHANGED")) {
                     if (parameters.size() == 2) {
-                        std::string info;
-                        info += "windows=\""; append_escaped_delimiters(info, parameters[0]);
-                        info += "\" edit=\""; append_escaped_delimiters(info, parameters[1]);
-                        info += '"';
-                        this->report_message.log4(order.c_str(), info.c_str());
+                        auto info = key_qvalue_pairs({
+                            {"type",   "EDIT_CHANGED"},
+                            {"window", parameters[0]},
+                            {"edit",   parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
+                            LOG(LOG_INFO, "%s", info);
                         }
-
                     }
                     else {
                         message_format_invalid = true;

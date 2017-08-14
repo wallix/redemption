@@ -36,8 +36,7 @@ class Authentifier : public AuthApi, public ReportMessageApi
 {
     struct LogParam
     {
-        std::string type;
-        std::string extra;
+        std::string info;
     };
 
     bool session_log_is_open = false;
@@ -112,14 +111,14 @@ public:
         }
     }
 
-    void log4(const char * type, const char * extra = nullptr) override
+    void log5(const std::string & info) override
     {
         // TODO: should we delay logs sent to SIEM ?
         if (this->connected_to_acl && this->session_log_is_open) {
-            this->acl_serial->log4(type, extra);
+            this->acl_serial->log5(info);
         }
         else {
-            this->buffered_log_params.push_back({type, extra ? extra : ""});
+            this->buffered_log_params.push_back({info});
         }
     }
 
@@ -153,10 +152,7 @@ public:
             this->cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
 
             for (LogParam const & log_param : this->buffered_log_params) {
-                this->acl_serial->log4(
-                    log_param.type.c_str(),
-                    log_param.extra.c_str()
-                );
+                this->acl_serial->log5(log_param.info);
             }
             this->buffered_log_params.clear();
             this->buffered_log_params.shrink_to_fit();

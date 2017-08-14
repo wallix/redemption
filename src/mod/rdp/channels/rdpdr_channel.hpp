@@ -21,14 +21,15 @@
 
 #pragma once
 
+#include <deque>
+
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/sugar/algostring.hpp"
-
-#include <deque>
+#include "utils/key_qvalue_pairs.hpp"
 
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
@@ -1518,7 +1519,7 @@ public:
                 }
 
                 if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
-                    std::string const * device_name =
+                    std::string const * p_device_name =
                         this->device_redirection_manager.get_device_name(
                             device_io_response.DeviceId());
 
@@ -1526,24 +1527,26 @@ public:
                         rdpdr::RDPDR_DTYP device_type =
                             this->device_redirection_manager.get_device_type(
                                 device_io_response.DeviceId());
+                        std::string device_name = (p_device_name) ? *p_device_name : "";
 
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
-                            std::string info("device_name='");
-                            if (device_name) { info += device_name->c_str(); }
-                            info += "' device_type='";
-                            info += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
-                                device_type);
-                            info += "'";
-
-                            this->report_message.log4("DRIVE_REDIRECTION_USE", info.c_str());
+                        
+                            auto device_type_name = rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(device_type);
+                            auto info = key_qvalue_pairs({
+                                {"type", "DRIVE_REDIRECTION_USE"},
+                                {"device_name", device_name},
+                                {"device_type", device_type_name}
+                                });
+                           
+                            this->report_message.log5(info);
                                 
                             if (!this->param_dont_log_data_into_syslog) {
-                                LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_USE\" %s", info.c_str());
+                                LOG(LOG_INFO, "%s", info);
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message("UseRedirectedDevice=");
-                                if (device_name) { message += device_name->c_str(); }
+                                if (p_device_name) { message += p_device_name->c_str(); }
                                 message += "<";
                                 message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
                                     device_type);
@@ -1554,8 +1557,8 @@ public:
                         }
                     }
 
-                    if (device_name) {
-                        std::string target_file_name = *device_name + file_path;
+                    if (p_device_name) {
+                        std::string target_file_name = *p_device_name + file_path;
 
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO,
@@ -1667,14 +1670,15 @@ public:
                                     "/desktop.ini",
                                     sizeof("/desktop.ini")-1
                                 )) {
-                                    std::string info("file_name=\"");
-                                    append_escaped_delimiters(info, target_info.file_path);
-                                    info += "\"";
-
-                                    this->report_message.log4("DRIVE_REDIRECTION_READ", info.c_str());
-
+                                    auto info = key_qvalue_pairs({
+                                        {"type", "DRIVE_REDIRECTION_READ"},
+                                        {"file_name", target_info.file_path},
+                                        });
+                                   
+                                    this->report_message.log5(info);
+                                        
                                     if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_READ\" %s", info.c_str());
+                                        LOG(LOG_INFO, "%s", info);
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
@@ -1711,14 +1715,16 @@ public:
                         if (target_iter != this->device_io_target_info_inventory.end()) {
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
-                                std::string info("file_name=\"");
-                                append_escaped_delimiters(info, target_info.file_path);
-                                info += "\"";
 
-                                this->report_message.log4("DRIVE_REDIRECTION_WRITE", info.c_str());
-
+                                auto info = key_qvalue_pairs({
+                                    {"type", "DRIVE_REDIRECTION_WRITE"},
+                                    {"file_name", target_info.file_path},
+                                    });
+                               
+                                this->report_message.log5(info);
+                                    
                                 if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_WRITE\" %s", info.c_str());
+                                    LOG(LOG_INFO, "%s", info);
                                 }
 
                                 if (!this->param_dont_log_data_into_wrm) {
@@ -1765,15 +1771,16 @@ public:
                         {
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
-                                device_io_target_info_type & target_info = *target_iter;
-                                std::string info("file_name=\"");
-                                append_escaped_delimiters(info, target_info.file_path);
-                                info += "\"";
 
-                                this->report_message.log4("DRIVE_REDIRECTION_DELETE", info.c_str());
+                                auto info = key_qvalue_pairs({
+                                    {"type", "DRIVE_REDIRECTION_DELETE"},
+                                    {"file_name", target_iter->file_path},
+                                    });
+
+                                this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_DELETE\" %s", info.c_str());
+                                    LOG(LOG_INFO, "%s", info);
                                 }
                             }
                         }
@@ -1783,19 +1790,18 @@ public:
                         {
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
-                                device_io_target_info_type & target_info = *target_iter;
-                                std::string info("old_file_name=\"");
-                                info += target_info.file_path;
-                                info += "\" new_file_name=\"";
-                                append_escaped_delimiters(info, file_path);
-                                info += "\"";
 
-                                this->report_message.log4("DRIVE_REDIRECTION_RENAME", info.c_str());
+                                auto info = key_qvalue_pairs({
+                                    {"type", "DRIVE_REDIRECTION_RENAME"},
+                                    {"old_file_name", target_iter->file_path},
+                                    {"new_file_name", file_path},
+                                    });
+
+                                this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "type=\"DRIVE_REDIRECTION_RENAME\" %s", info.c_str());
+                                    LOG(LOG_INFO, "%s", info);
                                 }
-                                    
                             }
                         }
                         break;
