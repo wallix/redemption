@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x33\xf1\x7f\x2b\x18\x67\x10\xe8\x72\x0c\x76\xb1\xf9\xe2\x40\xdc\x62\x16\x00\xbb");
+    RED_CHECK_SIG(drawable.gd, "\xf5\x8e\x7c\xb8\xe5\xf6\x63\x9f\xd7\x5a\x35\x07\x07\x2e\xa5\x00\x35\x94\x02\xe6");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)

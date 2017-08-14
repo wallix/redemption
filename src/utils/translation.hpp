@@ -71,9 +71,9 @@ namespace trkeys
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
         "In login edit box, enter:<br>"
-        "- target device and login with the wab login separated<br>"
-        "  by a semi colon as login@target:service:WABlogin<br>"
-        "- or a valid WAB authentication user.<br>"
+        "- target device and login with the Bastion login separated<br>"
+        "  by a semi colon as login@target:service:Bastionlogin<br>"
+        "- or a valid Bastion authentication user.<br>"
         "<br>"
         "In password edit box enter your password<br>"
         "for user.<br>"
@@ -85,8 +85,8 @@ namespace trkeys
 
         "Dans la zone de saisie login, entrez:<br>"
         "- le login sur la cible et le nom de la machine cible suivi<br>"
-        "  du compte WAB sous la forme login@serveur:service:WABlogin<br>"
-        "- ou un nom de compte WAB valide.<br>"
+        "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
+        "- ou un nom de compte Bastion valide.<br>"
         "<br>"
         "Dans la zone de saisie mot de passe,<br>"
         "entrez le mot de passe du compte.<br>"

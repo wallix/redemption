@@ -125,7 +125,6 @@ public:
         (void)sender;
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
         }
         else if (NOTIFY_SUBMIT == event) {
@@ -135,7 +134,6 @@ public:
             this->vars.ask<cfg::globals::target_device>();
             this->vars.ask<cfg::context::target_protocol>();
             this->event.signal = BACK_EVENT_STOP;
-//             this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
         }
     }
@@ -146,18 +144,15 @@ public:
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
                 this->close_widget.refresh_timeleft(this->timeout.timeleft(now));
             }
-//            this->event.set(200000);
             this->event.set_trigger_time(200000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-//            this->event.reset();
             this->event.reset_trigger_time();
             break;
         }

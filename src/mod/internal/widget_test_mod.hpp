@@ -126,7 +126,6 @@ public:
     {
         LocallyIntegrableMod::draw_event(now, gapi);
 
-//        this->event.reset();
         this->event.reset_trigger_time();
     }
 

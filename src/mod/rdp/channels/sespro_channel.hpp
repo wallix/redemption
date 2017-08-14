@@ -201,9 +201,6 @@ public:
                 this->session_probe_effective_launch_timeout.count(),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
-
-//        this->session_probe_event.object_and_time = true;
-//        this->session_probe_event.set_trigger_time(wait_obj::NOW);
     }
 
     void start_launch_timeout_timer()
@@ -215,7 +212,6 @@ public:
             }
 
             if (!this->session_probe_launch_timeout_timer_started) {
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->session_probe_effective_launch_timeout).count());
@@ -238,7 +234,6 @@ public:
         if (this->session_probe_event.is_trigger_time_set()) {
             if (this->has_additional_launch_time) {
                 if (!this->session_probe_ready) {
-//                    this->session_probe_event.set(
                     this->session_probe_event.set_trigger_time(
                         std::chrono::duration_cast<std::chrono::microseconds>(
                             this->session_probe_effective_launch_timeout).count());
@@ -279,8 +274,6 @@ public:
             return;
         }
 
-//        this->session_probe_event.reset();
-//        this->session_probe_event.waked_up_by_time = false;
         this->session_probe_event.reset_trigger_time();
 
         if (this->session_probe_effective_launch_timeout.count() &&
@@ -378,7 +371,6 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->param_session_probe_keepalive_timeout ).count());
@@ -483,7 +475,6 @@ public:
 
             this->file_system_virtual_channel.disable_session_probe_drive();
 
-//            this->session_probe_event.reset();
             this->session_probe_event.reset_trigger_time();
 
             if (this->param_session_probe_keepalive_timeout.count() > 0) {
@@ -516,7 +507,6 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->param_session_probe_keepalive_timeout).count());
@@ -1240,9 +1230,9 @@ public:
 //                            {"rule", parameters[0]},
 //                            {"application_name", parameters[1]}
 //                            });
-//                            
+//
 //                        this->report_message.log5(info);
-//                        
+//
 //                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
 //                            LOG(LOG_INFO, "%s", info);
 //                        }
@@ -1386,7 +1376,7 @@ public:
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "type=\"TITLE_BAR\" %s", info.c_str());
                         }
-                            
+
                     }
                     else {
                         message_format_invalid = true;
@@ -1403,7 +1393,7 @@ public:
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "type=\"%s\" %s", order.c_str(), info.c_str());
                         }
-                            
+
                     }
                     else {
                         message_format_invalid = true;

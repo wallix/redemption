@@ -96,7 +96,7 @@ struct ModRDPParams {
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
 
-    // Application WAB
+    // Application Bastion
     const char * alternate_shell = "";
     const char * shell_arguments = "";
     const char * shell_working_dir = "";

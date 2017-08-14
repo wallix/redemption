@@ -1670,8 +1670,6 @@ private:
                             this->t.disconnect();
 
                             this->state = ASK_PASSWORD;
-                            // this->event.object_and_time = true;
-                            // this->event.set();
                             this->event.set_trigger_time(wait_obj::NOW);
                         }
                         else

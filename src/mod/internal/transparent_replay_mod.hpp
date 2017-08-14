@@ -58,7 +58,6 @@ public:
                 this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
             }
 
-//            this->event.set(1);
             this->event.set_trigger_time(wait_obj::NOW);
         }
         catch (Error const & e) {
@@ -68,7 +67,6 @@ public:
                 }
 
                 this->event.signal = BACK_EVENT_NEXT;
-//                this->event.set(1);
                 this->event.set_trigger_time(wait_obj::NOW);
             }
             else {

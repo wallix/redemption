@@ -272,7 +272,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , report_message
         , false
         , vnc_verbose);
-//    mod.get_event().set();
     mod.get_event().set_trigger_time(wait_obj::NOW);
 
     if (front_verbose > 2){

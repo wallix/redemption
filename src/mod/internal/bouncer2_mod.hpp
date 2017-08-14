@@ -64,7 +64,6 @@ public:
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
             this->event.signal = BACK_EVENT_STOP;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             return ;
         }
@@ -149,7 +148,6 @@ public:
         drawable.end_update();
 
         // Final with setting next idle time
-//        this->event.set(33333); // 0.03s is 30fps
         this->event.set_trigger_time(33333);    // 0.03s is 30fps
     }
 

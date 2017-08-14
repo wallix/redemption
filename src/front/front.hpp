@@ -726,8 +726,6 @@ public:
         break;
         }
 
-        // this->event.set(500000);
-        // this->event.object_and_time = true;
         this->event.set_trigger_time(500000);
     }
 
@@ -744,8 +742,6 @@ public:
 
     wait_obj& get_event() {
         if (this->session_resized) {
-            // this->event.set(0);
-            // this->event.object_and_time = true;
             this->event.set_trigger_time(wait_obj::NOW);
         }
 
@@ -1031,7 +1027,6 @@ public:
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-//        this->capture->get_capture_event().set();
         this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
@@ -1253,13 +1248,10 @@ public:
             throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-//            this->event.set(500000);
             this->event.set_trigger_time(500000);
             break;
         default:
         case Timeout::TIMEOUT_INACTIVE:
-            // this->event.reset();
-            // this->event.object_and_time = false;
             this->event.reset_trigger_time();
             break;
         }

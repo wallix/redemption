@@ -925,7 +925,7 @@ public:
             if (bool(this->verbose & RDPVerbose::rail)) {
                 LOG(LOG_INFO,
                     "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
-                        "WAB Application found. OriginalExeOrFile=\"%s\" "
+                        "Bastion Application found. OriginalExeOrFile=\"%s\" "
                         "ExeOrFile=\"%s\"",
                     iter->OriginalExeOrFile(), serpdu.ExeOrFile());
             }
