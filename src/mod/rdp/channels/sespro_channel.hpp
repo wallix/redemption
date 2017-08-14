@@ -1389,10 +1389,6 @@ public:
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
-<<<<<<< HEAD
-
-=======
->>>>>>> 18019d85e4b68234cb7683ccef448c03a5fdb415
                     }
                     else {
                         message_format_invalid = true;
@@ -1411,10 +1407,6 @@ public:
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
-<<<<<<< HEAD
-
-=======
->>>>>>> 18019d85e4b68234cb7683ccef448c03a5fdb415
                     }
                     else {
                         message_format_invalid = true;

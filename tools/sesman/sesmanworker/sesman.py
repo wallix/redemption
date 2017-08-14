@@ -1690,6 +1690,10 @@ class Sesman():
         self.engine.stop_session(title=u"End session")
 
         Logger().info(u"Stop session done.")
+        Logger().info(u"module=%s" % self.shared.get(u"module"))
+        Logger().info(u"close_box=%s" % close_box)
+        Logger().info(u"back_selector=%s" % self.back_selector)
+
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
                 self.send_data({ u'module': u'close_back',
