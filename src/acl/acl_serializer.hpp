@@ -504,6 +504,8 @@ public:
 
                         this->remote_answer = false;
 
+                        authentifier.disconnect_target();
+
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
 
