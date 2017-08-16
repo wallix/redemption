@@ -485,12 +485,9 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
                     return true;
-//                     this->keepalive.stop();
-//                     next_state = MODULE_INTERNAL_WIDGET_SELECTOR;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
-//                     next_state = MODULE_INTERNAL_WIDGET_SELECTOR;
                 }
                 if (mm.mod) {
                     mm.mod->disconnect(now);

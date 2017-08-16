@@ -133,7 +133,7 @@ public:
             this->vars.ask<cfg::globals::target_user>();
             this->vars.ask<cfg::globals::target_device>();
             this->vars.ask<cfg::context::target_protocol>();
-            this->event.signal = BACK_EVENT_STOP;
+            this->event.signal = BACK_EVENT_NEXT;
             this->event.set_trigger_time(wait_obj::NOW);
         }
     }
