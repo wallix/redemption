@@ -45,6 +45,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/timestamp_tracer.hpp"
 
 inline void dump_png(const char * prefix, const Drawable & data)
 {
@@ -580,10 +581,14 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         Transport & trans;
         const Drawable & drawable;
 
+        TimestampTracer timestamp_tracer;
+
     public:
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
+        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
+              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
         {
         }
 
@@ -597,10 +602,12 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             const_cast<Drawable&>(this->drawable).trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+//            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->timestamp_tracer.trace(ptm);
             this->flush();
             this->trans.next();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
+//            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            this->timestamp_tracer.clear();
             const_cast<Drawable&>(this->drawable).clear_mouse();
             return microseconds::zero();
         }

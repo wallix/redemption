@@ -1050,6 +1050,7 @@ class Drawable
     DrawableImplPrivate & impl() noexcept { return this->impl_; }
     const DrawableImplPrivate & impl() const noexcept { return this->impl_; }
 
+/*
     enum {
         char_width  = 7,
         char_height = 12
@@ -1069,6 +1070,7 @@ class Drawable
     uint8_t timestamp_data[ts_width * ts_height * DrawableImplPrivate::Bpp];
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
+*/
 
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     uint16_t save_mouse_x;
@@ -1101,7 +1103,7 @@ public:
 
     Drawable(int width, int height)
     : impl_(width, height)
-    , previous_timestamp_length(0)
+//    , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
     , logical_frame_ended(true)
@@ -1111,8 +1113,14 @@ public:
     , current_pointer(&this->default_pointer)
     {
         this->initialize_default_pointer();
+/*
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
+*/
+    }
+
+    uint8_t * first_pixel() noexcept {
+        return this->impl().first_pixel();
     }
 
     const uint8_t * data() const noexcept {
@@ -1164,6 +1172,7 @@ public:
         this->mouse_cursor_pos_y = y;
     }
 
+/*
 private:
     int _posch_12x7(char ch) const {
         return char_width * char_height *
@@ -1722,6 +1731,7 @@ private:
             }
         }
     }
+*/
 
 public:
     /*
@@ -2467,6 +2477,7 @@ private:
         }
     }
 
+/*
 public:
     void trace_timestamp(const tm & now)
     {
@@ -2488,7 +2499,9 @@ public:
         this->priv_clear_timestamp(this->priv_offset_timestamp(this->previous_timestamp_length));
     }
 
+*/
 private:
+/*
     size_t priv_offset_timestamp(uint8_t timestamp_len) const
     {
         return this->rowsize() * (this->height() / 2) + ((this->width() - timestamp_len*char_width)*Bpp) / 2;
@@ -2531,6 +2544,7 @@ private:
         }
     }
 
+*/
     void initialize_default_pointer() {
         const uint8_t pointer_data[] = {
 /* 0000 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // ................
