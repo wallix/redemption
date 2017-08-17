@@ -179,14 +179,12 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
         time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
         localtime_r(&rawtime, &tm_result);
-//        this->drawable.trace_timestamp(tm_result);
         this->timestamp_tracer.trace(tm_result);
     }
     recorder.preparing_video_frame();
     this->previous_second = this->start_video_capture.tv_sec;
 
     if (!this->no_timestamp) {
-//        this->drawable.clear_timestamp();
         this->timestamp_tracer.clear();
     }
     this->drawable.clear_mouse();
@@ -487,10 +485,8 @@ Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
         if (this->first_image_impl.ic_drawable.logical_frame_ended() || duration > std::chrono::seconds(2) || duration >= video_interval) {
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-//            this->first_image_impl.ic_drawable.trace_timestamp(ptm);
             this->first_image_impl.timestamp_tracer.trace(ptm);
             this->first_image_impl.ic_flush();
-//            this->first_image_impl.ic_drawable.clear_timestamp();
             this->first_image_impl.timestamp_tracer.clear();
             this->first_image_impl.ic_has_first_img = true;
             this->first_image_impl.ic_trans.next();
@@ -684,10 +680,8 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     if (!this->ic_has_first_img) {
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
-//        this->ic_drawable.trace_timestamp(ptm);
         this->timestamp_tracer.trace(ptm);
         this->ic_flush();
-//        this->ic_drawable.clear_timestamp();
         this->timestamp_tracer.clear();
         this->ic_has_first_img = true;
         this->ic_trans.next();
@@ -695,10 +689,8 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     this->vc.next_video();
     tm ptm;
     localtime_r(&now.tv_sec, &ptm);
-//    this->ic_drawable.trace_timestamp(ptm);
     this->timestamp_tracer.trace(ptm);
     this->ic_flush();
-//    this->ic_drawable.clear_timestamp();
     this->timestamp_tracer.clear();
     this->ic_trans.next();
     this->next_video_notifier.notify_next_video(now, reason);

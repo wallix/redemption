@@ -167,7 +167,6 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
     //dump_png("test_glyph_000_", gd.impl());
 }
 
-
 RED_AUTO_TEST_CASE(TestPolyline)
 {
     // Create a simple capture image and dump it to file
@@ -602,11 +601,9 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             const_cast<Drawable&>(this->drawable).trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-//            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
             this->timestamp_tracer.trace(ptm);
             this->flush();
             this->trans.next();
-//            const_cast<Drawable&>(this->drawable).clear_timestamp();
             this->timestamp_tracer.clear();
             const_cast<Drawable&>(this->drawable).clear_mouse();
             return microseconds::zero();
@@ -731,7 +728,6 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-
 
     uint8_t source64x64[] = {
 // MIX_SET 60 remaining=932 bytes pix=0
@@ -900,5 +896,3 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
 }
-
-

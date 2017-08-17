@@ -58,7 +58,6 @@ public:
     , rowsize(rowsize) {
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
-LOG(LOG_INFO, "this->bpp=%u", this->bpp);
     }
 
     int _posch_12x7(char ch) {
@@ -612,7 +611,6 @@ LOG(LOG_INFO, "this->bpp=%u", this->bpp);
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
                             unsigned pixindex = br_pixindex + x * this->bpp;
                             memset(&rgbpixbuf[pixindex], pixcolorcomponent, this->bpp);
-LOG(LOG_INFO, "pixindex=%u, pixcolorcomponent=0x%02X bpp=%u", pixindex, pixcolorcomponent, this->bpp);
                         }
                     }
                 }

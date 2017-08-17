@@ -693,14 +693,12 @@ public:
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
-                //this->drawable.trace_timestamp(ptm);
                 this->timestamp_tracer.trace(ptm);
 
                 this->dump();
                 this->clear_old();
                 this->trans.next();
 
-                //this->drawable.clear_timestamp();
                 this->timestamp_tracer.clear();
                 this->start_capture = now;
                 this->drawable.clear_mouse();

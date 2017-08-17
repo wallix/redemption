@@ -376,7 +376,6 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-//    gd.trace_timestamp(now);
     timestamp_tracer.trace(now);
     RED_CHECK_SIG(gd, "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
 
@@ -394,17 +393,13 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-//    gd.clear_timestamp();
     timestamp_tracer.clear();
-//    gd.trace_timestamp(now);
     timestamp_tracer.trace(now);
     RED_CHECK_SIG(gd, "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
 
     // uncomment to see result in png file
     //dump_png("/tmp/test_timestamp_001_", gd.impl());
 
-
-//    gd.clear_timestamp();
     timestamp_tracer.clear();
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
