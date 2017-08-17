@@ -75,7 +75,7 @@ Bitmap bitmap_from_file_impl(const char * filename)
     unique_fd file{filename, O_RDONLY};
 
     if (!file) {
-        LOG(LOG_ERR, "Bitmap: error loading bitmap from file [%s] %s(%u)",
+        LOG(LOG_ERR, "Bitmap: error loading bitmap from file [%s] %s(%d)",
             filename, strerror(errno), errno);
         // TODO see value returned, maybe we should return open error
         return Bitmap{};

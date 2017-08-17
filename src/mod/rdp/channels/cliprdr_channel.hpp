@@ -596,7 +596,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                            "formatId=%s(%u) wszFormatName=\"%s\"",
                         RDPECLIP::get_Format_name(formatId), formatId,
                         utf8_string);
                 }
@@ -662,7 +662,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                            "formatId=%s(%u) wszFormatName=\"%s\"",
                         RDPECLIP::get_Format_name(formatId), formatId,
                         utf8_string);
                 }
@@ -1171,7 +1171,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                            "formatId=%s(%u) wszFormatName=\"%s\"",
                         RDPECLIP::get_Format_name(formatId), formatId,
                         utf8_string);
                 }
@@ -1223,7 +1223,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%s(%d) wszFormatName=\"%s\"",
+                            "formatId=%s(%u) wszFormatName=\"%s\"",
                         RDPECLIP::get_Format_name(formatId), formatId, utf8_string);
                 }
 

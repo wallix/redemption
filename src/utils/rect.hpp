@@ -196,7 +196,7 @@ struct Rect {
 
     bool has_intersection(Rect in) const
     {
-        return (this->cx && this->cx && !in.isempty()
+        return (this->cx && this->cy && !in.isempty()
         && ((in.x >= this->x && in.x < this->right()) || (this->x >= in.x && this->x < in.right()))
         && ((in.y >= this->y && in.y < this->bottom()) || (this->y >= in.y && this->y < in.bottom()))
         );

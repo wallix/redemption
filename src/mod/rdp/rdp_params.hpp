@@ -345,7 +345,7 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
 
-        RDP_PARAMS_LOG("%d",     static_cast<unsigned>, rail_disconnect_message_delay);
+        RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    rail_disconnect_message_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_session_probe_to_launch_remote_program);
 

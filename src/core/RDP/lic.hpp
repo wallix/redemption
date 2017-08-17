@@ -2001,7 +2001,7 @@ namespace LIC
             this->encryptedPlatformChallenge.wBlobType = stream.in_uint16_le();      // ignored
             this->encryptedPlatformChallenge.wBlobLen = stream.in_uint16_le();
             if (this->encryptedPlatformChallenge.wBlobLen != LICENSE_TOKEN_SIZE) {
-                LOG(LOG_ERR, "PlatformChallenge_Recv : token len = %d, expected %d",
+                LOG(LOG_ERR, "PlatformChallenge_Recv : token len = %u, expected %u",
                     this->encryptedPlatformChallenge.wBlobLen, LICENSE_TOKEN_SIZE);
                 throw Error(ERR_LIC);
             }
@@ -3059,7 +3059,7 @@ namespace LIC
             const unsigned expected =
                 16; /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwErrorCode(4) + dwStateTransition(4) + wBlobType(2) + wBlobLen(2) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Licence ErrorAlert_Recv : Truncated data, need=%d, remains=%zu",
+                LOG(LOG_ERR, "Licence ErrorAlert_Recv : Truncated data, need=%u, remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_LIC);
             }

@@ -264,9 +264,17 @@ struct CSMonitorEx {
             if (i) {
                 lg += snprintf(buffer + lg, sizeof(buffer) - lg, " ");
             }
-            lg += snprintf(buffer + lg, sizeof(buffer) - lg, "(physicalWidth=%d, physicalHeight=%d, orientation=%d, desktopScaleFactor=%d, deviceScaleFactor=%d)",
-                this->monitorAttributesArray[i].physicalWidth, this->monitorAttributesArray[i].physicalHeight, this->monitorAttributesArray[i].orientation,
-                this->monitorAttributesArray[i].desktopScaleFactor, this->monitorAttributesArray[i].deviceScaleFactor);
+            lg += snprintf(buffer + lg, sizeof(buffer) - lg,
+                "(physicalWidth=%u"
+                ", physicalHeight=%u"
+                ", orientation=%u"
+                ", desktopScaleFactor=%u"
+                ", deviceScaleFactor=%u)",
+                this->monitorAttributesArray[i].physicalWidth,
+                this->monitorAttributesArray[i].physicalHeight,
+                this->monitorAttributesArray[i].orientation,
+                this->monitorAttributesArray[i].desktopScaleFactor,
+                this->monitorAttributesArray[i].deviceScaleFactor);
         }
         snprintf(buffer + lg, sizeof(buffer) - lg, ")");
 

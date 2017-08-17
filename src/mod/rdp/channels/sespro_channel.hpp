@@ -548,7 +548,7 @@ public:
 
                 {
                     char cstr[128];
-                    std::snprintf(cstr, sizeof(cstr), "%u", ::getpid());
+                    std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 

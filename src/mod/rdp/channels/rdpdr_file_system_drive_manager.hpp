@@ -1314,7 +1314,7 @@ public:
             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                 LOG(LOG_INFO,
                     "ManagedFile::ProcessServerCreateDriveRequest: <%p> open_flags=0x%X",
-                    static_cast<void*>(this), open_flags);
+                    static_cast<void*>(this), unsigned(open_flags));
             }
 
             this->fd = ::open(this->full_path.c_str(), open_flags, S_IRUSR | S_IWUSR | S_IRGRP);

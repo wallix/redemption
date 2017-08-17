@@ -28,10 +28,10 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
     uint32_t chunk_data_length)
 {
     if (send) {
-        LOG(LOG_INFO, "Sending on channel (%d) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Sending on channel (%u) n bytes", chunk_data_length);
     }
     else {
-        LOG(LOG_INFO, "Recv done on channel (%d) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Recv done on channel (%u) n bytes", chunk_data_length);
     }
     const uint32_t dest = (from_or_to_client
                            ? 0  // Client
@@ -46,10 +46,10 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
         sizeof(chunk_data_length));
     hexdump_c(chunk_data, chunk_data_length);
     if (send) {
-        LOG(LOG_INFO, "Sent dumped on channel (%d) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Sent dumped on channel (%u) n bytes", chunk_data_length);
     }
     else {
-        LOG(LOG_INFO, "Dump done on channel (%d) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Dump done on channel (%u) n bytes", chunk_data_length);
     }
 }
 
@@ -58,10 +58,10 @@ inline static void msgdump_d(bool send, bool from_or_to_client,
     uint32_t chunk_data_length)
 {
     if (send) {
-        LOG(LOG_INFO, "Sending on channel (%d) n bytes", total_length);
+        LOG(LOG_INFO, "Sending on channel (%u) n bytes", total_length);
     }
     else {
-        LOG(LOG_INFO, "Recv done on channel (%d) n bytes", total_length);
+        LOG(LOG_INFO, "Recv done on channel (%u) n bytes", total_length);
     }
     const uint32_t dest = (from_or_to_client
                            ? 0  // Client
@@ -79,10 +79,10 @@ inline static void msgdump_d(bool send, bool from_or_to_client,
         LOG(LOG_INFO, "/* ---- */ \"...                                                             \" //................");
     }
     if (send) {
-        LOG(LOG_INFO, "Sent dumped on channel (%d) n bytes", total_length);
+        LOG(LOG_INFO, "Sent dumped on channel (%u) n bytes", total_length);
     }
     else {
-        LOG(LOG_INFO, "Dump done on channel (%d) n bytes", total_length);
+        LOG(LOG_INFO, "Dump done on channel (%u) n bytes", total_length);
     }
 }
 

@@ -312,9 +312,9 @@ public:
          && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
             if (this->stream.get_current() == this->stream.get_data_end()
              && this->remaining_order_count) {
-                LOG(LOG_ERR, "Incomplete order batch at chunk %" PRIu16 " "
-                             "order [%u/%" PRIu16 "] "
-                             "remaining [%zu/%" PRIu32 "]",
+                LOG(LOG_ERR, "Incomplete order batch at chunk %u "
+                             "order [%d/%u] "
+                             "remaining [%zu/%u]",
                              this->chunk_type,
                              (this->chunk_count-this->remaining_order_count), this->chunk_count,
                              this->stream.in_remain(), this->chunk_size);
@@ -347,7 +347,7 @@ public:
                     default: ;
                 }
                 if (this->chunk_size > 65536){
-                    LOG(LOG_ERR,"chunk_size (%d) > 65536", this->chunk_size);
+                    LOG(LOG_ERR,"chunk_size (%u) > 65536", this->chunk_size);
                     throw Error(ERR_WRM);
                 }
                 this->stream = InStream(this->stream_buf);
@@ -431,7 +431,7 @@ public:
                 break;
                 case RDP::TS_CACHE_COLOR_TABLE:
                     this->statistics.CacheColorTable++;
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%u)", header.type);
                     break;
                 case RDP::TS_CACHE_GLYPH:
                 {
@@ -448,16 +448,16 @@ public:
                 }
                 break;
                 case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%u)", header.type);
                   break;
                 case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%u)", header.type);
                   break;
                 case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%u)", header.type);
                   break;
                 default:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%u)", header.type);
                     /* error, unknown order */
                     break;
                 }

@@ -228,7 +228,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
         Session session(sck, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){
-            LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+            LOG(LOG_INFO, "Session::end of Session(%d)", sck);
         }
 
         shutdown(sck, 2);

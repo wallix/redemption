@@ -608,7 +608,7 @@ struct SCSecurity {
         this->serverCertLen = stream.in_uint32_le();
 
         if (this->serverRandomLen != SEC_RANDOM_SIZE) {
-            LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
+            LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %u, expected %u",
                  this->serverRandomLen, SEC_RANDOM_SIZE);
             throw Error(ERR_GCC);
         }

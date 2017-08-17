@@ -182,7 +182,7 @@ inline void run_mod(mod_api &mod, ClientFront &front, SocketTransport *st_mod) {
 
             }
         } catch (Error & e) {
-            LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %d!\n", e.id);
+            LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %u!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)

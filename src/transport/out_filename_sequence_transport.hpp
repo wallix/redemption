@@ -175,7 +175,7 @@ class OutFilenameSequenceTransport : public Transport
             LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
             // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
-                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
                    , this->current_filename_
                    , this->groupid_ ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
@@ -191,7 +191,7 @@ class OutFilenameSequenceTransport : public Transport
             LOG( LOG_ERR, "renaming file \"%s\" to \"%s\"\n"
                    , this->current_filename_, filename);
             if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%d : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
                 return nullptr;
             }

@@ -1464,7 +1464,7 @@ public:
             }
         }
 
-        LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
+        LOG(LOG_INFO, "Server key layout is %x", unsigned(this->keylayout));
 
         this->nego.set_identity(this->username,
                                 this->domain,
@@ -3323,7 +3323,7 @@ public:
             }
 
             if (sec.payload.get_current() != sec.payload.get_data_end()){
-                LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
+                LOG(LOG_ERR, "all data should have been consumed %s:%d tag = %x", __FILE__, __LINE__, flic.tag);
                 throw Error(ERR_SEC);
             }
         }
@@ -3575,7 +3575,7 @@ public:
             x224.payload.rewind();
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
-            LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+            LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
 
             this->end_session_reason.clear();
             this->end_session_message.clear();
@@ -4213,7 +4213,7 @@ public:
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){
-                        LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
+                        LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
                     };
 
                     this->event.signal = BACK_EVENT_NEXT;
@@ -6511,7 +6511,7 @@ public:
                     break;
 
                 default:
-                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", message_type);
+                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
                     throw Error(ERR_RDP_FASTPATH);
                 }
             },
@@ -7022,7 +7022,7 @@ public:
 
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
-                "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%d)",
+                "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%u)",
                 pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
@@ -7039,11 +7039,11 @@ public:
         uint16_t dlen = stream.in_uint16_le(); /* data length */
 
         if (cursor.width > Pointer::MAX_WIDTH){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%u)", cursor.width);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         if (cursor.height > Pointer::MAX_HEIGHT){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%u)", cursor.height);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
@@ -7052,12 +7052,12 @@ public:
         //    cursor.width, cursor.height);
 
         if (static_cast<unsigned>(cursor.x) >= cursor.width){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %u)", cursor.x, cursor.width);
             cursor.x = 0;
         }
 
         if (static_cast<unsigned>(cursor.y) >= cursor.height){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %d)", cursor.y, cursor.height);
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %u)", cursor.y, cursor.height);
             cursor.y = 0;
         }
 

@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     t.disable_remaining_error();
 
     for (int count = 0; count < 70; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
+        LOG(LOG_INFO, "===================> count = %d", count);
         mod.draw_event(time(nullptr), front);
     }
 
@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     t.disable_remaining_error();
 
     for (int count = 0; count < 40; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
+        LOG(LOG_INFO, "===================> count = %d", count);
         mod.draw_event(time(nullptr), front);
     }
 

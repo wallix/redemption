@@ -2294,7 +2294,7 @@ protected:
             this->work_areas[this->work_area_count].cy = body_r.Bottom() - body_r.Top();
 
             if (this->verbose) {
-                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
+                LOG(LOG_INFO, "WorkAreaRect: (%d, %d, %u, %u)",
                     this->work_areas[this->work_area_count].x, this->work_areas[this->work_area_count].y,
                     this->work_areas[this->work_area_count].cx, this->work_areas[this->work_area_count].cy);
             }
@@ -2642,7 +2642,7 @@ protected:
             this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
 
             if (this->verbose) {
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%u, %u, %u, %u)",
+                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %u, %u)",
                     this->task_bar_rect.x, this->task_bar_rect.y,
                     this->task_bar_rect.cx, this->task_bar_rect.cy);
             }

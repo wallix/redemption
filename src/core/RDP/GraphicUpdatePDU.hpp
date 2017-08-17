@@ -162,7 +162,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
     if (verbose & 4) {
         LOG( LOG_INFO
            , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
-             "encryptionLevel=%d initiator=%u type=%d data_extra=%u"
+             "encryptionLevel=%d initiator=%u type=%u data_extra=%u"
            , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
            , encryptionLevel, initiator, type, data_extra
            );
@@ -485,7 +485,7 @@ public:
     void init_orders() {
         if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
-               , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
+               , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%d"
                , this->userid
                , this->shareid);
         }
@@ -494,7 +494,7 @@ public:
     void init_bitmaps() {
         if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
-               , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
+               , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%d"
                , this->userid
                , this->shareid);
         }
@@ -874,7 +874,7 @@ protected:
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%u x=%u y=%u)",
+            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%d x=%d y=%d)",
                 cache_idx, cursor.x, cursor.y);
         }
 
@@ -931,7 +931,7 @@ protected:
 
     void set_pointer(int cache_idx) override {
         if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%u)", cache_idx);
+            LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;

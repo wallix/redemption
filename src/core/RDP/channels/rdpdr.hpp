@@ -502,7 +502,7 @@ struct ClientDriveDeviceListRemove {
 
     void log() const {
         LOG(LOG_INFO, "     Client Drive Device List Remove:");
-        LOG(LOG_INFO, "          * DeviceCount = %d (4 bytes)", this->DeviceCount);
+        LOG(LOG_INFO, "          * DeviceCount = %u (4 bytes)", this->DeviceCount);
         for (uint32_t i = 0; i < this->DeviceCount; i++) {
             LOG(LOG_INFO, "          * DeviceIds   = 0x%08x (4 bytes)", this->DeviceIds[i]);
         }
@@ -1711,7 +1711,7 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     Device Read Request:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length_);
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
     }
@@ -2554,7 +2554,7 @@ struct DeviceWriteResponse {
 
     void log() const {
         LOG(LOG_INFO, "     Device Write Response:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length);
         LOG(LOG_INFO, "          * Padding - (1 byte) NOT USED");
     }
 };
@@ -3422,7 +3422,7 @@ struct ClientDeviceListAnnounceRequest {
 
     void log() const {
         LOG(LOG_INFO, "     Client Device List Announce Request:");
-        LOG(LOG_INFO, "          * DeviceCount = %d (4 bytes)", this->DeviceCount);
+        LOG(LOG_INFO, "          * DeviceCount = %u (4 bytes)", this->DeviceCount);
     }
 
 };
@@ -3963,7 +3963,7 @@ struct ClientDriveQueryVolumeInformationResponse {
 
     void log() const {
         LOG(LOG_INFO, "     Client Drive Query Volume Information Response:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length);
     }
 };
 
@@ -4617,7 +4617,7 @@ struct ClientDriveQueryDirectoryResponse {
 
     void log() const {
         LOG(LOG_INFO, "     Client Drive Query Directory Response:");
-        LOG(LOG_INFO, "          * Length = %d (4 bytes)", this->Length);
+        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length);
     }
 };
 
@@ -5071,10 +5071,10 @@ struct ServerDriveLockControlRequest {
 
     void log() const {
         LOG(LOG_INFO, "     Server Drive Lock Control Request:");
-        LOG(LOG_INFO, "          * Operation = 0x%08x (4 bytes)", int(this->Operation));
-        LOG(LOG_INFO, "          * F         = 0x%01x (1 bit)", int(this->F));
+        LOG(LOG_INFO, "          * Operation = 0x%08x (4 bytes)", this->Operation);
+        LOG(LOG_INFO, "          * F         = 0x%01x (1 bit)", this->F);
         LOG(LOG_INFO, "          * Padding - (7 bits and 3 bytes) NOT USED");
-        LOG(LOG_INFO, "          * NumLocks  = %d (4 bytes)", int(this->Operation));
+        LOG(LOG_INFO, "          * NumLocks  = %u (4 bytes)", this->Operation);
         LOG(LOG_INFO, "          * Padding - (20 byte) NOT USED");
     }
 };
@@ -5841,7 +5841,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                         RdpDrStatus::DeviceIORequestData status_dior = status.get_completion_resquest(dior.DeviceId(), dior.CompletionId());
 
                         if (status_dior.DeviceId() == 0) {
-                            LOG(LOG_INFO, "Can't find corresponding Request for this Response (DeviceId = %d, CompletionId = %d", dior.DeviceId(), dior.CompletionId());
+                            LOG(LOG_INFO, "Can't find corresponding Request for this Response (DeviceId = %u, CompletionId = %u", dior.DeviceId(), dior.CompletionId());
 
                             return;
                         }

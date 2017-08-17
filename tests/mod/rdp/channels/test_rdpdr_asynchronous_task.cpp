@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
                 continue;
             }
 
-            LOG(LOG_ERR, "Task loop raised error %u : %s", errno, strerror(errno));
+            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
             run_task = false;
         }
         else {
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
                 continue;
             }
 
-            LOG(LOG_ERR, "Task loop raised error %u : %s", errno, strerror(errno));
+            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
             run_task = false;
         }
         else {

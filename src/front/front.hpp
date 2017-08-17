@@ -1105,9 +1105,9 @@ public:
 private:
     void reset() {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::reset: use_bitmap_comp=%u", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
-            LOG(LOG_INFO, "Front::reset: use_compact_packets=%u", this->client_info.use_compact_packets);
-            LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
+            LOG(LOG_INFO, "Front::reset: use_bitmap_comp=%d", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
+            LOG(LOG_INFO, "Front::reset: use_compact_packets=%d", this->client_info.use_compact_packets);
+            LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
         if (this->mppc_enc) {
@@ -1219,7 +1219,7 @@ public:
         if (bool(this->verbose & Verbose::channel)) {
             LOG( LOG_INFO
                , "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
-               , channel.name, channel.chanid, voidp(chunk), length, chunk_size, flags);
+               , channel.name, channel.chanid, voidp(chunk), length, chunk_size, unsigned(flags));
         }
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
@@ -1831,7 +1831,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
                     this->is_client_disconnected = true;
                     throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
@@ -1884,7 +1884,7 @@ public:
                 LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
-                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
                 this->is_client_disconnected = true;
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
@@ -1916,7 +1916,7 @@ public:
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
-            LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
+            LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", unsigned(this->client_info.keylayout));
             this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (bool(this->verbose & Verbose::basic_trace2)) {
@@ -2081,7 +2081,7 @@ public:
             if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
-                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
                 this->is_client_disconnected = true;
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
@@ -2436,7 +2436,7 @@ public:
                     throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
-                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %u)", fx224.type);
+                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", fx224.type);
                     throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
 
@@ -2447,7 +2447,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
                     this->is_client_disconnected = true;
                     throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
@@ -3011,7 +3011,7 @@ private:
 
         for (int n = 0; n < numberCapabilities; n++) {
             if (bool(this->verbose & Verbose::basic_trace5)) {
-                LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
+                LOG(LOG_INFO, "Front::capability %d / %d", n, numberCapabilities );
             }
             if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
                 LOG(LOG_ERR, "Front::process_confirm_active: Incomplete capabilities received (bad length):"
@@ -3443,7 +3443,7 @@ private:
     void send_control(int action)
     {
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::send_control: action=%u", action);
+            LOG(LOG_INFO, "Front::send_control: action=%d", action);
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -3468,7 +3468,7 @@ private:
                             );
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::send_control: done. action=%u", action);
+            LOG(LOG_INFO, "Front::send_control: done. action=%d", action);
         }
     }
 
@@ -3834,8 +3834,9 @@ private:
                     int bottom = sdata_in.payload.in_uint16_le();
                     rect = Rect(left, top, (right - left) + 1, (bottom - top) + 1);
                     if (bool(this->verbose & Verbose::basic_trace4)) {
-                        LOG(LOG_INFO, "Front::process_data: PDUTYPE2_REFRESH_RECT"
-                            " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
+
+                    LOG(LOG_INFO, "Front::process_data: PDUTYPE2_REFRESH_RECT"
+                            " left=%d top=%d right=%d bottom=%d cx=%u cy=%u",
                             left, top, right, bottom, rect.cx, rect.cy);
                     }
                     // // TODO we should consider adding to API some function to refresh several rects at once
@@ -4398,7 +4399,7 @@ private:
     void draw_tile(Rect dst_tile, Rect src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, Rect clip)
     {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "Front::draw_tile(MemBlt)((%u, %u, %u, %u) (%u, %u, %u, %u))",
+            LOG(LOG_INFO, "Front::draw_tile(MemBlt)((%d, %d, %u, %u) (%d, %d, %u, %u))",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }
@@ -4412,7 +4413,7 @@ private:
     void draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip, gdi::ColorCtx color_ctx)
     {
         if (bool(this->verbose & Verbose::graphic)) {
-            LOG(LOG_INFO, "Front::draw_tile(Mem3Blt)((%u, %u, %u, %u) (%u, %u, %u, %u)",
+            LOG(LOG_INFO, "Front::draw_tile(Mem3Blt)((%d, %d, %u, %u) (%d, %d, %u, %u)",
                  dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
                  src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         }

@@ -67,7 +67,7 @@ public:
         if (this->title_filter.has_title_changed()) {
             OcrTitle const & title = this->titles[best_index];
             if (this->enable_title_log) {
-                LOG(LOG_INFO, "Title rect: x=%u y=%u cx=%u cy=%u title=%s",
+                LOG(LOG_INFO, "Title rect: x=%d y=%d cx=%u cy=%u title=%s",
                     title.rect.x, title.rect.y, title.rect.cx, title.rect.cy, title.text.c_str());
             }
             const_cast<Drawable&>(this->drawable).tracked_area         = title.rect;

@@ -580,7 +580,7 @@ private:
             }
 
             if (this->chunk_size > 65536) {
-                LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
+                LOG(LOG_INFO,"chunk_size (%u) > 65536", this->chunk_size);
                 return false;
             }
             this->stream = InStream(this->stream_buf, 0);   // empty stream
@@ -1117,7 +1117,7 @@ static inline int check_encrypted_or_checksumed(
         }
         local_auto_remove auto_remove{full_mwrm_filename_tmp.c_str()};
         if (chmod(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
                 , full_mwrm_filename_tmp
                 , "u+r, g+r"
                 , strerror(errno), errno);
@@ -1617,7 +1617,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                 in_wrm_trans.next();
             }
 
-            LOG(LOG_INFO, "player begin_capture = %lu", begin_capture.tv_sec);
+            LOG(LOG_INFO, "player begin_capture = %ld", begin_capture.tv_sec);
             FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
             if (show_file_metadata) {

@@ -300,10 +300,10 @@ protected:
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
-            LOG(LOG_ERR, "Expected (length = %d):", public_key_length);
+            LOG(LOG_ERR, "Expected (length = %u):", public_key_length);
             hexdump_c(public_key1, public_key_length);
 
-            LOG(LOG_ERR, "Actual (length = %d):", public_key_length);
+            LOG(LOG_ERR, "Actual (length = %u):", public_key_length);
             hexdump_c(public_key2, public_key_length);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
@@ -454,7 +454,7 @@ private:
             this->InitSecurityInterface(this->sec_interface);
 
             if (this->table == nullptr) {
-                LOG(LOG_ERR, "Could not Initiate %d Security Interface!", this->sec_interface);
+                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
                 return Res::Err;
             }
             status = this->table->QuerySecurityPackageInfo(&packageInfo);

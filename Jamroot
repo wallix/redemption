@@ -11,6 +11,12 @@ project redemption
     : requirements
 
     <conditional>@includes
+    <conditional>@flags
+    # <lto>on
+    # <suggest>on
+    # <stack-protector>on
+    # <relro>on
+    # <security>on # strong, all
 
     $(CXXFLAGS)
 
@@ -378,6 +384,7 @@ exe rdpheadless
         gssglue
     :
         <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
+        <cxxflags>-std=c++14
         $(EXE_DEPENDENCIES)
     ;
 

@@ -92,7 +92,7 @@ private:
                     , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
                 if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
                     LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
-                       , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %d", status);
+                       , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %u", status);
                 }
             }
         }
@@ -154,7 +154,7 @@ private:
                                                 , reinterpret_cast<char *>(data_stream.get_current()), &compressed_data_length);
         if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
             LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
-               , "SnappyCompressionOutTransport::compress: snappy_compress return %d", status);
+               , "SnappyCompressionOutTransport::compress: snappy_compress return %u", status);
         }
         //if (this->verbose) {
         //    LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: compressed_data_length=%zu", compressed_data_length);
