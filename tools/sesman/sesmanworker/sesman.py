@@ -1292,7 +1292,6 @@ class Sesman():
             if _status and not self.infinite_connection and now < deconnection_time:
                 # deconnection time to epoch
                 tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
-                Logger().info(u"timeclose='%s'" % int(mktime(tt)))
                 kv[u'timeclose'] = int(mktime(tt))
                 _status, _error = self.interactive_display_message(
                         {u'message': TR(u'session_closed_at %s') % deconnection_time}
@@ -1690,10 +1689,6 @@ class Sesman():
         self.engine.stop_session(title=u"End session")
 
         Logger().info(u"Stop session done.")
-        Logger().info(u"module=%s" % self.shared.get(u"module"))
-        Logger().info(u"close_box=%s" % close_box)
-        Logger().info(u"back_selector=%s" % self.back_selector)
-
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
                 self.send_data({ u'module': u'close_back',
