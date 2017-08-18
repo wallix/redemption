@@ -334,6 +334,31 @@ inline parse_error parse(OcrLocale & x, spec_type<OcrLocale>, array_view_const_c
     });
 }
 
+template<> struct zstr_buffer_traits<BogusNumberOfFastpathInputEvent> : zstr_buffer_traits<void> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<BogusNumberOfFastpathInputEvent> & buf,
+    cfg_s_type<BogusNumberOfFastpathInputEvent>,
+    BogusNumberOfFastpathInputEvent x
+) {
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("disabled"),
+        cstr_array_view("pause_key_only"),
+        cstr_array_view("all_input_events"),
+    };
+    assert(static_cast<unsigned long>(x) < 3);
+    return arr[static_cast<unsigned long>(x)];
+}
+
+inline parse_error parse(BogusNumberOfFastpathInputEvent & x, spec_type<BogusNumberOfFastpathInputEvent>, array_view_const_char value)
+{
+    return parse_enum_str(x, value, {
+        {cstr_array_view("disabled"), BogusNumberOfFastpathInputEvent::disabled},
+        {cstr_array_view("pause_key_only"), BogusNumberOfFastpathInputEvent::pause_key_only},
+        {cstr_array_view("all_input_events"), BogusNumberOfFastpathInputEvent::all_input_events},
+    });
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(

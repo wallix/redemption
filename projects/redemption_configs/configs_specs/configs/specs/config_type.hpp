@@ -154,6 +154,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("cyrillic")
       .enable_icase_parser()
     ;
+
+    e.enumeration_list("BogusNumberOfFastpathInputEvent")
+      .value("disabled")
+      .value("pause_key_only")
+      .value("all_input_events")
+      .enable_icase_parser()
+    ;
 }
 
 }

@@ -2298,7 +2298,9 @@ public:
             if (fx224.fast_path) {
                 FastPath::ClientInputEventPDU_Recv cfpie(stream, this->decrypt, array);
 
-                for (uint8_t i = 0; i < cfpie.numEvents; i++) {
+                int num_events = cfpie.numEvents;
+
+                for (int i = 0; i < num_events; i++) {
                     if (!cfpie.payload.in_check_rem(1)) {
                         LOG(LOG_ERR, "Front::incoming: Truncated Fast-Path input event PDU, need=1 remains=%zu",
                             cfpie.payload.in_remain());
@@ -2317,6 +2319,17 @@ public:
                                 LOG(LOG_INFO,
                                     "Front::incoming: Received Fast-Path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
                                     ke.spKeyboardFlags, ke.keyCode);
+                            }
+
+                            if ((1 == num_events) &&
+                                (0 == i) &&
+                                (cfpie.payload.in_remain() == 6) &&
+                                (0x1D == ke.keyCode) &&
+                                (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                                 BogusNumberOfFastpathInputEvent::pause_key_only)) {
+                                LOG(LOG_INFO,
+                                    "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
+                                num_events = 4;
                             }
 
                             this->input_event_scancode(ke, cb, 0);
@@ -2395,6 +2408,14 @@ public:
                     }
                     if (bool(this->verbose & Verbose::basic_trace3)) {
                         LOG(LOG_INFO, "Front::incoming: Received Fast-Path PUD done");
+                    }
+
+                    if (cfpie.payload.in_remain() &&
+                        (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                         BogusNumberOfFastpathInputEvent::all_input_events)) {
+                        LOG(LOG_INFO,
+                            "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events");
+                        num_events++;
                     }
                 }
 

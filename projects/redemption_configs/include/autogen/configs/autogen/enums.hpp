@@ -405,6 +405,21 @@ operator << (std::basic_ostream<Ch, Tr> & os, OcrLocale e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class BogusNumberOfFastpathInputEvent {
+    disabled = 0,
+    pause_key_only = 1,
+    all_input_events = 2,
+};
+
+inline bool is_valid_enum_value(BogusNumberOfFastpathInputEvent e)
+{ return static_cast<unsigned long>(e) < 3; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, BogusNumberOfFastpathInputEvent e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit

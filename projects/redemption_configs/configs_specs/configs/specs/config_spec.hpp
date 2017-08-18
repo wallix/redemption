@@ -251,6 +251,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
+        W.sep();
+
+        W.member(ini_and_gui, no_sesman, type_<BogusNumberOfFastpathInputEvent>(), "bogus_number_of_fastpath_input_event", set(BogusNumberOfFastpathInputEvent::pause_key_only));
     });
 
     W.section("mod_rdp", [&]

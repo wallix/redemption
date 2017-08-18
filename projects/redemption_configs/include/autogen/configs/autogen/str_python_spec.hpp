@@ -239,6 +239,8 @@
 
 "bogus_ios_glyph_support_level = boolean(default=True)\n\n"
 
+"bogus_number_of_fastpath_input_event = option('disabled', 'pause_key_only', 'all_input_events', default='pause_key_only')\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"
