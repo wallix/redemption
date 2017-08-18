@@ -342,7 +342,7 @@ rule flags ( properties * )
     {
         flags +=
             <cxxflags>-Weverything
-            #<cxxflags>-Wno-documentation-unknown-command
+            <cxxflags>-Wno-documentation-unknown-command
             #<cxxflags>-Wno-range-loop-analysis
             #<cxxflags>-Wno-disabled-macro-expansion
             <cxxflags>-Wno-c++98-compat
@@ -354,6 +354,8 @@ rule flags ( properties * )
             <cxxflags>-Wno-weak-vtables
             <cxxflags>-Wno-exit-time-destructors
 
+            <cxxflags>-Wno-overlength-strings
+            <cxxflags>-Wno-disabled-macro-expansion
             <cxxflags>-Wno-covered-switch-default
             #<cxxflags>-Wno-conversion
 
