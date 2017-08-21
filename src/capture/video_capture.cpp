@@ -49,7 +49,7 @@ namespace
     void video_transport_log_error(Error const & error)
     {
         if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
-            LOG(LOG_ERR, "VideoTransport::send: %s [%u]", strerror(error.errnum), error.errnum);
+            LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
         }
     }
 }
@@ -87,7 +87,7 @@ VideoTransportBase::~VideoTransportBase()
         this->out_file.close();
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         if (::rename(this->tmp_filename, this->final_filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
                , this->tmp_filename, this->final_filename, errno, strerror(errno));
         }
     }
@@ -101,7 +101,7 @@ void VideoTransportBase::force_open()
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
     int fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (fd == -1) {
-        LOG( LOG_ERR, "can't open temporary file %s : %s [%u]"
+        LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
            , this->tmp_filename
            , strerror(errno), errno);
         this->status = false;
@@ -109,7 +109,7 @@ void VideoTransportBase::force_open()
     }
 
     if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
-        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
            , this->tmp_filename
            , this->groupid ? "u+r, g+r" : "u+r"
            , strerror(errno), errno);
@@ -131,7 +131,7 @@ void VideoTransportBase::rename()
 
     if (::rename(this->tmp_filename, this->final_filename) < 0)
     {
-        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
             , this->tmp_filename, this->final_filename, errno, strerror(errno));
         this->status = false;
         throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -283,10 +283,10 @@ struct IOVideoRecorderWithTransport
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
-                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%d)", e.id);
+                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%u)", e.id);
             }
             else {
-                LOG(LOG_ERR, "Video write_packet failure (id=%d, errnum=%d)", e.id, e.errnum);
+                LOG(LOG_ERR, "Video write_packet failure (id=%u, errnum=%d)", e.id, e.errnum);
             }
             return_code = -1;
         }
@@ -316,7 +316,7 @@ struct IOVideoRecorderWithTransport
             return offset;
         }
         catch (Error const & e){
-            LOG(LOG_ERR, "Video seek failure (id=%d)", e.id);
+            LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
             return -1;
         };
     }
@@ -351,7 +351,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 , video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 {
     if (flv_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
             flv_params.target_width, flv_params.target_height,
             flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
             flv_params.codec.c_str()
@@ -516,7 +516,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 , drawable(drawable)
 {
     if (flv_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
             flv_params.target_width, flv_params.target_height,
             flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
             flv_params.codec.c_str());

@@ -47,7 +47,7 @@ inline Bitmap compress_perf(Bitmap & bigbmp)
     microseconds elapusec = ustime() - usec;
     microseconds elapcyc = rdtsc() - cycles;
     printf("initial_size = %zu, compressed size: %zu\n"
-        "elapsed time = %" PRIuLEAST64 " %" PRIuLEAST64 " %f\n",
+        "elapsed time = %" PRIdLEAST64 " %" PRIdLEAST64 " %f\n",
         bigbmp.bmp_size(), out.get_offset(),
         elapusec.count(), elapcyc.count(), static_cast<double>(elapcyc.count()) / elapusec.count());
 

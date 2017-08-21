@@ -1198,12 +1198,12 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp ;
-obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
-obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp ;
-obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
-obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
-obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) ;
+obj sashimi_error : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 
 lib sashimi :
     sashimi_pki
@@ -1218,12 +1218,11 @@ lib sashimi :
     dl
     z
     rt
-   :
-       <link>shared
-#       <linkflags>-Wl,-Bsymbolic
-       $(LIB_DEPENDENCIES)
     :
-    :
+    <link>shared
+#    <linkflags>-Wl,-Bsymbolic
+    $(LIB_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
 ;
 
 ##
@@ -1236,6 +1235,7 @@ unit-test test_buffer :
     libunit_test
     :
     $(TEST_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
     ;
 
 unit-test test_crypto :
@@ -1245,4 +1245,5 @@ unit-test test_crypto :
     libunit_test
     :
     $(TEST_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
     ;
