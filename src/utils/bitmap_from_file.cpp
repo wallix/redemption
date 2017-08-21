@@ -139,16 +139,13 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     png_destroy_.info_ptr_ptr = &info_ptr;
 
 #if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4)
-    if (setjmp(png_jmpbuf(png_ptr))) {
-        return bitmap;
-    }
-
+    if (setjmp(png_jmpbuf(png_ptr)))
 #else
-    if (setjmp(png_ptr->jmpbuf)) {
+    if (setjmp(png_ptr->jmpbuf))
+#endif
+    {
         return bitmap;
     }
-
-#endif
     // this handle lib png errors for this call
 
     struct auto_close {
