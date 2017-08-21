@@ -201,7 +201,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, proxy_to_sesman, type_<unsigned>(), "keyboard_layout", set(0));
         std::string keyboard_layout_proposals_desc;
-        for (auto k :  keylayouts) {
+        for (auto k : Keymap2::keylayouts()) {
             keyboard_layout_proposals_desc += k->locale_name;
             keyboard_layout_proposals_desc += ", ";
         }
