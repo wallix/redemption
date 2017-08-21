@@ -298,11 +298,9 @@ void set_rows_from_image_chunk(
             case WrmChunkType::LAST_IMAGE_CHUNK:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
                 png_error(png_ptr, "Failed to read embedded image from WRM (transport closed)");
-                return ;
             default:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM");
                 png_error(png_ptr, "Failed to read embedded image from WRM");
-                return ;
             }
         }
     };
@@ -312,9 +310,9 @@ void set_rows_from_image_chunk(
     png_set_read_fn(png.ppng, &chunk_trans, png_read_data_fn);
 
 #if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4)
-    if (setjmp(png_jmpbuf(png_ptr)))
+    if (setjmp(png_jmpbuf(png.ppng)))
 #else
-    if (setjmp(png_ptr->jmpbuf))
+    if (setjmp(png.ppng.jmpbuf))
 #endif
     {
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
