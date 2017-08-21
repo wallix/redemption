@@ -239,7 +239,10 @@
 
 "bogus_ios_glyph_support_level = boolean(default=True)\n\n"
 
-"bogus_number_of_fastpath_input_event = option('disabled', 'pause_key_only', 'all_input_events', default='pause_key_only')\n\n"
+"#   0: disabled\n"
+"#   1: pause key only\n"
+"#   2: all input events\n"
+"bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)\n\n"
 
 "[mod_rdp]\n\n"
 

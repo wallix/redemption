@@ -38,19 +38,19 @@ inline void config_type_definition(type_enumerations & e)
       .value("low")
       .value("medium")
       .value("high")
-      .enable_icase_parser()
+      .set_string_parser()
     ;
 
     e.enumeration_list("Language")
       .value("en")
       .value("fr")
-      .enable_icase_parser()
+      .set_string_parser()
     ;
 
     e.enumeration_list("ClipboardEncodingType")
       .value("utf8").alias("utf-8")
       .value("latin1")
-      .enable_icase_parser()
+      .set_string_parser()
     ;
 
     e.enumeration_flags("KeyboardLogFlags")
@@ -152,14 +152,13 @@ inline void config_type_definition(type_enumerations & e)
     e.enumeration_list("OcrLocale")
       .value("latin")
       .value("cyrillic")
-      .enable_icase_parser()
+      .set_string_parser()
     ;
 
     e.enumeration_list("BogusNumberOfFastpathInputEvent")
       .value("disabled")
       .value("pause_key_only")
       .value("all_input_events")
-      .enable_icase_parser()
     ;
 }
 
