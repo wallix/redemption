@@ -142,7 +142,7 @@ namespace Extractors
 
         uint8_t get_type() const noexcept
         {
-            assert(this->is_fast_path());
+            assert(!this->is_fast_path());
             return this->type;
         }
 
