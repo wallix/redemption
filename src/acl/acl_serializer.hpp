@@ -919,7 +919,7 @@ public:
             try {
                 Buffers buffers(this->auth_trans, this->verbose);
 
-                for (auto && field : this->ini.get_fields_changed()) {
+                for (auto field : this->ini.get_fields_changed()) {
                     char const * key = string_from_authid(field.authid());
                     buffers.push(key);
                     buffers.push('\n');
