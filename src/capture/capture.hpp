@@ -144,6 +144,7 @@ class UpdateProgressData;
 class RDPDrawable;
 class SequencedVideoCaptureImpl;
 class FullVideoCaptureImpl;
+class VideoCropper;
 
 struct MouseTrace
 {
@@ -224,8 +225,9 @@ private:
     //@}
 
 public:
-
     std::unique_ptr<RDPDrawable> gd_drawable;
+
+    std::unique_ptr<VideoCropper> video_cropper;
 
 private:
     class Graphic final : public gdi::GraphicApi
@@ -395,7 +397,8 @@ public:
         bool disable_keyboard_log,
         bool session_log_enabled,
         bool keyboard_fully_masked,
-        bool meta_keyboard_log
+        bool meta_keyboard_log,
+        Rect crop_rect
     );
 
     ~Capture();

@@ -1269,9 +1269,9 @@ Capture::Capture(
     bool disable_keyboard_log,
     bool session_log_enabled,
     bool keyboard_fully_masked,
-    bool meta_keyboard_log)
+    bool meta_keyboard_log,
+    Rect crop_rect)
 : is_replay_mod(!report_message)
-, gd_drawable(nullptr)
 , update_progress_data(update_progress_data)
 , mouse_info{now, width / 2, height / 2}
 , capture_event{}
@@ -1289,6 +1289,18 @@ Capture::Capture(
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
         this->gd_drawable.reset(new RDPDrawable(width, height));
         this->gds.push_back(*this->gd_drawable);
+
+        if (!crop_rect.isempty()) {
+            this->video_cropper.reset(new VideoCropper(
+                    this->gd_drawable->width(),
+                    this->gd_drawable->height(),
+                    this->gd_drawable->data(),
+                    crop_rect.x,
+                    crop_rect.y,
+                    crop_rect.cx,
+                    crop_rect.cy
+                ));
+        }
 
         this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
 
@@ -1322,6 +1334,7 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
+                this->video_cropper.get(),
                 flv_params,
                 flv_break_interval, notifier
             ));
@@ -1330,6 +1343,7 @@ Capture::Capture(
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
+                this->video_cropper.get(),
                 flv_params));
         }
 

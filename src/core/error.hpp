@@ -321,6 +321,8 @@
     f(ERR_SESSION_PROBE_ENDING_IN_PROGRESS)                      \
     f(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION)              \
                                                                  \
+    fv(ERR_CROPPER_INVALID_PARAMETER, 24500)                     \
+                                                                 \
     fv(ERR_SSL_CALL_FAILED, 25000)                               \
     f(ERR_SSL_CALL_HMAC_INIT_FAILED)                             \
     f(ERR_SSL_CALL_HMAC_UPDATE_FAILED)                           \
