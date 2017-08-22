@@ -72,6 +72,9 @@ install install-bin
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
+obj keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp :
+    $(EXE_DEPENDENCIES) ;
+
 obj capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp :
     $(EXE_DEPENDENCIES) ;
 
@@ -98,6 +101,7 @@ exe client_demo_Qt4 :
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     front_Qt4_Demo.o
+    keymap2.o
     video_capture.o
     capture.o
     png.o
@@ -132,6 +136,7 @@ exe client_rdp_Qt4 :
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/rdp_client_qt_widget.hpp
     front_Qt4_rdp.o
+    keymap2.o
     capture.o
     video_capture.o
     png.o
@@ -178,6 +183,7 @@ exe client_rdp_Qt5 :
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/rdp_client_qt_widget.hpp
     front_Qt5.o
+    keymap2.o
     capture.o
     video_capture.o
     png.o
