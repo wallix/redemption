@@ -33,6 +33,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/caches/pointercache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"

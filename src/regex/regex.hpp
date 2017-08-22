@@ -23,11 +23,9 @@
 
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
-#include "utils/sugar/noncopyable.hpp"
 
-struct Tracer;
-namespace re {
-
+namespace re
+{
     class Regex
     {
         struct Parser {
