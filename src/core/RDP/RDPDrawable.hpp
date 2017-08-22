@@ -68,6 +68,8 @@ class RDPDrawable
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
+    unsigned int last_update_index = 0;
+
 public:
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
