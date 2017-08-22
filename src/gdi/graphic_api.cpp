@@ -18,8 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-#pragma once
-
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"

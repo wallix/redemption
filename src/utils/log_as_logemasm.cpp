@@ -26,11 +26,11 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
 {
     (void)priority;
     va_list ap;
+    char buffer[4096];
     va_start(ap, format);
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-    std::vprintf(format, ap);
-    REDEMPTION_DIAGNOSTIC_POP
-    std::puts("");
+    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
     va_end(ap);
+    buffer[len] = '\n';
+    buffer[len+1] = 0;
+    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
 }
