@@ -65,10 +65,12 @@ alias generate_python_spec : $(FILEGEN_SPEC) ;
 alias generate_enum : $(FILEGEN_ENUM) ;
 alias generate_ini : $(FILEGEN_INI) ;
 
-exe make_cpp_config : src/configs/write_cpp_config.cpp : ;
-exe make_python_spec : src/configs/write_python_spec.cpp : ;
-exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : ;
-exe make_ini : src/configs/write_ini.cpp : ;
+obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : <define>LOGNULL ;
+
+exe make_cpp_config : src/configs/write_cpp_config.cpp : <library>keymap ;
+exe make_python_spec : src/configs/write_python_spec.cpp : <library>keymap ;
+exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : <library>keymap ;
+exe make_ini : src/configs/write_ini.cpp : <library>keymap ;
 
 
 alias generate_types :

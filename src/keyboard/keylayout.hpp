@@ -21,9 +21,9 @@
    header file. Keylayout object, used by keymap managers
 */
 
-
-
 #pragma once
+
+#include <cstdint>
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -152,5 +152,3 @@ struct Keylayout
 
 
 }; // END STRUCT - Keylayout
-
-
