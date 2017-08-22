@@ -58,7 +58,7 @@ namespace cli
         {}
 
         Option(DataOption d, Act act)
-          : d{d}
+          : d(d)
           , act(act)
         {}
 
