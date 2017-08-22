@@ -163,5 +163,5 @@ notifications:
       - cmoroldo@wallix.com
       #- jinthavong@wallix.com
       #- mtan@wallix.com
-    on_success: never
+    on_success: change
     on_failure: always
