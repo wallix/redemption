@@ -20,23 +20,22 @@
 
 #pragma once
 
+#include "capture/video_recorder.hpp"
+#include "capture/flv_params.hpp"
+#include "capture/notify_next_video.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 #include "gdi/capture_api.hpp"
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "flv_params.hpp"
-#include "capture/video_recorder.hpp"
-#include "capture/notify_next_video.hpp"
 #include "utils/timestamp_tracer.hpp"
+#include "utils/video_cropper.hpp"
 
 #include <memory>
 #include <chrono>
 
-
 struct timeval;
 class video_recorder;
-class RDPDrawable;
-
 
 struct VideoTransportBase : Transport
 {
@@ -70,13 +69,30 @@ struct VideoCaptureCtx : noncopyable
         timeval const & now,
         bool no_timestamp,
         unsigned frame_rate,
-        RDPDrawable & drawable
+        RDPDrawable & drawable,
+        VideoCropper * pVideoCropper
     );
 
     void frame_marker_event(video_recorder &);
     void encoding_video_frame(video_recorder &);
     gdi::CaptureApi::Microseconds snapshot(
         video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+
+    uint16_t width() const noexcept {
+        return this->drawable.width();
+    }
+
+    uint16_t height() const noexcept {
+        return this->drawable.height();
+    }
+
+    size_t pix_len() const noexcept {
+        return this->drawable.pix_len();
+    }
+
+    const uint8_t * data() const noexcept {
+        return this->drawable.data();
+    }
 
 private:
     void preparing_video_frame(video_recorder &);
@@ -90,6 +106,9 @@ private:
     time_t previous_second = 0;
     bool has_frame_marker = false;
 
+    VideoCropper * video_cropper_ptr = nullptr;
+
+public:
     TimestampTracer timestamp_tracer;
 };
 
@@ -98,7 +117,8 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, bool no_timestamp, RDPDrawable & drawable, FlvParams flv_params
+        const int groupid, bool no_timestamp, RDPDrawable & drawable, VideoCropper * pVideoCropper,
+        FlvParams flv_params
     );
 
     ~FullVideoCaptureImpl();
@@ -125,8 +145,8 @@ private:
         );
     } trans_tmp_file;
 
-    video_recorder recorder;
     VideoCaptureCtx video_cap_ctx;
+    video_recorder recorder;
 };
 
 
@@ -202,6 +222,7 @@ public:
             const timeval & now,
             SequenceTransport & trans,
             RDPDrawable & drawable,
+            VideoCropper * pVideoCropper,
             bool no_timestamp,
             FlvParams flv_params
         );
@@ -220,12 +241,19 @@ public:
             bool ignore_frame_in_timeval
         );
 
+        void trace_timestamp(const tm & now);
+
+        void clear_timestamp();
+
+        void prepare_video_frame();
+
     private:
         VideoCaptureCtx video_cap_ctx;
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
         FlvParams flv_params;
         RDPDrawable & drawable;
+        VideoCropper * video_cropper_ptr = nullptr;
     } vc;
 
     SequenceTransport ic_trans;
@@ -235,6 +263,8 @@ public:
     unsigned ic_scaled_height;
 
     /* const */ RDPDrawable & ic_drawable;
+
+    VideoCropper * video_cropper_ptr = nullptr;
 
 private:
     std::unique_ptr<uint8_t[]> ic_scaled_buffer;
@@ -285,9 +315,6 @@ public:
 
     void next_video_impl(const timeval& now, NotifyNextVideo::reason reason);
 
-private:
-    TimestampTracer timestamp_tracer;
-
 public:
     SequencedVideoCaptureImpl(
         const timeval & now,
@@ -297,6 +324,7 @@ public:
         bool no_timestamp,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
+        VideoCropper * pVideoCropper,
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier);

@@ -60,6 +60,7 @@ public:
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
     }
 
+private:
     int _posch_12x7(char ch) {
         return char_width * char_height *
         (isdigit(ch)  ? ch - '0'
@@ -618,6 +619,7 @@ public:
         }
     }
 
+public:
     void trace(const tm & now)
     {
         const char* timezone = (daylight ? tzname[1] : tzname[0]);

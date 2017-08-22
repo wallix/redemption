@@ -56,11 +56,11 @@ toolset.flags security SECURITY : <security> ;
 # http://www.boost.org/build/tutorial.html#feature_reference
 # http://www.boost.org/doc/libs/1_63_0/doc/html/bbv2/reference.html
 # warnings-as-errors off, on
-# warnings            on, all, off
+# warnings        on, all, off
 # optimization    off, speed, space
-# profiling         off, on
-# toolset             gcc, msvc, intel-linux, intel-win, acc, borland, como-linux, cw, dmc, hp_cxx, sun
-# rtti                    on, off
+# profiling       off, on
+# toolset         gcc, msvc, intel-linux, intel-win, acc, borland, como-linux, cw, dmc, hp_cxx, sun
+# rtti            on, off
 
 GLIBCXX_ALLOW_BROKEN_ABI = 1 ; # for _GLIBCXX_DEBUG or _GLIBCXX_ASSERTIONS
 
@@ -243,7 +243,6 @@ rule flags ( properties * )
             <cxxflags>-Wdisabled-optimization
             <cxxflags>-Wfloat-equal
             <cxxflags>-Wformat-security
-            <cxxflags>-Wformat-signedness
             <cxxflags>-Wformat=2
             <cxxflags>-Wmissing-declarations
             #<cxxflags>-Wmissing-format-attribute
@@ -307,6 +306,7 @@ rule flags ( properties * )
                 <cxxflags>-Wsized-deallocation
                 <cxxflags>-Wstrict-null-sentinel
                 <cxxflags>-Wsuggest-override
+                <cxxflags>-Wformat-signedness
             ;
         }
         if [ ge-ver $(version) : 4.9.0 ]

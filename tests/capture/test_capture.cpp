@@ -247,6 +247,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , session_log_enabled
                         , keyboard_fully_masked
                         , meta_keyboard_log
+                        , Rect()
                         );
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -504,6 +505,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , session_log_enabled
                    , keyboard_fully_masked
                    , meta_keyboard_log
+                   , Rect()
                    );
     auto const color_cxt = gdi::ColorCtx::depth16();
     Pointer pointer1(Pointer::POINTER_EDIT);

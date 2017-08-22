@@ -1846,6 +1846,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , session_log_enabled
                                 , keyboard_fully_masked
                                 , meta_keyboard_log
+                                , Rect()
                                 );
 
                         player.add_consumer(&capture, &capture, &capture, &capture, &capture);

@@ -1025,6 +1025,7 @@ public:
                                     , session_log_enabled
                                     , keyboard_fully_masked
                                     , meta_keyboard_log
+                                    , Rect()
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();
