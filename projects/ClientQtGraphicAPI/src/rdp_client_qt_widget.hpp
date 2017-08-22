@@ -1321,7 +1321,6 @@ public:
 
 
 
-
     Sound_Qt(QWidget * parent, Front_RDP_Qt_API * front)
       : QObject(parent)
       , media(nullptr)
