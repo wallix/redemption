@@ -247,7 +247,7 @@ public:
         }
         else if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
-            return MODULE_INTERNAL_CLOSE_BACK;
+            return MODULE_INTERNAL_CLOSE;
         }
         else if (module_cstr == STRMODULE_CLOSE_BACK) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
