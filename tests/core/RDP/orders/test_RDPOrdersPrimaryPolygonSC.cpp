@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestOrderPolygonSC
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
 

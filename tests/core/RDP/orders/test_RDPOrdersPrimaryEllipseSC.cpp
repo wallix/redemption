@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 

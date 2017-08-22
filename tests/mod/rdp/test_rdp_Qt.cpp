@@ -26,7 +26,6 @@
 #include <unistd.h>
 
 #define LOGNULL
-//#define LOGPRINT
 #include "configs/config.hpp"
 
 #include "../src/front/front_widget_Qt.hpp"

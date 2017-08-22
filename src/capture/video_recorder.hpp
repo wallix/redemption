@@ -60,6 +60,7 @@ extern "C" {
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "transport/transport.hpp"
+#include "cxx/diagnostic.hpp"
 
 #include <memory>
 #include <chrono>

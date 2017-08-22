@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
-#define LOGPRINT
 #include "core/RDPEA/audio_output.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 

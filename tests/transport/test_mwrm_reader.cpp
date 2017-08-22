@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 // #define LOGNULL
-#define LOGPRINT
 
 #include "utils/sugar/iter.hpp"
 #include "transport/mwrm_reader.hpp"

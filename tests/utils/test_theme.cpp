@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "utils/theme.hpp"
 #include "configs/config.hpp"

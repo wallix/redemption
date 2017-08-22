@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/screen.hpp"

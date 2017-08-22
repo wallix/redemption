@@ -18,7 +18,6 @@
    Author(s): Clément Moroldo
 */
 
-//#define LOGPRINT
 
 #include "configs/config.hpp"
 

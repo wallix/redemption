@@ -26,7 +26,6 @@
 #define RED_TEST_MODULE TestKeymapSym
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGPRINT
 #define LOGNULL
 
 #include "utils/log.hpp"

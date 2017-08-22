@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"

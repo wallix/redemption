@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"

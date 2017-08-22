@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 #include "core/RDP/caches/bmpcache.hpp"
 #include "utils/bitmap_from_file.hpp"
 

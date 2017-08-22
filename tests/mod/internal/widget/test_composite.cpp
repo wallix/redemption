@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "mod/internal/widget/widget_rect.hpp"
 #include "mod/internal/widget/composite.hpp"

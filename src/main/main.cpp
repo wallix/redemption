@@ -22,7 +22,6 @@
    main program
 */
 
-#define LOGPRINT
 
 #include "main/version.hpp"
 

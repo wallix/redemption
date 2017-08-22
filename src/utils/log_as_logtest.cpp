@@ -23,6 +23,7 @@
 #endif
 
 #include "utils/log.hpp"
+#include "cxx/diagnostic.hpp"
 
 #include <cstdarg>
 

@@ -24,6 +24,7 @@
 #include <gssapi/gssapi.h>
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/kerberos/credentials.hpp"
+#include "cxx/diagnostic.hpp"
 #include <cassert>
 
 REDEMPTION_DIAGNOSTIC_PUSH

@@ -39,9 +39,9 @@ namespace { namespace compiler_aux_ {
 // This is handy to get stacktrace while debugging.
 
 #ifdef NDEBUG
-#define REDASSERT(x)
+# define REDASSERT(x)
 #else
-# if defined(LOGPRINT) || defined(REDASSERT_AS_ASSERT)
+# if defined(REDASSERT_AS_ASSERT)
 #  include <cassert>
 #  define REDASSERT(x) assert(x)
 # else
@@ -49,22 +49,17 @@ namespace { namespace compiler_aux_ {
 # endif
 #endif
 
-#include <sys/types.h> // getpid
-#include <unistd.h> // getpid
-
-#include "cxx/diagnostic.hpp"
-#include "cxx/cxx.hpp"
-
-#include <type_traits>
-
-#include <cstdint>
-#include <cstdio> // std::printf family
-#if defined(LOGPRINT) || !defined(LOGNULL)
-# include <cstdarg>
+#if !defined(LOGNULL)
+# include <sys/types.h> // getpid
+# include <unistd.h> // getpid
 #endif
 
+#include <type_traits>
+#include <cstdint>
+
+#include "cxx/cxx.hpp"
+
 #include <syslog.h>
-#include <cstring>
 
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
@@ -263,6 +258,9 @@ namespace
     #endif
     }
 }
+
+
+#include <cstdio> // std::printf family
 
 namespace {
 

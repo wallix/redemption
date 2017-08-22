@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "test_only/check_sig.hpp"
 #include "test_only/dump_png.hpp"

@@ -27,7 +27,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/error.hpp"
 #include "core/font.hpp"

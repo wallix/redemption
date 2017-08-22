@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "transport/snappy_compression_transport.hpp"
 #include "test_only/transport/test_transport.hpp"

@@ -23,9 +23,6 @@
 #include <iostream>
 #include <string>
 
-//#define LOGNULL
-#define LOGPRINT
-
 #include "core/listen.hpp"
 #include "core/session.hpp"
 #include "transport/socket_transport.hpp"

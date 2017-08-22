@@ -32,6 +32,7 @@
 #include "group_box.hpp"
 #include "utils/translation.hpp"
 #include "gdi/graphic_api.hpp"
+#include "cxx/diagnostic.hpp"
 
 
 class FlatForm : public WidgetParent

@@ -25,7 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "utils/stream.hpp"
 #include "core/RDP/out_per_bstream.hpp"

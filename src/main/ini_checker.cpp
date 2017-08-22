@@ -18,7 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define LOGPRINT
 
 #include "configs/config.hpp"
 #include "utils/cfgloader.hpp"

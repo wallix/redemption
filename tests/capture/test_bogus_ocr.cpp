@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "capture/title_extractors/ocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"

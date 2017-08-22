@@ -30,6 +30,9 @@
 #include "core/server_notifier_api.hpp"
 #include "core/defines.hpp"
 #include "utils/fileutils.hpp"
+
+#include "cxx/diagnostic.hpp"
+
 #include <memory>
 
 REDEMPTION_DIAGNOSTIC_PUSH

@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "test_only/get_file_contents.hpp"
 #include "transport/in_file_transport.hpp"

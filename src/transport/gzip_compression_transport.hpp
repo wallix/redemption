@@ -25,6 +25,7 @@
 
 #include "transport.hpp"
 #include "utils/stream.hpp"
+#include "cxx/diagnostic.hpp"
 
 constexpr size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 

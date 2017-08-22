@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
-#define LOGPRINT
 
 // include "transport/socket_transport.hpp"
 // include "core/client_info.hpp"

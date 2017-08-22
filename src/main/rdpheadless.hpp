@@ -21,7 +21,6 @@
 
 #pragma once
 
-//#define LOGPRINT
 
 #include <chrono>
 #include <stdio.h>
