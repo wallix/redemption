@@ -1291,21 +1291,12 @@ Capture::Capture(
         this->gds.push_back(*this->gd_drawable);
 
         if (!crop_rect.isempty()) {
-            this->video_cropper.reset(new EffectiveVideoCropper(
-                    this->gd_drawable->width(),
-                    this->gd_drawable->height(),
-                    this->gd_drawable->data(),
+            this->video_cropper.reset(new VideoCropper(
+                    this->gd_drawable.get(),
                     crop_rect.x,
                     crop_rect.y,
                     crop_rect.cx,
                     crop_rect.cy
-                ));
-        }
-        else {
-            this->video_cropper.reset(new DummyVideoCropper(
-                    this->gd_drawable->width(),
-                    this->gd_drawable->height(),
-                    this->gd_drawable->data()
                 ));
         }
 
@@ -1341,7 +1332,9 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
-                this->video_cropper.get(),
+                (this->video_cropper ?
+                 static_cast<gdi::ImageFrameApi*>(this->video_cropper.get()) :
+                 static_cast<gdi::ImageFrameApi*>(this->gd_drawable.get())),
                 flv_params,
                 flv_break_interval, notifier
             ));
@@ -1350,7 +1343,9 @@ Capture::Capture(
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
-                this->video_cropper.get(),
+                (this->video_cropper ?
+                 static_cast<gdi::ImageFrameApi*>(this->video_cropper.get()) :
+                 static_cast<gdi::ImageFrameApi*>(this->gd_drawable.get())),
                 flv_params));
         }
 

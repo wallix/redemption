@@ -70,7 +70,7 @@ struct VideoCaptureCtx : noncopyable
         bool no_timestamp,
         unsigned frame_rate,
         RDPDrawable & drawable,
-        VideoCropper * pVideoCropper
+        gdi::ImageFrameApi * pImageFrameApi
     );
 
     void frame_marker_event(video_recorder &);
@@ -106,7 +106,7 @@ private:
     time_t previous_second = 0;
     bool has_frame_marker = false;
 
-    VideoCropper * video_cropper_ptr = nullptr;
+    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
 
 public:
     TimestampTracer timestamp_tracer;
@@ -117,7 +117,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, bool no_timestamp, RDPDrawable & drawable, VideoCropper * pVideoCropper,
+        const int groupid, bool no_timestamp, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
         FlvParams flv_params
     );
 
@@ -222,7 +222,7 @@ public:
             const timeval & now,
             SequenceTransport & trans,
             RDPDrawable & drawable,
-            VideoCropper * pVideoCropper,
+            gdi::ImageFrameApi * pImageFrameApi,
             bool no_timestamp,
             FlvParams flv_params
         );
@@ -253,7 +253,7 @@ public:
         SequenceTransport & trans;
         FlvParams flv_params;
         RDPDrawable & drawable;
-        VideoCropper * video_cropper_ptr = nullptr;
+        gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
     } vc;
 
     SequenceTransport ic_trans;
@@ -264,7 +264,7 @@ public:
 
     /* const */ RDPDrawable & ic_drawable;
 
-    VideoCropper * video_cropper_ptr = nullptr;
+    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
 
 private:
     std::unique_ptr<uint8_t[]> ic_scaled_buffer;
@@ -324,7 +324,7 @@ public:
         bool no_timestamp,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
-        VideoCropper * pVideoCropper,
+        gdi::ImageFrameApi * pImageFrameApi,
         FlvParams flv_params,
         std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier);
