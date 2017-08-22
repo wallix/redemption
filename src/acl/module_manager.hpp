@@ -973,9 +973,9 @@ public:
                 )),
                 this->client_execute
             ));
-            if (bool(this->verbose & Verbose::new_mod)) {
+            //if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
-            }
+            //}
             }
             break;
         case MODULE_INTERNAL_CLOSE:

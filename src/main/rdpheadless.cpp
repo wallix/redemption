@@ -58,7 +58,7 @@ namespace cli
         {}
 
         Option(DataOption d, Act act)
-          : d{d}
+          : d(d)
           , act(act)
         {}
 
@@ -1230,6 +1230,10 @@ int main(int argc, char** argv)
             }
             catch (Error const& e)
             {
+                if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
+//                     std::cerr << e.errmsg() << std::endl;
+                    report_message.is_closed = true;
+                }
                 if (report_message.is_closed) {
                     main_return = 0;
                 }

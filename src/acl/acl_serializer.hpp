@@ -615,6 +615,7 @@ public:
                 this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
             }
         }
+
         return true;
     }
 
