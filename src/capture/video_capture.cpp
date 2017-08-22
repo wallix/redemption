@@ -181,9 +181,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     this->drawable.trace_mouse();
-    if (this->video_cropper_ptr) {
-        this->video_cropper_ptr->prepare_video_frame();
-    }
+    this->video_cropper_ptr->prepare_video_frame();
     if (!this->no_timestamp) {
         time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
@@ -555,10 +553,10 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         IOVideoRecorderWithTransport<SequenceTransport>::seek,
         &this->trans,
 
-        (this->video_cropper_ptr ? this->video_cropper_ptr->width() : this->video_cap_ctx.width()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->height() : this->video_cap_ctx.height()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->pix_len() : this->video_cap_ctx.pix_len()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->first_pixel() : this->video_cap_ctx.data()),
+        this->video_cropper_ptr->width(),
+        this->video_cropper_ptr->height(),
+        this->video_cropper_ptr->pix_len(),
+        this->video_cropper_ptr->first_pixel(),
 
         this->flv_params.bitrate,
         this->flv_params.frame_rate,
@@ -599,16 +597,14 @@ void SequencedVideoCaptureImpl::VideoCapture::clear_timestamp()
 
 void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
 {
-    if (this->video_cropper_ptr) {
-        this->video_cropper_ptr->prepare_video_frame();
-    }
+    this->video_cropper_ptr->prepare_video_frame();
 }
 
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
 {
     percent = std::min(percent, 100u);
-    const unsigned zoom_width = ((this->video_cropper_ptr ? this->video_cropper_ptr->width() : this->ic_drawable.width()) * percent) / 100;
-    const unsigned zoom_height = ((this->video_cropper_ptr ? this->video_cropper_ptr->height() : this->ic_drawable.height()) * percent) / 100;
+    const unsigned zoom_width = (this->video_cropper_ptr->width() * percent) / 100;
+    const unsigned zoom_height = (this->video_cropper_ptr->height() * percent) / 100;
     this->ic_zoom_factor = percent;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
@@ -631,10 +627,10 @@ void SequencedVideoCaptureImpl::dump24()
 {
     ::transport_dump_png24(
         this->ic_trans,
-        (this->video_cropper_ptr ? this->video_cropper_ptr->first_pixel() : this->ic_drawable.data()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->width() : this->ic_drawable.width()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->height() : this->ic_drawable.height()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->rowsize() : this->ic_drawable.rowsize()),
+        this->video_cropper_ptr->first_pixel(),
+        this->video_cropper_ptr->width(),
+        this->video_cropper_ptr->height(),
+        this->video_cropper_ptr->rowsize(),
         true);
 }
 
@@ -642,12 +638,12 @@ void SequencedVideoCaptureImpl::scale_dump24()
 {
     scale_data(
         this->ic_scaled_buffer.get(),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->first_pixel() : this->ic_drawable.data()),
+        this->video_cropper_ptr->first_pixel(),
         this->ic_scaled_width,
-        (this->video_cropper_ptr ? this->video_cropper_ptr->width() : this->ic_drawable.width()),
+        this->video_cropper_ptr->width(),
         this->ic_scaled_height,
-        (this->video_cropper_ptr ? this->video_cropper_ptr->height() : this->ic_drawable.height()),
-        (this->video_cropper_ptr ? this->video_cropper_ptr->rowsize() : this->ic_drawable.rowsize()));
+        this->video_cropper_ptr->height(),
+        this->video_cropper_ptr->rowsize());
     ::transport_dump_png24(
         this->ic_trans, this->ic_scaled_buffer.get(),
         this->ic_scaled_width, this->ic_scaled_height,

@@ -1291,7 +1291,7 @@ Capture::Capture(
         this->gds.push_back(*this->gd_drawable);
 
         if (!crop_rect.isempty()) {
-            this->video_cropper.reset(new VideoCropper(
+            this->video_cropper.reset(new EffectiveVideoCropper(
                     this->gd_drawable->width(),
                     this->gd_drawable->height(),
                     this->gd_drawable->data(),
@@ -1299,6 +1299,13 @@ Capture::Capture(
                     crop_rect.y,
                     crop_rect.cx,
                     crop_rect.cy
+                ));
+        }
+        else {
+            this->video_cropper.reset(new DummyVideoCropper(
+                    this->gd_drawable->width(),
+                    this->gd_drawable->height(),
+                    this->gd_drawable->data()
                 ));
         }
 
