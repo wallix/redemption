@@ -50,6 +50,7 @@
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
 #include "utils/png.hpp"
+#include "utils/timestamp_tracer.hpp"
 
 #include "transport/out_file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -546,7 +547,7 @@ public:
                 {"type","KBD_INPUT"},
                 {"data", make_array_view(byte_ptr(this->kbd_stream.get_data()).to_charp(), this->kbd_stream.get_offset())},
                 });
-            
+
             this->report_message.log5(info);
 
             this->kbd_stream.rewind();
@@ -630,6 +631,7 @@ public:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
+    TimestampTracer timestamp_tracer;
 
     PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, report_error_from_reporter(png_params.report_message))
@@ -639,6 +641,8 @@ public:
     , zoom_factor(png_params.zoom)
     , scaled_width{(((this->drawable.width() * this->zoom_factor) / 100)+3) & 0xFFC}
     , scaled_height{((this->drawable.height() * this->zoom_factor) / 100)}
+    , timestamp_tracer(this->drawable.width(), this->drawable.height(), this->drawable.impl().Bpp,
+          this->drawable.first_pixel(), this->drawable.rowsize())
     {
         if (this->zoom_factor != 100) {
             this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
@@ -689,13 +693,13 @@ public:
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
-                this->drawable.trace_timestamp(ptm);
+                this->timestamp_tracer.trace(ptm);
 
                 this->dump();
                 this->clear_old();
                 this->trans.next();
 
-                this->drawable.clear_timestamp();
+                this->timestamp_tracer.clear();
                 this->start_capture = now;
                 this->drawable.clear_mouse();
 
@@ -1484,7 +1488,6 @@ Capture::Microseconds Capture::periodic_snapshot(
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
 ) {
-//    this->capture_event.reset();
     this->capture_event.reset_trigger_time();
 
     if (this->gd_drawable) {

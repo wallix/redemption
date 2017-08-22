@@ -1085,7 +1085,7 @@ struct KeymapSym {
     {
 
         if (this->verbose){
-            LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode,  this->key_flags);
+            LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
         }
 
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)

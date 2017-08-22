@@ -164,7 +164,7 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj &, SocketTransport * s
             }
 
         } catch (Error & e) {
-            LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %d!\n", e.id);
+            LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %u!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)

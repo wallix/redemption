@@ -412,7 +412,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
     RED_CHECK_EQUAL(sizeof(__srcData), rlen);
     RED_CHECK_EQUAL(0,                 memcmp(__srcData, rdata, rlen));
 
-    LOG(LOG_INFO, "rlen=%d", rlen);
+    LOG(LOG_INFO, "rlen=%u", rlen);
     hexdump_d(rdata, rlen);
 }
 

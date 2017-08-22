@@ -1078,7 +1078,7 @@ struct InfoPacket {
             if (this->extendedInfoPacket.cbAutoReconnectLen) {
                 if (0x0000001C != this->extendedInfoPacket.cbAutoReconnectLen) {
                     LOG(LOG_ERR, "Wrong data size when reading autoReconnectCookie. Expected=%u Got=%u",
-                        0x0000001C, unsigned(this->extendedInfoPacket.cbAutoReconnectLen));
+                        0x0000001Cu, unsigned(this->extendedInfoPacket.cbAutoReconnectLen));
                     return;
                 }
 

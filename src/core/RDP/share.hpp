@@ -262,7 +262,7 @@ struct ShareControl_Recv
 
         if (!stream.in_check_rem(this->totalLength - 6)) {
             LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%zu",
-                this->totalLength - 6,
+                this->totalLength - 6u,
                 stream.in_remain());
             throw Error(ERR_SEC);
         }

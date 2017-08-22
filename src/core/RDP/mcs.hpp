@@ -733,7 +733,7 @@ namespace MCS
                 }
                 if ((0x7F00|MCSPDU_CONNECT_INITIAL) != tag){
                     LOG(LOG_ERR, "Connect Initial::CONNECT_INITIAL tag (0x%04x) expected, got 0x%04x",
-                        (0x7F00|MCSPDU_CONNECT_INITIAL), tag);
+                        (0x7F00u|MCSPDU_CONNECT_INITIAL), unsigned(tag));
                     throw Error(ERR_MCS);
                 }
                 return MCSPDU_CONNECT_INITIAL;
@@ -945,7 +945,7 @@ namespace MCS
                     }
                     if ((0x7F00|MCSPDU_CONNECT_RESPONSE) != tag){
                         LOG(LOG_ERR, "Connect Response::CONNECT_RESPONSE tag (0x%04x) expected, got 0x%04x",
-                            (0x7F00|MCSPDU_CONNECT_RESPONSE), tag);
+                            (0x7F00u|MCSPDU_CONNECT_RESPONSE), tag);
                         throw Error(ERR_MCS);
                     }
                     return MCSPDU_CONNECT_RESPONSE;
@@ -1208,7 +1208,7 @@ namespace MCS
             uint8_t tag = stream.in_uint8();
 
             if ((MCS::MCSPDU_ErectDomainRequest << 2) != tag){
-                LOG(LOG_ERR, "ErectDomainRequest tag (%u) expected, got %u",
+                LOG(LOG_ERR, "ErectDomainRequest tag (%d) expected, got %u",
                     (MCS::MCSPDU_ErectDomainRequest << 2), tag);
                 throw Error(ERR_MCS);
             }
@@ -1523,7 +1523,7 @@ namespace MCS
 
             uint16_t tag = stream.in_uint16_be();
             if ((tag >> 10) != MCS::MCSPDU_DisconnectProviderUltimatum) {
-                LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %u",
+                LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %d",
                    MCS::MCSPDU_DisconnectProviderUltimatum, (tag >> 10));
                 throw Error(ERR_MCS);
             }
@@ -1626,7 +1626,7 @@ namespace MCS
 
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_AttachUserRequest << 2) != tag){
-                LOG(LOG_ERR, "AttachUserRequest tag (%u) expected, got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
+                LOG(LOG_ERR, "AttachUserRequest tag (%d) expected, got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_AttachUserRequest;
@@ -1781,8 +1781,8 @@ namespace MCS
             uint8_t tag = stream.in_uint8();
             this->initiator_flag = (tag & 2) != 0;
             if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
-                LOG(LOG_ERR, "AttachUserConfirm tag (%u) expected, got %u",
-                    MCS::MCSPDU_AttachUserConfirm << 2, (tag & 0xFC));
+                LOG(LOG_ERR, "AttachUserConfirm tag (%d) expected, got %u",
+                    MCS::MCSPDU_AttachUserConfirm << 2, (tag & 0xFCu));
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_AttachUserConfirm;
@@ -1970,7 +1970,7 @@ namespace MCS
 
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_ChannelJoinRequest << 2)){
-                LOG(LOG_ERR, "ChannelJoinRequest tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
+                LOG(LOG_ERR, "ChannelJoinRequest tag (%d) expected, got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ChannelJoinRequest;
@@ -2108,7 +2108,7 @@ namespace MCS
 
             uint8_t tag = stream.in_uint8();
             if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
-                LOG(LOG_ERR, "ChannelJoinConfirm tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, (tag & 0xFC));
+                LOG(LOG_ERR, "ChannelJoinConfirm tag (%d) expected, got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, (tag & 0xFCu));
                 throw Error(ERR_MCS);
             }
             this->result    = stream.in_uint8();

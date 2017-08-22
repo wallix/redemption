@@ -193,7 +193,7 @@ public:
                     // EINVAL: invalid value in timeout (my fault again)
                     // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
 
-                    LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
+                    LOG(LOG_ERR, "Proxy data wait loop raised error %d : %s", errno, strerror(errno));
                     run_session = false;
                     continue;
                 }
@@ -421,7 +421,7 @@ public:
                         }
                     }
                 } catch (Error & e) {
-                    LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    LOG(LOG_INFO, "Session::Session exception = %u!\n", e.id);
                     time_t now = time(nullptr);
                     mm.invoke_close_box(e.errmsg(), signal, now, authentifier, authentifier);
                 };
@@ -432,7 +432,7 @@ public:
             front.disconnect();
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "Session::Session Init exception = %d!\n", e.id);
+            LOG(LOG_INFO, "Session::Session Init exception = %u!\n", e.id);
         }
         catch(...) {
             LOG(LOG_INFO, "Session::Session other exception in Init\n");

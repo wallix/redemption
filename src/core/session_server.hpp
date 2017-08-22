@@ -68,7 +68,7 @@ public:
 
         int sck = accept(incoming_sck, &u.s, &sin_size);
         if (-1 == sck) {
-            LOG(LOG_INFO, "Accept failed on socket %u (%s)", incoming_sck, strerror(errno));
+            LOG(LOG_INFO, "Accept failed on socket %d (%s)", incoming_sck, strerror(errno));
             _exit(1);
         }
 
@@ -193,7 +193,7 @@ public:
                     unlink(session_file);
 
                     if (ini.get<cfg::debug::session>()){
-                        LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+                        LOG(LOG_INFO, "Session::end of Session(%d)", sck);
                     }
 
                     shutdown(sck, 2);

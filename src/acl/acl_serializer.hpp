@@ -384,7 +384,6 @@ public:
         //    (unsigned)now, static_cast<unsigned>(signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
-//            mm.mod->get_event().reset();
             mm.mod->get_event().reset_trigger_time();
             return false;
         }
@@ -456,7 +455,6 @@ public:
                 // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
                 mm.mod->refresh_context();
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
-//                mm.mod->get_event().set();
                 mm.mod->get_event().set_trigger_time(wait_obj::NOW);
             }
             else if ((signal == BACK_EVENT_NEXT)
@@ -505,6 +503,8 @@ public:
                         signal = BACK_EVENT_NEXT;
 
                         this->remote_answer = false;
+
+                        authentifier.disconnect_target();
 
                         this->report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
@@ -920,7 +920,7 @@ public:
             try {
                 Buffers buffers(this->auth_trans, this->verbose);
 
-                for (auto && field : this->ini.get_fields_changed()) {
+                for (auto field : this->ini.get_fields_changed()) {
                     char const * key = string_from_authid(field.authid());
                     buffers.push(key);
                     buffers.push('\n');

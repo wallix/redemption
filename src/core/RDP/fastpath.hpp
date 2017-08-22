@@ -1354,7 +1354,7 @@ namespace FastPath {
         size_t str(char * buffer, size_t sz) const
         {
             size_t lg = snprintf(buffer, sz,
-                "Update_Recv(updateCode=%d fragmentation=0x%X compression=0x%X compressionFlags=0x%X size=%u)",
+                "Update_Recv(updateCode=%u fragmentation=0x%X compression=0x%X compressionFlags=0x%X size=%u)",
                 unsigned(this->updateCode), unsigned(this->fragmentation), unsigned(this->compression),
                 unsigned(compressionFlags), unsigned(this->size));
             if (lg >= sz){

@@ -223,7 +223,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 
     void write_desc_value(type_enumeration const & e, char const * prefix)
     {
-        if (e.is_icase_parser) {
+        if (e.is_string_parser) {
             if (std::none_of(begin(e.values), end(e.values), [](type_enumeration::Value const & v) {
                 return v.desc;
             })) {
@@ -234,7 +234,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         unsigned d = 0;
         bool const is_autoinc = e.flag == type_enumeration::autoincrement;
         for (type_enumeration::Value const & v : e.values) {
-            if (e.is_icase_parser) {
+            if (e.is_string_parser) {
                 this->write_value_((v.alias ? v.alias : v.name), v, prefix);
             }
             else {
@@ -363,7 +363,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         if (e.flag == type_enumeration::flags) {
             this->out() << "integer(min=0, max=" << e.max() << ", default=" << default_value << ")";
         }
-        else if (e.is_icase_parser) {
+        else if (e.is_string_parser) {
             this->out() << "option(";
             for (type_enumeration::Value const & v : e.values) {
                 this->out() << "'" << (v.alias ? v.alias : v.name) << "', ";

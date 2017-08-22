@@ -514,11 +514,11 @@ public:
                     //hexdump_d(order_start, stream.p - order_start);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
-                    LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)"
+                    LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%u)"
                        , header.type);
                     break;
                 default:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%u)", header.type);
                     /* error, unknown order */
                     break;
                 }
@@ -588,7 +588,7 @@ public:
                     {
                         if ((this->memblt.cache_id >> 8) >= 6) {
                             LOG( LOG_INFO, "colormap out of range in memblt:%x"
-                               , (this->memblt.cache_id >> 8));
+                               , unsigned(this->memblt.cache_id >> 8));
                             this->memblt.log(LOG_INFO, cmd_clip);
                             assert(false);
                         }
@@ -601,7 +601,7 @@ public:
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
-                                this->memblt.cache_id & 0x3, this->memblt.cache_idx);
+                                this->memblt.cache_id & 0x3u, this->memblt.cache_idx);
                             REDASSERT(false);
                         }
                     }
@@ -611,7 +611,7 @@ public:
                     {
                         if ((this->mem3blt.cache_id >> 8) >= 6){
                             LOG( LOG_INFO, "colormap out of range in mem3blt: %x"
-                               , (this->mem3blt.cache_id >> 8));
+                               , unsigned(this->mem3blt.cache_id >> 8));
                             this->mem3blt.log(LOG_INFO, cmd_clip);
                             assert(false);
                         }
@@ -624,7 +624,7 @@ public:
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
-                                this->mem3blt.cache_id & 0x3, this->mem3blt.cache_idx);
+                                this->mem3blt.cache_id & 0x3u, this->mem3blt.cache_idx);
                             REDASSERT(false);
                         }
                     }

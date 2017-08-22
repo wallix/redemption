@@ -79,7 +79,6 @@ public:
 
     mod_api()
     {
-//        this->event.set(0);
         this->event.set_trigger_time(wait_obj::NOW);
     }
 

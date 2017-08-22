@@ -171,8 +171,7 @@ public:
             this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%d",
-                e.id);
+            LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
             throw;
         }
         return (this->remaining_number_of_bytes_to_read != 0);

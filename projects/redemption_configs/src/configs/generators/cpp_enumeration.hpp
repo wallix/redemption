@@ -65,7 +65,7 @@ namespace cpp_enumeration_writer
 
         auto cfg_to_s_fmt = [&](auto & e) {
             write(e, "template<> struct zstr_buffer_traits<%e> : ");
-            out << "zstr_buffer_traits<" << (e.is_icase_parser ? "void" : "unsigned long") << "> {};\n\n";
+            out << "zstr_buffer_traits<" << (e.is_string_parser ? "void" : "unsigned long") << "> {};\n\n";
             write(e,
                 "inline array_view_const_char assign_zbuf_from_cfg(\n"
                 "    zstr_buffer_from<%e> & buf,\n"
@@ -73,7 +73,7 @@ namespace cpp_enumeration_writer
                 "    %e x\n"
                 ") {\n"
             );
-            if (e.is_icase_parser) {
+            if (e.is_string_parser) {
                 out <<
                     "    (void)buf;"
                     "    static constexpr array_view_const_char arr[]{\n";
@@ -98,7 +98,7 @@ namespace cpp_enumeration_writer
                 "inline parse_error parse(%e & x, spec_type<%e>, array_view_const_char value)\n"
                 "{\n"
             );
-            if (e.is_icase_parser) {
+            if (e.is_string_parser) {
                 out << "    return parse_enum_str(x, value, {\n";
                 loop(e,"        {cstr_array_view(\"%a\"), %e::%s},\n");
                 out << "    });\n";

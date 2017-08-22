@@ -58,7 +58,7 @@ public:
                 case PACKET_COMPR_TYPE_RDP6: this->mppc_dec = new rdp_mppc_60_dec; break;
                 case PACKET_COMPR_TYPE_RDP61: this->mppc_dec = new rdp_mppc_61_dec; break;
                 default:
-                    LOG(LOG_ERR, "rdp_mppc_unified_dec::decompress: invalid RDP compression code 0x%2.2x", type);
+                    LOG(LOG_ERR, "rdp_mppc_unified_dec::decompress: invalid RDP compression code 0x%2.2x", unsigned(type));
                     return false;
             }
         }

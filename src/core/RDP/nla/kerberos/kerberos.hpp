@@ -529,13 +529,13 @@ public:
         OM_uint32 msgctx = 0, ms;
         gss_buffer_desc status_string;
 
-        LOG(LOG_ERR, "GSS error [%d:%d:%d]: %s\n",
+        LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s\n",
             (major_status & 0xff000000) >> 24,	// Calling error
             (major_status & 0xff0000) >> 16,	// Routine error
             major_status & 0xffff,	// Supplementary info bits
             str);
 
-        LOG(LOG_ERR, "GSS Minor status error [%d:%d:%d]:%d %s\n",
+        LOG(LOG_ERR, "GSS Minor status error [%u:%u:%u]:%u %s\n",
             (minor_status & 0xff000000) >> 24,	// Calling error
             (minor_status & 0xff0000) >> 16,	// Routine error
             minor_status & 0xffff,	// Supplementary info bits

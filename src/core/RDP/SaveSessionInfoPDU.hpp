@@ -267,7 +267,7 @@ struct LogonInfoVersion1_Recv {
         this->SessionId = stream.in_uint32_le();
 
         LOG(LOG_INFO,
-            "Logon Info Version 1 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
+            "Logon Info Version 1 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%u",
             this->Domain, this->UserName, this->SessionId);
     }   // LogonInfoVersion1_Recv(InStream & stream)
 };  // struct LogonInfoVersion1_Recv
@@ -431,7 +431,7 @@ struct LogonInfoVersion2_Recv {
             sizeof(this->UserName));
 
         LOG(LOG_INFO,
-            "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
+            "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%u",
             this->Domain, this->UserName, this->SessionId);
     }   // LogonInfoVersion2_Recv(InStream & stream)
 };  // struct LogonInfoVersion2_Recv

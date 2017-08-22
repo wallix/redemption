@@ -145,7 +145,7 @@ public:
         }
 
         if (verbose) {
-            LOG(LOG_INFO, "filter number=%d", filter_number);
+            LOG(LOG_INFO, "filter number=%u", filter_number);
         }
 
         if (filter_number) {

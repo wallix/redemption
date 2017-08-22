@@ -45,6 +45,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/timestamp_tracer.hpp"
 
 inline void dump_png(const char * prefix, const Drawable & data)
 {
@@ -165,7 +166,6 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
     // uncomment to see result in png file
     //dump_png("test_glyph_000_", gd.impl());
 }
-
 
 RED_AUTO_TEST_CASE(TestPolyline)
 {
@@ -580,10 +580,14 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         Transport & trans;
         const Drawable & drawable;
 
+        TimestampTracer timestamp_tracer;
+
     public:
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
+        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
+              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
         {
         }
 
@@ -597,10 +601,10 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             const_cast<Drawable&>(this->drawable).trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->timestamp_tracer.trace(ptm);
             this->flush();
             this->trans.next();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            this->timestamp_tracer.clear();
             const_cast<Drawable&>(this->drawable).clear_mouse();
             return microseconds::zero();
         }
@@ -724,7 +728,6 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-
 
     uint8_t source64x64[] = {
 // MIX_SET 60 remaining=932 bytes pix=0
@@ -893,5 +896,3 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
 }
-
-

@@ -204,7 +204,6 @@ public:
     }
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
-//        if (bool(*this) && this->button_1_down_event.object_and_time) {
         if (bool(*this) && this->button_1_down_event.is_trigger_time_set()) {
             out_event_handlers.emplace_back(
                 &this->button_1_down_event,
@@ -220,7 +219,6 @@ public:
         this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
             this->button_1_down);
 
-//        this->button_1_down_event.object_and_time = false;
         this->button_1_down_event.reset_trigger_time();
     }
 
@@ -776,14 +774,12 @@ public:
         //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
-//        if (this->button_1_down_event.object_and_time) {
         if (this->button_1_down_event.is_trigger_time_set()) {
             if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
                 this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
                     this->button_1_down);
             }
 
-//            this->button_1_down_event.object_and_time = false;
             this->button_1_down_event.reset_trigger_time();
         }
 
@@ -887,14 +883,10 @@ public:
                         (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                         this->button_1_down = this->pressed_mouse_button;
 
-//                        this->button_1_down_event.set(400000);
                         this->button_1_down_event.set_trigger_time(400000);
 
                         this->button_1_down_x = xPos;
                         this->button_1_down_y = yPos;
-
-//                        this->button_1_down_event.object_and_time  = true;
-//                        this->button_1_down_event.waked_up_by_time = false;
 
                         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
@@ -2302,7 +2294,7 @@ protected:
             this->work_areas[this->work_area_count].cy = body_r.Bottom() - body_r.Top();
 
             if (this->verbose) {
-                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
+                LOG(LOG_INFO, "WorkAreaRect: (%d, %d, %u, %u)",
                     this->work_areas[this->work_area_count].x, this->work_areas[this->work_area_count].y,
                     this->work_areas[this->work_area_count].cx, this->work_areas[this->work_area_count].cy);
             }
@@ -2650,7 +2642,7 @@ protected:
             this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
 
             if (this->verbose) {
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%u, %u, %u, %u)",
+                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %u, %u)",
                     this->task_bar_rect.x, this->task_bar_rect.y,
                     this->task_bar_rect.cx, this->task_bar_rect.cy);
             }

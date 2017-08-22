@@ -49,7 +49,7 @@ namespace
     void video_transport_log_error(Error const & error)
     {
         if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
-            LOG(LOG_ERR, "VideoTransport::send: %s [%u]", strerror(error.errnum), error.errnum);
+            LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
         }
     }
 }
@@ -87,7 +87,7 @@ VideoTransportBase::~VideoTransportBase()
         this->out_file.close();
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         if (::rename(this->tmp_filename, this->final_filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
                , this->tmp_filename, this->final_filename, errno, strerror(errno));
         }
     }
@@ -101,7 +101,7 @@ void VideoTransportBase::force_open()
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
     int fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (fd == -1) {
-        LOG( LOG_ERR, "can't open temporary file %s : %s [%u]"
+        LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
            , this->tmp_filename
            , strerror(errno), errno);
         this->status = false;
@@ -109,7 +109,7 @@ void VideoTransportBase::force_open()
     }
 
     if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
-        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
            , this->tmp_filename
            , this->groupid ? "u+r, g+r" : "u+r"
            , strerror(errno), errno);
@@ -131,7 +131,7 @@ void VideoTransportBase::rename()
 
     if (::rename(this->tmp_filename, this->final_filename) < 0)
     {
-        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
             , this->tmp_filename, this->final_filename, errno, strerror(errno));
         this->status = false;
         throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -168,6 +168,8 @@ VideoCaptureCtx::VideoCaptureCtx(
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , no_timestamp(no_timestamp)
+, timestamp_tracer(this->drawable.width(), this->drawable.height(), this->drawable.impl().Bpp,
+      this->drawable.first_pixel(), this->drawable.rowsize())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
@@ -177,13 +179,13 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
         time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
         localtime_r(&rawtime, &tm_result);
-        this->drawable.trace_timestamp(tm_result);
+        this->timestamp_tracer.trace(tm_result);
     }
     recorder.preparing_video_frame();
     this->previous_second = this->start_video_capture.tv_sec;
 
     if (!this->no_timestamp) {
-        this->drawable.clear_timestamp();
+        this->timestamp_tracer.clear();
     }
     this->drawable.clear_mouse();
 }
@@ -281,10 +283,10 @@ struct IOVideoRecorderWithTransport
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
-                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%d)", e.id);
+                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%u)", e.id);
             }
             else {
-                LOG(LOG_ERR, "Video write_packet failure (id=%d, errnum=%d)", e.id, e.errnum);
+                LOG(LOG_ERR, "Video write_packet failure (id=%u, errnum=%d)", e.id, e.errnum);
             }
             return_code = -1;
         }
@@ -314,7 +316,7 @@ struct IOVideoRecorderWithTransport
             return offset;
         }
         catch (Error const & e){
-            LOG(LOG_ERR, "Video seek failure (id=%d)", e.id);
+            LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
             return -1;
         };
     }
@@ -349,7 +351,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 , video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable)
 {
     if (flv_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
             flv_params.target_width, flv_params.target_height,
             flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
             flv_params.codec.c_str()
@@ -483,9 +485,9 @@ Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
         if (this->first_image_impl.ic_drawable.logical_frame_ended() || duration > std::chrono::seconds(2) || duration >= video_interval) {
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            this->first_image_impl.ic_drawable.trace_timestamp(ptm);
+            this->first_image_impl.timestamp_tracer.trace(ptm);
             this->first_image_impl.ic_flush();
-            this->first_image_impl.ic_drawable.clear_timestamp();
+            this->first_image_impl.timestamp_tracer.clear();
             this->first_image_impl.ic_has_first_img = true;
             this->first_image_impl.ic_trans.next();
             ret = video_interval;
@@ -514,7 +516,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 , drawable(drawable)
 {
     if (flv_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %d x %d, rate: %d, qscale: %d, brate: %d, codec: %s",
+        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
             flv_params.target_width, flv_params.target_height,
             flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
             flv_params.codec.c_str());
@@ -661,6 +663,8 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     (video_interval > std::chrono::microseconds(0)) ? video_interval : std::chrono::microseconds::max(),
     *this)
 , next_video_notifier(next_video_notifier)
+, timestamp_tracer(this->ic_drawable.width(), this->ic_drawable.height(), this->ic_drawable.impl().Bpp,
+      this->ic_drawable.first_pixel(), this->ic_drawable.rowsize())
 {
     const unsigned zoom_width = (this->ic_drawable.width() * this->ic_zoom_factor) / 100;
     const unsigned zoom_height = (this->ic_drawable.height() * this->ic_zoom_factor) / 100;
@@ -676,18 +680,18 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     if (!this->ic_has_first_img) {
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
-        this->ic_drawable.trace_timestamp(ptm);
+        this->timestamp_tracer.trace(ptm);
         this->ic_flush();
-        this->ic_drawable.clear_timestamp();
+        this->timestamp_tracer.clear();
         this->ic_has_first_img = true;
         this->ic_trans.next();
     }
     this->vc.next_video();
     tm ptm;
     localtime_r(&now.tv_sec, &ptm);
-    this->ic_drawable.trace_timestamp(ptm);
+    this->timestamp_tracer.trace(ptm);
     this->ic_flush();
-    this->ic_drawable.clear_timestamp();
+    this->timestamp_tracer.clear();
     this->ic_trans.next();
     this->next_video_notifier.notify_next_video(now, reason);
 }

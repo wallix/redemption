@@ -244,9 +244,9 @@ public:
             this->total_received += res;
 
             if (bool(this->verbose & Verbose::dump)) {
-                LOG(LOG_INFO, "Recv done on %s (%d) %zu bytes", this->name, this->sck, res);
+                LOG(LOG_INFO, "Recv done on %s (%d) %zd bytes", this->name, this->sck, res);
                 hexdump_c(buffer, res);
-                LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, res);
+                LOG(LOG_INFO, "Dump done on %s (%d) %zd bytes", this->name, this->sck, res);
             }
         }
 
@@ -297,7 +297,7 @@ public:
         ssize_t res = (this->tls) ? this->tls->privsend_tls(buffer, len) : this->privsend(buffer, len);
         if (res < 0) {
             LOG(LOG_WARNING,
-                "SocketTransport::Send failed on %s (%d) errno=%u [%s]",
+                "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
                 this->name, this->sck, errno, strerror(errno));
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }

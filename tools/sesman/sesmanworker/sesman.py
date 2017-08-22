@@ -1292,7 +1292,6 @@ class Sesman():
             if _status and not self.infinite_connection and now < deconnection_time:
                 # deconnection time to epoch
                 tt = datetime.strptime(deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
-                Logger().info(u"timeclose='%s'" % int(mktime(tt)))
                 kv[u'timeclose'] = int(mktime(tt))
                 _status, _error = self.interactive_display_message(
                         {u'message': TR(u'session_closed_at %s') % deconnection_time}
@@ -1650,9 +1649,6 @@ class Sesman():
 
                                 self.shared[u'auth_channel_target'] = u''
                                 if self.shared.get(u'module') == u"close":
-                                    try_next = False
-                                    close_box = True
-                                    # Logger().info("GOT DISCONNECTED CLOSE !!!")
                                     break
                                 if self.shared.get(u'keepalive') == MAGICASK:
                                     self.send_data({u'keepalive': u'True'})
@@ -1663,6 +1659,9 @@ class Sesman():
                                     Logger().error(u'break connection')
                                     release_reason = u'Break connection'
                                     break
+                        if self.shared.get(u'module') == u"close":
+                            try_next = False
+                            close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
                     except AuthentifierSocketClosed, e:

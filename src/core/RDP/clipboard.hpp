@@ -313,7 +313,7 @@ public:
         LOG(LOG_INFO, "     CliprdrHeader:");
         LOG(LOG_INFO, "          * MsgType  = 0x%x (2 bytes): %s", this->msgType_, get_msgType_name(this->msgType_));
         LOG(LOG_INFO, "          * MsgFlags = 0x%x (2 bytes): %s", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
-        LOG(LOG_INFO, "          * DataLen  = %d Byte(s) (4 bytes)", this->dataLen_);
+        LOG(LOG_INFO, "          * DataLen  = %u Byte(s) (4 bytes)", this->dataLen_);
     }
 
 
@@ -1477,9 +1477,9 @@ struct FileContentsRequestPDU     // Resquest RANGE
     void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Request PDU:");
-        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
-        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
-        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
+        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", unsigned(this->streamID));
+        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", unsigned(this->flag));
+        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", unsigned(this->lindex));
         LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
     }
 
@@ -2224,7 +2224,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
                 default:
                     size_t len_to_skyp = recordSize*2;
-                    LOG(LOG_WARNING, "DEFAULT: unknow record type=%x size=%zu octets", type, len_to_skyp);
+                    LOG(LOG_WARNING, "DEFAULT: unknow record type=%x size=%zu octets", unsigned(type), len_to_skyp);
                     if (len_to_skyp <= stream.in_remain()) {
                         stream.in_skip_bytes(len_to_skyp - 6);
                     } else {
@@ -2414,7 +2414,7 @@ public:
                 }
                 break;
 
-                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", type, size);
+                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", unsigned(type), size);
                          chunk.in_skip_bytes(size - 6);
 
                 break;

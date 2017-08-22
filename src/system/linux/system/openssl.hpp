@@ -448,7 +448,7 @@ struct TLSContext
                     while ((error = ERR_get_error()) != 0){
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     }
-                    LOG(LOG_WARNING, "tls::tls_print_error %s [%u]", strerror(errno), errno);
+                    LOG(LOG_WARNING, "tls::tls_print_error %s [%d]", strerror(errno), errno);
                     return;
             }
         }
@@ -1193,7 +1193,7 @@ struct TLSContext
 
                 default:
                 {
-                    LOG(LOG_INFO, "Failure in SSL library, error=%ld, %s [%u]", error, strerror(errno), errno);
+                    LOG(LOG_INFO, "Failure in SSL library, error=%lu, %s [%d]", error, strerror(errno), errno);
                     uint32_t errcount = 0;
                     errcount++;
                     LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));

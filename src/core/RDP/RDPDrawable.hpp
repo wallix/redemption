@@ -76,6 +76,10 @@ public:
     {
     }
 
+    uint8_t * first_pixel() noexcept {
+        return this->drawable.first_pixel();
+    }
+
     const uint8_t * data() const noexcept {
         return this->drawable.data();
     }
@@ -86,6 +90,10 @@ public:
 
     uint16_t height() const noexcept {
         return this->drawable.height();
+    }
+
+    static constexpr uint8_t bpp() noexcept {
+        return Drawable::bpp();
     }
 
     unsigned size() const noexcept {
@@ -864,16 +872,6 @@ public:
         return this->drawable.clear_mouse();
     }
 
-    void clear_timestamp(void)
-    {
-        return this->drawable.clear_timestamp();
-    }
-
-    void trace_timestamp(const tm & ptm)
-    {
-        return this->drawable.trace_timestamp(ptm);
-    }
-
     void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
     void draw(const RDP::RAIL::WindowIcon                     &) override {}
     void draw(const RDP::RAIL::CachedIcon                     &) override {}
@@ -898,4 +896,3 @@ inline void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
         drawable.rowsize(),
         bgr);
 }
-

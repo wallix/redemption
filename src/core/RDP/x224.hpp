@@ -679,8 +679,9 @@ namespace X224
                     this->cookie[this->cookie_len] = 0;
                     if (verbose){
                         LOG(LOG_INFO, "cookie: %s [%.2x][%.2x]",
-                            this->cookie,this->cookie[this->cookie_len-2],
-                            this->cookie[this->cookie_len-1]);
+                            this->cookie,
+                            unsigned(this->cookie[this->cookie_len-2]),
+                            unsigned(this->cookie[this->cookie_len-1]));
                     }
                     break;
                 }
@@ -1017,7 +1018,7 @@ namespace X224
                 this->rdp_neg_length = stream.in_uint16_le();
                 this->rdp_neg_code = stream.in_uint32_le();
 
-                LOG(LOG_INFO, "NEG_RSP_TYPE=%d NEG_RSP_FLAGS=%d NEG_RSP_LENGTH=%d NEG_RSP_SELECTED_PROTOCOL=%d\n",
+                LOG(LOG_INFO, "NEG_RSP_TYPE=%u NEG_RSP_FLAGS=%u NEG_RSP_LENGTH=%u NEG_RSP_SELECTED_PROTOCOL=%u\n",
                     this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
 
                 switch (this->rdp_neg_type){
@@ -1322,7 +1323,7 @@ namespace X224
                     }
                     this->invalid_tpdu_vl = stream.in_uint8();
                     if (this->invalid_tpdu_vl > this->LI - 6){
-                        LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x",
+                        LOG(LOG_ERR, "Invalid TPDU details too large, max=%d got %x",
                             this->LI - 6, this->invalid_tpdu_vl);
                         throw Error(ERR_X224);
                     }
@@ -1335,7 +1336,7 @@ namespace X224
 
                     stream.in_copy_bytes(this->invalid, this->invalid_tpdu_vl);
                     if (this->LI - 6 - this->invalid_tpdu_vl != 0){
-                        LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes",
+                        LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %d bytes",
                             this->LI - 6 - this->invalid_tpdu_vl);
                         throw Error(ERR_X224);
                     }

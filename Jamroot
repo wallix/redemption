@@ -11,6 +11,12 @@ project redemption
     : requirements
 
     <conditional>@includes
+    <conditional>@flags
+    # <lto>on
+    # <suggest>on
+    # <stack-protector>on
+    # <relro>on
+    # <security>on # strong, all
 
     $(CXXFLAGS)
 
@@ -157,6 +163,12 @@ constant TEST_DEPENDENCIES :
     $(UNIT_TEST_DEPENDENCIES)
 ;
 
+rule obj2 ( base : source : requirements * )
+{
+    obj $(base).o : $(source) : $(requirements) $(OBJ_EXE_DEPENDENCIES) ;
+    obj $(base)_test.o : $(source) : $(requirements) $(OBJ_TEST_DEPENDENCIES) ;
+}
+
 
 obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
@@ -166,19 +178,13 @@ obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj scytale.o :
-    $(REDEMPTION_SRC_PATH)/main/scytale.cpp
-    :
+
+obj2 do_recorder : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
+obj2 scytale : $(REDEMPTION_SRC_PATH)/main/scytale.cpp :
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
-    $(OBJ_EXE_DEPENDENCIES)
 ;
-
-obj capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-
-obj do_recorder_test : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj capture_test : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj scytale_test : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPENDENCIES) ;
+obj2 capture : $(REDEMPTION_SRC_PATH)/capture/capture.cpp ;
+obj2 keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 
 alias bitmap : bitmap.o bitmap_from_file.o png ;
 alias video_capture : video_capture.o ffmpeg ;
@@ -192,11 +198,12 @@ exe rdpproxy
     :
         $(REDEMPTION_SRC_PATH)/main/main.cpp
         video_capture
-        capture
+        capture.o
         bitmap.o
         bitmap_from_file.o
         program_options.o
         png.o
+        keymap.o
 
         ocr/<link>static
 
@@ -226,6 +233,7 @@ exe rdpproxy
 lib libscytale
    :
        scytale.o
+       keymap.o
        $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
 
        openssl
@@ -244,13 +252,14 @@ lib libscytale
 lib libredrec
     :
         video_capture
-        capture
-        do_recorder
+        capture.o
+        do_recorder.o
         $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp
         bitmap.o
         bitmap_from_file.o
         program_options.o
         png.o
+        keymap.o
 
         ocr/<link>static
 
@@ -271,11 +280,12 @@ exe rdptproxy
     :
         $(REDEMPTION_SRC_PATH)/main/transparent.cpp
         video_capture
-        capture
+        capture.o
         png.o
         bitmap.o
         bitmap_from_file.o
         program_options.o
+        keymap.o
 
         ocr/<link>static
 
@@ -299,6 +309,7 @@ exe rdptanalyzer
     :
         $(REDEMPTION_SRC_PATH)/main/tanalyzer.cpp
         program_options.o
+        keymap.o
 
         openssl
         crypto
@@ -335,13 +346,14 @@ exe rdpclient
 exe vncclient
     : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
         video_capture
-        capture
+        capture.o
         program_options.o
         bitmap_from_file.o
         png.o
         bitmap.o
         openssl
         d3des.o
+        keymap.o
         crypto
         png
         z
@@ -359,12 +371,13 @@ exe vncclient
 exe rdpheadless
     : $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
         video_capture
-        capture
+        capture.o
         program_options.o
         bitmap_from_file.o
         png.o
         bitmap.o
         d3des.o
+        keymap.o
         openssl
         crypto
         png
@@ -378,6 +391,7 @@ exe rdpheadless
         gssglue
     :
         <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
+        <cxxflags>-std=c++14
         $(EXE_DEPENDENCIES)
     ;
 
@@ -516,7 +530,7 @@ exe tls_test_server
 test-run test_scytale
     : main/test_scytale.cpp
     :
-    : <library>openssl <library>crypto <library>snappy <library>scytale_test ;
+    : <library>openssl <library>crypto <library>snappy <library>scytale_test.o ;
 ## @}
 
 ## Acl tests
@@ -626,8 +640,8 @@ test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <librar
 
 test-canonical main/do_recorder.hpp :
     <library>program_options.o <library>openssl <library>crypto <library>snappy <library>dl <library>z
-    <library>do_recorder_test <library>ocr <library>bitmap <library>png.o
-    <library>capture_test <library>video_capture
+    <library>do_recorder_test.o <library>ocr <library>bitmap <library>png.o
+    <library>capture_test.o <library>video_capture
 ;
 
 
@@ -677,34 +691,34 @@ test-canonical utils/winpr/pattern.hpp ;
 ## Widget tests
 ## @{
 # TODO test-canonical mod/internal/widget/columnlayout.hpp ;
-test-canonical mod/internal/widget/composite.hpp : <library>png.o <library>png <library>crypto ;
-test-canonical mod/internal/widget/edit.hpp : <library>crypto ;
-test-canonical mod/internal/widget/edit_valid.hpp : <library>crypto ;
-test-canonical mod/internal/widget/flat_button.hpp : <library>crypto ;
-test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto ;
-test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>crypto ;
-test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget/selector.hpp : <library>crypto ;
-test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget/grid.hpp : <library>crypto ;
-test-canonical mod/internal/widget/group_box.hpp : <library>crypto ;
-test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>crypto ;
-test-canonical mod/internal/widget/label.hpp : <library>crypto ;
-test-canonical mod/internal/widget/labelgrid.hpp : <library>crypto ;
+test-canonical mod/internal/widget/composite.hpp : <library>png.o <library>png <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/edit.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/edit_valid.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_button.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/selector.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/grid.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/group_box.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/label.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/labelgrid.hpp : <library>crypto <library>keymap_test.o ;
 # TODO test-canonical mod/internal/widget/linelayout.hpp ;
-test-canonical mod/internal/widget/multiline.hpp : <library>crypto ;
-test-canonical mod/internal/widget/number_edit.hpp : <library>crypto ;
-test-canonical mod/internal/widget/password.hpp : <library>crypto ;
+test-canonical mod/internal/widget/multiline.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/number_edit.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/password.hpp : <library>crypto <library>keymap_test.o ;
 # TODO test-canonical mod/internal/widget/radio_list.hpp ;
-test-canonical mod/internal/widget/screen.hpp : <library>crypto ;
-test-canonical mod/internal/widget/scroll.hpp : <library>crypto ;
+test-canonical mod/internal/widget/screen.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/scroll.hpp : <library>crypto <library>keymap_test.o ;
 # TODO test-canonical mod/internal/widget/stacklayout.hpp ;
 test-canonical mod/internal/widget/tab.hpp ;
-test-canonical mod/internal/widget/tooltip.hpp : <library>crypto ;
-test-canonical mod/internal/widget/widget.hpp : <library>crypto ;
-test-canonical mod/internal/widget/widget_rect.hpp : <library>crypto ;
-test-canonical mod/internal/widget/flat_vnc_authentification.hpp ;
-test-canonical mod/internal/widget/language_button.hpp ;
+test-canonical mod/internal/widget/tooltip.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/widget.hpp : ;
+test-canonical mod/internal/widget/widget_rect.hpp : <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_vnc_authentification.hpp : ;
+test-canonical mod/internal/widget/language_button.hpp : ;
 test-canonical mod/internal/widget/layout.hpp ;
 test-canonical mod/internal/widget/notify_api.hpp ;
 ## @}
@@ -712,23 +726,23 @@ test-canonical mod/internal/widget/notify_api.hpp ;
 
 ## Widget for workflow
 ## @{
-test-canonical mod/internal/widget/flat_wait.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/widget/flat_form.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget/flat_wait.hpp : <library>png <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/widget/flat_form.hpp : <library>png <library>crypto <library>keymap_test.o ;
 ## @}
 
 
 ## Mod tests
 ## @{
-test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
-test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
-test-canonical mod/internal/flat_dialog_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>crypto ;
+test-canonical mod/internal/bouncer2_mod.hpp : <library>png <library>keymap_test.o ;
+test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto <library>keymap_test.o ;
+test-canonical mod/internal/flat_dialog_mod.hpp : <library>bitmap <library>keymap_test.o ;
+test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap <library>keymap_test.o ;
+test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>keymap_test.o ;
+test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>crypto <library>keymap_test.o ;
 test-canonical mod/internal/internal_mod.hpp ;
-test-canonical mod/internal/replay_mod.hpp : <library>png ;
-test-canonical mod/internal/test_card_mod.hpp : <library>bitmap ;
-test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap ;
+test-canonical mod/internal/replay_mod.hpp : <library>png <library>keymap_test.o ;
+test-canonical mod/internal/test_card_mod.hpp : <library>bitmap <library>keymap_test.o ;
+test-canonical mod/internal/widget_test_mod.hpp : <library>bitmap <library>keymap_test.o ;
 test-canonical mod/internal/selector_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
@@ -962,6 +976,7 @@ test-run test_rdp_client_test_card
       <library>crypto
       <library>dl
       <library>openssl
+      <library>keymap_test.o
       <covflag>nocover
     ;
 
@@ -978,6 +993,7 @@ test-run test_rdp_client_large_pointer
       <library>z
       <library>dl
       <library>openssl
+      <library>keymap_test.o
       <covflag>nocover
     ;
 
@@ -993,6 +1009,7 @@ test-run test_rdp_client_tls_w2008
       <library>z
       <library>dl
       <library>openssl
+      <library>keymap_test.o
       <covflag>nocover
     ;
 
@@ -1010,6 +1027,7 @@ test-run test_rdp_client_wab
       <library>dl
       <library>krb5
       <library>gssglue
+      <library>keymap_test.o
       <covflag>nocover
     ;
 
@@ -1023,6 +1041,7 @@ test-run test_vnc_client_simple
       <library>d3des.o
       <library>dl
       <library>z
+      <library>keymap_test.o
       <covflag>nocover
     ;
 ## @}
@@ -1040,6 +1059,7 @@ test-run cli_vnc_connection
       <library>crypto
       <library>d3des.o
       <library>dl
+      <library>keymap_test.o
       <covflag>nocover
     ;
 ## @}
@@ -1052,7 +1072,7 @@ test-run test_rdesktop_client
   :
   : <library>bitmap
     <library>video_capture
-    <library>capture_test
+    <library>capture_test.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1060,6 +1080,7 @@ test-run test_rdesktop_client
     <library>crypto
     <library>dl
     <library>ocr
+    <library>keymap_test.o
     <covflag>nocover
 ;
 
@@ -1069,7 +1090,7 @@ test-run test_mstsc_client
   :
   : <library>bitmap
     <library>video_capture
-    <library>capture_test
+    <library>capture_test.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1077,6 +1098,7 @@ test-run test_mstsc_client
     <library>crypto
     <library>dl
     <library>ocr
+    <library>keymap_test.o
     <covflag>nocover
 ;
 
@@ -1086,7 +1108,7 @@ test-run test_mstsc_client_rdp50bulk
   :
   : <library>bitmap
     <library>video_capture
-    <library>capture_test
+    <library>capture_test.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1094,6 +1116,7 @@ test-run test_mstsc_client_rdp50bulk
     <library>crypto
     <library>dl
     <library>ocr
+    <library>keymap_test.o
     <covflag>nocover
 ;
 ## @}
@@ -1128,7 +1151,7 @@ test-canonical core/buf64k.hpp ;
 test-canonical front/front.hpp
   : <library>bitmap
     <library>video_capture
-    <library>capture_test
+    <library>capture_test.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1138,9 +1161,10 @@ test-canonical front/front.hpp
     <library>dl
     <library>crypto
     <library>ocr
+    <library>keymap_test.o
 ;
 
-test-canonical keyboard/keymap2.hpp ;
+test-canonical keyboard/keymap2.hpp : <library>keymap_test.o ;
 test-canonical keyboard/keymapSym.hpp ;
 
 test-canonical gdi/graphic_cmd_color.hpp ;
@@ -1191,12 +1215,12 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp ;
-obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
-obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp ;
-obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
-obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
-obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) ;
+obj sashimi_error : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_pki : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_channels : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_sftp : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_libssh : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
+obj sashimi_log : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp : $(LIB_DEPENDENCIES) <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 
 lib sashimi :
     sashimi_pki
@@ -1211,12 +1235,11 @@ lib sashimi :
     dl
     z
     rt
-   :
-       <link>shared
-#       <linkflags>-Wl,-Bsymbolic
-       $(LIB_DEPENDENCIES)
     :
-    :
+    <link>shared
+#    <linkflags>-Wl,-Bsymbolic
+    $(LIB_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
 ;
 
 ##
@@ -1229,6 +1252,7 @@ unit-test test_buffer :
     libunit_test
     :
     $(TEST_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
     ;
 
 unit-test test_crypto :
@@ -1238,4 +1262,5 @@ unit-test test_crypto :
     libunit_test
     :
     $(TEST_DEPENDENCIES)
+    <cxxflags>-Wno-format <cxxflags>-Wno-format-security
     ;

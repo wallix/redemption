@@ -1369,8 +1369,8 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
-        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%ld (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%ld (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * FileNameLength  = %u (4 bytes)", this->FileNameLength);
         LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
@@ -2141,11 +2141,11 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * EndOfFile       = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
-        LOG(LOG_INFO, "          * AllocationSize  = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile       = 0x%ld (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize  = 0x%ld (8 bytes)", this->AllocationSize);
         LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
         LOG(LOG_INFO, "          * FileNameLength  = %u (4 bytes)", this->FileNameLength);
-        LOG(LOG_INFO, "          * EaSize          = %d (4 bytes)", this->EaSize);
+        LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
         LOG(LOG_INFO, "          * FileName        = \"%s\"", file_name_UTF8);
     }
 };  // FileFullDirectoryInformation
@@ -2641,8 +2641,8 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Standard Information:");
-        LOG(LOG_INFO, "          * AllocationSize = 0x%" PRIx64 " (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * EndOfFile      = 0x%" PRIx64 " (8 bytes)", this->EndOfFile);
+        LOG(LOG_INFO, "          * AllocationSize = 0x%ld (8 bytes)", this->AllocationSize);
+        LOG(LOG_INFO, "          * EndOfFile      = 0x%ld (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * NumberOfLinks  = 0x%08x (4 bytes)", this->NumberOfLinks);
         LOG(LOG_INFO, "          * DeletePending  = 0x%02x (1 byte)", this->DeletePending);
         LOG(LOG_INFO, "          * Directory      = 0x%02x (1 byte)", this->Directory);
@@ -3127,9 +3127,9 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Fs Full Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->CallerAvailableAllocationUnits);
-        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->ActualAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * TotalAllocationUnits           = 0x%ld (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * CallerAvailableAllocationUnits = 0x%ld (8 bytes)", this->CallerAvailableAllocationUnits);
+        LOG(LOG_INFO, "          * ActualAvailableAllocationUnits = 0x%ld (8 bytes)", this->ActualAvailableAllocationUnits);
         LOG(LOG_INFO, "          * SectorsPerAllocationUnit       = %u (4 bytes)", this->SectorsPerAllocationUnit);
         LOG(LOG_INFO, "          * BytesPerSector                 = %u (4 bytes)", this->BytesPerSector);
     }
@@ -3263,8 +3263,8 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Fs Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%" PRIx64 " (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%" PRIx64 " (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%ld (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%ld (8 bytes)", this->AvailableAllocationUnits);
         LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
         LOG(LOG_INFO, "          * BytesPerSector           = %u (4 bytes)", this->BytesPerSector);
     }

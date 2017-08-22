@@ -109,7 +109,6 @@ private:
         this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
         this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
         this->event.signal = BACK_EVENT_NEXT;
-//        this->event.set();
         this->event.set_trigger_time(wait_obj::NOW);
     }
     // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -117,7 +116,6 @@ private:
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
         this->event.signal = BACK_EVENT_NEXT;
-//        this->event.set();
         this->event.set_trigger_time(wait_obj::NOW);
     }
 
@@ -126,7 +124,6 @@ private:
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("exit");
         this->event.signal = BACK_EVENT_NEXT;
-//        this->event.set();
         this->event.set_trigger_time(wait_obj::NOW);
     }
 
@@ -143,11 +140,9 @@ public:
             this->refused();
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-//            this->event.set(1000000);
             this->event.set_trigger_time(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-//            this->event.reset();
             this->event.reset_trigger_time();
             break;
         }

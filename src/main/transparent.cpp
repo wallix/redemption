@@ -309,7 +309,7 @@ int main(int argc, char * argv[]) {
         }
     }   // try
     catch (Error & e) {
-        LOG(LOG_ERR, "errid = %d", e.id);
+        LOG(LOG_ERR, "errid = %u", e.id);
     }
 
     front.disconnect();
@@ -371,7 +371,6 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
 
             if (front.up_and_running) {
                 if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-//                    mod.get_event().reset();
                     mod.get_event().reset_trigger_time();
                     mod.draw_event(time(nullptr), front);
                     if (mod.get_event().signal != BACK_EVENT_NONE) {
@@ -386,7 +385,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             else {
             }
         } catch (Error & e) {
-            LOG(LOG_ERR, "Session::Session exception = %d!\n", e.id);
+            LOG(LOG_ERR, "Session::Session exception = %u!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)

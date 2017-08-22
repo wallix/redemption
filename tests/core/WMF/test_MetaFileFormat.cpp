@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestMetaHeader)
         metaHeader.emit(out_stream);
 
         std::string const out_data(reinterpret_cast<char *>(out_stream.get_data()), data_len);
-        std::string const expected(reinterpret_cast<const char *>(data), data_len);
+        std::string const expected(data, data_len);
         RED_CHECK_EQUAL(expected, out_data);
     }
 

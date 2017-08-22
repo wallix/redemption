@@ -132,18 +132,22 @@ namespace detail
 
         auto png_write_data = [](png_structp png_ptr, png_bytep data, png_size_t length) noexcept {
             try {
-                static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.send(data, length);
+                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.send(data, length);
+                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->trans.send(data, length);
             } catch (...) {
-                static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
+                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
+                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->error_id = -1;
                 png_error(png_ptr, "Exception in Transport::send");
             }
         };
 
         auto png_flush_data = [](png_structp png_ptr) noexcept {
             try {
-                static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.flush();
+                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.flush();
+                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->trans.flush();
             } catch (...) {
-                static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
+                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
+                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->error_id = -1;
                 png_error(png_ptr, "Exception in Transport::flush");
             }
         };
@@ -219,8 +223,9 @@ void transport_read_png24(
     (void)width;
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
-        // TODO catch exception ?
-        static_cast<Transport*>(png_ptr->io_ptr)->recv_boom(data, length);
+       // TODO catch exception ?
+       // static_cast<Transport*>(png_ptr->io_ptr)->recv_boom(data, length);
+        static_cast<Transport*>(png_get_io_ptr(png_ptr))->recv_boom(data, length);
     };
 
     detail::PngReadStruct png;
@@ -264,7 +269,8 @@ void set_rows_from_image_chunk(
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep buffer, png_size_t len) {
         // TODO catch exception ?
-        auto & chunk_trans = *static_cast<InChunkedImage*>(png_ptr->io_ptr);
+        //        auto & chunk_trans = *static_cast<InChunkedImage*>(png_ptr->io_ptr);
+        auto & chunk_trans = *static_cast<InChunkedImage*>(png_get_io_ptr(png_ptr));
         size_t total_len = 0;
         while (total_len < len){
             size_t remaining = chunk_trans.in_stream.in_remain();
@@ -292,11 +298,9 @@ void set_rows_from_image_chunk(
             case WrmChunkType::LAST_IMAGE_CHUNK:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
                 png_error(png_ptr, "Failed to read embedded image from WRM (transport closed)");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
             default:
                 LOG(LOG_ERR, "Failed to read embedded image from WRM");
                 png_error(png_ptr, "Failed to read embedded image from WRM");
-                throw Error(ERR_TRANSPORT_READ_FAILED);
             }
         }
     };
@@ -304,6 +308,16 @@ void set_rows_from_image_chunk(
     InChunkedImage chunk_trans(chunk_type, chunk_size, trans);
     detail::PngReadStruct png;
     png_set_read_fn(png.ppng, &chunk_trans, png_read_data_fn);
+
+#if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4)
+    if (setjmp(png_jmpbuf(png.ppng)))
+#else
+    if (setjmp(png.ppng->jmpbuf))
+#endif
+    {
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+    }
+
     png_read_info(png.ppng, png.pinfo);
 
     size_t height = png_get_image_height(png.ppng, png.pinfo);

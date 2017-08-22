@@ -115,18 +115,19 @@ private:
 public:
     uint32_t                    _verbose;
     enum : uint32_t {
-        SHOW_USER_AND_TARGET_PARAMS = 1
-      , SHOW_MOD_RDP_PARAMS         = 2
-      , SHOW_DRAW_ORDERS_INFO       = 4
-      , SHOW_CLPBRD_PDU_EXCHANGE    = 8
-      , SHOW_CURSOR_STATE_CHANGE    = 16
-      , SHOW_CORE_SERVER_INFO       = 32
-      , SHOW_SECURITY_SERVER_INFO   = 64
-      , SHOW_KEYBOARD_EVENT         = 128
-      , SHOW_FILE_SYSTEM_EXCHANGE   = 256
-      , SHOW_IN_PDU                 = 512
-      , SHOW_OUT_PDU                = 1024
-      , SHOW_CAPS                   = 2048
+        SHOW_USER_AND_TARGET_PARAMS = 1 << 0
+      , SHOW_MOD_RDP_PARAMS         = 1 << 1
+      , SHOW_DRAW_ORDERS_INFO       = 1 << 2
+      , SHOW_CLPBRD_PDU_EXCHANGE    = 1 << 3
+      , SHOW_CURSOR_STATE_CHANGE    = 1 << 4
+      , SHOW_CORE_SERVER_INFO       = 1 << 5
+      , SHOW_SECURITY_SERVER_INFO   = 1 << 6
+      , SHOW_KEYBOARD_EVENT         = 1 << 7
+      , SHOW_FILE_SYSTEM_EXCHANGE   = 1 << 8
+      , SHOW_IN_PDU                 = 1 << 9
+      , SHOW_OUT_PDU                = 1 << 10
+      , SHOW_CAPS                   = 1 << 11
+      , SHOW_ALL                    = (1 << 12) - 1
     };
     CHANNELS::ChannelDefArray   _cl;
     int                      _timer;

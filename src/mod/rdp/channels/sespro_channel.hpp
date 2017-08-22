@@ -201,9 +201,6 @@ public:
                 this->session_probe_effective_launch_timeout.count(),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
-
-//        this->session_probe_event.object_and_time = true;
-//        this->session_probe_event.set_trigger_time(wait_obj::NOW);
     }
 
     void start_launch_timeout_timer()
@@ -215,7 +212,6 @@ public:
             }
 
             if (!this->session_probe_launch_timeout_timer_started) {
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->session_probe_effective_launch_timeout).count());
@@ -238,7 +234,6 @@ public:
         if (this->session_probe_event.is_trigger_time_set()) {
             if (this->has_additional_launch_time) {
                 if (!this->session_probe_ready) {
-//                    this->session_probe_event.set(
                     this->session_probe_event.set_trigger_time(
                         std::chrono::duration_cast<std::chrono::microseconds>(
                             this->session_probe_effective_launch_timeout).count());
@@ -279,8 +274,6 @@ public:
             return;
         }
 
-//        this->session_probe_event.reset();
-//        this->session_probe_event.waked_up_by_time = false;
         this->session_probe_event.reset_trigger_time();
 
         if (this->session_probe_effective_launch_timeout.count() &&
@@ -378,7 +371,6 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->param_session_probe_keepalive_timeout ).count());
@@ -483,7 +475,6 @@ public:
 
             this->file_system_virtual_channel.disable_session_probe_drive();
 
-//            this->session_probe_event.reset();
             this->session_probe_event.reset_trigger_time();
 
             if (this->param_session_probe_keepalive_timeout.count() > 0) {
@@ -516,7 +507,6 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-//                this->session_probe_event.set(
                 this->session_probe_event.set_trigger_time(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->param_session_probe_keepalive_timeout).count());
@@ -558,7 +548,7 @@ public:
 
                 {
                     char cstr[128];
-                    std::snprintf(cstr, sizeof(cstr), "%u", ::getpid());
+                    std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
@@ -1077,13 +1067,13 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-        
+
             auto info = key_qvalue_pairs({
                 {"type",   "SESSION_ENDING_IN_PROGRESS"},
             });
-            
+
             this->report_message.log5(info);
-        
+
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "%s", info);
             }
@@ -1124,9 +1114,9 @@ public:
                         {"type",   "PASSWORD_TEXT_BOX_GET_FOCUS"},
                         {"status", parameters[0]},
                     });
-                    
+
                     this->report_message.log5(info);
-                
+
                     if (bool(this->verbose & RDPVerbose::sesprobe)) {
                         LOG(LOG_INFO, "%s", info);
                     }
@@ -1145,9 +1135,9 @@ public:
                             {"type",   "UAC_PROMPT_BECOME_VISIBLE"},
                             {"status", parameters[0]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1165,9 +1155,9 @@ public:
                             {"identifier",   parameters[0]},
                             {"display_name", parameters[1]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1186,9 +1176,9 @@ public:
                             {"type",         order.c_str()},
                             {"command_line", parameters[0]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1204,14 +1194,14 @@ public:
                             {"application_name", parameters[0]},
                             {"RawResult",        parameters[1]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
 
-                        LOG(LOG_ERR, 
+                        LOG(LOG_ERR,
                             "Session Probe failed to run startup application: %s", info);
 
                         this->report_message.report(
@@ -1228,9 +1218,9 @@ public:
                             {"rule",             parameters[0]},
                             {"application_name", parameters[1]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1246,9 +1236,9 @@ public:
                             {"rule", parameters[0]},
                             {"application_name", parameters[1]}
                             });
-                           
+
                         this->report_message.log5(info);
-                        
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1257,7 +1247,7 @@ public:
 
                         REDEMPTION_DIAGNOSTIC_PUSH
                         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-                        std::snprintf(message, sizeof(message), 
+                        std::snprintf(message, sizeof(message),
                             TR(trkeys::process_interrupted_security_policies,
                                 this->param_lang),
                             parameters[1].c_str());
@@ -1296,9 +1286,9 @@ public:
                                 {"dst_addr",     parameters[3]},
                                 {"dst_port",     parameters[4]},
                                 });
-                            
+
                             this->report_message.log5(info);
-                        
+
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                                 LOG(LOG_INFO, "%s", info);
                             }
@@ -1352,9 +1342,9 @@ public:
                                 {"app_name",     parameters[1]},
                                 {"app_cmd_line", parameters[2]},
                                 });
-                            
+
                             this->report_message.log5(info);
-                        
+
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                                 LOG(LOG_INFO, "%s", info);
                             }
@@ -1393,9 +1383,9 @@ public:
                             {"source",     "Probe"},
                             {"window",     parameters[0]},
                             });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1411,9 +1401,9 @@ public:
                             {"window",     parameters[0]},
                             {"button",     parameters[1]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1429,9 +1419,9 @@ public:
                             {"window", parameters[0]},
                             {"edit",   parameters[1]},
                         });
-                        
+
                         this->report_message.log5(info);
-                    
+
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }

@@ -121,12 +121,10 @@ public:
             this->vars.ask<cfg::context::target_protocol>();
             this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             break;
         case NOTIFY_CANCEL:
             this->event.signal = BACK_EVENT_STOP;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             break;
         case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
@@ -148,15 +146,12 @@ public:
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
-//            this->event.set();
             this->event.set_trigger_time(wait_obj::NOW);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-//            this->event.set(200000);
             this->event.set_trigger_time(200000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-//            this->event.reset();
             this->event.reset_trigger_time();
             break;
         }

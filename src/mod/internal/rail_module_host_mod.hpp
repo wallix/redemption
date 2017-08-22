@@ -164,7 +164,6 @@ public:
     {
         LocallyIntegrableMod::draw_event(now, gapi);
 
-//        this->event.reset();
         this->event.reset_trigger_time();
     }
 
@@ -209,7 +208,6 @@ public:
             this->client_execute.is_resizing_hosted_desktop_enabled()) {
             this->disconnection_reconnection_required = true;
 
-//            this->disconnection_reconnection_event.set(1000000);
             this->disconnection_reconnection_event.set_trigger_time(1000000);
         }
     }

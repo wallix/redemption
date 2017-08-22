@@ -115,7 +115,7 @@ namespace Extractors
             return HeaderResult::ok(len);
         }
 
-        void check_data(Buf64k const & buf) const
+        void prepare_data(Buf64k const & buf)
         {
             if (!this->has_fast_path) {
                 uint8_t tpdu_type = Parse(buf.sub(5, 1).data()).in_uint8();
@@ -125,23 +125,30 @@ namespace Extractors
                     case X224::DR_TPDU: // Disconnect Request 1000 0000
                     case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
                     case X224::ER_TPDU: // TPDU Error         0111 0000
-                        //this->type = tpdu_type & 0xF0;
+                        this->type = tpdu_type & 0xF0;
                         break;
                     default:
-                        //this->type = 0;
+                        this->type = 0;
                         LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
                         throw Error(ERR_X224);
                 }
             }
         }
 
-        bool is_fastpath() const noexcept
+        bool is_fast_path() const noexcept
         {
             return this->has_fast_path;
         }
 
+        uint8_t get_type() const noexcept
+        {
+            assert(!this->is_fast_path());
+            return this->type;
+        }
+
     private:
         bool has_fast_path;
+        uint8_t type;
     };
 
 
@@ -162,7 +169,7 @@ namespace Extractors
             else                    { throw Error(ERR_NEGO_INCONSISTENT_FLAGS); }
         }
 
-        void check_data(Buf64k const &) const
+        void prepare_data(Buf64k const &) const
         {}
     };
 }
@@ -201,7 +208,13 @@ struct TpduBuffer
     bool current_pdu_is_fast_path() const noexcept
     {
         assert(this->pdu_len);
-        return this->extractors.x224.is_fastpath();
+        return this->extractors.x224.is_fast_path();
+    }
+
+    uint8_t current_pdu_get_type() const noexcept
+    {
+        assert(this->pdu_len);
+        return this->extractors.x224.get_type();
     }
 
 private:
@@ -230,7 +243,7 @@ private:
                     this->pdu_len = r.data_size();
                     if (this->pdu_len <= this->buf.remaining())
                     {
-                        extractor.check_data(this->buf);
+                        extractor.prepare_data(this->buf);
                         return true;
                     }
                     this->state = StateRead::Data;
@@ -241,7 +254,7 @@ private:
                 if (this->pdu_len <= this->buf.remaining())
                 {
                     this->state = StateRead::Header;
-                    extractor.check_data(this->buf);
+                    extractor.prepare_data(this->buf);
                     return true;
                 }
                 return false;

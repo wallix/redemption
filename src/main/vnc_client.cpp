@@ -137,7 +137,6 @@ int main(int argc, char** argv)
       , report_message
       , false
       , to_verbose_flags(verbose));
-//    mod.get_event().set();
     mod.get_event().set_trigger_time(wait_obj::NOW);
 
     run_mod(mod, front, &sock_trans);
@@ -178,13 +177,12 @@ inline void run_mod(mod_api &mod, ClientFront &front, SocketTransport *st_mod) {
             }
 
             if (mod.get_event().is_set(st_mod->sck, rfds)) {
-//                mod.get_event().reset();
                 mod.get_event().reset_trigger_time();
                 mod.draw_event(time(nullptr), front);
 
             }
         } catch (Error & e) {
-            LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %d!\n", e.id);
+            LOG(LOG_ERR, "VNC CLIENT :: Exception raised = %u!\n", e.id);
             run_session = false;
         };
     }   // while (run_session)

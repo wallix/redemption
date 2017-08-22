@@ -117,7 +117,6 @@ private:
             this->vars.set_acl<cfg::context::display_message>(true);
         }
         this->event.signal = BACK_EVENT_NEXT;
-//        this->event.set();
         this->event.set_trigger_time(wait_obj::NOW);
     }
 
@@ -133,7 +132,6 @@ private:
             }
         }
         this->event.signal = BACK_EVENT_NEXT;
-//        this->event.set();
         this->event.set_trigger_time(wait_obj::NOW);
     }
 
@@ -149,11 +147,9 @@ public:
             this->accepted();
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-//            this->event.set(1000000);
             this->event.set_trigger_time(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-//            this->event.reset();
             this->event.reset_trigger_time();
             break;
         }

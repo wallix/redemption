@@ -27,6 +27,7 @@
 #include "flv_params.hpp"
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
+#include "utils/timestamp_tracer.hpp"
 
 #include <memory>
 #include <chrono>
@@ -88,6 +89,8 @@ private:
     bool no_timestamp;
     time_t previous_second = 0;
     bool has_frame_marker = false;
+
+    TimestampTracer timestamp_tracer;
 };
 
 
@@ -281,6 +284,9 @@ public:
     NotifyNextVideo & next_video_notifier;
 
     void next_video_impl(const timeval& now, NotifyNextVideo::reason reason);
+
+private:
+    TimestampTracer timestamp_tracer;
 
 public:
     SequencedVideoCaptureImpl(

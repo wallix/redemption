@@ -50,7 +50,7 @@ struct type_enumeration_base
     type_enumeration_base & operator=(type_enumeration_base const &) = delete;
     type_enumeration_base & operator=(type_enumeration_base &&) = default;
 
-    Inherit & enable_icase_parser() { this->is_icase_parser = true; return this->inherit(); }
+    Inherit & set_string_parser() { this->is_string_parser = true; return this->inherit(); }
 
     Inherit & alias(char const * s) {
         if (this->inherit().values.back().alias) {
@@ -70,7 +70,7 @@ public:
     char const * desc;
     char const * info;
 
-    bool is_icase_parser = false;
+    bool is_string_parser = false;
 };
 
 

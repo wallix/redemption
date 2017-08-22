@@ -106,7 +106,7 @@ struct Listen {
 
         LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", sck.sck, ::inet_ntoa(u.s4.sin_addr), this->port);
         if (0 != ::bind(sck.sck, &u.s, sizeof(u))) {
-            LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
+            LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
             return;
         }
 

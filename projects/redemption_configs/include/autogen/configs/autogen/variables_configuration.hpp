@@ -1011,6 +1011,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
+    // type: BogusNumberOfFastpathInputEvent
+    // value{static_cast<type>(1)}
+    struct client::bogus_number_of_fastpath_input_event {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "client"; }
+        static constexpr char const * name() { return "bogus_number_of_fastpath_input_event"; }
+        using type = BogusNumberOfFastpathInputEvent;
+        using sesman_and_spec_type = BogusNumberOfFastpathInputEvent;
+        using mapped_type = sesman_and_spec_type;
+        type value{static_cast<type>(1)};
+    };
 
     // type: RdpCompression
     // value{static_cast<type>(4)}
@@ -4221,6 +4233,7 @@ struct client
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
+, cfg::client::bogus_number_of_fastpath_input_event
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

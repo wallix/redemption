@@ -491,10 +491,10 @@ enum : int {
             LOG(LOG_INFO, "          * type            = 0x%04x (2 bytes)", this->type);
             LOG(LOG_INFO, "          * headerSize      = %d (2 bytes)", this->headerSize);
             LOG(LOG_INFO, "          * version         = 0x%04x (2 bytes): %s", this->version, get_MetaVersion_name(this->version));
-            LOG(LOG_INFO, "          * size            = %d (4 bytes)", this->size);
-            LOG(LOG_INFO, "          * numberOfObjects = %d (2 bytes)", this->numberOfObjects);
-            LOG(LOG_INFO, "          * maxRecord       = %d (4 bytes)", this->maxRecord);
-            LOG(LOG_INFO, "          * numberOfMembers = %d (2 bytes)", this->numberOfMembers);
+            LOG(LOG_INFO, "          * size            = %u (4 bytes)", this->size);
+            LOG(LOG_INFO, "          * numberOfObjects = %u (2 bytes)", this->numberOfObjects);
+            LOG(LOG_INFO, "          * maxRecord       = %u (4 bytes)", this->maxRecord);
+            LOG(LOG_INFO, "          * numberOfMembers = %u (2 bytes)", this->numberOfMembers);
         }
 
     };
@@ -544,7 +544,7 @@ enum : int {
 
         void log() const {
             LOG(LOG_INFO, "     Record Header:");
-            LOG(LOG_INFO, "          * recordSize     = %d (4 bytes)", this->recordSize);
+            LOG(LOG_INFO, "          * recordSize     = %u (4 bytes)", this->recordSize);
             LOG(LOG_INFO, "          * recordFunction = 0x%04x (2 bytes): %s", this->recordFunction, MFF::get_RecordType_name(this->recordFunction));
         }
     };

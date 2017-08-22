@@ -201,7 +201,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, proxy_to_sesman, type_<unsigned>(), "keyboard_layout", set(0));
         std::string keyboard_layout_proposals_desc;
-        for (auto k :  keylayouts) {
+        for (auto k : Keymap2::keylayouts()) {
             keyboard_layout_proposals_desc += k->locale_name;
             keyboard_layout_proposals_desc += ", ";
         }
@@ -251,6 +251,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
+        W.sep();
+
+        W.member(ini_and_gui, no_sesman, type_<BogusNumberOfFastpathInputEvent>(), "bogus_number_of_fastpath_input_event", set(BogusNumberOfFastpathInputEvent::pause_key_only));
     });
 
     W.section("mod_rdp", [&]

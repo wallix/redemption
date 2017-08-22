@@ -854,7 +854,7 @@ public:
             }
         }
         catch (Error const & e){
-            LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %d", e.id);
+            LOG(LOG_INFO, "Exception raised in ~OutCryptoTransport %u", e.id);
         }
     }
 
@@ -896,7 +896,7 @@ public:
 
         if (chmod(this->tmpname, groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
             int const err = errno;
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
                 , this->tmpname
                 , groupid ? "u+r, g+r" : "u+r"
                 , strerror(err), err);
@@ -938,7 +938,7 @@ public:
         if (this->tmpname[0] != 0){
             if (::rename(this->tmpname, this->finalname) < 0) {
                 int const err = errno;
-                LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%u : %s\n"
+                LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%d : %s\n"
                    , this->tmpname, this->finalname, err, strerror(err));
                 this->out_file.close();
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, err);

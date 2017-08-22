@@ -1766,7 +1766,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=0x%X Left=%u Top=%u",
+            "WindowId=0x%X Left=%d Top=%d",
             this->WindowId_, this->Left_, this->Top_);
         length += ((result < size - length) ? result : (size - length - 1));
 

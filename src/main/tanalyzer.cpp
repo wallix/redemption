@@ -152,11 +152,11 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * /*data*/
                                 , size_t length, size_t chunk_size, int flags) override {
         LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%zu chunk_size=%zu flags=0x%X",
-            channel.name, channel.chanid, length, chunk_size, flags);
+            channel.name, channel.chanid, length, chunk_size, unsigned(flags));
     }
 
     ResizeResult server_resize(int width, int height, int bpp) override {
-        LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
+        LOG(LOG_INFO, "server_resize: width=%d height=%d bpp=%d", width, height, bpp);
         return ResizeResult::done;
     }
 

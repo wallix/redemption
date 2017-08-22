@@ -60,12 +60,14 @@ class LanguageButton : public WidgetFlatButton
         auto LCID = front.get_keylayout();
 
         {
-            auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+            auto const keylayouts = Keymap2::keylayouts();
+            auto const it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
                 return k->LCID == LCID;
             });
             if (it == end(keylayouts)) {
-                LCID = keylayout_x00000409.LCID;
-                this->locales.push_back({keylayout_x00000409.locale_name, keylayout_x00000409.LCID});
+                auto & default_layout = Keymap2::default_layout();
+                LCID = default_layout.LCID;
+                this->locales.push_back({default_layout.locale_name, default_layout.LCID});
             }
             else {
                 this->locales.push_back({(*it)->locale_name, (*it)->LCID});
@@ -78,7 +80,8 @@ class LanguageButton : public WidgetFlatButton
             auto cstr = begin(trimmed_range).base();
             auto cend = end(trimmed_range).base();
 
-            auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+            auto const keylayouts = Keymap2::keylayouts();
+            auto const it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
                 return strncmp(k->locale_name, cstr, cend-cstr) == 0;
             });
             if (it != end(keylayouts)) {

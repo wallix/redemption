@@ -39,6 +39,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/timestamp_tracer.hpp"
 
 RED_AUTO_TEST_CASE(TestModOSD)
 {
@@ -55,10 +56,14 @@ RED_AUTO_TEST_CASE(TestModOSD)
         const Drawable & drawable;
         timeval start_capture;
 
+        TimestampTracer timestamp_tracer;
+
     public:
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
+        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
+              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
         {}
 
         std::chrono::microseconds do_snapshot(const timeval & now)
@@ -66,10 +71,10 @@ RED_AUTO_TEST_CASE(TestModOSD)
             const_cast<Drawable&>(this->drawable).trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
-            const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+            this->timestamp_tracer.trace(ptm);
             this->dump24();
             this->trans.next();
-            const_cast<Drawable&>(this->drawable).clear_timestamp();
+            this->timestamp_tracer.clear();
             this->start_capture = now;
             const_cast<Drawable&>(this->drawable).clear_mouse();
             return std::chrono::microseconds::zero();

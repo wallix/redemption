@@ -127,7 +127,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
         if (e.flag == type_enumeration::flags) {
             this->write_comment_line("(flags) min = 0, max = ", e.max());
         }
-        else if (e.is_icase_parser) {
+        else if (e.is_string_parser) {
             this->out() << "\"# ";
             for (type_enumeration::Value const & v : e.values) {
                 this->out() << "'" << (v.alias ? v.alias : v.name) << "', ";
@@ -227,7 +227,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
         if (e.flag == type_enumeration::flags) {
             this->out() << default_value;
         }
-        else if (e.is_icase_parser) {
+        else if (e.is_string_parser) {
             this->out() << e.values[default_value].name;
         }
         else {
