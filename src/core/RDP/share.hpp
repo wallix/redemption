@@ -196,7 +196,7 @@ struct ShareFlow_Recv
 //   protocol version information. The format of the pduType word is described
 //   by the following bitmask diagram:
 
-// pduType::type (4 bits): Least significant 4 bits of the least significant byte.
+// pduType::type (2 bits): Least significant 4 bits of the least significant byte.
 
 // +-----------------------------+---------------------------------------------+
 // | 1 PDUTYPE_DEMANDACTIVEPDU   | Demand Active PDU (section 2.2.1.13.1).     |
@@ -225,7 +225,7 @@ struct ShareControl_Recv
 {
     public:
     uint16_t totalLength;
-    uint8_t pduType;
+    uint16_t pduType;
     uint16_t PDUSource;
     InStream payload;
 
@@ -276,6 +276,16 @@ struct ShareControl_Recv
         }
         stream.in_skip_bytes(this->payload.get_capacity());
     }
+
+    inline void log() const {
+        LOG(LOG_INFO, "ShareControl_Recv: \n"
+                      "     * totalLength = %d (2 bytes)\n"
+                      "     * pduType = %d (2 bytes)\n"
+                      "     * PDUSource = %d (2 bytes)\n"
+                      "     * payload (%zu byte(s))\n",
+                      int(totalLength), int(pduType), int(PDUSource), this->payload.in_remain());
+    }
+
 }; // END CLASS ShareControl_Recv
 
 //##############################################################################
@@ -534,7 +544,7 @@ struct ShareData_Recv : private CheckShareData_Recv
               const uint8_t * rdata;
               uint32_t        rlen;
 
-              dec->decompress(stream.get_data()+stream.get_offset(), stream.in_remain(),
+              dec->decompress(stream.get_current(), stream.in_remain(),
                   this->compressedType, rdata, rlen);
 
               return InStream(rdata, rlen);
@@ -549,6 +559,20 @@ struct ShareData_Recv : private CheckShareData_Recv
         //   , this->pdutype2, this->len, this->compressedLen, this->payload.size());
         stream.in_skip_bytes(stream.in_remain());
     } // END CONSTRUCTOR
+
+    inline void log() const {
+        LOG(LOG_INFO, "ShareData_Recv: \n"
+                      "     * shareId = %d (4 bytes)\n"
+                      "     * pad1 (1 byte) \n"
+                      "     * streamId = %d (1 byte)\n"
+                      "     * uncompressedLength = %d (2 bytes)\n"
+                      "     * pduType2 = %d (1 byte)\n"
+                      "     * compressedType = %d (1 byte)\n"
+                      "     * compressedLength = %d (2 bytes)\n"
+                      "     * payload (%zu byte(s))\n",
+                      int(share_id), int(streamid), int(len), int(pdutype2), int(compressedType), int(compressedLen)
+                      , payload.in_remain());
+    }
 
     ~ShareData_Recv() noexcept(false) {
         if (!this->payload.check_end()) {

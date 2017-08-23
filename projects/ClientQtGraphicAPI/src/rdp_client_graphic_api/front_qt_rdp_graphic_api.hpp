@@ -1649,6 +1649,8 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
+
+        LOG(LOG_INFO, "begin_update");
     }
 
     virtual void end_update() override {
@@ -2916,14 +2918,15 @@ public:
                 y = 0;
             }
 
-            if (y > this->info.height) {
-                this->screen->mouse_out = true;
-            } else if (this->screen->mouse_out) {
-                this->screen->update_current_cursor();
-                this->screen->mouse_out = false;
-            }
+//             if (y > this->info.height) {
+//                 LOG(LOG_INFO, "eventFilter out");
+//                 this->screen->mouse_out = true;
+//             } else if (this->screen->mouse_out) {
+//                 this->screen->update_current_cursor();
+//                 this->screen->mouse_out = false;
+//             }
 
-            if (this->mod != nullptr) {
+            if (this->mod != nullptr && y < this->info.height) {
                 this->mouse_data.x = x;
                 this->mouse_data.y = y;
                 this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->keymap));
