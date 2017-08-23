@@ -24,7 +24,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "configs/config.hpp"
 #include "utils/translation.hpp"

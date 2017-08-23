@@ -23,7 +23,6 @@
 #include <iostream>
 #include <string>
 
-#define LOGPRINT
 
 #include "configs/config.hpp"
 #include "front/client_front.hpp"

@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"

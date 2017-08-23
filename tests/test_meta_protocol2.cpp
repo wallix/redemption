@@ -1,7 +1,6 @@
 #define RED_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
 
 #include <iostream>
 #include "proto/proto.hpp"

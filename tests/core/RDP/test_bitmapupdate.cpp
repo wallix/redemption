@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "test_only/check_sig.hpp"

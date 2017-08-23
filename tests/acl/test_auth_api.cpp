@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 #include "utils/log.hpp"
 
 #include "acl/auth_api.hpp"

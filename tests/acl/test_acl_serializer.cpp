@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "acl/acl_serializer.hpp"
 #include "test_only/transport/test_transport.hpp"

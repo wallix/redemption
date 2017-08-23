@@ -25,7 +25,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 #include "utils/log.hpp"
 
 #include "utils/bitmap_data_allocator.hpp"

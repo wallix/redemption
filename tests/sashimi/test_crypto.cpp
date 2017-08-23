@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCrypto
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 #include "utils/log.hpp"
 #include "sashimi/libcrypto.hpp"
 

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestSspi
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 #include "core/RDP/nla/sspi.hpp"
 
 

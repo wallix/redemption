@@ -162,26 +162,26 @@ VideoCaptureCtx::VideoCaptureCtx(
     bool no_timestamp,
     unsigned frame_rate,
     RDPDrawable & drawable,
-    VideoCropper * pVideoCropper
+    gdi::ImageFrameApi * pImageFrameApi
 )
 : drawable(drawable)
 , start_video_capture(now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , no_timestamp(no_timestamp)
-, video_cropper_ptr(pVideoCropper)
+, image_frame_api_ptr(pImageFrameApi)
 , timestamp_tracer(
-      (pVideoCropper ? pVideoCropper->width() : this->drawable.width()),
-      (pVideoCropper ? pVideoCropper->height() : this->drawable.height()),
-      (pVideoCropper ? pVideoCropper->bytes_per_pixel : this->drawable.impl().Bpp),
-      (pVideoCropper ? pVideoCropper->first_pixel() : this->drawable.first_pixel()),
-      (pVideoCropper ? pVideoCropper->rowsize() : this->drawable.rowsize()))
+      pImageFrameApi->width(),
+      pImageFrameApi->height(),
+      this->drawable.impl().Bpp,
+      pImageFrameApi->first_pixel(),
+      pImageFrameApi->rowsize())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     this->drawable.trace_mouse();
-    this->video_cropper_ptr->prepare_video_frame();
+    this->image_frame_api_ptr->prepare_image_frame();
     if (!this->no_timestamp) {
         time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
@@ -338,20 +338,20 @@ struct IOVideoRecorderWithTransport
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
     const int groupid, bool no_timestamp, RDPDrawable & drawable,
-    VideoCropper * pVideoCropper, FlvParams flv_params)
+    gdi::ImageFrameApi * pImageFrameApi, FlvParams flv_params)
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
-, video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pVideoCropper)
+, video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
     &this->trans_tmp_file,
 
-    (pVideoCropper ? pVideoCropper->width() : this->video_cap_ctx.width()),
-    (pVideoCropper ? pVideoCropper->height() : this->video_cap_ctx.height()),
-    (pVideoCropper ? pVideoCropper->pix_len() : this->video_cap_ctx.pix_len()),
-    (pVideoCropper ? pVideoCropper->first_pixel() : this->video_cap_ctx.data()),
+    pImageFrameApi->width(),
+    pImageFrameApi->height(),
+    pImageFrameApi->pix_len(),
+    pImageFrameApi->first_pixel(),
 
     flv_params.bitrate,
     flv_params.frame_rate,
@@ -520,14 +520,14 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     const timeval & now,
     SequenceTransport & trans,
     RDPDrawable & drawable,
-    VideoCropper * pVideoCropper,
+    gdi::ImageFrameApi * pImageFrameApi,
     bool no_timestamp,
     FlvParams flv_params)
-: video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pVideoCropper)
+: video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , drawable(drawable)
-, video_cropper_ptr(pVideoCropper)
+, image_frame_api_ptr(pImageFrameApi)
 {
     if (flv_params.verbosity) {
         LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
@@ -553,10 +553,10 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         IOVideoRecorderWithTransport<SequenceTransport>::seek,
         &this->trans,
 
-        this->video_cropper_ptr->width(),
-        this->video_cropper_ptr->height(),
-        this->video_cropper_ptr->pix_len(),
-        this->video_cropper_ptr->first_pixel(),
+        this->image_frame_api_ptr->width(),
+        this->image_frame_api_ptr->height(),
+        this->image_frame_api_ptr->pix_len(),
+        this->image_frame_api_ptr->first_pixel(),
 
         this->flv_params.bitrate,
         this->flv_params.frame_rate,
@@ -597,14 +597,14 @@ void SequencedVideoCaptureImpl::VideoCapture::clear_timestamp()
 
 void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
 {
-    this->video_cropper_ptr->prepare_video_frame();
+    this->image_frame_api_ptr->prepare_image_frame();
 }
 
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
 {
     percent = std::min(percent, 100u);
-    const unsigned zoom_width = (this->video_cropper_ptr->width() * percent) / 100;
-    const unsigned zoom_height = (this->video_cropper_ptr->height() * percent) / 100;
+    const unsigned zoom_width = (this->image_frame_api_ptr->width() * percent) / 100;
+    const unsigned zoom_height = (this->image_frame_api_ptr->height() * percent) / 100;
     this->ic_zoom_factor = percent;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
@@ -627,10 +627,10 @@ void SequencedVideoCaptureImpl::dump24()
 {
     ::transport_dump_png24(
         this->ic_trans,
-        this->video_cropper_ptr->first_pixel(),
-        this->video_cropper_ptr->width(),
-        this->video_cropper_ptr->height(),
-        this->video_cropper_ptr->rowsize(),
+        this->image_frame_api_ptr->first_pixel(),
+        this->image_frame_api_ptr->width(),
+        this->image_frame_api_ptr->height(),
+        this->image_frame_api_ptr->rowsize(),
         true);
 }
 
@@ -638,12 +638,12 @@ void SequencedVideoCaptureImpl::scale_dump24()
 {
     scale_data(
         this->ic_scaled_buffer.get(),
-        this->video_cropper_ptr->first_pixel(),
+        this->image_frame_api_ptr->first_pixel(),
         this->ic_scaled_width,
-        this->video_cropper_ptr->width(),
+        this->image_frame_api_ptr->width(),
         this->ic_scaled_height,
-        this->video_cropper_ptr->height(),
-        this->video_cropper_ptr->rowsize());
+        this->image_frame_api_ptr->height(),
+        this->image_frame_api_ptr->rowsize());
     ::transport_dump_png24(
         this->ic_trans, this->ic_scaled_buffer.get(),
         this->ic_scaled_width, this->ic_scaled_height,
@@ -683,19 +683,19 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     bool no_timestamp,
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
-    VideoCropper * pVideoCropper,
+    gdi::ImageFrameApi * pImageFrameApi,
     FlvParams flv_params,
     std::chrono::microseconds video_interval,
     NotifyNextVideo & next_video_notifier)
 : first_image(now, *this)
 , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
-, vc(now, this->vc_trans, drawable, pVideoCropper, no_timestamp, std::move(flv_params))
+, vc(now, this->vc_trans, drawable, pImageFrameApi, no_timestamp, std::move(flv_params))
 , ic_trans(record_path, basename, ".png", groupid, nullptr)
 , ic_zoom_factor(std::min(image_zoom, 100u))
-, ic_scaled_width(pVideoCropper ? pVideoCropper->width() : drawable.width())
-, ic_scaled_height(pVideoCropper ? pVideoCropper->height() : drawable.height())
+, ic_scaled_width(pImageFrameApi->width())
+, ic_scaled_height(pImageFrameApi->height())
 , ic_drawable(drawable)
-, video_cropper_ptr(pVideoCropper)
+, image_frame_api_ptr(pImageFrameApi)
 , video_sequencer(
     now,
     (video_interval > std::chrono::microseconds(0)) ? video_interval : std::chrono::microseconds::max(),
@@ -703,9 +703,9 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , next_video_notifier(next_video_notifier)
 {
     const unsigned zoom_width =
-        ((pVideoCropper ? pVideoCropper->width() : this->ic_drawable.width()) * this->ic_zoom_factor) / 100;
+        (pImageFrameApi->width() * this->ic_zoom_factor) / 100;
     const unsigned zoom_height =
-        ((pVideoCropper ? pVideoCropper->height() : this->ic_drawable.height()) * this->ic_zoom_factor) / 100;
+        (pImageFrameApi->height() * this->ic_zoom_factor) / 100;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
     if (this->ic_zoom_factor != 100) {

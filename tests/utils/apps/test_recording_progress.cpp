@@ -25,7 +25,6 @@
 
 
 // #define LOGNULL
-#define LOGPRINT
 #include "utils/apps/recording_progress.hpp"
 #include "test_only/get_file_contents.hpp"
 

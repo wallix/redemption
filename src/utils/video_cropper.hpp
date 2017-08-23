@@ -20,79 +20,15 @@
 
 #pragma once
 
-#include "core/RDP/RDPDrawable.hpp"
+#include "gdi/image_frame_api.hpp"
 
-class VideoCropper
+class VideoCropper : public gdi::ImageFrameApi
 {
-public:
+private:
     static constexpr const unsigned int bytes_per_pixel = 3;
 
-public:
-    virtual ~VideoCropper() = default;
+    ImageFrameApi* image_frame_api_ptr = nullptr;
 
-    virtual unsigned width() const = 0;
-
-    virtual unsigned height() const = 0;
-
-    virtual const uint8_t* data() const = 0;
-
-    virtual uint8_t* first_pixel() const = 0;
-
-    virtual unsigned int rowsize() const = 0;
-
-    virtual size_t pix_len() const = 0;
-
-    virtual void prepare_video_frame() = 0;
-};
-
-class DummyVideoCropper : public VideoCropper
-{
-private:
-    const unsigned int in_width;
-    const unsigned int in_height;
-
-    const unsigned int in_rowsize;
-
-    const uint8_t* in_bmpdata;
-
-public:
-    DummyVideoCropper(unsigned int in_width, unsigned int in_height,
-        const uint8_t* in_bmpdata)
-    : in_width(in_width)
-    , in_height(in_height)
-    , in_rowsize(in_width * VideoCropper::bytes_per_pixel)
-    , in_bmpdata(in_bmpdata) {}
-
-    unsigned width() const override {
-        return this->in_width;
-    }
-
-    unsigned height() const override {
-        return this->in_height;
-    }
-
-    const uint8_t* data() const override {
-        return this->in_bmpdata;
-    }
-
-    uint8_t* first_pixel() const override {
-        return const_cast<uint8_t*>(this->in_bmpdata);
-    }
-
-    unsigned int rowsize() const override {
-        return this->in_rowsize;
-    }
-
-    size_t pix_len() const override {
-        return this->in_rowsize * this->in_height;
-    }
-
-    void prepare_video_frame() override {}
-};
-
-class EffectiveVideoCropper : public VideoCropper
-{
-private:
     const unsigned int in_width;
     const unsigned int in_height;
 
@@ -112,14 +48,16 @@ private:
 
     const uint8_t* in_bmpdata_effective;
 
+    unsigned int last_update_index = 0;
+
 public:
-    EffectiveVideoCropper(unsigned int in_width, unsigned int in_height,
-        const uint8_t* in_bmpdata, unsigned int x, unsigned int y,
+    VideoCropper(ImageFrameApi* pImageFrameApi, unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
-    : in_width(in_width)
-    , in_height(in_height)
-    , in_rowsize(in_width * VideoCropper::bytes_per_pixel)
-    , in_bmpdata(in_bmpdata)
+    : image_frame_api_ptr(pImageFrameApi)
+    , in_width(pImageFrameApi->width())
+    , in_height(pImageFrameApi->height())
+    , in_rowsize(pImageFrameApi->width() * VideoCropper::bytes_per_pixel)
+    , in_bmpdata(pImageFrameApi->first_pixel())
     , x(x)
     , y(y)
     , out_width(out_width)
@@ -134,11 +72,11 @@ public:
         LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
     }
 
-    unsigned width() const override {
+    uint16_t width() const override {
         return this->out_width;
     }
 
-    unsigned height() const override {
+    uint16_t height() const override {
         return this->out_height;
     }
 
@@ -146,11 +84,11 @@ public:
         return this->out_bmpdata.get();
     }
 
-    uint8_t* first_pixel() const override {
+    uint8_t* first_pixel() override {
         return this->out_bmpdata.get();
     }
 
-    unsigned int rowsize() const override {
+    size_t rowsize() const override {
         return this->out_rowsize;
     }
 
@@ -158,7 +96,14 @@ public:
         return this->out_rowsize * this->out_height;
     }
 
-    void prepare_video_frame() override {
+    void prepare_image_frame() override {
+        const unsigned int remote_last_update_index =
+            this->image_frame_api_ptr->get_last_update_index();
+        if (remote_last_update_index == this->last_update_index) {
+            return;
+        }
+        this->last_update_index = remote_last_update_index;
+
         const uint8_t* in_bmpdata_tmp  = this->in_bmpdata_effective;
               uint8_t* out_bmpdata_tmp = this->out_bmpdata.get();
 
@@ -168,5 +113,9 @@ public:
             in_bmpdata_tmp  += this->in_rowsize;
             out_bmpdata_tmp += this->out_rowsize;
         }
+    }
+
+    unsigned int get_last_update_index() const noexcept override {
+        return this->last_update_index;
     }
 };

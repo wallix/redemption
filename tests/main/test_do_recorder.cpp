@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGPRINT
 #define LOGNULL
 #include "utils/log.hpp"
 
@@ -80,18 +79,16 @@ struct CoutBuf
 {
     CoutBuf()
     : oldbuf(std::cout.rdbuf(&sbuf))
-#ifndef LOGPRINT
-    , oldbuf_cerr(std::cerr.rdbuf(nullptr))
-#endif
+    , oldbuf_cerr(LOG__REDEMPTION__AS__LOGPRINT() ? std::cerr.rdbuf(nullptr) : nullptr)
     {
     }
 
     ~CoutBuf()
     {
         std::cout.rdbuf(oldbuf);
-#ifndef LOGPRINT
-        std::cerr.rdbuf(oldbuf_cerr);
-#endif
+        if (oldbuf_cerr) {
+            std::cerr.rdbuf(oldbuf_cerr);
+        }
     }
 
     std::string str() const
@@ -103,9 +100,7 @@ struct CoutBuf
 private:
     std::stringbuf sbuf;
     std::streambuf * oldbuf;
-#ifndef LOGPRINT
     std::streambuf * oldbuf_cerr;
-#endif
 };
 
 using EncryptionMode = InCryptoTransport::EncryptionMode;

@@ -23,7 +23,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "acl/module_manager.hpp"
 

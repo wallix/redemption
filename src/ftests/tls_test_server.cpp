@@ -1,7 +1,5 @@
  /* A simple TLS server */
 
-#define LOGPRINT
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

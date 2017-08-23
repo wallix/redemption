@@ -26,7 +26,6 @@
 #define RED_TEST_MODULE TestFont
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 
 #include "utils/log.hpp"
 #include "core/font.hpp"

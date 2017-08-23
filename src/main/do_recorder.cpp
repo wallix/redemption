@@ -29,6 +29,8 @@
 #include <openssl/err.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <dirent.h>
+
 #include "openssl_crypto.hpp"
 
 #include "utils/log.hpp"
@@ -200,7 +202,7 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
 
         // TODO size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?
         struct dirent * result;
-        for (result = readdir(d) ; result ; result = readdir(d)) {
+        while ((result = readdir(d))) {
             if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
                 continue;
             }

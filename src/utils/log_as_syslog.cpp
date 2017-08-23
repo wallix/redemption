@@ -18,14 +18,18 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_DECL_LOG_SYSLOG
-#  define REDEMPTION_DECL_LOG_SYSLOG
-#endif
-#if defined(LOGPRINT)
-# error "LOGPRINT" is defined
-# endif
-#if defined(LOGNULL)
-# error "LOGNULL" is defined
-#endif
-
 #include "utils/log.hpp"
+#include "cxx/diagnostic.hpp"
+
+#include <cstdarg>
+
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+    vsyslog(priority, format, ap);
+    REDEMPTION_DIAGNOSTIC_POP
+    va_end(ap);
+}

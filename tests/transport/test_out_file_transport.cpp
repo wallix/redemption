@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestInFileTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #include <stdlib.h>

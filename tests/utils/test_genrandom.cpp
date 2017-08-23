@@ -28,7 +28,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "utils/genrandom.hpp"
 #include "test_only/lcg_random.hpp"

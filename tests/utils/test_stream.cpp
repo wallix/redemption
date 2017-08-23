@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"

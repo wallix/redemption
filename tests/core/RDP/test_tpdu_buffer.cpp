@@ -25,7 +25,6 @@
 
 
 #define LOGNULL
-// #define LOGPRINT
 #include "core/RDP/tpdu_buffer.hpp"
 
 struct BlockTransport : Transport

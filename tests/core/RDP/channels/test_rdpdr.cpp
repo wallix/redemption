@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 #include "core/RDP/channels/rdpdr.hpp"
 
 RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)

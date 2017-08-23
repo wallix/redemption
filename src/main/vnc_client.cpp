@@ -22,7 +22,6 @@
 #include <iostream>
 #include <string>
 
-#define LOGPRINT
 #include "utils/log.hpp"
 #include "front/client_front.hpp"
 #include "core/client_info.hpp"

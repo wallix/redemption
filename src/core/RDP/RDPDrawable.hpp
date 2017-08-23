@@ -54,11 +54,12 @@
 #include "utils/png.hpp"
 
 #include "gdi/graphic_api.hpp"
+#include "gdi/image_frame_api.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable
-: public gdi::GraphicApi
+: public gdi::GraphicApi, public gdi::ImageFrameApi
 {
     using Color = Drawable::Color;
 
@@ -68,7 +69,7 @@ class RDPDrawable
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
-    unsigned int last_update_index = 0;
+    unsigned int last_update_index = 1;
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height)
@@ -78,19 +79,19 @@ public:
     {
     }
 
-    uint8_t * first_pixel() noexcept {
+    uint8_t * first_pixel() noexcept override {
         return this->drawable.first_pixel();
     }
 
-    const uint8_t * data() const noexcept {
+    const uint8_t * data() const noexcept override {
         return this->drawable.data();
     }
 
-    uint16_t width() const noexcept {
+    uint16_t width() const noexcept override {
         return this->drawable.width();
     }
 
-    uint16_t height() const noexcept {
+    uint16_t height() const noexcept override {
         return this->drawable.height();
     }
 
@@ -102,11 +103,11 @@ public:
         return this->drawable.size();
     }
 
-    size_t rowsize() const noexcept {
+    size_t rowsize() const noexcept override {
         return this->drawable.rowsize();
     }
 
-    size_t pix_len() const noexcept {
+    size_t pix_len() const noexcept override {
         return this->drawable.pix_len();
     }
 
@@ -117,6 +118,8 @@ public:
     void show_mouse_cursor(bool x) {
         this->drawable.dont_show_mouse_cursor = !x;
     }
+
+    void prepare_image_frame() override {}
 
     // TODO FIXME temporary
     //@{
@@ -184,12 +187,14 @@ public:
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.opaquerect(trect, this->u32rgb_to_color(color_ctx, cmd.color));
+        this->last_update_index++;
     }
 
     void draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         // TODO clip is not used
         (void)clip;
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(color_ctx, cmd.color));
+        this->last_update_index++;
     }
 
     // TODO This will draw a standard ellipse without brush style
@@ -197,6 +202,7 @@ public:
         // TODO clip is not used
         (void)clip;
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(color_ctx, cmd.back_color));
+        this->last_update_index++;
     }
 
     void draw(const RDPScrBlt & cmd, Rect clip) override {
@@ -207,11 +213,13 @@ public:
         const signed int deltax = cmd.srcx - cmd.rect.x;
         const signed int deltay = cmd.srcy - cmd.rect.y;
         this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
+        this->last_update_index++;
     }
 
     void draw(const RDPDestBlt & cmd, Rect clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
+        this->last_update_index++;
     }
 
 private:
@@ -253,6 +261,7 @@ public:
         this->draw_multi(cmd, clip, [&](const Rect & trect) {
             this->drawable.destblt(trect, cmd.bRop);
         });
+        this->last_update_index++;
     }
 
     void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -260,6 +269,7 @@ public:
         this->draw_multi(cmd, clip, [color, this](const Rect & trect) {
             this->drawable.opaquerect(trect, color);
         });
+        this->last_update_index++;
     }
 
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -284,6 +294,7 @@ public:
                 this->drawable.patblt(trect, cmd.bRop, color);
             });
         }
+        this->last_update_index++;
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
@@ -292,6 +303,7 @@ public:
         this->draw_multi(cmd, clip, [&](const Rect & trect) {
             this->drawable.scrblt(trect.x + deltax, trect.y + deltay, trect, cmd.bRop);
         });
+        this->last_update_index++;
     }
 
     void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -314,6 +326,7 @@ public:
         else {
             this->drawable.patblt(trect, cmd.rop, this->u32rgb_to_color(color_ctx, cmd.back_color));
         }
+        this->last_update_index++;
     }
 
     void draw(const RDPMemBlt & cmd_, Rect clip, const Bitmap & bmp) override {
@@ -360,6 +373,7 @@ public:
             //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
         break;
         }
+        this->last_update_index++;
     }
 
     void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bmp) override {
@@ -374,6 +388,7 @@ public:
             , cmd.rop
             , this->u32rgb_to_color(color_ctx, cmd.fore_color)
         );
+        this->last_update_index++;
     }
 
     /*
@@ -399,6 +414,7 @@ public:
             lineto.endx, lineto.endy,
             lineto.rop2, this->u32rgb_to_color(color_ctx, lineto.pen.color), clip
         );
+        this->last_update_index++;
     }
 
 // [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
@@ -739,8 +755,6 @@ public:
         }
     }
 
-
-
     void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
         if (screen_rect.isempty()){
@@ -771,6 +785,7 @@ public:
         this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
+        this->last_update_index++;
     }
 
     void draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -791,6 +806,7 @@ public:
             startx = endx;
             starty = endy;
         }
+        this->last_update_index++;
     }
 
     // TODO this functions only draw polygon borders but do not fill them with solid color.
@@ -816,6 +832,7 @@ public:
         endy = cmd.yStart;
 
         this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+        this->last_update_index++;
     }
 
     // TODO this functions only draw polygon borders but do not fill them with brush color.
@@ -841,6 +858,7 @@ public:
         endy = cmd.yStart;
 
         this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+        this->last_update_index++;
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
@@ -851,12 +869,14 @@ public:
         const Rect trect = rectBmp.intersect(this->drawable.width(), this->drawable.height());
 
         this->drawable.draw_bitmap(trect, bmp);
+        this->last_update_index++;
     }
 
     void draw(const RDP::FrameMarker & order) override {
         this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
         REDASSERT(this->frame_start_count >= 0);
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
+        this->last_update_index++;
     }
 
     bool logical_frame_ended()
@@ -889,6 +909,10 @@ public:
 
     void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
+    }
+
+    unsigned int get_last_update_index() const noexcept override {
+        return this->last_update_index;
     }
 };
 

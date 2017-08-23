@@ -29,6 +29,7 @@
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
 #include "utils/ellipse.hpp"
+#include "utils/bitfu.hpp"
 
 using std::size_t;
 

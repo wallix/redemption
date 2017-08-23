@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "capture/utils/match_finder.hpp"
 

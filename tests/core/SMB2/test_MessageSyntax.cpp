@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "core/SMB2/MessageSyntax.hpp"
 

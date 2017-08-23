@@ -24,7 +24,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"

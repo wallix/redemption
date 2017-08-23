@@ -25,7 +25,6 @@
 
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "capture/transparentrecorder.hpp"
 

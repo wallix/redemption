@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_multitransport.hpp"

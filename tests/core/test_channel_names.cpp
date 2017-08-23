@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
-//#define LOGPRINT
 #include "core/channel_names.hpp"
 
 RED_AUTO_TEST_CASE(TestChannelName)

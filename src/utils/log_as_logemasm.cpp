@@ -14,12 +14,23 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
-#include "bitmap_data_allocator.hpp"
+#include "utils/log.hpp"
 
-namespace aux_ {
-    BmpMemAlloc bitmap_data_allocator;
+#include <cstdarg>
+
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+{
+    (void)priority;
+    va_list ap;
+    char buffer[4096];
+    va_start(ap, format);
+    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
+    va_end(ap);
+    buffer[len] = '\n';
+    buffer[len+1] = 0;
+    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
 }

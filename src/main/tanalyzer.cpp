@@ -28,7 +28,6 @@
 #include <iostream>
 #include <string>
 
-#define LOGPRINT
 #include "utils/log.hpp"
 
 #include "core/channel_list.hpp"

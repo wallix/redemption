@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Jonathan Poelen
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    log file including syslog
@@ -39,9 +39,9 @@ namespace { namespace compiler_aux_ {
 // This is handy to get stacktrace while debugging.
 
 #ifdef NDEBUG
-#define REDASSERT(x)
+# define REDASSERT(x)
 #else
-# if defined(LOGPRINT) || defined(REDASSERT_AS_ASSERT)
+# if defined(REDASSERT_AS_ASSERT)
 #  include <cassert>
 #  define REDASSERT(x) assert(x)
 # else
@@ -49,22 +49,17 @@ namespace { namespace compiler_aux_ {
 # endif
 #endif
 
-#include <sys/types.h> // getpid
-#include <unistd.h> // getpid
-
-#include "cxx/diagnostic.hpp"
-#include "cxx/cxx.hpp"
-
-#include <type_traits>
-
-#include <cstdint>
-#include <cstdio> // std::printf family
-#if defined(LOGPRINT) || !defined(LOGNULL)
-# include <cstdarg>
+#if !defined(LOGNULL)
+# include <sys/types.h> // getpid
+# include <unistd.h> // getpid
 #endif
 
+#include <type_traits>
+#include <cstdint>
+
+#include "cxx/cxx.hpp"
+
 #include <syslog.h>
-#include <cstring>
 
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
@@ -202,6 +197,7 @@ namespace {
     // LOG_INFO       informational message
     // LOG_DEBUG      debug-level message
 
+#if !defined(LOGNULL)
     constexpr const char * const prioritynames[] =
     {
         "EMERG"/*, LOG_EMERG*/,
@@ -214,6 +210,7 @@ namespace {
         "DEBUG"/*, LOG_DEBUG*/,
         //{ nullptr/*, -1*/ }
     };
+#endif
 
     inline void LOGCHECK__REDEMPTION__INTERNAL(int)
     {}
@@ -226,65 +223,27 @@ namespace {
     }
 }
 
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
-// No inline, one definition by exe. Otherwise, bad config
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes")
-REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wmissing-declarations")
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
-#ifdef IN_IDE_PARSER
-;
-#elif defined(LOGPRINT)
+#ifdef REDEMPTION_DECL_LOG_TEST
+bool & LOG__REDEMPTION__AS__LOGPRINT();
+# ifdef LOGNULL
+static struct LOG__REDEMPTION__AS__LOGNULL__INIT
 {
-    (void)priority;
-    va_list ap;
-    va_start(ap, format);
-    std::vprintf(format, ap);
-    std::puts("");
-    va_end(ap);
-}
-#elif defined(LOGNULL)
-{
-    (void)priority;
-    (void)format;
-}
-#elif defined(LOGASMJS) && defined(EM_ASM)
-{
-    (void)priority;
-    va_list ap;
-    char buffer[4096];
-    va_start(ap, format);
-    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
-    va_end(ap);
-    buffer[len] = '\n';
-    buffer[len+1] = 0;
-    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
-}
-#else
-# ifdef REDEMPTION_DECL_LOG_SYSLOG
-{
-    va_list ap;
-    va_start(ap, format);
-    vsyslog(priority, format, ap);
-    va_end(ap);
-}
-# else
-;
-# endif
-# ifdef REDEMPTION_DECL_LOG_TEST
-#    error "Missing macro in the .cpp test: LOGNULL or LOGPRINT"
+    LOG__REDEMPTION__AS__LOGNULL__INIT()
+    {
+        LOG__REDEMPTION__AS__LOGPRINT() = false;
+    }
+} LOG__REDEMPTION__AS__LOGNULL__INIT_;
 # endif
 #endif
-
-REDEMPTION_DIAGNOSTIC_POP
 
 namespace
 {
     template<class... Ts>
     void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
-    #if !defined(LOGPRINT) && defined(LOGNULL)
+    #if defined(LOGNULL)
         compiler_aux_::unused_variables(priority, format, ((void)(args), 1)...);
     #else
         int const pid = getpid();
@@ -299,6 +258,9 @@ namespace
     #endif
     }
 }
+
+
+#include <cstdio> // std::printf family
 
 namespace {
 

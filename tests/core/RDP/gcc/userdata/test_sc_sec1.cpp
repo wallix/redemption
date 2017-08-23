@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-// #define LOGPRINT
 
 #include "utils/crypto/ssl_lib.hpp"
 #include "test_only/transport/test_transport.hpp"

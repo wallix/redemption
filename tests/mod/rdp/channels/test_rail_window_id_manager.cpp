@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
 
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 

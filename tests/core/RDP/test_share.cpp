@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestRDP
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
 
 #include "utils/stream.hpp"
 #include "core/RDP/share.hpp"
