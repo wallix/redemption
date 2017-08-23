@@ -19,23 +19,20 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file, region management
-
 */
-
 
 #pragma once
 
-#include <vector>
 #include "utils/rect.hpp"
 
-/* region */
-struct SubRegion {
+#include <vector>
+
+struct SubRegion
+{
     std::vector<Rect> rects;
 
-    SubRegion() {}
-    ~SubRegion() {}
-
-    void subtract_rect(const Rect rect) {
+    void subtract_rect(const Rect rect)
+    {
         std::vector<Rect> new_rects;
 
         std::size_t count = this->rects.size();
@@ -70,8 +67,8 @@ struct SubRegion {
         this->rects = std::move(new_rects);
     }
 
-    void add_rect(const Rect & rect) {
+    void add_rect(const Rect & rect)
+    {
         this->rects.push_back(rect);
     }
 };
-

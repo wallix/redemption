@@ -18,10 +18,12 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
-class Timeout {
+#include <sys/time.h>
+
+class Timeout
+{
     time_t timeout;
 
 public:
@@ -62,87 +64,3 @@ public:
         this->timeout = now + length;
     }
 };
-
-
-
-class TimeVal : public timeval {
-public:
-    TimeVal() {
-        ::gettimeofday(this, nullptr);
-    }
-
-    explicit TimeVal(uint64_t usec) {
-        this->tv_sec  = usec / 1000000L;
-        this->tv_usec = usec % 1000000L;
-    }
-
-    explicit TimeVal(timeval const & tv) {
-        this->tv_sec  = tv.tv_sec;
-        this->tv_usec = tv.tv_usec;
-    }
-
-    inline TimeVal & operator+(timeval const & other) {
-        this->tv_sec  += other.tv_sec;
-        this->tv_usec += other.tv_usec;
-        if (this->tv_usec >= 1000000LL) {
-            this->tv_sec++;
-
-            this->tv_usec -= 1000000LL;
-        }
-
-        return *this;
-    }
-
-    inline TimeVal & operator=(uint64_t usec) {
-        this->tv_sec  = usec / 1000000L;
-        this->tv_usec = usec % 1000000L;
-
-        return *this;
-    }
-
-    inline TimeVal & operator=(timeval const & tv) {
-        this->tv_sec  = tv.tv_sec;
-        this->tv_usec = tv.tv_usec;
-
-        return *this;
-    }
-
-    inline operator bool() const {
-        return (this->tv_sec && this->tv_usec);
-    }
-};
-
-static inline timeval operator-(timeval const & endtime, timeval const & starttime) {
-    assert((endtime.tv_sec  > starttime.tv_sec ) ||
-           (endtime.tv_usec > starttime.tv_usec));
-
-    timeval result;
-
-    result.tv_sec = endtime.tv_sec - starttime.tv_sec;
-
-    if (endtime.tv_usec >= starttime.tv_usec) {
-        result.tv_usec = endtime.tv_usec - starttime.tv_usec;
-    }
-    else {
-        result.tv_sec--;
-
-        result.tv_usec = 1000000LL - starttime.tv_usec + endtime.tv_usec;
-    }
-
-    return result;
-}
-
-static inline timeval operator+(timeval const & a, timeval const & b) {
-    timeval result;
-
-    result.tv_sec  = a.tv_sec  + b.tv_sec;
-    result.tv_usec = a.tv_usec + b.tv_usec;
-    if (result.tv_usec >= 1000000LL) {
-        result.tv_sec++;
-
-        result.tv_usec -= 1000000LL;
-    }
-
-    return result;
-}
-

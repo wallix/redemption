@@ -5,7 +5,9 @@
  * See : https://msdn.microsoft.com/en-us/library/c46d0ecf-3836-4a3b-b379-339ab6a11589
  */
 
-static unsigned short lowers[] = {
+#include <cstdint>
+
+constexpr uint16_t lowers[] = {
     0x0061, // LATIN SMALL LETTER A
     0x0062, // LATIN SMALL LETTER B
     0x0063, // LATIN SMALL LETTER C
@@ -904,7 +906,7 @@ static unsigned short lowers[] = {
     0xFF5A, // FULLWIDTH LATIN SMALL LETTER Z
 };
 
-static unsigned short uppers[] = {
+constexpr uint16_t uppers[] = {
     0x0041, // LATIN CAPITAL LETTER A
     0x0042, // LATIN CAPITAL LETTER B
     0x0043, // LATIN CAPITAL LETTER C
