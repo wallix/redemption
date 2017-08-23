@@ -1626,13 +1626,13 @@ public:
 
     virtual bool must_be_stop_capture() override {
 //         this->is_pipe_ok = false;
-        if (this->capture) {
-            this->capture.reset(nullptr);
-            this->graph_capture = nullptr;
-            this->is_recording = false;
-
-            return true;
-        }
+//         if (this->capture) {
+//             this->capture.reset(nullptr);
+//             this->graph_capture = nullptr;
+//             this->is_recording = false;
+//
+//             return true;
+//         }
         return false;
     }
 
@@ -1649,8 +1649,6 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
-
-        LOG(LOG_INFO, "begin_update");
     }
 
     virtual void end_update() override {
