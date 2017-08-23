@@ -29,7 +29,9 @@
 
 #include "core/server_notifier_api.hpp"
 #include "core/defines.hpp"
+#include "core/error.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/log.hpp"
 
 #include "cxx/diagnostic.hpp"
 
