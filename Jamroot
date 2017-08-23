@@ -174,6 +174,7 @@ obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 obj keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
+obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp : ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -233,6 +234,7 @@ exe rdpproxy
 #         <link>static
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
+        <library>nego.o
     ;
 
 # Maybe merge with libredrec ?
@@ -315,6 +317,7 @@ exe rdptproxy
 #         <link>static
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
+        <library>nego.o
     ;
 
 exe rdptanalyzer
@@ -358,6 +361,7 @@ exe rdpclient
     :
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
+        <library>nego.o
     ;
 
 exe vncclient
@@ -416,6 +420,7 @@ exe rdpheadless
         <cxxflags>-std=c++14
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
+        <library>nego.o
     ;
 
 exe rdpinichecker
@@ -865,7 +870,7 @@ test-canonical core/RDP/mppc_50.hpp ;
 test-canonical core/RDP/mppc_60.hpp ;
 test-canonical core/RDP/mppc_61.hpp ;
 test-canonical core/RDP/mppc_unified_dec.hpp ;
-test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
+test-canonical core/RDP/nego.hpp : <library>nego.o <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
 test-canonical core/RDP/out_per_bstream.hpp ;
 test-run test_rdp_pointer : core/RDP/test_pointer.cpp ;
@@ -952,7 +957,7 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
 test-canonical mod/vnc/vnc.hpp : <library>bitmap <library>d3des.o ;
 test-canonical mod/xup/xup.hpp ;
-test-canonical mod/rdp/rdp.hpp : <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
+test-canonical mod/rdp/rdp.hpp : <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
 ## @}
 
 
@@ -1004,11 +1009,15 @@ test-run test_rdp_client_test_card
     :
     : <library>bitmap
       <library>fileutils.o
+      <library>nego.o
       <library>z
       <library>crypto
       <library>dl
       <library>openssl
       <library>keymap.o
+      <library>nego.o
+      <library>gssglue
+      <library>krb5
       <library>gdapi.o
       <covflag>nocover
     ;
@@ -1018,6 +1027,7 @@ test-run test_rdp_client_large_pointer
     :
     : <library>bitmap
       <library>fileutils.o
+      <library>nego.o
       <library>png.o
       <library>krb5
       <library>gssglue
@@ -1037,6 +1047,7 @@ test-run test_rdp_client_tls_w2008
     :
     : <library>bitmap
       <library>fileutils.o
+      <library>nego.o
       <library>krb5
       <library>gssglue
       <library>png
@@ -1055,6 +1066,7 @@ test-run test_rdp_client_wab
     :
     : <library>bitmap
       <library>fileutils.o
+      <library>nego.o
       <library>png.o
       <library>krb5
       <library>gssglue
@@ -1210,6 +1222,7 @@ test-canonical front/front.hpp
     <library>crypto
     <library>ocr
     <library>fileutils.o
+    <library>nego.o
     <library>keymap.o
     <library>gdapi.o
 ;
