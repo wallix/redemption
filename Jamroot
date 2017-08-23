@@ -169,7 +169,7 @@ obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
 obj d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
-obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
+obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp : <cxxflags>-std=c++14 ;
 obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 obj keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : $(OBJ_EXE_DEPENDENCIES) ;
@@ -188,7 +188,7 @@ obj scytale_test.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPEND
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
 ;
 
-alias bitmap : bitmap.o bitmap_from_file.o png ;
+alias bitmap : bitmap.o bitmap_from_file.o png crypto ;
 alias video_capture : video_capture.o ffmpeg ;
 
 
@@ -445,11 +445,11 @@ exe extract_text
 exe ppocr_extract_text
 :
     $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp
-    bitmap.o
     ocr
 :
     $(EXE_DEPENDENCIES)
     <library>log_print.o
+    <library>bitmap
 ;
 
 
@@ -710,32 +710,32 @@ test-canonical utils/winpr/pattern.hpp ;
 ## Widget tests
 ## @{
 # TODO test-canonical mod/internal/widget/columnlayout.hpp ;
-test-canonical mod/internal/widget/composite.hpp : <library>png.o <library>png <library>crypto <library>keymap.o ;
-test-canonical mod/internal/widget/edit.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/edit_valid.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_button.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>png.o <library>png <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/selector.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/grid.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/group_box.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/label.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/labelgrid.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/composite.hpp : <library>bitmap <library>png.o <library>keymap.o ;
+test-canonical mod/internal/widget/edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/edit_valid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_button.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_dialog.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_login.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/selector.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_wab_close.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/grid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/group_box.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/label.hpp : <library>bitmap  <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/labelgrid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 # TODO test-canonical mod/internal/widget/linelayout.hpp ;
-test-canonical mod/internal/widget/multiline.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/number_edit.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/password.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/multiline.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/number_edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/password.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 # TODO test-canonical mod/internal/widget/radio_list.hpp ;
-test-canonical mod/internal/widget/screen.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/scroll.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/screen.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/scroll.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 # TODO test-canonical mod/internal/widget/stacklayout.hpp ;
 test-canonical mod/internal/widget/tab.hpp ;
-test-canonical mod/internal/widget/tooltip.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/tooltip.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/widget.hpp : ;
-test-canonical mod/internal/widget/widget_rect.hpp : <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/widget_rect.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/flat_vnc_authentification.hpp : ;
 test-canonical mod/internal/widget/language_button.hpp : ;
 test-canonical mod/internal/widget/layout.hpp ;
@@ -745,19 +745,19 @@ test-canonical mod/internal/widget/notify_api.hpp ;
 
 ## Widget for workflow
 ## @{
-test-canonical mod/internal/widget/flat_wait.hpp : <library>png <library>crypto <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_form.hpp : <library>png <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_wait.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_form.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 ## @}
 
 
 ## Mod tests
 ## @{
-test-canonical mod/internal/bouncer2_mod.hpp : <library>png <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/bouncer2_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/copy_paste.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/flat_dialog_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>crypto <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/replay_mod.hpp : <library>png <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/test_card_mod.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
@@ -926,8 +926,8 @@ test-canonical mod/rdp/channels/sespro_channel.hpp ;
 test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;
 test-canonical mod/rdp/channels/sespro_launcher.hpp ;
 test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ;
-test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
-test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
+test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>bitmap ;
+test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>bitmap ;
 ## @}
 
 

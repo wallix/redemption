@@ -3,8 +3,6 @@
    sends a hello packet and waits for the response
 */
 
-// #define LOGPRINT
-
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>

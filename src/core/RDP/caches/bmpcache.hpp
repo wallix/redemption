@@ -28,6 +28,7 @@
 #include <cinttypes>
 
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_data_allocator.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "utils/verbose_flags.hpp"
 

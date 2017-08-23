@@ -31,6 +31,7 @@
 
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_private_data.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "cxx/cxx.hpp"

@@ -150,4 +150,3 @@ namespace aux_ {
         }
     } bitmap_data_allocator;
 }
-
