@@ -69,7 +69,9 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
+obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp :
+    <cxxflags>-std=c++14 ;
+
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 
 obj keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp :
@@ -87,6 +89,14 @@ obj png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp :
 obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp :
     $(EXE_DEPENDENCIES)
     <cxxflags>-std=c++14 ;
+
+obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
+
+obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
+
+obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
+
+
 
 using qt : /usr ; #4
 
@@ -106,6 +116,9 @@ exe client_demo_Qt4 :
     capture.o
     png.o
     bitmap_from_file.o
+    fileutils.o
+    gdapi.o
+    log.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -141,6 +154,9 @@ exe client_rdp_Qt4 :
     video_capture.o
     png.o
     bitmap_from_file.o
+    fileutils.o
+    gdapi.o
+    log.o
     /qt//QtGui       #4
     /qt//phonon
     bitmap
@@ -154,6 +170,7 @@ exe client_rdp_Qt4 :
     ffmpeg
     dl
     snappy
+
 :
     $(EXE_DEPENDENCIES)
 ;
@@ -188,6 +205,9 @@ exe client_rdp_Qt5 :
     video_capture.o
     png.o
     bitmap_from_file.o
+    fileutils.o
+    gdapi.o
+    log.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets
