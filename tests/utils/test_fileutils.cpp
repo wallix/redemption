@@ -345,6 +345,16 @@ RED_AUTO_TEST_CASE(TestParsePath)
         std::string directory = "./"    ;
         std::string filename  = "sesman";
         std::string extension = ".conf" ;
+        ParsePath("a", directory, filename, extension);
+        RED_CHECK_EQUAL("./"    , directory);
+        RED_CHECK_EQUAL("a"     , filename );
+        RED_CHECK_EQUAL(".conf" , extension);
+    }
+
+    {
+        std::string directory = "./"    ;
+        std::string filename  = "sesman";
+        std::string extension = ".conf" ;
         ParsePath("", directory, filename, extension);
         RED_CHECK_EQUAL("./"    , directory);
         RED_CHECK_EQUAL("sesman", filename );
