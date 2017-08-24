@@ -94,7 +94,9 @@ obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
 
 obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
 
-obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
+obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+
+obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 
 
 
@@ -157,6 +159,7 @@ exe client_rdp_Qt4 :
     fileutils.o
     gdapi.o
     log.o
+    nego.o
     /qt//QtGui       #4
     /qt//phonon
     bitmap

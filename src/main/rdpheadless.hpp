@@ -230,6 +230,7 @@ public:
     timeval connection_time;
     timeval start_session_time;
     std::string out_path;
+    bool connection_finished;
 
 
 
@@ -261,6 +262,7 @@ public:
     , _callback(nullptr)
     , _running(false)
     , is_pipe_ok(true)
+    , connection_finished(false)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -292,7 +294,7 @@ public:
                                               );
 
         this->_to_client_sender._channel = channel_cliprdr;
-        this->_cl.push_back(channel_cliprdr);
+//         this->_cl.push_back(channel_cliprdr);
 
         CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -300,7 +302,7 @@ public:
                                         GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                       , PDU_MAX_SIZE+1
                                       };
-        this->_cl.push_back(channel_rdpdr);
+//         this->_cl.push_back(channel_rdpdr);
 
         if (this->mod_bpp == this->_info.bpp) {
             this->mod_palette = BGRPalette::classic_332();
@@ -308,6 +310,25 @@ public:
     }
 
     ~TestClientCLI() {}
+
+    void record_connection_nego_time() {
+        if (!this->connection_finished) {
+            this->connection_finished = true;
+
+            this->start_session_time = tvtime();
+
+            std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
+
+            //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
+
+            if (!this->out_path.empty()) {
+                std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
+                if (file_movie) {
+                    file_movie << duration.count() / 1000 << "\n";
+                }
+            }
+        }
+    }
 
     void disconnect() {
         timeval now = tvtime();
@@ -360,20 +381,6 @@ public:
         this->_info.bpp = bpp;
         this->_info.width = width;
         this->_info.height = height;
-
-        this->start_session_time = tvtime();
-
-        std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
-
-        //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
-
-        if (!this->out_path.empty()) {
-            std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
-            if (file_movie) {
-                file_movie << duration.count() / 1000 << "\n";
-            }
-        }
-
 
         return ResizeResult::done;
     }
@@ -712,6 +719,8 @@ public:
             std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
+
+        this->record_connection_nego_time();
     }
 
     virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
