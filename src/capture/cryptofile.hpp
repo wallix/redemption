@@ -30,7 +30,6 @@
 #include <vector>
 #include <iterator>
 #include <algorithm>
-#include <snappy-c.h>
 
 #include "utils/log.hpp"
 #include "utils/sugar/byte.hpp"
@@ -250,7 +249,7 @@ public:
         base64tbl[int('-')] = 62;
         base64tbl[int('_')] = 63;
 
-        while (*txt) {
+        for (; *txt; ++txt) {
             char const v = base64tbl[static_cast<uint8_t>(*txt)];
             if (v >= 0) {
                 bits <<= 6;
@@ -263,7 +262,6 @@ public:
                     nbits -= 8;
                 }
             }
-            txt++;
         }
 
         return nbytes;
