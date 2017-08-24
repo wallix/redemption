@@ -142,10 +142,9 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len)
         wc += source[i+1] << 8;
 
         for (unsigned int  j = 0 ; j < sizeof(lowers)/sizeof(lowers[0]); j++){
-            unsigned short c = lowers[j];
+            uint16_t c = lowers[j];
             if (wc == c) {
                 source[i] = uppers[j] & 0xFF;
-                source[i+1] = 0;
                 source[i+1] = (uppers[j] >> 8) & 0x00FF;
                 break;
             }
@@ -894,4 +893,3 @@ static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
 
     return length;
 }
-

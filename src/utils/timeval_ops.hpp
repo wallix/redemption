@@ -23,6 +23,7 @@
 
 #include <sys/time.h>
 #include <stdint.h>
+#include <cassert>
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
     // return ustime(a) < ustime(b)
@@ -51,3 +52,38 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 
+static inline timeval operator-(timeval const & endtime, timeval const & starttime)
+{
+    assert((endtime.tv_sec  > starttime.tv_sec ) ||
+           (endtime.tv_usec > starttime.tv_usec));
+
+    timeval result;
+
+    result.tv_sec = endtime.tv_sec - starttime.tv_sec;
+
+    if (endtime.tv_usec >= starttime.tv_usec) {
+        result.tv_usec = endtime.tv_usec - starttime.tv_usec;
+    }
+    else {
+        result.tv_sec--;
+
+        result.tv_usec = 1000000LL - starttime.tv_usec + endtime.tv_usec;
+    }
+
+    return result;
+}
+
+static inline timeval operator+(timeval const & a, timeval const & b)
+{
+    timeval result;
+
+    result.tv_sec  = a.tv_sec  + b.tv_sec;
+    result.tv_usec = a.tv_usec + b.tv_usec;
+    if (result.tv_usec >= 1000000LL) {
+        result.tv_sec++;
+
+        result.tv_usec -= 1000000LL;
+    }
+
+    return result;
+}

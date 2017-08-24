@@ -25,6 +25,7 @@
 #define LOGNULL
 
 #include "utils/log.hpp"
+#include "utils/difftimeval.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/server_notifier_api.hpp"

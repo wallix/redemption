@@ -31,6 +31,7 @@
 #include <utility>
 #include <iosfwd>
 #include <cstdint>
+#include <cstdlib> // abs
 
 struct Rect {
     int16_t x;
