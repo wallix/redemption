@@ -178,12 +178,14 @@ obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp : ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
+obj socket.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj scytale.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_EXE_DEPENDENCIES) :
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
 ;
 
+obj socket_test.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 obj do_recorder_test.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 obj capture_test.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 obj scytale_test.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPENDENCIES) :
@@ -235,6 +237,7 @@ exe rdpproxy
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
         <library>nego.o
+        <library>socket.o
     ;
 
 # Maybe merge with libredrec ?
@@ -318,6 +321,7 @@ exe rdptproxy
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
         <library>nego.o
+        <library>socket.o
     ;
 
 exe rdptanalyzer
@@ -362,6 +366,7 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
         <library>nego.o
+        <library>socket.o
     ;
 
 exe vncclient
@@ -390,6 +395,7 @@ exe vncclient
     :
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
+        <library>socket.o
     ;
 
 exe rdpheadless
@@ -421,6 +427,7 @@ exe rdpheadless
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
         <library>nego.o
+        <library>socket.o
     ;
 
 exe rdpinichecker
@@ -541,6 +548,7 @@ exe tls_test_client
         $(EXE_DEPENDENCIES)
         <library>log_print.o
         <library>fileutils.o
+        <library>socket_test.o
  ;
 exe tls_test_server
     :
@@ -550,6 +558,7 @@ exe tls_test_server
         $(EXE_DEPENDENCIES)
         <library>log_print.o
         <library>fileutils.o
+        <library>socket_test.o
 ;
 
 
@@ -669,7 +678,7 @@ test-canonical transport/mwrm_reader.hpp : <library>fileutils.o <library>crypto 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
-test-canonical transport/socket_transport.hpp : <library>fileutils.o <library>openssl <library>crypto <library>dl ;
+test-canonical transport/socket_transport.hpp : <library>socket_test.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
 # TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;

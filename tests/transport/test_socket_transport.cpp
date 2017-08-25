@@ -29,6 +29,10 @@
 #include "cxx/diagnostic.hpp"
 #include "cxx/cxx.hpp"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code")

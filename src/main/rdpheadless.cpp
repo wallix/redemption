@@ -22,11 +22,13 @@
 #include "configs/config.hpp"
 
 #include "main/rdpheadless.hpp"
-#include "utils/timeval_ops.hpp"
+#include "utils/netutils.hpp"
 
 #include "test_only/lcg_random.hpp"
 
 #include <iomanip>
+
+#include <signal.h>
 
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 

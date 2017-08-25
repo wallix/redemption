@@ -3,22 +3,20 @@
    sends a hello packet and waits for the response
 */
 
+#include "core/server_notifier_api.hpp"
+#include "transport/socket_transport.hpp"
+#include "system/openssl.hpp"
+
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
+
+#include <cstring>
+#include <cstdio>
+#include <cerrno>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <netdb.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <unistd.h>
-#include <string.h>
-#include "transport/socket_transport.hpp"
-
-#include "openssl_tls.hpp"
 
 
 // TODO -Wold-style-cast is ignored
