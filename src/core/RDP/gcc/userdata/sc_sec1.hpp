@@ -32,7 +32,7 @@
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/stream.hpp"
-#include "system/openssl.hpp"
+#include "openssl_crypto.hpp"
 
 #include <inttypes.h>
 

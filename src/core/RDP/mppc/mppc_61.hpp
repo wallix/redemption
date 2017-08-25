@@ -18,12 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
-#include "mppc_50.hpp"
+#include "core/RDP/mppc.hpp"
+#include "core/RDP/mppc/mppc_utils.hpp"
+#include "core/RDP/mppc/mppc_50.hpp"
+#include "utils/stream.hpp"
 
-#include <type_traits> // std:is_base_of
+#include <type_traits> // std::is_base_of
 
 
 // [MS-RDPEGDI] 2.2.2.4.1 RDP 6.1 Compressed Data (RDP61_COMPRESSED_DATA)
@@ -169,25 +171,18 @@ static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
     ;
 
 
-struct rdp_mppc_61_dec : public rdp_mppc_dec {
+struct rdp_mppc_61_dec : public rdp_mppc_dec
+{
     uint8_t   historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];    // Livel-1 history buffer.
     size_t    historyOffset;    // Livel-1 history buffer associated history offset.
 
     rdp_mppc_50_dec level_2_decompressor;
 
-    /**
-     * Initialize rdp_mppc_61_dec structure
-     */
-    rdp_mppc_61_dec() : rdp_mppc_dec()
-    , historyBuffer{0}
-    , historyOffset(0)
+    rdp_mppc_61_dec()
+        : rdp_mppc_dec()
+        , historyBuffer{0}
+        , historyOffset(0)
     {}
-
-    /**
-     * Deinitialize rdp_mppc_61_dec structure
-     */
-    ~rdp_mppc_61_dec() override {
-    }
 
 private:
     static inline void prepare_compressed_data(InStream & compressed_data_stream, bool compressed,
@@ -223,7 +218,8 @@ private:
 
 public:
     int decompress(uint8_t const * compressed_data, int compressed_data_size,
-        int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override {
+        int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override
+    {
         (void)compressionFlags;
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
@@ -347,17 +343,20 @@ public:
         return true;
     }
 
-    void dump() override {
+    void dump() override
+    {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
     }
 
-    void mini_dump() override {
+    void mini_dump() override
+    {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
     }
 };
 
 
-struct rdp_mppc_enc_match_finder {
+struct rdp_mppc_enc_match_finder
+{
     StaticOutStream<65536> match_details_stream;
 
     virtual ~rdp_mppc_enc_match_finder() {}
@@ -377,7 +376,8 @@ struct rdp_mppc_enc_match_finder {
 
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
-    void dump(bool mini_dump) const override {
+    void dump(bool mini_dump) const override
+    {
         (void)mini_dump;
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
     }
@@ -423,7 +423,8 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
         }
     }
 
-    void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) override {
+    void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) override
+    {
         if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)
             return;
 
@@ -477,16 +478,15 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
-    ~rdp_mppc_61_enc_hash_based_match_finder() override {
-    }
-
-    void dump(bool mini_dump) const  override {
+    void dump(bool mini_dump) const  override
+    {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder hash-based match finder");
         this->hash_tab_mgr.dump(mini_dump);
     }
 
     void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
-        uint16_t uncompressed_data_size) override {
+        uint16_t uncompressed_data_size) override
+    {
         this->match_details_stream.rewind();
 
         this->hash_tab_mgr.clear_undo_history();
@@ -548,11 +548,13 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
     }
 
 public:
-    void process_packet_at_front() override {
+    void process_packet_at_front() override
+    {
         this->hash_tab_mgr.reset();
     }
 
-    bool undo_last_changes() override {
+    bool undo_last_changes() override
+    {
         return this->hash_tab_mgr.undo_last_changes();
     }
 };
@@ -595,7 +597,8 @@ public:
     {}
 
 private:
-    void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
+    void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size)
+    {
         if (this->verbose) {
             LOG(LOG_INFO, "compress_61: uncompressed_data_size=%" PRIu16 " historyOffset=%" PRIu32,
                 uncompressed_data_size, this->historyOffset);
@@ -746,8 +749,9 @@ private:
         }
     }
 
-    void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
+    void do_compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t /*reserved*/) override
+    {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         if (this->bytes_in_output_buffer) {
@@ -762,7 +766,8 @@ private:
     }
 
 public:
-    void dump(bool mini_dump) const override {
+    void dump(bool mini_dump) const override
+    {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_61_HISTORY_BUFFER_LENGTH));
@@ -779,7 +784,8 @@ public:
         this->match_finder.dump(mini_dump);
     }
 
-    void get_compressed_data(OutStream & stream) const override {
+    void get_compressed_data(OutStream & stream) const override
+    {
         if (stream.tailroom() <
             static_cast<size_t>(2) + // Level1ComprFlags(1) + Level2ComprFlags(1)
                 this->bytes_in_output_buffer) {
@@ -794,4 +800,3 @@ public:
 };  // struct rdp_mppc_61_enc
 
 typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
-

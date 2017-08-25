@@ -175,6 +175,7 @@ obj keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
 obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp : ;
+obj mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc/mppc.cpp : ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -238,6 +239,7 @@ exe rdpproxy
         <library>fileutils.o
         <library>nego.o
         <library>socket.o
+        <library>mppc.o
     ;
 
 # Maybe merge with libredrec ?
@@ -322,6 +324,7 @@ exe rdptproxy
         <library>fileutils.o
         <library>nego.o
         <library>socket.o
+        <library>mppc.o
     ;
 
 exe rdptanalyzer
@@ -345,6 +348,7 @@ exe rdptanalyzer
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
+        <library>mppc.o
     ;
 
 exe rdpclient
@@ -367,6 +371,7 @@ exe rdpclient
         <library>fileutils.o
         <library>nego.o
         <library>socket.o
+        <library>mppc.o
     ;
 
 exe vncclient
@@ -396,6 +401,7 @@ exe vncclient
         $(EXE_DEPENDENCIES)
         <library>fileutils.o
         <library>socket.o
+        <library>mppc.o
     ;
 
 exe rdpheadless
@@ -428,6 +434,7 @@ exe rdpheadless
         <library>fileutils.o
         <library>nego.o
         <library>socket.o
+        <library>mppc.o
     ;
 
 exe rdpinichecker
@@ -873,11 +880,11 @@ test-canonical core/RDP/fastpath.hpp : <library>crypto ;
 test-canonical core/RDP/lic.hpp : <library>crypto ;
 test-canonical core/RDP/logon.hpp ;
 test-canonical core/RDP/mcs.hpp ;
-test-canonical core/RDP/mppc.hpp ;
-test-canonical core/RDP/mppc_40.hpp ;
-test-canonical core/RDP/mppc_50.hpp ;
-test-canonical core/RDP/mppc_60.hpp ;
-test-canonical core/RDP/mppc_61.hpp ;
+test-canonical core/RDP/mppc.hpp : <library>mppc.o ;
+test-canonical core/RDP/mppc_40.hpp : <library>mppc.o ;
+test-canonical core/RDP/mppc_50.hpp : <library>mppc.o ;
+test-canonical core/RDP/mppc_60.hpp : <library>mppc.o ;
+test-canonical core/RDP/mppc_61.hpp : <library>mppc.o ;
 test-canonical core/RDP/mppc_unified_dec.hpp ;
 test-canonical core/RDP/nego.hpp : <library>nego.o <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
@@ -966,7 +973,7 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
 test-canonical mod/vnc/vnc.hpp : <library>bitmap <library>d3des.o ;
 test-canonical mod/xup/xup.hpp ;
-test-canonical mod/rdp/rdp.hpp : <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
+test-canonical mod/rdp/rdp.hpp : <library>mppc.o <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
 ## @}
 
 
@@ -1037,6 +1044,7 @@ test-run test_rdp_client_large_pointer
     : <library>bitmap
       <library>fileutils.o
       <library>nego.o
+      <library>mppc.o
       <library>png.o
       <library>krb5
       <library>gssglue
@@ -1057,6 +1065,7 @@ test-run test_rdp_client_tls_w2008
     : <library>bitmap
       <library>fileutils.o
       <library>nego.o
+      <library>mppc.o
       <library>krb5
       <library>gssglue
       <library>png
@@ -1076,6 +1085,7 @@ test-run test_rdp_client_wab
     : <library>bitmap
       <library>fileutils.o
       <library>nego.o
+      <library>mppc.o
       <library>png.o
       <library>krb5
       <library>gssglue
@@ -1137,6 +1147,7 @@ test-run test_rdesktop_client
     <library>fileutils.o
     <library>video_capture
     <library>capture_test.o
+    <library>mppc.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1166,6 +1177,7 @@ test-run test_mstsc_client
     <library>ocr
     <library>keymap.o
     <library>gdapi.o
+    <library>mppc.o
     <covflag>nocover
 ;
 
@@ -1186,6 +1198,7 @@ test-run test_mstsc_client_rdp50bulk
     <library>ocr
     <library>keymap.o
     <library>gdapi.o
+    <library>mppc.o
     <covflag>nocover
 ;
 ## @}
@@ -1232,6 +1245,7 @@ test-canonical front/front.hpp
     <library>ocr
     <library>fileutils.o
     <library>nego.o
+    <library>mppc.o
     <library>keymap.o
     <library>gdapi.o
 ;

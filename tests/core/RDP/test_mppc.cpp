@@ -28,7 +28,8 @@
 #define LOGNULL
 
 #include <sys/time.h>
-#include "core/RDP/mppc_unified_dec.hpp"
+#include "core/RDP/mppc.hpp"
+#include "core/RDP/mppc/mppc_50.hpp"
 
 RED_AUTO_TEST_CASE(TestMPPC)
 {
@@ -37,14 +38,6 @@ RED_AUTO_TEST_CASE(TestMPPC)
 
     const uint8_t * rdata;
     uint32_t        rlen;
-    long int dur;
-
-    timeval start_time;
-    timeval end_time;
-
-
-    /* save starting time */
-    gettimeofday(&start_time, nullptr);
 
     for (int x = 0; x < 1000 ; x++){
         rdp_mppc_unified_dec rmppc_d;
@@ -55,13 +48,6 @@ RED_AUTO_TEST_CASE(TestMPPC)
 
         RED_CHECK_EQUAL(0, memcmp(decompressed_rd5, rdata, sizeof(decompressed_rd5)));
     }
-
-    /* get end time */
-    gettimeofday(&end_time, nullptr);
-
-    /* print time taken */
-    dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
-    LOG(LOG_INFO, "test_mppc: decompressed data in %ld micro seconds", dur);
 }
 
 RED_AUTO_TEST_CASE(TestMPPC_enc)
@@ -72,10 +58,6 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
     const uint8_t * rdata;
     uint32_t        rlen;
 
-    /* required for timing the test */
-    timeval start_time;
-    timeval end_time;
-
     /* setup decoder */
     rdp_mppc_unified_dec rmppc_d;
     rdp_mppc_dec & rmppc = rmppc_d;
@@ -84,10 +66,6 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
     rdp_mppc_50_enc enc;
 
     int data_len = sizeof(decompressed_rd5_data);
-    LOG(LOG_INFO, "test_mppc_enc: testing with embedded data of %d bytes", data_len);
-
-    /* save starting time */
-    gettimeofday(&start_time, nullptr);
 
     uint8_t  compressionFlags;
     uint16_t datalen;
@@ -99,13 +77,6 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
     RED_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
     RED_CHECK_EQUAL(data_len, rlen);
     RED_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
-
-    /* get end time */
-    gettimeofday(&end_time, nullptr);
-
-    /* print time taken */
-    long int dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
-    LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, dur / 1000000.0);
 }
 
 RED_AUTO_TEST_CASE(TestBitsSerializer)

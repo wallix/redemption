@@ -25,13 +25,15 @@
 
 #pragma once
 
-#include <stdint.h>
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "utils/parse.hpp"
+
+#include <cstdint>
+#include <cinttypes>
 
 //##############################################################################
 namespace X224

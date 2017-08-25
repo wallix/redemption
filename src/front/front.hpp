@@ -97,10 +97,7 @@
 
 #include "keyboard/keymap2.hpp"
 
-#include "core/RDP/mppc_40.hpp"
-#include "core/RDP/mppc_50.hpp"
-#include "core/RDP/mppc_60.hpp"
-#include "core/RDP/mppc_61.hpp"
+#include "core/RDP/mppc.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
@@ -569,7 +566,7 @@ private:
 
     Transport * persistent_key_list_transport;
 
-    rdp_mppc_enc * mppc_enc;
+    std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
     bool       auth_info_sent;
@@ -662,7 +659,6 @@ public:
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , server_capabilities_filename(server_capabilities_filename)
     , persistent_key_list_transport(persistent_key_list_transport)
-    , mppc_enc(nullptr)
     , report_message(report_message)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
@@ -733,7 +729,6 @@ public:
 
     ~Front() override {
         ERR_free_strings();
-        delete this->mppc_enc;
 
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
@@ -1106,49 +1101,27 @@ public:
     }
 
 private:
-    void reset() {
+    void reset()
+    {
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::reset: use_bitmap_comp=%d", this->ini.get<cfg::client::bitmap_compression>() ? 1 : 0);
             LOG(LOG_INFO, "Front::reset: use_compact_packets=%d", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
-        if (this->mppc_enc) {
-            delete this->mppc_enc;
-            this->mppc_enc = nullptr;
-        }
-
         this->max_bitmap_size = 1024 * 30;  // should be less than 1 << 15
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1))
-        {
-        case PACKET_COMPR_TYPE_RDP61:
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::reset: Use RDP 6.1 Bulk compression");
-            }
-            //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
-            this->mppc_enc = new rdp_mppc_61_enc_hash_based(this->ini.get<cfg::debug::compression>());
-            break;
-        case PACKET_COMPR_TYPE_RDP6:
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::reset: Use RDP 6.0 Bulk compression");
-            }
-            this->mppc_enc = new rdp_mppc_60_enc(this->ini.get<cfg::debug::compression>());
-            break;
-        case PACKET_COMPR_TYPE_64K:
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::reset: Use RDP 5.0 Bulk compression");
-            }
-            this->mppc_enc = new rdp_mppc_50_enc(this->ini.get<cfg::debug::compression>());
-            break;
-        case PACKET_COMPR_TYPE_8K:
-            if (bool(this->verbose & Verbose::basic_trace)) {
-                LOG(LOG_INFO, "Front::reset: Use RDP 4.0 Bulk compression");
-            }
-            this->mppc_enc = new rdp_mppc_40_enc(this->ini.get<cfg::debug::compression>());
+        int const mppc_type = this->get_appropriate_compression_type(
+            this->client_info.rdp_compression_type,
+            static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1
+        );
+        if (mppc_type == PACKET_COMPR_TYPE_8K) {
             this->max_bitmap_size = 1024 * 8;
-            break;
         }
+        this->mppc_enc = rdp_mppc_load_compressor(
+            bool(this->verbose & Verbose::basic_trace), "Front::reset",
+            mppc_type, this->ini.get<cfg::debug::compression>()
+        );
 
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
@@ -1165,7 +1138,7 @@ private:
           , this->ini
           , this->max_bitmap_size
           , this->server_fastpath_update_support
-          , this->mppc_enc
+          , this->mppc_enc.get()
           , this->verbose
         );
         this->set_gd(this->orders.graphics_update_pdu());
@@ -2742,7 +2715,7 @@ private:
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
                             , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3396,7 +3369,7 @@ private:
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
                             , false
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3450,7 +3423,7 @@ private:
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
                             , false
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3505,7 +3478,7 @@ private:
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
                             , false
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3539,7 +3512,7 @@ private:
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SAVE_SESSION_INFO
                             , false
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3579,7 +3552,7 @@ private:
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_MONITOR_LAYOUT_PDU
                             , false
-                            , this->mppc_enc
+                            , this->mppc_enc.get()
                             , this->share_id
                             , this->encryptionLevel
                             , this->encrypt
@@ -3889,7 +3862,7 @@ private:
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
                                     , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
-                                    , this->mppc_enc
+                                    , this->mppc_enc.get()
                                     , this->share_id
                                     , this->encryptionLevel
                                     , this->encrypt
@@ -4561,7 +4534,7 @@ private:
             this->trans
           , this->server_fastpath_update_support
           , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
-          , this->mppc_enc
+          , this->mppc_enc.get()
           , this->share_id
           , this->encryptionLevel
           , this->encrypt

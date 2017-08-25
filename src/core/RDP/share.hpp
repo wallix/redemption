@@ -28,6 +28,7 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "core/error.hpp"
 
 #include "core/RDP/mppc.hpp"
 

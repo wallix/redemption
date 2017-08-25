@@ -34,7 +34,7 @@
 #include "core/front_api.hpp"
 #include "transport/in_file_transport.hpp"
 #include "core/RDP/autoreconnect.hpp"
-#include "core/RDP/mppc_unified_dec.hpp"
+#include "core/RDP/mppc.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"

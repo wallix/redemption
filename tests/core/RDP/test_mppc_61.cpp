@@ -23,7 +23,7 @@
 
 #define LOGNULL
 
-#include "core/RDP/mppc_61.hpp"
+#include "core/RDP/mppc/mppc_61.hpp"
 
 RED_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {

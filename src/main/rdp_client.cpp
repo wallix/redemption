@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <string>
+#include <openssl/ssl.h>
 
 
 #include "configs/config.hpp"
