@@ -278,6 +278,8 @@ FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
 // IOVideoRecorderWithTransport
 //@{
 
+#include <libavformat/avio.h>
+
 template<class Transport>
 struct IOVideoRecorderWithTransport
 {

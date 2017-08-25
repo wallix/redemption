@@ -165,6 +165,7 @@ constant TEST_DEPENDENCIES :
     $(UNIT_TEST_DEPENDENCIES)
 ;
 
+obj video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : ;
 obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
 obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp : <cxxflags>-std=c++14 ;
@@ -194,7 +195,7 @@ obj scytale_test.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPEND
 ;
 
 alias bitmap : bitmap.o bitmap_from_file.o png crypto ;
-alias video_capture : video_capture.o ffmpeg ;
+alias video_capture : video_capture.o video_recorder.o ffmpeg ;
 
 
 #
@@ -452,7 +453,6 @@ exe redrec
         libredrec
     :
         $(EXE_DEPENDENCIES)
-        <library>fileutils.o
         <library>log_print.o
     ;
 
