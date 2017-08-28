@@ -890,7 +890,7 @@ test-run test_mppc_40 : core/RDP/test_mppc_40.cpp : : <library>mppc.o ;
 test-run test_mppc_50 : core/RDP/test_mppc_50.cpp : : <library>mppc.o ;
 test-run test_mppc_60 : core/RDP/test_mppc_60.cpp : : <library>mppc.o ;
 test-run test_mppc_61 : core/RDP/test_mppc_61.cpp : : <library>mppc.o ;
-test-canonical core/RDP/mppc_unified_dec.hpp ;
+test-run test_mppc_unified_dec : core/RDP/test_mppc_unified_dec.cpp : : <library>mppc.o ;
 test-canonical core/RDP/nego.hpp : <library>nego.o <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
 test-canonical core/RDP/out_per_bstream.hpp ;
