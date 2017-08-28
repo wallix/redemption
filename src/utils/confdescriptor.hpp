@@ -32,17 +32,17 @@ bool general_caps_load(GeneralCaps & caps, char const * filename);
 bool bitmap_caps_load(BitmapCaps & caps, char const * filename);
 bool order_caps_load(OrderCaps & caps, char const * filename);
 
-bool general_caps_load(GeneralCaps & caps, std::string const & filename)
+inline bool general_caps_load(GeneralCaps & caps, std::string const & filename)
 {
     return general_caps_load(caps, filename.c_str());
 }
 
-bool bitmap_caps_load(BitmapCaps & caps, std::string const & filename)
+inline bool bitmap_caps_load(BitmapCaps & caps, std::string const & filename)
 {
     return bitmap_caps_load(caps, filename.c_str());
 }
 
-bool order_caps_load(OrderCaps & caps, std::string const & filename)
+inline bool order_caps_load(OrderCaps & caps, std::string const & filename)
 {
     return order_caps_load(caps, filename.c_str());
 }

@@ -181,6 +181,7 @@ obj netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp : ;
 obj confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp : ;
 obj authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp : ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp : ;
+obj crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp : ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -249,11 +250,13 @@ exe rdpproxy
         <library>confdescriptor.o
         <library>authorization_channels.o
         <library>cfgloader.o
+        <library>crypto_transport.o
     ;
 
 # Maybe merge with libredrec ?
 lib libscytale
    :
+       crypto_transport.o
        fileutils.o
        scytale.o
        keymap.o
@@ -286,6 +289,7 @@ lib libredrec
         keymap.o
         gdapi.o
         cfgloader.o
+        crypto_transport.o
 
         ocr/<link>static
 
@@ -339,6 +343,7 @@ exe rdptproxy
         <library>confdescriptor.o
         <library>authorization_channels.o
         <library>cfgloader.o
+        <library>crypto_transport.o
     ;
 
 exe rdptanalyzer
@@ -390,6 +395,7 @@ exe rdpclient
         <library>confdescriptor.o
         <library>authorization_channels.o
         <library>cfgloader.o
+        <library>crypto_transport.o
     ;
 
 exe vncclient
@@ -423,6 +429,7 @@ exe vncclient
         <library>netutils.o
         <library>confdescriptor.o
         <library>cfgloader.o
+        <library>crypto_transport.o
     ;
 
 exe rdpheadless
@@ -460,6 +467,7 @@ exe rdpheadless
         <library>confdescriptor.o
         <library>authorization_channels.o
         <library>cfgloader.o
+        <library>crypto_transport.o
     ;
 
 exe rdpinichecker
@@ -610,14 +618,14 @@ exe tls_test_server
 test-run test_scytale
     : main/test_scytale.cpp
     :
-    : <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>scytale_test.o ;
+    : <library>crypto_transport.o <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>scytale_test.o ;
 ## @}
 
 ## Acl tests
 ## @{
-test-canonical acl/acl_serializer.hpp : <library>confdescriptor.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>png.o <library>video_capture <library>crypto <library>snappy ;
+test-canonical acl/acl_serializer.hpp : <library>crypto_transport.o <library>confdescriptor.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>png.o <library>video_capture <library>crypto <library>snappy ;
 test-canonical acl/auth_api.hpp ;
-test-canonical acl/authentifier.hpp : <library>confdescriptor.o <library>cfgloader.o <library>fileutils.o <library>crypto <library>png <library>snappy ;
+test-canonical acl/authentifier.hpp : <library>crypto_transport.o <library>confdescriptor.o <library>cfgloader.o <library>fileutils.o <library>crypto <library>png <library>snappy ;
 test-canonical acl/module_manager.hpp : <library>authorization_channels.o <library>confdescriptor.o <library>cfgloader.o <library>fileutils.o <library>crypto <library>png <library>snappy ;
 test-canonical acl/mm_api.hpp ;
 ## @}
@@ -635,9 +643,9 @@ test-canonical capture/ocr/locale/latin_to_cyrillic.hpp : <library>ocr.o ;
 
 ## Capture tests
 ## @{
-test-canonical capture/capture.hpp : <library>cfgloader.o <library>fileutils.o <library>bitmap <library>png.o <library>crypto <library>dl <library>z <library>snappy <library>ocr <library>video_capture ;
+test-canonical capture/capture.hpp : <library>crypto_transport.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>png.o <library>crypto <library>dl <library>z <library>snappy <library>ocr <library>video_capture ;
 test-canonical capture/video_capture.hpp : <library>fileutils.o <library>bitmap <library>png.o <library>dl <library>video_capture ;
-test-canonical capture/wrm_capture.hpp : <library>fileutils.o <library>bitmap <library>png.o <library>crypto <library>png <library>z <library>snappy <library>dl ;
+test-canonical capture/wrm_capture.hpp : <library>crypto_transport.o <library>fileutils.o <library>bitmap <library>png.o <library>crypto <library>png <library>z <library>snappy <library>dl ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
@@ -706,11 +714,11 @@ test-canonical core/RDP/capabilities/window.hpp ;
 
 ## Transport tests
 ## @{
-test-canonical transport/crypto_transport.hpp : <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/crypto_transport.hpp : <library>crypto_transport.o <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/in_file_transport.hpp ;
-test-canonical transport/mwrm_reader.hpp : <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
-test-canonical transport/in_meta_sequence_transport.hpp : <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/mwrm_reader.hpp : <library>crypto_transport.o <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto_transport.o <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/socket_transport.hpp : <library>netutils.o <library>socket_test.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
@@ -719,7 +727,7 @@ test-canonical utils/compression_transport_builder.hpp : <library>z <library>sna
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 test-canonical main/do_recorder.hpp :
-    <library>cfgloader.o <library>program_options.o <library>openssl <library>crypto <library>snappy <library>dl <library>z
+    <library>crypto_transport.o <library>cfgloader.o <library>program_options.o <library>openssl <library>crypto <library>snappy <library>dl <library>z
     <library>do_recorder_test.o <library>ocr <library>bitmap <library>png.o
     <library>fileutils.o <library>capture_test.o <library>video_capture
 ;
@@ -1193,6 +1201,7 @@ test-run test_rdesktop_client
     <library>gdapi.o
     <library>cfgloader.o
     <library>confdescriptor.o
+    <library>crypto_transport.o
     <covflag>nocover
 ;
 
@@ -1216,6 +1225,7 @@ test-run test_mstsc_client
     <library>mppc.o
     <library>cfgloader.o
     <library>confdescriptor.o
+    <library>crypto_transport.o
     <covflag>nocover
 ;
 
@@ -1239,6 +1249,7 @@ test-run test_mstsc_client_rdp50bulk
     <library>mppc.o
     <library>cfgloader.o
     <library>confdescriptor.o
+    <library>crypto_transport.o
     <covflag>nocover
 ;
 ## @}
@@ -1291,6 +1302,7 @@ test-canonical front/front.hpp
     <library>authorization_channels.o
     <library>confdescriptor.o
     <library>cfgloader.o
+    <library>crypto_transport.o
 ;
 
 test-canonical keyboard/keymap2.hpp : <library>keymap.o ;

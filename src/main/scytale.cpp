@@ -25,6 +25,8 @@
 #include <memory>
 
 #include "test_only/lcg_random.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/genfstat.hpp"
 
 #include "main/version.hpp"
 
