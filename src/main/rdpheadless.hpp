@@ -319,7 +319,7 @@ public:
 
             std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
 
-            //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
+            std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
 
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);

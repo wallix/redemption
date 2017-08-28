@@ -3687,7 +3687,7 @@ public:
                 else {
 
                     ShareControl_Recv sctrl(sec.payload);
-                    sctrl.log();
+                    //sctrl.log();
                     next_packet += sctrl.totalLength;
 
                     if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -3703,7 +3703,7 @@ public:
                         case EARLY:
                         {
                             ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                            sdata.log();
+                            // sdata.log();
                             LOG(LOG_ERR, "sdata.pdutype2=%u", sdata.pdutype2);
 
                             if (sdata.pdutype2 == PDUTYPE2_SET_ERROR_INFO_PDU)
@@ -3722,7 +3722,7 @@ public:
 
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                sdata.log();
+                                // sdata.log();
 
                                 if (sdata.pdutype2 == PDUTYPE2_MONITOR_LAYOUT_PDU) {
 
@@ -3764,7 +3764,7 @@ public:
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                sdata.log();
+                                // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                             }
                             break;
@@ -3775,7 +3775,7 @@ public:
                             this->connection_finalization_state = WAITING_FONT_MAP;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                sdata.log();
+                                // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                             }
                             break;
@@ -3794,7 +3794,7 @@ public:
                             rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                sdata.log();
+                                // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                             }
 
@@ -3853,7 +3853,7 @@ public:
 
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                sdata.log();
+                                // sdata.log();
 
                                 switch (sdata.pdutype2) {
                                 case PDUTYPE2_UPDATE:
