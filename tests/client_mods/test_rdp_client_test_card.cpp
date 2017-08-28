@@ -30,6 +30,7 @@
 
 #include "core/error.hpp"
 #include "core/font.hpp"
+#include "core/client_info.hpp"
 #include "mod/internal/test_card_mod.hpp"
 
 #include "test_only/front/fake_front.hpp"
