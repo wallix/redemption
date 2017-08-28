@@ -177,6 +177,7 @@ obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
 obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp : ;
 obj mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc/mppc.cpp : ;
+obj netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp : ;
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -241,6 +242,7 @@ exe rdpproxy
         <library>nego.o
         <library>socket.o
         <library>mppc.o
+        <library>netutils.o
     ;
 
 # Maybe merge with libredrec ?
@@ -326,6 +328,7 @@ exe rdptproxy
         <library>nego.o
         <library>socket.o
         <library>mppc.o
+        <library>netutils.o
     ;
 
 exe rdptanalyzer
@@ -373,6 +376,7 @@ exe rdpclient
         <library>nego.o
         <library>socket.o
         <library>mppc.o
+        <library>netutils.o
     ;
 
 exe vncclient
@@ -403,6 +407,7 @@ exe vncclient
         <library>fileutils.o
         <library>socket.o
         <library>mppc.o
+        <library>netutils.o
     ;
 
 exe rdpheadless
@@ -436,6 +441,7 @@ exe rdpheadless
         <library>nego.o
         <library>socket.o
         <library>mppc.o
+        <library>netutils.o
     ;
 
 exe rdpinichecker
@@ -556,6 +562,7 @@ exe tls_test_client
         <library>log_print.o
         <library>fileutils.o
         <library>socket_test.o
+        <library>netutils.o
  ;
 exe tls_test_server
     :
@@ -566,6 +573,7 @@ exe tls_test_server
         <library>log_print.o
         <library>fileutils.o
         <library>socket_test.o
+        <library>netutils.o
 ;
 
 
@@ -685,7 +693,7 @@ test-canonical transport/mwrm_reader.hpp : <library>fileutils.o <library>crypto 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
-test-canonical transport/socket_transport.hpp : <library>socket_test.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
+test-canonical transport/socket_transport.hpp : <library>netutils.o <library>socket_test.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
 # TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -719,10 +727,9 @@ test-canonical utils/genrandom.hpp ;
 test-canonical utils/genfstat.hpp ;
 test-canonical utils/get_printable_password.hpp ;
 test-canonical utils/log.hpp ;
-test-canonical utils/netutils.hpp ;
+test-canonical utils/netutils.hpp : <library>netutils.o ;
 test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/parse.hpp ;
-test-canonical utils/parse_ip_conntrack.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
