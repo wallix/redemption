@@ -2759,7 +2759,7 @@ private:
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
                 if (!this->server_capabilities_filename.empty()) {
-                    configuration_load(GeneralCapsLoader(general_caps), this->server_capabilities_filename);
+                    general_caps_load(general_caps, this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
@@ -2773,7 +2773,7 @@ private:
                 bitmap_caps.desktopHeight = this->client_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
                 if (!this->server_capabilities_filename.empty()) {
-                    configuration_load(BitmapCapsLoader(bitmap_caps), this->server_capabilities_filename);
+                    bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
@@ -2808,7 +2808,7 @@ private:
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
                 if (!this->server_capabilities_filename.empty()) {
-                    configuration_load(OrderCapsLoader(order_caps), this->server_capabilities_filename);
+                    order_caps_load(order_caps, this->server_capabilities_filename);
                 }
                 if (bool(this->verbose)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
