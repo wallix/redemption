@@ -64,6 +64,11 @@ void rdp_mppc_enc::compress(
 }
 
 
+rdp_mppc_unified_dec::~rdp_mppc_unified_dec()
+{
+    delete this->mppc_dec;
+}
+
 void rdp_mppc_unified_dec::mini_dump()
 {
     if (this->mppc_dec) {
