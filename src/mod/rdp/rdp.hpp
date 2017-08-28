@@ -33,6 +33,7 @@
 #include "core/report_message_api.hpp"
 #include "core/front_api.hpp"
 
+#include "core/server_notifier_api.hpp"
 #include "core/RDP/x224.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/RDP/mcs.hpp"
@@ -53,7 +54,7 @@
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
 #include "core/RDP/pointer.hpp"
-#include "core/RDP/mppc_unified_dec.hpp"
+#include "core/RDP/mppc.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
 #include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/capabilities/cap_bmpcache.hpp"

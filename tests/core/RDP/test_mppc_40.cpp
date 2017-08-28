@@ -23,7 +23,7 @@
 
 //#define LOGNULL
 
-#include "core/RDP/mppc_40.hpp"
+#include "core/RDP/mppc/mppc_40.hpp"
 
 RED_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 {

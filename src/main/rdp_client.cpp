@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <string>
+#include <openssl/ssl.h>
 
 
 #include "configs/config.hpp"
@@ -31,10 +32,11 @@
 #include "transport/socket_transport.hpp"
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/redirection_info.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "utils/genrandom.hpp"
 #include "mod/rdp/rdp.hpp"
+#include "utils/redirection_info.hpp"
+#include "utils/netutils.hpp"
+#include "utils/genrandom.hpp"
 #include "program_options/program_options.hpp"
 
 

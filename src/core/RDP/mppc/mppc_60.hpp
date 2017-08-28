@@ -18,12 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
-#include <stdint.h>
-#include "mppc.hpp"
+#include "core/RDP/mppc.hpp"
+#include "core/RDP/mppc/mppc_utils.hpp"
 #include "utils/stream.hpp"
+
+#include <cinttypes>
 
 static uint8_t HuffLenLEC[] = {
     0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, // 0
@@ -198,7 +199,8 @@ static const size_t RDP_60_HIST_BUF_LEN      = 65536;
 static const size_t RDP_60_HIST_BUF_MIDDLE   = RDP_60_HIST_BUF_LEN / 2;
 static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
-static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
+static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset)
+{
     REDASSERT(copy_offset);
     REDASSERT((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
         (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]));
@@ -210,7 +212,8 @@ static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
 
 }
 
-static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
+static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex)
+{
     REDASSERT(LUTIndex);
 
     uint16_t t = *offset_cache;
@@ -218,15 +221,13 @@ static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
     *(offset_cache + LUTIndex) = t;
 }
 
-struct rdp_mppc_60_dec : public rdp_mppc_dec {
+struct rdp_mppc_60_dec : public rdp_mppc_dec
+{
     uint8_t    history_buf[RDP_60_HIST_BUF_LEN];
     uint16_t   offset_cache[RDP_60_OFFSET_CACHE_SIZE];
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
-    /**
-     * Initialize rdp_mppc_60_dec structure
-     */
     rdp_mppc_60_dec()
     : history_buf{0}
     , offset_cache{0}
@@ -234,13 +235,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
     , history_ptr(this->history_buf)
     {}
 
-    /**
-     * Deinitialize rdp_mppc_60_dec structure
-     */
-    ~rdp_mppc_60_dec() override {
-    }
-
-    void mini_dump() override {
+    void mini_dump() override
+    {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, 16);
@@ -250,7 +246,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
-    void dump() override {
+    void dump() override
+    {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
@@ -261,15 +258,18 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
     }
 
 protected:
-    static inline uint16_t LEChash(uint16_t key) {
+    static inline uint16_t LEChash(uint16_t key)
+    {
         return ((key & 0x1ff) ^ (key  >> 9) ^ (key >> 4) ^ (key >> 7));
     }
 
-    static inline uint16_t LOMhash(uint16_t key) {
+    static inline uint16_t LOMhash(uint16_t key)
+    {
         return ((key & 0x1f) ^ (key  >> 5) ^ (key >> 9));
     }
 
-    static inline uint16_t miniLEChash(uint16_t key) {
+    static inline uint16_t miniLEChash(uint16_t key)
+    {
         uint16_t h;
         h = ((((key >> 8) ^ (key & 0xff)) >> 2) & 0xf);
         if (key >> 9) {
@@ -278,13 +278,15 @@ protected:
         return (h % 12);
     }
 
-    static inline uint8_t miniLOMhash(uint16_t key) {
+    static inline uint8_t miniLOMhash(uint16_t key)
+    {
         uint8_t h;
         h = (key >> 4) & 0xf;
         return ((h ^ (h >> 2) ^ (h >> 3)) & 0x3);
     }
 
-    static inline uint16_t getLECindex(uint16_t huff) {
+    static inline uint16_t getLECindex(uint16_t huff)
+    {
         uint16_t h = HuffIndexLEC[ ::rdp_mppc_60_dec::LEChash(huff)];
         if ((h ^ huff) >> 9) {
             return h & 0x1ff;
@@ -292,7 +294,8 @@ protected:
         return HuffIndexLEC[LECHTab[ ::rdp_mppc_60_dec::miniLEChash(huff)]];
     }
 
-    static inline uint16_t getLOMindex(uint16_t huff) {
+    static inline uint16_t getLOMindex(uint16_t huff)
+    {
         uint16_t h = HuffIndexLOM[ ::rdp_mppc_60_dec::LOMhash(huff)];
         if ((h ^ huff) >> 5) {
             return h & 0x1f;
@@ -300,7 +303,8 @@ protected:
         return HuffIndexLOM[LOMHTab[ ::rdp_mppc_60_dec::miniLOMhash(huff)]];
     }
 
-    static inline uint32_t transposebits(uint32_t x) {
+    static inline uint32_t transposebits(uint32_t x)
+    {
         x = ((x & 0x55555555) << 1) | ((x >> 1) & 0x55555555);
         x = ((x & 0x33333333) << 2) | ((x >> 2) & 0x33333333);
         x = ((x & 0x0f0f0f0f) << 4) | ((x >> 4) & 0x0f0f0f0f);
@@ -327,7 +331,8 @@ public:
      *
      * @return        True on success, False on failure
      */
-    int decompress_60(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
+    int decompress_60(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen)
+    {
         //LOG(LOG_INFO, "decompress_60");
 
         uint16_t * offset_cache = this->offset_cache;   /* Copy Offset cache                          */
@@ -608,7 +613,8 @@ public:
         return true;
     }   // decompress_60
 
-    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override {
+    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override
+    {
         uint32_t roff = 0;
         int      result;
 
@@ -628,7 +634,8 @@ public:
 ////////////////////
 
 static inline void insert_n_bits_60(uint8_t n, uint32_t data,
-    uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index, bool verbose) {
+    uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index, bool verbose)
+{
     if (verbose) {
         LOG(LOG_INFO, "data=%u bit=%u", data, n);
     }
@@ -658,12 +665,14 @@ static inline void insert_n_bits_60(uint8_t n, uint32_t data,
 }
 
 static inline void encode_literal_60(uint16_t c, uint8_t * outputBuffer,
-    uint8_t & bits_left, uint16_t & opb_index, bool verbose) {
+    uint8_t & bits_left, uint16_t & opb_index, bool verbose)
+{
     insert_n_bits_60(HuffLenLEC[c], HuffCodeLEC[c],
         outputBuffer, bits_left, opb_index, verbose);
 }
 
-struct rdp_mppc_60_enc : public rdp_mppc_enc {
+struct rdp_mppc_60_enc : public rdp_mppc_enc
+{
     static const size_t MINIMUM_MATCH_LENGTH             = 3;
     static const size_t MAXIMUM_MATCH_LENGTH             = 514;
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
@@ -718,9 +727,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
-    ~rdp_mppc_60_enc() override {}
-
-    void dump(bool mini_dump) const override {
+    void dump(bool mini_dump) const override
+    {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
@@ -736,7 +744,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         this->hash_tab_mgr.dump(mini_dump);
     }
 
-    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset) {
+    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset)
+    {
         for (int i = 0; i < 4; i++) {
             if (offset_cache[i] == copy_offset) {
                 return i;
@@ -986,8 +995,9 @@ private:
         this->flagsHold     =  0;
     }   // void compress_60(const uint8_t * uncompressed_data, int uncompressed_data_size)
 
-    void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
+    void do_compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t /*reserved*/) override
+    {
         this->compress_60(uncompressed_data, uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
@@ -1000,7 +1010,8 @@ private:
     }
 
 public:
-    void get_compressed_data(OutStream & stream) const override {
+    void get_compressed_data(OutStream & stream) const override
+    {
         if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_60_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);
@@ -1009,4 +1020,3 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
 };  // struct rdp_mppc_60_enc
-

@@ -34,6 +34,8 @@
 
 #include <memory>
 
+#include <snappy-c.h>
+
 
 // "MFCW"
 constexpr uint32_t WABCRYPTOFILE_MAGIC = 0x4D464357;

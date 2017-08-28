@@ -30,8 +30,9 @@
 
 #include <utility>
 #include <iosfwd>
-#include <cstdint>
+#include <algorithm> // min max
 #include <cstdlib> // abs
+#include <cstdint>
 
 struct Rect {
     int16_t x;

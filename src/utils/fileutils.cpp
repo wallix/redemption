@@ -90,7 +90,7 @@ void ParsePath(const char * fullpath, std::string & directory,
             return dot - 1;
         } ();
 
-    if (end_of_filename > begin_of_filename) {
+    if (end_of_filename >= begin_of_filename) {
         filename.assign(begin_of_filename,
             end_of_filename - begin_of_filename + 1);
     }

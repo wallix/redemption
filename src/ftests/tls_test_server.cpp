@@ -1,21 +1,19 @@
  /* A simple TLS server */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
+#include "openssl_tls.hpp"
+#include "system/openssl.hpp"
+
+#include "transport/socket_transport.hpp"
+
+#include <cstring>
+#include <cstdio>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <netdb.h>
-#include <fcntl.h>
 #include <signal.h>
-#include <unistd.h>
-#include <string.h>
 
-#include "openssl_tls.hpp"
-
-#include "transport/socket_transport.hpp"
 
 // TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push

@@ -171,7 +171,7 @@ char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 
 
 #ifdef IN_IDE_PARSER
-#  define LOG LOGSYSLOG__REDEMPTION__INTERNAL
+#  define LOG(priority, ...) compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
 
 #else
 #  define LOG(priority, ...) do {                                \
