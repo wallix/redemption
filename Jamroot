@@ -165,41 +165,52 @@ constant TEST_DEPENDENCIES :
     $(UNIT_TEST_DEPENDENCIES)
 ;
 
-obj video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : ;
-obj video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
-obj bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
-obj bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp : <cxxflags>-std=c++14 ;
-obj d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
-obj png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
+rule obj-canonical ( source : requirements * : dependencies * )
+{
+    obj $(source:B).o : $(REDEMPTION_SRC_PATH)/$(source) : $(requirements) : $(dependencies) ;
+}
+
+obj-canonical keyboard/keymapSym.cpp : ;
+obj-canonical capture/video_recorder.cpp : ;
+obj-canonical capture/video_capture.cpp ;
+obj-canonical utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
+obj-canonical utils/bitmap.cpp : <cxxflags>-std=c++14 ;
+obj-canonical utils/d3des.cpp ;
+obj-canonical utils/png.cpp ;
 obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
-obj keymap.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
-obj gdapi.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp : ;
-obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp : ;
-obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp : ;
-obj mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc/mppc.cpp : ;
-obj netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp : ;
-obj confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp : ;
-obj authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp : ;
-obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp : ;
-obj crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp : ;
+obj-canonical keyboard/keymap2.cpp : ;
+obj-canonical gdi/graphic_api.cpp : ;
+obj-canonical utils/fileutils.cpp : ;
+obj-canonical core/RDP/nego.cpp : ;
+obj-canonical core/RDP/mppc/mppc.cpp : ;
+obj-canonical utils/netutils.cpp : ;
+obj-canonical utils/confdescriptor.cpp : ;
+obj-canonical utils/authorization_channels.cpp : ;
+obj-canonical utils/cfgloader.cpp : ;
+obj-canonical transport/crypto_transport.cpp : ;
 
-obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
+obj-canonical core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
-obj client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj socket.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj scytale.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_EXE_DEPENDENCIES) :
+rule obj2-canonical ( source : requirements * : dependencies * )
+{
+    obj $(source:B).o : $(REDEMPTION_SRC_PATH)/$(source)
+        : $(OBJ_EXE_DEPENDENCIES) $(requirements) : $(dependencies) ;
+    obj $(source:B)_test.o : $(REDEMPTION_SRC_PATH)/$(source)
+        : $(OBJ_TEST_DEPENDENCIES) $(requirements) : $(dependencies) ;
+}
+
+obj2-canonical mod/internal/client_execute.cpp ;
+obj2-canonical transport/socket_transport.cpp ;
+obj2-canonical main/do_recorder.cpp ;
+obj2-canonical capture/capture.cpp ;
+obj2-canonical main/scytale.cpp :
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
 ;
 
-obj client_execute_test.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj socket_test.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj do_recorder_test.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj capture_test.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(OBJ_TEST_DEPENDENCIES) ;
-obj scytale_test.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : $(OBJ_TEST_DEPENDENCIES) :
-    <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
-;
+alias socket.o : socket_transport.o ;
+alias socket_test.o : socket_transport_test.o ;
+alias keymap.o : keymap2.o ;
+alias gdapi.o : graphic_api.o ;
 
 alias bitmap : bitmap.o bitmap_from_file.o png crypto ;
 alias video_capture : video_capture.o video_recorder.o ffmpeg ;
@@ -227,7 +238,7 @@ exe rdpproxy
 
         ocr/<link>static
 
-        mainloop
+        mainloop.o
 
         d3des.o
 
@@ -257,6 +268,7 @@ exe rdpproxy
         <library>cfgloader.o
         <library>crypto_transport.o
         <library>client_execute.o
+        <library>keymapSym.o
     ;
 
 # Maybe merge with libredrec ?
@@ -440,6 +452,7 @@ exe vncclient
         <library>confdescriptor.o
         <library>cfgloader.o
         <library>crypto_transport.o
+        <library>keymapSym.o
     ;
 
 exe rdpheadless
@@ -479,6 +492,7 @@ exe rdpheadless
         <library>cfgloader.o
         <library>crypto_transport.o
         <library>client_execute.o
+        <library>keymapSym.o
     ;
 
 exe rdpinichecker
@@ -1015,7 +1029,7 @@ test-canonical mod/null/null.hpp ;
 test-canonical mod/rdp/rdp_log.hpp ;
 test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
-test-canonical mod/vnc/vnc.hpp : <library>bitmap <library>d3des.o ;
+test-canonical mod/vnc/vnc.hpp : <library>bitmap <library>d3des.o <library>keymapSym.o ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical mod/rdp/rdp.hpp : <library>client_execute.o <library>fake_front <library>authorization_channels.o <library>cfgloader.o <library>mppc.o <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
 ## @}
@@ -1175,6 +1189,7 @@ test-run test_vnc_client_simple
       <library>keymap.o
       <library>gdapi.o
       <library>fake_front
+      <library>keymapSym.o
       <covflag>nocover
     ;
 ## @}
@@ -1195,6 +1210,7 @@ test-run cli_vnc_connection
       <library>keymap.o
       <library>gdapi.o
       <library>fake_front
+      <library>keymapSym.o
       <covflag>nocover
     ;
 ## @}
@@ -1330,7 +1346,7 @@ test-canonical front/front.hpp
 ;
 
 test-canonical keyboard/keymap2.hpp : <library>keymap.o ;
-test-canonical keyboard/keymapSym.hpp ;
+test-canonical keyboard/keymapSym.hpp : <library>keymapSym.o ;
 
 test-canonical gdi/graphic_cmd_color.hpp ;
 test-canonical gdi/protected_graphics.hpp : <library>fileutils.o <library>bitmap <library>png.o <library>crypto <library>z <library>snappy <library>dl ;
