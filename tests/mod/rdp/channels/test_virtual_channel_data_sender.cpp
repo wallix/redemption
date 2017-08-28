@@ -25,8 +25,7 @@
 
 #define LOGNULL
 
-#include "utils/virtual_channel_data_sender.hpp"
-
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 RED_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {

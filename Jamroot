@@ -728,7 +728,6 @@ test-canonical utils/genfstat.hpp ;
 test-canonical utils/get_printable_password.hpp ;
 test-canonical utils/log.hpp ;
 test-canonical utils/netutils.hpp : <library>netutils.o ;
-test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/parse.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
@@ -742,7 +741,6 @@ test-canonical utils/timeout.hpp ;
 test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/translation.hpp : <library>fileutils.o ;
 test-canonical utils/utf.hpp ;
-test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
 ## @}
 
@@ -968,6 +966,7 @@ test-canonical mod/rdp/channels/sespro_launcher.hpp ;
 test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ;
 test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>bitmap ;
 test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>fileutils.o <library>bitmap ;
+test-canonical mod/rdp/channels/virtual_channel_data_sender.hpp : ;
 ## @}
 
 

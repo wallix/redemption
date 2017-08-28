@@ -38,7 +38,7 @@
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
 
 #define DUMMY_REMOTEAPP "||WABRemoteApp"
 
