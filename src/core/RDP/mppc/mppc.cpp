@@ -38,7 +38,7 @@ rdp_mppc_enc::rdp_mppc_enc(bool verbose)
 {
 }
 
-inline void rdp_mppc_enc::compress(
+void rdp_mppc_enc::compress(
     const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
     uint8_t & compressedType, uint16_t & compressed_data_size,
     uint16_t max_compressed_data_size)
