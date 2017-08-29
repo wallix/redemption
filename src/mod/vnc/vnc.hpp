@@ -49,6 +49,7 @@
 #include "utils/verbose_flags.hpp"
 #include "core/buf64k.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "core/front_api.hpp"
 
 
 // got extracts of VNC documentation from
