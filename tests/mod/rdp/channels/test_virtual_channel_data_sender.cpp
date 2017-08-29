@@ -23,8 +23,10 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
+#define LOGNULL
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
+
+RED_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {
 }

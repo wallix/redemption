@@ -24,7 +24,7 @@
 #include "configs/config.hpp"
 #include "core/server.hpp"
 #include "core/session.hpp"
-#include "utils/parse_ip_conntrack.hpp"
+#include "utils/netutils.hpp"
 
 class SessionServer : public Server
 {

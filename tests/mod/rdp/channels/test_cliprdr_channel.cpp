@@ -29,8 +29,8 @@
 #include "utils/sugar/make_unique.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "test_only/front/fake_front.hpp"
 

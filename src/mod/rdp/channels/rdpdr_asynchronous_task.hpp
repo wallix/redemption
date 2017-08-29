@@ -23,7 +23,7 @@
 
 #include "utils/asynchronous_task_manager.hpp"
 #include "core/channel_list.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/wait_obj.hpp"
 #include "mod/rdp/rdp_log.hpp"

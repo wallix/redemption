@@ -24,6 +24,7 @@
 #define LOGNULL
 
 #include "configs/config.hpp"
+#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"

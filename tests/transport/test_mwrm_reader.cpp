@@ -24,6 +24,7 @@
 // #define LOGNULL
 
 #include "utils/sugar/iter.hpp"
+#include "utils/genfstat.hpp"
 #include "transport/mwrm_reader.hpp"
 
 #include <fstream>

@@ -56,6 +56,11 @@
 #include "gdi/protected_graphics.hpp"
 #include "mm_api.hpp"
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
 inline Rect get_widget_rect(uint16_t width, uint16_t height,
         GCC::UserData::CSMonitor const & monitors) {
     Rect widget_rect(0, 0, width - 1, height - 1);

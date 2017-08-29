@@ -28,6 +28,8 @@
 #include "capture/file_to_graphic.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "mod/internal/internal_mod.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/fileutils.hpp"
 
 #include <ctime>
 

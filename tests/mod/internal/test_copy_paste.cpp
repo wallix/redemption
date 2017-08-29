@@ -28,6 +28,7 @@
 
 #include "test_only/mod/fake_draw.hpp"
 #include "core/font.hpp"
+#include "core/client_info.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"

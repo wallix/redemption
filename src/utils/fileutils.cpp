@@ -24,14 +24,17 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
 #include <cstdio>
 #include <cstddef>
 #include <cerrno>
 #include <cstring>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <alloca.h>
+#include <stdlib.h>
 
 #include <string>
 

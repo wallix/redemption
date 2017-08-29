@@ -21,6 +21,7 @@
 #pragma once
 
 #include "core/wait_obj.hpp"
+#include "core/RDP/slowpath.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/internal_mod.hpp"
 

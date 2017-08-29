@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <cstdint>
 
 // TODO: see parameters used rowsize if annoying as it's an implicit way
 // to provide Bpp (Bytes per pixel) and the function hard encode it to 3.

@@ -23,16 +23,6 @@
 #define RED_TEST_MODULE TestAuthAPI
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-#include "utils/log.hpp"
-
-#include "acl/auth_api.hpp"
-
 RED_AUTO_TEST_CASE(TestAuthAPI1)
 {
-    LOG(LOG_INFO, "Test not yet implemented");
-    RED_CHECK(true);
-
-    NullAuthentifier nullAuth;
-
 }

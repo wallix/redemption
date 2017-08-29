@@ -23,6 +23,8 @@
 
 #include "utils/stream.hpp"
 
+#include <string>
+
 namespace smb2 {
 
 // [MS-SMB2] - 2.2.13 SMB2 CREATE Request

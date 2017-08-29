@@ -25,6 +25,7 @@
 
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
+#include "utils/fileutils.hpp"
 
 
 class InMetaSequenceTransport : public Transport
