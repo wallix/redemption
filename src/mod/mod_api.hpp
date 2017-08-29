@@ -31,7 +31,7 @@
 namespace gdi
 {
     class GraphicApi;
-};
+}
 
 class EventHandler
 {
