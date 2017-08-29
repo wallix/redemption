@@ -800,7 +800,6 @@ test-canonical utils/winpr/pattern.hpp ;
 
 ## Widget tests
 ## @{
-# TODO test-canonical mod/internal/widget/columnlayout.hpp ;
 test-canonical mod/internal/widget/composite.hpp : <library>bitmap <library>png.o <library>keymap.o ;
 test-canonical mod/internal/widget/edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/edit_valid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
@@ -815,15 +814,11 @@ test-canonical mod/internal/widget/group_box.hpp : <library>bitmap <library>keym
 test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/label.hpp : <library>bitmap  <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/labelgrid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-# TODO test-canonical mod/internal/widget/linelayout.hpp ;
 test-canonical mod/internal/widget/multiline.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/number_edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/password.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-# TODO test-canonical mod/internal/widget/radio_list.hpp ;
 test-canonical mod/internal/widget/screen.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/scroll.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-# TODO test-canonical mod/internal/widget/stacklayout.hpp ;
-test-canonical mod/internal/widget/tab.hpp ;
 test-canonical mod/internal/widget/tooltip.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/widget.hpp : ;
 test-canonical mod/internal/widget/widget_rect.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
