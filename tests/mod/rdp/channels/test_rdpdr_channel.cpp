@@ -29,9 +29,9 @@
 #include "utils/sugar/make_unique.hpp"
 #include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "test_only/front/fake_front.hpp"
 

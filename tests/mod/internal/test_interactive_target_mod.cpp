@@ -24,6 +24,7 @@
 
 #define LOGNULL
 
+#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"

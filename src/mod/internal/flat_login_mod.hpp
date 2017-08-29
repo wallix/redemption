@@ -24,6 +24,7 @@
 
 #include "main/version.hpp"
 #include "configs/config_access.hpp"
+#include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"

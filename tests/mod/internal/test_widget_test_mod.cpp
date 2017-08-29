@@ -24,6 +24,7 @@
 #define LOGNULL
 
 #include "configs/config.hpp"
+#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"

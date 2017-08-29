@@ -62,6 +62,8 @@ extern "C" {
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
 
+#include <algorithm>
+
 
 void video_recorder::default_av_free::operator()(void * ptr)
 {

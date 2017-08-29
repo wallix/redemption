@@ -25,6 +25,7 @@
 
 #define LOGNULL
 
+#include "core/client_info.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 

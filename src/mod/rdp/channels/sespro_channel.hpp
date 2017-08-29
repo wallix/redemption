@@ -24,19 +24,255 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
-#include "utils/extra_system_processes.hpp"
-#include "utils/outbound_connection_monitor_rules.hpp"
-#include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "core/error.hpp"
 #include "mod/mod_api.hpp"
 
 #include <chrono>
 #include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
+
+#include <cstring>
 #include <cinttypes> // PRId64, ...
+
+
+class ExtraSystemProcesses
+{
+    std::vector<std::string> processes;
+
+public:
+    ExtraSystemProcesses(const char * comme_separated_processes) {
+        if (comme_separated_processes) {
+            const char * process = comme_separated_processes;
+
+            while (*process) {
+                if ((*process == ',') || (*process == '\t') || (*process == ' ')) {
+                    process++;
+                    continue;
+                }
+
+                char const * process_begin = process;
+
+                const char * process_separator = strchr(process, ',');
+
+                std::string name_string(process_begin, (process_separator ? process_separator - process_begin : ::strlen(process_begin)));
+
+                this->processes.push_back(std::move(name_string));
+
+                if (!process_separator) {
+                    break;
+                }
+
+                process = process_separator + 1;
+            }
+        }
+    }
+
+    bool get(
+        size_t index,
+        std::string & out__name
+    ) {
+        if (this->processes.size() <= index) {
+            out__name.clear();
+
+            return false;
+        }
+
+        out__name = this->processes[index];
+
+        return true;
+    }
+};
+
+
+class OutboundConnectionMonitorRules
+{
+    struct outbound_connection_monitor_rule
+    {
+        unsigned type;
+        std::string address;
+        std::string port_range;
+        std::string description;
+    };
+
+    std::vector<outbound_connection_monitor_rule> rules;
+
+public:
+    OutboundConnectionMonitorRules(
+        const char * comme_separated_monitoring_rules
+    ) {
+        if (comme_separated_monitoring_rules) {
+            const char * rule = comme_separated_monitoring_rules;
+
+            char const RULE_PREFIX_ALLOW[]  = "$allow:";
+            char const RULE_PREFIX_NOTIFY[] = "$notify:";
+            char const RULE_PREFIX_DENY[]   = "$deny:";
+
+            while (*rule) {
+                if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
+                    rule++;
+                    continue;
+                }
+
+                char const * rule_begin = rule;
+
+                unsigned uType = 1; // Deny
+                if (strcasestr(rule, RULE_PREFIX_ALLOW) == rule)
+                {
+                    uType  = 2;                             // Allow
+                    rule  += sizeof(RULE_PREFIX_ALLOW) - 1;
+                }
+                else if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
+                {
+                    uType  = 0;                             // Notify
+                    rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
+                }
+                else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
+                {
+                    uType  = 1;                             // Deny
+                    rule  += sizeof(RULE_PREFIX_DENY) - 1;
+                }
+
+                const char * rule_separator = strchr(rule, ',');
+
+                std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
+
+                std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
+
+                const char * rule_c_str = rule_string.c_str();
+
+                const char * info_separator = strchr(rule_c_str, ':');
+
+                if (info_separator)
+                {
+                    std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
+
+                    this->rules.push_back({
+                        uType, std::move(host_address_or_subnet), std::string(info_separator + 1),
+                        std::move(description_string)
+                    });
+                }
+
+                if (!rule_separator) {
+                    break;
+                }
+
+                rule = rule_separator + 1;
+            }
+        }
+    }
+
+    bool get(
+        size_t index,
+        unsigned int & out__type,
+        std::string & out__host_address_or_subnet,
+        std::string & out__port_range,
+        std::string & out__description
+    ) {
+        if (this->rules.size() <= index) {
+            out__type = 0;
+            out__host_address_or_subnet.clear();
+            out__port_range.clear();
+            out__description.clear();
+
+            return false;
+        }
+
+        out__type                   = this->rules[index].type;
+        out__host_address_or_subnet = this->rules[index].address;
+        out__port_range             = this->rules[index].port_range;
+        out__description            = this->rules[index].description;
+
+        return true;
+    }
+};
+
+
+class ProcessMonitorRules
+{
+    struct process_monitor_rule
+    {
+        unsigned    type;
+        std::string pattern;
+        std::string description;
+    };
+
+    std::vector<process_monitor_rule> rules;
+
+public:
+    ProcessMonitorRules(const char * comme_separated_rules) {
+        if (comme_separated_rules) {
+            const char * rule = comme_separated_rules;
+
+            char const RULE_PREFIX_NOTIFY[] = "$notify:";
+            char const RULE_PREFIX_DENY[]   = "$deny:";
+
+            while (*rule) {
+                if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
+                    rule++;
+                    continue;
+                }
+
+                char const * rule_begin = rule;
+
+                unsigned uType = 1; // Deny
+                if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
+                {
+                    uType  = 0;                             // Notify
+                    rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
+                }
+                else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
+                {
+                    uType  = 1;                             // Deny
+                    rule  += sizeof(RULE_PREFIX_DENY) - 1;
+                }
+
+                const char * rule_separator = strchr(rule, ',');
+
+                std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
+
+                std::string pattern(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
+
+                this->rules.push_back({
+                    uType, std::move(pattern), std::move(description_string)
+                });
+
+                if (!rule_separator) {
+                    break;
+                }
+
+                rule = rule_separator + 1;
+            }
+        }
+    }
+
+    bool get(
+        size_t index,
+        unsigned int & out__type,
+        std::string & out__pattern,
+        std::string & out__description
+    ) {
+        if (this->rules.size() <= index) {
+            out__type = 0;
+            out__pattern.clear();
+            out__description.clear();
+
+            return false;
+        }
+
+        out__type                   = this->rules[index].type;
+        out__pattern                = this->rules[index].pattern;
+        out__description            = this->rules[index].description;
+
+        return true;
+    }
+};
+
 
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {

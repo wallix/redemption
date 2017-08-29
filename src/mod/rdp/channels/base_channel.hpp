@@ -21,8 +21,8 @@
 
 #pragma once
 
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "utils/asynchronous_task_manager.hpp"
-#include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "core/report_message_api.hpp"
 
