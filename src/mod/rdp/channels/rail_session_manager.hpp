@@ -265,6 +265,7 @@ public:
     }
 
     void draw(RDP::RAIL::DeletedWindow const & order) override {
+// LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(DeletedWindow)");
         const uint32_t window_id         = order.header.WindowId();
         const bool     window_is_blocked = (window_id == this->blocked_server_window_id);
 
@@ -292,6 +293,7 @@ public:
     }
 
     void draw(RDP::RAIL::NewOrExistingWindow const & order) override {
+// LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow)");
         const char *   title_info        = order.TitleInfo();
         const uint32_t window_id         = order.header.WindowId();
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);

@@ -633,16 +633,19 @@ public:
 
     TimestampTracer timestamp_tracer;
 
-    PngCapture(const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
+    gdi::ImageFrameApi * image_frame_api_ptr;
+
+    PngCapture(const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
     : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, report_error_from_reporter(png_params.report_message))
     , drawable(drawable)
     , start_capture(now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width{(((this->drawable.width() * this->zoom_factor) / 100)+3) & 0xFFC}
-    , scaled_height{((this->drawable.height() * this->zoom_factor) / 100)}
-    , timestamp_tracer(this->drawable.width(), this->drawable.height(), this->drawable.impl().Bpp,
-          this->drawable.first_pixel(), this->drawable.rowsize())
+    , scaled_width{(((pImageFrameApi->width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((pImageFrameApi->height() * this->zoom_factor) / 100)}
+    , timestamp_tracer(pImageFrameApi->width(), pImageFrameApi->height(), this->drawable.impl().Bpp,
+          pImageFrameApi->first_pixel(), pImageFrameApi->rowsize())
+    , image_frame_api_ptr(pImageFrameApi)
     {
         if (this->zoom_factor != 100) {
             this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
@@ -653,16 +656,16 @@ public:
     {
         if (this->zoom_factor == 100) {
             ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
+                this->trans, this->image_frame_api_ptr->data(),
+                this->image_frame_api_ptr->width(), this->image_frame_api_ptr->height(),
+                this->image_frame_api_ptr->rowsize(), true);
         }
         else {
             scale_data(
-                this->scaled_buffer.get(), this->drawable.data(),
-                this->scaled_width, this->drawable.width(),
-                this->scaled_height, this->drawable.height(),
-                this->drawable.rowsize());
+                this->scaled_buffer.get(), this->image_frame_api_ptr->data(),
+                this->scaled_width, this->image_frame_api_ptr->width(),
+                this->scaled_height, this->image_frame_api_ptr->height(),
+                this->image_frame_api_ptr->rowsize());
             ::transport_dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,
@@ -693,6 +696,7 @@ public:
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
+                this->image_frame_api_ptr->prepare_image_frame();
                 this->timestamp_tracer.trace(ptm);
 
                 this->dump();
@@ -723,8 +727,8 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, RDPDrawable & drawable, const PngParams & png_params)
-    : PngCapture(now, drawable, png_params)
+        const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    : PngCapture(now, drawable, pImageFrameApi, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -764,6 +768,191 @@ public:
             return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
         return interval - duration % interval;
+    }
+
+    struct WindowRecord {
+        uint32_t window_id;
+        uint32_t fields_present_flags;
+        uint32_t style;
+        uint8_t show_state;
+        int32_t visible_offset_x;
+        int32_t visible_offset_y;
+
+        WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
+                     uint32_t style, uint8_t show_state,
+                     int32_t visible_offset_x, int32_t visible_offset_y)
+        : window_id(window_id)
+        , fields_present_flags(fields_present_flags)
+        , style(style)
+        , show_state(show_state)
+        , visible_offset_x(visible_offset_x)
+        , visible_offset_y(visible_offset_y) {}
+    };
+
+    std::vector<WindowRecord> windows;
+
+    struct VisibilityRectRecord {
+        uint32_t window_id;
+        Rect rect;
+
+        VisibilityRectRecord(uint32_t window_id, Rect rect)
+        : window_id(window_id)
+        , rect(rect) {}
+    };
+
+    std::vector<VisibilityRectRecord> windows_rects;
+
+    void new_or_existing_window_event(
+            uint32_t window_id, uint32_t fields_present_flags,
+            uint32_t style, uint8_t show_state,
+            int32_t visible_offset_x, int32_t visible_offset_y,
+            std::vector<RDP::RAIL::Rectangle> const & visibility_rects)
+            override {
+// LOG(LOG_INFO, "PngCaptureRT::new_or_existing_window_event");
+        if (fields_present_flags &
+            (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
+             RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
+             RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) {
+            std::vector<WindowRecord>::iterator iter =
+                std::find_if(
+                        this->windows.begin(),
+                        this->windows.end(),
+                        [window_id](WindowRecord& window_record) -> bool {
+                            return (window_record.window_id == window_id);
+                        }
+                    );
+            if (iter != this->windows.end()) {
+                if (fields_present_flags &
+                    RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
+                    iter->style = style;
+                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_STYLE;
+                }
+                if (fields_present_flags &
+                    RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
+                    iter->show_state = show_state;
+                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_SHOW;
+                }
+                if (fields_present_flags &
+                    RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET) {
+                    iter->visible_offset_x = visible_offset_x;
+                    iter->visible_offset_y = visible_offset_y;
+                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET;
+                }
+            }
+            else {
+                this->windows.emplace_back(window_id,
+                    (fields_present_flags &
+                     (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
+                      RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
+                      RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)),
+                    style, show_state, visible_offset_x, visible_offset_y);
+            }
+        }
+
+        if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
+            this->windows_rects.erase(
+                    std::remove_if(
+                        this->windows_rects.begin(),
+                        this->windows_rects.end(),
+                        [window_id](VisibilityRectRecord& window_rect_record) {
+// LOG(LOG_INFO, "remove_if: %s", ((window_rect_record.window_id == window_id) ? "true" : "false"));
+                                return (window_rect_record.window_id == window_id);
+                            }),
+                    this->windows_rects.end()
+                );
+
+            if (visibility_rects.size()) {
+                std::for_each(
+                        visibility_rects.cbegin(),
+                        visibility_rects.cend(),
+                        [this, window_id](
+                                const RDP::RAIL::Rectangle& rectangle) {
+                            this->windows_rects.emplace_back(window_id,
+                                Rect(rectangle.Left(), rectangle.Top(),
+                                     rectangle.Width(), rectangle.Height()));
+                        }
+                    );
+            }
+        }
+
+        this->update_image_frame_rect();
+    }
+
+    void delete_window_event(uint32_t window_id) override {
+// LOG(LOG_INFO, "PngCaptureRT::delete_window_event");
+        this->windows.erase(
+                std::remove_if(this->windows.begin(), this->windows.end(),
+                    [window_id](WindowRecord& window_record) {
+// LOG(LOG_INFO, "remove_if(1): %s", ((window_record.window_id == window_id) ? "true" : "false"));
+                            return (window_record.window_id == window_id);
+                        }),
+                this->windows.end()
+            );
+
+        this->windows_rects.erase(
+                std::remove_if(this->windows_rects.begin(),
+                    this->windows_rects.end(),
+                    [window_id](VisibilityRectRecord& visibility_rect_record) {
+// LOG(LOG_INFO, "remove_if(2): %s", ((visibility_rect_record.window_id == window_id) ? "true" : "false"));
+                            return (visibility_rect_record.window_id == window_id);
+                        }),
+                this->windows_rects.end()
+            );
+
+        this->update_image_frame_rect();
+    }
+
+    void update_image_frame_rect() {
+// LOG(LOG_INFO, "");
+// LOG(LOG_INFO, "Widnows Rects Size: %zu", this->windows_rects.size());
+
+        Rect new_image_frame_rect;
+// new_image_frame_rect.log(LOG_INFO, "] ] ] ] ] NewImageFrameRect");
+
+        std::for_each(
+                this->windows.cbegin(),
+                this->windows.cend(),
+                [&new_image_frame_rect, this](const WindowRecord& window_record) {
+                    std::for_each(
+                            this->windows_rects.cbegin(),
+                            this->windows_rects.cend(),
+                            [&new_image_frame_rect, window_record](
+                                    const VisibilityRectRecord& visibility_rect_record) {
+                                if (window_record.window_id !=
+                                    visibility_rect_record.window_id) {
+                                    return;
+                                }
+
+                                REDASSERT(window_record.fields_present_flags &
+                                    RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
+
+// visibility_rect_record.rect.offset(
+//     window_record.visible_offset_x, window_record.visible_offset_y).log(
+//         LOG_INFO, "} } } } } VisibilityRect");
+
+                                if (!(window_record.style & WS_ICONIC) &&
+                                    ((window_record.style & WS_VISIBLE) ||
+                                     ((window_record.show_state != SW_FORCEMINIMIZE) &&
+                                      (window_record.show_state != SW_HIDE) &&
+                                      (window_record.show_state != SW_MINIMIZE)))) {
+                                        new_image_frame_rect =
+                                            new_image_frame_rect.disjunct(
+                                                visibility_rect_record.rect.offset(
+                                                        window_record.visible_offset_x,
+                                                        window_record.visible_offset_y
+                                                    ));
+// new_image_frame_rect.log(LOG_INFO, "] ] ] ] ] NewImageFrameRect");
+                                }
+                            }
+                        );
+                }
+            );
+
+        new_image_frame_rect.expand(10);
+
+        new_image_frame_rect = new_image_frame_rect.intersect({0, 0, this->drawable.width(), this->drawable.height()});
+
+// new_image_frame_rect.log(LOG_INFO, "> > > > > NewImageFrameRect");
     }
 };
 
@@ -1290,6 +1479,8 @@ Capture::Capture(
         this->gd_drawable.reset(new RDPDrawable(width, height));
         this->gds.push_back(*this->gd_drawable);
 
+        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable.get();
+
         if (!crop_rect.isempty()) {
             this->video_cropper.reset(new VideoCropper(
                     this->gd_drawable.get(),
@@ -1298,6 +1489,8 @@ Capture::Capture(
                     crop_rect.cx,
                     crop_rect.cy
                 ));
+
+            image_frame_api_ptr = this->video_cropper.get();
         }
 
         this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
@@ -1305,11 +1498,11 @@ Capture::Capture(
         if (capture_png) {
             if (png_params.real_time_image_capture) {
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    now, *this->gd_drawable, png_params));
+                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    now, *this->gd_drawable, png_params));
+                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
         }
 
@@ -1332,9 +1525,7 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
-                (this->video_cropper ?
-                 static_cast<gdi::ImageFrameApi*>(this->video_cropper.get()) :
-                 static_cast<gdi::ImageFrameApi*>(this->gd_drawable.get())),
+                image_frame_api_ptr,
                 flv_params,
                 flv_break_interval, notifier
             ));
@@ -1343,9 +1534,7 @@ Capture::Capture(
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
-                (this->video_cropper ?
-                 static_cast<gdi::ImageFrameApi*>(this->video_cropper.get()) :
-                 static_cast<gdi::ImageFrameApi*>(this->gd_drawable.get())),
+                image_frame_api_ptr,
                 flv_params));
         }
 

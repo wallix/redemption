@@ -36,13 +36,13 @@ private:
 
     const uint8_t* in_bmpdata;
 
-    const unsigned int x;
-    const unsigned int y;
+    unsigned int x;
+    unsigned int y;
 
-    const unsigned int out_width;
-    const unsigned int out_height;
+    unsigned int out_width;
+    unsigned int out_height;
 
-    const unsigned int out_rowsize;
+    unsigned int out_rowsize;
 
     std::unique_ptr<uint8_t[]> out_bmpdata;
 
@@ -69,7 +69,7 @@ public:
           this->in_bmpdata +
           this->y * this->in_rowsize +
           this->x * VideoCropper::bytes_per_pixel) {
-        LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
+        //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
     }
 
     uint16_t width() const override {
@@ -117,5 +117,22 @@ public:
 
     unsigned int get_last_update_index() const noexcept override {
         return this->last_update_index;
+    }
+
+    void reset(unsigned int x, unsigned int y,
+               unsigned int out_width, unsigned int out_height) {
+        this->x = x;
+        this->y = y;
+        this->out_width = out_width;
+        this->out_height = out_height;
+        this->out_rowsize = this->out_width * VideoCropper::bytes_per_pixel;
+        this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
+
+        this->in_bmpdata_effective =
+            this->in_bmpdata +
+            this->y * this->in_rowsize +
+            this->x * VideoCropper::bytes_per_pixel;
+
+        //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
     }
 };

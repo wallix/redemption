@@ -43,6 +43,7 @@
 #include "capture/save_state_chunk.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "core/wait_obj.hpp"
+#include "core/window_constants.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <functional> // std::reference_wrapper
@@ -318,6 +319,31 @@ private:
                 for (gdi::CaptureApi & cap : this->caps) {
                     cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
                 }
+            }
+        }
+
+        void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+// cmd.log(LOG_INFO);
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.new_or_existing_window_event(cmd.header.WindowId(),
+                    cmd.header.FieldsPresentFlags(),
+                    cmd.Style(), cmd.ShowState(),
+                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY(),
+                    cmd.VisibilityRects());
+            }
+        }
+
+        void draw_impl(const RDP::RAIL::DeletedWindow & cmd) {
+            for (gdi::GraphicApi & gd : this->gds) {
+                gd.draw(cmd);
+            }
+
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.delete_window_event(cmd.header.WindowId());
             }
         }
 

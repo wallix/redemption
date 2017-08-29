@@ -156,6 +156,15 @@ struct Rect {
         );
     }
 
+    Rect expand(uint16_t margin) const {
+        return Rect(
+            static_cast<int16_t>(this->x - margin),
+            static_cast<int16_t>(this->y - margin),
+            static_cast<uint16_t>(this->cx + margin * 2),
+            static_cast<uint16_t>(this->cy + margin * 2)
+        );
+    }
+
     //Rect upper_side() const {
     //    return Rect(this->x, this->y, this->cx, 1);
     //}
@@ -189,6 +198,13 @@ struct Rect {
 
     Rect disjunct(Rect r) const
     {
+        if (this->isempty()) {
+            return r;
+        }
+        else if (r.isempty()) {
+            return *this;
+        }
+
         auto x = std::min(r.x, this->x);
         auto y = std::min(r.y, this->y);
         auto cx = std::max(r.right(), this->right()) - x;
