@@ -25,7 +25,8 @@
 #include "capture/transparentplayer.hpp"
 #include "internal_mod.hpp"
 
-class TransparentReplayMod : public InternalMod {
+class TransparentReplayMod : public InternalMod
+{
 private:
     std::string * auth_error_message;
 
@@ -51,7 +52,8 @@ public:
     , player(&this->ift, &this->front)
     {}
 
-    void draw_event(time_t now, gdi::GraphicApi &) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override
+    {
         (void)now;
         try {
             if (!this->player.interpret_chunk()) {

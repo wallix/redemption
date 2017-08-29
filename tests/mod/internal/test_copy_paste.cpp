@@ -22,18 +22,19 @@
 #define RED_TEST_MODULE TestCopyPaste
 #include "system/redemption_unit_tests.hpp"
 
-#include <string>
-
 #define LOGNULL
 
-#include "test_only/mod/fake_draw.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "core/font.hpp"
 #include "core/client_info.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/mod/fake_draw.hpp"
 #include "test_only/check_sig.hpp"
+
+#include <string>
 
 
 struct CopyPasteFront : FakeFront

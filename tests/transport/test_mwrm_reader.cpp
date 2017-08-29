@@ -26,6 +26,7 @@
 #include "utils/sugar/iter.hpp"
 #include "utils/genfstat.hpp"
 #include "transport/mwrm_reader.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include <fstream>
 

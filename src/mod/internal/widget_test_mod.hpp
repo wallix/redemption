@@ -20,27 +20,31 @@
 
 #pragma once
 
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "mod/internal/internal_mod.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/widget/widget_test.hpp"
 #include "mod/mod_api.hpp"
 
 #include "configs/config_access.hpp"
 
 using WidgetTestModVariables = vcfg::variables<
-    vcfg::var<cfg::translation::language,   vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                    vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                   vcfg::accessmode::get>
+    vcfg::var<cfg::font,  vcfg::accessmode::get>,
+    vcfg::var<cfg::theme, vcfg::accessmode::get>
 >;
 
-class WidgetTestMod : public LocallyIntegrableMod, public NotifyApi {
+namespace GCC
+{
+    namespace UserData
+    {
+        class CSMonitor;
+    }
+}
+
+class WidgetTestMod : public LocallyIntegrableMod, public NotifyApi
+{
     WidgetTest widget_test;
 
-    WidgetTestModVariables vars;
-
-    class ManagedModEventHandler : public EventHandler::CB {
+    class ManagedModEventHandler : public EventHandler::CB
+    {
         WidgetTestMod& mod_;
 
     public:
@@ -48,8 +52,10 @@ class WidgetTestMod : public LocallyIntegrableMod, public NotifyApi {
         : mod_(mod)
         {}
 
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
-            this->mod_.process_managed_mod_event(now, event, drawable);
+        void operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable) override
+        {
+            mod_api& mod = this->mod_.widget_test.get_managed_mod();
+            mod.draw_event(now, drawable);
         }
     } managed_mod_event_handler;
 
@@ -67,13 +73,11 @@ public:
                   this->screen, this, std::move(managed_mod),
                   vars.get<cfg::font>(), vars.get<cfg::theme>(),
                   cs_monitor, width, height)
-    , vars(vars)
     , managed_mod_event_handler(*this)
     {
         this->screen.add_widget(&this->widget_test);
 
-        this->screen.set_widget_focus(&this->widget_test,
-            Widget::focus_reason_tabkey);
+        this->screen.set_widget_focus(&this->widget_test, Widget::focus_reason_tabkey);
 
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
@@ -83,24 +87,20 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget*, notify_event_t) override {}
+    void notify(Widget*, notify_event_t) override
+    {}
 
-    void process_managed_mod_event(time_t now, wait_obj& /*event*/, gdi::GraphicApi& gapi) {
-        mod_api& mod = this->widget_test.get_managed_mod();
-
-        mod.draw_event(now, gapi);
-    }
-
-public:
     // RdpInput
 
-    void rdp_input_invalidate(Rect r) override {
+    void rdp_input_invalidate(Rect r) override
+    {
         LocallyIntegrableMod::rdp_input_invalidate(r);
 
         this->widget_test.rdp_input_invalidate(r);
     }
 
-    void rdp_input_up_and_running() override {
+    void rdp_input_up_and_running() override
+    {
         mod_api& mod = this->widget_test.get_managed_mod();
 
         mod.rdp_input_up_and_running();
@@ -112,8 +112,8 @@ public:
                              InStream& chunk, size_t length,
                              uint32_t flags) override
     {
-        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk,
-            length, flags);
+        LocallyIntegrableMod::send_to_mod_channel(
+            front_channel_name, chunk, length, flags);
 
         mod_api& mod = this->widget_test.get_managed_mod();
 
@@ -129,16 +129,17 @@ public:
         this->event.reset_trigger_time();
     }
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
+    {
         mod_api& mod = this->widget_test.get_managed_mod();
 
         mod.get_event_handlers(out_event_handlers);
 
         out_event_handlers.emplace_back(
-                &mod.get_event(),
-                &this->managed_mod_event_handler,
-                mod.get_fd()
-            );
+            &mod.get_event(),
+            &this->managed_mod_event_handler,
+            mod.get_fd()
+        );
 
         LocallyIntegrableMod::get_event_handlers(out_event_handlers);
     }

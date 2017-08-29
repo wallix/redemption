@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/front_api.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "flat_button.hpp"
 
