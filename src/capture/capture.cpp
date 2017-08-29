@@ -948,9 +948,15 @@ public:
                 }
             );
 
-        new_image_frame_rect.expand(10);
+        if (!new_image_frame_rect.isempty()) {
+            new_image_frame_rect = new_image_frame_rect.expand(16).intersect(
+                {0, 0, this->drawable.width(), this->drawable.height()});
 
-        new_image_frame_rect = new_image_frame_rect.intersect({0, 0, this->drawable.width(), this->drawable.height()});
+
+            this->image_frame_api_ptr->reset(
+                new_image_frame_rect.x, new_image_frame_rect.y,
+                new_image_frame_rect.cx, new_image_frame_rect.cy);
+        }
 
 // new_image_frame_rect.log(LOG_INFO, "> > > > > NewImageFrameRect");
     }
@@ -1482,6 +1488,7 @@ Capture::Capture(
         gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable.get();
 
         if (!crop_rect.isempty()) {
+            REDASSERT(!capture_png || !png_params.real_time_image_capture)
             this->video_cropper.reset(new VideoCropper(
                     this->gd_drawable.get(),
                     crop_rect.x,
@@ -1497,6 +1504,20 @@ Capture::Capture(
 
         if (capture_png) {
             if (png_params.real_time_image_capture) {
+                if (png_params.remote_program_session) {
+                    REDASSERT(image_frame_api_ptr == this->gd_drawable.get());
+
+                    this->video_cropper.reset(new VideoCropper(
+                            this->gd_drawable.get(),
+                            0,
+                            0,
+                            this->gd_drawable->width(),
+                            this->gd_drawable->height()
+                        ));
+
+                    image_frame_api_ptr = this->video_cropper.get();
+                }
+
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
                     now, *this->gd_drawable, image_frame_api_ptr, png_params));
             }

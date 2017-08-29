@@ -936,7 +936,8 @@ public:
                 &this->report_message,
                 record_tmp_path,
                 basename,
-                groupid
+                groupid,
+                this->client_info.remote_program
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 

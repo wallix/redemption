@@ -37,4 +37,5 @@ struct PngParams
     const char * record_tmp_path;
     const char * basename;
     int groupid;
+    bool remote_program_session;
 };

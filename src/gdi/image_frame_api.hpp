@@ -40,6 +40,11 @@ struct ImageFrameApi {
     virtual void prepare_image_frame() = 0;
 
     virtual unsigned int get_last_update_index() const = 0;
+
+//    virtual void reset_to_origin() = 0;
+
+    virtual void reset(unsigned int x, unsigned int y,
+               unsigned int out_width, unsigned int out_height) = 0;
 };
 
 }
