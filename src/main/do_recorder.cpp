@@ -163,8 +163,8 @@ static inline int encryption_type(const std::string & full_filename, CryptoConte
         Fstat fstat;
         InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
         in_test.open(full_filename.c_str());
-        char mem[4096];
         try {
+            char mem[4096];
             auto len = in_test.partial_read(mem, sizeof(mem));
             (void)len;
         } catch (Error const&) {

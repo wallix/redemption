@@ -50,7 +50,7 @@ public:
     , uid(uid)
     , gid(gid)
     , debug_config(debug_config)
-    , config_filename(config_filename)
+    , config_filename(std::move(config_filename))
     {
     }
 

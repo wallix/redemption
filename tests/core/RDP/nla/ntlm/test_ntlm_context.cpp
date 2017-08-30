@@ -374,7 +374,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.ntlm_generate_server_sealing_key();
     client_context.AUTHENTICATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
 
-    uint32_t flag = client_context.AUTHENTICATE_MESSAGE.negoFlags.flags;
+    uint32_t const flag = client_context.AUTHENTICATE_MESSAGE.negoFlags.flags;
     if (flag & NTLMSSP_NEGOTIATE_VERSION)
         client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
@@ -385,7 +385,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
         workstationbuff.mark_end();
     }
 
-    flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
     auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
     domain.reset();
     domain.ostream.out_copy_bytes(userDomain, sizeof(userDomain));
