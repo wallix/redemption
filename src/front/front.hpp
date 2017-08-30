@@ -32,6 +32,7 @@
 #include "openssl_tls.hpp"
 #include "utils/stream.hpp"
 #include "transport/transport.hpp"
+#include "core/app_path.hpp"
 #include "core/RDP/x224.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/RDP/mcs.hpp"
@@ -287,8 +288,8 @@ private:
                 bmp_cache.has_cache_persistent()) {
                 // Generates the name of file.
                 char cache_filename[2048];
-                ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/PDBC-%s-%d",
-                    PERSISTENT_PATH "/client", ini.get<cfg::globals::host>().c_str(), this->bmp_cache.bpp);
+                ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/client/PDBC-%s-%d",
+                    app_path(AppPath::Persistent), ini.get<cfg::globals::host>().c_str(), this->bmp_cache.bpp);
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
                 int fd = ::open(cache_filename, O_RDONLY);
@@ -917,7 +918,8 @@ public:
         char basename[1024];
         char extension[128];
 
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
+        strcat(path, "/");
         strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
@@ -1093,7 +1095,7 @@ public:
     {
         ::save_persistent_disk_bitmap_cache(
             this->orders.get_bmp_cache(),
-            PERSISTENT_PATH "/client",
+            (std::string(app_path(AppPath::Persistent)) + "/client").c_str(),
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
             report_error_from_reporter(this->report_message),

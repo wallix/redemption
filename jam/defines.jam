@@ -69,6 +69,24 @@ rule defines ( properties * )
     return $(defs) ;
 }
 
+rule defines-for-test ( properties * )
+{
+    local defs ;
+    defs += <define>RECORD_PATH='\"/tmp/redemption_recorded\"' ;
+    defs += <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"' ;
+    defs += <define>FLV_PATH='\"/tmp\"' ;
+    defs += <define>OCR_PATH='\"/tmp\"' ;
+    defs += <define>PNG_PATH='\"/tmp\"' ;
+    defs += <define>WRM_PATH='\"/tmp\"' ;
+    defs += <define>HASH_PATH='\"/tmp/redemption_hash\"' ;
+    defs += <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"/tmp/redemption_cert\"' ;
+    defs += <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"' ;
+    defs += <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"' ;
+    defs += <define>PID_PATH='\"/tmp/redemption_pid\"' ;
+    return $(defs) ;
+}
+
 ## ffmpeg {
 # empty for default system header
 _FFMPEG_INC_PATH ?= "" ;

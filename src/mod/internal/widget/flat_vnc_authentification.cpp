@@ -22,8 +22,8 @@
 #include "utils/theme.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
+#include "core/app_path.hpp"
 
-#include "core/defines.hpp"
 
 FlatVNCAuthentification::FlatVNCAuthentification(
     gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
@@ -41,7 +41,7 @@ FlatVNCAuthentification::FlatVNCAuthentification(
                     theme.edit.focus_color, theme.global.bgcolor, font, nullptr, false, -1u, 1, 1, true)
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
-          SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+          app_path(AppPath::LoginWabBlue), *this, nullptr, -10)
     , fgcolor(theme.global.fgcolor)
     , bgcolor(theme.global.bgcolor)
 {

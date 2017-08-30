@@ -29,10 +29,6 @@
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
 
-
-#undef DEFAULT_FONT_NAME
-#define DEFAULT_FONT_NAME "sans-10.fv1"
-
 #include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
@@ -74,7 +70,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run();
 
     Inifile ini;
-    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
+    ini.set<cfg::font>(Font(app_path(AppPath::Share) + std::string("/sans-10.fv1")));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);

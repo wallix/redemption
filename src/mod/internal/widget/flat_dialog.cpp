@@ -19,7 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/password.hpp"
 #include "mod/internal/widget/edit.hpp"
@@ -55,7 +55,7 @@ FlatDialog::FlatDialog(
         : nullptr)
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
-          SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -8)
+          app_path(AppPath::LoginWabBlue), *this, nullptr, -8)
     , extra_button(extra_button)
     , font(font)
     , bg_color(theme.global.bgcolor)

@@ -202,7 +202,7 @@ static inline int app_proxy(
     unsigned euid = uid;
     unsigned egid = gid;
 
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+    std::string config_filename = app_path(AppPath::CfgIni);
 
     static constexpr char const * opt_print_spec = "print-spec";
     static constexpr char const * opt_print_ini = "print-default-ini";
@@ -236,10 +236,10 @@ static inline int app_proxy(
     auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
 
     if (options.count("kill")) {
-        int status = shutdown(PID_PATH "/redemption/" LOCKFILE);
+        int status = shutdown(app_path(AppPath::LockFile));
         if (status){
             // TODO check the real error that occured
-            std::clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
+            std::clog << "problem opening " << app_path(AppPath::LockFile) << "."
             " Maybe rdpproxy is not running\n";
         }
         return status;
@@ -299,11 +299,10 @@ static inline int app_proxy(
             }
             CheckFile::ShowErrors(euser_check_file_list, euid, egid);
 
-            LOG(LOG_INFO, "%s",
+            LOG(LOG_INFO,
                 "Please verify that all tests passed. If not, "
-                    "you may need to remove " PID_PATH "/redemption/"
-                    LOCKFILE " or reinstall rdpproxy if some configuration "
-                    "files are missing.");
+                "you may need to remove %s or reinstall rdpproxy if some configuration "
+                "files are missing.", app_path(AppPath::LockFile));
         }
         return 0;
     }
@@ -319,34 +318,35 @@ static inline int app_proxy(
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
 
-    if (mkdir(PID_PATH "/redemption", 0700) < 0){
+    if (mkdir(app_path(AppPath::LockDir), 0700) < 0){
         // TODO check only for relevant errors (exists with expected permissions is OK)
     }
 
-    if (chown(PID_PATH "/redemption", euid, egid) < 0){
-        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", euid, egid);
+    if (chown(app_path(AppPath::LockDir), euid, egid) < 0){
+        LOG(LOG_INFO, "Failed to set owner %u.%u to %s", euid, egid, app_path(AppPath::LockDir));
         return 1;
     }
 
     if (options.count("force")){
-        shutdown(PID_PATH  "/redemption/" LOCKFILE);
+        shutdown(app_path(AppPath::LockFile));
     }
 
-    if (0 == access(PID_PATH "/redemption/" LOCKFILE, F_OK)) {
+    if (0 == access(app_path(AppPath::LockFile), F_OK)) {
         std::clog <<
-        "File " << PID_PATH "/redemption/" LOCKFILE << " already exists. "
+        "File " << app_path(AppPath::LockFile) << " already exists. "
         "It looks like rdpproxy is already running, "
-        "if not, try again with -f (force) option or delete the " PID_PATH "/redemption/" LOCKFILE " file and try again\n";
+        "if not, try again with -f (force) option or delete the "
+        << app_path(AppPath::LockFile) << " file and try again\n";
         return 1;
     }
 
 
     /* write the pid to file */
-    int const fd = open(PID_PATH "/redemption/" LOCKFILE, O_WRONLY | O_CREAT, S_IRWXU);
+    int const fd = open(app_path(AppPath::LockFile), O_WRONLY | O_CREAT, S_IRWXU);
     if (fd == -1) {
         std::clog
-        <<  "Writing process id to " PID_PATH "/redemption/" LOCKFILE " failed. Maybe no rights ?"
-        << " : " << errno << ":'" << strerror(errno) << "'\n";
+        <<  "Writing process id to " << app_path(AppPath::LockFile)
+        << " failed. Maybe no rights ?" << " : " << errno << ":'" << strerror(errno) << "'\n";
         return 1;
     }
 
@@ -355,12 +355,12 @@ static inline int app_proxy(
         size_t lg = snprintf(text, 255, "%d", getpid());
         OutFileTransport(unique_fd{fd}).send(text, lg);
     } catch (Error const &) {
-        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/" LOCKFILE, strerror(errno));
+        LOG(LOG_ERR, "Couldn't write pid to %s: %s", app_path(AppPath::LockFile), strerror(errno));
         return 1;
     }
 
     if (!options.count("nodaemon")) {
-        daemonize(PID_PATH "/redemption/" LOCKFILE);
+        daemonize(app_path(AppPath::LockFile));
     }
 
     Inifile ini;
@@ -384,7 +384,7 @@ static inline int app_proxy(
     ) {
         // load global constant...
         rdp_ppocr::get_ocr_constants(
-            CFG_PATH,
+            app_path(AppPath::Cfg),
             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
         );
     }
@@ -396,7 +396,7 @@ static inline int app_proxy(
     /* don't care about errors. */
     /* If we are not in daemon mode this file will not exists, */
     /* hence some errors are expected */
-    unlink(PID_PATH "/redemption/" LOCKFILE);
+    unlink(app_path(AppPath::LockFile));
 
     return 0;
 }

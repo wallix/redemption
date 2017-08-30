@@ -29,7 +29,7 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/stream.hpp"
@@ -168,7 +168,7 @@ private:
     {
       ::save_persistent_disk_bitmap_cache(
           *this->bmp_cache,
-          PERSISTENT_PATH "/mod_rdp",
+          app_path(AppPath::PersistentRdp),
           this->target_host.c_str(),
           this->bmp_cache->bpp,
           this->report_error,
@@ -205,7 +205,7 @@ public:
             // Generates the name of file.
             char filename[2048];
             ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-                PERSISTENT_PATH "/mod_rdp", this->target_host.c_str(), this->bmp_cache->bpp);
+                app_path(AppPath::PersistentRdp), this->target_host.c_str(), this->bmp_cache->bpp);
             filename[sizeof(filename) - 1] = '\0';
 
             int fd = ::open(filename, O_RDONLY);

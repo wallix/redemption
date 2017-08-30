@@ -1758,7 +1758,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         char path[1024];
                         char basename[1024];
                         char extension[128];
-                        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+                        strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
+                        strcat(path, "/");
                         strcpy(basename, movie_path);
                         strcpy(extension, "");          // extension is currently ignored
 
@@ -2086,7 +2087,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         configuration_load(ini.configuration_holder(), recorder.config_filename);
     }
     else {
-        recorder.config_filename = std::string(CFG_PATH "/" RDPPROXY_INI);
+        recorder.config_filename = std::string(app_path(AppPath::CfgIni));
     }
 
     if (options.count("quick") > 0) {
@@ -2289,7 +2290,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
 
     if (recorder.output_filename.size()) {
-        std::string directory = WRM_PATH "/";
+        std::string directory = app_path(AppPath::Wrm); directory += "/";
         std::string filename                ;
         std::string extension = ".mwrm"     ;
 

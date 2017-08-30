@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
 
-    configuration_load(ThemeHolder(colors), CFG_PATH "/themes/test_theme/theme.ini");
+    configuration_load(ThemeHolder(colors), app_path(AppPath::Cfg) + std::string("/themes/test_theme/theme.ini"));
     RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
     RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
     RED_CHECK_EQUAL((RED),                colors.global.separator_color);
@@ -194,11 +194,11 @@ RED_AUTO_TEST_CASE(TestConfigPartialIni)
 
     ini.set<cfg::internal_mod::theme>("test_theme");
 
-    RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
-    RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
-    RED_CHECK_EQUAL((RED),                colors.global.separator_color);
+    RED_CHECK_EQUAL((DARK_BLUE_BIS),     colors.global.bgcolor);
+    RED_CHECK_EQUAL((GREY),              colors.global.fgcolor);
+    RED_CHECK_EQUAL((RED),               colors.global.separator_color);
     RED_CHECK_EQUAL(BGRColor(0x125456),  colors.global.focus_color);
 
-    RED_CHECK_EQUAL(true,                             colors.global.logo);
-    RED_CHECK_EQUAL(CFG_PATH "/themes/test_theme/logo.png", colors.global.logo_path);
+    RED_CHECK_EQUAL(true,                colors.global.logo);
+    RED_CHECK_EQUAL(app_path(AppPath::Cfg) + std::string("/themes/test_theme/logo.png"), colors.global.logo_path);
 }

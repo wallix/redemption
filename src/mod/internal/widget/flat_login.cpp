@@ -19,7 +19,7 @@
  */
 
 #include "mod/internal/widget/flat_login.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
@@ -55,7 +55,7 @@ FlatLogin::FlatLogin(
                     -1u, 1, 1, true)
     , img(drawable,
             theme.global.logo ? theme.global.logo_path.c_str() :
-            SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+            app_path(AppPath::LoginWabBlue), *this, nullptr, -10)
     , version_label(drawable, *this, nullptr, caption, -15,
                     theme.global.fgcolor, theme.global.bgcolor,
                     font)

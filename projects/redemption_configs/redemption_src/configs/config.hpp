@@ -24,18 +24,13 @@
 #pragma once
 
 #include "configs/io.hpp"
-
+#include "core/app_path.hpp"
 #include "core/authid.hpp"
 
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/sugar/exchange.hpp"
-#include "core/defines.hpp"
-#include "core/font.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
-
-#include <string>
-#include <chrono>
 
 #include <cstdint>
 #include <cassert>
@@ -139,7 +134,7 @@ namespace configs
 
         {
             char theme_path[1024] = {};
-            snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, str.c_str());
+            snprintf(theme_path, 1024, "%s/themes/%s/" THEME_INI, app_path(AppPath::Cfg), str.c_str());
             theme_path[sizeof(theme_path) - 1] = 0;
 
             configuration_load(ThemeHolder(theme), theme_path);
@@ -147,10 +142,10 @@ namespace configs
 
         if (theme.global.logo) {
             char logo_path[1024] = {};
-            snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_PNG, str.c_str());
+            snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_PNG, app_path(AppPath::Cfg), str.c_str());
             logo_path[sizeof(logo_path) - 1] = 0;
             if (!file_exist(logo_path)) {
-                snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_BMP, str.c_str());
+                snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_BMP, app_path(AppPath::Cfg), str.c_str());
                 logo_path[sizeof(logo_path) - 1] = 0;
                 if (!file_exist(logo_path)) {
                     theme.global.logo = false;

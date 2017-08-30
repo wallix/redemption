@@ -78,10 +78,10 @@
 "#certificate_password = inquisition\n\n"
 
 "#_advanced\n"
-"#png_path = " PNG_PATH "\n\n"
+"#png_path = " + std::string(app_path(AppPath::Png)) + "\n\n"
 
 "#_advanced\n"
-"#wrm_path = " WRM_PATH "\n\n"
+"#wrm_path = " + std::string(app_path(AppPath::Wrm)) + "\n\n"
 
 "#_advanced\n"
 "#movie_path = \n\n"
@@ -100,7 +100,7 @@
 "#enable_osd_display_remote_target = 1\n\n"
 
 "#_advanced\n"
-"#persistent_path = " PERSISTENT_PATH "\n\n"
+"#persistent_path = " + std::string(app_path(AppPath::Persistent)) + "\n\n"
 
 "#_hidden\n"
 "#enable_wab_integration = " CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) "\n\n"
@@ -580,13 +580,13 @@
 "#replay_path = /tmp/\n\n"
 
 "#_advanced\n"
-"#hash_path = " HASH_PATH "\n\n"
+"#hash_path = " + std::string(app_path(AppPath::Hash)) + "\n\n"
 
 "#_advanced\n"
-"#record_tmp_path = " RECORD_TMP_PATH "\n\n"
+"#record_tmp_path = " + std::string(app_path(AppPath::RecordTmp)) + "\n\n"
 
 "#_advanced\n"
-"#record_path = " RECORD_PATH "\n\n"
+"#record_path = " + std::string(app_path(AppPath::Record)) + "\n\n"
 
 "# Disable keyboard log:\n"
 "#   0: none\n"

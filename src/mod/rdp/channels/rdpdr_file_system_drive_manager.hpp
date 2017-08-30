@@ -22,7 +22,7 @@
 #pragma once
 
 #include "core/channel_list.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/SMB2/MessageSyntax.hpp"
@@ -1687,7 +1687,8 @@ private:
                          bool ignore_existence_check__for_test_only) {
         uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
 
-        std::string absolute_directory_path = DRIVE_REDIRECTION_PATH "/";
+        std::string absolute_directory_path = app_path(AppPath::DriveRedirection);
+        absolute_directory_path += '/';
         absolute_directory_path += relative_directory_path;
 
         struct stat sb;

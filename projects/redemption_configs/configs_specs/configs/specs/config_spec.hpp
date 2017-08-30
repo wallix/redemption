@@ -157,8 +157,8 @@ void config_spec_definition(Writer && W)
         W.member(iptables_in_gui, no_sesman, type_<bool>(), "enable_transparent_mode", desc{"Allow Transparent mode."}, set(false));
         W.member(advanced_in_gui | password_in_gui, no_sesman, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "png_path", set(CPP_MACRO(PNG_PATH)));
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "wrm_path", set(CPP_MACRO(WRM_PATH)));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "png_path", set(CPP_EXPR(app_path(AppPath::Png))));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "wrm_path", set(CPP_EXPR(app_path(AppPath::Wrm))));
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "is_rec", set(false));
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "movie_path", sesman::name{"rec_path"});
@@ -168,7 +168,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "enable_osd", set(true));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "enable_osd_display_remote_target", set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "persistent_path", set(CPP_MACRO(PERSISTENT_PATH)));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "persistent_path", set(CPP_EXPR(app_path(AppPath::Persistent))));
         W.sep();
         W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set((CPP_MACRO(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
         W.sep();
@@ -431,9 +431,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "replay_path", set("/tmp/"));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "hash_path", set(CPP_MACRO(HASH_PATH)));
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_tmp_path", set(CPP_MACRO(RECORD_TMP_PATH)));
-        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_path", set(CPP_MACRO(RECORD_PATH)));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash))));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
         W.sep();

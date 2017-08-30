@@ -22,7 +22,7 @@
 #include "mod/internal/widget/flat_wab_close.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "gdi/graphic_api.hpp"
 
 FlatWabClose::FlatWabClose(
@@ -65,7 +65,7 @@ FlatWabClose::FlatWabClose(
                                             6, 2) : nullptr)
 , img(drawable,
         theme.global.logo ? theme.global.logo_path.c_str() :
-        SHARE_PATH "/" LOGIN_WAB_BLUE, *this, nullptr, -10)
+        app_path(AppPath::LoginWabBlue), *this, nullptr, -10)
 , bg_color(theme.global.bgcolor)
 , prev_time(0)
 , lang(lang)

@@ -91,7 +91,7 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
-                ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
+                ini.set<cfg::font>(Font(app_path(AppPath::DefaultFontFile)));
                 ini.set<cfg::debug::config>(this->debug_config);
                 configuration_load(ini.configuration_holder(), this->config_filename);
 
@@ -159,7 +159,7 @@ public:
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
-                    sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
+                    sprintf(session_file, "%s/redemption/session_%d.pid", app_path(AppPath::Pid), child_pid);
                     int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                     if (fd == -1) {
                         LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s\n", errno, strerror(errno));
@@ -168,7 +168,7 @@ public:
                     char text[256];
                     const size_t lg = snprintf(text, 255, "%d", child_pid);
                     if (write(fd, text, lg) == -1) {
-                        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
+                        LOG(LOG_ERR, "Couldn't write pid to %s/redemption/session_<pid>.pid: %s", app_path(AppPath::Pid), strerror(errno));
                         _exit(1);
                     }
                     close(fd);
