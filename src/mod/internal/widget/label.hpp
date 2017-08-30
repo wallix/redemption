@@ -48,6 +48,8 @@ public:
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0);
 
+    WidgetLabel(WidgetLabel const &);
+
     ~WidgetLabel() override;
 
     void set_text(const char * text);

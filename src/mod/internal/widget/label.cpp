@@ -47,6 +47,21 @@ WidgetLabel::WidgetLabel(
     this->set_text(text);
 }
 
+WidgetLabel::WidgetLabel(WidgetLabel const & other)
+    : Widget(other)
+    , initial_x_text(other.initial_x_text)
+    , x_text(other.x_text)
+    , y_text(other.y_text)
+    , bg_color(other.bg_color)
+    , fg_color(other.fg_color)
+    , tool(other.tool)
+    , w_border(other.w_border)
+    , h_border(other.h_border)
+    , font(other.font)
+{
+}
+
+
 WidgetLabel::~WidgetLabel() = default;
 
 void WidgetLabel::set_text(const char * text)

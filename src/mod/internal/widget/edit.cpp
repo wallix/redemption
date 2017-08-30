@@ -73,6 +73,24 @@ WidgetEdit::WidgetEdit(
     this->pointer_flag = Pointer::POINTER_EDIT;
 }
 
+WidgetEdit::WidgetEdit(WidgetEdit const & other)
+: Widget(other)
+, label(other.label)
+, buffer_size(other.buffer_size)
+, num_chars(other.num_chars)
+, edit_buffer_pos(other.edit_buffer_pos)
+, edit_pos(other.edit_pos)
+, cursor_px_pos(other.cursor_px_pos)
+, w_text(other.w_text)
+, h_text(other.h_text)
+, cursor_color(other.cursor_color)
+, focus_color(other.focus_color)
+, drawall(other.drawall)
+, draw_border_focus(other.draw_border_focus)
+, font(other.font)
+{
+}
+
 WidgetEdit::~WidgetEdit() = default;
 
 Dimension WidgetEdit::get_optimal_dim()

@@ -78,6 +78,20 @@ public:
     bool has_focus;
     int notify_value;
 
+protected:
+    Widget(Widget const & other)
+    : parent(other.parent)
+    , drawable(other.drawable)
+    , notifier(other.notifier)
+    , rect(other.rect)
+    , group_id(other.group_id)
+    , tab_flag(other.tab_flag)
+    , focus_flag(other.focus_flag)
+    , pointer_flag(other.pointer_flag)
+    , has_focus(other.has_focus)
+    , notify_value(other.notify_value)
+    {}
+
 public:
     Widget(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
