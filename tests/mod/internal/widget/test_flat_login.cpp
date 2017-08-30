@@ -26,8 +26,8 @@
 
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/check_sig.hpp"
-
 #include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatLogin)

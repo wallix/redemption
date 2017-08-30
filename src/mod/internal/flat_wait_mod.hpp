@@ -24,6 +24,7 @@
 
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "utils/timeout.hpp"
 #include "widget/flat_wait.hpp"

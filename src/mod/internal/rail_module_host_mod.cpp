@@ -19,7 +19,9 @@
 */
 
 #include "mod/internal/rail_module_host_mod.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "configs/config.hpp"
+#include "core/front_api.hpp"
 
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
@@ -30,10 +32,9 @@ RailModuleHostMod::RailModuleHostMod(
 : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                         client_execute, vars.get<cfg::theme>())
 , rail_module_host(front, widget_rect.x, widget_rect.y,
-                    widget_rect.cx, widget_rect.cy,
-                    this->screen, this, std::move(managed_mod),
-                    vars.get<cfg::font>(), vars.get<cfg::theme>(),
-                    cs_monitor, width, height)
+                   widget_rect.cx, widget_rect.cy,
+                   this->screen, this, std::move(managed_mod),
+                   vars.get<cfg::font>(), cs_monitor, width, height)
 , vars(vars)
 , managed_mod_event_handler(*this)
 , client_execute(client_execute)

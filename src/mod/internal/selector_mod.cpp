@@ -19,6 +19,7 @@
  */
 
 #include "mod/internal/selector_mod.hpp"
+#include "core/front_api.hpp"
 #include "configs/config.hpp"
 
 namespace

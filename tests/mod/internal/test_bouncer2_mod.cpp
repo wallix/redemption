@@ -28,6 +28,7 @@
 #include "core/client_info.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "keyboard/keymap2.hpp"
 
 RED_AUTO_TEST_CASE(TestBouncer2Mod)
 {

@@ -30,6 +30,7 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/mod/fake_draw.hpp"
 #include "test_only/check_sig.hpp"

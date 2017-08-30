@@ -21,10 +21,14 @@
 
 #pragma once
 
-#include "widget.hpp"
-#include "utils/colors.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "gdi/graphic_api.hpp"
+#include "mod/internal/widget/widget.hpp"
+
+class NotifyApi;
+
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class WidgetRect : public Widget
 {
@@ -32,30 +36,7 @@ public:
     BGRColor color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, BGRColor color = BLACK)
-    : Widget(drawable, parent, notifier, group_id)
-    , color(color)
-    {
-        this->tab_flag = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-    }
+    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, BGRColor color = BLACK);
 
-    void rdp_input_invalidate(Rect clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
-
-        if (!rect_intersect.isempty()) {
-            this->drawable.begin_update();
-
-            this->drawable.draw(
-                RDPOpaqueRect(
-                    rect_intersect,
-                    encode_color24()(this->color)
-                ),
-                rect_intersect,
-                gdi::ColorCtx::depth24()
-            );
-
-            this->drawable.end_update();
-        }
-    }
+    void rdp_input_invalidate(Rect clip) override;
 };

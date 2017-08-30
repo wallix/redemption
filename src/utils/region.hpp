@@ -33,7 +33,7 @@ struct SubRegion
 
     void subtract_rect(const Rect rect)
     {
-        std::vector<Rect> new_rects;
+        this->new_rects.clear();
 
         std::size_t count = this->rects.size();
         for (std::size_t i = 0; i < count; i++) {
@@ -42,7 +42,7 @@ struct SubRegion
                 const Rect sect = rect.intersect(rect1);
 
                 if (sect.isempty()) {
-                    new_rects.push_back(rect1);
+                    this->new_rects.push_back(rect1);
                 }
                 else {
                     const Rect a(rect1.x, rect1.y, rect1.cx, sect.y - rect1.y);
@@ -50,25 +50,28 @@ struct SubRegion
                     const Rect c(sect.right(), sect.y, rect1.right() - sect.right(), sect.cy);
                     const Rect d(rect1.x, sect.bottom(), rect1.cx, rect1.bottom() - sect.bottom());
                     if (!a.isempty()) {
-                        new_rects.push_back(a);
+                        this->new_rects.push_back(a);
                     }
                     if (!b.isempty()) {
-                        new_rects.push_back(b);
+                        this->new_rects.push_back(b);
                     }
                     if (!c.isempty()) {
-                        new_rects.push_back(c);
+                        this->new_rects.push_back(c);
                     }
                     if (!d.isempty()) {
-                        new_rects.push_back(d);
+                        this->new_rects.push_back(d);
                     }
                 }
             }
         }
-        this->rects = std::move(new_rects);
+        swap(this->rects, this->new_rects);
     }
 
     void add_rect(const Rect & rect)
     {
         this->rects.push_back(rect);
     }
+
+private:
+    std::vector<Rect> new_rects;
 };

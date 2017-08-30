@@ -44,6 +44,7 @@ using InteractiveTargetModVariables = vcfg::variables<
 
 class InteractiveTargetMod : public LocallyIntegrableMod, public NotifyApi
 {
+public:
     bool ask_device;
     bool ask_login;
     bool ask_password;

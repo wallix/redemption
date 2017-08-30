@@ -27,6 +27,7 @@
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/front_api.hpp"
+#include "keyboard/keymap2.hpp"
 
 ReplayMod::TemporaryCtxPath::TemporaryCtxPath(const char * replay_path, const char * movie)
 {

@@ -20,9 +20,11 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
+#include "keyboard/keymap2.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "core/defines.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "utils/bitmap_from_file.hpp"

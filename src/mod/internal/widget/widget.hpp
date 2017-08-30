@@ -20,17 +20,20 @@
  */
 #pragma once
 
-#include <vector>
-
 #include "notify_api.hpp"
 #include "utils/rect.hpp"
+#include "utils/colors.hpp"
 #include "core/callback.hpp"
 #include "core/RDP/pointer.hpp"
-#include "gdi/graphic_api.hpp"
 
 struct Keymap2;
+namespace gdi
+{
+    class GraphicApi;
+}
 
-enum NotifyEventType {
+enum NotifyEventType
+{
     NOTIFY_FOCUS_BEGIN,
     NOTIFY_FOCUS_END,
     NOTIFY_TEXT_CHANGED,
@@ -85,7 +88,8 @@ public:
     , focus_flag(NORMAL_FOCUS)
     , pointer_flag(Pointer::POINTER_NORMAL)
     , has_focus(false)
-    , notify_value(0) {}
+    , notify_value(0)
+    {}
 
     virtual bool next_focus()
     {
@@ -97,22 +101,28 @@ public:
         return false;
     }
 
-    bool is_root() {
+    bool is_root()
+    {
         // The root widget is defined as the parent of itself (screen widget only)
         return (&this->parent == this);
     }
 
-    virtual void show_tooltip(Widget * widget, const char * text, int x, int y,
-                              Rect preferred_display_rect, int iter = 10) {
+    virtual void show_tooltip(
+        Widget * widget, const char * text, int x, int y,
+        Rect preferred_display_rect, int iter = 10)
+    {
         if (iter > 0) {
             this->parent.show_tooltip(widget, text, x, y, preferred_display_rect, iter - 1);
         }
     }
-    void hide_tooltip() {
+
+    void hide_tooltip()
+    {
         this->show_tooltip(this, nullptr, 0, 0, Rect(0, 0, 0, 0));
     }
 
-    Widget * last_widget_at_pos(int16_t x, int16_t y) {
+    Widget * last_widget_at_pos(int16_t x, int16_t y)
+    {
         Widget * w = this;
         int count = 10;
         while (w->widget_at_pos(x, y)
@@ -132,7 +142,8 @@ public:
         (void)param4;
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
+    {
         (void)unicode;
         (void)flag;
     }
@@ -145,14 +156,16 @@ public:
     }
 
     // - synchronisation of capslock, numlock, etc state.
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    {
         (void)time;
         (void)device_flags;
         (void)param1;
         (void)param2;
     }
 
-    void refresh(Rect clip) override {
+    void refresh(Rect clip) override
+    {
         this->rdp_input_invalidate(clip);
     }
 
@@ -162,7 +175,8 @@ public:
             this->notifier->notify(this, event);
     }
 
-    void notify(Widget *, NotifyApi::notify_event_t event) override {
+    void notify(Widget *, NotifyApi::notify_event_t event) override
+    {
         if (this->notifier)
             this->notifier->notify(this, event);
     }
@@ -191,7 +205,8 @@ public:
         this->set_wh(dim.w, dim.h);
     }
 
-    virtual void set_color(BGRColor bg_color, BGRColor fg_color) {
+    virtual void set_color(BGRColor bg_color, BGRColor fg_color)
+    {
         (void)bg_color;
         (void)fg_color;
     }
@@ -225,7 +240,8 @@ public:
         }
     }
 
-    virtual Dimension get_optimal_dim() {
+    virtual Dimension get_optimal_dim()
+    {
         return Dimension(0, 0);
     }
 
@@ -269,7 +285,8 @@ public:
         return this->rect;
     }
 
-    virtual const Pointer* get_pointer() const {
+    virtual const Pointer* get_pointer() const
+    {
         return nullptr;
     }
 };

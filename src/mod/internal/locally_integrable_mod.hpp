@@ -26,6 +26,34 @@ class ClientExecute;
 
 class LocallyIntegrableMod : public InternalMod
 {
+public:
+    LocallyIntegrableMod(FrontAPI & front,
+                         uint16_t front_width, uint16_t front_height,
+                         Font const & font, ClientExecute & client_execute,
+                         Theme const & theme);
+
+    ~LocallyIntegrableMod() override;
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
+
+    void rdp_input_invalidate(Rect r) override;
+
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4,
+            Keymap2 * keymap) override;
+
+    void refresh(Rect r) override;
+
+    void draw_event(time_t, gdi::GraphicApi &) override;
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+
+private:
+    void cancel_double_click_detection();
+
+    virtual bool is_resizing_hosted_desktop_allowed() const;
+
     ClientExecute & client_execute;
 
     bool alt_key_pressed = false;
@@ -66,32 +94,4 @@ class LocallyIntegrableMod : public InternalMod
     };
 
     MouseOwner current_mouse_owner;
-
-public:
-    LocallyIntegrableMod(FrontAPI & front,
-                         uint16_t front_width, uint16_t front_height,
-                         Font const & font, ClientExecute & client_execute,
-                         Theme const & theme);
-
-    ~LocallyIntegrableMod() override;
-
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
-
-    void rdp_input_invalidate(Rect r) override;
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4,
-            Keymap2 * keymap) override;
-
-    void refresh(Rect r) override;
-
-    void draw_event(time_t, gdi::GraphicApi &) override;
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
-
-private:
-    void cancel_double_click_detection();
-
-    virtual bool is_resizing_hosted_desktop_allowed() const;
 };
