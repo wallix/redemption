@@ -383,31 +383,52 @@ namespace FastPath {
 //  FASTPATH_INPUT_EVENT_SCANCODE (0). The eventFlags bitfield (5 bits in size)
 //  contains flags describing the keyboard event.
 
-// +---------------------------------------+-----------------------------------+
-// | 5-Bit Codes                           | Meaning                           |
-// +---------------------------------------+-----------------------------------+
-// | 0x01 FASTPATH_INPUT_KBDFLAGS_RELEASE  | The absence of this flag          |
-// |                                       | indicates a key-down event,       |
-// |                                       | while its presence indicates a    |
-// |                                       | key-release event.                |
-// +---------------------------------------+-----------------------------------+
-// | 0x02 FASTPATH_INPUT_KBDFLAGS_EXTENDED | The keystroke message contains an |
-// |                                       | extended scancode. For enhanced   |
-// |                                       | 101-key and 102-key keyboards,    |
-// |                                       | extended keys include the right   |
-// |                                       | ALT and right CTRL keys on the    |
-// |                                       | main section of the keyboard; the |
-// |                                       | INS, DEL, HOME, END, PAGE UP,     |
-// |                                       | PAGE DOWN and ARROW keys in the   |
-// |                                       | clusters to the left of the       |
-// |                                       | numeric keypad; and the Divide    |
-// |                                       | ("/") and ENTER keys in the       |
-// |                                       | numeric keypad.                   |
-// +---------------------------------------+-----------------------------------+
+// +----------------------------------------+-----------------------------------+
+// | 5-Bit Codes                            | Meaning                           |
+// +----------------------------------------+-----------------------------------+
+// | 0x01 FASTPATH_INPUT_KBDFLAGS_RELEASE   | The absence of this flag          |
+// |                                        | indicates a key-down event,       |
+// |                                        | while its presence indicates a    |
+// |                                        | key-release event.                |
+// +----------------------------------------+-----------------------------------+
+// | 0x02 FASTPATH_INPUT_KBDFLAGS_EXTENDED  | Indicates that the keystroke      |
+// |                                        | message contains an extended      |
+// |                                        | scancode. For enhanced 101-key    |
+// |                                        | and 102-key keyboards, extended   |
+// |                                        | keys include the right ALT and    |
+// |                                        | right CTRL keys on the main       |
+// |                                        | section of the keyboard; the INS, |
+// |                                        | DEL, HOME, END, PAGE UP,          |
+// |                                        | PAGE DOWN and ARROW keys in the   |
+// |                                        | clusters to the left of the       |
+// |                                        | numeric keypad; and the Divide    |
+// |                                        | ("/") and ENTER keys in the       |
+// |                                        | numeric keypad.                   |
+// +----------------------------------------+-----------------------------------+
+// | 0x04 FASTPATH_INPUT_KBDFLAGS_EXTENDED1 | Used to send keyboard events      |
+// |                                        | triggered by the PAUSE key.       |
+// |                                        | A PAUSE key press and release     |
+// |                                        | MUST be sent as the following     |
+// |                                        | sequence of keyboard events:      |
+// |                                        |                                   |
+// |                                        | * CTRL (0x1D) DOWN                |
+// |                                        |                                   |
+// |                                        | * NUMLOCK (0x45) DOWN             |
+// |                                        |                                   |
+// |                                        | * CTRL (0x1D) UP                  |
+// |                                        |                                   |
+// |                                        | * NUMLOCK (0x45) UP               |
+// |                                        |                                   |
+// |                                        | The CTRL DOWN and CTRL UP events  |
+// |                                        | MUST both include the             |
+// |                                        | FASTPATH_INPUT_KBDFLAGS_EXTENDED1 |
+// |                                        | flag.                             |
+// +----------------------------------------+-----------------------------------+
 
     enum {
-          FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
-        , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
+          FASTPATH_INPUT_KBDFLAGS_RELEASE   = 0x01
+        , FASTPATH_INPUT_KBDFLAGS_EXTENDED  = 0x02
+        , FASTPATH_INPUT_KBDFLAGS_EXTENDED1 = 0x04
     };
 
 // keyCode (1 byte): An 8-bit, unsigned integer. The scancode of the key which
@@ -437,6 +458,10 @@ namespace FastPath {
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED;
+            }
+
+            if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED1){
+                this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED1;
             }
 
             if (!stream.in_check_rem(1)) {

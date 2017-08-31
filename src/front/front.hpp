@@ -2284,8 +2284,8 @@ public:
 
                                 if (bool(this->verbose & Verbose::basic_trace3)) {
                                     LOG(LOG_INFO,
-                                        "Front::incoming: Received Fast-Path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
-                                        ke.spKeyboardFlags, ke.keyCode);
+                                        "Front::incoming: Received Fast-Path PUD, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                                        ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
                                 }
 
                                 if ((1 == num_events) &&
