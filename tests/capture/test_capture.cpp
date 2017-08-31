@@ -177,7 +177,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         }
 
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                                nullptr, record_tmp_path, basename, groupid};
+                                nullptr, record_tmp_path, basename, groupid, false};
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
@@ -434,7 +434,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     }
 
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                        nullptr, record_tmp_path, basename, groupid};
+                        nullptr, record_tmp_path, basename, groupid, false};
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
