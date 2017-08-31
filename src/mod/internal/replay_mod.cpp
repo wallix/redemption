@@ -23,10 +23,11 @@
 */
 
 
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/front_api.hpp"
+#include "keyboard/keymap2.hpp"
 
 ReplayMod::TemporaryCtxPath::TemporaryCtxPath(const char * replay_path, const char * movie)
 {
@@ -37,7 +38,7 @@ ReplayMod::TemporaryCtxPath::TemporaryCtxPath(const char * replay_path, const ch
 
     char path[1024];
     char basename[1024];
-    strcpy(path, RECORD_PATH); // default value, actual one should come from movie_path
+    strcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
     strcpy(basename, "replay"); // default value actual one should come from movie_path
     strcpy(this->extension, ".mwrm"); // extension is currently ignored
 

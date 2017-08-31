@@ -20,7 +20,6 @@
  *
  */
 
-#pragma once
 #include "widget.hpp"
 #include "gdi/graphic_api.hpp"
 

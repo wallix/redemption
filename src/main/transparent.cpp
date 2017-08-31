@@ -57,7 +57,7 @@ int main(int argc, char * argv[]) {
     persistent_key_list_filename = "./PersistentKeyList.bin";
     target_port                  = 3389;
 
-    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+    std::string config_filename = app_path(AppPath::CfgIni);
 
     program_options::options_description desc({
         {'h', "help",    "produce help message"},
@@ -168,7 +168,7 @@ int main(int argc, char * argv[]) {
 
     Inifile ini;
     configuration_load(ini.configuration_holder(), config_filename);
-    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
+    ini.set<cfg::font>(Font(app_path(AppPath::DefaultFontFile)));
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char *>(&nodelay)

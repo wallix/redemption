@@ -23,14 +23,14 @@
 #define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
-#undef RECORD_PATH
-#define RECORD_PATH "/tmp/recorded"
-#undef WRM_PATH
-#define WRM_PATH "/tmp/recorded"
-#undef HASH_PATH
-#define HASH_PATH "/tmp/hash"
-#undef RECORD_TMP_PATH
-#define RECORD_TMP_PATH "/tmp/tmp"
+// #undef RECORD_PATH
+// #define RECORD_PATH "/tmp/recorded"
+// #undef WRM_PATH
+// #define WRM_PATH "/tmp/recorded"
+// #undef HASH_PATH
+// #define HASH_PATH "/tmp/hash"
+// #undef RECORD_TMP_PATH
+// #define RECORD_TMP_PATH "/tmp/tmp"
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
@@ -119,8 +119,8 @@ public:
 RED_AUTO_TEST_CASE(TestFront)
 {
     try {
-        ::unlink(RECORD_PATH "/redemption.mwrm");
-        ::unlink(RECORD_PATH "/redemption-000000.wrm");
+        ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
+        ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
 
         ClientInfo info;
         info.keylayout = 0x04C;
@@ -346,8 +346,8 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 RED_AUTO_TEST_CASE(TestFront2)
 {
     auto test = [&]{
-        ::unlink(RECORD_PATH "/redemption.mwrm");
-        ::unlink(RECORD_PATH "/redemption-000000.wrm");
+        ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
+        ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
 
         ClientInfo info;
         info.keylayout = 0x04C;

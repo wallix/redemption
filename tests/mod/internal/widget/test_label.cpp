@@ -24,6 +24,7 @@
 
 #define LOGNULL
 
+#include "keyboard/keymap2.hpp"
 #include "core/font.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/screen.hpp"

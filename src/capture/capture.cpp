@@ -1311,7 +1311,7 @@ public:
 
     MetaCaptureImpl(
         const timeval & now,
-        MetaParams meta_params,
+        MetaParams const & meta_params,
         std::string record_path,
         const char * const basename,
         ReportError report_error)

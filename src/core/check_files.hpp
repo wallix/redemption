@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include "utils/log.hpp"
 #include "core/font.hpp" //DEFAULT_FONT_NAME
-#include "defines.hpp"
+#include "core/app_path.hpp"
 
 // TODO merge that with find and unlink
 
@@ -45,7 +45,7 @@ struct CheckFileList
 
 static CheckFileList user_check_file_list[] =
 {
-    { RDPPROXY_INI, CFG_PATH, true,  false, false, false },
+    { RDPPROXY_INI, app_path(AppPath::Cfg), true,  false, false, false },
 
     // End of list.
     { nullptr,         nullptr,     false, false, false, false }
@@ -54,31 +54,31 @@ static CheckFileList user_check_file_list[] =
 static CheckFileList euser_check_file_list[] =
 {
     // Directories.
-    { "",                       CERTIF_PATH,            false, true,  false, false },
-    { "",                       RECORD_PATH,            false, true,  false, false },
-    { "",                       RECORD_TMP_PATH,        false, true,  false, false },
-    { "",                       HASH_PATH,              false, true,  false, false },
-    { "",                       FLV_PATH,               false, true,  false, false },
-    { "",                       OCR_PATH,               false, true,  false, false },
-    { "",                       PNG_PATH,               false, true,  false, false },
-    { "",                       LICENSE_PATH,           false, true,  false, false },
-    { "",                       CERTIF_PATH,            false, true,  false, false },
-    { "",                       PERSISTENT_PATH,        false, true,  false, false },
-    { "",                       DRIVE_REDIRECTION_PATH, false, true,  false, false },
-    { "",                       PID_PATH,               false, true,  false, false },
+    { "",                 app_path(AppPath::Certif),            false, true,  false, false },
+    { "",                 app_path(AppPath::Record),            false, true,  false, false },
+    { "",                 app_path(AppPath::RecordTmp),         false, true,  false, false },
+    { "",                 app_path(AppPath::Hash),              false, true,  false, false },
+    { "",                 app_path(AppPath::Flv),               false, true,  false, false },
+    { "",                 app_path(AppPath::Ocr),               false, true,  false, false },
+    { "",                 app_path(AppPath::Png),               false, true,  false, false },
+    { "",                 app_path(AppPath::License),           false, true,  false, false },
+    { "",                 app_path(AppPath::Certif),            false, true,  false, false },
+    { "",                 app_path(AppPath::Persistent),        false, true,  false, false },
+    { "",                 app_path(AppPath::DriveRedirection),  false, true,  false, false },
+    { "",                 app_path(AppPath::Pid),               false, true,  false, false },
 
     //  Files
-    { DEFAULT_FONT_NAME,        SHARE_PATH,      true,  false, false, false },
-    { REDEMPTION_LOGO24,        SHARE_PATH,      true,  false, false, false },
-    { LOGIN_WAB_BLUE,           SHARE_PATH,      true,  false, false, false },
-    { LOCKFILE,                 PID_PATH,        true,  false, false, false },
-    { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
-//     { LOGO_PNG,                 CFG_THEMES_PATH, true,  false, false, false },
-//     { LOGO_BMP,                 CFG_THEMES_PATH, true,  false, false, false },
-//     { THEME_INI,                CFG_THEMES_PATH, true,  false, false, false },
-    { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
-    { RDPPROXY_CRT,             CFG_PATH,        true,  false, false, false },
-    { DH2048_PEM,               CFG_PATH,        true,  false, false, false },
+    { DEFAULT_FONT_NAME,  app_path(AppPath::Share),             true,  false, false, false },
+    { REDEMPTION_LOGO24,  app_path(AppPath::Share),             true,  false, false, false },
+    { LOGIN_WAB_BLUE,     app_path(AppPath::Share),             true,  false, false, false },
+    { LOCKFILE,           app_path(AppPath::Pid),               true,  false, false, false },
+    { RDPPROXY_INI,       app_path(AppPath::Cfg),               true,  false, false, false },
+//     { LOGO_PNG,           CFG_THEMES_PATH, true,  false, false, false },
+//     { LOGO_BMP,           CFG_THEMES_PATH, true,  false, false, false },
+//     { THEME_INI,          CFG_THEMES_PATH, true,  false, false, false },
+    { RDPPROXY_KEY,       app_path(AppPath::Cfg),               true,  false, false, false },
+    { RDPPROXY_CRT,       app_path(AppPath::Cfg),               true,  false, false, false },
+    { DH2048_PEM,         app_path(AppPath::Cfg),               true,  false, false, false },
 
 
     // End of list.

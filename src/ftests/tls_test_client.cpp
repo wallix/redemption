@@ -68,7 +68,7 @@ void rdp_request(SocketTransport & sockettransport)
             true,
             false,
             null_server_notifier,
-            CERTIF_PATH,
+            app_path(AppPath::Certif),
             nullptr,
             "127.0.0.1",
             331

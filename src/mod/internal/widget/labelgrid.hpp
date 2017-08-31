@@ -20,13 +20,10 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "widget.hpp"
-#include "label.hpp"
-#include "grid.hpp"
-#include "gdi/graphic_api.hpp"
+#include "mod/internal/widget/grid.hpp"
 
-struct WidgetLabelGrid : public WidgetGrid {
+struct WidgetLabelGrid : public WidgetGrid
+{
     static const unsigned x_padding_label = 3;
     static const unsigned y_padding_label = 1;
 
@@ -40,63 +37,14 @@ struct WidgetLabelGrid : public WidgetGrid {
                BGRColor bg_color_2, BGRColor fg_color_2,
                BGRColor bg_color_focus, BGRColor fg_color_focus,
                BGRColor bg_color_selection, BGRColor fg_color_selection,
-               Font const & font, uint16_t border = 0, int group_id = 0)
-        : WidgetGrid(drawable, parent, notifier, nb_lines, nb_columns,
-                     bg_color_1, fg_color_1, bg_color_2, fg_color_2,
-                     bg_color_focus, fg_color_focus,
-                     bg_color_selection, fg_color_selection, border, group_id)
-        , toDelete()
-        , font(font)
-    {}
+               Font const & font, uint16_t border = 0, int group_id = 0);
 
-    ~WidgetLabelGrid() override {
-        this->clean_labels();
-    }
+    ~WidgetLabelGrid() override;
 
-    void clear() override {
-        this->clean_labels();
-        WidgetGrid::clear();
-    }
-    void clean_labels() {
-        for (int i = 0; i < GRID_NB_COLUMNS_MAX; i++) {
-            for (int j = 0; j < GRID_NB_ROWS_MAX; j++) {
-                if (this->toDelete[i][j]) {
-                    if (this->widgets[i][j]) {
-                        delete this->widgets[i][j];
-                        this->widgets[i][j] = nullptr;
-                    }
-                }
-            }
-        }
-    }
+    void clear() override;
+    void clean_labels();
 
-    uint16_t add_line(const char ** entries) {
-        REDASSERT(this->nb_rows <= GRID_NB_ROWS_MAX);
-        for (int i = 0; i < this->nb_columns; i++) {
-            bool odd = this->nb_rows & 1;
-            WidgetLabel * label = new WidgetLabel(this->drawable, *this, this,
-                                              entries[i], this->group_id,
-                                              odd ? this->fg_color_1 : this->fg_color_2,
-                                              odd ? this->bg_color_1 : this->bg_color_2,
-                                              this->font, x_padding_label, y_padding_label);
+    uint16_t add_line(const char ** entries);
 
-            Dimension dim = label->get_optimal_dim();
-            label->set_wh(dim);
-
-            label->tool = true;
-            this->set_widget(this->nb_rows, i, label);
-            this->toDelete[i][this->nb_rows] = true;
-        }
-        return this->nb_rows++;
-    }
-
-    const char * get_cell_text(uint16_t row_index, uint16_t column_index) {
-        const char * result = "";
-        if (this->toDelete[column_index][row_index]) {
-            WidgetLabel * label = static_cast<WidgetLabel*>(this->widgets[column_index][row_index]);
-            result = label->get_text();
-        }
-        return result;
-    }
-
+    const char * get_cell_text(uint16_t row_index, uint16_t column_index);
 };

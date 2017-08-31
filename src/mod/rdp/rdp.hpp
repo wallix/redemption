@@ -918,13 +918,13 @@ public:
         , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)
         , certif_path([](const char * device_id){
-            size_t lg_certif_path = strlen(CERTIF_PATH);
+            size_t lg_certif_path = strlen(app_path(AppPath::Certif));
             size_t lg_dev_id = strlen(device_id);
             char * buffer(new(std::nothrow) char[lg_certif_path + lg_dev_id + 2]);
             if (!buffer){
                 throw Error(ERR_PATH_TOO_LONG);
             }
-            memcpy(buffer, CERTIF_PATH, lg_certif_path);
+            memcpy(buffer, app_path(AppPath::Certif), lg_certif_path);
             buffer[lg_certif_path] =  '/';
             memcpy(buffer+lg_certif_path+1, device_id, lg_dev_id+1);
             return buffer;
@@ -1046,7 +1046,7 @@ public:
         // TODO CGR: license loading should be done before creating protocol layers
         struct stat st;
         char path[256];
-        snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", info.hostname);
+        snprintf(path, sizeof(path), "%s/license.%s", app_path(AppPath::License), info.hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1){
             if (fstat(fd, &st) != 0){

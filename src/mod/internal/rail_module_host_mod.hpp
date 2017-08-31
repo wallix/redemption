@@ -39,48 +39,12 @@ using RailModuleHostModVariables = vcfg::variables<
 
 class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi
 {
-    RailModuleHost rail_module_host;
-
-    RailModuleHostModVariables vars;
-
-    class ManagedModEventHandler : public EventHandler::CB
-    {
-        RailModuleHostMod& mod_;
-
-    public:
-        ManagedModEventHandler(RailModuleHostMod& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable) override
-        {
-            mod_api& mod = this->mod_.rail_module_host.get_managed_mod();
-            mod.draw_event(now, drawable);
-        }
-    } managed_mod_event_handler;
-
-    wait_obj disconnection_reconnection_event;
-
-    bool disconnection_reconnection_required = false;   // Window resize
-
-    class DisconnectionReconnectionEventHandler : public EventHandler::CB
-    {
-    public:
-        void operator()(time_t/* now*/, wait_obj&/* event*/, gdi::GraphicApi&/* drawable*/) override
-        {
-            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-        }
-    } disconnection_reconnection_event_handler;
-
-    ClientExecute& client_execute;
-
 public:
     RailModuleHostMod(
         RailModuleHostModVariables vars,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute,
-        const GCC::UserData::CSMonitor& cs_monitor);
+        ClientExecute& client_execute, const GCC::UserData::CSMonitor& cs_monitor);
 
     ~RailModuleHostMod() override
     {
@@ -126,4 +90,40 @@ public:
     Dimension get_dim() const override;
 
     bool is_resizing_hosted_desktop_allowed() const override;
+
+private:
+    RailModuleHost rail_module_host;
+
+    RailModuleHostModVariables vars;
+
+    class ManagedModEventHandler : public EventHandler::CB
+    {
+        RailModuleHostMod& mod_;
+
+    public:
+        ManagedModEventHandler(RailModuleHostMod& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable) override
+        {
+            mod_api& mod = this->mod_.rail_module_host.get_managed_mod();
+            mod.draw_event(now, drawable);
+        }
+    } managed_mod_event_handler;
+
+    wait_obj disconnection_reconnection_event;
+
+    bool disconnection_reconnection_required = false;   // Window resize
+
+    class DisconnectionReconnectionEventHandler : public EventHandler::CB
+    {
+    public:
+        void operator()(time_t/* now*/, wait_obj&/* event*/, gdi::GraphicApi&/* drawable*/) override
+        {
+            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+        }
+    } disconnection_reconnection_event_handler;
+
+    ClientExecute& client_execute;
 };

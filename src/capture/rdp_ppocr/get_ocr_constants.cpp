@@ -23,8 +23,6 @@
 
 #include "ppocr/utils/read_file.hpp"
 
-#include "core/defines.hpp"
-
 #include "utils/log.hpp"
 
 #include <cassert>

@@ -29,6 +29,8 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
+#include "mod/internal/client_execute.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 
 RED_AUTO_TEST_CASE(TestDialogMod)

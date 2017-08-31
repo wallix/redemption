@@ -23,13 +23,11 @@
 
 */
 
-
 #define RED_TEST_MODULE TestSubRegion
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "utils/rect.hpp"
 #include "utils/region.hpp"
 
 
@@ -39,13 +37,13 @@ RED_AUTO_TEST_CASE(TestSubRegion)
 
     Rect r1(10, 110, 10, 10);
     SubRegion region;
-    region.rects.push_back(r1);
-    region.rects.push_back(r1);
-    region.rects.push_back(r1);
+    region.add_rect(r1);
+    region.add_rect(r1);
+    region.add_rect(r1);
 
     int sum_left = 0;
-    for (size_t i = 0 ; i < region.rects.size() ; i++){
-        sum_left += region.rects[i].x;
+    for (Rect const & rect : region.rects){
+        sum_left += rect.x;
     }
     RED_CHECK_EQUAL(30, sum_left);
 
@@ -62,7 +60,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
     //   x----------------x
     //
     SubRegion region2;
-    region2.rects.push_back(Rect(10,10,90,90));
+    region2.add_rect(Rect(10,10,90,90));
     RED_CHECK_EQUAL(1, region2.rects.size());
 
     // (10,10)
@@ -85,7 +83,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
 
     // we substract a traversing rectangle
     SubRegion region3;
-    region3.rects.push_back(Rect(10,10,90,90));
+    region3.add_rect(Rect(10,10,90,90));
     RED_CHECK_EQUAL(1, region3.rects.size());
 
 

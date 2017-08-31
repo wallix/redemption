@@ -113,6 +113,9 @@ namespace cpp
 
     struct macro { char const * name; };
     #define CPP_MACRO(name) ::cfg_attributes::cpp::macro{#name}
+
+    struct expr { char const * value; };
+    #define CPP_EXPR(name) ::cfg_attributes::cpp::expr{#name}
 }
 
 

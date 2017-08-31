@@ -24,6 +24,7 @@
 #include "transport/transport.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
+#include <linux/limits.h> // PATH_MAX
 #include <sys/types.h>
 
 class InCryptoTransport;

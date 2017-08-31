@@ -23,6 +23,8 @@
 
 #include "mod/internal/bouncer2_mod.hpp"
 #include "core/front_api.hpp"
+#include "keyboard/keymap2.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 Bouncer2Mod::Bouncer2Mod(FrontAPI & front, uint16_t width, uint16_t height,
             Font const & font, bool dont_resize)

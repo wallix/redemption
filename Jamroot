@@ -118,18 +118,13 @@ obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj log_print.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
-constant COMMON_OBJ_DEPENDENCIES :
-    <conditional>@defines
-    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
-    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
-;
 constant LIB_DEPENDENCIES :
-    $(COMMON_OBJ_DEPENDENCIES)
+    <library>app_path_exe.o
     <cxxflags>-fPIC
     <variant>release:<cxxflags>-fvisibility=hidden
 ;
 constant OBJ_EXE_DEPENDENCIES :
-    $(COMMON_OBJ_DEPENDENCIES)
+    <library>app_path_exe.o
     $(GCOV_NO_BUILD)
 ;
 constant EXE_DEPENDENCIES :
@@ -138,32 +133,33 @@ constant EXE_DEPENDENCIES :
 
 constant OBJ_TEST_DEPENDENCIES :
     $(GCOV)
+    <library>app_path_test.o
     <library>libunit_test
     <library>log_test.o
     <include>$(REDEMPTION_TEST_PATH)/includes
     <cxxflags>-frtti
-    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
-    <define>RECORD_PATH='\"/tmp/redemption_recorded\"'
-    <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"'
-    <define>PNG_PATH='\"/tmp\"'
-    <define>OCR_PATH='\"/tmp\"'
-    <define>WRM_PATH='\"/tmp\"'
-    <define>FLV_PATH='\"/tmp\"'
-    <define>HASH_PATH='\"/tmp/redemption_hash\"'
-    <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"'
-    <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"'
-    <define>CERTIF_PATH='\"/tmp/redemption_cert\"'
-    <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"'
-    <define>PID_PATH='\"/tmp/redemption_pid\"'
     #<define>CFG_THEMES_PATH='\"$(ETC_PREFIX)/themes\"'
 ;
 
 constant TEST_DEPENDENCIES :
+    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     $(OBJ_TEST_DEPENDENCIES)
     $(UNIT_TEST_DEPENDENCIES)
 ;
+
+obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
+    <conditional>@defines
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+;
+
+obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
+    <conditional>@defines-for-test
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+;
+
+obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 rule obj-canonical ( source : requirements * : dependencies * )
 {
@@ -177,7 +173,6 @@ obj-canonical utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
 obj-canonical utils/bitmap.cpp : <cxxflags>-std=c++14 ;
 obj-canonical utils/d3des.cpp ;
 obj-canonical utils/png.cpp ;
-obj program_options.o : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 obj-canonical keyboard/keymap2.cpp ;
 obj-canonical gdi/graphic_api.cpp ;
 obj-canonical utils/fileutils.cpp ;
@@ -190,7 +185,30 @@ obj-canonical utils/cfgloader.cpp ;
 obj-canonical transport/crypto_transport.cpp ;
 obj-canonical transport/mwrm_reader.cpp ;
 obj-canonical mod/internal/locally_integrable_mod.cpp ;
+obj-canonical mod/internal/bouncer2_mod.cpp ;
 obj-canonical mod/internal/internal_mod.cpp ;
+obj-canonical mod/internal/widget/composite.cpp ;
+obj-canonical mod/internal/widget/edit.cpp ;
+obj-canonical mod/internal/widget/edit_valid.cpp ;
+obj-canonical mod/internal/widget/flat_button.cpp ;
+obj-canonical mod/internal/widget/flat_form.cpp ;
+obj-canonical mod/internal/widget/flat_wait.cpp ;
+obj-canonical mod/internal/widget/flat_interactive_target.cpp ;
+obj-canonical mod/internal/widget/group_box.cpp ;
+obj-canonical mod/internal/widget/image.cpp ;
+obj-canonical mod/internal/widget/label.cpp ;
+obj-canonical mod/internal/widget/labelgrid.cpp ;
+obj-canonical mod/internal/widget/language_button.cpp ;
+obj-canonical mod/internal/widget/module_host.cpp ;
+obj-canonical mod/internal/widget/multiline.cpp ;
+obj-canonical mod/internal/widget/number_edit.cpp ;
+obj-canonical mod/internal/widget/password.cpp ;
+obj-canonical mod/internal/widget/rail_module_host.cpp ;
+obj-canonical mod/internal/widget/screen.cpp ;
+obj-canonical mod/internal/widget/scroll.cpp ;
+obj-canonical mod/internal/widget/selector.cpp ;
+obj-canonical mod/internal/widget/tooltip.cpp ;
+obj-canonical mod/internal/widget/widget_rect.cpp ;
 
 obj-canonical core/mainloop.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 
@@ -198,32 +216,27 @@ obj-canonical mod/internal/rail_module_host_mod.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj-canonical mod/internal/replay_mod.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj-canonical mod/internal/selector_mod.cpp : $(OBJ_EXE_DEPENDENCIES) ;
 obj-canonical mod/internal/flat_wait_mod.cpp : $(OBJ_EXE_DEPENDENCIES) ;
-obj-canonical mod/internal/bouncer2_mod.cpp ;
 
-rule obj2-canonical ( source : requirements * : dependencies * )
-{
-    obj $(source:B).o : $(REDEMPTION_SRC_PATH)/$(source)
-        : $(OBJ_EXE_DEPENDENCIES) $(requirements) : $(dependencies) ;
-    obj $(source:B)_test.o : $(REDEMPTION_SRC_PATH)/$(source)
-        : $(OBJ_TEST_DEPENDENCIES) $(requirements) : $(dependencies) ;
-}
-
-obj2-canonical mod/internal/copy_paste.cpp ;
-obj2-canonical mod/internal/flat_dialog_mod.cpp ;
-obj2-canonical mod/internal/flat_login_mod.cpp ;
-obj2-canonical mod/internal/flat_wab_close_mod.cpp ;
-obj2-canonical mod/internal/interactive_target_mod.cpp ;
-obj2-canonical mod/internal/test_card_mod.cpp ;
-obj2-canonical mod/internal/client_execute.cpp ;
-obj2-canonical transport/socket_transport.cpp ;
-obj2-canonical main/do_recorder.cpp ;
-obj2-canonical capture/capture.cpp ;
-obj2-canonical main/scytale.cpp :
+obj-canonical mod/internal/widget_test_mod.cpp ;
+obj-canonical mod/internal/widget/flat_wab_close.cpp ;
+obj-canonical mod/internal/widget/flat_login.cpp ;
+obj-canonical mod/internal/widget/flat_dialog.cpp ;
+obj-canonical mod/internal/widget/flat_vnc_authentification.cpp ;
+obj-canonical mod/internal/copy_paste.cpp ;
+obj-canonical mod/internal/flat_dialog_mod.cpp ;
+obj-canonical mod/internal/flat_login_mod.cpp ;
+obj-canonical mod/internal/flat_wab_close_mod.cpp ;
+obj-canonical mod/internal/interactive_target_mod.cpp ;
+obj-canonical mod/internal/test_card_mod.cpp ;
+obj-canonical mod/internal/client_execute.cpp ;
+obj-canonical transport/socket_transport.cpp ;
+obj-canonical main/do_recorder.cpp ;
+obj-canonical capture/capture.cpp ;
+obj-canonical main/scytale.cpp :
     <include>$(REDEMPTION_TEST_PATH)/includes # for lcg_random
 ;
 
 alias socket.o : socket_transport.o ;
-alias socket_test.o : socket_transport_test.o ;
 alias keymap.o : keymap2.o ;
 alias gdapi.o : graphic_api.o ;
 
@@ -232,6 +245,35 @@ alias video_capture : video_capture.o video_recorder.o ffmpeg ;
 
 obj fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(OBJ_TEST_DEPENDENCIES) ;
 alias fake_front : fake_front.o png.o ;
+
+alias widgets.o :
+    composite.o
+    edit.o
+    edit_valid.o
+    flat_button.o
+    flat_dialog.o
+    flat_form.o
+    flat_interactive_target.o
+    flat_login.o
+    flat_vnc_authentification.o
+    flat_wab_close.o
+    flat_wait.o
+    group_box.o
+    image.o
+    label.o
+    labelgrid.o
+    language_button.o
+    module_host.o
+    multiline.o
+    number_edit.o
+    password.o
+    rail_module_host.o
+    screen.o
+    scroll.o
+    selector.o
+    tooltip.o
+    widget_rect.o
+;
 
 
 #
@@ -296,8 +338,10 @@ exe rdpproxy
         <library>rail_module_host_mod.o
         <library>interactive_target_mod.o
         <library>locally_integrable_mod.o
+        <library>widget_test_mod.o
         <library>keymapSym.o
         <library>internal_mod.o
+        <library>widgets.o
     ;
 
 # Maybe merge with libredrec ?
@@ -394,6 +438,7 @@ exe rdptproxy
         <library>crypto_transport.o
         <library>client_execute.o
         <library>internal_mod.o
+        <library>widgets.o
     ;
 
 exe rdptanalyzer
@@ -447,6 +492,8 @@ exe rdpclient
         <library>cfgloader.o
         <library>crypto_transport.o
         <library>client_execute.o
+        <library>widgets.o
+        <library>keymap.o
         <library>bitmap
     ;
 
@@ -484,6 +531,7 @@ exe vncclient
         <library>crypto_transport.o
         <library>keymapSym.o
         <library>internal_mod.o
+        <library>widgets.o
     ;
 
 exe rdpheadless
@@ -525,6 +573,7 @@ exe rdpheadless
         <library>client_execute.o
         <library>internal_mod.o
         <library>keymapSym.o
+        <library>widgets.o
     ;
 
 exe rdpinichecker
@@ -646,7 +695,7 @@ exe tls_test_client
         $(EXE_DEPENDENCIES)
         <library>log_print.o
         <library>fileutils.o
-        <library>socket_test.o
+        <library>socket.o
         <library>netutils.o
  ;
 exe tls_test_server
@@ -657,7 +706,7 @@ exe tls_test_server
         $(EXE_DEPENDENCIES)
         <library>log_print.o
         <library>fileutils.o
-        <library>socket_test.o
+        <library>socket.o
         <library>netutils.o
 ;
 
@@ -675,7 +724,7 @@ exe tls_test_server
 test-run test_scytale
     : main/test_scytale.cpp
     :
-    : <library>crypto_transport.o <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>scytale_test.o ;
+    : <library>crypto_transport.o <library>fileutils.o <library>openssl <library>crypto <library>snappy <library>scytale.o ;
 ## @}
 
 ## Acl tests
@@ -778,15 +827,15 @@ test-canonical transport/mwrm_reader.hpp : <library>mwrm_reader.o <library>crypt
 test-canonical transport/in_meta_sequence_transport.hpp : <library>mwrm_reader.o <library>crypto_transport.o <library>fileutils.o <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
-test-canonical transport/socket_transport.hpp : <library>netutils.o <library>socket_test.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
+test-canonical transport/socket_transport.hpp : <library>netutils.o <library>socket.o <library>fileutils.o <library>openssl <library>crypto <library>dl ;
 # TODO move to transport/
 test-canonical utils/compression_transport_builder.hpp : <library>z <library>snappy ;
 test-canonical capture/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 test-canonical main/do_recorder.hpp :
     <library>mwrm_reader.o <library>crypto_transport.o <library>cfgloader.o <library>program_options.o <library>openssl <library>crypto <library>snappy <library>dl <library>z
-    <library>do_recorder_test.o <library>ocr <library>bitmap <library>png.o
-    <library>fileutils.o <library>capture_test.o <library>video_capture
+    <library>do_recorder.o <library>ocr <library>bitmap <library>png.o
+    <library>fileutils.o <library>capture.o <library>video_capture
 ;
 
 
@@ -832,54 +881,53 @@ test-canonical utils/winpr/pattern.hpp ;
 
 ## Widget tests
 ## @{
-test-canonical mod/internal/widget/composite.hpp : <library>bitmap <library>png.o <library>keymap.o ;
-test-canonical mod/internal/widget/edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/edit_valid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_button.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_dialog.hpp : <library>internal_mod.o <library>client_execute_test.o  <library>locally_integrable_mod.o <library>fake_front <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_login.hpp : <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/selector.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_wab_close.hpp : <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/grid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/group_box.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/image.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/label.hpp : <library>bitmap  <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/labelgrid.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/multiline.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/number_edit.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/password.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/screen.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/scroll.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/tooltip.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/composite.hpp : <library>gdapi.o <library>widgets.o <library>bitmap <library>png.o <library>keymap.o ;
+test-canonical mod/internal/widget/edit.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/edit_valid.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_button.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_dialog.hpp : <library>widgets.o <library>widgets.o <library>internal_mod.o <library>client_execute.o  <library>locally_integrable_mod.o <library>fake_front <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_interactive_target.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_login.hpp : <library>widgets.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/selector.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_wab_close.hpp : <library>widgets.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/grid.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/group_box.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/image.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/label.hpp : <library>widgets.o <library>bitmap  <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/labelgrid.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/multiline.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/number_edit.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/password.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/screen.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/scroll.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/tooltip.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/widget.hpp : ;
-test-canonical mod/internal/widget/widget_rect.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/widget_rect.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/widget/flat_vnc_authentification.hpp : ;
 test-canonical mod/internal/widget/language_button.hpp : ;
-test-canonical mod/internal/widget/layout.hpp ;
 test-canonical mod/internal/widget/notify_api.hpp ;
 ## @}
 
 
 ## Widget for workflow
 ## @{
-test-canonical mod/internal/widget/flat_wait.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget/flat_form.hpp : <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_wait.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget/flat_form.hpp : <library>widgets.o <library>bitmap <library>keymap.o <library>gdapi.o ;
 ## @}
 
 
 ## Mod tests
 ## @{
-test-canonical mod/internal/bouncer2_mod.hpp : <library>bouncer2_mod.o <library>internal_mod.o <library>fake_front <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/copy_paste.hpp : <library>copy_paste_test.o <library>fake_front <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/flat_dialog_mod.hpp : <library>copy_paste_test.o <library>flat_dialog_mod_test.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute_test.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/flat_login_mod.hpp : <library>copy_paste_test.o <library>flat_login_mod_test.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute_test.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/flat_wab_close_mod.hpp : <library>flat_wab_close_mod_test.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute_test.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/interactive_target_mod.hpp : <library>copy_paste_test.o <library>interactive_target_mod_test.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute_test.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/bouncer2_mod.hpp : <library>widgets.o <library>bouncer2_mod.o <library>internal_mod.o <library>fake_front <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/copy_paste.hpp : <library>widgets.o <library>copy_paste.o <library>fake_front <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/flat_dialog_mod.hpp : <library>widgets.o <library>copy_paste.o <library>flat_dialog_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/flat_login_mod.hpp : <library>widgets.o <library>copy_paste.o <library>flat_login_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/flat_wab_close_mod.hpp : <library>widgets.o <library>flat_wab_close_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/interactive_target_mod.hpp : <library>widgets.o <library>copy_paste.o <library>interactive_target_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/internal_mod.hpp ;
-test-canonical mod/internal/replay_mod.hpp : <library>internal_mod.o <library>png <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/test_card_mod.hpp : <library>internal_mod.o <library>bitmap <library>keymap.o <library>gdapi.o ;
-test-canonical mod/internal/widget_test_mod.hpp : <library>bouncer2_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute_test.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/replay_mod.hpp : <library>bitmap <library>widgets.o <library>internal_mod.o <library>png <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/test_card_mod.hpp : <library>widgets.o <library>internal_mod.o <library>bitmap <library>keymap.o <library>gdapi.o ;
+test-canonical mod/internal/widget_test_mod.hpp : <library>widget_test_mod.o <library>widgets.o <library>bouncer2_mod.o <library>internal_mod.o <library>locally_integrable_mod.o <library>fake_front <library>client_execute.o <library>cfgloader.o <library>fileutils.o <library>bitmap <library>keymap.o <library>gdapi.o ;
 test-canonical mod/internal/selector_mod.hpp ;
 test-canonical mod/internal/flat_wait_mod.hpp ;
 test-canonical mod/internal/transparent_replay_mod.hpp ;
@@ -1058,7 +1106,7 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/rdp_params.hpp ;
 test-canonical mod/vnc/vnc.hpp : <library>bitmap <library>d3des.o <library>keymapSym.o ;
 test-canonical mod/xup/xup.hpp ;
-test-canonical mod/rdp/rdp.hpp : <library>client_execute_test.o <library>fake_front <library>authorization_channels.o <library>cfgloader.o <library>mppc.o <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
+test-canonical mod/rdp/rdp.hpp : <library>widgets.o <library>keymap.o <library>client_execute.o <library>fake_front <library>authorization_channels.o <library>cfgloader.o <library>mppc.o <library>nego.o <library>fileutils.o <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des.o <library>z <library>dl <library>crypto <library>gdapi.o ;
 ## @}
 
 
@@ -1121,8 +1169,9 @@ test-run test_rdp_client_test_card
       <library>krb5
       <library>gdapi.o
       <library>fake_front
-      <library>test_card_mod_test.o
+      <library>test_card_mod.o
       <library>internal_mod.o
+      <library>widgets.o
       <covflag>nocover
     ;
 
@@ -1148,9 +1197,10 @@ test-run test_rdp_client_large_pointer
       <library>authorization_channels.o
       <library>cfgloader.o
       <library>fake_front
-      <library>client_execute_test.o
-      <library>test_card_mod_test.o
+      <library>client_execute.o
+      <library>test_card_mod.o
       <library>internal_mod.o
+      <library>widgets.o
       <covflag>nocover
     ;
 
@@ -1175,9 +1225,10 @@ test-run test_rdp_client_tls_w2008
       <library>authorization_channels.o
       <library>cfgloader.o
       <library>fake_front
-      <library>client_execute_test.o
-      <library>test_card_mod_test.o
+      <library>client_execute.o
+      <library>test_card_mod.o
       <library>internal_mod.o
+      <library>widgets.o
       <covflag>nocover
     ;
 
@@ -1204,9 +1255,10 @@ test-run test_rdp_client_wab
       <library>authorization_channels.o
       <library>cfgloader.o
       <library>fake_front
-      <library>client_execute_test.o
-      <library>test_card_mod_test.o
+      <library>client_execute.o
+      <library>test_card_mod.o
       <library>internal_mod.o
+      <library>widgets.o
       <covflag>nocover
     ;
 
@@ -1226,6 +1278,7 @@ test-run test_vnc_client_simple
       <library>fake_front
       <library>keymapSym.o
       <library>internal_mod.o
+      <library>widgets.o
       <covflag>nocover
     ;
 ## @}
@@ -1260,7 +1313,7 @@ test-run test_rdesktop_client
   : <library>bitmap
     <library>fileutils.o
     <library>video_capture
-    <library>capture_test.o
+    <library>capture.o
     <library>mppc.o
     <library>png.o
     <library>openssl
@@ -1274,8 +1327,9 @@ test-run test_rdesktop_client
     <library>cfgloader.o
     <library>confdescriptor.o
     <library>crypto_transport.o
-    <library>test_card_mod_test.o
+    <library>test_card_mod.o
     <library>internal_mod.o
+      <library>widgets.o
     <library>fake_front
     <covflag>nocover
 ;
@@ -1287,7 +1341,7 @@ test-run test_mstsc_client
   : <library>bitmap
     <library>fileutils.o
     <library>video_capture
-    <library>capture_test.o
+    <library>capture.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1302,8 +1356,9 @@ test-run test_mstsc_client
     <library>confdescriptor.o
     <library>crypto_transport.o
     <library>fake_front
-    <library>test_card_mod_test.o
+    <library>test_card_mod.o
     <library>internal_mod.o
+      <library>widgets.o
     <covflag>nocover
 ;
 
@@ -1314,7 +1369,7 @@ test-run test_mstsc_client_rdp50bulk
   : <library>bitmap
     <library>fileutils.o
     <library>video_capture
-    <library>capture_test.o
+    <library>capture.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1329,8 +1384,9 @@ test-run test_mstsc_client_rdp50bulk
     <library>confdescriptor.o
     <library>crypto_transport.o
     <library>fake_front
-    <library>test_card_mod_test.o
+    <library>test_card_mod.o
     <library>internal_mod.o
+    <library>widgets.o
     <covflag>nocover
 ;
 ## @}
@@ -1347,7 +1403,6 @@ test-canonical core/channel_list.hpp ;
 test-canonical core/channel_names.hpp ;
 test-canonical core/check_files.hpp ;
 test-canonical core/client_info.hpp ;
-test-canonical core/defines.hpp ;
 test-canonical core/error.hpp ;
 test-canonical core/font.hpp ;
 test-canonical core/front_api.hpp ;
@@ -1365,7 +1420,7 @@ test-canonical core/buf64k.hpp ;
 test-canonical front/front.hpp
   : <library>bitmap
     <library>video_capture
-    <library>capture_test.o
+    <library>capture.o
     <library>png.o
     <library>openssl
     <library>snappy
@@ -1384,7 +1439,8 @@ test-canonical front/front.hpp
     <library>confdescriptor.o
     <library>cfgloader.o
     <library>crypto_transport.o
-    <library>client_execute_test.o
+    <library>client_execute.o
+    <library>widgets.o
 ;
 
 test-canonical keyboard/keymap2.hpp : <library>keymap.o ;

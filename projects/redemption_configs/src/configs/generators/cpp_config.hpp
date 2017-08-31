@@ -215,6 +215,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
     void write_value(std::string const & str) { this->write_value(str.c_str()); }
     void write_value(cpp::macro x) { this->out() << " = " << x.name; }
+    void write_value(cpp::expr x) { this->out() << " = " << x.value; }
 
     template<class T, class Ratio>
     void write_value(std::chrono::duration<T, Ratio> x) { this->out() << '{' << x.count() << '}'; }

@@ -27,10 +27,11 @@
 
 #include "core/font.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
+#include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/flat_button.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/check_sig.hpp"
-
 #include "test_only/mod/fake_draw.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatDialog)

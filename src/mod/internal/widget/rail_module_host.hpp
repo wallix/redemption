@@ -20,12 +20,13 @@
 
 #pragma once
 
-#include "core/front_api.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "gdi/graphic_api.hpp"
 #include "mod/internal/widget/composite.hpp"
 #include "mod/internal/widget/module_host.hpp"
-#include "mod/mod_api.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+
+#include <memory>
+
+class mod_api;
 
 class RailModuleHost : public WidgetParent
 {
@@ -39,52 +40,20 @@ public:
                int16_t left, int16_t top, int16_t width, int16_t height,
                Widget& parent, NotifyApi* notifier,
                std::unique_ptr<mod_api> managed_mod, Font const & font,
-               Theme const & theme,
                const GCC::UserData::CSMonitor& cs_monitor,
-               uint16_t front_width, uint16_t front_height)
-    : WidgetParent(drawable, parent, notifier)
-    , module_host(drawable, *this, this, std::move(managed_mod), font, theme,
-                  cs_monitor, front_width, front_height)
-    {
-        this->impl = &composite_array;
+               uint16_t front_width, uint16_t front_height);
 
-        this->add_widget(&this->module_host);
+    ~RailModuleHost() override;
 
-        this->move_size_widget(left, top, width, height);
-    }
+    mod_api& get_managed_mod();
 
-    ~RailModuleHost() override {
-        this->clear();
-    }
+    const mod_api& get_managed_mod() const;
 
-    mod_api& get_managed_mod()
-    {
-        return this->module_host.get_managed_mod();
-    }
-
-    const mod_api& get_managed_mod() const
-    {
-        return this->module_host.get_managed_mod();
-    }
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width,
-                          uint16_t height) {
-        this->set_xy(left, top);
-        this->set_wh(width, height);
-
-        this->module_host.set_xy(left, top);
-        this->module_host.set_wh(width, height);
-    }
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     // Widget
 
-    void focus(int reason) override {
-        this->module_host.focus(reason);
-        Widget::focus(reason);
-    }
+    void focus(int reason) override;
 
-    void blur() override {
-        this->module_host.blur();
-        Widget::blur();
-    }
+    void blur() override;
 };

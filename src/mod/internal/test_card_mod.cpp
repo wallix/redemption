@@ -20,13 +20,17 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
+#include "keyboard/keymap2.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "core/front_api.hpp"
+
+#include <string>
 
 TestCardMod::TestCardMod(
     FrontAPI & front, uint16_t width, uint16_t height,
@@ -66,7 +70,7 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
     this->front.draw(RDPOpaqueRect(winrect, encode_color24()(WINBLUE)), clip, color_ctx);
 
 
-    Bitmap bitmap = bitmap_from_file(SHARE_PATH "/" "Philips_PM5544_640.png");
+    Bitmap bitmap = bitmap_from_file((std::string(app_path(AppPath::Share)) + "/" "Philips_PM5544_640.png").c_str());
 
     this->front.draw(RDPMemBlt(0,
         Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
@@ -114,7 +118,7 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
     gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", encode_color24()(BLUE), encode_color24()(BLACK), color_ctx, clip);
     gdi::server_draw_text(drawable, this->font, 30, 110, "Black", encode_color24()(BLACK), encode_color24()(WHITE), color_ctx, clip);
 
-    Bitmap card = bitmap_from_file(SHARE_PATH "/" REDEMPTION_LOGO24);
+    Bitmap card = bitmap_from_file(app_path(AppPath::RedemptionLogo24));
     this->front.draw(RDPMemBlt(0,
         Rect(this->get_screen_rect().cx - card.cx() - 30,
                 this->get_screen_rect().cy - card.cy() - 30, card.cx(), card.cy()),
@@ -132,8 +136,8 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
         Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
             32, 32, 0), clip, bloc64x64);
 
-    //Bitmap_PNG logo(SHARE_PATH "/ad8b.bmp");
-    Bitmap logo = bitmap_from_file(SHARE_PATH "/ad8b.png");
+    //Bitmap_PNG logo(std::string(app_path(AppPath::Share)) + "/ad8b.bmp");
+    Bitmap logo = bitmap_from_file((std::string(app_path(AppPath::Share)) + "/ad8b.png").c_str());
     this->front.draw(RDPMemBlt(0,
         Rect(100, 100, 26, 32),
         0xCC,
@@ -143,7 +147,7 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
         //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
         this->front.sync();
 
-        Bitmap wab_logo_blue = bitmap_from_file(SHARE_PATH "/" "wablogoblue.png");
+        Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue));
 
 
         const uint16_t startx = 5;

@@ -19,7 +19,7 @@
 */
 
 #include "mod/internal/client_execute.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
@@ -52,7 +52,7 @@
 
 ClientExecute::ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
 : front_(&front)
-, wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+, wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin)))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , button_1_down_event_handler(*this)

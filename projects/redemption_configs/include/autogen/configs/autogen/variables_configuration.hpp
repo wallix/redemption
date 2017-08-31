@@ -414,7 +414,7 @@ namespace cfg {
         type value = "inquisition";
     };
     // type: ::configs::spec_types::directory_path
-    // value = PNG_PATH
+    // value = app_path(AppPath::Png)
     struct globals::png_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -423,10 +423,10 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = PNG_PATH;
+        type value = app_path(AppPath::Png);
     };
     // type: ::configs::spec_types::directory_path
-    // value = WRM_PATH
+    // value = app_path(AppPath::Wrm)
     struct globals::wrm_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -435,7 +435,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = WRM_PATH;
+        type value = app_path(AppPath::Wrm);
     };
     // AUTHID_GLOBALS_IS_REC
     // type: bool
@@ -522,7 +522,7 @@ namespace cfg {
         type value{1};
     };
     // type: ::configs::spec_types::directory_path
-    // value = PERSISTENT_PATH
+    // value = app_path(AppPath::Persistent)
     struct globals::persistent_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -531,7 +531,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = PERSISTENT_PATH;
+        type value = app_path(AppPath::Persistent);
     };
     // type: bool
     // value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION
@@ -2123,7 +2123,7 @@ namespace cfg {
         type value = "/tmp/";
     };
     // type: ::configs::spec_types::directory_path
-    // value = HASH_PATH
+    // value = app_path(AppPath::Hash)
     struct video::hash_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2132,10 +2132,10 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = HASH_PATH;
+        type value = app_path(AppPath::Hash);
     };
     // type: ::configs::spec_types::directory_path
-    // value = RECORD_TMP_PATH
+    // value = app_path(AppPath::RecordTmp)
     struct video::record_tmp_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2144,10 +2144,10 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = RECORD_TMP_PATH;
+        type value = app_path(AppPath::RecordTmp);
     };
     // type: ::configs::spec_types::directory_path
-    // value = RECORD_PATH
+    // value = app_path(AppPath::Record)
     struct video::record_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2156,7 +2156,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = RECORD_PATH;
+        type value = app_path(AppPath::Record);
     };
     // type: std::chrono::seconds
     // value{300}

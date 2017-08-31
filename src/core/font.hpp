@@ -28,6 +28,7 @@
 #include <cstring>
 #include <cerrno>
 
+#include <string>
 #include <vector>
 #include <algorithm>
 #include "utils/bitfu.hpp"
@@ -156,10 +157,6 @@ struct FontChar
     Glyph Data var, see FONT_DATASIZE macro
 */
 
-#ifndef DEFAULT_FONT_NAME
-#define DEFAULT_FONT_NAME "dejavu_14.fv1"
-#endif
-
 struct Font
 {
     Font() = default;
@@ -173,6 +170,10 @@ struct Font
             this->unknown_item = item;
         }
     }
+
+    explicit Font(std::string const & file_path)
+    : Font(file_path.c_str())
+    {}
 
     bool is_loaded() const
     {
