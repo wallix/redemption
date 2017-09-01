@@ -53,6 +53,7 @@
 #include "utils/bitmap.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/netutils.hpp"
+#include "utils/genrandom.hpp"
 
 #include "capture/flv_params_from_ini.hpp"
 #include "capture/capture.hpp"
