@@ -25,9 +25,11 @@
 #define LOGNULL
 
 #include "configs/config.hpp"
+#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_login_mod.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 
 RED_AUTO_TEST_CASE(TestDialogMod)

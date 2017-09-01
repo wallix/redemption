@@ -21,11 +21,8 @@
 
 #pragma once
 
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "mod/internal/widget/widget.hpp"
-#include "utils/sugar/cast.hpp"
 #include "gdi/graphic_api.hpp"
-#include "utils/log.hpp"
 
 class WidgetLabel : public Widget
 {
@@ -49,147 +46,31 @@ public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
                 NotifyApi* notifier, const char * text,
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
-                int xtext = 0, int ytext = 0)
-    : Widget(drawable, parent, notifier, group_id)
-    , initial_x_text(xtext)
-    , x_text(xtext)
-    , y_text(ytext)
-    , bg_color(bgcolor)
-    , fg_color(fgcolor)
-    , tool(false)
-    , w_border(x_text)
-    , h_border(y_text)
-    , font(font)
-    {
-        this->tab_flag = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-        this->set_text(text);
-    }
+                int xtext = 0, int ytext = 0);
 
-    WidgetLabel(const WidgetLabel & label)
-        : Widget(label.drawable, label.parent, label.notifier, label.group_id)
-        , initial_x_text(label.initial_x_text)
-        , x_text(label.x_text)
-        , y_text(label.y_text)
-        , bg_color(label.bg_color)
-        , fg_color(label.fg_color)
-        , tool(false)
-        , w_border(label.x_text)
-        , h_border(label.y_text)
-        , font(label.font)
-    {
-        this->tab_flag = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-        this->set_text(label.get_text());
-    }
+    WidgetLabel(WidgetLabel const &);
 
-    ~WidgetLabel() override {
-    }
+    ~WidgetLabel() override;
 
-    void set_text(const char * text)
-    {
-        this->buffer[0] = 0;
-        if (text) {
-            const size_t remain_n = buffer_size - 1;
-            const size_t n = strlen(text);
-            const size_t max = ((remain_n >= n) ? n :
-                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
-            memcpy(this->buffer, text, max);
-            this->buffer[max] = 0;
-        }
-    }
+    void set_text(const char * text);
 
-    const char * get_text() const
-    {
-        return this->buffer;
-    }
+    const char * get_text() const;
 
-    void rdp_input_invalidate(Rect clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
-
-        if (!rect_intersect.isempty()) {
-            this->drawable.begin_update();
-
-            this->draw(
-                rect_intersect, this->get_rect(), this->drawable, this->buffer,
-                encode_color24()(this->fg_color), encode_color24()(this->bg_color), gdi::ColorCtx::depth24(),
-                this->font, this->x_text, this->y_text);
-
-            this->drawable.end_update();
-        }
-    }
+    void rdp_input_invalidate(Rect clip) override;
 
     static void draw(Rect const clip, Rect const rect, gdi::GraphicApi& drawable,
                      char const* text, RDPColor fgcolor, RDPColor bgcolor, gdi::ColorCtx color_ctx,
-                     Font const & font, int xtext, int ytext) {
-        drawable.draw(RDPOpaqueRect(rect, bgcolor), clip, color_ctx);
-        gdi::server_draw_text(drawable,
-                              font,
-                              xtext + rect.x,
-                              ytext + rect.y,
-                              text,
-                              fgcolor,
-                              bgcolor,
-                              color_ctx,
-                              rect.intersect(clip)
-                              );
-    }
+                     Font const & font, int xtext, int ytext);
 
-    Dimension get_optimal_dim() override {
-        gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
-        return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
-    }
+    Dimension get_optimal_dim() override;
 
-    static Dimension get_optimal_dim(Font const & font, char const* text, int xtext, int ytext) {
-        char buffer[buffer_size];
+    static Dimension get_optimal_dim(Font const & font, char const* text, int xtext, int ytext);
 
-        buffer[0] = 0;
-        if (text) {
-            const size_t remain_n = buffer_size - 1;
-            const size_t n = strlen(text);
-            const size_t max = ((remain_n >= n) ? n :
-                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
-            memcpy(buffer, text, max);
-            buffer[max] = 0;
-        }
+    bool shift_text(int pos_x);
 
-        gdi::TextMetrics tm(font, (buffer[0] ? buffer : "Édp"));
-        return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
-    }
+    void set_color(BGRColor bg_color, BGRColor fg_color) override;
 
-    bool shift_text(int pos_x) {
-        bool res = true;
-        if (pos_x + this->x_text > this->cx() - 4) {
-            this->x_text = this->cx() - pos_x - 4;
-        }
-        else if (pos_x + this->x_text < this->w_border) {
-            this->x_text = this->w_border - pos_x;
-        }
-        else {
-            res = false;
-        }
-        return res;
-    }
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2*) override;
 
-    void set_color(BGRColor bg_color, BGRColor fg_color) override {
-        this->bg_color = bg_color;
-        this->fg_color = fg_color;
-    }
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2*) override {
-        if (this->tool) {
-            if (device_flags == MOUSE_FLAG_MOVE) {
-                // TODO: tm.height unused ?
-                gdi::TextMetrics tm(this->font, this->buffer);
-                if (tm.width > this->cx()) {
-                    this->show_tooltip(this, this->buffer, x, y, Rect(0, 0, 0, 0));
-                }
-            }
-        }
-    }
-
-    void auto_resize() {
-        Dimension dim = this->get_optimal_dim();
-        this->set_wh(dim);
-    }
+    void auto_resize();
 };

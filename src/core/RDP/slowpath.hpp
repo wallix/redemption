@@ -229,30 +229,49 @@ namespace SlowPath {
 // keyboardFlags (2 bytes): A 16-bit, unsigned integer. The flags describing the
 //  keyboard event.
 
-// +--------------------------+------------------------------------------------+
-// | Flag                     | Meaning                                        |
-// +--------------------------+------------------------------------------------+
-// | 0x0100 KBDFLAGS_EXTENDED | The keystroke message contains an extended     |
-// |                          | scancode. For enhanced 101-key and 102-key     |
-// |                          | keyboards, extended keys include the right ALT |
-// |                          | and right CTRL keys on the main section of the |
-// |                          | keyboard; the INS, DEL, HOME, END, PAGE UP,    |
-// |                          | PAGE DOWN and ARROW keys in the clusters to    |
-// |                          | the left of the numeric keypad; and the Divide |
-// |                          | ("/") and ENTER keys in the numeric keypad.    |
-// +--------------------------+------------------------------------------------+
-// | 0x4000 KBDFLAGS_DOWN     | Indicates that the key was down prior to this  |
-// |                          | event.                                         |
-// +--------------------------+------------------------------------------------+
-// | 0x8000 KBDFLAGS_RELEASE  | The absence of this flag indicates a key-down  |
-// |                          | event, while its presence indicates a          |
-// |                          | key-release event.                             |
-// +--------------------------+------------------------------------------------+
+// +---------------------------+-----------------------------------------------+
+// | Flag                      | Meaning                                       |
+// +---------------------------+-----------------------------------------------+
+// | 0x0100 KBDFLAGS_EXTENDED  | Indicates that the keystroke message contains |
+// |                           | an extended scancode. For enhanced 101-key    |
+// |                           | and 102-key keyboards, extended keys include  |
+// |                           | the right ALT and right CTRL keys on the main |
+// |                           | section of the keyboard; the INS, DEL, HOME,  |
+// |                           | END, PAGE UP, PAGE DOWN and ARROW keys in the |
+// |                           | clusters to the left of the numeric keypad;   |
+// |                           | and the Divide ("/") and ENTER keys in the    |
+// |                           | numeric keypad.                               |
+// +---------------------------+-----------------------------------------------+
+// | 0x0200 KBDFLAGS_EXTENDED1 | Used to send keyboard events triggered by the |
+// |                           | PAUSE key.                                    |
+// |                           |                                               |
+// |                           | A PAUSE key press and release MUST be sent as |
+// |                           | the following sequence of keyboard events:    |
+// |                           |                                               |
+// |                           | * CTRL (0x1D) DOWN                            |
+// |                           |                                               |
+// |                           | * NUMLOCK (0x45) DOWN                         |
+// |                           |                                               |
+// |                           | * CTRL (0x1D) UP                              |
+// |                           |                                               |
+// |                           | * NUMLOCK (0x45) UP                           |
+// |                           |                                               |
+// |                           | The CTRL DOWN and CTRL UP events MUST both    |
+// |                           | include the KBDFLAGS_EXTENDED1 flag.          |
+// +---------------------------+-----------------------------------------------+
+// | 0x4000 KBDFLAGS_DOWN      | Indicates that the key was down prior to this |
+// |                           | event.                                        |
+// +---------------------------+-----------------------------------------------+
+// | 0x8000 KBDFLAGS_RELEASE   | The absence of this flag indicates a key-down |
+// |                           | event, while its presence indicates a         |
+// |                           | key-release event.                            |
+// +---------------------------+-----------------------------------------------+
 
     enum {
-          KBDFLAGS_EXTENDED = 0x0100
-        , KBDFLAGS_DOWN     = 0x4000
-        , KBDFLAGS_RELEASE  = 0x8000
+          KBDFLAGS_EXTENDED  = 0x0100
+        , KBDFLAGS_EXTENDED1 = 0x0200
+        , KBDFLAGS_DOWN      = 0x4000
+        , KBDFLAGS_RELEASE   = 0x8000
     };
 
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which

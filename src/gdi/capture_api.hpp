@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
 #include <chrono>
@@ -75,6 +76,14 @@ struct CaptureApi : private noncopyable
     {
         this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
+
+    virtual void new_or_existing_window_event(uint32_t /*window_id*/,
+        uint32_t /*fields_present_flags*/,
+        uint32_t /*style*/, uint8_t /*show_state*/,
+        int32_t /*visible_offset_x*/, int32_t /*visible_offset_y*/,
+        std::vector<RDP::RAIL::Rectangle> const & /*visibility_rects*/) {}
+
+    virtual void delete_window_event(uint32_t /* window_id*/) {}
 };
 
 

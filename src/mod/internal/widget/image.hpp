@@ -18,52 +18,22 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
  */
+
 #pragma once
 
-#include "widget.hpp"
-#include "utils/bitmap_from_file.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "gdi/graphic_api.hpp"
+#include "mod/internal/widget/widget.hpp"
+#include "utils/bitmap.hpp"
 
 class WidgetImage : public Widget
 {
     Bitmap bmp;
 
 public:
-    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0)
-    : Widget(drawable, parent, notifier, group_id)
-    , bmp(bitmap_from_file(filename))
-    {
-        this->tab_flag   = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-    }
+    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0);
 
-    ~WidgetImage() override {}
+    ~WidgetImage() override;
 
-    void rdp_input_invalidate(Rect clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
+    void rdp_input_invalidate(Rect clip) override;
 
-        if (!rect_intersect.isempty()) {
-            this->drawable.begin_update();
-
-            this->drawable.draw(
-                RDPMemBlt(
-                    0,
-                    rect_intersect,
-                    0xCC,
-                    rect_intersect.x - this->x(),
-                    rect_intersect.y - this->y(),
-                    0
-                ),
-                rect_intersect,
-                this->bmp
-            );
-
-            this->drawable.end_update();
-        }
-    }
-
-    Dimension get_optimal_dim() override {
-        return Dimension(this->bmp.cx(), this->bmp.cy());
-    }
+    Dimension get_optimal_dim() override;
 };

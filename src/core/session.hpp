@@ -458,13 +458,13 @@ public:
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
-                    , PID_PATH , this->ini.get<cfg::context::session_id>().c_str());
+                    , app_path(AppPath::Pid), this->ini.get<cfg::context::session_id>().c_str());
             unlink(new_session_file);
         }
         else {
             int child_pid = getpid();
             char old_session_file[256];
-            sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+            sprintf(old_session_file, "%s/session_%d.pid", app_path(AppPath::Pid), child_pid);
             unlink(old_session_file);
         }
     }

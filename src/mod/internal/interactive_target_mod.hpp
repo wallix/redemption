@@ -19,18 +19,15 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-
 #pragma once
 
-#include "configs/config.hpp"
 #include "configs/config_access.hpp"
-#include "core/front_api.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "mod/internal/widget/flat_interactive_target.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "mod/internal/widget/screen.hpp"
-#include "utils/translation.hpp"
+#include "mod/internal/widget/flat_interactive_target.hpp"
+
 
 using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
@@ -47,6 +44,7 @@ using InteractiveTargetModVariables = vcfg::variables<
 
 class InteractiveTargetMod : public LocallyIntegrableMod, public NotifyApi
 {
+public:
     bool ask_device;
     bool ask_login;
     bool ask_password;
@@ -59,112 +57,29 @@ class InteractiveTargetMod : public LocallyIntegrableMod, public NotifyApi
     InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, ClientExecute & client_execute)
-        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
-        , ask_device(vars.is_asked<cfg::context::target_host>())
-        , ask_login(vars.is_asked<cfg::globals::target_user>())
-        , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
-        , challenge(
-            front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-            this->screen, this,
-            this->ask_device, this->ask_login, this->ask_password,
-            vars.get<cfg::theme>(),
-            TR(trkeys::target_info_required, language(vars)),
-            TR(trkeys::device, language(vars)), vars.get<cfg::globals::target_device>().c_str(),
-            TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
-            TR(trkeys::password, language(vars)),
-            vars.get<cfg::font>(),
-            &this->language_button)
-        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
-        , vars(vars)
+    InteractiveTargetMod(
+        InteractiveTargetModVariables vars, FrontAPI & front,
+        uint16_t width, uint16_t height, Rect const widget_rect,
+        ClientExecute & client_execute);
+
+    ~InteractiveTargetMod() override;
+
+    void notify(Widget* sender, notify_event_t event) override;
+
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override;
+
+    bool is_up_and_running() override
+    { return true; }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
-        this->screen.add_widget(&this->challenge);
-        this->challenge.password_edit.set_text("");
-        this->screen.set_widget_focus(&this->challenge,
-                                      Widget::focus_reason_tabkey);
-        if (this->ask_device) {
-            this->challenge.set_widget_focus(&this->challenge.device_edit,
-                                             Widget::focus_reason_tabkey);
-        }
-        else if (this->ask_login) {
-            this->challenge.set_widget_focus(&this->challenge.login_edit,
-                                             Widget::focus_reason_tabkey);
-        }
-        else {
-            this->challenge.set_widget_focus(&this->challenge.password_edit,
-                                             Widget::focus_reason_tabkey);
-        }
-        this->screen.rdp_input_invalidate(this->screen.get_rect());
-    }
-
-    ~InteractiveTargetMod() override {
-        this->screen.clear();
-    }
-
-    void notify(Widget* sender, notify_event_t event) override {
-        (void)sender;
-        switch (event) {
-            case NOTIFY_SUBMIT: this->accepted(); break;
-            case NOTIFY_CANCEL: this->refused(); break;
-            case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
-                if (this->copy_paste) {
-                    copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
-                }
-                break;
-            default: ;
-        }
+        this->challenge.move_size_widget(left, top, width, height);
     }
 
 private:
-    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-    void accepted()
-    {
-        if (this->ask_device) {
-            this->vars.set_acl<cfg::context::target_host>(this->challenge.device_edit.get_text());
-        }
-        if (this->ask_login) {
-            this->vars.set_acl<cfg::globals::target_user>(this->challenge.login_edit.get_text());
-        }
-        if (this->ask_password) {
-            this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
-        }
-        this->vars.set_acl<cfg::context::display_message>(true);
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
-    }
+    void accepted();
 
-    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-    void refused()
-    {
-        this->vars.set_acl<cfg::context::target_password>("");
-        this->vars.set_acl<cfg::context::display_message>(false);
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
-    }
-
-public:
-    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
-        LocallyIntegrableMod::draw_event(now, gapi);
-
-        if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-            this->copy_paste.ready(this->front);
-        }
-
-        this->event.reset_trigger_time();
-    }
-
-    bool is_up_and_running() override { return true; }
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-        if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-            this->copy_paste.send_to_mod_channel(chunk, flags);
-        }
-    }
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->challenge.move_size_widget(left, top, width, height);
-    }
+    void refused();
 };

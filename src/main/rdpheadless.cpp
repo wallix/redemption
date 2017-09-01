@@ -58,7 +58,7 @@ namespace cli
           , act(act)
         {}
 
-        Option(DataOption d, Act act)
+        Option(DataOption const & d, Act act)
           : d(d)
           , act(act)
         {}
@@ -414,7 +414,7 @@ namespace cli
             while (r.opti < r.argc) {
                 auto * s = r.argv[r.opti];
                 Res res = Res::BadFormat;
-                if (s[0] && s[0] == '-' && s[1]) {
+                if (s[0] == '-' && s[1]) {
                     if (s[1] == '-') {
                         if (s[2]) {
                             res = parse_long_option(s+2, r, opts...);
@@ -472,8 +472,6 @@ int main(int argc, char** argv)
     std::string userPwd;
     int port(3389);
     std::string localIP;
-    int nbTry(3);
-    int retryDelay(1000);
     std::chrono::milliseconds time_out_response(TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
     bool script_on(false);
     std::string out_path;
@@ -960,6 +958,8 @@ int main(int argc, char** argv)
         }
 
 
+        int const nbTry(3);
+        int const retryDelay(1000);
         int const sck = ip_connect(ip.c_str(), port, nbTry, retryDelay);
         if (sck <= 0) {
             std::cerr << "ip_connect: Cannot connect to [" << ip << "]." << std::endl;

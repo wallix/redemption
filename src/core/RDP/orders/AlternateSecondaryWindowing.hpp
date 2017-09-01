@@ -126,6 +126,10 @@ public:
                        unsigned(this->Right_), unsigned(this->Bottom_));
         return ((length < size) ? length : size - 1);
     }
+
+    uint16_t Width() const { return (this->Right_ - this->Left_ + 1); }
+
+    uint16_t Height() const { return (this->Bottom_ - this->Top_ + 1); }
 };
 
 // [MS-RDPEGDI] - 2.2.1.2.3 Icon Info (TS_ICON_INFO)
@@ -1516,6 +1520,10 @@ public:
         if (idx_visibility_rect < this->visibility_rects.size()) {
             this->visibility_rects[idx_visibility_rect] = rect;
         }
+    }
+
+    std::vector<Rectangle> const & VisibilityRects() const {
+        return this->visibility_rects;
     }
 
     uint8_t AppBarState() const { return this->AppBarState_; }

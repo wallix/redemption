@@ -1314,7 +1314,7 @@ void Bitmap::compress_(TBpp Bpp, OutStream & outbuffer) const
             const unsigned color_cost = 1 + Bpp;
             const unsigned bicolor_cost = 1 + 2*Bpp;
             if ((fom_count >= color_count || (color_count == 0))
-            && ((fom_count >= bicolor_count) || (bicolor_count == 0) || (bicolor_count < 4))
+            && ((fom_count >= bicolor_count) || (bicolor_count < 4))
             && fom_cost < copy_fom_cost) {
                 switch (flags){
                     case FLAG_FOM:

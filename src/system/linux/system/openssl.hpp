@@ -28,7 +28,7 @@
 #include "openssl_tls.hpp"
 
 #include "core/server_notifier_api.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "core/error.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
@@ -1055,7 +1055,7 @@ struct TLSContext
         // --------Start of session specific init code ---------------------------------
 
         /* Load our keys and certificates*/
-        if(!(SSL_CTX_use_certificate_chain_file(ctx, CFG_PATH "/rdpproxy.crt")))
+        if(!(SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt))))
         {
             BIO_printf(bio_err, "Can't read certificate file\n");
             ERR_print_errors(bio_err);
@@ -1064,14 +1064,14 @@ struct TLSContext
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
         SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password)));
-        if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy.key", SSL_FILETYPE_PEM)))
+        if(!(SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM)))
         {
             BIO_printf(bio_err,"Can't read key file\n");
             ERR_print_errors(bio_err);
             exit(129);
         }
 
-        BIO *bio = BIO_new_file(CFG_PATH "/" DH_PEM,"r");
+        BIO *bio = BIO_new_file(app_path(AppPath::CfgDhPem), "r");
         if (bio == nullptr){
             BIO_printf(bio_err,"Couldn't open DH file\n");
             ERR_print_errors(bio_err);

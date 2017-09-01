@@ -24,10 +24,12 @@
 
 #define LOGNULL
 
+#include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
+#include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 
 // TODO "Need more tests, with or without device/login/password asking, "

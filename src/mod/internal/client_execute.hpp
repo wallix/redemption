@@ -28,6 +28,7 @@
 #include "core/RDP/pointer.hpp"
 
 #include <vector>
+#include <string>
 
 class FrontAPI;
 class mod_api;

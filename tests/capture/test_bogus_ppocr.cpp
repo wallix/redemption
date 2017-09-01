@@ -25,6 +25,8 @@
 
 #define LOGNULL
 
+#include "core/app_path.hpp"
+
 #include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
 
@@ -46,7 +48,7 @@ namespace {
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
 
-    auto & ocr_constants = rdp_ppocr::get_ocr_constants(CFG_PATH "/ppocr.latin-cyrillic");
+    auto & ocr_constants = rdp_ppocr::get_ocr_constants(app_path(AppPath::Cfg) + std::string("/ppocr.latin-cyrillic"));
 }
 
 

@@ -12,13 +12,13 @@ import re
 import platform
 
 def usage():
-  print("Usage: %s [-h|--help] [--force-build] [--update-version version] [--no-entry-changelog] [--no-git-commit] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--force-build] [--update-version version] [--no-entry-changelog] [--no-git-commit] [--git-push] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
 
 try:
   options, args = getopt.getopt(sys.argv[1:], "h",
                                 ["help", "update-version=", "build-package",
                                  "no-entry-changelog",
-                                 "no-git-commit", "git-tag", "git-push-tag",
+                                 "no-git-commit", "git-tag", "git-push-tag", "git-push",
                                  "package-distribution=", "force-build",
                                  "debug", "force-target="])
 except getopt.GetoptError as err:
@@ -37,6 +37,7 @@ class opts(object):
   git_commit = True
   git_tag = False
   git_push_tag = False
+  git_push = False
 
   update_version = False
   build_package = False
@@ -65,6 +66,8 @@ for o,a in options:
     opts.entry_changelog = False
   elif o == "--no-git-commit":
     opts.git_commit = False
+  elif o == "--git-push":
+    opts.git_push = True
   elif o == "--git-tag":
     opts.git_tag = True
   elif o == "--git-push-tag":
@@ -380,6 +383,10 @@ try:
       status = os.system("git commit -am 'Version %s'" % opts.tag)
       if status:
         raise ""
+      if opts.git_push:
+        status = os.system("git push")
+        if status:
+          raise ""
       if opts.git_tag:
         status = os.system("git tag %s" % opts.tag)
         if status:

@@ -30,7 +30,9 @@
 
 #include <snappy-c.h>
 #include <memory>
+#include <cstring>
 
+#include "core/app_path.hpp"
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 
@@ -118,7 +120,8 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         char path[1024];
         char basename[1024];
         char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
+        strcat(path, "/");
         strcpy(basename, "capture");
         strcpy(extension, "");          // extension is currently ignored
 

@@ -14,17 +14,20 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
-
-   Unit test to conversion of RDP drawing orders to PNG images
+   Copyright (C) Wallix 2017
+   Author(s): Christophe Grosjean, Raphael ZHOU
 */
 
-#define RED_TEST_MODULE TestXXXXXXXXXX
-#include "system/redemption_unit_tests.hpp"
+#pragma once
 
-// #define LOGNULL
+enum {
+    WS_ICONIC   = 0x20000000L,  // The window is initially minimized. Same as the WS_MINIMIZE style.
+    WS_MINIMIZE = WS_ICONIC,
+    WS_VISIBLE  = 0x10000000L   // The window is initially visible.
+};
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
-{
-}
+enum {
+    SW_FORCEMINIMIZE = 11,
+    SW_HIDE          = 0,
+    SW_MINIMIZE      = 6
+};

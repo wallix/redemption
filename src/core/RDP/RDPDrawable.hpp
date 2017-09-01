@@ -914,6 +914,12 @@ public:
     unsigned int get_last_update_index() const noexcept override {
         return this->last_update_index;
     }
+
+//    void reset_to_origin() noexcept override {}
+
+    void reset(unsigned int /*x*/, unsigned int /*y*/,
+        unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
+        override {}
 };
 
 inline void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {

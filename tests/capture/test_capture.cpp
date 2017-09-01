@@ -165,7 +165,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         char path[1024];
         char basename[1024];
         char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
+        strcat(path, "/");
         strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
@@ -176,7 +177,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         }
 
         PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                                nullptr, record_tmp_path, basename, groupid};
+                                nullptr, record_tmp_path, basename, groupid, false};
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
@@ -421,7 +422,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     char path[1024];
     char basename[1024];
     char extension[128];
-    strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+    strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
+    strcat(path, "/");
     strcpy(basename, movie_path);
     strcpy(extension, "");          // extension is currently ignored
 
@@ -432,7 +434,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     }
 
     PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                        nullptr, record_tmp_path, basename, groupid};
+                        nullptr, record_tmp_path, basename, groupid, false};
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,

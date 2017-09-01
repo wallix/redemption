@@ -25,7 +25,7 @@
 #include "ocr_titles_extractor.hpp"
 #include "ppocr_titles_extractor.hpp"
 #include "ocr_title_filter.hpp"
-#include "core/defines.hpp"
+#include "core/app_path.hpp"
 #include "configs/autogen/enums.hpp"
 
 
@@ -106,7 +106,7 @@ public:
         if (is_ocr2) {
             new (&this->variant.v2) PpOcrDrawableTitleExtractor(
                 drawable, enable_title_log,
-                rdp_ppocr::get_ocr_constants(CFG_PATH, locale_id)
+                rdp_ppocr::get_ocr_constants(app_path(AppPath::Cfg), locale_id)
                 , title_bar_only, max_unrecog_char_rate, locale_id
             );
         }

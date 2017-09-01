@@ -21,10 +21,11 @@
 */
 
 
+#include "utils/confdescriptor.hpp"
+#include "utils/cfgloader.hpp"
 #include "utils/log.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "cfgloader.hpp"
 
 #include "core/RDP/capabilities/general.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"

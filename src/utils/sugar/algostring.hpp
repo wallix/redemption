@@ -22,6 +22,7 @@
 
 #include <iterator>
 #include <algorithm>
+#include <string>
 
 #include "utils/sugar/range.hpp"
 

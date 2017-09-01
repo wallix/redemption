@@ -20,29 +20,20 @@
 
 #pragma once
 
-#include "core/front_api.hpp"
-#include "gdi/graphic_api.hpp"
 #include "mod/internal/widget/composite.hpp"
 #include "mod/internal/widget/module_host.hpp"
-#include "mod/mod_api.hpp"
 
 class WidgetTest : public WidgetParent
 {
-private:
-    CompositeArray composite_array;
-
-    WidgetModuleHost module_host;
-
 public:
     WidgetTest(gdi::GraphicApi& drawable,
                int16_t left, int16_t top, int16_t width, int16_t height,
                Widget& parent, NotifyApi* notifier,
                std::unique_ptr<mod_api> managed_mod, Font const & font,
-               Theme const & theme,
                const GCC::UserData::CSMonitor& cs_monitor,
                uint16_t front_width, uint16_t front_height)
     : WidgetParent(drawable, parent, notifier)
-    , module_host(drawable, *this, this, std::move(managed_mod), font, theme,
+    , module_host(drawable, *this, this, std::move(managed_mod), font,
                   cs_monitor, front_width, front_height)
     {
         this->impl = &composite_array;
@@ -52,7 +43,8 @@ public:
         this->move_size_widget(left, top, width, height);
     }
 
-    ~WidgetTest() override {
+    ~WidgetTest() override
+    {
         this->clear();
     }
 
@@ -61,8 +53,8 @@ public:
         return this->module_host.get_managed_mod();
     }
 
-    void move_size_widget(int16_t left, int16_t top, uint16_t width,
-                          uint16_t height) {
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height)
+    {
         this->set_xy(left, top);
         this->set_wh(width, height);
 
@@ -72,13 +64,20 @@ public:
 
     // Widget
 
-    void focus(int reason) override {
+    void focus(int reason) override
+    {
         this->module_host.focus(reason);
         Widget::focus(reason);
     }
 
-    void blur() override {
+    void blur() override
+    {
         this->module_host.blur();
         Widget::blur();
     }
+
+private:
+    CompositeArray composite_array;
+
+    WidgetModuleHost module_host;
 };

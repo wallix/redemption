@@ -22,15 +22,14 @@
 
 #pragma once
 
-#include "configs/config.hpp"
 #include "configs/config_access.hpp"
-#include "core/front_api.hpp"
 #include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "utils/timeout.hpp"
 #include "widget/flat_wait.hpp"
 #include "widget/language_button.hpp"
-#include "widget/screen.hpp"
+
 
 using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
@@ -45,6 +44,7 @@ using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
+
 class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
@@ -56,109 +56,29 @@ class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
-                const char * caption, const char * message, time_t now, ClientExecute & client_execute,
-                bool showform = false, uint32_t flag = 0)
-        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
-        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
-                      &this->language_button,
-                      vars.get<cfg::font>(),
-                      vars.get<cfg::theme>(),
-                      language(vars),
-                      showform, flag, vars.get<cfg::context::duration_max>()
-                      )
-        , vars(vars)
-        , timeout(now, 600)
-        , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
+    FlatWaitMod(
+        FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+        Rect const widget_rect, const char * caption, const char * message, time_t now,
+        ClientExecute & client_execute, bool showform = false, uint32_t flag = 0);
+
+    ~FlatWaitMod() override;
+
+    void notify(Widget * sender, notify_event_t event) override;
+
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override;
+
+    bool is_up_and_running() override
+    { return true; }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
-        this->screen.add_widget(&this->wait_widget);
-        if (this->wait_widget.hasform) {
-            this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget::focus_reason_tabkey);
-        }
-        else {
-            this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget::focus_reason_tabkey);
-        }
-        this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
-        this->screen.rdp_input_invalidate(this->screen.get_rect());
-    }
-
-    ~FlatWaitMod() override {
-        this->screen.clear();
-    }
-
-    void notify(Widget * sender, notify_event_t event) override {
-        switch (event) {
-            case NOTIFY_SUBMIT: this->accepted(); break;
-            case NOTIFY_CANCEL: this->refused(); break;
-            case NOTIFY_TEXT_CHANGED: this->confirm(); break;
-            case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
-                if (this->copy_paste) {
-                    copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event);
-                };
-                break;
-            default:;
-        }
+        this->wait_widget.move_size_widget(left, top, width, height);
     }
 
 private:
-    void confirm()
-    {
-        this->vars.set_acl<cfg::context::waitinforeturn>("confirm");
-        this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
-        this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
-        this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
-    }
-    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-    void accepted()
-    {
-        this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
-    }
-
-    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-    void refused()
-    {
-        this->vars.set_acl<cfg::context::waitinforeturn>("exit");
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
-    }
-
-public:
-    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
-        LocallyIntegrableMod::draw_event(now, gapi);
-
-        if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-            this->copy_paste.ready(this->front);
-        }
-
-        switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
-            this->refused();
-            break;
-        case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set_trigger_time(1000000);
-            break;
-        case Timeout::TIMEOUT_INACTIVE:
-            this->event.reset_trigger_time();
-            break;
-        }
-    }
-
-    bool is_up_and_running() override { return true; }
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
-
-        if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
-            this->copy_paste.send_to_mod_channel(chunk, flags);
-        }
-    }
-
-    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->wait_widget.move_size_widget(left, top, width, height);
-    }
+    void confirm();
+    void accepted();
+    void refused();
 };

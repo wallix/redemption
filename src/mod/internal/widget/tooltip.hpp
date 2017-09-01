@@ -23,95 +23,33 @@
 
 #include "widget.hpp"
 #include "multiline.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "gdi/graphic_api.hpp"
 
 class WidgetTooltip : public Widget
 {
+public:
+    WidgetTooltip(gdi::GraphicApi & drawable, Widget & parent,
+                  NotifyApi* notifier, const char * text,
+                  BGRColor fgcolor, BGRColor bgcolor, BGRColor border_color, Font const & font);
+
+    ~WidgetTooltip() override;
+
+    Dimension get_optimal_dim() override;
+
+    void set_text(const char * text);
+
+    void rdp_input_invalidate(Rect clip) override;
+
+    void set_xy(int16_t x, int16_t y) override;
+
+    void set_wh(uint16_t w, uint16_t h) override;
+
+    using Widget::set_wh;
+
+    void draw_border(const Rect clip);
+
+private:
     uint w_border;
     uint h_border;
     WidgetMultiLine desc;
     BGRColor border_color;
-
-public:
-    WidgetTooltip(gdi::GraphicApi & drawable, Widget & parent,
-                  NotifyApi* notifier, const char * text,
-                  BGRColor fgcolor, BGRColor bgcolor, BGRColor border_color, Font const & font)
-        : Widget(drawable, parent, notifier, 0)
-        , w_border(10)
-        , h_border(10)
-        , desc(drawable, *this, this, text, 0, fgcolor, bgcolor, font, 0, 0)
-        , border_color(border_color)
-    {
-        this->tab_flag   = IGNORE_TAB;
-        this->focus_flag = IGNORE_FOCUS;
-    }
-
-    ~WidgetTooltip() override {
-    }
-
-    Dimension get_optimal_dim() override {
-        Dimension dim = this->desc.get_optimal_dim();
-
-        dim.w += 2 * this->w_border;
-        dim.h += 2 * this->h_border;
-
-        return dim;
-    }
-
-    void set_text(const char * text)
-    {
-        this->desc.set_text(text);
-        Dimension dim = this->desc.get_optimal_dim();
-        this->desc.set_wh(dim);
-
-        this->set_wh(this->desc.cx() + 2 * w_border,
-                     this->desc.cy() + 2 * h_border);
-    }
-
-    void rdp_input_invalidate(Rect clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
-
-        if (!rect_intersect.isempty()) {
-            this->drawable.begin_update();
-
-            this->drawable.draw(RDPOpaqueRect(this->get_rect(), encode_color24()(this->desc.bg_color)), rect_intersect, gdi::ColorCtx::depth24());
-            this->desc.rdp_input_invalidate(rect_intersect);
-            this->draw_border(rect_intersect);
-
-            this->drawable.end_update();
-        }
-    }
-
-    void set_xy(int16_t x, int16_t y) override {
-        Widget::set_xy(x, y);
-        this->desc.set_xy(x + w_border, y + h_border);
-    }
-
-    void set_wh(uint16_t w, uint16_t h) override {
-        Widget::set_wh(w, h);
-        this->desc.set_wh(w -  2 * w_border, h - 2 * h_border);
-    }
-
-    using Widget::set_wh;
-
-    void draw_border(const Rect clip)
-    {
-        //top
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->x(), this->y(), this->cx() - 1, 1
-        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
-        //left
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->x(), this->y() + 1, 1, this->cy() - 2
-        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
-        //right
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->x() + this->cx() - 1, this->y(), 1, this->cy()
-        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
-        //bottom
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->x(), this->y() + this->cy() - 1, this->cx() - 1, 1
-        )), encode_color24()(this->border_color)), clip, gdi::ColorCtx::depth24());
-    }
 };

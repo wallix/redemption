@@ -18,33 +18,37 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
-// set by command line
-#ifdef IN_IDE_PARSER
-# define RECORD_PATH "/var/rdpproxy/recorded"
-# define RECORD_TMP_PATH "/var/rdpproxy/tmp"
-# define FLV_PATH "/tmp"
-# define OCR_PATH "/tmp"
-# define PNG_PATH "/tmp"
-# define WRM_PATH "/tmp"
-// still used in front and recorder
-# define HASH_PATH "/tmp/hash"
-# define LICENSE_PATH "/var/certs/redemption"
-// still used in sockettransport
-# define CERTIF_PATH "/etc/rdpproxy/certificate"
-# define PERSISTENT_PATH "/var/lib/redemption/cache"
-# define DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection"
-# define PID_PATH "/var/run"
-
-// still used in front, checkfiles, session, transparent, some internal mods
-# define SHARE_PATH "/usr/local/share/rdpproxy"
-// still used in main and sockettransport
-# define CFG_PATH "/etc/rdpproxy"
-// # define CFG_THEMES_PATH "/etc/rdpproxy/themes"
-#endif
-
+enum class AppPath
+{
+    Record,
+    RecordTmp,
+    Flv,
+    Ocr,
+    Png,
+    Wrm,
+    Hash,
+    License,
+    Certif,
+    Persistent,
+    PersistentRdp,
+    DriveRedirection,
+    Pid,
+    Share,
+    Cfg,
+    LoginWabBlue,
+    RedemptionLogo24,
+    WallixIconMin,
+    CfgIni,
+    CfgCrt,
+    CfgKey,
+    CfgDhPem,
+    LockDir,
+    LockFile,
+    DefaultFontFile,
+};
+char const * app_path(AppPath) noexcept;
 
 // TODO move these into configuration
 // #define LOGIN_LOGO24 "ad24b.png"
@@ -68,3 +72,5 @@
 // #define DH1024_PEM "dh1024.pem"
 #define DH2048_PEM "dh2048.pem"
 #define DH_PEM DH2048_PEM
+
+#define DEFAULT_FONT_NAME "dejavu_14.fv1"

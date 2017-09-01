@@ -26,17 +26,45 @@
 
 #include "core/callback.hpp"
 #include "core/wait_obj.hpp"
-#include "gdi/graphic_api.hpp"
 #include "utils/sugar/non_null_ptr.hpp"
 
-class EventHandler {
+namespace gdi
+{
+    class GraphicApi;
+}
+
+class EventHandler
+{
 public:
-    class CB {
+    class CB
+    {
     public:
         virtual ~CB() = default;
 
         virtual void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) = 0;
     };
+
+public:
+    EventHandler(non_null_ptr<wait_obj> event, non_null_ptr<CB> cb, int fd = INVALID_SOCKET)
+    : event_(event)
+    , cb_(cb.get())
+    , fd_(fd)
+    {}
+
+    void operator()(time_t now, gdi::GraphicApi& drawable)
+    {
+        (*this->cb_)(now, *this->event_, drawable);
+    }
+
+    wait_obj & get_event() const
+    {
+        return *this->event_;
+    }
+
+    int get_fd() const
+    {
+        return this->fd_;
+    }
 
 private:
     wait_obj* event_;
@@ -44,25 +72,6 @@ private:
     CB* cb_;
 
     int fd_;
-
-public:
-    EventHandler(non_null_ptr<wait_obj> event, non_null_ptr<CB> cb, int fd = INVALID_SOCKET)
-    : event_(event.get())
-    , cb_(cb.get())
-    , fd_(fd)
-    {}
-
-    void operator()(time_t now, gdi::GraphicApi& drawable) {
-        (*this->cb_)(now, *this->event_, drawable);
-    }
-
-    wait_obj & get_event() const {
-        return *this->event_;
-    }
-
-    int get_fd() const {
-        return this->fd_;
-    }
 };
 
 class mod_api : public Callback
