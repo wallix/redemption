@@ -120,6 +120,27 @@ obj client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp :
 
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp : ;
 
+obj mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp : ;
+
+obj app_path.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp : 
+    $(EXE_DEPENDENCIES) ;
+
+obj flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp : ;
+
+obj replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : ;
+
+obj internal_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/internal_mod.cpp : ;
+
+obj screen.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/screen.cpp : ;
+
+obj composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp : ;
+
+obj label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp : ;
+
+obj tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp : ;
+
+obj multiline.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/multiline.cpp : ;
+
 
 using qt : /usr ; #4
 
@@ -152,6 +173,16 @@ exe client_demo_Qt4 :
     socket_transport.o
     client_execute.o
     cfgloader.o
+    mwrm_reader.o
+    app_path.o
+    flat_button.o
+    replay_mod.o
+    internal_mod.o
+    composite.o
+    label.o
+    tooltip.o
+    screen.o
+    multiline.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -200,6 +231,16 @@ exe client_rdp_Qt4 :
     socket_transport.o
     client_execute.o
     cfgloader.o
+    mwrm_reader.o
+    app_path.o
+    flat_button.o
+    replay_mod.o
+    internal_mod.o
+    composite.o
+    label.o
+    tooltip.o
+    screen.o
+    multiline.o
     /qt//QtGui       #4
     /qt//phonon
     bitmap
@@ -261,6 +302,16 @@ exe client_rdp_Qt5 :
     socket_transport.o
     client_execute.o
     cfgloader.o
+    mwrm_reader.o
+    app_path.o
+    flat_button.o
+    replay_mod.o
+    internal_mod.o
+    composite.o
+    label.o
+    tooltip.o
+    screen.o
+    multiline.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets

@@ -817,7 +817,7 @@ int main(int argc, char** argv)
 
         cli::option("index")
         .help("Set an index to identify this client among clients logs")
-        .action(cli::arg([&](int t){ index = t; }))
+        .action(cli::arg([&](int i){ index = i; }))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -925,6 +925,7 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
     TestClientCLI front(info, report_message, verbose);
     front.out_path = out_path;
+    front.index = index;
     int main_return = 40;
 
     if (input_connection_data_complete & TestClientCLI::IP) {

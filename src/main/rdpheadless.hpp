@@ -335,7 +335,7 @@ public:
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
                 if (file_movie) {
-                    if (this->index) {
+                    if (this->index !=  0) {
                         file_movie << this->index << "\t" << prim_len << "\t" << sec_len << "\n";
                     } else {
                         file_movie << prim_len << "\t" << sec_len << "\n";
