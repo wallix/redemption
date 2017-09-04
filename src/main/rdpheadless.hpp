@@ -236,6 +236,8 @@ public:
 
     int keep_alive_freq;
 
+    int index;
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
@@ -268,6 +270,7 @@ public:
     , secondary_connection_finished(false)
     , primary_connection_finished(false)
     , keep_alive_freq(0)
+    , index(0)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -332,7 +335,11 @@ public:
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
                 if (file_movie) {
-                    file_movie << prim_len << "\t" << sec_len << "\n";
+                    if (this->index) {
+                        file_movie << this->index << "\t" << prim_len << "\t" << sec_len << "\n";
+                    } else {
+                        file_movie << prim_len << "\t" << sec_len << "\n";
+                    }
                 }
             }
         }
@@ -372,6 +379,10 @@ public:
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->_cl;
+    }
+
+    void setIndex(int index) {
+        this->index = index;
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {

@@ -477,6 +477,7 @@ int main(int argc, char** argv)
     std::string out_path;
 
     int keep_alive_frequence = 100;
+    int index = 0;
 
 
     Inifile ini;
@@ -812,7 +813,11 @@ int main(int argc, char** argv)
 
         cli::option("keep_alive_frequence")
         .help("Set timeout to send keypress to keep the session alive")
-        .action(cli::arg([&](int t){ keep_alive_frequence = t; }))
+        .action(cli::arg([&](int t){ keep_alive_frequence = t; })),
+
+        cli::option("index")
+        .help("Set an index to identify this client among clients logs")
+        .action(cli::arg([&](int t){ index = t; }))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
