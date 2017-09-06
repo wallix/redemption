@@ -23,6 +23,7 @@
 #include "mod/internal/widget/notify_api.hpp"
 
 #include <cstdint>
+#include <cstddef>
 
 
 class FrontAPI;
