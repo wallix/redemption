@@ -3115,6 +3115,10 @@ make-test tests/utils/crypto/test_ssl_md5_direct :
   tests/utils/crypto/test_ssl_md5_direct.cpp 
 :
 ;
+make-test tests/utils/crypto/test_ssl_mod_exp_direct :
+  tests/utils/crypto/test_ssl_mod_exp_direct.cpp 
+:
+;
 make-test tests/utils/crypto/test_ssl_rc4_direct :
   tests/utils/crypto/test_ssl_rc4_direct.cpp 
 :
@@ -3468,6 +3472,7 @@ obj src/sashimi/libssh.o : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
 obj src/sashimi/pki.o : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
 obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
 obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp ;
+obj src/system/linux/system/test_framework.o : $(REDEMPTION_SRC_PATH)/system/linux/system/test_framework.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
@@ -3478,20 +3483,107 @@ obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
+obj src/utils/log_as_logemasm.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
+obj src/utils/log_as_logprint.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+obj src/utils/log_as_logtest.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+obj src/utils/log_as_syslog.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
 obj src/main/scytale.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
+alias test_acl_serializer : tests/acl/test_acl_serializer ;
+alias test_auth_api : tests/acl/test_auth_api ;
+alias test_authentifier : tests/acl/test_authentifier ;
+alias test_mm_api : tests/acl/test_mm_api ;
+alias test_module_manager : tests/acl/test_module_manager ;
+alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
+alias test_bogus_ocr : tests/capture/test_bogus_ocr ;
+alias test_bogus_ppocr : tests/capture/test_bogus_ppocr ;
+alias test_capture : tests/capture/test_capture ;
+alias test_cryptofile : tests/capture/test_cryptofile ;
+alias test_ocr : tests/capture/test_ocr ;
+alias test_ppocr : tests/capture/test_ppocr ;
+alias test_transparentchunk : tests/capture/test_transparentchunk ;
+alias test_transparentplayer : tests/capture/test_transparentplayer ;
+alias test_transparentrecorder : tests/capture/test_transparentrecorder ;
+alias test_video_capture : tests/capture/test_video_capture ;
+alias test_wrm_capture : tests/capture/test_wrm_capture ;
+alias test_match_finder : tests/capture/utils/test_match_finder ;
 alias cli_vnc_connection : tests/client_mods/cli_vnc_connection ;
-alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
+alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_pointer ;
+alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
+alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
+alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
+alias test_vnc_client_simple : tests/client_mods/test_vnc_client_simple ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
-alias test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU ;
-alias test_MessageSyntax : tests/core/SMB2/test_MessageSyntax ;
-alias test_MetaFileFormat : tests/core/WMF/test_MetaFileFormat ;
-alias test_PersistentKeyListPDU : tests/core/RDP/test_PersistentKeyListPDU ;
-alias test_RDPDrawable : tests/core/RDP/test_RDPDrawable ;
+alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
+alias test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister ;
+alias test_brushcache : tests/core/RDP/caches/test_brushcache ;
+alias test_glyphcache : tests/core/RDP/caches/test_glyphcache ;
+alias test_pointercache : tests/core/RDP/caches/test_pointercache ;
+alias test_activate : tests/core/RDP/capabilities/test_activate ;
+alias test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport ;
+alias test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs ;
+alias test_bmpcache2 : tests/core/RDP/capabilities/test_bmpcache2 ;
+alias test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap ;
+alias test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache ;
+alias test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache ;
+alias test_cap_font : tests/core/RDP/capabilities/test_cap_font ;
+alias test_cap_glyphcache : tests/core/RDP/capabilities/test_cap_glyphcache ;
+alias test_cap_share : tests/core/RDP/capabilities/test_cap_share ;
+alias test_cap_sound : tests/core/RDP/capabilities/test_cap_sound ;
+alias test_colcache : tests/core/RDP/capabilities/test_colcache ;
+alias test_common : tests/core/RDP/capabilities/test_common ;
+alias test_compdesk : tests/core/RDP/capabilities/test_compdesk ;
+alias test_control : tests/core/RDP/capabilities/test_control ;
+alias test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus ;
+alias test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegridcache ;
+alias test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge ;
+alias test_general : tests/core/RDP/capabilities/test_general ;
+alias test_input : tests/core/RDP/capabilities/test_input ;
+alias test_largepointer : tests/core/RDP/capabilities/test_largepointer ;
+alias test_multifragmentupdate : tests/core/RDP/capabilities/test_multifragmentupdate ;
+alias test_offscreencache : tests/core/RDP/capabilities/test_offscreencache ;
+alias test_order : tests/core/RDP/capabilities/test_order ;
+alias test_pointer : tests/core/RDP/capabilities/test_pointer ;
+alias test_rail : tests/core/RDP/capabilities/test_rail ;
+alias test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands ;
+alias test_virchan : tests/core/RDP/capabilities/test_virchan ;
+alias test_window : tests/core/RDP/capabilities/test_window ;
+alias test_rdpdr : tests/core/RDP/channels/test_rdpdr ;
+alias test_cs_cluster : tests/core/RDP/gcc/userdata/test_cs_cluster ;
+alias test_cs_core : tests/core/RDP/gcc/userdata/test_cs_core ;
+alias test_cs_mcs_msgchannel : tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel ;
+alias test_cs_monitor : tests/core/RDP/gcc/userdata/test_cs_monitor ;
+alias test_cs_monitor_ex : tests/core/RDP/gcc/userdata/test_cs_monitor_ex ;
+alias test_cs_multitransport : tests/core/RDP/gcc/userdata/test_cs_multitransport ;
+alias test_cs_net : tests/core/RDP/gcc/userdata/test_cs_net ;
+alias test_cs_security : tests/core/RDP/gcc/userdata/test_cs_security ;
+alias test_sc_core : tests/core/RDP/gcc/userdata/test_sc_core ;
+alias test_sc_net : tests/core/RDP/gcc/userdata/test_sc_net ;
+alias test_sc_sec1 : tests/core/RDP/gcc/userdata/test_sc_sec1 ;
+alias test_mppc_40 : tests/core/RDP/mppc/test_mppc_40 ;
+alias test_mppc_50 : tests/core/RDP/mppc/test_mppc_50 ;
+alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
+alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
+alias test_ber : tests/core/RDP/nla/asn1/test_ber ;
+alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
+alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
+alias test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm ;
+alias test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair ;
+alias test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context ;
+alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
+alias test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate ;
+alias test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge ;
+alias test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate ;
+alias test_credssp : tests/core/RDP/nla/test_credssp ;
+alias test_nla : tests/core/RDP/nla/test_nla ;
+alias test_sspi : tests/core/RDP/nla/test_sspi ;
+alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
 alias test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon ;
 alias test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt ;
 alias test_RDPOrdersPrimaryEllipseCB : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB ;
@@ -3515,217 +3607,121 @@ alias test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSe
 alias test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache ;
 alias test_RDPOrdersSecondaryFrameMarker : tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker ;
 alias test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache ;
+alias test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU ;
+alias test_PersistentKeyListPDU : tests/core/RDP/test_PersistentKeyListPDU ;
+alias test_RDPDrawable : tests/core/RDP/test_RDPDrawable ;
 alias test_RDPSerializer : tests/core/RDP/test_RDPSerializer ;
 alias test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU ;
 alias test_SaveSessionInfoPDU : tests/core/RDP/test_SaveSessionInfoPDU ;
 alias test_ServerRedirection : tests/core/RDP/test_ServerRedirection ;
-alias test_acl_serializer : tests/acl/test_acl_serializer ;
-alias test_activate : tests/core/RDP/capabilities/test_activate ;
-alias test_algostring : tests/utils/sugar/test_algostring ;
-alias test_app_proxy : tests/utils/apps/test_app_proxy ;
-alias test_array_view : tests/utils/sugar/test_array_view ;
-alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
-alias test_audio_output : tests/core/RDPEA/test_audio_output ;
-alias test_auth_api : tests/acl/test_auth_api ;
-alias test_authentifier : tests/acl/test_authentifier ;
-alias test_authid : tests/core/test_authid ;
-alias test_authorization_channels : tests/utils/test_authorization_channels ;
 alias test_autoreconnect : tests/core/RDP/test_autoreconnect ;
-alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
-alias test_ber : tests/core/RDP/nla/asn1/test_ber ;
-alias test_bitfu : tests/utils/test_bitfu ;
-alias test_bitmap : tests/utils/test_bitmap ;
-alias test_bitmap_data_allocator : tests/utils/test_bitmap_data_allocator ;
-alias test_bitmap_from_file : tests/utils/test_bitmap_from_file ;
-alias test_bitmap_perf : tests/test_bitmap_perf ;
-alias test_bitmap_shrink : tests/utils/test_bitmap_shrink ;
-alias test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport ;
-alias test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs ;
 alias test_bitmapupdate : tests/core/RDP/test_bitmapupdate ;
-alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
-alias test_bmpcache2 : tests/core/RDP/capabilities/test_bmpcache2 ;
-alias test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister ;
-alias test_bogus_ocr : tests/capture/test_bogus_ocr ;
-alias test_bogus_ppocr : tests/capture/test_bogus_ppocr ;
-alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
-alias test_brushcache : tests/core/RDP/caches/test_brushcache ;
-alias test_buf64k : tests/core/test_buf64k ;
-alias test_buffer : tests/sashimi/test_buffer ;
-alias test_buffer_t : tests/utils/sugar/test_buffer_t ;
-alias test_byte : tests/utils/sugar/test_byte ;
-alias test_callback : tests/core/test_callback ;
-alias test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap ;
-alias test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache ;
-alias test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache ;
-alias test_cap_font : tests/core/RDP/capabilities/test_cap_font ;
-alias test_cap_glyphcache : tests/core/RDP/capabilities/test_cap_glyphcache ;
-alias test_cap_share : tests/core/RDP/capabilities/test_cap_share ;
-alias test_cap_sound : tests/core/RDP/capabilities/test_cap_sound ;
 alias test_capabilities : tests/core/RDP/test_capabilities ;
-alias test_capture : tests/capture/test_capture ;
-alias test_cast : tests/utils/sugar/test_cast ;
-alias test_cfgloader : tests/utils/test_cfgloader ;
+alias test_clipboard : tests/core/RDP/test_clipboard ;
+alias test_fastpath : tests/core/RDP/test_fastpath ;
+alias test_gcc : tests/core/RDP/test_gcc ;
+alias test_lic : tests/core/RDP/test_lic ;
+alias test_logon : tests/core/RDP/test_logon ;
+alias test_mcs : tests/core/RDP/test_mcs ;
+alias test_mppc : tests/core/RDP/test_mppc ;
+alias test_nego : tests/core/RDP/test_nego ;
+alias test_non_null_terminated_utf16_from_utf8 : tests/core/RDP/test_non_null_terminated_utf16_from_utf8 ;
+alias test_out_per_bstream : tests/core/RDP/test_out_per_bstream ;
+alias test_rdp_pointer : tests/core/RDP/test_pointer ;
+alias test_protocol : tests/core/RDP/test_protocol ;
+alias test_remote_programs : tests/core/RDP/test_remote_programs ;
+alias test_sec : tests/core/RDP/test_sec ;
+alias test_share : tests/core/RDP/test_share ;
+alias test_slowpath : tests/core/RDP/test_slowpath ;
+alias test_tpdu_buffer : tests/core/RDP/test_tpdu_buffer ;
+alias test_x224 : tests/core/RDP/test_x224 ;
+alias test_audio_output : tests/core/RDPEA/test_audio_output ;
+alias test_MessageSyntax : tests/core/SMB2/test_MessageSyntax ;
+alias test_MetaFileFormat : tests/core/WMF/test_MetaFileFormat ;
+alias test_authid : tests/core/test_authid ;
+alias test_buf64k : tests/core/test_buf64k ;
+alias test_callback : tests/core/test_callback ;
 alias test_channel_list : tests/core/test_channel_list ;
 alias test_channel_names : tests/core/test_channel_names ;
 alias test_check_files : tests/core/test_check_files ;
 alias test_client_info : tests/core/test_client_info ;
-alias test_clipboard : tests/core/RDP/test_clipboard ;
-alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
-alias test_colcache : tests/core/RDP/capabilities/test_colcache ;
-alias test_colors : tests/utils/test_colors ;
-alias test_common : tests/core/RDP/capabilities/test_common ;
-alias test_compdesk : tests/core/RDP/capabilities/test_compdesk ;
-alias test_composite : tests/mod/internal/widget/test_composite ;
-alias test_compression_transport_builder : tests/utils/test_compression_transport_builder ;
-alias test_confdescriptor : tests/utils/test_confdescriptor ;
-alias test_control : tests/core/RDP/capabilities/test_control ;
-alias test_copy_paste : tests/mod/internal/test_copy_paste ;
-alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
-alias test_credssp : tests/core/RDP/nla/test_credssp ;
-alias test_crypto : tests/sashimi/test_crypto ;
-alias test_crypto_transport : tests/transport/test_crypto_transport ;
-alias test_cryptofile : tests/capture/test_cryptofile ;
-alias test_cs_cluster : tests/core/RDP/gcc/userdata/test_cs_cluster ;
-alias test_cs_core : tests/core/RDP/gcc/userdata/test_cs_core ;
-alias test_cs_mcs_msgchannel : tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel ;
-alias test_cs_monitor : tests/core/RDP/gcc/userdata/test_cs_monitor ;
-alias test_cs_monitor_ex : tests/core/RDP/gcc/userdata/test_cs_monitor_ex ;
-alias test_cs_multitransport : tests/core/RDP/gcc/userdata/test_cs_multitransport ;
-alias test_cs_net : tests/core/RDP/gcc/userdata/test_cs_net ;
-alias test_cs_security : tests/core/RDP/gcc/userdata/test_cs_security ;
-alias test_d3des : tests/utils/test_d3des ;
-alias test_diffiehellman : tests/utils/test_diffiehellman ;
-alias test_difftimeval : tests/utils/test_difftimeval ;
+alias test_error : tests/core/test_error ;
+alias test_font : tests/core/test_font ;
+alias test_front_api : tests/core/test_front_api ;
+alias test_listen : tests/core/test_listen ;
+alias test_mainloop : tests/core/test_mainloop ;
+alias test_server : tests/core/test_server ;
+alias test_server_notifier_api : tests/core/test_server_notifier_api ;
+alias test_session : tests/core/test_session ;
+alias test_session_server : tests/core/test_session_server ;
+alias test_wait_obj : tests/core/test_wait_obj ;
+alias test_front : tests/front/test_front ;
+alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
+alias test_protected_graphics : tests/gdi/test_protected_graphics ;
+alias test_keymap2 : tests/keyboard/test_keymap2 ;
+alias test_keymapSym : tests/keyboard/test_keymapSym ;
 alias test_do_recorder : tests/main/test_do_recorder ;
-alias test_drawable : tests/utils/test_drawable ;
-alias test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus ;
-alias test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegridcache ;
+alias test_scytale : tests/main/test_scytale ;
+alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
+alias test_copy_paste : tests/mod/internal/test_copy_paste ;
+alias test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod ;
+alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
+alias test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod ;
+alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
+alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
+alias test_internal_mod : tests/mod/internal/test_internal_mod ;
+alias test_replay_mod : tests/mod/internal/test_replay_mod ;
+alias test_selector_mod : tests/mod/internal/test_selector_mod ;
+alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
+alias test_transparent_replay_mod : tests/mod/internal/test_transparent_replay_mod ;
+alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
+alias test_composite : tests/mod/internal/widget/test_composite ;
 alias test_edit : tests/mod/internal/widget/test_edit ;
 alias test_edit_valid : tests/mod/internal/widget/test_edit_valid ;
-alias test_ellipse : tests/utils/test_ellipse ;
-alias test_error : tests/core/test_error ;
-alias test_exchange : tests/utils/sugar/test_exchange ;
-alias test_fastpath : tests/core/RDP/test_fastpath ;
-alias test_fileutils : tests/utils/test_fileutils ;
-alias test_finally : tests/utils/sugar/test_finally ;
 alias test_flat_button : tests/mod/internal/widget/test_flat_button ;
 alias test_flat_dialog : tests/mod/internal/widget/test_flat_dialog ;
-alias test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod ;
 alias test_flat_form : tests/mod/internal/widget/test_flat_form ;
 alias test_flat_interactive_target : tests/mod/internal/widget/test_flat_interactive_target ;
 alias test_flat_login : tests/mod/internal/widget/test_flat_login ;
-alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
 alias test_flat_vnc_authentification : tests/mod/internal/widget/test_flat_vnc_authentification ;
 alias test_flat_wab_close : tests/mod/internal/widget/test_flat_wab_close ;
-alias test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod ;
 alias test_flat_wait : tests/mod/internal/widget/test_flat_wait ;
-alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
-alias test_font : tests/core/test_font ;
-alias test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge ;
-alias test_front : tests/front/test_front ;
-alias test_front_api : tests/core/test_front_api ;
-alias test_gcc : tests/core/RDP/test_gcc ;
-alias test_general : tests/core/RDP/capabilities/test_general ;
-alias test_genfstat : tests/utils/test_genfstat ;
-alias test_genrandom : tests/utils/test_genrandom ;
-alias test_get_printable_password : tests/utils/test_get_printable_password ;
-alias test_glyphcache : tests/core/RDP/caches/test_glyphcache ;
-alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_grid : tests/mod/internal/widget/test_grid ;
 alias test_group_box : tests/mod/internal/widget/test_group_box ;
-alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
 alias test_image : tests/mod/internal/widget/test_image ;
-alias test_in_file_transport : tests/transport/test_in_file_transport ;
-alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
-alias test_input : tests/core/RDP/capabilities/test_input ;
-alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
-alias test_internal_mod : tests/mod/internal/test_internal_mod ;
-alias test_iter : tests/utils/sugar/test_iter ;
-alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
-alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
-alias test_keymap2 : tests/keyboard/test_keymap2 ;
-alias test_keymapSym : tests/keyboard/test_keymapSym ;
 alias test_label : tests/mod/internal/widget/test_label ;
 alias test_labelgrid : tests/mod/internal/widget/test_labelgrid ;
 alias test_language_button : tests/mod/internal/widget/test_language_button ;
-alias test_largepointer : tests/core/RDP/capabilities/test_largepointer ;
-alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
-alias test_libpng : tests/test_libpng ;
-alias test_lic : tests/core/RDP/test_lic ;
-alias test_listen : tests/core/test_listen ;
-alias test_log : tests/utils/test_log ;
-alias test_logon : tests/core/RDP/test_logon ;
-alias test_mainloop : tests/core/test_mainloop ;
-alias test_make_unique : tests/utils/sugar/test_make_unique ;
-alias test_match_finder : tests/capture/utils/test_match_finder ;
-alias test_mcs : tests/core/RDP/test_mcs ;
-alias test_mm_api : tests/acl/test_mm_api ;
-alias test_mod_api : tests/mod/test_mod_api ;
-alias test_module_manager : tests/acl/test_module_manager ;
-alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
-alias test_mppc : tests/core/RDP/test_mppc ;
-alias test_mppc_40 : tests/core/RDP/mppc/test_mppc_40 ;
-alias test_mppc_50 : tests/core/RDP/mppc/test_mppc_50 ;
-alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
-alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
-alias test_mstsc_client : tests/server/test_mstsc_client ;
-alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
-alias test_multifragmentupdate : tests/core/RDP/capabilities/test_multifragmentupdate ;
 alias test_multiline : tests/mod/internal/widget/test_multiline ;
-alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
-alias test_nego : tests/core/RDP/test_nego ;
-alias test_netutils : tests/utils/test_netutils ;
-alias test_nla : tests/core/RDP/nla/test_nla ;
-alias test_non_null_terminated_utf16_from_utf8 : tests/core/RDP/test_non_null_terminated_utf16_from_utf8 ;
-alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_notify_api : tests/mod/internal/widget/test_notify_api ;
-alias test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm ;
-alias test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair ;
-alias test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context ;
-alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
-alias test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate ;
-alias test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge ;
-alias test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate ;
-alias test_null : tests/mod/null/test_null ;
 alias test_number_edit : tests/mod/internal/widget/test_number_edit ;
-alias test_ocr : tests/capture/test_ocr ;
-alias test_offscreencache : tests/core/RDP/capabilities/test_offscreencache ;
-alias test_openssl : tests/system/linux/system/test_openssl ;
-alias test_order : tests/core/RDP/capabilities/test_order ;
-alias test_out_file_transport : tests/transport/test_out_file_transport ;
-alias test_out_per_bstream : tests/core/RDP/test_out_per_bstream ;
-alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
-alias test_parse : tests/utils/test_parse ;
 alias test_password : tests/mod/internal/widget/test_password ;
-alias test_pattern : tests/utils/winpr/test_pattern ;
-alias test_pattutils : tests/utils/test_pattutils ;
-alias test_png : tests/utils/test_png ;
-alias test_pointer : tests/core/RDP/capabilities/test_pointer ;
-alias test_pointercache : tests/core/RDP/caches/test_pointercache ;
-alias test_ppocr : tests/capture/test_ppocr ;
-alias test_protected_graphics : tests/gdi/test_protected_graphics ;
-alias test_protocol : tests/core/RDP/test_protocol ;
-alias test_rail : tests/core/RDP/capabilities/test_rail ;
+alias test_screen : tests/mod/internal/widget/test_screen ;
+alias test_scroll : tests/mod/internal/widget/test_scroll ;
+alias test_selector : tests/mod/internal/widget/test_selector ;
+alias test_tab : tests/mod/internal/widget/test_tab ;
+alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
+alias test_widget : tests/mod/internal/widget/test_widget ;
+alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
+alias test_null : tests/mod/null/test_null ;
+alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
+alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
-alias test_range : tests/utils/sugar/test_range ;
-alias test_rdesktop_client : tests/server/test_rdesktop_client ;
-alias test_rdp : tests/mod/rdp/test_rdp ;
-alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_pointer ;
-alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
-alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
-alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
-alias test_rdp_log : tests/mod/rdp/test_rdp_log ;
-alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
-alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
-alias test_rdp_pointer : tests/core/RDP/test_pointer ;
-alias test_rdpdr : tests/core/RDP/channels/test_rdpdr ;
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
 alias test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel ;
 alias test_rdpdr_file_system_drive_manager : tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager ;
-alias test_rdtsc : tests/utils/test_rdtsc ;
-alias test_recording_progress : tests/utils/apps/test_recording_progress ;
-alias test_rect : tests/utils/test_rect ;
-alias test_redirection_info : tests/utils/test_redirection_info ;
+alias test_sespro_alternate_shell_based_launcher : tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher ;
+alias test_sespro_channel : tests/mod/rdp/channels/test_sespro_channel ;
+alias test_sespro_clipboard_based_launcher : tests/mod/rdp/channels/test_sespro_clipboard_based_launcher ;
+alias test_sespro_launcher : tests/mod/rdp/channels/test_sespro_launcher ;
+alias test_virtual_channel_data_sender : tests/mod/rdp/channels/test_virtual_channel_data_sender ;
+alias test_rdp : tests/mod/rdp/test_rdp ;
+alias test_rdp_log : tests/mod/rdp/test_rdp_log ;
+alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
+alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
+alias test_mod_api : tests/mod/test_mod_api ;
+alias test_vnc : tests/mod/vnc/test_vnc ;
+alias test_xup : tests/mod/xup/test_xup ;
 alias test_regex : tests/regex/test_regex ;
 alias test_regex_automate : tests/regex/test_regex_automate ;
 alias test_regex_consumer : tests/regex/test_regex_consumer ;
@@ -3734,98 +3730,112 @@ alias test_regex_st_automate : tests/regex/test_regex_st_automate ;
 alias test_regex_state : tests/regex/test_regex_state ;
 alias test_regex_states_value : tests/regex/test_regex_states_value ;
 alias test_regex_utils : tests/regex/test_regex_utils ;
-alias test_region : tests/utils/test_region ;
-alias test_remote_programs : tests/core/RDP/test_remote_programs ;
-alias test_replay_mod : tests/mod/internal/test_replay_mod ;
-alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
-alias test_sc_core : tests/core/RDP/gcc/userdata/test_sc_core ;
-alias test_sc_net : tests/core/RDP/gcc/userdata/test_sc_net ;
-alias test_sc_sec1 : tests/core/RDP/gcc/userdata/test_sc_sec1 ;
-alias test_screen : tests/mod/internal/widget/test_screen ;
-alias test_scroll : tests/mod/internal/widget/test_scroll ;
-alias test_scytale : tests/main/test_scytale ;
-alias test_sec : tests/core/RDP/test_sec ;
-alias test_selector : tests/mod/internal/widget/test_selector ;
-alias test_selector_mod : tests/mod/internal/test_selector_mod ;
-alias test_server : tests/core/test_server ;
-alias test_server_notifier_api : tests/core/test_server_notifier_api ;
-alias test_sespro_alternate_shell_based_launcher : tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher ;
-alias test_sespro_channel : tests/mod/rdp/channels/test_sespro_channel ;
-alias test_sespro_clipboard_based_launcher : tests/mod/rdp/channels/test_sespro_clipboard_based_launcher ;
-alias test_sespro_launcher : tests/mod/rdp/channels/test_sespro_launcher ;
-alias test_session : tests/core/test_session ;
-alias test_session_server : tests/core/test_session_server ;
-alias test_share : tests/core/RDP/test_share ;
-alias test_slowpath : tests/core/RDP/test_slowpath ;
-alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
-alias test_socket_transport : tests/transport/test_socket_transport ;
-alias test_splitter : tests/utils/sugar/test_splitter ;
-alias test_ssl : tests/test_ssl ;
+alias test_buffer : tests/sashimi/test_buffer ;
+alias test_crypto : tests/sashimi/test_crypto ;
+alias test_mstsc_client : tests/server/test_mstsc_client ;
+alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
+alias test_rdesktop_client : tests/server/test_rdesktop_client ;
+alias test_openssl : tests/system/linux/system/test_openssl ;
 alias test_ssl_aes : tests/system/linux/system/test_ssl_aes ;
-alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_calls : tests/system/linux/system/test_ssl_calls ;
-alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
 alias test_ssl_md4 : tests/system/linux/system/test_ssl_md4 ;
-alias test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct ;
 alias test_ssl_md5 : tests/system/linux/system/test_ssl_md5 ;
-alias test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct ;
 alias test_ssl_mod_exp : tests/system/linux/system/test_ssl_mod_exp ;
 alias test_ssl_rc4 : tests/system/linux/system/test_ssl_rc4 ;
-alias test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct ;
 alias test_ssl_sha1 : tests/system/linux/system/test_ssl_sha1 ;
-alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
 alias test_ssl_sha256 : tests/system/linux/system/test_ssl_sha256 ;
-alias test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct ;
 alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
+alias test_bitmap_perf : tests/test_bitmap_perf ;
+alias test_libpng : tests/test_libpng ;
+alias test_ssl : tests/test_ssl ;
+alias test_crypto_transport : tests/transport/test_crypto_transport ;
+alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
+alias test_in_file_transport : tests/transport/test_in_file_transport ;
+alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
+alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
+alias test_out_file_transport : tests/transport/test_out_file_transport ;
+alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
+alias test_socket_transport : tests/transport/test_socket_transport ;
+alias test_test_transport : tests/transport/test_test_transport ;
+alias test_transport : tests/transport/test_transport ;
+alias test_app_proxy : tests/utils/apps/test_app_proxy ;
+alias test_recording_progress : tests/utils/apps/test_recording_progress ;
+alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
+alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
+alias test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct ;
+alias test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct ;
+alias test_ssl_mod_exp_direct : tests/utils/crypto/test_ssl_mod_exp_direct ;
+alias test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct ;
+alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
+alias test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct ;
 alias test_ssl_sha512_direct : tests/utils/crypto/test_ssl_sha512_direct ;
 alias test_ssl_sign : tests/utils/crypto/test_ssl_sign ;
-alias test_sspi : tests/core/RDP/nla/test_sspi ;
-alias test_stream : tests/utils/test_stream ;
+alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
+alias test_algostring : tests/utils/sugar/test_algostring ;
+alias test_array_view : tests/utils/sugar/test_array_view ;
+alias test_buffer_t : tests/utils/sugar/test_buffer_t ;
+alias test_byte : tests/utils/sugar/test_byte ;
+alias test_cast : tests/utils/sugar/test_cast ;
+alias test_exchange : tests/utils/sugar/test_exchange ;
+alias test_finally : tests/utils/sugar/test_finally ;
+alias test_iter : tests/utils/sugar/test_iter ;
+alias test_make_unique : tests/utils/sugar/test_make_unique ;
+alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
+alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
+alias test_range : tests/utils/sugar/test_range ;
+alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_strutils : tests/utils/sugar/test_strutils ;
-alias test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands ;
-alias test_tab : tests/mod/internal/widget/test_tab ;
-alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
-alias test_test_transport : tests/transport/test_test_transport ;
-alias test_theme : tests/utils/test_theme ;
-alias test_timeout : tests/utils/test_timeout ;
-alias test_timeval_ops : tests/utils/test_timeval_ops ;
-alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
-alias test_tpdu_buffer : tests/core/RDP/test_tpdu_buffer ;
-alias test_translation : tests/utils/test_translation ;
-alias test_transparent_replay_mod : tests/mod/internal/test_transparent_replay_mod ;
-alias test_transparentchunk : tests/capture/test_transparentchunk ;
-alias test_transparentplayer : tests/capture/test_transparentplayer ;
-alias test_transparentrecorder : tests/capture/test_transparentrecorder ;
-alias test_transport : tests/transport/test_transport ;
 alias test_underlying_cast : tests/utils/sugar/test_underlying_cast ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
+alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
+alias test_authorization_channels : tests/utils/test_authorization_channels ;
+alias test_bitfu : tests/utils/test_bitfu ;
+alias test_bitmap : tests/utils/test_bitmap ;
+alias test_bitmap_data_allocator : tests/utils/test_bitmap_data_allocator ;
+alias test_bitmap_from_file : tests/utils/test_bitmap_from_file ;
+alias test_bitmap_shrink : tests/utils/test_bitmap_shrink ;
+alias test_cfgloader : tests/utils/test_cfgloader ;
+alias test_colors : tests/utils/test_colors ;
+alias test_compression_transport_builder : tests/utils/test_compression_transport_builder ;
+alias test_confdescriptor : tests/utils/test_confdescriptor ;
+alias test_d3des : tests/utils/test_d3des ;
+alias test_diffiehellman : tests/utils/test_diffiehellman ;
+alias test_difftimeval : tests/utils/test_difftimeval ;
+alias test_drawable : tests/utils/test_drawable ;
+alias test_ellipse : tests/utils/test_ellipse ;
+alias test_fileutils : tests/utils/test_fileutils ;
+alias test_genfstat : tests/utils/test_genfstat ;
+alias test_genrandom : tests/utils/test_genrandom ;
+alias test_get_printable_password : tests/utils/test_get_printable_password ;
+alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
+alias test_log : tests/utils/test_log ;
+alias test_netutils : tests/utils/test_netutils ;
+alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
+alias test_parse : tests/utils/test_parse ;
+alias test_pattutils : tests/utils/test_pattutils ;
+alias test_png : tests/utils/test_png ;
+alias test_rdtsc : tests/utils/test_rdtsc ;
+alias test_rect : tests/utils/test_rect ;
+alias test_redirection_info : tests/utils/test_redirection_info ;
+alias test_region : tests/utils/test_region ;
+alias test_stream : tests/utils/test_stream ;
+alias test_theme : tests/utils/test_theme ;
+alias test_timeout : tests/utils/test_timeout ;
+alias test_timeval_ops : tests/utils/test_timeval_ops ;
+alias test_translation : tests/utils/test_translation ;
 alias test_utf : tests/utils/test_utf ;
-alias test_video_capture : tests/capture/test_video_capture ;
-alias test_virchan : tests/core/RDP/capabilities/test_virchan ;
-alias test_virtual_channel_data_sender : tests/mod/rdp/channels/test_virtual_channel_data_sender ;
-alias test_vnc : tests/mod/vnc/test_vnc ;
-alias test_vnc_client_simple : tests/client_mods/test_vnc_client_simple ;
-alias test_wait_obj : tests/core/test_wait_obj ;
-alias test_widget : tests/mod/internal/widget/test_widget ;
-alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
-alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
-alias test_window : tests/core/RDP/capabilities/test_window ;
 alias test_word_identification : tests/utils/test_word_identification ;
-alias test_wrm_capture : tests/capture/test_wrm_capture ;
-alias test_x224 : tests/core/RDP/test_x224 ;
-alias test_xup : tests/mod/xup/test_xup ;
-alias tests :
-  tests/test_bitmap_perf
-  tests/test_libpng
-  tests/test_ssl
-;
+alias test_pattern : tests/utils/winpr/test_pattern ;
 alias tests/acl :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
   tests/acl/test_authentifier
   tests/acl/test_mm_api
   tests/acl/test_module_manager
+;
+alias tests/capture/ocr/locale :
+  tests/capture/ocr/locale/test_latin_to_cyrillic
 ;
 alias tests/capture :
   tests/capture/test_bogus_ocr
@@ -3840,9 +3850,6 @@ alias tests/capture :
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture
 ;
-alias tests/capture/ocr/locale :
-  tests/capture/ocr/locale/test_latin_to_cyrillic
-;
 alias tests/capture/utils :
   tests/capture/utils/test_match_finder
 ;
@@ -3854,57 +3861,8 @@ alias tests/client_mods :
   tests/client_mods/test_rdp_client_wab
   tests/client_mods/test_vnc_client_simple
 ;
-alias tests/core :
-  tests/core/test_authid
-  tests/core/test_buf64k
-  tests/core/test_callback
-  tests/core/test_channel_list
-  tests/core/test_channel_names
-  tests/core/test_check_files
-  tests/core/test_client_info
-  tests/core/test_error
-  tests/core/test_font
-  tests/core/test_front_api
-  tests/core/test_listen
-  tests/core/test_mainloop
-  tests/core/test_server
-  tests/core/test_server_notifier_api
-  tests/core/test_session
-  tests/core/test_session_server
-  tests/core/test_wait_obj
-;
 alias tests/core/FSCC :
   tests/core/FSCC/test_FileInformation
-;
-alias tests/core/RDP :
-  tests/core/RDP/test_GraphicUpdatePDU
-  tests/core/RDP/test_PersistentKeyListPDU
-  tests/core/RDP/test_RDPDrawable
-  tests/core/RDP/test_RDPSerializer
-  tests/core/RDP/test_RefreshRectPDU
-  tests/core/RDP/test_SaveSessionInfoPDU
-  tests/core/RDP/test_ServerRedirection
-  tests/core/RDP/test_autoreconnect
-  tests/core/RDP/test_bitmapupdate
-  tests/core/RDP/test_capabilities
-  tests/core/RDP/test_clipboard
-  tests/core/RDP/test_fastpath
-  tests/core/RDP/test_gcc
-  tests/core/RDP/test_lic
-  tests/core/RDP/test_logon
-  tests/core/RDP/test_mcs
-  tests/core/RDP/test_mppc
-  tests/core/RDP/test_nego
-  tests/core/RDP/test_non_null_terminated_utf16_from_utf8
-  tests/core/RDP/test_out_per_bstream
-  tests/core/RDP/test_pointer
-  tests/core/RDP/test_protocol
-  tests/core/RDP/test_remote_programs
-  tests/core/RDP/test_sec
-  tests/core/RDP/test_share
-  tests/core/RDP/test_slowpath
-  tests/core/RDP/test_tpdu_buffer
-  tests/core/RDP/test_x224
 ;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches/test_bmpcache
@@ -3966,11 +3924,6 @@ alias tests/core/RDP/mppc :
   tests/core/RDP/mppc/test_mppc_60
   tests/core/RDP/mppc/test_mppc_61
 ;
-alias tests/core/RDP/nla :
-  tests/core/RDP/nla/test_credssp
-  tests/core/RDP/nla/test_nla
-  tests/core/RDP/nla/test_sspi
-;
 alias tests/core/RDP/nla/asn1 :
   tests/core/RDP/nla/asn1/test_ber
 ;
@@ -3986,6 +3939,11 @@ alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate
   tests/core/RDP/nla/ntlm/test_ntlm_message_challenge
   tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate
+;
+alias tests/core/RDP/nla :
+  tests/core/RDP/nla/test_credssp
+  tests/core/RDP/nla/test_nla
+  tests/core/RDP/nla/test_sspi
 ;
 alias tests/core/RDP/orders :
   tests/core/RDP/orders/test_AlternateSecondaryWindowing
@@ -4013,6 +3971,36 @@ alias tests/core/RDP/orders :
   tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker
   tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache
 ;
+alias tests/core/RDP :
+  tests/core/RDP/test_GraphicUpdatePDU
+  tests/core/RDP/test_PersistentKeyListPDU
+  tests/core/RDP/test_RDPDrawable
+  tests/core/RDP/test_RDPSerializer
+  tests/core/RDP/test_RefreshRectPDU
+  tests/core/RDP/test_SaveSessionInfoPDU
+  tests/core/RDP/test_ServerRedirection
+  tests/core/RDP/test_autoreconnect
+  tests/core/RDP/test_bitmapupdate
+  tests/core/RDP/test_capabilities
+  tests/core/RDP/test_clipboard
+  tests/core/RDP/test_fastpath
+  tests/core/RDP/test_gcc
+  tests/core/RDP/test_lic
+  tests/core/RDP/test_logon
+  tests/core/RDP/test_mcs
+  tests/core/RDP/test_mppc
+  tests/core/RDP/test_nego
+  tests/core/RDP/test_non_null_terminated_utf16_from_utf8
+  tests/core/RDP/test_out_per_bstream
+  tests/core/RDP/test_pointer
+  tests/core/RDP/test_protocol
+  tests/core/RDP/test_remote_programs
+  tests/core/RDP/test_sec
+  tests/core/RDP/test_share
+  tests/core/RDP/test_slowpath
+  tests/core/RDP/test_tpdu_buffer
+  tests/core/RDP/test_x224
+;
 alias tests/core/RDPEA :
   tests/core/RDPEA/test_audio_output
 ;
@@ -4021,6 +4009,25 @@ alias tests/core/SMB2 :
 ;
 alias tests/core/WMF :
   tests/core/WMF/test_MetaFileFormat
+;
+alias tests/core :
+  tests/core/test_authid
+  tests/core/test_buf64k
+  tests/core/test_callback
+  tests/core/test_channel_list
+  tests/core/test_channel_names
+  tests/core/test_check_files
+  tests/core/test_client_info
+  tests/core/test_error
+  tests/core/test_font
+  tests/core/test_front_api
+  tests/core/test_listen
+  tests/core/test_mainloop
+  tests/core/test_server
+  tests/core/test_server_notifier_api
+  tests/core/test_session
+  tests/core/test_session_server
+  tests/core/test_wait_obj
 ;
 alias tests/front :
   tests/front/test_front
@@ -4036,9 +4043,6 @@ alias tests/keyboard :
 alias tests/main :
   tests/main/test_do_recorder
   tests/main/test_scytale
-;
-alias tests/mod :
-  tests/mod/test_mod_api
 ;
 alias tests/mod/internal :
   tests/mod/internal/test_bouncer2_mod
@@ -4088,12 +4092,6 @@ alias tests/mod/internal/widget :
 alias tests/mod/null :
   tests/mod/null/test_null
 ;
-alias tests/mod/rdp :
-  tests/mod/rdp/test_rdp
-  tests/mod/rdp/test_rdp_log
-  tests/mod/rdp/test_rdp_orders
-  tests/mod/rdp/test_rdp_params
-;
 alias tests/mod/rdp/channels :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
@@ -4106,6 +4104,15 @@ alias tests/mod/rdp/channels :
   tests/mod/rdp/channels/test_sespro_clipboard_based_launcher
   tests/mod/rdp/channels/test_sespro_launcher
   tests/mod/rdp/channels/test_virtual_channel_data_sender
+;
+alias tests/mod/rdp :
+  tests/mod/rdp/test_rdp
+  tests/mod/rdp/test_rdp_log
+  tests/mod/rdp/test_rdp_orders
+  tests/mod/rdp/test_rdp_params
+;
+alias tests/mod :
+  tests/mod/test_mod_api
 ;
 alias tests/mod/vnc :
   tests/mod/vnc/test_vnc
@@ -4144,6 +4151,11 @@ alias tests/system/linux/system :
   tests/system/linux/system/test_ssl_sha256
   tests/system/linux/system/test_ssl_sha512
 ;
+alias tests :
+  tests/test_bitmap_perf
+  tests/test_libpng
+  tests/test_ssl
+;
 alias tests/transport :
   tests/transport/test_crypto_transport
   tests/transport/test_gzip_compression_transport
@@ -4155,6 +4167,44 @@ alias tests/transport :
   tests/transport/test_socket_transport
   tests/transport/test_test_transport
   tests/transport/test_transport
+;
+alias tests/utils/apps :
+  tests/utils/apps/test_app_proxy
+  tests/utils/apps/test_recording_progress
+;
+alias tests/utils/crypto :
+  tests/utils/crypto/test_ssl_aes_direct
+  tests/utils/crypto/test_ssl_lib
+  tests/utils/crypto/test_ssl_md4_direct
+  tests/utils/crypto/test_ssl_md5_direct
+  tests/utils/crypto/test_ssl_mod_exp_direct
+  tests/utils/crypto/test_ssl_rc4_direct
+  tests/utils/crypto/test_ssl_sha1_direct
+  tests/utils/crypto/test_ssl_sha256_direct
+  tests/utils/crypto/test_ssl_sha512_direct
+  tests/utils/crypto/test_ssl_sign
+;
+alias tests/utils/sugar/numerics :
+  tests/utils/sugar/numerics/test_safe_conversions
+;
+alias tests/utils/sugar :
+  tests/utils/sugar/test_algostring
+  tests/utils/sugar/test_array_view
+  tests/utils/sugar/test_buffer_t
+  tests/utils/sugar/test_byte
+  tests/utils/sugar/test_cast
+  tests/utils/sugar/test_exchange
+  tests/utils/sugar/test_finally
+  tests/utils/sugar/test_iter
+  tests/utils/sugar/test_make_unique
+  tests/utils/sugar/test_movable_noncopyable
+  tests/utils/sugar/test_noncopyable
+  tests/utils/sugar/test_range
+  tests/utils/sugar/test_splitter
+  tests/utils/sugar/test_strutils
+  tests/utils/sugar/test_underlying_cast
+  tests/utils/sugar/test_unique_fd
+  tests/utils/sugar/test_update_lock
 ;
 alias tests/utils :
   tests/utils/test_asynchronous_task_manager
@@ -4196,90 +4246,53 @@ alias tests/utils :
   tests/utils/test_utf
   tests/utils/test_word_identification
 ;
-alias tests/utils/apps :
-  tests/utils/apps/test_app_proxy
-  tests/utils/apps/test_recording_progress
-;
-alias tests/utils/crypto :
-  tests/utils/crypto/test_ssl_aes_direct
-  tests/utils/crypto/test_ssl_lib
-  tests/utils/crypto/test_ssl_md4_direct
-  tests/utils/crypto/test_ssl_md5_direct
-  tests/utils/crypto/test_ssl_rc4_direct
-  tests/utils/crypto/test_ssl_sha1_direct
-  tests/utils/crypto/test_ssl_sha256_direct
-  tests/utils/crypto/test_ssl_sha512_direct
-  tests/utils/crypto/test_ssl_sign
-;
-alias tests/utils/sugar :
-  tests/utils/sugar/test_algostring
-  tests/utils/sugar/test_array_view
-  tests/utils/sugar/test_buffer_t
-  tests/utils/sugar/test_byte
-  tests/utils/sugar/test_cast
-  tests/utils/sugar/test_exchange
-  tests/utils/sugar/test_finally
-  tests/utils/sugar/test_iter
-  tests/utils/sugar/test_make_unique
-  tests/utils/sugar/test_movable_noncopyable
-  tests/utils/sugar/test_noncopyable
-  tests/utils/sugar/test_range
-  tests/utils/sugar/test_splitter
-  tests/utils/sugar/test_strutils
-  tests/utils/sugar/test_underlying_cast
-  tests/utils/sugar/test_unique_fd
-  tests/utils/sugar/test_update_lock
-;
-alias tests/utils/sugar/numerics :
-  tests/utils/sugar/numerics/test_safe_conversions
-;
 alias tests/utils/winpr :
   tests/utils/winpr/test_pattern
 ;
 alias tests.full :
-  tests
   tests/acl
-  tests/capture
   tests/capture/ocr/locale
+  tests/capture
   tests/capture/utils
   tests/client_mods
-  tests/core
   tests/core/FSCC
-  tests/core/RDP
   tests/core/RDP/caches
   tests/core/RDP/capabilities
   tests/core/RDP/channels
   tests/core/RDP/gcc/userdata
   tests/core/RDP/mppc
-  tests/core/RDP/nla
   tests/core/RDP/nla/asn1
   tests/core/RDP/nla/kerberos
   tests/core/RDP/nla/ntlm
+  tests/core/RDP/nla
   tests/core/RDP/orders
+  tests/core/RDP
   tests/core/RDPEA
   tests/core/SMB2
   tests/core/WMF
+  tests/core
   tests/front
   tests/gdi
   tests/keyboard
   tests/main
-  tests/mod
   tests/mod/internal
   tests/mod/internal/widget
   tests/mod/null
-  tests/mod/rdp
   tests/mod/rdp/channels
+  tests/mod/rdp
+  tests/mod
   tests/mod/vnc
   tests/mod/xup
   tests/regex
   tests/sashimi
   tests/server
   tests/system/linux/system
+  tests
   tests/transport
-  tests/utils
   tests/utils/apps
   tests/utils/crypto
-  tests/utils/sugar
   tests/utils/sugar/numerics
+  tests/utils/sugar
+  tests/utils
   tests/utils/winpr
 ;

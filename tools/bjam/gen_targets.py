@@ -2,6 +2,7 @@
 
 import glob ;
 import os ;
+from collections import OrderedDict
 
 #project_root = '../..'
 project_root = '.'
@@ -17,6 +18,14 @@ includes = (
 
 disable_tests = (
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
+)
+
+disable_srcs = (
+    'src/system/linux/system/test_framework.cpp',
+    'src/utils/log_as_syslog.cpp',
+    'src/utils/log_as_logemasm.cpp',
+    'src/utils/log_as_logprint.cpp',
+    'src/utils/log_as_logtest.cpp',
 )
 
 src_requirements = dict((
@@ -126,8 +135,7 @@ def append_file(a, root, path, type):
         path = path[2:]
     root = root.replace('//', '/')
     path = path.replace('//', '/')
-    file = (path, File(root, path, type))
-    a.append(file)
+    a.append(File(root, path, type))
 
 def get_files(a, dirpath):
     for root, dirs, files in os.walk(project_root + '/' + dirpath):
@@ -167,15 +175,6 @@ get_files(sources, 'tests/includes/test_only')
 for path in glob.glob('src/main/*.hpp'):
     append_file(sources, 'src/main', path, 'H')
 
-sources.append((
-    'src/configs/config.hpp',
-    File(
-        'projects/redemption_configs/redemption_src',
-        'projects/redemption_configs/redemption_src/configs/config.hpp',
-        'H'
-    )
-))
-
 for path in glob.glob('src/main/*.cpp'):
     if path == 'src/main/redrec.cpp':
         continue
@@ -186,30 +185,43 @@ for path in glob.glob('src/main/*.cpp'):
 
 files_on_tests = []
 get_files(files_on_tests, 'tests')
-for t in files_on_tests:
-    f = t[1]
+for f in files_on_tests:
     if f.type == 'H' or start_with(f.path, 'tests/includes/'):
-        sources.append(t)
+        sources.append(f)
     elif not start_with(f.path, 'tests/system/common/') and not start_with(f.path, 'tests/system/emscripten/system/') and f.path != 'tests/test_meta_protocol2.cpp':
-        tests.append(t)
+        tests.append(f)
+
+sources = [f for f in sources if f not in disable_srcs]
+tests = [f for f in tests if f not in disable_tests]
+
+extra_srcs = (
+    ('src/configs/config.hpp', File(
+        'projects/redemption_configs/redemption_src',
+        'projects/redemption_configs/redemption_src/configs/config.hpp',
+        'H')
+    ),
+)
+
+for t in extra_srcs:
+    sources.append(t[1])
 
 #for k,f in tests:
     #print(k, f.root)
 
-sources = dict(sources)
-mains = dict(mains)
-libs = dict(libs)
-tests = dict(tests)
-for path in disable_tests:
-    tests.pop(path)
-sources.pop('src/system/linux/system/test_framework.cpp')
-sources.pop('src/utils/log_as_syslog.cpp')
-sources.pop('src/utils/log_as_logemasm.cpp')
-sources.pop('src/utils/log_as_logprint.cpp')
-sources.pop('src/utils/log_as_logtest.cpp')
-all_files = dict(tests, **sources)
-all_files.update(mains)
-all_files.update(libs)
+kpath = lambda f: f.path
+sources = sorted(sources, key=kpath)
+mains = sorted(mains, key=kpath)
+libs = sorted(libs, key=kpath)
+tests = sorted(tests, key=kpath)
+
+def tuple_files(l):
+    return [(f.path, f) for f in l]
+
+all_files = OrderedDict(tuple_files(tests))
+all_files.update(tuple_files(sources))
+all_files.update(tuple_files(mains))
+all_files.update(tuple_files(libs))
+all_files.update(extra_srcs)
 
 
 ###
@@ -366,8 +378,8 @@ def get_requirements(f):
         a.append(dir_requirements[f.root])
     return a
 
-def generate(type, dict, requirements, get_target_cb = get_target):
-    for name,f in dict:
+def generate(type, files, requirements, get_target_cb = get_target):
+    for f in files:
         src = f.path
         if type == 'lib':
             src += '.lib.o'
@@ -386,9 +398,6 @@ def generate(type, dict, requirements, get_target_cb = get_target):
                 print(' ', s)
         print(';')
 
-def dict_to_sorted_by_name(dict):
-    return sorted(dict.items(), key = lambda e: e[0])
-
 def inject_variable_prefix(path):
     if start_with(path, 'src/'):
         path = '$(REDEMPTION_SRC_PATH)' + path[3:]
@@ -396,20 +405,19 @@ def inject_variable_prefix(path):
         path = '$(REDEMPTION_TEST_PATH)' + path[5:]
     return path
 
-def generate_obj(dict):
-    for name,f in dict_to_sorted_by_name(dict):
+def generate_obj(files):
+    for f in files:
         if f.type == 'C' and f != app_path_cpp:
             print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
             if f.path in src_requirements:
                 print(' :', src_requirements[f.path], end='')
             print(' ;')
 
-generate('exe', dict_to_sorted_by_name(mains), '$(EXE_DEPENDENCIES)')
+generate('exe', mains, '$(EXE_DEPENDENCIES)')
 print()
 
-sorted_libs = dict_to_sorted_by_name(libs)
-generate('lib', sorted_libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
-for name, f in sorted_libs:
+generate('lib', libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
+for f in libs:
     print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
     if f.path in src_requirements:
         print(' ', src_requirements[f.path])
@@ -418,10 +426,11 @@ for name, f in sorted_libs:
     print(';')
 print()
 
-generate('make-test', dict_to_sorted_by_name(tests), '', unprefixed_file)
+generate('make-test', tests, '', unprefixed_file)
 print()
 
 generate_obj(sources)
+print()
 generate_obj(libs)
 print()
 
@@ -430,29 +439,26 @@ print()
 ###
 
 # alias by name
-test_targets = [(get_target(f), [0, f]) for name, f in tests.items()]
-test_targets_counter = dict(test_targets)
+test_targets = [(get_target(f), [0, f]) for f in tests]
+test_targets_counter = OrderedDict(test_targets)
 for t in test_targets:
     test_targets_counter[t[0]][0] += 1
 
-for k in sorted(test_targets_counter.keys()):
-    t = test_targets_counter[k]
+for k,t in test_targets_counter.items():
     if t[0] == 1:
         print('alias', k, ':', unprefixed_file(t[1]), ';')
 
 # alias by directory
-dir_tests = dict()
-for k,f in tests.items():
-    dir_tests.setdefault(f.root, [])
-    dir_tests[f.root].append(unprefixed_file(f))
+dir_tests = OrderedDict()
+for f in tests:
+    dir_tests.setdefault(f.root, []).append(unprefixed_file(f))
 
-sorted_tests = dict_to_sorted_by_name(dir_tests)
-for name,aliases in sorted_tests:
+for name,aliases in dir_tests.items():
     #print('explicit', name, ';')
-    print('alias ', name, ' :\n  ', '\n  '.join(sorted(aliases)), '\n;', sep='')
+    print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 #print('explicit tests.full ;')
 print('alias tests.full :')
-for name,aliases in sorted_tests:
+for name in dir_tests.keys():
     print(' ', name)
 print(';')
