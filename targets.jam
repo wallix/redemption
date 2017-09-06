@@ -93,7 +93,7 @@ exe rdpproxy :
   <library>swscale
   <library>z
 ;
-exe rdp_client :
+exe rdpclient :
   src/main/rdp_client.cpp 
 :
   $(EXE_DEPENDENCIES)
@@ -174,7 +174,7 @@ exe rdptanalyzer :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
 ;
-exe transparent :
+exe rdptproxy :
   src/main/transparent.cpp 
 :
   $(EXE_DEPENDENCIES)
@@ -256,7 +256,7 @@ exe transparent :
   <library>swscale
   <library>z
 ;
-exe vnc_client :
+exe vncclient :
   src/main/vnc_client.cpp 
 :
   $(EXE_DEPENDENCIES)

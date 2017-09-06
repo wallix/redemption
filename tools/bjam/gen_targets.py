@@ -41,12 +41,13 @@ target_pre_renames = dict((
 ))
 
 target_renames = dict((
+    ('main', 'rdpproxy'),
+    ('transparent', 'rdptproxy'),
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
     ('tanalyzer', 'rdptanalyzer'),
-    ('rdpclient', 'rdp_client'),
-    ('vncclient', 'vnc_client'),
-    ('main', 'rdpproxy'),
+    ('rdp_client', 'rdpclient'),
+    ('vnc_client', 'vncclient'),
 ))
 
 sys_lib_assoc = dict((

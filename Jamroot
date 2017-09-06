@@ -169,15 +169,13 @@ constant TEST_DEPENDENCIES :
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 
-# exe redrec
-# :
-#     $(REDEMPTION_SRC_PATH)/main/redrec.cpp
-#     libredrec
-# :
-#     $(EXE_DEPENDENCIES)
-#     #<library>log_print.o
-#     #<library>cfgloader.o
-# ;
+exe redrec
+:
+    $(REDEMPTION_SRC_PATH)/main/redrec.cpp
+    libredrec
+:
+    $(EXE_DEPENDENCIES)
+;
 
 
 exe display_learning
