@@ -22,7 +22,7 @@
 #pragma once
 
 #include "utils/stream.hpp"
-#include "capabilities/general.hpp"
+#include "core/RDP/capabilities/general.hpp"
 
 // 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
 // ------------------------------------------------

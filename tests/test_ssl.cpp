@@ -25,8 +25,6 @@
 #define RED_TEST_MODULE TestSsl
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "system/ssl_calls.hpp"
 #include <cstring>
 
@@ -55,6 +53,6 @@ RED_AUTO_TEST_CASE(TestRC4)
     }
     RC4(&rc4, sizeof(source) - cut, source + cut, target1 + cut);
 
-    RED_CHECK(0 == memcmp(target1, target, sizeof(target)));
+    RED_CHECK_MEM_AA(target1, target);
 }
 

@@ -1,0 +1,457 @@
+#!/usr/bin/python3 -O
+
+import glob ;
+import os ;
+
+#project_root = '../..'
+project_root = '.'
+
+includes = (
+    'src/',
+    'src/system/linux/',
+    'src/system/linux/system/',
+    'projects/redemption_configs/redemption_src/',
+    'src/capture/ocr/',
+    'tests/includes/',
+)
+
+disable_tests = (
+    'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
+)
+
+src_requirements = dict((
+    ('src/utils/bitmap_from_file.cpp', '<cxxflags>-std=c++14'),
+    ('src/utils/bitmap.cpp', '<cxxflags>-std=c++14'),
+    ('src/main/rdpheadless.cpp', '<cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
+))
+
+remove_requirements = dict((
+    ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
+))
+
+dir_requirements = dict((
+    ('src/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
+    ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
+))
+
+target_pre_renames = dict((
+    ('tests/core/RDP/test_pointer.cpp', 'test_rdp_pointer'),
+))
+
+target_renames = dict((
+    ('do_recorder', 'redrec'),
+    ('ini_checker', 'rdpinichecker'),
+    ('tanalyzer', 'rdptanalyzer'),
+    ('rdpclient', 'rdp_client'),
+    ('vncclient', 'vnc_client'),
+    ('main', 'rdpproxy'),
+))
+
+sys_lib_assoc = dict((
+    ('png.h', 'png'),
+    ('krb5.h', 'krb5'),
+    ('gssapi/gssapi.h', 'gssapi_krb5'),
+    ('snappy-c.h', 'snappy'),
+    ('zlib.h', 'z'),
+))
+sys_lib_prefix = (
+    ('libavutil/', 'avutil'),
+    ('libavcodec/', 'avcodec'),
+    ('libavformat/', 'avformat'),
+    ('libswscale/', 'swscale'),
+    ('openssl/', 'crypto'),
+)
+
+user_lib_assoc = dict((
+    ('program_options/program_options.hpp', 'program_options'),
+    ('openssl_crypto.hpp', 'crypto'),
+    ('openssl_tls.hpp', 'openssl'),
+))
+user_lib_prefix = (
+    ('ppocr/', 'ppocr'),
+)
+
+def get_system_lib(inc):
+    if inc in sys_lib_assoc:
+        return sys_lib_assoc[inc]
+
+    for t in sys_lib_prefix:
+        if start_with(inc, t[0]):
+            return t[1]
+
+    return None
+
+def get_user_lib(inc):
+    if inc in user_lib_assoc:
+        return user_lib_assoc[inc]
+
+    for t in user_lib_prefix:
+        if start_with(inc, t[0]):
+            return t[1]
+
+    return None
+
+
+class File:
+    def __init__(self, root, path, type):
+        self.root = root
+        self.path = path
+        self.type = type
+        #self.user_includes = set()
+        #self.unknown_user_includes = set()
+        #self.system_includes = set()
+        #self.source_deps = set()
+        #self.direct_source_deps = set()
+        #self.direct_lib_deps = set()
+        self.all_source_deps = None # then set()
+        self.all_lib_deps = None # then set()
+
+
+###
+### Get files
+###
+
+sources = []
+mains = []
+libs = []
+tests = []
+
+def append_file(a, root, path, type):
+    if root[:2] == './':
+        root = root[2:]
+    if path[:2] == './':
+        path = path[2:]
+    root = root.replace('//', '/')
+    path = path.replace('//', '/')
+    file = (path, File(root, path, type))
+    a.append(file)
+
+def get_files(a, dirpath):
+    for root, dirs, files in os.walk(project_root + '/' + dirpath):
+        for name in files:
+            if name[-4:] == '.hpp':
+                append_file(a, root, root+'/'+name, 'H')
+            elif name[-4:] == '.cpp':
+                append_file(a, root, root+'/'+name, 'C')
+            elif name[-2:] == '.h':
+                append_file(a, root, root+'/'+name, 'H')
+            elif name[-2:] == '.c':
+                append_file(a, root, root+'/'+name, 'C')
+            elif name[-3:] == '.hh':
+                append_file(a, root, root+'/'+name, 'H')
+            elif name[-3:] == '.cc':
+                append_file(a, root, root+'/'+name, 'C')
+
+def start_with(str, prefix):
+    return str[:len(prefix)] == prefix
+
+for d in (
+    "acl",
+    "capture",
+    "core",
+    "front",
+    "gdi",
+    "keyboard",
+    "mod",
+    "regex",
+    "sashimi",
+    "transport",
+    "utils"
+):
+    get_files(sources, 'src/'+d)
+get_files(sources, 'src/system/linux/system')
+get_files(sources, 'tests/includes/test_only')
+for path in glob.glob('src/main/*.hpp'):
+    append_file(sources, 'src/main', path, 'H')
+
+sources.append((
+    'src/configs/config.hpp',
+    File(
+        'projects/redemption_configs/redemption_src',
+        'projects/redemption_configs/redemption_src/configs/config.hpp',
+        'H'
+    )
+))
+
+for path in glob.glob('src/main/*.cpp'):
+    if path == 'src/main/redrec.cpp':
+        continue
+    a = mains
+    if path in ('src/main/scytale.cpp', 'src/main/do_recorder.cpp'):
+        a = libs
+    append_file(a, 'src/main', path, 'C')
+
+files_on_tests = []
+get_files(files_on_tests, 'tests')
+for t in files_on_tests:
+    f = t[1]
+    if f.type == 'H' or start_with(f.path, 'tests/includes/'):
+        sources.append(t)
+    elif not start_with(f.path, 'tests/system/common/') and not start_with(f.path, 'tests/system/emscripten/system/') and f.path != 'tests/test_meta_protocol2.cpp':
+        tests.append(t)
+
+#for k,f in tests:
+    #print(k, f.root)
+
+sources = dict(sources)
+mains = dict(mains)
+libs = dict(libs)
+tests = dict(tests)
+for path in disable_tests:
+    tests.pop(path)
+sources.pop('src/system/linux/system/test_framework.cpp')
+sources.pop('src/utils/log_as_syslog.cpp')
+sources.pop('src/utils/log_as_logemasm.cpp')
+sources.pop('src/utils/log_as_logprint.cpp')
+sources.pop('src/utils/log_as_logtest.cpp')
+all_files = dict(tests, **sources)
+all_files.update(mains)
+all_files.update(libs)
+
+
+###
+### Get user includes
+###
+
+def get_includes(path):
+    user_includes = []
+    system_includes = []
+    unknown_user_includes = []
+    with open(path) as f:
+        for line in f:
+            line = line.lstrip()
+            if len(line) and line[0] == '#':
+                line = line[1:].lstrip()
+                if line[:7] == 'include':
+                    line = line[7:].lstrip()
+                    if len(line) and line[0] == '"':
+                        inc = line[1:line.rfind('"')]
+                        found = False
+                        for dir_name in includes:
+                            file_name = dir_name+inc
+                            if file_name in all_files:
+                                user_includes.append(all_files[file_name])
+                                found = True
+                                break
+                        if not found:
+                            unknown_user_includes.append(inc)
+                    if len(line) and line[0] == '<':
+                        system_includes.append(line[1:line.rfind('>')])
+    return set(user_includes), set(system_includes), set(unknown_user_includes)
+
+for name, f in all_files.items():
+    f.user_includes, f.system_includes, f.unknown_user_includes = get_includes(f.path)
+
+#for name, f in sources.items():
+    #print(name, f.user_includes, f.system_includes, f.unknown_user_includes)
+
+
+###
+### Get deps (cpp, hpp, lib)
+###
+
+for name, f in all_files.items():
+    deps = []
+    for pf in f.user_includes:
+        cpp_name = pf.path[:-4]+'.cpp'
+        if cpp_name in all_files:
+            deps.append(all_files[cpp_name])
+        cpp_name = pf.path[:-4]+'.cc'
+        if cpp_name in all_files:
+            deps.append(all_files[cpp_name])
+    f.direct_source_deps = set(deps)
+
+    deps = []
+    for name in f.system_includes:
+        syslib = get_system_lib(name)
+        if syslib:
+            deps.append(syslib)
+    for name in f.unknown_user_includes:
+        syslib = get_user_lib(name)
+        if syslib:
+            deps.append(syslib)
+    for pf in f.user_includes:
+        syslib = get_user_lib(pf.path)
+        if syslib:
+            deps.append(syslib)
+    f.direct_lib_deps = set(deps)
+
+
+def compute_all_source_deps(f, empty_array = []):
+    if f.all_source_deps is None:
+        srcs = f.direct_source_deps
+        libs = f.direct_lib_deps
+        incs = f.user_includes
+        f.direct_source_deps = empty_array
+        f.direct_lib_deps = empty_array
+        f.user_includes = empty_array
+
+        all_source_deps = list(srcs)
+        all_lib_deps = list(libs)
+
+        for pf in srcs:
+            compute_all_source_deps(pf)
+            if pf.all_source_deps is not None:
+                all_source_deps += pf.all_source_deps
+                all_lib_deps += pf.all_lib_deps
+
+        for pf in incs:
+            compute_all_source_deps(pf)
+            if pf.all_source_deps is not None:
+                all_source_deps += pf.all_source_deps
+                all_lib_deps += pf.all_lib_deps
+
+        f.direct_source_deps = srcs
+        f.direct_lib_deps = libs
+        f.user_includes = incs
+
+        f.all_source_deps = set(all_source_deps)
+        f.all_lib_deps = set(all_lib_deps)
+
+
+for f in all_files.values():
+    compute_all_source_deps(f)
+
+
+###
+### Generate
+###
+
+print('# ')
+print('# DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN')
+print('# run `tools/bjam/gen_targets.py > targets.jam`')
+print('# ')
+
+def get_target(f):
+    if f.path in target_pre_renames:
+        return target_pre_renames[f.path]
+    iright = f.path.rfind('.')
+    ileft = f.path.rfind('/')
+    target = f.path[ileft+1:iright]
+    if target in target_renames:
+        target = target_renames[target]
+    return target
+
+def unprefixed_file(f):
+    return f.path[:f.path.rfind('.')]
+
+def cpp_to_obj(f):
+    return unprefixed_file(f)+'.o'
+
+app_path_cpp = all_files['src/core/app_path.cpp']
+#log_hpp = all_files['src/utils/log.hpp']
+
+def get_sources_deps(f, cat, exclude):
+    a = []
+    for pf in f.all_source_deps:
+        if pf == app_path_cpp:
+            if cat == 'make-test':
+                a.append('<library>app_path_test.o')
+            else:
+                a.append('<library>app_path_exe.o')
+        elif pf != exclude:
+            a.append('<library>'+cpp_to_obj(pf))
+    return a
+
+def get_requirements(f):
+    a = []
+    for name in f.all_lib_deps:
+        a.append('<library>'+name)
+    if f.path in src_requirements:
+        a.append(src_requirements[f.path])
+    if f.root in dir_requirements:
+        a.append(dir_requirements[f.root])
+    return a
+
+def generate(type, dict, requirements, get_target_cb = get_target):
+    for name,f in dict:
+        src = f.path
+        if type == 'lib':
+            src += '.lib.o'
+        print(type, get_target_cb(f), ':\n ', src, '\n:')
+        if requirements:
+            print(' ', requirements)
+        deps_libs = get_sources_deps(f, type, f)
+        deps_libs += get_requirements(f)
+        if f.path in remove_requirements:
+            l = remove_requirements[f.path]
+            for s in sorted(deps_libs):
+                if s not in l:
+                    print(' ', s)
+        else:
+            for s in sorted(deps_libs):
+                print(' ', s)
+        print(';')
+
+def dict_to_sorted_by_name(dict):
+    return sorted(dict.items(), key = lambda e: e[0])
+
+def inject_variable_prefix(path):
+    if start_with(path, 'src/'):
+        path = '$(REDEMPTION_SRC_PATH)' + path[3:]
+    elif start_with(path, 'tests/'):
+        path = '$(REDEMPTION_TEST_PATH)' + path[5:]
+    return path
+
+def generate_obj(dict):
+    for name,f in dict_to_sorted_by_name(dict):
+        if f.type == 'C' and f != app_path_cpp:
+            print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
+            if f.path in src_requirements:
+                print(' :', src_requirements[f.path], end='')
+            print(' ;')
+
+generate('exe', dict_to_sorted_by_name(mains), '$(EXE_DEPENDENCIES)')
+print()
+
+sorted_libs = dict_to_sorted_by_name(libs)
+generate('lib', sorted_libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
+for name, f in sorted_libs:
+    print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
+    if f.path in src_requirements:
+        print(' ', src_requirements[f.path])
+    if f.root in dir_requirements:
+        print(' ', dir_requirements[f.root])
+    print(';')
+print()
+
+generate('make-test', dict_to_sorted_by_name(tests), '', unprefixed_file)
+print()
+
+generate_obj(sources)
+generate_obj(libs)
+print()
+
+###
+### Test alias
+###
+
+# alias by name
+test_targets = [(get_target(f), [0, f]) for name, f in tests.items()]
+test_targets_counter = dict(test_targets)
+for t in test_targets:
+    test_targets_counter[t[0]][0] += 1
+
+for k in sorted(test_targets_counter.keys()):
+    t = test_targets_counter[k]
+    if t[0] == 1:
+        print('alias', k, ':', unprefixed_file(t[1]), ';')
+
+# alias by directory
+dir_tests = dict()
+for k,f in tests.items():
+    dir_tests.setdefault(f.root, [])
+    dir_tests[f.root].append(unprefixed_file(f))
+
+sorted_tests = dict_to_sorted_by_name(dir_tests)
+for name,aliases in sorted_tests:
+    #print('explicit', name, ';')
+    print('alias ', name, ' :\n  ', '\n  '.join(sorted(aliases)), '\n;', sep='')
+
+#print('explicit tests.full ;')
+print('alias tests.full :')
+for name,aliases in sorted_tests:
+    print(' ', name)
+print(';')

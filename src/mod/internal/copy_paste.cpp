@@ -24,7 +24,7 @@
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 #include "utils/stream.hpp"
-#include "widget/edit.hpp"
+#include "mod/internal/widget/edit.hpp"
 #include "core/channel_names.hpp"
 
 #include <utility>

@@ -31,6 +31,8 @@
 #include "utils/sugar/exchange.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
+#include "utils/cfgloader.hpp"
+#include "utils/fileutils.hpp" // file_exist
 
 #include <cstdint>
 #include <cassert>
@@ -96,8 +98,6 @@ namespace configs
 #include "configs/autogen/variables_configuration.hpp"
 
 #include "configs/autogen/enums_func_ini.hpp"
-
-#include "utils/fileutils.hpp" // file_exist
 
 class Inifile;
 

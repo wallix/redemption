@@ -73,7 +73,7 @@
 // field are arbitrary and MUST be ignored.
 
 #include "utils/colors.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPColCache {
 public:

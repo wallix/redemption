@@ -23,7 +23,7 @@
 
 #include "core/channel_names.hpp"
 #include "transport/transport.hpp"
-#include "transparentchunk.hpp"
+#include "capture/transparentchunk.hpp"
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
 

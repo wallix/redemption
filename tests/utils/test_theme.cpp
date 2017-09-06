@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestConfigPartialFile)
 {
     Theme          colors;
 
-    configuration_load(ThemeHolder(colors), app_path(AppPath::Cfg) + std::string("/themes/test_theme/theme.ini"));
+    configuration_load(ThemeHolder(colors), app_path_s(AppPath::Cfg) + "/themes/test_theme/theme.ini");
     RED_CHECK_EQUAL((DARK_BLUE_BIS),      colors.global.bgcolor);
     RED_CHECK_EQUAL((GREY),               colors.global.fgcolor);
     RED_CHECK_EQUAL((RED),                colors.global.separator_color);

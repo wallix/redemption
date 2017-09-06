@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "notify_api.hpp"
+#include "mod/internal/widget/notify_api.hpp"
 #include "utils/rect.hpp"
 #include "utils/colors.hpp"
 #include "core/callback.hpp"

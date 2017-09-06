@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "keylayout.hpp"
+#include "keyboard/keylayout.hpp"
 
 namespace x00010416 {    // Portuguese (Brazil) // Portuguese (Brazilian ABNT2)
 

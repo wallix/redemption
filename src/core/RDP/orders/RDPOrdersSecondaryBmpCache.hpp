@@ -27,7 +27,7 @@
 #include "utils/log.hpp"
 #include "utils/colors.hpp"
 #include "utils/bitmap.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 /* RDP bitmap cache (version 2) constants */
 enum {

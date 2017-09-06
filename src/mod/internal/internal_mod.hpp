@@ -21,7 +21,7 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "widget/screen.hpp"
+#include "mod/internal/widget/screen.hpp"
 
 class FrontAPI;
 

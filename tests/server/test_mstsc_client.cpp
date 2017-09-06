@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run();
 
     Inifile ini;
-    ini.set<cfg::font>(Font(app_path(AppPath::Share) + std::string("/sans-10.fv1")));
+    ini.set<cfg::font>(Font(app_path_s(AppPath::Share) + "/sans-10.fv1"));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);

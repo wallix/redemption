@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <string>
 #include <cinttypes>
 #include <inttypes.h>
 

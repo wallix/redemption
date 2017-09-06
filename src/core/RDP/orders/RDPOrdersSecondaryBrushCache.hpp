@@ -25,7 +25,7 @@
 #pragma once
 
 #include "utils/stream.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 // MS-RDPEGDI 2.2.2.2.1.2.7 Cache Brush (CACHE_BRUSH_ORDER)
 // ========================================================

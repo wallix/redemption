@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "common.hpp"
-#include "virchan.hpp"
+#include "core/RDP/capabilities/common.hpp"
+#include "core/RDP/capabilities/virchan.hpp"
 #include "utils/stream.hpp"
 
 // [MS-RDPERP] - 2.2.1.1.2 Window List Capability Set

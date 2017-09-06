@@ -22,7 +22,7 @@
 #pragma once
 
 #include "utils/ellipse.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================

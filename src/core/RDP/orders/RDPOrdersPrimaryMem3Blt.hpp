@@ -161,7 +161,7 @@
 //   TS_BITMAPCACHE_SCREEN_ID (0xFF), this field MUST contain the index of an
 //   entry in the Offscreen Bitmap Cache that contains the source bitmap.
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPMem3Blt {
     public:

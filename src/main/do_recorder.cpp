@@ -2087,7 +2087,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         configuration_load(ini.configuration_holder(), recorder.config_filename);
     }
     else {
-        recorder.config_filename = std::string(app_path(AppPath::CfgIni));
+        recorder.config_filename = app_path(AppPath::CfgIni);
     }
 
     if (options.count("quick") > 0) {

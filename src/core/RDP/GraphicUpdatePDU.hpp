@@ -25,11 +25,11 @@
 
 #include "utils/log.hpp"
 #include "utils/sugar/underlying_cast.hpp"
-#include "RDPSerializer.hpp"
-#include "gcc.hpp"
-#include "sec.hpp"
-#include "mcs.hpp"
-#include "x224.hpp"
+#include "core/RDP/RDPSerializer.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/x224.hpp"
 
 static inline void send_data_indication_ex( Transport & trans
                                           , int encryptionLevel, CryptContext & encrypt

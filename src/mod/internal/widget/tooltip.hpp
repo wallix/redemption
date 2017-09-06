@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "widget.hpp"
-#include "multiline.hpp"
+#include "mod/internal/widget/widget.hpp"
+#include "mod/internal/widget/multiline.hpp"
 
 class WidgetTooltip : public Widget
 {

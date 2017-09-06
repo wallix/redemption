@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include "utils/stream.hpp"
 
 // [MS-RDPERP] - 2.2.1.1.1 Remote Programs Capability Set

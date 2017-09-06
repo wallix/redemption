@@ -29,7 +29,8 @@
 #include "configs/config.hpp"
 #include "utils/netutils.hpp"
 #include "mod/mod_api.hpp"
-#include "auth_api.hpp"
+#include "acl/mm_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/rdp.hpp"
@@ -54,7 +55,6 @@
 #include "mod/internal/widget_test_mod.hpp"
 
 #include "gdi/protected_graphics.hpp"
-#include "mm_api.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
