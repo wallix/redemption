@@ -227,10 +227,16 @@ public:
     int                         _lindex;
     bool                        _running;
     bool is_pipe_ok;
-    timeval connection_time;
-    timeval start_session_time;
+    timeval start_connection_time;                          // when socket is connected
+    timeval start_wab_session_time;                         // when the first resize is received
+    timeval start_win_session_time;                         // when the first memblt is received
     std::string out_path;
+    bool secondary_connection_finished;
+    bool primary_connection_finished;
 
+    int keep_alive_freq;
+
+    int index;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,6 +267,10 @@ public:
     , _callback(nullptr)
     , _running(false)
     , is_pipe_ok(true)
+    , secondary_connection_finished(false)
+    , primary_connection_finished(false)
+    , keep_alive_freq(0)
+    , index(0)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -292,7 +302,7 @@ public:
                                               );
 
         this->_to_client_sender._channel = channel_cliprdr;
-        this->_cl.push_back(channel_cliprdr);
+//         this->_cl.push_back(channel_cliprdr);
 
         CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -300,7 +310,7 @@ public:
                                         GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                       , PDU_MAX_SIZE+1
                                       };
-        this->_cl.push_back(channel_rdpdr);
+//         this->_cl.push_back(channel_rdpdr);
 
         if (this->mod_bpp == this->_info.bpp) {
             this->mod_palette = BGRPalette::classic_332();
@@ -309,12 +319,37 @@ public:
 
     ~TestClientCLI() {}
 
+    void record_connection_nego_times() {
+        if (!this->secondary_connection_finished) {
+            this->secondary_connection_finished = true;
+
+            std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+            int prim_len = prim_duration.count() / 1000;
+            std::cout << "primary connection lenght = " << prim_len << " ms" <<  std::endl;
+
+            this->start_win_session_time = tvtime();
+            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+            int sec_len = sec_duration.count() / 1000;
+            std::cout << "secondary connection lenght = " << sec_len << " ms" << std::endl;
+
+            if (!this->out_path.empty()) {
+                std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
+                if (file_movie) {
+                    if (this->index !=  0) {
+                        file_movie << this->index << "\t" << prim_len << "\t" << sec_len << "\n";
+                    } else {
+                        file_movie << prim_len << "\t" << sec_len << "\n";
+                    }
+                }
+            }
+        }
+    }
+
     void disconnect() {
-        timeval now = tvtime();
-        std::chrono::microseconds duration = difftimeval(now, this->start_session_time);
+        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_wab_session_time);
 
         //     std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
-        std::cout << "movie_length = " << duration.count() / 1000 <<  std::endl;
+        std::cout << "movielength = " << duration.count() / 1000 <<  std::endl;
 
         if (!this->out_path.empty()) {
             std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
@@ -346,6 +381,10 @@ public:
         return this->_cl;
     }
 
+    void setIndex(int index) {
+        this->index = index;
+    }
+
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
             std::cout << "server >> update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
@@ -361,19 +400,12 @@ public:
         this->_info.width = width;
         this->_info.height = height;
 
-        this->start_session_time = tvtime();
+         if (!this->primary_connection_finished) {
+             this->primary_connection_finished = true;
 
-        std::chrono::microseconds duration = difftimeval(this->start_session_time, this->connection_time);
+             this->start_wab_session_time = tvtime();
 
-        //std::cout << "nego_lenght = " << duration.count() / 1000 <<  std::endl;
-
-        if (!this->out_path.empty()) {
-            std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
-            if (file_movie) {
-                file_movie << duration.count() / 1000 << "\n";
-            }
-        }
-
+         }
 
         return ResizeResult::done;
     }
@@ -712,6 +744,8 @@ public:
             std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
+
+        this->record_connection_nego_times();
     }
 
     virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -978,6 +1012,16 @@ public:
         }
     }
 
+    void send_key_to_keep_alive() {
+        if (this->keep_alive_freq) {
+            std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+
+            if ( ((duration.count() / 1000000) % this->keep_alive_freq) == 0) {
+                this->keyPressed(0x1e, 0);
+                this->keyReleased(0x1e, 0);
+            }
+        }
+    }
 
 };
 

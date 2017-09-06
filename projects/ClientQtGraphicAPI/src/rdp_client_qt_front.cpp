@@ -2211,6 +2211,8 @@ public:
                 }
                         break;
 
+
+                        
             case rdpdr::Component::RDPDR_CTYP_PRT:
             {
                 //hexdump_c(chunk_series.get_data(), chunk_size);
@@ -2285,7 +2287,6 @@ public:
                     {
                         rdpdr::DeviceIORequest deviceIORequest;
                         deviceIORequest.receive(chunk);
-
 
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -3302,8 +3303,6 @@ int main(int argc, char** argv){
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
     // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
-
-
 
     // ../packager/packager.py --version 1.0.0 --no-entry-changelog --build-package
 

@@ -476,6 +476,10 @@ int main(int argc, char** argv)
     bool script_on(false);
     std::string out_path;
 
+    int keep_alive_frequence = 100;
+    int index = 0;
+
+
     Inifile ini;
     ModRDPParams mod_rdp_params( ""
                                , ""
@@ -804,8 +808,16 @@ int main(int argc, char** argv)
         .action(cli::arg("path", [&](std::string s){ out_path = std::move(s); })),
 
         cli::option("vnc")
-        .help("Set timeout response before to disconnect in milisecond")
-        .action(cli::on_off_location(protocol_is_VNC))
+        .help("Set protocol to VNC (default protocol is RDP)")
+        .action(cli::on_off_location(protocol_is_VNC)),
+
+        cli::option("keep_alive_frequence")
+        .help("Set timeout to send keypress to keep the session alive")
+        .action(cli::arg([&](int t){ keep_alive_frequence = t; })),
+
+        cli::option("index")
+        .help("Set an index to identify this client among clients logs")
+        .action(cli::arg([&](int i){ index = i; }))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -913,6 +925,7 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
     TestClientCLI front(info, report_message, verbose);
     front.out_path = out_path;
+    front.index = index;
     int main_return = 40;
 
     if (input_connection_data_complete & TestClientCLI::IP) {
@@ -980,7 +993,7 @@ int main(int argc, char** argv)
         NullReportMessage reportMessage;
         Theme      theme;
 
-        front.connection_time = tvtime();
+        front.start_connection_time = tvtime();
         struct : NullReportMessage {
             void report(const char* reason, const char* /*message*/) override
             {
@@ -1281,9 +1294,10 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
             return err;
         }
 
-        // if (front.is_running()) {
-        //     al.emit();
-        // }
+        if (front.is_running()) {
+            front.send_key_to_keep_alive();
+//             al.emit();
+        }
     }
 
     return 0;

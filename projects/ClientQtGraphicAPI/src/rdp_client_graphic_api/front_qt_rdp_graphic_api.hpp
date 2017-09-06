@@ -52,11 +52,15 @@
 #include "configs/config.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "utils/netutils.hpp"
+#include "utils/genrandom.hpp"
+#include "keyboard/keymap2.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include "capture/flv_params_from_ini.hpp"
 #include "capture/capture.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
-
+#include "core/channel_list.hpp"
 
 #include "Qt4/Qt.hpp"
 
