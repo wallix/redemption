@@ -18,6 +18,7 @@ includes = (
 
 disable_tests = (
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
+    'src/system/linux/system/test_framework.cpp',
 )
 
 disable_srcs = (
@@ -67,10 +68,7 @@ sys_lib_assoc = dict((
     ('zlib.h', 'z'),
 ))
 sys_lib_prefix = (
-    ('libavutil/', 'avutil'),
-    ('libavcodec/', 'avcodec'),
-    ('libavformat/', 'avformat'),
-    ('libswscale/', 'swscale'),
+    ('libavformat/', 'ffmpeg'),
     ('openssl/', 'crypto'),
 )
 
@@ -185,14 +183,16 @@ for path in glob.glob('src/main/*.cpp'):
 
 files_on_tests = []
 get_files(files_on_tests, 'tests')
-for f in files_on_tests:
-    if f.type == 'H' or start_with(f.path, 'tests/includes/'):
-        sources.append(f)
-    elif not start_with(f.path, 'tests/system/common/') and not start_with(f.path, 'tests/system/emscripten/system/') and f.path != 'tests/test_meta_protocol2.cpp':
-        tests.append(f)
+tests = [f for f in files_on_tests \
+    if f.type != 'H' \
+    and not start_with(f.path, 'tests/includes/') \
+    and not start_with(f.path, 'tests/system/common/') \
+    and not start_with(f.path, 'tests/system/emscripten/system/') \
+    and f.path != 'tests/test_meta_protocol2.cpp' \
+    and f.path not in disable_tests
+]
 
-sources = [f for f in sources if f not in disable_srcs]
-tests = [f for f in tests if f not in disable_tests]
+sources = [f for f in sources if f.path not in disable_srcs]
 
 extra_srcs = (
     ('src/configs/config.hpp', File(

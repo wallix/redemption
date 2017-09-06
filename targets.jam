@@ -15,10 +15,8 @@ exe rdpproxy :
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -90,7 +88,6 @@ exe rdpproxy :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 exe rdpclient :
@@ -179,10 +176,8 @@ exe rdptproxy :
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -253,7 +248,6 @@ exe rdptproxy :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 exe vncclient :
@@ -261,10 +255,8 @@ exe vncclient :
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -335,7 +327,6 @@ exe vncclient :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 
@@ -344,10 +335,8 @@ lib libredrec :
 :
   $(LIB_DEPENDENCIES)
   <library>app_path_exe.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>png
   <library>ppocr
   <library>program_options
@@ -365,7 +354,6 @@ lib libredrec :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 lib libscytale :
@@ -394,10 +382,8 @@ make-test tests/acl/test_acl_serializer :
   tests/acl/test_acl_serializer.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -467,7 +453,6 @@ make-test tests/acl/test_acl_serializer :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/acl/test_auth_api :
@@ -478,10 +463,8 @@ make-test tests/acl/test_authentifier :
   tests/acl/test_authentifier.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -551,7 +534,6 @@ make-test tests/acl/test_authentifier :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/acl/test_mm_api :
@@ -562,10 +544,8 @@ make-test tests/acl/test_module_manager :
   tests/acl/test_module_manager.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -635,7 +615,6 @@ make-test tests/acl/test_module_manager :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/capture/ocr/locale/test_latin_to_cyrillic :
@@ -674,10 +653,8 @@ make-test tests/capture/test_capture :
   tests/capture/test_capture.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>png
   <library>ppocr
   <library>snappy
@@ -692,7 +669,6 @@ make-test tests/capture/test_capture :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/capture/test_cryptofile :
@@ -745,10 +721,8 @@ make-test tests/capture/test_transparentrecorder :
 make-test tests/capture/test_video_capture :
   tests/capture/test_video_capture.cpp 
 :
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>png
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -757,7 +731,6 @@ make-test tests/capture/test_video_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
 ;
 make-test tests/capture/test_wrm_capture :
   tests/capture/test_wrm_capture.cpp 
@@ -1546,10 +1519,8 @@ make-test tests/core/test_mainloop :
   tests/core/test_mainloop.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -1620,7 +1591,6 @@ make-test tests/core/test_mainloop :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/core/test_server :
@@ -1635,10 +1605,8 @@ make-test tests/core/test_session :
   tests/core/test_session.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -1708,17 +1676,14 @@ make-test tests/core/test_session :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/core/test_session_server :
   tests/core/test_session_server.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -1788,7 +1753,6 @@ make-test tests/core/test_session_server :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/core/test_wait_obj :
@@ -1799,10 +1763,8 @@ make-test tests/front/test_front :
   tests/front/test_front.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -1834,7 +1796,6 @@ make-test tests/front/test_front :
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/gdi/test_graphic_cmd_color :
@@ -1867,10 +1828,8 @@ make-test tests/main/test_do_recorder :
   tests/main/test_do_recorder.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>png
   <library>ppocr
   <library>program_options
@@ -1889,7 +1848,6 @@ make-test tests/main/test_do_recorder :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/main/test_scytale :
@@ -2835,10 +2793,8 @@ make-test tests/server/test_mstsc_client :
   tests/server/test_mstsc_client.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -2867,17 +2823,14 @@ make-test tests/server/test_mstsc_client :
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/server/test_mstsc_client_rdp50bulk :
   tests/server/test_mstsc_client_rdp50bulk.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -2906,17 +2859,14 @@ make-test tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/server/test_rdesktop_client :
   tests/server/test_rdesktop_client.cpp 
 :
   <library>app_path_test.o
-  <library>avcodec
-  <library>avformat
-  <library>avutil
   <library>crypto
+  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
@@ -2945,7 +2895,6 @@ make-test tests/server/test_rdesktop_client :
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
-  <library>swscale
   <library>z
 ;
 make-test tests/system/linux/system/test_openssl :
@@ -3113,10 +3062,6 @@ make-test tests/utils/crypto/test_ssl_md4_direct :
 ;
 make-test tests/utils/crypto/test_ssl_md5_direct :
   tests/utils/crypto/test_ssl_md5_direct.cpp 
-:
-;
-make-test tests/utils/crypto/test_ssl_mod_exp_direct :
-  tests/utils/crypto/test_ssl_mod_exp_direct.cpp 
 :
 ;
 make-test tests/utils/crypto/test_ssl_rc4_direct :
@@ -3472,7 +3417,6 @@ obj src/sashimi/libssh.o : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp ;
 obj src/sashimi/pki.o : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp ;
 obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp ;
 obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp ;
-obj src/system/linux/system/test_framework.o : $(REDEMPTION_SRC_PATH)/system/linux/system/test_framework.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
@@ -3483,13 +3427,8 @@ obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
-obj src/utils/log_as_logemasm.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
-obj src/utils/log_as_logprint.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
-obj src/utils/log_as_logtest.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
-obj src/utils/log_as_syslog.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
-obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
@@ -3764,7 +3703,6 @@ alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
 alias test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct ;
 alias test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct ;
-alias test_ssl_mod_exp_direct : tests/utils/crypto/test_ssl_mod_exp_direct ;
 alias test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct ;
 alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
 alias test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct ;
@@ -4177,7 +4115,6 @@ alias tests/utils/crypto :
   tests/utils/crypto/test_ssl_lib
   tests/utils/crypto/test_ssl_md4_direct
   tests/utils/crypto/test_ssl_md5_direct
-  tests/utils/crypto/test_ssl_mod_exp_direct
   tests/utils/crypto/test_ssl_rc4_direct
   tests/utils/crypto/test_ssl_sha1_direct
   tests/utils/crypto/test_ssl_sha256_direct
