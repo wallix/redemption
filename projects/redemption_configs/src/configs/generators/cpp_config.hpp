@@ -110,32 +110,32 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->out_ = &this->out_member_;
 
         apply_if_contains<desc>(infos, [this](auto desc){
-            this->tab();
-            this->out() << cpp_comment(desc.value, 0);
+            //this->tab();
+            this->out() << cpp_doxygen_comment(desc.value, 4);
         });
         if (bool(properties)) {
             this->tab();
-            this->out() << "// AUTHID_";
+            this->out() << "/// AUTHID_";
             std::string str = section_name;
             str += '_';
             str += varname;
             for (auto & c : str) {
                 c = char(std::toupper(c));
             }
-            this->out() << str << "\n";
+            this->out() << str << " <br/>\n";
             this->authids.emplace_back(str, pack_get<sesman::name>(infos));
         }
-        this->tab(); this->out() << "// type: "; this->inherit().write_type(type); this->out() << "\n";
+        this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
         if ((properties & sesman::io::rw) == sesman::io::sesman_to_proxy) {
-            this->tab(); this->out() << "// sesman -> proxy\n";
+            this->tab(); this->out() << "/// sesman -> proxy <br/>\n";
         }
         else if ((properties & sesman::io::rw) == sesman::io::proxy_to_sesman) {
-            this->tab(); this->out() << "// sesman <- proxy\n";
+            this->tab(); this->out() << "/// sesman <- proxy <br/>\n";
         }
         else if ((properties & sesman::io::rw) == sesman::io::rw) {
-            this->tab(); this->out() << "// sesman <-> proxy\n";
+            this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
-        this->tab(); this->out() << "// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << "\n";
+        this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";
         this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << bool(properties & sesman::io::proxy_to_sesman) << "; }\n";

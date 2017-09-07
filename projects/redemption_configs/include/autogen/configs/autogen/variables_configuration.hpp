@@ -3,10 +3,10 @@
 //
 
 namespace cfg {
-    // AUTHID_GLOBALS_CAPTURE_CHUNK
-    // type: bool
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_CAPTURE_CHUNK <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::capture_chunk {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -20,10 +20,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_AUTH_USER
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_GLOBALS_AUTH_USER <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct globals::auth_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -37,10 +37,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_HOST
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_GLOBALS_HOST <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct globals::host {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -54,10 +54,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct globals::target {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -71,10 +71,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET_DEVICE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET_DEVICE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::target_device {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -88,10 +88,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_DEVICE_ID
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_DEVICE_ID <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::device_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -105,10 +105,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_PRIMARY_USER_ID
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_PRIMARY_USER_ID <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::primary_user_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -122,10 +122,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET_USER
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET_USER <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct globals::target_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -139,10 +139,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET_APPLICATION
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET_APPLICATION <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::target_application {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -156,10 +156,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::target_application_account {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -173,10 +173,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::target_application_password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -190,9 +190,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Support of Bitmap Cache.
-    // type: bool
-    // value{1}
+    /// Support of Bitmap Cache. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::bitmap_cache {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -203,8 +203,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct globals::glyph_cache {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -215,8 +215,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: unsigned int
-    // value{3389}
+    /// type: unsigned int <br/>
+    /// value{3389} <br/>
     struct globals::port {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -227,8 +227,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct globals::nomouse {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -239,8 +239,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct globals::notimestamp {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -251,8 +251,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: Level
-    // value{static_cast<type>(0)}
+    /// type: Level <br/>
+    /// value{static_cast<type>(0)} <br/>
     struct globals::encryptionLevel {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -263,8 +263,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(0)};
     };
-    // type: std::string
-    // value = REDEMPTION_CONFIG_AUTHFILE
+    /// type: std::string <br/>
+    /// value = REDEMPTION_CONFIG_AUTHFILE <br/>
     struct globals::authfile {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -275,9 +275,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_AUTHFILE;
     };
-    // Time out during RDP handshake stage.
-    // type: std::chrono::seconds
-    // value{10}
+    /// Time out during RDP handshake stage. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{10} <br/>
     struct globals::handshake_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -288,9 +288,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{10};
     };
-    // No traffic auto disconnection.
-    // type: std::chrono::seconds
-    // value{900}
+    /// No traffic auto disconnection. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{900} <br/>
     struct globals::session_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -301,11 +301,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{900};
     };
-    // No traffic auto disconnection.
-    // AUTHID_GLOBALS_INACTIVITY_TIMEOUT
-    // type: std::chrono::seconds
-    // sesman -> proxy
-    // value{0}
+    /// No traffic auto disconnection. <br/>
+    /// AUTHID_GLOBALS_INACTIVITY_TIMEOUT <br/>
+    /// type: std::chrono::seconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct globals::inactivity_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -319,9 +319,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Keepalive.
-    // type: std::chrono::seconds
-    // value{30}
+    /// Keepalive. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{30} <br/>
     struct globals::keepalive_grace_delay {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -332,9 +332,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{30};
     };
-    // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
-    // type: std::chrono::seconds
-    // value{120}
+    /// Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate). <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{120} <br/>
     struct globals::authentication_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -345,9 +345,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{120};
     };
-    // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-    // type: std::chrono::seconds
-    // value{600}
+    /// Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate). <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{600} <br/>
     struct globals::close_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -358,10 +358,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    // AUTHID_GLOBALS_TRACE_TYPE
-    // type: TraceType
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// AUTHID_GLOBALS_TRACE_TYPE <br/>
+    /// type: TraceType <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct globals::trace_type {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -375,8 +375,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // type: std::string
-    // value = "0.0.0.0"
+    /// type: std::string <br/>
+    /// value = "0.0.0.0" <br/>
     struct globals::listen_address {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -387,9 +387,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "0.0.0.0";
     };
-    // Allow Transparent mode.
-    // type: bool
-    // value{0}
+    /// Allow Transparent mode. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct globals::enable_transparent_mode {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -400,9 +400,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Proxy certificate password.
-    // type: char[255]
-    // value = "inquisition"
+    /// Proxy certificate password. <br/>
+    /// type: char[255] <br/>
+    /// value = "inquisition" <br/>
     struct globals::certificate_password {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -413,8 +413,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "inquisition";
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::Png)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::Png) <br/>
     struct globals::png_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -425,8 +425,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Png);
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::Wrm)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::Wrm) <br/>
     struct globals::wrm_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -437,10 +437,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Wrm);
     };
-    // AUTHID_GLOBALS_IS_REC
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_GLOBALS_IS_REC <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct globals::is_rec {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -454,10 +454,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_GLOBALS_MOVIE_PATH
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_GLOBALS_MOVIE_PATH <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct globals::movie_path {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -471,9 +471,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Support of Bitmap Update.
-    // type: bool
-    // value{1}
+    /// Support of Bitmap Update. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::enable_bitmap_update {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -484,9 +484,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Show close screen.
-    // type: bool
-    // value{1}
+    /// Show close screen. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::enable_close_box {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -497,8 +497,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::enable_osd {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -509,8 +509,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::enable_osd_display_remote_target {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -521,8 +521,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::Persistent)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::Persistent) <br/>
     struct globals::persistent_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -533,8 +533,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Persistent);
     };
-    // type: bool
-    // value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION
+    /// type: bool <br/>
+    /// value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION <br/>
     struct globals::enable_wab_integration {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -545,8 +545,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION;
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct globals::allow_using_multiple_monitors {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -557,9 +557,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Needed to refresh screen of Windows Server 2012.
-    // type: bool
-    // value{1}
+    /// Needed to refresh screen of Windows Server 2012. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::bogus_refresh_rect {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -570,8 +570,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: std::string
-    // value = "flv"
+    /// type: std::string <br/>
+    /// value = "flv" <br/>
     struct globals::codec_id {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -582,8 +582,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "flv";
     };
-    // type: Level
-    // value{static_cast<type>(2)}
+    /// type: Level <br/>
+    /// value{static_cast<type>(2)} <br/>
     struct globals::video_quality {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -594,8 +594,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(2)};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct globals::large_pointer_support {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -606,10 +606,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_GLOBALS_UNICODE_KEYBOARD_EVENT_SUPPORT
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_GLOBALS_UNICODE_KEYBOARD_EVENT_SUPPORT <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct globals::unicode_keyboard_event_support {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -624,8 +624,8 @@ namespace cfg {
         type value{0};
     };
 
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct session_log::enable_session_log {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -636,11 +636,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Log redirection in a file
-    // AUTHID_SESSION_LOG_SESSION_LOG_REDIRECTION
-    // type: bool
-    // sesman <- proxy
-    // value{1}
+    /// Log redirection in a file <br/>
+    /// AUTHID_SESSION_LOG_SESSION_LOG_REDIRECTION <br/>
+    /// type: bool <br/>
+    /// sesman <- proxy <br/>
+    /// value{1} <br/>
     struct session_log::session_log_redirection {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -654,10 +654,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_SESSION_LOG_LOG_PATH
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_SESSION_LOG_LOG_PATH <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct session_log::log_path {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -671,8 +671,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: KeyboardInputMaskingLevel
-    // value{static_cast<type>(3)}
+    /// type: KeyboardInputMaskingLevel <br/>
+    /// value{static_cast<type>(3)} <br/>
     struct session_log::keyboard_input_masking_level {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -683,8 +683,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(3)};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct session_log::hide_non_printable_kbd_input {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -696,10 +696,10 @@ namespace cfg {
         type value{0};
     };
 
-    // AUTHID_CLIENT_KEYBOARD_LAYOUT
-    // type: unsigned int
-    // sesman <- proxy
-    // value{0}
+    /// AUTHID_CLIENT_KEYBOARD_LAYOUT <br/>
+    /// type: unsigned int <br/>
+    /// sesman <- proxy <br/>
+    /// value{0} <br/>
     struct client::keyboard_layout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -713,9 +713,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
-    // type: std::string
-    // value = "en-US, fr-FR, de-DE, ru-RU"
+    /// cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic <br/>
+    /// type: std::string <br/>
+    /// value = "en-US, fr-FR, de-DE, ru-RU" <br/>
     struct client::keyboard_layout_proposals {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -726,9 +726,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "en-US, fr-FR, de-DE, ru-RU";
     };
-    // If true, ignore password provided by RDP client, user need do login manually.
-    // type: bool
-    // value{0}
+    /// If true, ignore password provided by RDP client, user need do login manually. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::ignore_logon_password {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -739,9 +739,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Enable font smoothing (0x80).
-    // type: uint32_t
-    // value{128}
+    /// Enable font smoothing (0x80). <br/>
+    /// type: uint32_t <br/>
+    /// value{128} <br/>
     struct client::performance_flags_default {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -752,10 +752,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{128};
     };
-    // Disable theme (0x8).
-// Disable mouse cursor shadows (0x20).
-    // type: uint32_t
-    // value{40}
+    /// Disable theme (0x8). <br/>
+    /// Disable mouse cursor shadows (0x20). <br/>
+    /// type: uint32_t <br/>
+    /// value{40} <br/>
     struct client::performance_flags_force_present {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -766,8 +766,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{40};
     };
-    // type: uint32_t
-    // value{0}
+    /// type: uint32_t <br/>
+    /// value{0} <br/>
     struct client::performance_flags_force_not_present {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -778,9 +778,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // If enabled, avoid automatically font smoothing in recorded session.
-    // type: bool
-    // value{1}
+    /// If enabled, avoid automatically font smoothing in recorded session. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::auto_adjust_performance_flags {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -791,9 +791,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Fallback to RDP Legacy Encryption if client does not support TLS.
-    // type: bool
-    // value{0}
+    /// Fallback to RDP Legacy Encryption if client does not support TLS. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::tls_fallback_legacy {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -804,8 +804,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::tls_support {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -816,9 +816,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Needed to connect with jrdp, based on bogus X224 layer code.
-    // type: bool
-    // value{0}
+    /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::bogus_neg_request {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -829,9 +829,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
-    // type: bool
-    // value{1}
+    /// Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::bogus_user_id {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -842,11 +842,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
-    // AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
+    /// AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct client::disable_tsk_switch_shortcuts {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -860,8 +860,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: RdpCompression
-    // value{static_cast<type>(4)}
+    /// type: RdpCompression <br/>
+    /// value{static_cast<type>(4)} <br/>
     struct client::rdp_compression {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -872,8 +872,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(4)};
     };
-    // type: ColorDepth
-    // value{static_cast<type>(24)}
+    /// type: ColorDepth <br/>
+    /// value{static_cast<type>(24)} <br/>
     struct client::max_color_depth {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -884,9 +884,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(24)};
     };
-    // Persistent Disk Bitmap Cache on the front side.
-    // type: bool
-    // value{1}
+    /// Persistent Disk Bitmap Cache on the front side. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::persistent_disk_bitmap_cache {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -897,9 +897,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
-    // type: bool
-    // value{0}
+    /// Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::cache_waiting_list {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -910,9 +910,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
-    // type: bool
-    // value{0}
+    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::persist_bitmap_cache_on_disk {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -923,9 +923,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Support of Bitmap Compression.
-    // type: bool
-    // value{1}
+    /// Support of Bitmap Compression. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::bitmap_compression {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -936,9 +936,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Enables support of Clent Fast-Path Input Event PDUs.
-    // type: bool
-    // value{1}
+    /// Enables support of Clent Fast-Path Input Event PDUs. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::fast_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -949,8 +949,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::enable_suppress_output {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -961,10 +961,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // [Not configured]: Compatible with more RDP clients (less secure)
-// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)
-    // type: std::string
-    // value{}
+    /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
+    /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure) <br/>
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct client::ssl_cipher_list {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -975,8 +975,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::show_target_user_in_f12_message {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -987,8 +987,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct client::enable_new_pointer_update {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -999,8 +999,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct client::bogus_ios_glyph_support_level {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1011,8 +1011,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: BogusNumberOfFastpathInputEvent
-    // value{static_cast<type>(1)}
+    /// type: BogusNumberOfFastpathInputEvent <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct client::bogus_number_of_fastpath_input_event {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1024,8 +1024,8 @@ namespace cfg {
         type value{static_cast<type>(1)};
     };
 
-    // type: RdpCompression
-    // value{static_cast<type>(4)}
+    /// type: RdpCompression <br/>
+    /// value{static_cast<type>(4)} <br/>
     struct mod_rdp::rdp_compression {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1036,8 +1036,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(4)};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::disconnect_on_logon_user_change {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1048,8 +1048,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: std::chrono::seconds
-    // value{0}
+    /// type: std::chrono::seconds <br/>
+    /// value{0} <br/>
     struct mod_rdp::open_session_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1060,14 +1060,14 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Enables support of additional drawing orders:
-//   15: MultiDstBlt
-//   16: MultiPatBlt
-//   17: MultiScrBlt
-//   18: MultiOpaqueRect
-//   22: Polyline
-    // type: std::string
-    // value = "15,16,17,18,22"
+    /// Enables support of additional drawing orders: <br/>
+    ///   15: MultiDstBlt <br/>
+    ///   16: MultiPatBlt <br/>
+    ///   17: MultiScrBlt <br/>
+    ///   18: MultiOpaqueRect <br/>
+    ///   22: Polyline <br/>
+    /// type: std::string <br/>
+    /// value = "15,16,17,18,22" <br/>
     struct mod_rdp::extra_orders {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1078,9 +1078,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "15,16,17,18,22";
     };
-    // NLA authentication in secondary target.
-    // type: bool
-    // value{1}
+    /// NLA authentication in secondary target. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct mod_rdp::enable_nla {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1091,10 +1091,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // If enabled, NLA authentication will try Kerberos before NTLM.
-// (if enable_nla is disabled, this value is ignored).
-    // type: bool
-    // value{0}
+    /// If enabled, NLA authentication will try Kerberos before NTLM. <br/>
+    /// (if enable_nla is disabled, this value is ignored). <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::enable_kerberos {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1105,9 +1105,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Persistent Disk Bitmap Cache on the mod side.
-    // type: bool
-    // value{1}
+    /// Persistent Disk Bitmap Cache on the mod side. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct mod_rdp::persistent_disk_bitmap_cache {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1118,9 +1118,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
-    // type: bool
-    // value{1}
+    /// Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled). <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct mod_rdp::cache_waiting_list {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1131,9 +1131,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
-    // type: bool
-    // value{0}
+    /// If enabled, the contents of Persistent Bitmap Caches are stored on disk. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::persist_bitmap_cache_on_disk {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1144,9 +1144,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
-    // type: std::string
-    // value = "*"
+    /// Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority. <br/>
+    /// type: std::string <br/>
+    /// value = "*" <br/>
     struct mod_rdp::allow_channels {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1157,9 +1157,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "*";
     };
-    // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
-    // type: std::string
-    // value{}
+    /// Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority. <br/>
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct mod_rdp::deny_channels {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1170,9 +1170,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Enables support of Server Fast-Path Update PDUs.
-    // type: bool
-    // value{1}
+    /// Enables support of Server Fast-Path Update PDUs. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct mod_rdp::fast_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1183,9 +1183,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Enables Server Redirection Support.
-    // type: bool
-    // value{0}
+    /// Enables Server Redirection Support. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::server_redirection_support {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1196,8 +1196,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: RedirectionInfo
-    // value{}
+    /// type: RedirectionInfo <br/>
+    /// value{} <br/>
     struct mod_rdp::redir_info {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1207,10 +1207,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_MOD_RDP_LOAD_BALANCE_INFO
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_MOD_RDP_LOAD_BALANCE_INFO <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_rdp::load_balance_info {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1224,11 +1224,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
-    // AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
+    /// AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::bogus_sc_net_size {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1242,8 +1242,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // type: BogusLinuxCursor
-    // value{static_cast<type>(2)}
+    /// type: BogusLinuxCursor <br/>
+    /// value{static_cast<type>(2)} <br/>
     struct mod_rdp::bogus_linux_cursor {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1254,10 +1254,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(2)};
     };
-    // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_rdp::proxy_managed_drives {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1271,10 +1271,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::ignore_auth_channel {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1288,9 +1288,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
-    // type: char[8]
-    // value = "*"
+    /// Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel. <br/>
+    /// type: char[8] <br/>
+    /// value = "*" <br/>
     struct mod_rdp::auth_channel {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1301,10 +1301,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "*";
     };
-    // AUTHID_MOD_RDP_ALTERNATE_SHELL
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_MOD_RDP_ALTERNATE_SHELL <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_rdp::alternate_shell {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1318,10 +1318,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_MOD_RDP_SHELL_ARGUMENTS
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_MOD_RDP_SHELL_ARGUMENTS <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_rdp::shell_arguments {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1335,10 +1335,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_rdp::shell_working_directory {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1352,10 +1352,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::use_client_provided_alternate_shell {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1369,10 +1369,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::use_client_provided_remoteapp {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1386,10 +1386,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::use_native_remoteapp_capability {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1403,10 +1403,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_MOD_RDP_ENABLE_SESSION_PROBE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::enable_session_probe {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1420,12 +1420,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // Minimum supported server : Windows Server 2008.
-// Clipboard redirection should be remain enabled on Terminal Server.
-    // AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// Minimum supported server : Windows Server 2008. <br/>
+    /// Clipboard redirection should be remain enabled on Terminal Server. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::session_probe_use_clipboard_based_launcher {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1439,10 +1439,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::session_probe_enable_launch_mask {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1456,10 +1456,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
-    // type: SessionProbeOnLaunchFailure
-    // sesman -> proxy
-    // value{static_cast<type>(2)}
+    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE <br/>
+    /// type: SessionProbeOnLaunchFailure <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(2)} <br/>
     struct mod_rdp::session_probe_on_launch_failure {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1473,12 +1473,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(2)};
     };
-    // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-// 0 to disable timeout.
-    // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{20000}
+    /// This parameter is used if session_probe_on_launch_failure is 1 (disconnect user). <br/>
+    /// 0 to disable timeout. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{20000} <br/>
     struct mod_rdp::session_probe_launch_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1492,12 +1492,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{20000};
     };
-    // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-// 0 to disable timeout.
-    // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{7000}
+    /// This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
+    /// 0 to disable timeout. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{7000} <br/>
     struct mod_rdp::session_probe_launch_fallback_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1511,11 +1511,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{7000};
     };
-    // Minimum supported server : Windows Server 2008.
-    // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// Minimum supported server : Windows Server 2008. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1529,10 +1529,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{5000}
+    /// AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{5000} <br/>
     struct mod_rdp::session_probe_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1546,10 +1546,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5000};
     };
-    // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::session_probe_on_keepalive_timeout_disconnect_user {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1563,11 +1563,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // End automatically a disconnected session
-    // AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// End automatically a disconnected session <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_end_disconnected_session {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1581,8 +1581,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_customize_executable_name {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1593,10 +1593,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_enable_log {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1610,12 +1610,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // This policy setting allows you to configure a time limit for disconnected application sessions.
-// 0 to disable timeout.
-    // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{0}
+    /// This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
+    /// 0 to disable timeout. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_disconnected_application_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1629,12 +1629,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
-// 0 to disable timeout.
-    // AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{0}
+    /// This policy setting allows you to configure a time limit for disconnected Terminal Services sessions. <br/>
+    /// 0 to disable timeout. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_disconnected_session_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1648,12 +1648,12 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
-// 0 to disable timeout.
-    // AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT
-    // type: std::chrono::milliseconds
-    // sesman -> proxy
-    // value{0}
+    /// This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
+    /// 0 to disable timeout. <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct mod_rdp::session_probe_idle_session_limit {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1667,8 +1667,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: char[512]
-    // value = "||CMD"
+    /// type: char[512] <br/>
+    /// value = "||CMD" <br/>
     struct mod_rdp::session_probe_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1679,8 +1679,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "||CMD";
     };
-    // type: char[512]
-    // value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS
+    /// type: char[512] <br/>
+    /// value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS <br/>
     struct mod_rdp::session_probe_arguments {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1691,11 +1691,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS;
     };
-    // Keep known server certificates on WAB
-    // AUTHID_MOD_RDP_SERVER_CERT_STORE
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// Keep known server certificates on WAB <br/>
+    /// AUTHID_MOD_RDP_SERVER_CERT_STORE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct mod_rdp::server_cert_store {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1709,10 +1709,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_MOD_RDP_SERVER_CERT_CHECK
-    // type: ServerCertCheck
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// AUTHID_MOD_RDP_SERVER_CERT_CHECK <br/>
+    /// type: ServerCertCheck <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_cert_check {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1726,11 +1726,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Warn if check allow connexion to server.
-    // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
-    // type: ServerNotification
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// Warn if check allow connexion to server. <br/>
+    /// AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE <br/>
+    /// type: ServerNotification <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_access_allowed_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1744,11 +1744,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Warn that new server certificate file was created.
-    // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
-    // type: ServerNotification
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// Warn that new server certificate file was created. <br/>
+    /// AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE <br/>
+    /// type: ServerNotification <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_cert_create_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1762,11 +1762,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Warn that server certificate file was successfully checked.
-    // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
-    // type: ServerNotification
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// Warn that server certificate file was successfully checked. <br/>
+    /// AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE <br/>
+    /// type: ServerNotification <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_cert_success_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1780,11 +1780,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Warn that server certificate file checking failed.
-    // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
-    // type: ServerNotification
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// Warn that server certificate file checking failed. <br/>
+    /// AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE <br/>
+    /// type: ServerNotification <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_cert_failure_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1798,11 +1798,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Warn that server certificate check raised some internal error.
-    // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
-    // type: ServerNotification
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// Warn that server certificate check raised some internal error. <br/>
+    /// AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE <br/>
+    /// type: ServerNotification <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::server_cert_error_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1816,9 +1816,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Do not transmit client machine name or RDP server.
-    // type: bool
-    // value{0}
+    /// Do not transmit client machine name or RDP server. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::hide_client_name {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1829,8 +1829,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_rdp::clean_up_32_bpp_cursor {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1841,8 +1841,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct mod_rdp::bogus_ios_rdpdr_virtual_channel {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1854,11 +1854,11 @@ namespace cfg {
         type value{1};
     };
 
-    // Enable or disable the clipboard from client (client to server).
-    // AUTHID_MOD_VNC_CLIPBOARD_UP
-    // type: bool
-    // sesman -> proxy
-    // value{}
+    /// Enable or disable the clipboard from client (client to server). <br/>
+    /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_vnc::clipboard_up {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1872,11 +1872,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Enable or disable the clipboard from server (server to client).
-    // AUTHID_MOD_VNC_CLIPBOARD_DOWN
-    // type: bool
-    // sesman -> proxy
-    // value{}
+    /// Enable or disable the clipboard from server (server to client). <br/>
+    /// AUTHID_MOD_VNC_CLIPBOARD_DOWN <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct mod_vnc::clipboard_down {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1890,14 +1890,14 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // Sets the encoding types in which pixel data can be sent by the VNC server:
-//   0: Raw
-//   1: CopyRect
-//   2: RRE
-//   16: ZRLE
-//   -239 (0xFFFFFF11): Cursor pseudo-encoding
-    // type: std::string
-    // value{}
+    /// Sets the encoding types in which pixel data can be sent by the VNC server: <br/>
+    ///   0: Raw <br/>
+    ///   1: CopyRect <br/>
+    ///   2: RRE <br/>
+    ///   16: ZRLE <br/>
+    ///   -239 (0xFFFFFF11): Cursor pseudo-encoding <br/>
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct mod_vnc::encodings {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1908,8 +1908,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_vnc::allow_authentification_retries {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1920,11 +1920,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // VNC server clipboard data encoding type.
-    // AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
-    // type: ClipboardEncodingType
-    // sesman -> proxy
-    // value{static_cast<type>(1)}
+    /// VNC server clipboard data encoding type. <br/>
+    /// AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE <br/>
+    /// type: ClipboardEncodingType <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_vnc::server_clipboard_encoding_type {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1938,10 +1938,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
-    // type: VncBogusClipboardInfiniteLoop
-    // sesman -> proxy
-    // value{static_cast<type>(0)}
+    /// AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP <br/>
+    /// type: VncBogusClipboardInfiniteLoop <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(0)} <br/>
     struct mod_vnc::bogus_clipboard_infinite_loop {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1956,9 +1956,9 @@ namespace cfg {
         type value{static_cast<type>(0)};
     };
 
-    // 0 - Wait for Escape, 1 - End session
-    // type: bool
-    // value{0}
+    /// 0 - Wait for Escape, 1 - End session <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct mod_replay::on_end_of_data {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1970,8 +1970,8 @@ namespace cfg {
         type value{0};
     };
 
-    // type: OcrVersion
-    // value{static_cast<type>(2)}
+    /// type: OcrVersion <br/>
+    /// value{static_cast<type>(2)} <br/>
     struct ocr::version {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1982,8 +1982,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(2)};
     };
-    // type: OcrLocale
-    // value{static_cast<type>(0)}
+    /// type: OcrLocale <br/>
+    /// value{static_cast<type>(0)} <br/>
     struct ocr::locale {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1994,8 +1994,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(0)};
     };
-    // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
-    // value{100}
+    /// type: std::chrono::duration<unsigned int, std::ratio<1, 100>> <br/>
+    /// value{100} <br/>
     struct ocr::interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2006,8 +2006,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{100};
     };
-    // type: bool
-    // value{1}
+    /// type: bool <br/>
+    /// value{1} <br/>
     struct ocr::on_title_bar_only {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2018,11 +2018,11 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // Expressed in percentage,
-//   0   - all of characters need be recognized
-//   100 - accept all results
-    // type: unsigned int
-    // value{40}
+    /// Expressed in percentage, <br/>
+    ///   0   - all of characters need be recognized <br/>
+    ///   100 - accept all results <br/>
+    /// type: unsigned int <br/>
+    /// value{40} <br/>
     struct ocr::max_unrecog_char_rate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2034,8 +2034,8 @@ namespace cfg {
         type value{40};
     };
 
-    // type: unsigned int
-    // value{33}
+    /// type: unsigned int <br/>
+    /// value{33} <br/>
     struct video::capture_groupid {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2046,8 +2046,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{33};
     };
-    // type: CaptureFlags
-    // value{static_cast<type>(3)}
+    /// type: CaptureFlags <br/>
+    /// value{static_cast<type>(3)} <br/>
     struct video::capture_flags {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2058,9 +2058,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(3)};
     };
-    // Frame interval.
-    // type: std::chrono::duration<unsigned int, std::ratio<1, 10>>
-    // value{10}
+    /// Frame interval. <br/>
+    /// type: std::chrono::duration<unsigned int, std::ratio<1, 10>> <br/>
+    /// value{10} <br/>
     struct video::png_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2071,9 +2071,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{10};
     };
-    // Frame interval.
-    // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
-    // value{40}
+    /// Frame interval. <br/>
+    /// type: std::chrono::duration<unsigned int, std::ratio<1, 100>> <br/>
+    /// value{40} <br/>
     struct video::frame_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2084,9 +2084,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{40};
     };
-    // Time between 2 wrm movies.
-    // type: std::chrono::seconds
-    // value{600}
+    /// Time between 2 wrm movies. <br/>
+    /// type: std::chrono::seconds <br/>
+    /// value{600} <br/>
     struct video::break_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2097,9 +2097,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    // Number of png captures to keep.
-    // type: unsigned int
-    // value{5}
+    /// Number of png captures to keep. <br/>
+    /// type: unsigned int <br/>
+    /// value{5} <br/>
     struct video::png_limit {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2110,8 +2110,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    // type: ::configs::spec_types::directory_path
-    // value = "/tmp/"
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = "/tmp/" <br/>
     struct video::replay_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2122,8 +2122,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "/tmp/";
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::Hash)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::Hash) <br/>
     struct video::hash_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2134,8 +2134,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Hash);
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::RecordTmp)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::RecordTmp) <br/>
     struct video::record_tmp_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2146,8 +2146,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::RecordTmp);
     };
-    // type: ::configs::spec_types::directory_path
-    // value = app_path(AppPath::Record)
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value = app_path(AppPath::Record) <br/>
     struct video::record_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2158,8 +2158,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Record);
     };
-    // type: std::chrono::seconds
-    // value{300}
+    /// type: std::chrono::seconds <br/>
+    /// value{300} <br/>
     struct video::inactivity_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2169,9 +2169,9 @@ namespace cfg {
         using mapped_type = type;
         type value{300};
     };
-    // Disable keyboard log:
-    // type: KeyboardLogFlags
-    // value{static_cast<type>(1)}
+    /// Disable keyboard log: <br/>
+    /// type: KeyboardLogFlags <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::disable_keyboard_log {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2182,9 +2182,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Disable clipboard log:
-    // type: ClipboardLogFlags
-    // value{static_cast<type>(1)}
+    /// Disable clipboard log: <br/>
+    /// type: ClipboardLogFlags <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::disable_clipboard_log {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2195,9 +2195,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // Disable (redirected) file system log:
-    // type: FileSystemLogFlags
-    // value{static_cast<type>(1)}
+    /// Disable (redirected) file system log: <br/>
+    /// type: FileSystemLogFlags <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::disable_file_system_log {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2208,10 +2208,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // AUTHID_VIDEO_RT_DISPLAY
-    // type: unsigned int
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_VIDEO_RT_DISPLAY <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct video::rt_display {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2225,8 +2225,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: ColorDepthSelectionStrategy
-    // value{static_cast<type>(1)}
+    /// type: ColorDepthSelectionStrategy <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::wrm_color_depth_selection_strategy {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2237,8 +2237,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // type: WrmCompressionAlgorithm
-    // value{static_cast<type>(1)}
+    /// type: WrmCompressionAlgorithm <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::wrm_compression_algorithm {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2249,8 +2249,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    // type: std::chrono::seconds
-    // value{0}
+    /// type: std::chrono::seconds <br/>
+    /// value{0} <br/>
     struct video::flv_break_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2260,9 +2260,9 @@ namespace cfg {
         using mapped_type = type;
         type value{0};
     };
-    // Bitrate for low quality.
-    // type: unsigned int
-    // value{10000}
+    /// Bitrate for low quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{10000} <br/>
     struct video::l_bitrate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2273,9 +2273,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{10000};
     };
-    // Framerate for low quality.
-    // type: unsigned int
-    // value{5}
+    /// Framerate for low quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{5} <br/>
     struct video::l_framerate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2286,9 +2286,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    // Height for low quality.
-    // type: unsigned int
-    // value{480}
+    /// Height for low quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{480} <br/>
     struct video::l_height {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2299,9 +2299,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{480};
     };
-    // Width for low quality.
-    // type: unsigned int
-    // value{640}
+    /// Width for low quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{640} <br/>
     struct video::l_width {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2312,9 +2312,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{640};
     };
-    // Qscale (parameter given to ffmpeg) for low quality.
-    // type: unsigned int
-    // value{28}
+    /// Qscale (parameter given to ffmpeg) for low quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{28} <br/>
     struct video::l_qscale {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2325,9 +2325,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{28};
     };
-    // Bitrate for medium quality.
-    // type: unsigned int
-    // value{20000}
+    /// Bitrate for medium quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{20000} <br/>
     struct video::m_bitrate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2338,9 +2338,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{20000};
     };
-    // Framerate for medium quality.
-    // type: unsigned int
-    // value{5}
+    /// Framerate for medium quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{5} <br/>
     struct video::m_framerate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2351,9 +2351,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    // Height for medium quality.
-    // type: unsigned int
-    // value{768}
+    /// Height for medium quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{768} <br/>
     struct video::m_height {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2364,9 +2364,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{768};
     };
-    // Width for medium quality.
-    // type: unsigned int
-    // value{1024}
+    /// Width for medium quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{1024} <br/>
     struct video::m_width {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2377,9 +2377,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1024};
     };
-    // Qscale (parameter given to ffmpeg) for medium quality.
-    // type: unsigned int
-    // value{14}
+    /// Qscale (parameter given to ffmpeg) for medium quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{14} <br/>
     struct video::m_qscale {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2390,9 +2390,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{14};
     };
-    // Bitrate for high quality.
-    // type: unsigned int
-    // value{30000}
+    /// Bitrate for high quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{30000} <br/>
     struct video::h_bitrate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2403,9 +2403,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{30000};
     };
-    // Framerate for high quality.
-    // type: unsigned int
-    // value{5}
+    /// Framerate for high quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{5} <br/>
     struct video::h_framerate {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2416,9 +2416,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    // Height for high quality.
-    // type: unsigned int
-    // value{2048}
+    /// Height for high quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{2048} <br/>
     struct video::h_height {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2429,9 +2429,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{2048};
     };
-    // Width for high quality.
-    // type: unsigned int
-    // value{2048}
+    /// Width for high quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{2048} <br/>
     struct video::h_width {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2442,9 +2442,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{2048};
     };
-    // Qscale (parameter given to ffmpeg) for high quality.
-    // type: unsigned int
-    // value{7}
+    /// Qscale (parameter given to ffmpeg) for high quality. <br/>
+    /// type: unsigned int <br/>
+    /// value{7} <br/>
     struct video::h_qscale {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2456,10 +2456,10 @@ namespace cfg {
         type value{7};
     };
 
-    // AUTHID_CRYPTO_KEY0
-    // type: std::array<unsigned char, 32>
-    // sesman -> proxy
-    // value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }}
+    /// AUTHID_CRYPTO_KEY0 <br/>
+    /// type: std::array<unsigned char, 32> <br/>
+    /// sesman -> proxy <br/>
+    /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
     struct crypto::key0 {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2473,10 +2473,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
-    // AUTHID_CRYPTO_KEY1
-    // type: std::array<unsigned char, 32>
-    // sesman -> proxy
-    // value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }}
+    /// AUTHID_CRYPTO_KEY1 <br/>
+    /// type: std::array<unsigned char, 32> <br/>
+    /// sesman -> proxy <br/>
+    /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
     struct crypto::key1 {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2491,8 +2491,8 @@ namespace cfg {
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
 
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::x224 {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2503,8 +2503,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::mcs {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2515,8 +2515,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::sec {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2527,8 +2527,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::rdp {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2539,8 +2539,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::primary_orders {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2551,8 +2551,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::secondary_orders {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2563,8 +2563,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::bitmap_update {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2575,8 +2575,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::bitmap {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2587,8 +2587,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::capture {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2599,8 +2599,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::auth {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2611,8 +2611,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::session {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2623,8 +2623,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::front {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2635,8 +2635,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::mod_rdp {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2647,8 +2647,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::mod_vnc {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2659,8 +2659,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::mod_internal {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2671,8 +2671,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::mod_xup {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2683,8 +2683,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::widget {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2695,8 +2695,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::input {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2707,8 +2707,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::password {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2719,8 +2719,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::compression {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2731,8 +2731,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::cache {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2743,8 +2743,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::performance {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2755,8 +2755,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::pass_dialog_box {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2767,8 +2767,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::ocr {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2779,8 +2779,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: uint32_t
-    // value{}
+    /// type: uint32_t <br/>
+    /// value{} <br/>
     struct debug::ffmpeg {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2791,8 +2791,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: unsigned int
-    // value{2}
+    /// type: unsigned int <br/>
+    /// value{2} <br/>
     struct debug::config {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2804,10 +2804,10 @@ namespace cfg {
         type value{2};
     };
 
-    // AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct remote_program::allow_resize_hosted_desktop {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2822,10 +2822,10 @@ namespace cfg {
         type value{1};
     };
 
-    // AUTHID_TRANSLATION_LANGUAGE
-    // type: Language
-    // sesman -> proxy
-    // value{static_cast<type>(0)}
+    /// AUTHID_TRANSLATION_LANGUAGE <br/>
+    /// type: Language <br/>
+    /// sesman -> proxy <br/>
+    /// value{static_cast<type>(0)} <br/>
     struct translation::language {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2839,10 +2839,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(0)};
     };
-    // AUTHID_TRANSLATION_PASSWORD_EN
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_TRANSLATION_PASSWORD_EN <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct translation::password_en {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2856,10 +2856,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_TRANSLATION_PASSWORD_FR
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_TRANSLATION_PASSWORD_FR <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct translation::password_fr {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2874,8 +2874,8 @@ namespace cfg {
         type value{};
     };
 
-    // type: std::string
-    // value{}
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct internal_mod::theme {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2887,8 +2887,8 @@ namespace cfg {
         type value{};
     };
 
-    // type: std::string
-    // value{}
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct context::movie {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2898,10 +2898,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_CONTEXT_OPT_BITRATE
-    // type: unsigned int
-    // sesman -> proxy
-    // value{40000}
+    /// AUTHID_CONTEXT_OPT_BITRATE <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{40000} <br/>
     struct context::opt_bitrate {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2915,10 +2915,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{40000};
     };
-    // AUTHID_CONTEXT_OPT_FRAMERATE
-    // type: unsigned int
-    // sesman -> proxy
-    // value{5}
+    /// AUTHID_CONTEXT_OPT_FRAMERATE <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{5} <br/>
     struct context::opt_framerate {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2932,10 +2932,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    // AUTHID_CONTEXT_OPT_QSCALE
-    // type: unsigned int
-    // sesman -> proxy
-    // value{15}
+    /// AUTHID_CONTEXT_OPT_QSCALE <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{15} <br/>
     struct context::opt_qscale {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2949,10 +2949,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{15};
     };
-    // AUTHID_CONTEXT_OPT_BPP
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{24}
+    /// AUTHID_CONTEXT_OPT_BPP <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{24} <br/>
     struct context::opt_bpp {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -2966,10 +2966,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{24};
     };
-    // AUTHID_CONTEXT_OPT_HEIGHT
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{600}
+    /// AUTHID_CONTEXT_OPT_HEIGHT <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{600} <br/>
     struct context::opt_height {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -2983,10 +2983,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    // AUTHID_CONTEXT_OPT_WIDTH
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{800}
+    /// AUTHID_CONTEXT_OPT_WIDTH <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{800} <br/>
     struct context::opt_width {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3000,8 +3000,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{800};
     };
-    // type: std::string
-    // value{}
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct context::auth_error_message {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3011,10 +3011,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_CONTEXT_SELECTOR
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_SELECTOR <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::selector {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3028,10 +3028,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{1}
+    /// AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{1} <br/>
     struct context::selector_current_page {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3045,10 +3045,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::selector_device_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3062,10 +3062,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SELECTOR_GROUP_FILTER <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::selector_group_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3079,10 +3079,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SELECTOR_PROTO_FILTER <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::selector_proto_filter {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3096,10 +3096,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{0} <br/>
     struct context::selector_lines_per_page {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3113,10 +3113,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
-    // type: unsigned int
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct context::selector_number_of_pages {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3130,10 +3130,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    // AUTHID_CONTEXT_TARGET_PASSWORD
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_TARGET_PASSWORD <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::target_password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3147,10 +3147,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_TARGET_HOST
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_TARGET_HOST <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::target_host {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3164,10 +3164,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_TARGET_STR
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_TARGET_STR <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::target_str {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3181,10 +3181,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_TARGET_SERVICE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_TARGET_SERVICE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::target_service {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3198,10 +3198,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_TARGET_PORT
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{3389}
+    /// AUTHID_CONTEXT_TARGET_PORT <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{3389} <br/>
     struct context::target_port {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3215,10 +3215,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
-    // AUTHID_CONTEXT_TARGET_PROTOCOL
-    // type: std::string
-    // sesman -> proxy
-    // value = "RDP"
+    /// AUTHID_CONTEXT_TARGET_PROTOCOL <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value = "RDP" <br/>
     struct context::target_protocol {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3232,10 +3232,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "RDP";
     };
-    // AUTHID_CONTEXT_PASSWORD
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_PASSWORD <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3249,10 +3249,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_REPORTING
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_REPORTING <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::reporting {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3266,10 +3266,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_channel_answer {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3283,10 +3283,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_CHANNEL_TARGET <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::auth_channel_target {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3300,10 +3300,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_MESSAGE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_MESSAGE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3317,10 +3317,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_ACCEPT_MESSAGE
-    // type: bool
-    // sesman <- proxy
-    // value{}
+    /// AUTHID_CONTEXT_ACCEPT_MESSAGE <br/>
+    /// type: bool <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
     struct context::accept_message {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3334,10 +3334,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_DISPLAY_MESSAGE
-    // type: bool
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_DISPLAY_MESSAGE <br/>
+    /// type: bool <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::display_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3351,10 +3351,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_REJECTED
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_REJECTED <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::rejected {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3368,10 +3368,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTHENTICATED
-    // type: bool
-    // sesman <-> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_AUTHENTICATED <br/>
+    /// type: bool <br/>
+    /// sesman <-> proxy <br/>
+    /// value{0} <br/>
     struct context::authenticated {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3385,10 +3385,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_KEEPALIVE
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_KEEPALIVE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::keepalive {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3402,10 +3402,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_SESSION_ID
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SESSION_ID <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::session_id {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3419,10 +3419,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_END_DATE_CNX
-    // type: unsigned int
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_END_DATE_CNX <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::end_date_cnx {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3436,10 +3436,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_END_TIME
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_END_TIME <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::end_time {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3453,10 +3453,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_MODE_CONSOLE
-    // type: std::string
-    // sesman -> proxy
-    // value = "allow"
+    /// AUTHID_CONTEXT_MODE_CONSOLE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value = "allow" <br/>
     struct context::mode_console {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3470,10 +3470,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "allow";
     };
-    // AUTHID_CONTEXT_TIMEZONE
-    // type: int
-    // sesman -> proxy
-    // value{-3600}
+    /// AUTHID_CONTEXT_TIMEZONE <br/>
+    /// type: int <br/>
+    /// sesman -> proxy <br/>
+    /// value{-3600} <br/>
     struct context::timezone {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3487,10 +3487,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{-3600};
     };
-    // AUTHID_CONTEXT_REAL_TARGET_DEVICE
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_REAL_TARGET_DEVICE <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::real_target_device {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3504,10 +3504,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
-    // type: bool
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::authentication_challenge {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3521,10 +3521,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_TICKET
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_TICKET <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::ticket {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3538,10 +3538,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_COMMENT
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_COMMENT <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::comment {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3555,10 +3555,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_DURATION
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_DURATION <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::duration {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3572,10 +3572,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_DURATION_MAX
-    // type: unsigned int
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_DURATION_MAX <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::duration_max {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3589,10 +3589,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_WAITINFORETURN
-    // type: std::string
-    // sesman <-> proxy
-    // value{}
+    /// AUTHID_CONTEXT_WAITINFORETURN <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
     struct context::waitinforeturn {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3606,10 +3606,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SHOWFORM
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_SHOWFORM <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::showform {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3623,10 +3623,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_FORMFLAG
-    // type: unsigned int
-    // sesman <-> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_FORMFLAG <br/>
+    /// type: unsigned int <br/>
+    /// sesman <-> proxy <br/>
+    /// value{0} <br/>
     struct context::formflag {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3640,10 +3640,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_MODULE
-    // type: std::string
-    // sesman <-> proxy
-    // value = "login"
+    /// AUTHID_CONTEXT_MODULE <br/>
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value = "login" <br/>
     struct context::module {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3657,10 +3657,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "login";
     };
-    // AUTHID_CONTEXT_FORCEMODULE
-    // type: bool
-    // sesman -> proxy
-    // value{0}
+    /// AUTHID_CONTEXT_FORCEMODULE <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{0} <br/>
     struct context::forcemodule {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3674,10 +3674,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // AUTHID_CONTEXT_PROXY_OPT
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_PROXY_OPT <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::proxy_opt {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3691,10 +3691,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_PATTERN_KILL
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_PATTERN_KILL <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::pattern_kill {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3708,10 +3708,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_PATTERN_NOTIFY
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_PATTERN_NOTIFY <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::pattern_notify {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3725,10 +3725,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_OPT_MESSAGE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_OPT_MESSAGE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::opt_message {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3742,10 +3742,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::session_probe_outbound_connection_monitoring_rules {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3759,10 +3759,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::session_probe_process_monitoring_rules {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3776,10 +3776,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::session_probe_extra_system_processes {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3793,8 +3793,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // type: std::string
-    // value{}
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct context::manager_disconnect_reason {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3804,10 +3804,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_CONTEXT_DISCONNECT_REASON
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_DISCONNECT_REASON <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::disconnect_reason {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3821,10 +3821,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
-    // type: bool
-    // sesman <- proxy
-    // value{0}
+    /// AUTHID_CONTEXT_DISCONNECT_REASON_ACK <br/>
+    /// type: bool <br/>
+    /// sesman <- proxy <br/>
+    /// value{0} <br/>
     struct context::disconnect_reason_ack {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3838,8 +3838,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: std::string
-    // value{}
+    /// type: std::string <br/>
+    /// value{} <br/>
     struct context::ip_target {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3849,10 +3849,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_CONTEXT_RECORDING_STARTED
-    // type: bool
-    // sesman <- proxy
-    // value{0}
+    /// AUTHID_CONTEXT_RECORDING_STARTED <br/>
+    /// type: bool <br/>
+    /// sesman <- proxy <br/>
+    /// value{0} <br/>
     struct context::recording_started {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3866,8 +3866,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    // type: bool
-    // value{0}
+    /// type: bool <br/>
+    /// value{0} <br/>
     struct context::perform_automatic_reconnection {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3877,8 +3877,8 @@ namespace cfg {
         using mapped_type = type;
         type value{0};
     };
-    // type: std::array<unsigned char, 28>
-    // value{}
+    /// type: std::array<unsigned char, 28> <br/>
+    /// value{} <br/>
     struct context::server_auto_reconnect_packet {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3888,10 +3888,10 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3905,10 +3905,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_NOTIFY
-    // type: std::string
-    // sesman <- proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_NOTIFY <br/>
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
     struct context::auth_notify {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3922,10 +3922,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS
-    // type: unsigned int
-    // sesman <- proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS <br/>
+    /// type: unsigned int <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
     struct context::auth_notify_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3939,10 +3939,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE
-    // type: std::string
-    // sesman <- proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE <br/>
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
     struct context::auth_notify_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 1; }
@@ -3956,10 +3956,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT
-    // type: unsigned int
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_exec_result {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3973,10 +3973,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS
-    // type: unsigned int
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3990,10 +3990,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_original_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4007,10 +4007,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4024,10 +4024,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_working_dir {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4041,10 +4041,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_arguments {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4058,10 +4058,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_account {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4075,10 +4075,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD
-    // type: std::string
-    // sesman -> proxy
-    // value{}
+    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD <br/>
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
     struct context::auth_command_rail_exec_password {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4092,10 +4092,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    // AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY
-    // type: unsigned int
-    // sesman -> proxy
-    // value{3000}
+    /// AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY <br/>
+    /// type: unsigned int <br/>
+    /// sesman -> proxy <br/>
+    /// value{3000} <br/>
     struct context::rail_disconnect_message_delay {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4109,10 +4109,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
-    // AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM
-    // type: bool
-    // sesman -> proxy
-    // value{1}
+    /// AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{1} <br/>
     struct context::use_session_probe_to_launch_remote_program {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4127,8 +4127,8 @@ namespace cfg {
         type value{1};
     };
 
-    // type: Theme
-    // value{}
+    /// type: Theme <br/>
+    /// value{} <br/>
     struct theme {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -4138,8 +4138,8 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    // type: Font
-    // value{}
+    /// type: Font <br/>
+    /// value{} <br/>
     struct font {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }

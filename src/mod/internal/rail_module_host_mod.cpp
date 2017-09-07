@@ -103,7 +103,8 @@ void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
     this->event.reset_trigger_time();
 }
 
-void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
+void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
+{
     mod_api& mod = this->rail_module_host.get_managed_mod();
 
     mod.get_event_handlers(out_event_handlers);
