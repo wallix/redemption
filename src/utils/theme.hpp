@@ -22,7 +22,7 @@
 #pragma once
 
 #include "utils/colors.hpp"
-#include "cfgloader.hpp"
+#include "utils/cfgloader.hpp"
 #include "utils/parse.hpp"
 
 #include <string>

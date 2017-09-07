@@ -70,7 +70,7 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
     this->front.draw(RDPOpaqueRect(winrect, encode_color24()(WINBLUE)), clip, color_ctx);
 
 
-    Bitmap bitmap = bitmap_from_file((std::string(app_path(AppPath::Share)) + "/" "Philips_PM5544_640.png").c_str());
+    Bitmap bitmap = bitmap_from_file((app_path_s(AppPath::Share) + "/" "Philips_PM5544_640.png").c_str());
 
     this->front.draw(RDPMemBlt(0,
         Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
@@ -136,8 +136,8 @@ void TestCardMod::draw(gdi::GraphicApi & drawable)
         Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
             32, 32, 0), clip, bloc64x64);
 
-    //Bitmap_PNG logo(std::string(app_path(AppPath::Share)) + "/ad8b.bmp");
-    Bitmap logo = bitmap_from_file((std::string(app_path(AppPath::Share)) + "/ad8b.png").c_str());
+    //Bitmap_PNG logo(app_path_s(AppPath::Share) + "/ad8b.bmp");
+    Bitmap logo = bitmap_from_file((app_path_s(AppPath::Share) + "/ad8b.png").c_str());
     this->front.draw(RDPMemBlt(0,
         Rect(100, 100, 26, 32),
         0xCC,

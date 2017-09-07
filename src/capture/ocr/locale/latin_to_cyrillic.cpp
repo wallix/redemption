@@ -18,7 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "latin_to_cyrillic.hpp"
+#include "capture/ocr/locale/latin_to_cyrillic.hpp"
 
 
 namespace

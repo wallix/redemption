@@ -1694,7 +1694,7 @@ struct ssh_crypto_struct {
         if(len % this->in_cipher->blocksize != 0){
             error.eid = SSH_FATAL;
             snprintf(error.error_buffer, sizeof(error.error_buffer),
-                "Cryptographic functions must be set on at least one blocksize (received %d)",len);
+                "Cryptographic functions must be set on at least one blocksize (received %u)",len);
             return nullptr;
         }
 

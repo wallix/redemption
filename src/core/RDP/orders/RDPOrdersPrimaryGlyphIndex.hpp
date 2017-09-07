@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 // [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // =============================================================

@@ -32,6 +32,7 @@
 #include "utils/bitmap_from_file.hpp"
 
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
+#include "core/app_path.hpp"
 
 
 namespace {
@@ -46,7 +47,7 @@ namespace {
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
 
-    auto & ocr_constants = rdp_ppocr::get_ocr_constants(CFG_PATH "/ppocr.latin-cyrillic");
+    auto & ocr_constants = rdp_ppocr::get_ocr_constants(app_path_s(AppPath::Cfg) + "/ppocr.latin-cyrillic");
 }
 
 RED_AUTO_TEST_CASE(TestPPOCR1)

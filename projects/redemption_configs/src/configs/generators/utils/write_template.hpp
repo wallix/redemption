@@ -156,7 +156,15 @@ inline io_prefix_lines cpp_comment(char const * s, unsigned space) {
 }
 
 inline io_prefix_lines cpp_comment(std::string const & str, unsigned space) {
-    return io_prefix_lines{str.c_str(), "// ", "", space};
+    return cpp_comment(str.c_str(), space);
+}
+
+inline io_prefix_lines cpp_doxygen_comment(char const * s, unsigned space) {
+    return io_prefix_lines{s, "/// ", " <br/>", space};
+}
+
+inline io_prefix_lines cpp_doxygen_comment(std::string const & str, unsigned space) {
+    return cpp_doxygen_comment(str.c_str(), space);
 }
 
 inline io_prefix_lines python_comment(char const * s, unsigned space) {
@@ -164,7 +172,7 @@ inline io_prefix_lines python_comment(char const * s, unsigned space) {
 }
 
 inline io_prefix_lines python_comment(std::string const & str, unsigned space) {
-    return io_prefix_lines{str.c_str(), "# ", "", space};
+    return python_comment(str.c_str(), space);
 }
 
 

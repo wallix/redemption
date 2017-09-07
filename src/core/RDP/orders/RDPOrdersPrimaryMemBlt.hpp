@@ -88,7 +88,7 @@
 //   index of an entry in the Offscreen Bitmap Cache that contains the source
 //   bitmap.
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPMemBlt {
     public:

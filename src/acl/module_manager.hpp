@@ -29,7 +29,8 @@
 #include "configs/config.hpp"
 #include "utils/netutils.hpp"
 #include "mod/mod_api.hpp"
-#include "auth_api.hpp"
+#include "acl/mm_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/rdp.hpp"
@@ -54,7 +55,6 @@
 #include "mod/internal/widget_test_mod.hpp"
 
 #include "gdi/protected_graphics.hpp"
-#include "mm_api.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1425,8 +1425,6 @@ public:
 
                 mod_rdp_params.allow_channels                      = &(this->ini.get<cfg::mod_rdp::allow_channels>());
                 mod_rdp_params.deny_channels                       = &(this->ini.get<cfg::mod_rdp::deny_channels>());
-
-                mod_rdp_params.server_redirection_support          = this->ini.get<cfg::mod_rdp::server_redirection_support>();
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
                 mod_rdp_params.bogus_linux_cursor                  = this->ini.get<cfg::mod_rdp::bogus_linux_cursor>();

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "keylayout.hpp"
+#include "keyboard/keylayout.hpp"
 
 namespace x0000100c {    // French (Switzerland) // Swiss French
 

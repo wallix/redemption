@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
 

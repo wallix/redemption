@@ -21,9 +21,12 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#include "sashimi/channels.hpp"
 #include "utils/log.hpp"
 #include "system/ssl_md5.hpp"
 #include "cxx/cxx.hpp"
+
+#include <sys/time.h>
 
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll
@@ -5145,7 +5148,6 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 LOG(LOG_DEBUG, "Public key of %s accepted by server", client_session->agent_state->comment);
                 client_session->agent_state->state = SSH_AGENT_STATE_AUTH;
                 continue;
-            break;
             case SSH_AUTH_INFO:
                 LOG(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_INFO ---", __FUNCTION__);
                 client_session->agent_state->state = SSH_AGENT_STATE_PUBKEY;
@@ -5387,7 +5389,6 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                     delete client_session->agent_state;
                     client_session->agent_state = nullptr;
                     return SSH_AUTH_SUCCESS;
-                break;
 //                case SSH_ERROR:
                 default:
                     LOG(LOG_INFO, "Server accepted public key but refused the signature");
@@ -5400,21 +5401,13 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 }
             }
             case SSH_PENDING_CALL_AUTH_NONE:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_PASSWORD:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_PUBKEY:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_KBDINT_INIT:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_KBDINT_SEND:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_AUTH_GSSAPI_MIC:
-                REDEMPTION_CXX_FALLTHROUGH;
             case SSH_PENDING_CALL_CONNECT:
-                REDEMPTION_CXX_FALLTHROUGH;
             default:
                 ;
             }
@@ -5623,7 +5616,6 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_AUTH_ERROR;
     }
-    return SSH_AUTH_ERROR;
 }
 
 
@@ -5996,7 +5988,6 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
                 "Wrong state during pending SSH call");
         return SSH_ERROR;
     }
-    return SSH_AUTH_ERROR;
 }
 
 
@@ -6618,16 +6609,10 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
-
     default:
     break;
     }
@@ -6715,16 +6700,10 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
-
     default:
     break;
     }
@@ -6799,16 +6778,10 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
-
     default:
         break;
     }
@@ -6857,15 +6830,10 @@ int ssh_channel_change_pty_size_client(SshClientSession * client_session, ssh_ch
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
     default:
         break;
     }
@@ -6924,15 +6892,10 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
     default:
         ;
     }
@@ -7000,15 +6963,10 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
             return channel->channel_request(client_session);
         }
     }
-    break;
     case SSH_CHANNEL_REQ_STATE_PENDING:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_DENIED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ACCEPTED:
-    REDEMPTION_CXX_FALLTHROUGH;
     case SSH_CHANNEL_REQ_STATE_ERROR:
-    REDEMPTION_CXX_FALLTHROUGH;
     default:
     break;
     }

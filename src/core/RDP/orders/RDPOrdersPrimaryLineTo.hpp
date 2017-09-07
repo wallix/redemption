@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPLineTo {
     // LINE fields bytes

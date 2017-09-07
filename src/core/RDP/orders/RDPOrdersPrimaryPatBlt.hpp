@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 // 2.2.2.2.1.1.2.3 PatBlt (PATBLT_ORDER)
 // =====================================

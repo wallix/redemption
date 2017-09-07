@@ -25,7 +25,7 @@
 #include "fonts.hpp"
 #include "labelize.hh"
 #include "extract_data.hh"
-#include "locale/latin_to_cyrillic.hpp"
+#include "capture/ocr/locale/latin_to_cyrillic.hpp"
 
 #include <vector>
 #include <string>

@@ -83,7 +83,7 @@ struct ssh_buffer_struct {
       int doabort=0;
 
       if((this->data == nullptr) && (this->allocated != 0)){
-        LOG(LOG_INFO, "data is nullptr!!! allocated=%d", this->allocated);
+        LOG(LOG_INFO, "data is nullptr!!! allocated=%u", this->allocated);
         doabort=1;
       }
       if(this->used > this->allocated){
@@ -476,7 +476,7 @@ static inline void hexdump(const char * data, size_t size, unsigned line_length)
             line += sprintf(line, "0x%.2x, ", static_cast<unsigned char>(data[j+i]));
         }
         if (i < line_length){
-            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<int>((line_length-i)*3), ' ');
         }
 
         line += sprintf(line, " // ");

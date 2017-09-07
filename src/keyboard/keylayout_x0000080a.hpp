@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "keylayout.hpp"
+#include "keyboard/keylayout.hpp"
 
 namespace x0000080a {    // Spanish (Mexico) // Latin American
 

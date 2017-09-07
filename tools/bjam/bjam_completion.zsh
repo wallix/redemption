@@ -9,6 +9,12 @@ _bjam_completion () {
     /^ *test-canonical /{
         s#^.+/([^.]+)\.h.*#test_\1#p
     }' Jamroot
+    
+    sed -n -E '/^alias tests/!{
+      /^(exe|alias|lib) /{
+        s/^[^ ]+\s+([-_a-zA-Z0-9]+) .*/\1/p
+      } 
+    }' targets.jam 2>/dev/null
   ))
 }
 

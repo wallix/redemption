@@ -22,7 +22,7 @@
 #pragma once
 
 #include "transport/transport.hpp"
-#include "transparentchunk.hpp"
+#include "capture/transparentchunk.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "utils/difftimeval.hpp"

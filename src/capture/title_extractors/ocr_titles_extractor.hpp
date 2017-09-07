@@ -29,7 +29,7 @@
 #include "capture/utils/drawable_image_view.hpp"
 #include "utils/drawable.hpp"
 
-#include "ocr_title.hpp"
+#include "capture/title_extractors/ocr_title.hpp"
 
 
 struct OcrTitlesExtractor

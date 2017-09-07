@@ -30,6 +30,7 @@
 #include "core/error.hpp"
 
 #include <cstring>
+#include <cstdlib>
 
 ////////////////////
 //

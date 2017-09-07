@@ -303,7 +303,6 @@
 "#fast_path = 1\n\n"
 
 "# Enables Server Redirection Support.\n"
-"#_advanced\n"
 "#server_redirection_support = 0\n\n"
 
 "# Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.\n"

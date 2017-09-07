@@ -288,7 +288,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Server Fast-Path Update PDUs."}, set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, set(false));
+        W.member(ini_and_gui, no_sesman, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "load_balance_info");

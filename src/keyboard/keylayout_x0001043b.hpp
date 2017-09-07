@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "keylayout.hpp"
+#include "keyboard/keylayout.hpp"
 
 namespace x0001043b {    // Sami (Northern) (Norway) // Sami Extended Norway
 

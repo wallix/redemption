@@ -695,10 +695,6 @@ int main(int argc, char** argv)
         .help("Active/unactive new pointer")
         .action(cli::on_off_location(mod_rdp_params.enable_new_pointer)),
 
-        cli::option("serv_red")
-        .help("Active/unactive server redirection support")
-        .action(cli::on_off_location(mod_rdp_params.server_redirection_support)),
-
         cli::option("krb")
         .help("Active/unactive krb")
         .action(cli::on_off_location(mod_rdp_params.enable_krb)),
@@ -891,7 +887,6 @@ int main(int argc, char** argv)
         std::cout << " enable_fastpath = " << mod_rdp_params.enable_fastpath << "\n";
         std::cout << " enable_mem3blt = " << mod_rdp_params.enable_mem3blt << "\n";
         std::cout << " enable_new_pointer = " << mod_rdp_params.enable_new_pointer << "\n";
-        std::cout << " server_redirection_support = " << mod_rdp_params.server_redirection_support << "\n";
         std::cout << " enable_krb = " << mod_rdp_params.enable_krb << "\n";
         std::cout << " enable_glyph_cache = " << mod_rdp_params.enable_glyph_cache << "\n";
         std::cout << " enable_session_probe = " << mod_rdp_params.enable_session_probe << "\n";

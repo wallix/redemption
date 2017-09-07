@@ -23,7 +23,7 @@
 
 #include "transport/in_file_transport.hpp"
 #include "capture/transparentplayer.hpp"
-#include "internal_mod.hpp"
+#include "mod/internal/internal_mod.hpp"
 
 class TransparentReplayMod : public InternalMod
 {

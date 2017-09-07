@@ -261,11 +261,11 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             // }
             LOG(LOG_INFO, "activating SSL");
             this->trans.enable_client_tls(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
+                server_cert_store,
+                server_cert_check,
+                server_notifier,
+                certif_path
+            );
 
             LOG(LOG_INFO, "activating CREDSSP");
             this->credssp.reset(new rdpCredsspClient(

@@ -26,7 +26,7 @@
 
 #include <cinttypes>
 
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 

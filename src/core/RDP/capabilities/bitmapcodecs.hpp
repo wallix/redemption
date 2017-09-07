@@ -25,7 +25,7 @@
 #pragma once
 
 #include <string.h>
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 
 // 2.2.7.2.10 Bitmap Codecs Capability Set (TS_BITMAPCODECS_CAPABILITYSET)
 // =======================================================================

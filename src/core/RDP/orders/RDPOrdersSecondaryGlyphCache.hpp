@@ -27,7 +27,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/stream.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 using std::size_t;
 

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include "utils/stream.hpp"
 
 // 2.2.1.3 Draw GDI+ Capability Set (TS_DRAW_GDIPLUS_CAPABILITYSET)

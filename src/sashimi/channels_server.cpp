@@ -24,6 +24,8 @@
 #include "utils/log.hpp"
 #include "sashimi/channels.hpp"
 
+#include <sys/time.h>
+
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 

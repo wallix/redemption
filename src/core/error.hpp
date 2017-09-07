@@ -412,6 +412,9 @@ public:
         case ERR_RDP_OPEN_SESSION_TIMEOUT:
             return "Logon timer expired";
 
+        case ERR_RDP_SERVER_REDIR:
+            return "The computer that you are trying to connect to is redirecting you to another computer.";
+
         default:
             if (this->has_msg && this->with_id == with_id) {
                 return this->msg;

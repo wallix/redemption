@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <string>
+
 enum class AppPath
 {
     Record,
@@ -49,6 +51,7 @@ enum class AppPath
     DefaultFontFile,
 };
 char const * app_path(AppPath) noexcept;
+std::string app_path_s(AppPath);
 
 // TODO move these into configuration
 // #define LOGIN_LOGO24 "ad24b.png"

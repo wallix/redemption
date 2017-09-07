@@ -26,9 +26,9 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
+#include "mod/internal/widget/flat_wait.hpp"
+#include "mod/internal/widget/language_button.hpp"
 #include "utils/timeout.hpp"
-#include "widget/flat_wait.hpp"
-#include "widget/language_button.hpp"
 
 
 using FlatWaitModVariables = vcfg::variables<

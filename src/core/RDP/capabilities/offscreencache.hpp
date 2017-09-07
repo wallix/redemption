@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include "utils/stream.hpp"
 
 // 2.2.7.1.9 Offscreen Bitmap Cache Capability Set (TS_OFFSCREEN_CAPABILITYSET)

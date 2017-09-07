@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common.hpp"
+#include "core/RDP/capabilities/common.hpp"
 #include "utils/stream.hpp"
 
 // 2.2.1.3 TS_FRAME_ACKNOWLEDGE_CAPABILITYSET

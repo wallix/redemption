@@ -22,7 +22,7 @@
 #pragma once
 
 #include "utils/log.hpp"
-#include "RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
 

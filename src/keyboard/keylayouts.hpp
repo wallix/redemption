@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "keylayout.hpp"
+#include "keyboard/keylayout.hpp"
 #include "keylayout_x0000201a.hpp" // Bosnian (Cyrillic) (Bosnia and Herzegovina))
 #include "keylayout_x00030402.hpp" // Bulgarian (Bulgaria)
 #include "keylayout_x00010402.hpp" // Bulgarian (Bulgaria) - latin
