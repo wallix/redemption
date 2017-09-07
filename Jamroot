@@ -279,4 +279,4 @@ rule make-test ( target : sources + : requirements * )
     unit-test $(target) : $(sources) : $(TEST_DEPENDENCIES) $(requirements) ;
 }
 
-include targets.jam ;
+include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
