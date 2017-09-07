@@ -327,6 +327,13 @@ public:
             int prim_len = prim_duration.count() / 1000;
             std::cout << "primary connection lenght = " << prim_len << " ms" <<  std::endl;
 
+            if (!this->out_path.empty()) {
+                std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
+                if (file_movie) {
+                    file_movie << this->index << "\t" << prim_len << "\n";
+                }
+            }
+
             this->start_win_session_time = tvtime();
             std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
             int sec_len = sec_duration.count() / 1000;
@@ -335,11 +342,7 @@ public:
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
                 if (file_movie) {
-                    if (this->index !=  0) {
-                        file_movie << this->index << "\t" << prim_len << "\t" << sec_len << "\n";
-                    } else {
-                        file_movie << prim_len << "\t" << sec_len << "\n";
-                    }
+                    file_movie << this->index << "\t" << sec_len << "\n";
                 }
             }
         }
@@ -354,7 +357,7 @@ public:
         if (!this->out_path.empty()) {
             std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
             if (file_movie) {
-                file_movie << duration.count() / 1000 << "\n";
+                file_movie << this->index <<  "\t" <<  duration.count() / 1000 << "\n";
             }
         }
     }
