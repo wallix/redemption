@@ -368,14 +368,17 @@ def get_sources_deps(f, cat, exclude):
             a.append('<library>'+cpp_to_obj(pf))
     return a
 
+def requirement_action(f, act):
+    if f.path in src_requirements:
+        act(src_requirements[f.path])
+    if f.root in dir_requirements:
+        act(dir_requirements[f.root])
+
 def get_requirements(f):
     a = []
     for name in f.all_lib_deps:
         a.append('<library>'+name)
-    if f.path in src_requirements:
-        a.append(src_requirements[f.path])
-    if f.root in dir_requirements:
-        a.append(dir_requirements[f.root])
+    requirement_action(f, lambda r: a.append(r))
     return a
 
 def generate(type, files, requirements, get_target_cb = get_target):
@@ -409,8 +412,7 @@ def generate_obj(files):
     for f in files:
         if f.type == 'C' and f != app_path_cpp:
             print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
-            if f.path in src_requirements:
-                print(' :', src_requirements[f.path], end='')
+            requirement_action(f, lambda r: print(' :', r, end=''))
             print(' ;')
 
 generate('exe', mains, '$(EXE_DEPENDENCIES)')
@@ -419,10 +421,7 @@ print()
 generate('lib', libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
 for f in libs:
     print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
-    if f.path in src_requirements:
-        print(' ', src_requirements[f.path])
-    if f.root in dir_requirements:
-        print(' ', dir_requirements[f.root])
+    requirement_action(f, lambda r: print(' ', r))
     print(';')
 print()
 
