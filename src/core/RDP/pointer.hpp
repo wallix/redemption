@@ -21,10 +21,12 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "utils/bitfu.hpp"
+
+#include <algorithm> // std::min
+#include <cassert>
 #include <cstring>
-#include <algorithm> // std:min
+
 
 struct Pointer {
     enum  {
@@ -791,9 +793,9 @@ public:
         this->x      = x;
         this->y      = y;
 
-        REDASSERT(data_size == sizeof(this->data));
+        assert(data_size == sizeof(this->data));
         ::memcpy(this->data, data, std::min(data_size, sizeof(this->data)));
-        REDASSERT(mask_size == sizeof(this->mask));
+        assert(mask_size == sizeof(this->mask));
         ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
     }
 

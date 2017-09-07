@@ -2109,10 +2109,15 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     recorder.flv_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
-    recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("flv") > 0))?CaptureFlags::flv:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("ocr") > 0))?CaptureFlags::ocr:CaptureFlags::none);
+    recorder.capture_flags
+      = (                   (options.count("wrm") > 0)
+        ? CaptureFlags::wrm : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("png") > 0))
+        ? CaptureFlags::png : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("flv") > 0))
+        ? CaptureFlags::flv : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("ocr") > 0))
+        ? CaptureFlags::ocr : CaptureFlags::none);
 
     if (options.count("flv-quality") > 0) {
             if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {

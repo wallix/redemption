@@ -25,6 +25,7 @@ exe rdpproxy :
   <library>program_options
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
@@ -32,7 +33,9 @@ exe rdpproxy :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/mainloop.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -87,6 +90,7 @@ exe rdpproxy :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -103,7 +107,9 @@ exe rdpclient :
   <library>program_options
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -135,7 +141,9 @@ exe rdpheadless :
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
@@ -186,13 +194,16 @@ exe rdptproxy :
   <library>program_options
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -247,6 +258,7 @@ exe rdptproxy :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -265,13 +277,16 @@ exe vncclient :
   <library>program_options
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -326,6 +341,7 @@ exe vncclient :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -342,6 +358,7 @@ lib libredrec :
   <library>program_options
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
@@ -353,6 +370,7 @@ lib libredrec :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -391,13 +409,16 @@ make-test tests/acl/test_acl_serializer :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -452,6 +473,7 @@ make-test tests/acl/test_acl_serializer :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -472,13 +494,16 @@ make-test tests/acl/test_authentifier :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -533,6 +558,7 @@ make-test tests/acl/test_authentifier :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -553,13 +579,16 @@ make-test tests/acl/test_module_manager :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -614,6 +643,7 @@ make-test tests/acl/test_module_manager :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -658,6 +688,7 @@ make-test tests/capture/test_capture :
   <library>png
   <library>ppocr
   <library>snappy
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
@@ -668,6 +699,7 @@ make-test tests/capture/test_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -751,6 +783,7 @@ make-test tests/capture/test_wrm_capture :
 make-test tests/capture/utils/test_match_finder :
   $(REDEMPTION_TEST_PATH)/capture/utils/test_match_finder.cpp
 :
+  <library>src/utils/pattutils.o
 ;
 make-test tests/client_mods/cli_vnc_connection :
   $(REDEMPTION_TEST_PATH)/client_mods/cli_vnc_connection.cpp
@@ -791,7 +824,9 @@ make-test tests/client_mods/test_rdp_client_large_pointer :
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -840,7 +875,9 @@ make-test tests/client_mods/test_rdp_client_tls_w2008 :
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -868,7 +905,9 @@ make-test tests/client_mods/test_rdp_client_wab :
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -1528,6 +1567,7 @@ make-test tests/core/test_mainloop :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
@@ -1535,7 +1575,9 @@ make-test tests/core/test_mainloop :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/mainloop.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -1590,6 +1632,7 @@ make-test tests/core/test_mainloop :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -1614,13 +1657,16 @@ make-test tests/core/test_session :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -1675,6 +1721,7 @@ make-test tests/core/test_session :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -1691,13 +1738,16 @@ make-test tests/core/test_session_server :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -1752,6 +1802,7 @@ make-test tests/core/test_session_server :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -1772,13 +1823,16 @@ make-test tests/front/test_front :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -1795,6 +1849,7 @@ make-test tests/front/test_front :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -1808,7 +1863,9 @@ make-test tests/gdi/test_protected_graphics :
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
@@ -1835,6 +1892,7 @@ make-test tests/main/test_do_recorder :
   <library>program_options
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
@@ -1847,6 +1905,7 @@ make-test tests/main/test_do_recorder :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -2051,6 +2110,7 @@ make-test tests/mod/internal/test_replay_mod :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/file_to_graphic.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2668,7 +2728,9 @@ make-test tests/mod/rdp/test_rdp :
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
@@ -2802,12 +2864,14 @@ make-test tests/server/test_mstsc_client :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/internal_mod.o
@@ -2822,6 +2886,7 @@ make-test tests/server/test_mstsc_client :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -2838,12 +2903,14 @@ make-test tests/server/test_mstsc_client_rdp50bulk :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/internal_mod.o
@@ -2858,6 +2925,7 @@ make-test tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -2874,12 +2942,14 @@ make-test tests/server/test_rdesktop_client :
   <library>ppocr
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/internal_mod.o
@@ -2894,6 +2964,7 @@ make-test tests/server/test_rdesktop_client :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -3289,6 +3360,7 @@ make-test tests/utils/test_parse :
 make-test tests/utils/test_pattutils :
   $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
 :
+  <library>src/utils/pattutils.o
 ;
 make-test tests/utils/test_png :
   $(REDEMPTION_TEST_PATH)/utils/test_png.cpp
@@ -3354,6 +3426,7 @@ make-test tests/utils/winpr/test_pattern :
 ;
 
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp ;
+obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
 obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_text.cc ;
 obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
@@ -3365,7 +3438,9 @@ obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
+obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
@@ -3428,6 +3503,7 @@ obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
+obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 

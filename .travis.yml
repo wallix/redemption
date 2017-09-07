@@ -4,8 +4,8 @@ language: cpp
 addons:
   apt:
     packages:
-      - g++-4.9
-      #- g++-5
+      #- g++-4.9
+      - g++-5
       #- g++-6
       - libssl-dev
       - libpng12-dev
@@ -26,18 +26,20 @@ cache:
 matrix:
   include:
     #GCC 4
-    - os: linux
-      env: TOOLSET=gcc-4.9
-      compiler: gcc-4.9
-      before_script:
-        - "echo -e 'using gcc : : g++-4.9 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
-
-    # GCC 5 (Note: g++-5: internal compiler error: Killed (program cc1plus))
     #- os: linux
-      #env: TOOLSET=gcc-5
-      #compiler: gcc
+      #env: TOOLSET=gcc-4.9
+      #compiler: gcc-4.9
       #before_script:
-        #- "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+        #- "echo -e 'using gcc : : g++-4.9 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+
+    # Note: Insufficient memory (4G)
+    #internal compiler error: Killed (program cc1plus)
+    #GCC 5
+    - os: linux
+      env: TOOLSET=gcc-5
+      compiler: gcc
+      before_script:
+        - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
     # GCC 6
     #- os: linux

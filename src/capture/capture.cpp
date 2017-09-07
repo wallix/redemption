@@ -862,16 +862,11 @@ public:
                 );
 
             if (visibility_rects.size()) {
-                std::for_each(
-                        visibility_rects.cbegin(),
-                        visibility_rects.cend(),
-                        [this, window_id](
-                                const RDP::RAIL::Rectangle& rectangle) {
-                            this->windows_rects.emplace_back(window_id,
-                                Rect(rectangle.Left(), rectangle.Top(),
-                                     rectangle.Width(), rectangle.Height()));
-                        }
-                    );
+                for (const RDP::RAIL::Rectangle& rectangle : visibility_rects) {
+                    this->windows_rects.emplace_back(
+                        window_id,
+                        Rect(rectangle.Left(), rectangle.Top(), rectangle.Width(), rectangle.Height()));
+                }
             }
         }
 
@@ -1405,6 +1400,48 @@ public:
 
     void possible_active_window_change() override {}
 };
+
+
+
+void Capture::Graphic::draw_impl(RDP::FrameMarker const & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    if (cmd.action == RDP::FrameMarker::FrameEnd) {
+        for (gdi::CaptureApi & cap : this->caps) {
+            cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
+        }
+    }
+}
+
+void Capture::Graphic::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    // cmd.log(LOG_INFO);
+    for (gdi::CaptureApi & cap : this->caps) {
+        cap.new_or_existing_window_event(cmd.header.WindowId(),
+            cmd.header.FieldsPresentFlags(),
+            cmd.Style(), cmd.ShowState(),
+            cmd.VisibleOffsetX(), cmd.VisibleOffsetY(),
+            cmd.VisibilityRects());
+    }
+}
+
+void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    for (gdi::CaptureApi & cap : this->caps) {
+        cap.delete_window_event(cmd.header.WindowId());
+    }
+}
 
 
 void Capture::TitleChangedFunctions::notify_title_changed(

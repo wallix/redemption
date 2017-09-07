@@ -43,7 +43,6 @@
 #include "mod/internal/replay_mod.hpp"
 #include "front/front.hpp"
 #include "utils/translation.hpp"
-#include "utils/pattutils.hpp"
 
 #include "mod/internal/flat_login_mod.hpp"
 #include "mod/internal/selector_mod.hpp"

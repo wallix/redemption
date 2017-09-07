@@ -57,7 +57,7 @@ public:
     ~PointerCache() = default;
 
     void add_pointer_static(const Pointer & cursor, int index) {
-        REDASSERT((index >= 0) && (index < MAX_POINTER_COUNT));
+        assert((index >= 0) && (index < MAX_POINTER_COUNT));
         this->Pointers[index].x = cursor.x;
         this->Pointers[index].y = cursor.y;
         this->Pointers[index].width = cursor.width;
