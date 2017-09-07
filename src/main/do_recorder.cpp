@@ -2035,7 +2035,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         {'p', "png", "enable png capture"},
         {'w', "wrm", "enable wrm capture"},
         {'t', "ocr", "enable ocr title bar detection"},
-        {'f', "flv", "enable flv capture"},
+        {'f', "video", "enable video capture"},
         {'u', "full", "create full video"},
         {'c', "chunk", "chunk splitting on title bar change detection"},
 
@@ -2114,7 +2114,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         ? CaptureFlags::wrm : CaptureFlags::none)
       | ((recorder.chunk || (options.count("png") > 0))
         ? CaptureFlags::png : CaptureFlags::none)
-      | ((recorder.chunk || (options.count("flv") > 0))
+      | ((recorder.chunk || (options.count("video") > 0))
         ? CaptureFlags::flv : CaptureFlags::none)
       | ((recorder.chunk || (options.count("ocr") > 0))
         ? CaptureFlags::ocr : CaptureFlags::none);
