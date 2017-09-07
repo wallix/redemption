@@ -340,7 +340,7 @@ struct IOVideoRecorderWithTransport
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
     const int groupid, bool no_timestamp, RDPDrawable & drawable,
-    gdi::ImageFrameApi * pImageFrameApi, FlvParams flv_params)
+    gdi::ImageFrameApi * pImageFrameApi, FlvParams const & flv_params)
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)

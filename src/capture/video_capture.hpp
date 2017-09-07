@@ -118,7 +118,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, bool no_timestamp, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams flv_params
+        FlvParams const & flv_params
     );
 
     ~FullVideoCaptureImpl();
