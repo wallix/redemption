@@ -1776,6 +1776,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.record_tmp_path = record_tmp_path;
                         png_params.basename = basename;
                         png_params.groupid = groupid;
+                        png_params.remote_program_session = false;
 
 
                         MetaParams meta_params{
@@ -1963,7 +1964,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0, false};
     FlvParams flv_params;
 
     // flv output options

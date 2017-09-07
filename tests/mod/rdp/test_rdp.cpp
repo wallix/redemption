@@ -97,7 +97,6 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
         //mod_rdp_params.open_session_timeout            = 0;
         //mod_rdp_params.certificate_change_action       = 0;
         //mod_rdp_params.extra_orders                    = "";
-        mod_rdp_params.server_redirection_support        = true;
 
         // To always get the same client random, in tests
         LCGRandom gen(0);
@@ -200,7 +199,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.server_redirection_support        = true;
     mod_rdp_params.large_pointer_support             = false;
 
     // To always get the same client random, in tests
@@ -290,7 +288,6 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.server_redirection_support        = true;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -383,7 +380,6 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.server_redirection_support        = true;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);

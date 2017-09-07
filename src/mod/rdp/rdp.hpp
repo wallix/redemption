@@ -393,8 +393,6 @@ protected:
 
     const bool remote_program;
 
-    const bool server_redirection_support;
-
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
 
@@ -940,7 +938,6 @@ public:
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
-        , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -1474,10 +1471,8 @@ public:
 
         if (bool(this->verbose & RDPVerbose::connection)){
             this->redir_info.log(LOG_INFO, "Init with Redir_info");
-            LOG(LOG_INFO, "ServerRedirectionSupport=%s",
-                this->server_redirection_support ? "true" : "false");
         }
-        if (this->server_redirection_support) {
+        {
             bool load_balance_info_used = false;
 
             const size_t load_balance_info_length = this->load_balance_info.length();
@@ -2364,7 +2359,7 @@ public:
 
                 GCC::UserData::CSCluster cs_cluster;
                 // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
-                if (this->server_redirection_support) {
+                {
                     LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
                     if (!this->nego.tls){
                         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;

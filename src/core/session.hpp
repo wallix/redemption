@@ -299,7 +299,8 @@ public:
                                 signal = BACK_EVENT_RETRY_CURRENT;
                                 mm.mod->get_event().reset_trigger_time();
                             }
-                            else if (e.id == ERR_RDP_SERVER_REDIR) {
+                            else if ((e.id == ERR_RDP_SERVER_REDIR) &&
+                                     this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
                                 // SET new target in ini
                                 const char * host = char_ptr_cast(
                                     this->ini.get<cfg::mod_rdp::redir_info>().host);
