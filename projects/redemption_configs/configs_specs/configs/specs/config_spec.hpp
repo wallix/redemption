@@ -648,6 +648,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));
+        W.sep();
+
+        W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "session_probe_launch_error_message");
     });
 
     W.section("", [&]

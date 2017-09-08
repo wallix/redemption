@@ -646,7 +646,9 @@ public:
         this->sesprob_channel = reinterpret_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    void stop(bool bLaunchSuccessful) override {
+    void stop(bool bLaunchSuccessful, error_type& id_ref) override {
+        id_ref = NO_ERROR;
+
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> stop");
@@ -662,18 +664,21 @@ public:
                     "SessionProbeClipboardBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
                         "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
+                id_ref = ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE;
             }
             else if (!this->clipboard_initialized) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Clipboard Virtual Channel is unavailable. "
                         "Please allow the clipboard redirection in the Remote Desktop Services settings of the target.");
+                id_ref = ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE;
             }
             else if (!this->drive_ready) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Drive of Session Probe is not ready yet. "
                         "Is the target running under Windows Server 2008 R2 or more recent version?");
+                id_ref = ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET;
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
@@ -681,12 +686,14 @@ public:
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
                         "Please also check the temporary directory to ensure there is enough free space.");
+                id_ref = ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS;
             }
             else if (!this->copy_paste_loop_counter) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Session Probe launch cycle has been interrupted. "
                         "The launch timeout duration may be too short.");
+                id_ref = ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED;
             }
             else {
                 LOG(LOG_ERR,
@@ -695,6 +702,7 @@ public:
                         "clipboard_monitor_ready=%s format_data_requested=%s",
                     (this->clipboard_monitor_ready ? "yes" : "no"),
                     (this->format_data_requested ? "yes" : "no"));
+                id_ref = ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG;
             }
         }
 

@@ -4233,6 +4233,18 @@ public:
                         (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
                         (e.id == ERR_RAIL_STARTING_PROGRAM) ||
                         (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
+
+                        (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
+                        (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
+                        (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG) ||
+
                         (e.id == ERR_SESSION_PROBE_LAUNCH)) {
                         throw;
                     }
@@ -7738,20 +7750,28 @@ private:
         if (this->enable_session_probe) {
             ClipboardVirtualChannel& cvc =
                 this->get_clipboard_virtual_channel();
-            cvc.set_session_probe_launcher(
-                this->session_probe_launcher.get());
+            if (this->session_probe_launcher) {
+                cvc.set_session_probe_launcher(
+                    this->session_probe_launcher.get());
+            }
 
             FileSystemVirtualChannel& fsvc =
                 this->get_file_system_virtual_channel();
-            fsvc.set_session_probe_launcher(
-                this->session_probe_launcher.get());
+            if (this->session_probe_launcher) {
+                fsvc.set_session_probe_launcher(
+                    this->session_probe_launcher.get());
+            }
 
-            this->file_system_drive_manager.set_session_probe_launcher(
-                this->session_probe_launcher.get());
+            if (this->session_probe_launcher) {
+                this->file_system_drive_manager.set_session_probe_launcher(
+                    this->session_probe_launcher.get());
+            }
 
             SessionProbeVirtualChannel& spvc =
                 this->get_session_probe_virtual_channel();
-            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            if (this->session_probe_launcher) {
+                spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            }
             this->session_probe_virtual_channel_p = &spvc;
             if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
                 spvc.start_launch_timeout_timer();
@@ -7772,11 +7792,13 @@ private:
                 rpvc.set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);
 
-                rpvc.set_session_probe_launcher(
-                    this->session_probe_launcher.get());
+                if (this->session_probe_launcher) {
+                    rpvc.set_session_probe_launcher(
+                        this->session_probe_launcher.get());
 
-                this->session_probe_launcher->set_remote_programs_virtual_channel(
-                    &rpvc);
+                    this->session_probe_launcher->set_remote_programs_virtual_channel(
+                        &rpvc);
+                }
             }
         }
     }

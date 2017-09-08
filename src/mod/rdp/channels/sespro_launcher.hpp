@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/error.hpp"
 #include "core/wait_obj.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 
@@ -59,6 +60,6 @@ public:
     virtual void set_session_probe_virtual_channel(
         BaseVirtualChannel* channel) = 0;
 
-    virtual void stop(bool bLaunchSuccessful) = 0;
+    virtual void stop(bool bLaunchSuccessful, error_type& id_ref) = 0;
 };
 

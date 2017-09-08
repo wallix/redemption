@@ -29,6 +29,8 @@
 #include "mod/internal/widget/flat_button.hpp"
 #include "utils/translation.hpp"
 
+#include <string>
+
 class Theme;
 
 class FlatWabClose : public WidgetParent
@@ -61,6 +63,11 @@ private:
     Translation::language_t lang;
 
     bool showtimer;
+
+    Font const & font;
+
+    std::string  diagnostic_text;
+    bool         fixed_format_diagnostic_text;
 
 public:
     FlatWabClose(gdi::GraphicApi & drawable,

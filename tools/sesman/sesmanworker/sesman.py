@@ -189,6 +189,8 @@ class Sesman():
         self.back_selector = False
         self.target_app_rights = {}
 
+        self.shared[u'session_probe_launch_error_message'] = u''
+
     def reset_session_var(self):
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
@@ -1595,7 +1597,11 @@ class Sesman():
                                         release_reason = u'Interrupt: Session Probe launch failed'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_launch_failed")})
+                                        if self.shared.get(u'session_probe_launch_error_message'):
+                                            self.send_data({u'disconnect_reason': self.shared.get(u'session_probe_launch_error_message')})
+                                            self.shared[u'session_probe_launch_error_message'] = u''
+                                        else:
+                                            self.send_data({u'disconnect_reason': TR(u"session_probe_launch_failed")})
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe keepalive missed')
                                         release_reason = u'Interrupt: Session Probe keepalive missed'

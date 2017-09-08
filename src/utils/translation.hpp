@@ -163,6 +163,102 @@ namespace trkeys
         "Disconnect Now",
         "Se déconnecter maintenant"
     );
+    TR_KV(err_rdp_server_redir,
+        "The computer that you are trying to connect to is redirecting you to another computer!",
+        "L'ordinateur auquel vous essayez de vous connecter vous redirige vers un autre ordinateur!"
+    );
+    TR_KV(err_nla_authentication_failed,
+        "NLA Authentication Failed!",
+        "Échec d'authentification NLA!"
+    );
+    TR_KV(err_transport_tls_certificate_changed,
+        "TLS certificate changed!",
+        "Certificat TLS modifié!"
+    );
+    TR_KV(err_transport_tls_certificate_missed,
+        "TLS certificate missed!",
+        "Certificat TLS est manquant!"
+    );
+    TR_KV(err_transport_tls_certificate_corrupted,
+        "TLS certificate corrupted!",
+        "Certificat TLS est corrompu!"
+    );
+    TR_KV(err_transport_tls_certificate_inaccessible,
+        "TLS certificate  is inaccessible!",
+        "Certificat TLS est inaccessible!"
+    );
+    TR_KV(err_vnc_connection_error,
+        "VNC connection error!",
+        "Error de connexion VNC!"
+    );
+    TR_KV(err_rdp_unsupported_monitor_layout,
+        "Unsupported client display monitor layout!",
+        "La disposition du moniteur d'affichage du client n'est pas supportée!"
+    );
+    TR_KV(err_lic,
+        "An error occurred during the licensing protocol!",
+        "Une erreur de protocole de licence s'est produite!"
+    );
+    TR_KV(err_rail_client_execute,
+        "The RemoteApp program did not start on the remote computer!",
+        "Le programme RemoteApp n'a pas démarré sur l'ordinateur distant!"
+    );
+    TR_KV(err_rail_starting_program,
+        "Cannot start the RemoteApp program!",
+        "Impossible de démarrer le programme RemoteApp!"
+    );
+    TR_KV(err_rail_unauthorized_program,
+        "The RemoteApp program is not in the list of authorized programs!",
+        "Le programme RemoteApp n'est pas dans la liste des programmes autorisés!"
+    );
+    TR_KV(err_rdp_open_session_timeout,
+        "Logon timer expired!",
+        "Le délai d'attente d'ouverture de session a expiré!"
+    );
+    TR_KV(err_session_probe_launch,
+        "Could not launch Session Probe!",
+        "Impossible de lancer Session Probe!"
+    );
+    TR_KV(err_session_probe_asbl_fsvc_unavailable,
+        "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target.",
+        "(ASBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
+    );
+    TR_KV(err_session_probe_asbl_maybe_something_blocks,
+        "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space.",
+        "(ASBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. La cible fonctionne-elle sous un produit de famille Microsoft Server? L'invite de commande doit être publiée comme programme RemoteApp et accepter tout type de paramètres de ligne de commande. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
+    );
+    TR_KV(err_session_probe_asbl_unknown_reason,
+        "(ASBL) Session Probe launch has failed for unknown reason!",
+        "(ASBL) Le lancement de Session Probe a échoué pour une raison inconnue!"
+    );
+    TR_KV(err_session_probe_cbbl_fsvc_unavailable,
+        "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target.",
+        "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
+    );
+    TR_KV(err_session_probe_cbbl_cbvc_unavailable,
+        "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. Please allow the clipboard redirection in the Remote Desktop Services settings of the target.",
+        "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du presse-papier n'est pas disponible. Veuillez autorisez la redirection du presse-papier dans les paramètres des Services de bureau à distance de la cible."
+    );
+    TR_KV(err_session_probe_cbbl_drive_not_ready_yet,
+        "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?",
+        "(CBBL) Impossible de lancer Session Probe! Le lecteur de Session Probe n'est pas encore prêt. La cible fonctionne-elle sous Windows Server 2008 R2 ou une version plus récente?"
+    );
+    TR_KV(err_session_probe_cbbl_maybe_something_blocks,
+        "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space.",
+        "(CBBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
+    );
+    TR_KV(err_session_probe_cbbl_launch_cycle_interrupted,
+        "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout duration may be too short.",
+        "(CBBL) Le cycle de lancement de Session Probe a été interrompu! La durée du délai d'attente de lancement peut être trop courte."
+    );
+    TR_KV(err_session_probe_cbbl_unknown_reason_refer_to_syslog,
+        "(ASBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition.",
+        "(ASBL) Le lancement de Session Probe a échoué pour une raison inconnue! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
+    );
+    TR_KV(err_session_probe_rp_launch_refer_to_syslog,
+        "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition.",
+        "(RP) Impossible de lancer Session Probe! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
+    );
 #undef TR_KV
 }
 

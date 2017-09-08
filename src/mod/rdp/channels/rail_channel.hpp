@@ -36,8 +36,6 @@ private:
     uint16_t client_order_type = 0;
     uint16_t server_order_type = 0;
 
-    //FrontAPI& front;
-
        uint16_t param_client_execute_flags;
     std::string param_client_execute_exe_or_file;
     std::string param_client_execute_working_dir;
@@ -954,7 +952,7 @@ public:
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
                     {"ExeOrFile", serpdu.ExeOrFile()},
                     });
-                   
+
                 this->report_message.log5(info);
             }
         }
@@ -971,7 +969,7 @@ public:
 */
 
                 if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
-                    throw Error(ERR_SESSION_PROBE_LAUNCH);
+                    throw Error(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG);
                 }
 
                 if (!this->exe_or_file_2_sent &&
@@ -1659,7 +1657,7 @@ private:
                 out_s.get_data(), length);
         }
         LOG(LOG_INFO,
-            "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+            "RemoteProgramsVirtualChannel::try_launch_application: "
                 "Send to server - Client Execute PDU (2)");
         cepdu.log(LOG_INFO);
 

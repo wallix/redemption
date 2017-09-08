@@ -25,7 +25,7 @@
 #include "utils/rect.hpp"
 
 #include <cassert>
-
+#include <string>
 
 class Font;
 
@@ -349,6 +349,16 @@ struct TextMetrics
     int height = 0;
 
     TextMetrics(const Font & font, const char * unicode_text);
+};
+
+
+struct MultiLineTextMetrics
+{
+    int width = 0;
+    int height = 0;
+
+    MultiLineTextMetrics(const Font& font, const char* unicode_text, int max_width,
+        std::string& out_multiline_string_ref);
 };
 
 

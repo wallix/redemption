@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "utils/translation.hpp"
+
 #include <cstdio>
 
 #define EACH_ERROR(f, fv)                                        \
@@ -320,6 +322,16 @@
     fv(ERR_SESSION_PROBE_LAUNCH, 24200)                          \
     f(ERR_SESSION_PROBE_ENDING_IN_PROGRESS)                      \
     f(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION)              \
+    f(ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)                   \
+    f(ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)             \
+    f(ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)                     \
+    f(ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE)                   \
+    f(ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE)                   \
+    f(ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET)                \
+    f(ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS)             \
+    f(ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED)           \
+    f(ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)     \
+    f(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)               \
                                                                  \
     fv(ERR_CROPPER_INVALID_PARAMETER, 24500)                     \
                                                                  \
@@ -440,5 +452,87 @@ public:
         }
     }
 };
+
+inline const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) {
+    switch (error.id) {
+    case ERR_NLA_AUTHENTICATION_FAILED:
+        return TR(trkeys::err_nla_authentication_failed, lang);
+
+    case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+        return TR(trkeys::err_transport_tls_certificate_changed, lang);
+
+    case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+        return TR(trkeys::err_transport_tls_certificate_missed, lang);
+
+    case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+        return TR(trkeys::err_transport_tls_certificate_corrupted, lang);
+
+    case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+        return TR(trkeys::err_transport_tls_certificate_inaccessible, lang);
+
+    case ERR_VNC_CONNECTION_ERROR:
+        return TR(trkeys::err_vnc_connection_error, lang);
+
+    case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
+        return TR(trkeys::session_logoff_in_progress, lang);
+
+    case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
+        return TR(trkeys::err_rdp_unsupported_monitor_layout, lang);
+
+    case ERR_LIC:
+        return TR(trkeys::err_lic, lang);
+
+    case ERR_RAIL_CLIENT_EXECUTE:
+        return TR(trkeys::err_rail_client_execute, lang);
+
+    case ERR_RAIL_STARTING_PROGRAM:
+        return TR(trkeys::err_rail_starting_program, lang);
+
+    case ERR_RAIL_UNAUTHORIZED_PROGRAM:
+        return TR(trkeys::err_rail_unauthorized_program, lang);
+
+    case ERR_RDP_OPEN_SESSION_TIMEOUT:
+        return TR(trkeys::err_rdp_open_session_timeout, lang);
+
+    case ERR_RDP_SERVER_REDIR:
+        return TR(trkeys::err_rdp_server_redir, lang);
+
+    case ERR_SESSION_PROBE_LAUNCH:
+        return TR(trkeys::err_session_probe_launch, lang);
+
+    case ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE:
+        return TR(trkeys::err_session_probe_asbl_fsvc_unavailable, lang);
+
+    case ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS:
+        return TR(trkeys::err_session_probe_asbl_maybe_something_blocks, lang);
+
+    case ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON:
+        return TR(trkeys::err_session_probe_asbl_unknown_reason, lang);
+
+    case ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE:
+        return TR(trkeys::err_session_probe_cbbl_fsvc_unavailable, lang);
+
+    case ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE:
+        return TR(trkeys::err_session_probe_cbbl_cbvc_unavailable, lang);
+
+    case ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET:
+        return TR(trkeys::err_session_probe_cbbl_drive_not_ready_yet, lang);
+
+    case ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS:
+        return TR(trkeys::err_session_probe_cbbl_maybe_something_blocks, lang);
+
+    case ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED:
+        return TR(trkeys::err_session_probe_cbbl_launch_cycle_interrupted, lang);
+
+    case ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG:
+        return TR(trkeys::err_session_probe_cbbl_unknown_reason_refer_to_syslog, lang);
+
+    case ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG:
+        return TR(trkeys::err_session_probe_rp_launch_refer_to_syslog, lang);
+
+    default:
+        return error.errmsg(with_id);
+    }
+}
 
 #undef EACH_ERROR

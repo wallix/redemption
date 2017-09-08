@@ -23,6 +23,9 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 
+#include <sstream>
+#include <vector>
+
 namespace gdi {
 
 TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
@@ -35,6 +38,68 @@ TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
         height_max = std::max(height_max, font_item.height);
     }
     this->height = height_max;
+}
+
+MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode_text, int max_width,
+    std::string& out_multiline_string_ref)
+{
+    out_multiline_string_ref.clear();
+
+    int number_of_lines = 1;
+
+    int height_max = 0;
+
+    auto get_text_width = [&font, &height_max](const char* unicode_text) -> int {
+        TextMetrics tt(font, unicode_text);
+
+        height_max = std::max(height_max, tt.height);
+
+        return tt.width;
+    };
+
+    const int white_space_width = get_text_width(" ");
+
+    std::istringstream  iss(unicode_text);
+    std::string         parameter;
+    std::ostringstream  oss;
+    int                 cumulative_width(0);
+    while (std::getline(iss, parameter, ' ')) {
+        if (!parameter.length()) {
+            continue;
+        }
+
+        const int part_width = get_text_width(parameter.c_str());
+
+        if (cumulative_width) {
+            if (cumulative_width + white_space_width + part_width > max_width) {
+                oss << "<br>" << parameter;
+
+                cumulative_width = part_width;
+
+                this->width = std::max(this->width, cumulative_width);
+
+                number_of_lines++;
+            }
+            else {
+                oss << " " << parameter;
+
+                cumulative_width += (white_space_width + part_width);
+
+                this->width = std::max(this->width, cumulative_width);
+            }
+        }
+        else {
+            oss << parameter;
+
+            cumulative_width = part_width;
+
+            this->width = std::max(this->width, cumulative_width);
+        }
+    }
+
+    this->height = height_max * number_of_lines;
+
+    out_multiline_string_ref = std::move(oss.str());
 }
 
 

@@ -3,7 +3,7 @@
 # run `tools/bjam/gen_targets.py > targets.jam`
 # 
 exe rdpinichecker :
-  src/main/ini_checker.cpp 
+  $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
@@ -11,7 +11,7 @@ exe rdpinichecker :
   <library>src/utils/fileutils.o
 ;
 exe rdpproxy :
-  src/main/main.cpp 
+  $(REDEMPTION_SRC_PATH)/main/main.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
@@ -91,7 +91,7 @@ exe rdpproxy :
   <library>z
 ;
 exe rdpclient :
-  src/main/rdp_client.cpp 
+  $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
@@ -123,7 +123,7 @@ exe rdpclient :
   <library>src/utils/png.o
 ;
 exe rdpheadless :
-  src/main/rdpheadless.cpp 
+  $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
 :
   $(EXE_DEPENDENCIES)
   <cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes
@@ -163,7 +163,7 @@ exe rdpheadless :
   <library>z
 ;
 exe rdptanalyzer :
-  src/main/tanalyzer.cpp 
+  $(REDEMPTION_SRC_PATH)/main/tanalyzer.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>crypto
@@ -172,7 +172,7 @@ exe rdptanalyzer :
   <library>src/gdi/graphic_api.o
 ;
 exe rdptproxy :
-  src/main/transparent.cpp 
+  $(REDEMPTION_SRC_PATH)/main/transparent.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
@@ -251,7 +251,7 @@ exe rdptproxy :
   <library>z
 ;
 exe vncclient :
-  src/main/vnc_client.cpp 
+  $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
@@ -331,7 +331,7 @@ exe vncclient :
 ;
 
 lib libredrec :
-  src/main/do_recorder.cpp.lib.o 
+  src/main/do_recorder.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
   <library>app_path_exe.o
@@ -357,7 +357,7 @@ lib libredrec :
   <library>z
 ;
 lib libscytale :
-  src/main/scytale.cpp.lib.o 
+  src/main/scytale.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
@@ -379,7 +379,7 @@ obj src/main/scytale.cpp.lib.o :
 ;
 
 make-test tests/acl/test_acl_serializer :
-  tests/acl/test_acl_serializer.cpp 
+  $(REDEMPTION_TEST_PATH)/acl/test_acl_serializer.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -456,11 +456,11 @@ make-test tests/acl/test_acl_serializer :
   <library>z
 ;
 make-test tests/acl/test_auth_api :
-  tests/acl/test_auth_api.cpp 
+  $(REDEMPTION_TEST_PATH)/acl/test_auth_api.cpp
 :
 ;
 make-test tests/acl/test_authentifier :
-  tests/acl/test_authentifier.cpp 
+  $(REDEMPTION_TEST_PATH)/acl/test_authentifier.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -537,11 +537,11 @@ make-test tests/acl/test_authentifier :
   <library>z
 ;
 make-test tests/acl/test_mm_api :
-  tests/acl/test_mm_api.cpp 
+  $(REDEMPTION_TEST_PATH)/acl/test_mm_api.cpp
 :
 ;
 make-test tests/acl/test_module_manager :
-  tests/acl/test_module_manager.cpp 
+  $(REDEMPTION_TEST_PATH)/acl/test_module_manager.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -618,12 +618,12 @@ make-test tests/acl/test_module_manager :
   <library>z
 ;
 make-test tests/capture/ocr/locale/test_latin_to_cyrillic :
-  tests/capture/ocr/locale/test_latin_to_cyrillic.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/ocr/locale/test_latin_to_cyrillic.cpp
 :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
 ;
 make-test tests/capture/test_bogus_ocr :
-  tests/capture/test_bogus_ocr.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ocr.cpp
 :
   <library>crypto
   <library>png
@@ -635,7 +635,7 @@ make-test tests/capture/test_bogus_ocr :
   <library>src/utils/png.o
 ;
 make-test tests/capture/test_bogus_ppocr :
-  tests/capture/test_bogus_ppocr.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ppocr.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -650,7 +650,7 @@ make-test tests/capture/test_bogus_ppocr :
   <library>src/utils/png.o
 ;
 make-test tests/capture/test_capture :
-  tests/capture/test_capture.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_capture.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -672,12 +672,12 @@ make-test tests/capture/test_capture :
   <library>z
 ;
 make-test tests/capture/test_cryptofile :
-  tests/capture/test_cryptofile.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_cryptofile.cpp
 :
   <library>crypto
 ;
 make-test tests/capture/test_ocr :
-  tests/capture/test_ocr.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_ocr.cpp
 :
   <library>crypto
   <library>png
@@ -689,7 +689,7 @@ make-test tests/capture/test_ocr :
   <library>src/utils/png.o
 ;
 make-test tests/capture/test_ppocr :
-  tests/capture/test_ppocr.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_ppocr.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -704,22 +704,22 @@ make-test tests/capture/test_ppocr :
   <library>src/utils/png.o
 ;
 make-test tests/capture/test_transparentchunk :
-  tests/capture/test_transparentchunk.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_transparentchunk.cpp
 :
 ;
 make-test tests/capture/test_transparentplayer :
-  tests/capture/test_transparentplayer.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_transparentplayer.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
 ;
 make-test tests/capture/test_transparentrecorder :
-  tests/capture/test_transparentrecorder.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_transparentrecorder.cpp
 :
 ;
 make-test tests/capture/test_video_capture :
-  tests/capture/test_video_capture.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
 :
   <library>crypto
   <library>ffmpeg
@@ -733,7 +733,7 @@ make-test tests/capture/test_video_capture :
   <library>src/utils/png.o
 ;
 make-test tests/capture/test_wrm_capture :
-  tests/capture/test_wrm_capture.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/test_wrm_capture.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -749,11 +749,11 @@ make-test tests/capture/test_wrm_capture :
   <library>z
 ;
 make-test tests/capture/utils/test_match_finder :
-  tests/capture/utils/test_match_finder.cpp 
+  $(REDEMPTION_TEST_PATH)/capture/utils/test_match_finder.cpp
 :
 ;
 make-test tests/client_mods/cli_vnc_connection :
-  tests/client_mods/cli_vnc_connection.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/cli_vnc_connection.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -782,7 +782,7 @@ make-test tests/client_mods/cli_vnc_connection :
   <library>z
 ;
 make-test tests/client_mods/test_rdp_client_large_pointer :
-  tests/client_mods/test_rdp_client_large_pointer.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_large_pointer.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -810,7 +810,7 @@ make-test tests/client_mods/test_rdp_client_large_pointer :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/client_mods/test_rdp_client_test_card :
-  tests/client_mods/test_rdp_client_test_card.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_test_card.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -831,7 +831,7 @@ make-test tests/client_mods/test_rdp_client_test_card :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/client_mods/test_rdp_client_tls_w2008 :
-  tests/client_mods/test_rdp_client_tls_w2008.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_tls_w2008.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -859,7 +859,7 @@ make-test tests/client_mods/test_rdp_client_tls_w2008 :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/client_mods/test_rdp_client_wab :
-  tests/client_mods/test_rdp_client_wab.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_wab.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -887,7 +887,7 @@ make-test tests/client_mods/test_rdp_client_wab :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/client_mods/test_vnc_client_simple :
-  tests/client_mods/test_vnc_client_simple.cpp 
+  $(REDEMPTION_TEST_PATH)/client_mods/test_vnc_client_simple.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -917,11 +917,11 @@ make-test tests/client_mods/test_vnc_client_simple :
   <library>z
 ;
 make-test tests/core/FSCC/test_FileInformation :
-  tests/core/FSCC/test_FileInformation.cpp 
+  $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
 ;
 make-test tests/core/RDP/caches/test_bmpcache :
-  tests/core/RDP/caches/test_bmpcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_bmpcache.cpp
 :
   <library>crypto
   <library>png
@@ -932,265 +932,265 @@ make-test tests/core/RDP/caches/test_bmpcache :
   <library>src/utils/png.o
 ;
 make-test tests/core/RDP/caches/test_bmpcachepersister :
-  tests/core/RDP/caches/test_bmpcachepersister.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_bmpcachepersister.cpp
 :
   <library>crypto
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
 ;
 make-test tests/core/RDP/caches/test_brushcache :
-  tests/core/RDP/caches/test_brushcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_brushcache.cpp
 :
 ;
 make-test tests/core/RDP/caches/test_glyphcache :
-  tests/core/RDP/caches/test_glyphcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_glyphcache.cpp
 :
 ;
 make-test tests/core/RDP/caches/test_pointercache :
-  tests/core/RDP/caches/test_pointercache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_activate :
-  tests/core/RDP/capabilities/test_activate.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_activate.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_bitmapcachehostsupport :
-  tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcachehostsupport.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_bitmapcodecs :
-  tests/core/RDP/capabilities/test_bitmapcodecs.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcodecs.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_bmpcache2 :
-  tests/core/RDP/capabilities/test_bmpcache2.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bmpcache2.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_bitmap :
-  tests/core/RDP/capabilities/test_cap_bitmap.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_bitmap.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_bmpcache :
-  tests/core/RDP/capabilities/test_cap_bmpcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_bmpcache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_brushcache :
-  tests/core/RDP/capabilities/test_cap_brushcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_brushcache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_font :
-  tests/core/RDP/capabilities/test_cap_font.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_font.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_glyphcache :
-  tests/core/RDP/capabilities/test_cap_glyphcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_glyphcache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_share :
-  tests/core/RDP/capabilities/test_cap_share.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_share.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_cap_sound :
-  tests/core/RDP/capabilities/test_cap_sound.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_sound.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_colcache :
-  tests/core/RDP/capabilities/test_colcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_colcache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_common :
-  tests/core/RDP/capabilities/test_common.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_common.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_compdesk :
-  tests/core/RDP/capabilities/test_compdesk.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_compdesk.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_control :
-  tests/core/RDP/capabilities/test_control.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_control.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_drawgdiplus :
-  tests/core/RDP/capabilities/test_drawgdiplus.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawgdiplus.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_drawninegridcache :
-  tests/core/RDP/capabilities/test_drawninegridcache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawninegridcache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_frameacknowledge :
-  tests/core/RDP/capabilities/test_frameacknowledge.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_frameacknowledge.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_general :
-  tests/core/RDP/capabilities/test_general.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_general.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_input :
-  tests/core/RDP/capabilities/test_input.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_input.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_largepointer :
-  tests/core/RDP/capabilities/test_largepointer.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_largepointer.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_multifragmentupdate :
-  tests/core/RDP/capabilities/test_multifragmentupdate.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_multifragmentupdate.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_offscreencache :
-  tests/core/RDP/capabilities/test_offscreencache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_offscreencache.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_order :
-  tests/core/RDP/capabilities/test_order.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_order.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_pointer :
-  tests/core/RDP/capabilities/test_pointer.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_pointer.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_rail :
-  tests/core/RDP/capabilities/test_rail.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_rail.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_surfacecommands :
-  tests/core/RDP/capabilities/test_surfacecommands.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_surfacecommands.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_virchan :
-  tests/core/RDP/capabilities/test_virchan.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_virchan.cpp
 :
 ;
 make-test tests/core/RDP/capabilities/test_window :
-  tests/core/RDP/capabilities/test_window.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_window.cpp
 :
 ;
 make-test tests/core/RDP/channels/test_rdpdr :
-  tests/core/RDP/channels/test_rdpdr.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/channels/test_rdpdr.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_cluster :
-  tests/core/RDP/gcc/userdata/test_cs_cluster.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_cluster.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_core :
-  tests/core/RDP/gcc/userdata/test_cs_core.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_core.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
-  tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_mcs_msgchannel.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_monitor :
-  tests/core/RDP/gcc/userdata/test_cs_monitor.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
-  tests/core/RDP/gcc/userdata/test_cs_monitor_ex.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor_ex.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_multitransport :
-  tests/core/RDP/gcc/userdata/test_cs_multitransport.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_multitransport.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_net :
-  tests/core/RDP/gcc/userdata/test_cs_net.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_net.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_cs_security :
-  tests/core/RDP/gcc/userdata/test_cs_security.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_security.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_sc_core :
-  tests/core/RDP/gcc/userdata/test_sc_core.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_core.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_sc_net :
-  tests/core/RDP/gcc/userdata/test_sc_net.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_net.cpp
 :
 ;
 make-test tests/core/RDP/gcc/userdata/test_sc_sec1 :
-  tests/core/RDP/gcc/userdata/test_sc_sec1.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_sec1.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/mppc/test_mppc_40 :
-  tests/core/RDP/mppc/test_mppc_40.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_40.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/mppc/test_mppc_50 :
-  tests/core/RDP/mppc/test_mppc_50.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_50.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/mppc/test_mppc_60 :
-  tests/core/RDP/mppc/test_mppc_60.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_60.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/mppc/test_mppc_61 :
-  tests/core/RDP/mppc/test_mppc_61.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_61.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/nla/asn1/test_ber :
-  tests/core/RDP/nla/asn1/test_ber.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/asn1/test_ber.cpp
 :
 ;
 make-test tests/core/RDP/nla/kerberos/test_credentials :
-  tests/core/RDP/nla/kerberos/test_credentials.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_credentials.cpp
 :
   <library>krb5
 ;
 make-test tests/core/RDP/nla/kerberos/test_kerberos :
-  tests/core/RDP/nla/kerberos/test_kerberos.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_kerberos.cpp
 :
   <library>gssapi_krb5
   <library>krb5
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm :
-  tests/core/RDP/nla/ntlm/test_ntlm.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_avpair :
-  tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_context :
-  tests/core/RDP/nla/ntlm/test_ntlm_context.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_context.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_message :
-  tests/core/RDP/nla/ntlm/test_ntlm_message.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
-  tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
-  tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
-  tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/test_credssp :
-  tests/core/RDP/nla/test_credssp.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_credssp.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/nla/test_nla :
-  tests/core/RDP/nla/test_nla.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_nla.cpp
 :
   <library>crypto
   <library>gssapi_krb5
@@ -1198,109 +1198,109 @@ make-test tests/core/RDP/nla/test_nla :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/nla/test_sspi :
-  tests/core/RDP/nla/test_sspi.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_AlternateSecondaryWindowing :
-  tests/core/RDP/orders/test_AlternateSecondaryWindowing.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersCommon :
-  tests/core/RDP/orders/test_RDPOrdersCommon.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersCommon.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt :
-  tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache :
-  tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp
 :
   <library>crypto
   <library>src/utils/bitmap.o
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache :
-  tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache :
-  tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker :
-  tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker.cpp
 :
 ;
 make-test tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache :
-  tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp
 :
 ;
 make-test tests/core/RDP/test_GraphicUpdatePDU :
-  tests/core/RDP/test_GraphicUpdatePDU.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_GraphicUpdatePDU.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
@@ -1308,11 +1308,11 @@ make-test tests/core/RDP/test_GraphicUpdatePDU :
   <library>src/utils/bitmap.o
 ;
 make-test tests/core/RDP/test_PersistentKeyListPDU :
-  tests/core/RDP/test_PersistentKeyListPDU.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_PersistentKeyListPDU.cpp
 :
 ;
 make-test tests/core/RDP/test_RDPDrawable :
-  tests/core/RDP/test_RDPDrawable.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_RDPDrawable.cpp
 :
   <library>crypto
   <library>png
@@ -1323,32 +1323,32 @@ make-test tests/core/RDP/test_RDPDrawable :
   <library>src/utils/png.o
 ;
 make-test tests/core/RDP/test_RDPSerializer :
-  tests/core/RDP/test_RDPSerializer.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_RDPSerializer.cpp
 :
   <library>crypto
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
 ;
 make-test tests/core/RDP/test_RefreshRectPDU :
-  tests/core/RDP/test_RefreshRectPDU.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_RefreshRectPDU.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_SaveSessionInfoPDU :
-  tests/core/RDP/test_SaveSessionInfoPDU.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_SaveSessionInfoPDU.cpp
 :
 ;
 make-test tests/core/RDP/test_ServerRedirection :
-  tests/core/RDP/test_ServerRedirection.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_ServerRedirection.cpp
 :
 ;
 make-test tests/core/RDP/test_autoreconnect :
-  tests/core/RDP/test_autoreconnect.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_autoreconnect.cpp
 :
 ;
 make-test tests/core/RDP/test_bitmapupdate :
-  tests/core/RDP/test_bitmapupdate.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_bitmapupdate.cpp
 :
   <library>crypto
   <library>png
@@ -1358,46 +1358,46 @@ make-test tests/core/RDP/test_bitmapupdate :
   <library>src/utils/png.o
 ;
 make-test tests/core/RDP/test_capabilities :
-  tests/core/RDP/test_capabilities.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_capabilities.cpp
 :
 ;
 make-test tests/core/RDP/test_clipboard :
-  tests/core/RDP/test_clipboard.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_clipboard.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_fastpath :
-  tests/core/RDP/test_fastpath.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_fastpath.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_gcc :
-  tests/core/RDP/test_gcc.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_gcc.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/test_lic :
-  tests/core/RDP/test_lic.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_lic.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/test_logon :
-  tests/core/RDP/test_logon.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_logon.cpp
 :
 ;
 make-test tests/core/RDP/test_mcs :
-  tests/core/RDP/test_mcs.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_mcs.cpp
 :
 ;
 make-test tests/core/RDP/test_mppc :
-  tests/core/RDP/test_mppc.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_mppc.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_nego :
-  tests/core/RDP/test_nego.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_nego.cpp
 :
   <library>crypto
   <library>gssapi_krb5
@@ -1406,117 +1406,117 @@ make-test tests/core/RDP/test_nego :
   <library>src/core/RDP/nego.o
 ;
 make-test tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
-  tests/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp
 :
 ;
 make-test tests/core/RDP/test_out_per_bstream :
-  tests/core/RDP/test_out_per_bstream.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_out_per_bstream.cpp
 :
   <library>crypto
 ;
 make-test tests/core/RDP/test_pointer :
-  tests/core/RDP/test_pointer.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_pointer.cpp
 :
 ;
 make-test tests/core/RDP/test_protocol :
-  tests/core/RDP/test_protocol.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
 :
 ;
 make-test tests/core/RDP/test_remote_programs :
-  tests/core/RDP/test_remote_programs.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
 :
 ;
 make-test tests/core/RDP/test_sec :
-  tests/core/RDP/test_sec.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_sec.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_share :
-  tests/core/RDP/test_share.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_share.cpp
 :
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_slowpath :
-  tests/core/RDP/test_slowpath.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_slowpath.cpp
 :
 ;
 make-test tests/core/RDP/test_tpdu_buffer :
-  tests/core/RDP/test_tpdu_buffer.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_tpdu_buffer.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDP/test_x224 :
-  tests/core/RDP/test_x224.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_x224.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/RDPEA/test_audio_output :
-  tests/core/RDPEA/test_audio_output.cpp 
+  $(REDEMPTION_TEST_PATH)/core/RDPEA/test_audio_output.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/SMB2/test_MessageSyntax :
-  tests/core/SMB2/test_MessageSyntax.cpp 
+  $(REDEMPTION_TEST_PATH)/core/SMB2/test_MessageSyntax.cpp
 :
 ;
 make-test tests/core/WMF/test_MetaFileFormat :
-  tests/core/WMF/test_MetaFileFormat.cpp 
+  $(REDEMPTION_TEST_PATH)/core/WMF/test_MetaFileFormat.cpp
 :
 ;
 make-test tests/core/test_authid :
-  tests/core/test_authid.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_authid.cpp
 :
 ;
 make-test tests/core/test_buf64k :
-  tests/core/test_buf64k.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_buf64k.cpp
 :
 ;
 make-test tests/core/test_callback :
-  tests/core/test_callback.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_callback.cpp
 :
 ;
 make-test tests/core/test_channel_list :
-  tests/core/test_channel_list.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_channel_list.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/core/test_channel_names :
-  tests/core/test_channel_names.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_channel_names.cpp
 :
 ;
 make-test tests/core/test_check_files :
-  tests/core/test_check_files.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_check_files.cpp
 :
   <library>app_path_test.o
 ;
 make-test tests/core/test_client_info :
-  tests/core/test_client_info.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp
 :
   <library>crypto
 ;
 make-test tests/core/test_error :
-  tests/core/test_error.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_error.cpp
 :
 ;
 make-test tests/core/test_font :
-  tests/core/test_font.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_font.cpp
 :
 ;
 make-test tests/core/test_front_api :
-  tests/core/test_front_api.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
 :
 ;
 make-test tests/core/test_listen :
-  tests/core/test_listen.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_listen.cpp
 :
 ;
 make-test tests/core/test_mainloop :
-  tests/core/test_mainloop.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_mainloop.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1594,15 +1594,15 @@ make-test tests/core/test_mainloop :
   <library>z
 ;
 make-test tests/core/test_server :
-  tests/core/test_server.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_server.cpp
 :
 ;
 make-test tests/core/test_server_notifier_api :
-  tests/core/test_server_notifier_api.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
 :
 ;
 make-test tests/core/test_session :
-  tests/core/test_session.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_session.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1679,7 +1679,7 @@ make-test tests/core/test_session :
   <library>z
 ;
 make-test tests/core/test_session_server :
-  tests/core/test_session_server.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_session_server.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1756,11 +1756,11 @@ make-test tests/core/test_session_server :
   <library>z
 ;
 make-test tests/core/test_wait_obj :
-  tests/core/test_wait_obj.cpp 
+  $(REDEMPTION_TEST_PATH)/core/test_wait_obj.cpp
 :
 ;
 make-test tests/front/test_front :
-  tests/front/test_front.cpp 
+  $(REDEMPTION_TEST_PATH)/front/test_front.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1799,11 +1799,11 @@ make-test tests/front/test_front :
   <library>z
 ;
 make-test tests/gdi/test_graphic_cmd_color :
-  tests/gdi/test_graphic_cmd_color.cpp 
+  $(REDEMPTION_TEST_PATH)/gdi/test_graphic_cmd_color.cpp
 :
 ;
 make-test tests/gdi/test_protected_graphics :
-  tests/gdi/test_protected_graphics.cpp 
+  $(REDEMPTION_TEST_PATH)/gdi/test_protected_graphics.cpp
 :
   <library>crypto
   <library>png
@@ -1815,17 +1815,17 @@ make-test tests/gdi/test_protected_graphics :
   <library>src/utils/png.o
 ;
 make-test tests/keyboard/test_keymap2 :
-  tests/keyboard/test_keymap2.cpp 
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymap2.cpp
 :
   <library>src/keyboard/keymap2.o
 ;
 make-test tests/keyboard/test_keymapSym :
-  tests/keyboard/test_keymapSym.cpp 
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymapSym.cpp
 :
   <library>src/keyboard/keymapSym.o
 ;
 make-test tests/main/test_do_recorder :
-  tests/main/test_do_recorder.cpp 
+  $(REDEMPTION_TEST_PATH)/main/test_do_recorder.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1851,7 +1851,7 @@ make-test tests/main/test_do_recorder :
   <library>z
 ;
 make-test tests/main/test_scytale :
-  tests/main/test_scytale.cpp 
+  $(REDEMPTION_TEST_PATH)/main/test_scytale.cpp
 :
   <library>crypto
   <library>snappy
@@ -1860,7 +1860,7 @@ make-test tests/main/test_scytale :
   <library>src/utils/fileutils.o
 ;
 make-test tests/mod/internal/test_bouncer2_mod :
-  tests/mod/internal/test_bouncer2_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_bouncer2_mod.cpp
 :
   <library>crypto
   <library>png
@@ -1879,7 +1879,7 @@ make-test tests/mod/internal/test_bouncer2_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_copy_paste :
-  tests/mod/internal/test_copy_paste.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_copy_paste.cpp
 :
   <library>crypto
   <library>png
@@ -1899,7 +1899,7 @@ make-test tests/mod/internal/test_copy_paste :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_flat_dialog_mod :
-  tests/mod/internal/test_flat_dialog_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_dialog_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1932,7 +1932,7 @@ make-test tests/mod/internal/test_flat_dialog_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_flat_login_mod :
-  tests/mod/internal/test_flat_login_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_login_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1965,7 +1965,7 @@ make-test tests/mod/internal/test_flat_login_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_flat_wab_close_mod :
-  tests/mod/internal/test_flat_wab_close_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_wab_close_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -1994,11 +1994,11 @@ make-test tests/mod/internal/test_flat_wab_close_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_flat_wait_mod :
-  tests/mod/internal/test_flat_wait_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_wait_mod.cpp
 :
 ;
 make-test tests/mod/internal/test_interactive_target_mod :
-  tests/mod/internal/test_interactive_target_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_interactive_target_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2031,7 +2031,7 @@ make-test tests/mod/internal/test_interactive_target_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/test_internal_mod :
-  tests/mod/internal/test_internal_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_internal_mod.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
@@ -2045,7 +2045,7 @@ make-test tests/mod/internal/test_internal_mod :
   <library>src/utils/cfgloader.o
 ;
 make-test tests/mod/internal/test_replay_mod :
-  tests/mod/internal/test_replay_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2069,11 +2069,11 @@ make-test tests/mod/internal/test_replay_mod :
   <library>z
 ;
 make-test tests/mod/internal/test_selector_mod :
-  tests/mod/internal/test_selector_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_selector_mod.cpp
 :
 ;
 make-test tests/mod/internal/test_test_card_mod :
-  tests/mod/internal/test_test_card_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_test_card_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2093,11 +2093,11 @@ make-test tests/mod/internal/test_test_card_mod :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/test_transparent_replay_mod :
-  tests/mod/internal/test_transparent_replay_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_transparent_replay_mod.cpp
 :
 ;
 make-test tests/mod/internal/test_widget_test_mod :
-  tests/mod/internal/test_widget_test_mod.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_widget_test_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2126,7 +2126,7 @@ make-test tests/mod/internal/test_widget_test_mod :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/internal/widget/test_composite :
-  tests/mod/internal/widget/test_composite.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_composite.cpp
 :
   <library>crypto
   <library>png
@@ -2139,7 +2139,7 @@ make-test tests/mod/internal/widget/test_composite :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_edit :
-  tests/mod/internal/widget/test_edit.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit.cpp
 :
   <library>crypto
   <library>png
@@ -2157,7 +2157,7 @@ make-test tests/mod/internal/widget/test_edit :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_edit_valid :
-  tests/mod/internal/widget/test_edit_valid.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit_valid.cpp
 :
   <library>crypto
   <library>png
@@ -2178,7 +2178,7 @@ make-test tests/mod/internal/widget/test_edit_valid :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_button :
-  tests/mod/internal/widget/test_flat_button.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_button.cpp
 :
   <library>crypto
   <library>png
@@ -2196,7 +2196,7 @@ make-test tests/mod/internal/widget/test_flat_button :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_dialog :
-  tests/mod/internal/widget/test_flat_dialog.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_dialog.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2221,7 +2221,7 @@ make-test tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_form :
-  tests/mod/internal/widget/test_flat_form.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_form.cpp
 :
   <library>crypto
   <library>png
@@ -2241,7 +2241,7 @@ make-test tests/mod/internal/widget/test_flat_form :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_interactive_target :
-  tests/mod/internal/widget/test_flat_interactive_target.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_interactive_target.cpp
 :
   <library>crypto
   <library>png
@@ -2264,7 +2264,7 @@ make-test tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_login :
-  tests/mod/internal/widget/test_flat_login.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_login.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2289,11 +2289,11 @@ make-test tests/mod/internal/widget/test_flat_login :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_vnc_authentification :
-  tests/mod/internal/widget/test_flat_vnc_authentification.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_vnc_authentification.cpp
 :
 ;
 make-test tests/mod/internal/widget/test_flat_wab_close :
-  tests/mod/internal/widget/test_flat_wab_close.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wab_close.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2316,7 +2316,7 @@ make-test tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_flat_wait :
-  tests/mod/internal/widget/test_flat_wait.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wait.cpp
 :
   <library>crypto
   <library>png
@@ -2339,7 +2339,7 @@ make-test tests/mod/internal/widget/test_flat_wait :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_grid :
-  tests/mod/internal/widget/test_grid.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_grid.cpp
 :
   <library>crypto
   <library>png
@@ -2357,7 +2357,7 @@ make-test tests/mod/internal/widget/test_grid :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_group_box :
-  tests/mod/internal/widget/test_group_box.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_group_box.cpp
 :
   <library>crypto
   <library>png
@@ -2377,7 +2377,7 @@ make-test tests/mod/internal/widget/test_group_box :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_image :
-  tests/mod/internal/widget/test_image.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_image.cpp
 :
   <library>crypto
   <library>png
@@ -2395,7 +2395,7 @@ make-test tests/mod/internal/widget/test_image :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_label :
-  tests/mod/internal/widget/test_label.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_label.cpp
 :
   <library>crypto
   <library>png
@@ -2412,7 +2412,7 @@ make-test tests/mod/internal/widget/test_label :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_labelgrid :
-  tests/mod/internal/widget/test_labelgrid.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_labelgrid.cpp
 :
   <library>crypto
   <library>png
@@ -2430,11 +2430,11 @@ make-test tests/mod/internal/widget/test_labelgrid :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_language_button :
-  tests/mod/internal/widget/test_language_button.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
 ;
 make-test tests/mod/internal/widget/test_multiline :
-  tests/mod/internal/widget/test_multiline.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_multiline.cpp
 :
   <library>crypto
   <library>png
@@ -2450,11 +2450,11 @@ make-test tests/mod/internal/widget/test_multiline :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_notify_api :
-  tests/mod/internal/widget/test_notify_api.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_notify_api.cpp
 :
 ;
 make-test tests/mod/internal/widget/test_number_edit :
-  tests/mod/internal/widget/test_number_edit.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_number_edit.cpp
 :
   <library>crypto
   <library>png
@@ -2473,7 +2473,7 @@ make-test tests/mod/internal/widget/test_number_edit :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_password :
-  tests/mod/internal/widget/test_password.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_password.cpp
 :
   <library>crypto
   <library>png
@@ -2492,7 +2492,7 @@ make-test tests/mod/internal/widget/test_password :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_screen :
-  tests/mod/internal/widget/test_screen.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_screen.cpp
 :
   <library>crypto
   <library>png
@@ -2510,7 +2510,7 @@ make-test tests/mod/internal/widget/test_screen :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_scroll :
-  tests/mod/internal/widget/test_scroll.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_scroll.cpp
 :
   <library>crypto
   <library>png
@@ -2529,7 +2529,7 @@ make-test tests/mod/internal/widget/test_scroll :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_selector :
-  tests/mod/internal/widget/test_selector.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_selector.cpp
 :
   <library>crypto
   <library>png
@@ -2551,11 +2551,11 @@ make-test tests/mod/internal/widget/test_selector :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_tab :
-  tests/mod/internal/widget/test_tab.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tab.cpp
 :
 ;
 make-test tests/mod/internal/widget/test_tooltip :
-  tests/mod/internal/widget/test_tooltip.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tooltip.cpp
 :
   <library>crypto
   <library>png
@@ -2572,11 +2572,11 @@ make-test tests/mod/internal/widget/test_tooltip :
   <library>src/utils/png.o
 ;
 make-test tests/mod/internal/widget/test_widget :
-  tests/mod/internal/widget/test_widget.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
 ;
 make-test tests/mod/internal/widget/test_widget_rect :
-  tests/mod/internal/widget/test_widget_rect.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget_rect.cpp
 :
   <library>crypto
   <library>png
@@ -2593,15 +2593,15 @@ make-test tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/png.o
 ;
 make-test tests/mod/null/test_null :
-  tests/mod/null/test_null.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/null/test_null.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_base_channel :
-  tests/mod/rdp/channels/test_base_channel.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_cliprdr_channel :
-  tests/mod/rdp/channels/test_cliprdr_channel.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
   <library>crypto
   <library>png
@@ -2612,17 +2612,17 @@ make-test tests/mod/rdp/channels/test_cliprdr_channel :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/rdp/channels/test_rail_window_id_manager :
-  tests/mod/rdp/channels/test_rail_window_id_manager.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rail_window_id_manager.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
-  tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
 ;
 make-test tests/mod/rdp/channels/test_rdpdr_channel :
-  tests/mod/rdp/channels/test_rdpdr_channel.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_channel.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2635,31 +2635,31 @@ make-test tests/mod/rdp/channels/test_rdpdr_channel :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
-  tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
-  tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_alternate_shell_based_launcher.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_sespro_channel :
-  tests/mod/rdp/channels/test_sespro_channel.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_channel.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
-  tests/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_sespro_launcher :
-  tests/mod/rdp/channels/test_sespro_launcher.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
 :
 ;
 make-test tests/mod/rdp/channels/test_virtual_channel_data_sender :
-  tests/mod/rdp/channels/test_virtual_channel_data_sender.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_virtual_channel_data_sender.cpp
 :
 ;
 make-test tests/mod/rdp/test_rdp :
-  tests/mod/rdp/test_rdp.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2687,11 +2687,11 @@ make-test tests/mod/rdp/test_rdp :
   <library>tests/includes/test_only/front/fake_front.o
 ;
 make-test tests/mod/rdp/test_rdp_log :
-  tests/mod/rdp/test_rdp_log.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_log.cpp
 :
 ;
 make-test tests/mod/rdp/test_rdp_orders :
-  tests/mod/rdp/test_rdp_orders.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_orders.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2700,15 +2700,15 @@ make-test tests/mod/rdp/test_rdp_orders :
   <library>src/utils/fileutils.o
 ;
 make-test tests/mod/rdp/test_rdp_params :
-  tests/mod/rdp/test_rdp_params.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
 :
 ;
 make-test tests/mod/test_mod_api :
-  tests/mod/test_mod_api.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/test_mod_api.cpp
 :
 ;
 make-test tests/mod/vnc/test_vnc :
-  tests/mod/vnc/test_vnc.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2737,60 +2737,60 @@ make-test tests/mod/vnc/test_vnc :
   <library>z
 ;
 make-test tests/mod/xup/test_xup :
-  tests/mod/xup/test_xup.cpp 
+  $(REDEMPTION_TEST_PATH)/mod/xup/test_xup.cpp
 :
   <library>crypto
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
 ;
 make-test tests/regex/test_regex :
-  tests/regex/test_regex.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex.cpp
 :
 ;
 make-test tests/regex/test_regex_automate :
-  tests/regex/test_regex_automate.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_automate.cpp
 :
 ;
 make-test tests/regex/test_regex_consumer :
-  tests/regex/test_regex_consumer.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_consumer.cpp
 :
 ;
 make-test tests/regex/test_regex_parser :
-  tests/regex/test_regex_parser.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_parser.cpp
 :
 ;
 make-test tests/regex/test_regex_st_automate :
-  tests/regex/test_regex_st_automate.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_st_automate.cpp
 :
 ;
 make-test tests/regex/test_regex_state :
-  tests/regex/test_regex_state.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_state.cpp
 :
 ;
 make-test tests/regex/test_regex_states_value :
-  tests/regex/test_regex_states_value.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_states_value.cpp
 :
 ;
 make-test tests/regex/test_regex_utils :
-  tests/regex/test_regex_utils.cpp 
+  $(REDEMPTION_TEST_PATH)/regex/test_regex_utils.cpp
 :
 ;
 make-test tests/sashimi/test_buffer :
-  tests/sashimi/test_buffer.cpp 
+  $(REDEMPTION_TEST_PATH)/sashimi/test_buffer.cpp
 :
   <cxxflags>-Wno-format <cxxflags>-Wno-format-security
   <library>crypto
   <library>z
 ;
 make-test tests/sashimi/test_crypto :
-  tests/sashimi/test_crypto.cpp 
+  $(REDEMPTION_TEST_PATH)/sashimi/test_crypto.cpp
 :
   <cxxflags>-Wno-format <cxxflags>-Wno-format-security
   <library>crypto
   <library>z
 ;
 make-test tests/server/test_mstsc_client :
-  tests/server/test_mstsc_client.cpp 
+  $(REDEMPTION_TEST_PATH)/server/test_mstsc_client.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2826,7 +2826,7 @@ make-test tests/server/test_mstsc_client :
   <library>z
 ;
 make-test tests/server/test_mstsc_client_rdp50bulk :
-  tests/server/test_mstsc_client_rdp50bulk.cpp 
+  $(REDEMPTION_TEST_PATH)/server/test_mstsc_client_rdp50bulk.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2862,7 +2862,7 @@ make-test tests/server/test_mstsc_client_rdp50bulk :
   <library>z
 ;
 make-test tests/server/test_rdesktop_client :
-  tests/server/test_rdesktop_client.cpp 
+  $(REDEMPTION_TEST_PATH)/server/test_rdesktop_client.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2898,7 +2898,7 @@ make-test tests/server/test_rdesktop_client :
   <library>z
 ;
 make-test tests/system/linux/system/test_openssl :
-  tests/system/linux/system/test_openssl.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_openssl.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -2906,52 +2906,52 @@ make-test tests/system/linux/system/test_openssl :
   <library>src/utils/fileutils.o
 ;
 make-test tests/system/linux/system/test_ssl_aes :
-  tests/system/linux/system/test_ssl_aes.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_aes.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_calls :
-  tests/system/linux/system/test_ssl_calls.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_calls.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_md4 :
-  tests/system/linux/system/test_ssl_md4.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_md4.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_md5 :
-  tests/system/linux/system/test_ssl_md5.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_md5.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_mod_exp :
-  tests/system/linux/system/test_ssl_mod_exp.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_mod_exp.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_rc4 :
-  tests/system/linux/system/test_ssl_rc4.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_rc4.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_sha1 :
-  tests/system/linux/system/test_ssl_sha1.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha1.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_sha256 :
-  tests/system/linux/system/test_ssl_sha256.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha256.cpp
 :
   <library>crypto
 ;
 make-test tests/system/linux/system/test_ssl_sha512 :
-  tests/system/linux/system/test_ssl_sha512.cpp 
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha512.cpp
 :
   <library>crypto
 ;
 make-test tests/test_bitmap_perf :
-  tests/test_bitmap_perf.cpp 
+  $(REDEMPTION_TEST_PATH)/test_bitmap_perf.cpp
 :
   <library>crypto
   <library>png
@@ -2962,17 +2962,17 @@ make-test tests/test_bitmap_perf :
   <library>src/utils/png.o
 ;
 make-test tests/test_libpng :
-  tests/test_libpng.cpp 
+  $(REDEMPTION_TEST_PATH)/test_libpng.cpp
 :
   <library>png
 ;
 make-test tests/test_ssl :
-  tests/test_ssl.cpp 
+  $(REDEMPTION_TEST_PATH)/test_ssl.cpp
 :
   <library>crypto
 ;
 make-test tests/transport/test_crypto_transport :
-  tests/transport/test_crypto_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_crypto_transport.cpp
 :
   <library>crypto
   <library>snappy
@@ -2980,16 +2980,16 @@ make-test tests/transport/test_crypto_transport :
   <library>src/utils/fileutils.o
 ;
 make-test tests/transport/test_gzip_compression_transport :
-  tests/transport/test_gzip_compression_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_gzip_compression_transport.cpp
 :
   <library>z
 ;
 make-test tests/transport/test_in_file_transport :
-  tests/transport/test_in_file_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_in_file_transport.cpp
 :
 ;
 make-test tests/transport/test_in_meta_sequence_transport :
-  tests/transport/test_in_meta_sequence_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_in_meta_sequence_transport.cpp
 :
   <library>crypto
   <library>png
@@ -3004,7 +3004,7 @@ make-test tests/transport/test_in_meta_sequence_transport :
   <library>z
 ;
 make-test tests/transport/test_mwrm_reader :
-  tests/transport/test_mwrm_reader.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_mwrm_reader.cpp
 :
   <library>crypto
   <library>snappy
@@ -3013,16 +3013,16 @@ make-test tests/transport/test_mwrm_reader :
   <library>src/utils/fileutils.o
 ;
 make-test tests/transport/test_out_file_transport :
-  tests/transport/test_out_file_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_out_file_transport.cpp
 :
 ;
 make-test tests/transport/test_snappy_compression_transport :
-  tests/transport/test_snappy_compression_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_snappy_compression_transport.cpp
 :
   <library>snappy
 ;
 make-test tests/transport/test_socket_transport :
-  tests/transport/test_socket_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_socket_transport.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -3032,146 +3032,146 @@ make-test tests/transport/test_socket_transport :
   <library>src/utils/netutils.o
 ;
 make-test tests/transport/test_test_transport :
-  tests/transport/test_test_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_test_transport.cpp
 :
 ;
 make-test tests/transport/test_transport :
-  tests/transport/test_transport.cpp 
+  $(REDEMPTION_TEST_PATH)/transport/test_transport.cpp
 :
 ;
 make-test tests/utils/apps/test_app_proxy :
-  tests/utils/apps/test_app_proxy.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/apps/test_app_proxy.cpp
 :
 ;
 make-test tests/utils/apps/test_recording_progress :
-  tests/utils/apps/test_recording_progress.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/apps/test_recording_progress.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_aes_direct :
-  tests/utils/crypto/test_ssl_aes_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_aes_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_lib :
-  tests/utils/crypto/test_ssl_lib.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_lib.cpp
 :
   <library>crypto
 ;
 make-test tests/utils/crypto/test_ssl_md4_direct :
-  tests/utils/crypto/test_ssl_md4_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_md4_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_md5_direct :
-  tests/utils/crypto/test_ssl_md5_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_md5_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_rc4_direct :
-  tests/utils/crypto/test_ssl_rc4_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_rc4_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_sha1_direct :
-  tests/utils/crypto/test_ssl_sha1_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_sha1_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_sha256_direct :
-  tests/utils/crypto/test_ssl_sha256_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_sha256_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_sha512_direct :
-  tests/utils/crypto/test_ssl_sha512_direct.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_sha512_direct.cpp
 :
 ;
 make-test tests/utils/crypto/test_ssl_sign :
-  tests/utils/crypto/test_ssl_sign.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_sign.cpp
 :
   <library>crypto
 ;
 make-test tests/utils/sugar/numerics/test_safe_conversions :
-  tests/utils/sugar/numerics/test_safe_conversions.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/numerics/test_safe_conversions.cpp
 :
 ;
 make-test tests/utils/sugar/test_algostring :
-  tests/utils/sugar/test_algostring.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_algostring.cpp
 :
 ;
 make-test tests/utils/sugar/test_array_view :
-  tests/utils/sugar/test_array_view.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_array_view.cpp
 :
 ;
 make-test tests/utils/sugar/test_buffer_t :
-  tests/utils/sugar/test_buffer_t.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_buffer_t.cpp
 :
 ;
 make-test tests/utils/sugar/test_byte :
-  tests/utils/sugar/test_byte.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_byte.cpp
 :
 ;
 make-test tests/utils/sugar/test_cast :
-  tests/utils/sugar/test_cast.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_cast.cpp
 :
 ;
 make-test tests/utils/sugar/test_exchange :
-  tests/utils/sugar/test_exchange.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_exchange.cpp
 :
 ;
 make-test tests/utils/sugar/test_finally :
-  tests/utils/sugar/test_finally.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_finally.cpp
 :
 ;
 make-test tests/utils/sugar/test_iter :
-  tests/utils/sugar/test_iter.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_iter.cpp
 :
 ;
 make-test tests/utils/sugar/test_make_unique :
-  tests/utils/sugar/test_make_unique.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_make_unique.cpp
 :
 ;
 make-test tests/utils/sugar/test_movable_noncopyable :
-  tests/utils/sugar/test_movable_noncopyable.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_movable_noncopyable.cpp
 :
 ;
 make-test tests/utils/sugar/test_noncopyable :
-  tests/utils/sugar/test_noncopyable.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_noncopyable.cpp
 :
 ;
 make-test tests/utils/sugar/test_range :
-  tests/utils/sugar/test_range.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_range.cpp
 :
 ;
 make-test tests/utils/sugar/test_splitter :
-  tests/utils/sugar/test_splitter.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
 :
 ;
 make-test tests/utils/sugar/test_strutils :
-  tests/utils/sugar/test_strutils.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_strutils.cpp
 :
 ;
 make-test tests/utils/sugar/test_underlying_cast :
-  tests/utils/sugar/test_underlying_cast.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_underlying_cast.cpp
 :
 ;
 make-test tests/utils/sugar/test_unique_fd :
-  tests/utils/sugar/test_unique_fd.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_unique_fd.cpp
 :
 ;
 make-test tests/utils/sugar/test_update_lock :
-  tests/utils/sugar/test_update_lock.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_update_lock.cpp
 :
 ;
 make-test tests/utils/test_asynchronous_task_manager :
-  tests/utils/test_asynchronous_task_manager.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
 ;
 make-test tests/utils/test_authorization_channels :
-  tests/utils/test_authorization_channels.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_authorization_channels.cpp
 :
   <library>src/utils/authorization_channels.o
 ;
 make-test tests/utils/test_bitfu :
-  tests/utils/test_bitfu.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_bitfu.cpp
 :
 ;
 make-test tests/utils/test_bitmap :
-  tests/utils/test_bitmap.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_bitmap.cpp
 :
   <library>crypto
   <library>png
@@ -3182,11 +3182,11 @@ make-test tests/utils/test_bitmap :
   <library>src/utils/png.o
 ;
 make-test tests/utils/test_bitmap_data_allocator :
-  tests/utils/test_bitmap_data_allocator.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_bitmap_data_allocator.cpp
 :
 ;
 make-test tests/utils/test_bitmap_from_file :
-  tests/utils/test_bitmap_from_file.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_bitmap_from_file.cpp
 :
   <library>crypto
   <library>png
@@ -3197,45 +3197,45 @@ make-test tests/utils/test_bitmap_from_file :
   <library>src/utils/png.o
 ;
 make-test tests/utils/test_bitmap_shrink :
-  tests/utils/test_bitmap_shrink.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_bitmap_shrink.cpp
 :
 ;
 make-test tests/utils/test_cfgloader :
-  tests/utils/test_cfgloader.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_cfgloader.cpp
 :
   <library>src/utils/cfgloader.o
 ;
 make-test tests/utils/test_colors :
-  tests/utils/test_colors.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_colors.cpp
 :
 ;
 make-test tests/utils/test_compression_transport_builder :
-  tests/utils/test_compression_transport_builder.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_compression_transport_builder.cpp
 :
   <library>snappy
   <library>z
 ;
 make-test tests/utils/test_confdescriptor :
-  tests/utils/test_confdescriptor.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_confdescriptor.cpp
 :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
 ;
 make-test tests/utils/test_d3des :
-  tests/utils/test_d3des.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_d3des.cpp
 :
   <library>src/utils/d3des.o
 ;
 make-test tests/utils/test_diffiehellman :
-  tests/utils/test_diffiehellman.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_diffiehellman.cpp
 :
 ;
 make-test tests/utils/test_difftimeval :
-  tests/utils/test_difftimeval.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_difftimeval.cpp
 :
 ;
 make-test tests/utils/test_drawable :
-  tests/utils/test_drawable.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_drawable.cpp
 :
   <library>crypto
   <library>png
@@ -3245,53 +3245,53 @@ make-test tests/utils/test_drawable :
   <library>src/utils/png.o
 ;
 make-test tests/utils/test_ellipse :
-  tests/utils/test_ellipse.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_ellipse.cpp
 :
 ;
 make-test tests/utils/test_fileutils :
-  tests/utils/test_fileutils.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_fileutils.cpp
 :
   <library>src/utils/fileutils.o
 ;
 make-test tests/utils/test_genfstat :
-  tests/utils/test_genfstat.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_genfstat.cpp
 :
 ;
 make-test tests/utils/test_genrandom :
-  tests/utils/test_genrandom.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_genrandom.cpp
 :
 ;
 make-test tests/utils/test_get_printable_password :
-  tests/utils/test_get_printable_password.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_get_printable_password.cpp
 :
 ;
 make-test tests/utils/test_key_qvalue_pairs :
-  tests/utils/test_key_qvalue_pairs.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
 :
 ;
 make-test tests/utils/test_log :
-  tests/utils/test_log.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_log.cpp
 :
 ;
 make-test tests/utils/test_netutils :
-  tests/utils/test_netutils.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
 :
   <library>src/utils/netutils.o
 ;
 make-test tests/utils/test_outbound_connection_monitor_rules :
-  tests/utils/test_outbound_connection_monitor_rules.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_outbound_connection_monitor_rules.cpp
 :
 ;
 make-test tests/utils/test_parse :
-  tests/utils/test_parse.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_parse.cpp
 :
 ;
 make-test tests/utils/test_pattutils :
-  tests/utils/test_pattutils.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
 :
 ;
 make-test tests/utils/test_png :
-  tests/utils/test_png.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_png.cpp
 :
   <library>png
   <library>src/core/RDP/mppc.o
@@ -3299,57 +3299,57 @@ make-test tests/utils/test_png :
   <library>src/utils/png.o
 ;
 make-test tests/utils/test_rdtsc :
-  tests/utils/test_rdtsc.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_rdtsc.cpp
 :
 ;
 make-test tests/utils/test_rect :
-  tests/utils/test_rect.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp
 :
 ;
 make-test tests/utils/test_redirection_info :
-  tests/utils/test_redirection_info.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_redirection_info.cpp
 :
 ;
 make-test tests/utils/test_region :
-  tests/utils/test_region.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_region.cpp
 :
 ;
 make-test tests/utils/test_stream :
-  tests/utils/test_stream.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_stream.cpp
 :
 ;
 make-test tests/utils/test_theme :
-  tests/utils/test_theme.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_theme.cpp
 :
   <library>app_path_test.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
 ;
 make-test tests/utils/test_timeout :
-  tests/utils/test_timeout.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_timeout.cpp
 :
 ;
 make-test tests/utils/test_timeval_ops :
-  tests/utils/test_timeval_ops.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_timeval_ops.cpp
 :
 ;
 make-test tests/utils/test_translation :
-  tests/utils/test_translation.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_translation.cpp
 :
   <library>app_path_test.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
 ;
 make-test tests/utils/test_utf :
-  tests/utils/test_utf.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
 :
 ;
 make-test tests/utils/test_word_identification :
-  tests/utils/test_word_identification.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/test_word_identification.cpp
 :
 ;
 make-test tests/utils/winpr/test_pattern :
-  tests/utils/winpr/test_pattern.cpp 
+  $(REDEMPTION_TEST_PATH)/utils/winpr/test_pattern.cpp
 :
 ;
 
