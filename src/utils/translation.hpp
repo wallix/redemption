@@ -163,6 +163,58 @@ namespace trkeys
         "Disconnect Now",
         "Se déconnecter maintenant"
     );
+    TR_KV(server_redirection,
+        "The computer that you are trying to connect to is redirecting you to another computer!",
+        "L'ordinateur auquel vous essayez de vous connecter vous redirige vers un autre ordinateur!"
+    );
+    TR_KV(err_nla_authentication_failed,
+        "NLA Authentication Failed!",
+        "Échec d'authentification NLA!"
+    );
+    TR_KV(err_transport_tls_certificate_changed,
+        "TLS certificate changed!",
+        "Certificat TLS modifié!"
+    );
+    TR_KV(err_transport_tls_certificate_missed,
+        "TLS certificate missed!",
+        "Certificat TLS est manquant!"
+    );
+    TR_KV(err_transport_tls_certificate_corrupted,
+        "TLS certificate corrupted!",
+        "Certificat TLS est corrompu!"
+    );
+    TR_KV(err_transport_tls_certificate_inaccessible,
+        "TLS certificate  is inaccessible!",
+        "Certificat TLS est inaccessible!"
+    );
+    TR_KV(err_vnc_connection_error,
+        "VNC connection error!",
+        "Error de connexion VNC!"
+    );
+    TR_KV(err_rdp_unsupported_monitor_layout,
+        "Unsupported client display monitor layout!",
+        "La disposition du moniteur d'affichage du client n'est pas supportée!"
+    );
+    TR_KV(err_lic,
+        "An error occurred during the licensing protocol!",
+        "Une erreur de protocole de licence s'est produite!"
+    );
+    TR_KV(err_rail_client_execute,
+        "The RemoteApp program did not start on the remote computer!",
+        "Le programme RemoteApp n'a pas démarré sur l'ordinateur distant!"
+    );
+    TR_KV(err_rail_starting_program,
+        "Cannot start the RemoteApp program!",
+        "Impossible de démarrer le programme RemoteApp!"
+    );
+    TR_KV(err_rail_unauthorized_program,
+        "The RemoteApp program is not in the list of authorized programs!",
+        "Le programme RemoteApp n'est pas dans la liste des programmes autorisés!"
+    );
+    TR_KV(err_rdp_open_session_timeout,
+        "Logon timer expired!",
+        "Le délai d'attente d'ouverture de session a expiré!"
+    );
 #undef TR_KV
 }
 

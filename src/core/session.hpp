@@ -424,7 +424,7 @@ public:
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %u!\n", e.id);
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(e.errmsg(), signal, now, authentifier, authentifier);
+                    mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };
             }
             if (mm.mod) {
