@@ -7,69 +7,55 @@
 */
 
 #include "main/do_recorder.hpp"
+#include "main/version.hpp"
+
+#include "system/scoped_crypto_init.hpp"
+#include "program_options/program_options.hpp"
+
+#include "capture/flv_params.hpp"
+#include "capture/flv_params_from_ini.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/wrm_params.hpp"
+
+#include "capture/capture.hpp"
+#include "capture/cryptofile.hpp"
+#include "capture/save_state_chunk.hpp"
+
+#include "configs/config.hpp"
+
+#include "core/RDP/RDPSerializer.hpp" // RDPSerializer::Verbose
+
+#include "transport/crypto_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+
+#include "utils/apps/recording_progress.hpp"
+#include "utils/chex_to_int.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/iter.hpp"
+#include "utils/sugar/unique_fd.hpp"
+#include "utils/word_identification.hpp"
 
 
-#include <type_traits>
 #include <string>
 #include <vector>
-#include <utility>
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <memory>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdint.h>
-#include <sys/stat.h>
+
+// opendir/closedir
 #include <sys/types.h>
-#include <snappy-c.h>
-#include <openssl/err.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <dirent.h>
 
-#include "openssl_crypto.hpp"
+#include <signal.h>
 
-#include "utils/log.hpp"
-#include "transport/transport.hpp"
-#include "system/ssl_calls.hpp"
-#include "system/scoped_crypto_init.hpp"
-
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/exchange.hpp"
-#include "utils/sugar/iter.hpp"
-#include "utils/chex_to_int.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/word_identification.hpp"
-#include "configs/config.hpp"
-#include "program_options/program_options.hpp"
-
-#include "main/version.hpp"
-
-#include "transport/in_meta_sequence_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/transport.hpp"
-
-#include "acl/auth_api.hpp"
-#include "utils/genrandom.hpp"
-#include "capture/capture.hpp"
-#include "capture/cryptofile.hpp"
-#include "utils/apps/recording_progress.hpp"
-
-#include "capture/png_params.hpp"
-#include "capture/wrm_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/wrm_capture.hpp"
-#include "capture/flv_params_from_ini.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "utils/chex_to_int.hpp"
-#include "utils/parse.hpp"
-#include "utils/fileutils.hpp"
-#include "transport/crypto_transport.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -722,7 +708,7 @@ static int do_recompress(
     try {
         CryptoContext cctx_no_crypto;
 
-        wrmcapture_OutMetaSequenceTransport trans(
+        OutMetaSequenceTransport trans(
             ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
             rnd,
             fstat,
@@ -1704,10 +1690,18 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-                            | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-                            | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-                            | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+                        RDPSerializer::Verbose wrm_verbose
+                            = to_verbose_flags(ini.get<cfg::debug::capture>())
+                            | (ini.get<cfg::debug::primary_orders>()
+                                ? RDPSerializer::Verbose::primary_orders
+                                : RDPSerializer::Verbose::none)
+                            | (ini.get<cfg::debug::secondary_orders>()
+                                ? RDPSerializer::Verbose::secondary_orders
+                                : RDPSerializer::Verbose::none)
+                            | (ini.get<cfg::debug::bitmap_update>()
+                                ? RDPSerializer::Verbose::bitmap_update
+                                : RDPSerializer::Verbose::none)
+                        ;
 
                         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
                         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
@@ -1806,18 +1800,18 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             uint32_t(wrm_verbose) // TODO
                         );
 
-const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-int debug_capture = ini.get<cfg::debug::capture>();
-bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
-bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-bool rt_display = ini.get<cfg::video::rt_display>();
-bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
-bool session_log_enabled = false;
-bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-     != ::KeyboardInputMaskingLevel::fully_masked;
-bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+                        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+                        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+                        int debug_capture = ini.get<cfg::debug::capture>();
+                        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+                        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+                        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+                        bool rt_display = ini.get<cfg::video::rt_display>();
+                        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+                        bool session_log_enabled = false;
+                        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+                            != ::KeyboardInputMaskingLevel::fully_masked;
+                        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
                         Capture capture(
                                   capture_wrm, wrm_params

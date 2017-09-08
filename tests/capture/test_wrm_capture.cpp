@@ -350,47 +350,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     }
 }
 
-inline char * wrmcapture_swrite_hash(char * p, uint8_t const * hash)
-{
-    auto write = [&p](uint8_t const * hash) {
-        *p++ = ' ';                // 1 octet
-        for (unsigned c : iter(hash, MD_HASH::DIGEST_LENGTH)) {
-            sprintf(p, "%02x", c); // 64 octets (hash)
-            p += 2;
-        }
-    };
-    write(hash);
-    write(hash + MD_HASH::DIGEST_LENGTH);
-    return p;
-}
-
-
-//RED_AUTO_TEST_CASE(TestOSumBuf)
-//{
-//    CryptoContext cctx;
-//    cctx.set_master_key(cstr_array_view(
-//        "\x00\x01\x02\x03\x04\x05\x06\x07"
-//        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-//        "\x10\x11\x12\x13\x14\x15\x16\x17"
-//        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-//    ));
-//    cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-//    wrmcapture_ochecksum_buf_null_buf buf(cctx.get_hmac_key());
-//    buf.open();
-//    RED_CHECK_EQUAL(buf.write("ab", 2), 2);
-//    RED_CHECK_EQUAL(buf.write("cde", 3), 3);
-
-//    MD_HASH hash;
-//    buf.close(hash);
-
-//    char hash_str[(MD_HASH::DIGEST_LENGTH*2+1)*2 + 1];
-//    *wrmcapture_swrite_hash(hash_str, hash) = 0;
-//    RED_CHECK_EQUAL(
-//        hash_str,
-//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
-//        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
-//    );
-//}
 
 template<class Writer>
 int wrmcapture_write_filename(Writer & writer, const char * filename)
@@ -493,7 +452,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
         cctx.set_with_encryption(false);
         cctx.set_with_checksum(false);
         
-        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -572,7 +531,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         cctx.set_with_encryption(false);
         cctx.set_with_checksum(true);
         
-        wrmcapture_OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "/tmp/", "xxx", now, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "/tmp/", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();

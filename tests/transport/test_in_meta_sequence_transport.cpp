@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         cctx.set_with_encryption(true);
         cctx.set_with_checksum(true);
         
-        wrmcapture_OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
