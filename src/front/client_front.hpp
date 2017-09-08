@@ -39,6 +39,7 @@ class ClientFront : public FrontAPI
     BGRPalette                  mod_palette;
     RDPDrawable gd;
     CHANNELS::ChannelDefArray   cl;
+    bool is_capture_state_;
 
 public:
     ClientFront(ClientInfo & info, bool verbose)
@@ -47,10 +48,24 @@ public:
     , mod_bpp(gdi::Depth::from_bpp(info.bpp))
     , mod_palette(BGRPalette::classic_332())
     , gd(info.width, info.height)
+    , is_capture_state_(false)
     {}
 
-    bool can_be_start_capture() override { return false; }
-    bool must_be_stop_capture() override { return false; }
+    bool can_be_start_capture() override
+    {
+        this->is_capture_state_ = true;
+        return false;
+    }
+
+    bool must_be_stop_capture() override
+    {
+        return false;
+    }
+
+    bool is_capture_state() const
+    {
+        return this->is_capture_state_;
+    }
 
     void flush() {
         if (this->verbose) {
@@ -363,7 +378,7 @@ public:
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
         }
-        return ResizeResult::done;
+        return ResizeResult::instant_done;
     }
 
     void set_pointer(const Pointer & cursor) override {
@@ -424,3 +439,59 @@ private:
         }
     }
 };
+
+#include "mod/mod_api.hpp"
+
+inline int run_connection_test(char const * type, int sck_fd, mod_api & mod, ClientFront & front)
+{
+    fd_set rfds;
+
+    io_fd_zero(rfds);
+
+    int       timeout_counter = 0;
+    int const timeout_counter_max = 3;
+
+    try {
+        for (;;) {
+            auto & event = mod.get_event();
+
+            timeval timeout = {5, 0};
+            event.wait_on_timeout(timeout);
+            io_fd_set(sck_fd, rfds);
+
+            int num = select(sck_fd + 1, &rfds, nullptr, nullptr, &timeout);
+
+            if (num < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+
+                LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
+                return 1;
+            }
+
+            if (event.is_set(sck_fd, rfds)) {
+                LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
+                mod.draw_event(time(nullptr), front);
+
+                if (mod.is_up_and_running()) {
+                    LOG(LOG_INFO, "%s CLIENT :: Done", type);
+                    return 0;
+                }
+
+                timeout_counter = 0;
+            }
+            else {
+                ++timeout_counter;
+                LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)", type, timeout_counter, timeout_counter_max);
+                if (timeout_counter == timeout_counter_max) {
+                    return 2;
+                }
+            }
+        }
+    }
+    catch (Error const & e) {
+        LOG(LOG_ERR, "%s CLIENT :: Exception raised = %s !\n", type, e.errmsg());
+        return 1;
+    };
+}

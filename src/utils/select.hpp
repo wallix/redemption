@@ -38,6 +38,11 @@ inline void io_fd_set(int const fd, fd_set & rfds)
     FD_SET(fd, &rfds);
 }
 
+inline void io_fd_clr(int const fd, fd_set & rfds)
+{
+    FD_CLR(fd, &rfds);
+}
+
 inline int io_fd_isset(int const fd, fd_set const & rfds)
 {
     return FD_ISSET(fd, &rfds);
