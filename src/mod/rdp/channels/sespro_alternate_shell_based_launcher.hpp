@@ -123,7 +123,9 @@ public:
         this->sespro_channel = reinterpret_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    void stop(bool bLaunchSuccessful) override {
+    void stop(bool bLaunchSuccessful, error_type& id_ref) override {
+        id_ref = NO_ERROR;
+
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> stop");
@@ -141,6 +143,7 @@ public:
                     "SessionProbeAlternateShellBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
                         "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
+                id_ref = ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE;
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
@@ -150,11 +153,13 @@ public:
                         "Is the target running under Microsoft Server products? "
                         "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. "
                         "Please also check the temporary directory to ensure there is enough free space.");
+                id_ref = ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS;
             }
             else {
                 LOG(LOG_ERR,
                     "SessionProbeAlternateShellBasedLauncher :=> "
                         "Session Probe launch has failed for unknown reason.");
+                id_ref = ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON;
             }
         }
     }

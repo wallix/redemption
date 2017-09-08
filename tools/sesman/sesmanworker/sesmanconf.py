@@ -118,7 +118,6 @@ class SesmanConfig(object):
             , u'account_locked' : u"Compte verrouillé."
             , u'start_session_failed' : u'Echec de démarage de session.'
             , u'pattern_kill' : u'Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
-            , u'session_probe_launch_failed' : u'Impossible de lancer Session Probe, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_keepalive_missed' : u'Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_outbound_connection_blocking_failed' : u'Connexion sortante potentiellement indésirable detectée, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_process_blocking_failed' : u'Processus potentiellement indésirable détecté, le gestionnaire de session a coupé la connexion.'
@@ -208,7 +207,6 @@ class SesmanConfig(object):
             , u'account_locked' : u"Account locked."
             , u'start_session_failed' : u'Failed to start session.'
             , u'pattern_kill' : u'Forbidden pattern detected, connection closed by manager.'
-            , u'session_probe_launch_failed' : u'Could not launch Session Probe, connection closed by manager.'
             , u'session_probe_keepalive_missed' : u'Session Probe keepalive missed, connection closed by manager.'
             , u'session_probe_outbound_connection_blocking_failed' : u'Potentially undesirable outbound connection detected, connection closed by manager.'
             , u'session_probe_process_blocking_failed' : u'Potentially undesirable process detected, connection closed by manager.'

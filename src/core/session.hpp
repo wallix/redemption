@@ -269,7 +269,17 @@ public:
                             }
                         }
                         catch (Error const & e) {
-                            if (e.id == ERR_SESSION_PROBE_LAUNCH) {
+                            if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
+                                (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
+                                (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
+                                (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
+                                (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
+                                (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
                                 if (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
                                     SessionProbeOnLaunchFailure::retry_without_session_probe) {
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
@@ -278,6 +288,8 @@ public:
                                     mm.mod->get_event().reset_trigger_time();
                                 }
                                 else if (acl) {
+                                    this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
+
                                     authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
                                 }
                                 else {

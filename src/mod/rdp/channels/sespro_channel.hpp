@@ -521,8 +521,10 @@ public:
                 "SessionProbeVirtualChannel::process_event: "
                     "Session Probe is not ready yet!");
 
+            error_type err_id = ERR_SESSION_PROBE_LAUNCH;
+
             if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop(false);
+                this->session_probe_stop_launch_sequence_notifier->stop(false, err_id);
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
@@ -546,7 +548,7 @@ public:
                 }
             }
             else {
-                throw Error(ERR_SESSION_PROBE_LAUNCH);
+                throw Error(err_id);
             }
         }
 
@@ -681,8 +683,10 @@ public:
                         "Session Probe is ready.");
             }
 
+            error_type err_id = NO_ERROR;
+
             if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop(true);
+                this->session_probe_stop_launch_sequence_notifier->stop(true, err_id);
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 

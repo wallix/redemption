@@ -136,6 +136,7 @@ enum authid_t : unsigned {
     AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD,
     AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY,
     AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM,
+    AUTHID_CONTEXT_SESSION_PROBE_LAUNCH_ERROR_MESSAGE,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -271,4 +272,5 @@ constexpr char const * const authstr[] = {
     "auth_command_rail_exec_password",
     "rail_disconnect_message_delay",
     "use_session_probe_to_launch_remote_program",
+    "session_probe_launch_error_message",
 };
