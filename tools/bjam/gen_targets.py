@@ -386,7 +386,9 @@ def generate(type, files, requirements, get_target_cb = get_target):
         src = f.path
         if type == 'lib':
             src += '.lib.o'
-        print(type, get_target_cb(f), ':\n ', src, '\n:')
+        if type == 'exe' or type == 'make-test':
+            src = inject_variable_prefix(f.path)
+        print(type, ' ', get_target_cb(f), ' :\n  ', src, '\n:', sep='')
         if requirements:
             print(' ', requirements)
         deps_libs = get_sources_deps(f, type, f)
