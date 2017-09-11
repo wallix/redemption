@@ -38,6 +38,11 @@ src_requirements = dict((
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
 ))
 
+target_requirements = dict((
+    ('libscytale', '<library>log_print.o'),
+    ('libredrec', '<library>log.o'),
+))
+
 remove_requirements = dict((
     ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
 ))
@@ -389,11 +394,14 @@ def generate(type, files, requirements, get_target_cb = get_target):
             src += '.lib.o'
         if type == 'exe' or type == 'make-test':
             src = inject_variable_prefix(f.path)
-        print(type, ' ', get_target_cb(f), ' :\n  ', src, '\n:', sep='')
+        target = get_target_cb(f)
+        print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
         if requirements:
             print(' ', requirements)
         deps_libs = get_sources_deps(f, type, f)
         deps_libs += get_requirements(f)
+        if target in target_requirements:
+            deps_libs.append(target_requirements[target])
         if f.path in remove_requirements:
             l = remove_requirements[f.path]
             for s in sorted(deps_libs):

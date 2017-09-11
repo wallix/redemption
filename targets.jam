@@ -353,6 +353,7 @@ lib libredrec :
   <library>app_path_exe.o
   <library>crypto
   <library>ffmpeg
+  <library>log.o
   <library>png
   <library>ppocr
   <library>program_options
@@ -382,6 +383,7 @@ lib libscytale :
   <include>$(REDEMPTION_TEST_PATH)/includes
   <library>log_print.o
   <library>crypto
+  <library>log_print.o
   <library>snappy
   <library>src/transport/crypto_transport.o
   <library>src/utils/fileutils.o
