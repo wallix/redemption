@@ -1856,6 +1856,11 @@ make-test tests/front/test_front :
   <library>src/utils/png.o
   <library>z
 ;
+make-test tests/gdi/test_graphic_api :
+  $(REDEMPTION_TEST_PATH)/gdi/test_graphic_api.cpp
+:
+  <library>src/gdi/graphic_api.o
+;
 make-test tests/gdi/test_graphic_cmd_color :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_cmd_color.cpp
 :
@@ -3674,6 +3679,7 @@ alias test_session : tests/core/test_session ;
 alias test_session_server : tests/core/test_session_server ;
 alias test_wait_obj : tests/core/test_wait_obj ;
 alias test_front : tests/front/test_front ;
+alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
@@ -4050,6 +4056,7 @@ alias tests/front :
   tests/front/test_front
 ;
 alias tests/gdi :
+  tests/gdi/test_graphic_api
   tests/gdi/test_graphic_cmd_color
   tests/gdi/test_protected_graphics
 ;
