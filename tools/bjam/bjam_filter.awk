@@ -12,10 +12,10 @@
   {
     ++i
   }
-  else if (/^\.\.\.on /)
-  {
-    i=int($2)
-  }
+#   else if (/^\.\.\.on /)
+#   {
+#     i=int($2)
+#   }
   else if (/^\.\.\.updating/)
   {
     n=int($2)
