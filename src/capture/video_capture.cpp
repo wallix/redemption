@@ -207,6 +207,7 @@ void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
     recorder.encoding_video_frame(this->current_video_time / frame_interval);
+    // TODO Two consecutive encoding_video_frame call is suspecious (differ by `+ 1`)
     recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
 }
 
