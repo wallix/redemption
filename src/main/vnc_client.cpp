@@ -34,7 +34,7 @@
 
 int main(int argc, char** argv)
 {
-    int verbose = 16;
+    uint64_t verbose = 16;
     std::string target_device = "10.10.46.70";
     int target_port = 5900;
     int nbretry = 3;

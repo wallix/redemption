@@ -43,7 +43,7 @@
 int main(int argc, char** argv)
 {
     RedirectionInfo redir_info;
-    int verbose = 0;
+    uint64_t verbose = 0;
     std::string target_device = "10.10.47.205";
     int target_port = 3389;
     int nbretry = 3;
@@ -85,6 +85,7 @@ int main(int argc, char** argv)
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     Inifile ini;
+
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::mod_rdp::persist_bitmap_cache_on_disk>(false);
     ini.set<cfg::client::persist_bitmap_cache_on_disk>(false);
