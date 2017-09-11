@@ -165,6 +165,7 @@ bool FileToGraphic::next_order()
         this->chunk_type = safe_cast<WrmChunkType>(header.in_uint16_le());
         this->chunk_size = header.in_uint32_le();
         this->remaining_order_count = this->chunk_count = header.in_uint16_le();
+        this->statistics.total_read_len += this->chunk_size;
 
         if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
         && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
@@ -174,7 +175,13 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::RDP_UPDATE_BITMAP:
                     this->statistics.bitmap_update_chunk++;   break;
                 case WrmChunkType::TIMESTAMP:
-                    this->statistics.timestamp_chunk++;       break;
+                    this->statistics.timestamp_chunk++;
+                    REDEMPTION_CXX_FALLTHROUGH;
+                case WrmChunkType::META_FILE:
+                case WrmChunkType::SAVE_STATE:
+                case WrmChunkType::RESET_CHUNK:
+                case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
+                    this->statistics.internal_order_read_len += this->chunk_size; break;
                 default: ;
             }
             if (this->chunk_size > 65536){
@@ -185,7 +192,11 @@ bool FileToGraphic::next_order()
             if (this->chunk_size - HEADER_SIZE > 0) {
                 this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
                 this->trans->recv_boom(this->stream_buf, this->chunk_size - HEADER_SIZE);
+                this->statistics.internal_order_read_len += HEADER_SIZE;
             }
+        }
+        else {
+            this->statistics.internal_order_read_len += this->chunk_size;
         }
     }
     if (this->remaining_order_count > 0){this->remaining_order_count--;}

@@ -200,6 +200,9 @@ public:
         uint32_t graphics_update_chunk;
         uint32_t bitmap_update_chunk;
         uint32_t timestamp_chunk;
+
+        uint64_t total_read_len;
+        uint64_t internal_order_read_len;
     } statistics;
 
     bool break_privplay_client;

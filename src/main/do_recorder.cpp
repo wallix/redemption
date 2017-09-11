@@ -1299,9 +1299,18 @@ static inline int check_encrypted_or_checksumed(
 inline unsigned get_file_count(
     InMetaSequenceTransport & in_wrm_trans,
     uint32_t & begin_cap, uint32_t & end_cap,
-    timeval & begin_record, timeval & end_record
+    timeval & begin_record, timeval & end_record,
+    Fstat & fstat, uint64_t & total_wrm_file_len, unsigned & count_wrm_file
 ) {
-    in_wrm_trans.next();
+    auto next_wrm = [&]{
+        struct stat stat {};
+        in_wrm_trans.next();
+        fstat.stat(in_wrm_trans.path(), stat);
+        total_wrm_file_len += stat.st_size;
+        ++count_wrm_file;
+    };
+
+    next_wrm();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
     // TODO a negative time should be a time relative to end of movie
     // less than 1 year means we are given a time relatve to beginning of movie
@@ -1314,13 +1323,13 @@ inline unsigned get_file_count(
         end_cap += in_wrm_trans.begin_chunk_time();
     }
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
-        in_wrm_trans.next();
+        next_wrm();
     }
     unsigned const result = in_wrm_trans.get_seqno();
     try {
         do {
             end_record.tv_sec = in_wrm_trans.end_chunk_time();
-            in_wrm_trans.next();
+            next_wrm();
         }
         while (true);
     }
@@ -1447,8 +1456,16 @@ inline void init_signals()
 
 
 inline
-static void show_statistics(FileToGraphic::Statistics const & statistics) {
+static void show_statistics(
+    FileToGraphic::Statistics const & statistics,
+    uint64_t total_wrm_file_len, unsigned count_wrm_file)
+{
     std::cout
+    << "\nCount wrm file        : " << count_wrm_file
+    << "\nTotal wrm files size  : " << total_wrm_file_len << " bytes"
+    << "\nTotal orders size     : " << statistics.total_read_len << " bytes. Ratio : x" << (statistics.total_read_len / double(total_wrm_file_len))
+    << "\nInternal orders size  : " << statistics.internal_order_read_len << " bytes"
+    << "\n"
     << "\nDstBlt                : " << statistics.DstBlt
     << "\nMultiDstBlt           : " << statistics.MultiDstBlt
     << "\nPatBlt                : " << statistics.PatBlt
@@ -1554,6 +1571,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
+    uint64_t total_wrm_file_len = 0;
+    unsigned count_wrm_file = 0;
     try {
         InMetaSequenceTransport in_wrm_trans_tmp(
             cctx,
@@ -1561,7 +1580,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             infile_extension.c_str(),
             encryption_mode,
             fstat);
-        file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
+        file_count = get_file_count(
+            in_wrm_trans_tmp,
+            begin_cap, end_cap,
+            begin_record, end_record,
+            fstat, total_wrm_file_len, count_wrm_file);
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
@@ -1888,7 +1911,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                 }
 
                 if (show_statistics && return_code == 0) {
-                    ::show_statistics(player.statistics);
+                    ::show_statistics(player.statistics, total_wrm_file_len, count_wrm_file);
                 }
 
                 result = return_code;
