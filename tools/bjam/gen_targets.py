@@ -34,6 +34,7 @@ src_requirements = dict((
     ('src/utils/bitmap.cpp', '<cxxflags>-std=c++14'),
     ('src/main/rdpheadless.cpp', '<cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
 ))
 

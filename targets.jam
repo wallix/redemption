@@ -374,16 +374,19 @@ lib libredrec :
   <library>src/utils/png.o
   <library>z
 ;
+
 lib libscytale :
   src/main/scytale.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
+  <library>log_print.o
   <library>crypto
   <library>snappy
   <library>src/transport/crypto_transport.o
   <library>src/utils/fileutils.o
 ;
+
 obj src/main/do_recorder.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp
 :
