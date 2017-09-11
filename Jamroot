@@ -280,3 +280,11 @@ rule make-test ( target : sources + : requirements * )
 }
 
 include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
+
+actions gen_targets
+{
+    python3 ./tools/bjam/gen_targets.py > targets.jam
+}
+
+explicit targets.jam ;
+make targets.jam : : @gen_targets ;
