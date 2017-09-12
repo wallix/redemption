@@ -7,11 +7,28 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 
 REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++11 ;
 
+variant coverage : san : ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov : ;
+
+constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
+
+constant GCOV :
+    <variant>coverage:<cxxflags>--profile-arcs
+    <variant>coverage:<cxxflags>--test-coverage
+    <variant>coverage:<cxxflags>--coverage
+    #<variant>coverage:<link>shared
+    <variant>coverage:<library>gcov
+;
+
 project redemption
     : requirements
 
     <conditional>@includes
     <conditional>@flags
+    $(GCOV)
     # <lto>on
     # <suggest>on
     # <stack-protector>on
@@ -138,31 +155,17 @@ constant LIB_DEPENDENCIES :
     <variant>release:<cxxflags>-fvisibility=hidden
     <link>shared
     <linkflags>-Wl,-Bsymbolic
-
+    $(GCOV_NO_BUILD)
 ;
+
 constant OBJ_EXE_DEPENDENCIES :
     $(GCOV_NO_BUILD)
 ;
+
 constant EXE_DEPENDENCIES :
     <library>app_path_exe.o
     <library>log.o
-    $(GCOV_NO_BUILD)
-;
-
-constant OBJ_TEST_DEPENDENCIES :
-    $(GCOV)
-    <library>app_path_test.o
-    <library>libunit_test
-    <library>log_test.o
-    <include>$(REDEMPTION_TEST_PATH)/includes
-    <cxxflags>-frtti
-    #<define>CFG_THEMES_PATH='\"$(ETC_PREFIX)/themes\"'
-;
-
-constant TEST_DEPENDENCIES :
-    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    $(OBJ_TEST_DEPENDENCIES)
-    $(UNIT_TEST_DEPENDENCIES)
+    $(OBJ_EXE_DEPENDENCIES)
 ;
 
 
@@ -274,12 +277,8 @@ install install-sashimi : sashimi : <location>debian/sashimi/usr/lib ;
 install local-install-sashimi : sashimi : <location>/usr/lib ;
 
 
-rule make-test ( target : sources + : requirements * )
-{
-    unit-test $(target) : $(sources) : $(TEST_DEPENDENCIES) $(requirements) ;
-}
-
 include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
+
 
 actions gen_targets
 {

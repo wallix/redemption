@@ -180,13 +180,13 @@ if __name__ == "__main__":
             fn = cover.modules[m].functions[fnl]
             total_number += 1
             if fn.covered_lines == 0:
-                print "WARNING: NO COVERAGE src/%s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+                print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
                 no_coverage += 1
             elif fn.covered_lines * 100 < fn.total_lines * 50:
-                print "WARNING: LOW COVERAGE src/%s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+                print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
                 low_coverage += 1
             else:
-                print "COVERAGE src/%s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+                print "COVERAGE %s%s:%s [%s] %s/%s" % (td, m, fnl, fn.name, fn.covered_lines, fn.total_lines)
                 covered += 1
         print "MODULE %s : %s COVERED, %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (m, covered,
                                                     low_coverage, no_coverage, total_number)

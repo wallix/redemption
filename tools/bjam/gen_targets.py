@@ -66,6 +66,18 @@ target_renames = dict((
     ('vnc_client', 'vncclient'),
 ))
 
+#coverage_requirements = dict((
+#))
+
+dir_nocoverage = set([
+    'tests/sashimi/',
+    'tests/server/',
+    'tests/system/common/',
+    'tests/system/emscripten/',
+    'tests/client_mods'
+])
+file_nocoverage = set(glob.glob('tests/*.cpp'))
+
 sys_lib_assoc = dict((
     ('png.h', 'png'),
     ('krb5.h', 'krb5'),
@@ -366,7 +378,7 @@ def get_sources_deps(f, cat, exclude):
     a = []
     for pf in f.all_source_deps:
         if pf == app_path_cpp:
-            if cat == 'make-test':
+            if cat == 'test-run':
                 a.append('<library>app_path_test.o')
             else:
                 a.append('<library>app_path_exe.o')
@@ -390,25 +402,41 @@ def get_requirements(f):
 def generate(type, files, requirements, get_target_cb = get_target):
     for f in files:
         src = f.path
-        if type == 'lib':
-            src += '.lib.o'
-        if type == 'exe' or type == 'make-test':
-            src = inject_variable_prefix(f.path)
         target = get_target_cb(f)
+        deps = get_sources_deps(f, type, f)
+        deps += get_requirements(f)
+        if target in target_requirements:
+            deps.append(target_requirements[target])
+
+        if type == 'test-run':
+            if f.root in dir_nocoverage or src in file_nocoverage:
+                deps.append('<covflag>nocover $(GCOV_NO_BUILD)')
+            else:
+                iright = len(f.root)
+                base = 'src/' + src[6:iright+1] + src[iright+6:-3]
+                for ext in ('hpp', 'cpp', 'h', 'c'):
+                    if base+ext in all_files:
+                        deps.append('<covfile>'+base+ext)
+            #if src in coverage_requirements:
+                #deps.append(coverage_requirements[src])
+            src = inject_variable_prefix(f.path)
+        elif type == 'exe':
+            src = inject_variable_prefix(f.path)
+        elif type == 'lib':
+            src += '.lib.o'
+
         print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
+
         if requirements:
             print(' ', requirements)
-        deps_libs = get_sources_deps(f, type, f)
-        deps_libs += get_requirements(f)
-        if target in target_requirements:
-            deps_libs.append(target_requirements[target])
+
         if f.path in remove_requirements:
             l = remove_requirements[f.path]
-            for s in sorted(deps_libs):
+            for s in sorted(deps):
                 if s not in l:
                     print(' ', s)
         else:
-            for s in sorted(deps_libs):
+            for s in sorted(deps):
                 print(' ', s)
         print(';')
 
@@ -436,7 +464,7 @@ for f in libs:
     print(';')
 print()
 
-generate('make-test', tests, '', unprefixed_file)
+generate('test-run', tests, '', unprefixed_file)
 print()
 
 generate_obj(sources)
