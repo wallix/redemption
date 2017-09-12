@@ -49,6 +49,10 @@ int main(int argc, char** argv)
     int nbretry = 3;
     int retry_delai_ms = 1000;
 
+    unsigned inactivity_time_ms = 1000u;
+    unsigned max_time_ms = 5u * inactivity_time_ms;
+    std::string screen_output;
+
     std::string username = "administrateur";
     std::string password = "SecureLinux";
     ClientInfo client_info;
@@ -65,6 +69,9 @@ int main(int argc, char** argv)
         {'u', "username", &username, "username"},
         {'p', "password", &password, "password"},
         {'P', "port", &target_port, "port"},
+        {'a', "inactivity-time", &inactivity_time_ms, "milliseconds inactivity before sreenshot"},
+        {'m', "max-time", &max_time_ms, "maximum milliseconds before sreenshot"},
+        {'s', "screen-output", &screen_output, "png screenshot path"},
         {"verbose", &verbose, "verbose"},
     });
 
@@ -121,5 +128,8 @@ int main(int argc, char** argv)
     /* mod_api */
     mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-    return run_connection_test("RDP", mod_trans.sck, mod, front);
+    using Ms = std::chrono::milliseconds;
+    return run_test_client(
+        "RDP", mod_trans.sck, mod, front,
+        Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
 }
