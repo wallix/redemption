@@ -175,7 +175,7 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::RDP_UPDATE_BITMAP:
                     this->statistics.bitmap_update_chunk++;   break;
                 case WrmChunkType::TIMESTAMP:
-                    this->statistics.timestamp_chunk++;
+                    this->statistics.timestamp_chunk.count++;
                     REDEMPTION_CXX_FALLTHROUGH;
                 case WrmChunkType::META_FILE:
                 case WrmChunkType::SAVE_STATE:
@@ -203,16 +203,95 @@ bool FileToGraphic::next_order()
     return true;
 }
 
+struct ReceiveOrder
+{
+    FileToGraphic & ftg;
+
+    template<class Order, class... Args>
+    void read(
+        Order & order, FileToGraphic::Statistics::Order & stat,
+        Rect clip, Args const& ...args) const
+    {
+        stat.count++;
+        auto * p = ftg.stream.get_current();
+        order.receive(ftg.stream, args...);
+        stat.total_len += ftg.stream.get_current() - p;
+        if (bool(ftg.verbose & FileToGraphic::Verbose::rdp_orders)) {
+            order.log(LOG_INFO, clip);
+        }
+    }
+
+    template<class Order, class... Args>
+    Order read(
+        FileToGraphic::Statistics::Order & stat,
+        FileToGraphic::Verbose verbose_flag, Args const& ...args) const
+    {
+        Order order;
+        stat.count++;
+        auto * p = ftg.stream.get_current();
+        order.receive(ftg.stream, args...);
+        stat.total_len += ftg.stream.get_current() - p;
+        if (bool(ftg.verbose & verbose_flag)) {
+            order.log(LOG_INFO);
+        }
+        return order;
+    }
+
+    template<class Order, class Header, class... Args>
+    void read_and_draw(
+        Order & order, FileToGraphic::Statistics::Order & stat,
+        Rect clip, Header & header, Args const& ...draw_args) const
+    {
+        read(order, stat, clip, header);
+        if (ftg.begin_to_elapse <= ftg.movie_elapsed_client) {
+            for (gdi::GraphicApi * gd : ftg.graphic_consumers){
+                gd->draw(order, clip, draw_args...);
+            }
+        }
+    }
+
+    template<class Order, class Header>
+    void read_and_draw(
+        FileToGraphic::Statistics::Order & stat,
+        FileToGraphic::Verbose verbose_flag, Header & header) const
+    {
+        auto order = read<Order>(stat, verbose_flag, header);
+        if (ftg.begin_to_elapse <= ftg.movie_elapsed_client) {
+            for (gdi::GraphicApi * gd : ftg.graphic_consumers){
+                gd->draw(order);
+            }
+        }
+    }
+
+    struct ColorCtxFromBppConverter
+    {
+        uint16_t info_bpp;
+        BGRPalette const & palette;
+
+        operator gdi::ColorCtx () const
+        {
+            return gdi::ColorCtx::from_bpp(this->info_bpp, this->palette);
+        }
+    };
+
+    ColorCtxFromBppConverter color_ctx(BGRPalette const & palette) const
+    {
+        return ColorCtxFromBppConverter{ftg.info_bpp, palette};
+    }
+};
+
 void FileToGraphic::interpret_order()
 {
     this->total_orders_count++;
     auto const & palette = BGRPalette::classic_332();
 
-//         if (this->begin_to_elapse <= this->movie_elapsed_client) {
-//             if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
-//                 return;
-//             }
-//         }
+    // if (this->begin_to_elapse <= this->movie_elapsed_client) {
+    //     if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
+    //         return;
+    //     }
+    // }
+
+    ReceiveOrder receive_order{*this};
 
     switch (this->chunk_type)
     {
@@ -233,18 +312,8 @@ void FileToGraphic::interpret_order()
             switch (header.orderType) {
                 case RDP::AltsecDrawingOrderHeader::FrameMarker:
                 {
-                    this->statistics.FrameMarker++;
-                    RDP::FrameMarker order;
-
-                    order.receive(stream, header);
-                    if (bool(this->verbose & Verbose::frame_marker)){
-                        order.log(LOG_INFO);
-                    }
-                    if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(order);
-                        }
-                    }
+                    receive_order.read_and_draw<RDP::FrameMarker>(
+                        this->statistics.FrameMarker, Verbose::frame_marker, header);
                 }
                 break;
                 case RDP::AltsecDrawingOrderHeader::Window:
@@ -263,27 +332,20 @@ void FileToGraphic::interpret_order()
             case RDP::TS_CACHE_BITMAP_COMPRESSED:
             case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
-                this->statistics.CacheBitmap++;
-                RDPBmpCache cmd;
-                cmd.receive(this->stream, header, palette, this->info_bpp);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    cmd.log(LOG_INFO);
-                }
+                auto cmd = receive_order.read<RDPBmpCache>(
+                    this->statistics.CacheBitmap, Verbose::rdp_orders,
+                    header, palette, this->info_bpp);
                 this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
             }
             break;
             case RDP::TS_CACHE_COLOR_TABLE:
-                this->statistics.CacheColorTable++;
+                this->statistics.CacheColorTable.count++;
                 LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%u)", header.type);
                 break;
             case RDP::TS_CACHE_GLYPH:
             {
-                this->statistics.CacheGlyph++;
-                RDPGlyphCache cmd;
-                cmd.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    cmd.log(LOG_INFO);
-                }
+                auto cmd = receive_order.read<RDPGlyphCache>(
+                    this->statistics.CacheGlyph, Verbose::rdp_orders, header);
                 this->gly_cache.set_glyph(
                     FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
                     cmd.cacheId, cmd.cacheIndex
@@ -311,136 +373,60 @@ void FileToGraphic::interpret_order()
             const Rect clip = (control & RDP::BOUNDS) ? this->ssc.common.clip : this->screen_rect;
             switch (this->ssc.common.order) {
             case RDP::GLYPHINDEX:
-                this->statistics.GlyphIndex++;
-                this->ssc.glyphindex.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.glyphindex.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.glyphindex, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette), this->gly_cache);
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.glyphindex, this->statistics.GlyphIndex,
+                    clip, header, receive_order.color_ctx(palette), this->gly_cache);
                 break;
             case RDP::DESTBLT:
-                this->statistics.DstBlt++;
-                this->ssc.destblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.destblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.destblt, clip);
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.destblt, this->statistics.DstBlt, clip, header);
                 break;
             case RDP::MULTIDSTBLT:
-                this->statistics.MultiDstBlt++;
-                this->ssc.multidstblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.multidstblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multidstblt, clip);
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.multidstblt, this->statistics.MultiDstBlt, clip, header);
                 break;
             case RDP::MULTIOPAQUERECT:
-                this->statistics.MultiOpaqueRect++;
-                this->ssc.multiopaquerect.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.multiopaquerect.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multiopaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.multiopaquerect, this->statistics.MultiOpaqueRect,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::MULTIPATBLT:
-                this->statistics.MultiPatBlt++;
-                this->ssc.multipatblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.multipatblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.multipatblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.multipatblt, this->statistics.MultiPatBlt,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::MULTISCRBLT:
-                this->statistics.MultiScrBlt++;
-                this->ssc.multiscrblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.multiscrblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                for (gdi::GraphicApi * gd : this->graphic_consumers){
-                    if (this->begin_to_elapse <= this->movie_elapsed_client)
-                        gd->draw(this->ssc.multiscrblt, clip);
-                }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.multiscrblt, this->statistics.MultiScrBlt, clip, header);
                 break;
             case RDP::PATBLT:
-                this->statistics.PatBlt++;
-                this->ssc.patblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.patblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.patblt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.patblt, this->statistics.PatBlt,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::SCREENBLT:
-                this->statistics.ScrBlt++;
-                this->ssc.scrblt.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.scrblt.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.scrblt, clip);
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.scrblt, this->statistics.ScrBlt, clip, header);
                 break;
             case RDP::LINE:
-                this->statistics.LineTo++;
-                this->ssc.lineto.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.lineto.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.lineto, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.lineto, this->statistics.LineTo,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::RECT:
-                this->statistics.OpaqueRect++;
-                this->ssc.opaquerect.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.opaquerect.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.opaquerect, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.opaquerect, this->statistics.OpaqueRect,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::MEMBLT:
                 {
-                    this->statistics.MemBlt++;
-                    this->ssc.memblt.receive(this->stream, header);
-                    if (bool(this->verbose & Verbose::rdp_orders)){
-                        this->ssc.memblt.log(LOG_INFO, clip);
-                    }
-                    const Bitmap & bmp = this->bmp_cache->get(this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
+                    receive_order.read(
+                        this->ssc.memblt, this->statistics.MemBlt, clip, header);
+                    const Bitmap & bmp = this->bmp_cache->get(
+                        this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                     if (!bmp.is_valid()){
-                        LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
+                        LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)",
+                            this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                         throw Error(ERR_WRM);
                     } else {
                         if (this->begin_to_elapse <= this->movie_elapsed_client) {
@@ -453,48 +439,33 @@ void FileToGraphic::interpret_order()
                 break;
             case RDP::MEM3BLT:
                 {
-                    this->statistics.Mem3Blt++;
-                    this->ssc.mem3blt.receive(this->stream, header);
-                    if (bool(this->verbose & Verbose::rdp_orders)){
-                        this->ssc.mem3blt.log(LOG_INFO, clip);
-                    }
-                    const Bitmap & bmp = this->bmp_cache->get(this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
+                    receive_order.read(
+                        this->ssc.mem3blt, this->statistics.Mem3Blt, clip, header);
+                    const Bitmap & bmp = this->bmp_cache->get(
+                        this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                     if (!bmp.is_valid()){
-                        LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
+                        LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)",
+                            this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                         throw Error(ERR_WRM);
                     }
                     else {
                         if (this->begin_to_elapse <= this->movie_elapsed_client) {
                             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.mem3blt, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette), bmp);
+                                gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
                             }
                         }
                     }
                 }
                 break;
             case RDP::POLYLINE:
-                this->statistics.Polyline++;
-                this->ssc.polyline.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.polyline.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                        gd->draw(this->ssc.polyline, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.polyline, this->statistics.Polyline,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             case RDP::ELLIPSESC:
-                this->statistics.EllipseSC++;
-                this->ssc.ellipseSC.receive(this->stream, header);
-                if (bool(this->verbose & Verbose::rdp_orders)){
-                    this->ssc.ellipseSC.log(LOG_INFO, clip);
-                }
-                if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                    for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(this->ssc.ellipseSC, clip, gdi::ColorCtx::from_bpp(this->info_bpp, palette));
-                    }
-                }
+                receive_order.read_and_draw(
+                    this->ssc.ellipseSC, this->statistics.EllipseSC,
+                    clip, header, receive_order.color_ctx(palette));
                 break;
             default:
                 /* error unknown order */
@@ -511,6 +482,8 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::TIMESTAMP:
     {
+        auto * const p = this->stream.get_current();
+
         this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
@@ -597,6 +570,8 @@ void FileToGraphic::interpret_order()
                 } */
             }
         }
+
+        this->statistics.timestamp_chunk.total_len += this->stream.get_current() - p;
     }
     break;
     case WrmChunkType::META_FILE:
@@ -719,9 +694,8 @@ void FileToGraphic::interpret_order()
             throw Error(ERR_WRM);
         }
 
-        this->statistics.BitmapUpdate++;
-        RDPBitmapData bitmap_data;
-        bitmap_data.receive(this->stream);
+        auto bitmap_data = receive_order.read<RDPBitmapData>(
+            this->statistics.BitmapUpdate, Verbose::rdp_orders);
 
         const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
@@ -734,10 +708,6 @@ void FileToGraphic::interpret_order()
                         , bitmap_data.bitmap_size()
                         , (bitmap_data.flags & BITMAP_COMPRESSION)
                         );
-
-        if (bool(this->verbose & Verbose::rdp_orders)){
-            bitmap_data.log(LOG_INFO);
-        }
 
         if (this->begin_to_elapse <= this->movie_elapsed_client) {
             for (gdi::GraphicApi * gd : this->graphic_consumers){
@@ -759,16 +729,17 @@ void FileToGraphic::interpret_order()
         this->mouse_y = this->stream.in_uint16_le();
         cache_idx     = this->stream.in_uint8();
 
-        if (  chunk_size - 8 /*header(8)*/
-            > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-            this->statistics.CachePointer++;
-            struct Pointer cursor(Pointer::POINTER_NULL);
+        if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+            this->statistics.CachePointer.count++;
+            auto * const p = this->stream.get_current();
+            Pointer cursor(Pointer::POINTER_NULL);
             cursor.width = 32;
             cursor.height = 32;
             cursor.x = this->stream.in_uint8();
             cursor.y = this->stream.in_uint8();
             stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
             stream.in_copy_bytes(cursor.mask, 128);
+            this->statistics.CachePointer.total_len += this->stream.get_current() - p;
 
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
@@ -777,7 +748,8 @@ void FileToGraphic::interpret_order()
             }
         }
         else {
-            this->statistics.PointerIndex++;
+            this->statistics.PointerIndex.count++;
+            auto * const p = this->stream.get_current();
             Pointer & pi = this->ptr_cache.Pointers[cache_idx];
             Pointer cursor(Pointer::POINTER_NULL);
             cursor.width = pi.width;
@@ -786,6 +758,7 @@ void FileToGraphic::interpret_order()
             cursor.y = pi.y;
             memcpy(cursor.data, pi.data, sizeof(pi.data));
             memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
+            this->statistics.PointerIndex.total_len += this->stream.get_current() - p;
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
@@ -805,8 +778,10 @@ void FileToGraphic::interpret_order()
         this->mouse_y = this->stream.in_uint16_le();
         cache_idx     = this->stream.in_uint8();
 
-        this->statistics.CachePointer++;
-        struct Pointer cursor(Pointer::POINTER_NULL);
+        this->statistics.CachePointer.count++;
+        auto * const p = this->stream.get_current();
+
+        Pointer cursor(Pointer::POINTER_NULL);
 
         cursor.width    = this->stream.in_uint8();
         cursor.height   = this->stream.in_uint8();
@@ -824,6 +799,8 @@ void FileToGraphic::interpret_order()
 
         stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
         stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+
+        this->statistics.CachePointer.total_len += this->stream.get_current() - p;
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
 

@@ -49,6 +49,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 
 // opendir/closedir
 #include <sys/types.h>
@@ -1455,45 +1456,129 @@ inline void init_signals()
 }
 
 
+inline int count_digit(uint64_t n)
+{
+    return
+        n < 100000
+            ? n < 10000
+                ? n < 1000
+                    ? n < 100
+                        ? n < 10
+                            ? 1
+                            : 2
+                        : 3
+                    : 4
+                :  5
+            : n < 1000000 ? 6
+            : n < 10000000 ? 7
+            : n < 100000000 ? 8
+            : n < 1000000000 ? 9
+            : n < 10000000000 ? 10
+            : n < 100000000000 ? 11
+            : n < 1000000000000 ? 12
+            : n < 10000000000000 ? 13
+            : n < 100000000000000 ? 14
+            : n < 1000000000000000 ? 15
+            : n < 10000000000000000 ? 16
+            : n < 100000000000000000 ? 17
+            : n < 1000000000000000000 ? 18
+            : 19
+        ;
+}
+
+template<class Mem>
+int fiels_size(FileToGraphic::Statistics const & statistics, Mem mem)
+{
+    return std::max({
+        count_digit(statistics.DstBlt.*mem),
+        count_digit(statistics.MultiDstBlt.*mem),
+        count_digit(statistics.PatBlt.*mem),
+        count_digit(statistics.MultiPatBlt.*mem),
+        count_digit(statistics.OpaqueRect.*mem),
+        count_digit(statistics.MultiOpaqueRect.*mem),
+        count_digit(statistics.ScrBlt.*mem),
+        count_digit(statistics.MultiScrBlt.*mem),
+        count_digit(statistics.MemBlt.*mem),
+        count_digit(statistics.Mem3Blt.*mem),
+        count_digit(statistics.LineTo.*mem),
+        count_digit(statistics.GlyphIndex.*mem),
+        count_digit(statistics.Polyline.*mem),
+
+        count_digit(statistics.CacheBitmap.*mem),
+        count_digit(statistics.CacheColorTable.*mem),
+        count_digit(statistics.CacheGlyph.*mem),
+
+        count_digit(statistics.FrameMarker.*mem),
+
+        count_digit(statistics.BitmapUpdate.*mem),
+
+        count_digit(statistics.CachePointer.*mem),
+        count_digit(statistics.PointerIndex.*mem),
+
+        count_digit(statistics.timestamp_chunk.*mem),
+    });
+}
+
+struct OutStatisticField
+{
+    int count_len;
+    int total_len;
+    FileToGraphic::Statistics::Order const & stat;
+
+    friend std::ostream & operator <<(std::ostream & out, OutStatisticField const & f)
+    {
+        return out << std::setw(f.count_len) << f.stat.count
+            << "  ( " << std::setw(f.total_len) << f.stat.total_len << " bytes)";
+    }
+};
+
 inline
 static void show_statistics(
     FileToGraphic::Statistics const & statistics,
     uint64_t total_wrm_file_len, unsigned count_wrm_file)
 {
+    using Stat = FileToGraphic::Statistics::Order;
+    int const count_field_len = fiels_size(statistics, &Stat::count);
+    int const total_field_len = fiels_size(statistics, &Stat::total_len);
+
+    auto f = [=](Stat const & stat){
+      return OutStatisticField{count_field_len, total_field_len, stat};
+    };
+
     std::cout
     << "\nCount wrm file        : " << count_wrm_file
     << "\nTotal wrm files size  : " << total_wrm_file_len << " bytes"
     << "\nTotal orders size     : " << statistics.total_read_len << " bytes. Ratio : x" << (statistics.total_read_len / double(total_wrm_file_len))
     << "\nInternal orders size  : " << statistics.internal_order_read_len << " bytes"
     << "\n"
-    << "\nDstBlt                : " << statistics.DstBlt
-    << "\nMultiDstBlt           : " << statistics.MultiDstBlt
-    << "\nPatBlt                : " << statistics.PatBlt
-    << "\nMultiPatBlt           : " << statistics.MultiPatBlt
-    << "\nOpaqueRect            : " << statistics.OpaqueRect
-    << "\nMultiOpaqueRect       : " << statistics.MultiOpaqueRect
-    << "\nScrBlt                : " << statistics.ScrBlt
-    << "\nMultiScrBlt           : " << statistics.MultiScrBlt
-    << "\nMemBlt                : " << statistics.MemBlt
-    << "\nMem3Blt               : " << statistics.Mem3Blt
-    << "\nLineTo                : " << statistics.LineTo
-    << "\nGlyphIndex            : " << statistics.GlyphIndex
-    << "\nPolyline              : " << statistics.Polyline
-
-    << "\nCacheBitmap           : " << statistics.CacheBitmap
-    << "\nCacheColorTable       : " << statistics.CacheColorTable
-    << "\nCacheGlyph            : " << statistics.CacheGlyph
-
-    << "\nFrameMarker           : " << statistics.FrameMarker
-
-    << "\nBitmapUpdate          : " << statistics.BitmapUpdate
-
-    << "\nCachePointer          : " << statistics.CachePointer
-    << "\nPointerIndex          : " << statistics.PointerIndex
-
-    << "\ngraphics_update_chunk : " << statistics.graphics_update_chunk
-    << "\nbitmap_update_chunk   : " << statistics.bitmap_update_chunk
-    << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
+    << "\nDstBlt                : " << f(statistics.DstBlt)
+    << "\nMultiDstBlt           : " << f(statistics.MultiDstBlt)
+    << "\nPatBlt                : " << f(statistics.PatBlt)
+    << "\nMultiPatBlt           : " << f(statistics.MultiPatBlt)
+    << "\nOpaqueRect            : " << f(statistics.OpaqueRect)
+    << "\nMultiOpaqueRect       : " << f(statistics.MultiOpaqueRect)
+    << "\nScrBlt                : " << f(statistics.ScrBlt)
+    << "\nMultiScrBlt           : " << f(statistics.MultiScrBlt)
+    << "\nMemBlt                : " << f(statistics.MemBlt)
+    << "\nMem3Blt               : " << f(statistics.Mem3Blt)
+    << "\nLineTo                : " << f(statistics.LineTo)
+    << "\nGlyphIndex            : " << f(statistics.GlyphIndex)
+    << "\nPolyline              : " << f(statistics.Polyline)
+    << "\n"
+    << "\nCacheBitmap           : " << f(statistics.CacheBitmap)
+    << "\nCacheColorTable       : " << f(statistics.CacheColorTable)
+    << "\nCacheGlyph            : " << f(statistics.CacheGlyph)
+    << "\n"
+    << "\nFrameMarker           : " << f(statistics.FrameMarker)
+    << "\n"
+    << "\nBitmapUpdate          : " << f(statistics.BitmapUpdate)
+    << "\n"
+    << "\nCachePointer          : " << f(statistics.CachePointer)
+    << "\nPointerIndex          : " << f(statistics.PointerIndex)
+    << "\n"
+    << "\ngraphics_update_chunk : " << std::setw(count_field_len) << statistics.graphics_update_chunk
+    << "\nbitmap_update_chunk   : " << std::setw(count_field_len) << statistics.bitmap_update_chunk
+    << "\ntimestamp_chunk       : " << f(statistics.timestamp_chunk)
     << std::endl;
 }
 
