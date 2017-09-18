@@ -2101,8 +2101,15 @@ struct RecorderParams {
     bool json_pgs = false;
 };
 
+enum class ClRes
+{
+    Ok,
+    Err,
+    Exit,
+};
+
 inline
-int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
+ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -2178,12 +2185,12 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "\n\nUsage: redrec [options]\n\n";
         // TODO error code description
         std::cout << desc << "\n\n";
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice << std::endl << std::endl;
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("config-file") > 0) {
@@ -2233,7 +2240,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2246,7 +2253,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
                                  : 0;
         if (!recorder.wrm_color_depth){
             std::cerr << "Unknown wrm color depth\n\n";
-            return 1;
+            return ClRes::Err;
         }
     }
 
@@ -2257,7 +2264,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("png-geometry") > 0) {
@@ -2270,7 +2277,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         if (!png_w || !png_h) {
             std::cerr << "Invalide png geometry\n\n";
-            return -1;
+            return ClRes::Err;
         }
         recorder.png_params.png_width  = png_w;
         recorder.png_params.png_height = png_h;
@@ -2294,14 +2301,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
     if (options.count("hash-path") > 0){
         if (recorder.hash_path.c_str()[0] == 0) {
             std::cerr << "Missing hash-path : use -h path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2315,7 +2322,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if (options.count("mwrm-path") > 0){
         if (recorder.mwrm_path.c_str()[0] == 0) {
             std::cerr << "Missing mwrm-path : use -m path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2324,7 +2331,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (recorder.input_filename.c_str()[0] == 0) {
         std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-        return 1;
+        return ClRes::Err;
     }
 
     // Input path rule is as follow:
@@ -2374,7 +2381,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("encryption") > 0) {
@@ -2389,7 +2396,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2407,7 +2414,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
     }
 
-    return 0;
+    return ClRes::Ok;
 }
 
 extern "C" {
@@ -2488,9 +2495,10 @@ extern "C" {
         // TODO: annoying, if we read default hash_path and mwrm_path from ini
         // we should do that after config_filename was eventually changed...
 
-        if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
-            // parsing error
-            return -1;
+        switch (parse_command_line_options(argc, argv, rp, ini, verbose)) {
+            case ClRes::Exit: return 0;
+            case ClRes::Err: return -1;
+            case ClRes::Ok: ;
         }
 
         {
