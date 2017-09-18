@@ -73,16 +73,16 @@ PatternValue get_pattern_value(array_view_const_char av)
                 }
                 else {
                     if (eq(token, cstr_array_view("ocr"))) {
-                        if (is_exact) {
-                            return empty_pattern_value;
-                        }
                         pattern_value.is_ocr = true;
+                        if (is_exact) {
+                            pattern_value.cat = Cat::is_exact_str;
+                        }
                     }
                     else if (eq(token, cstr_array_view("kbd"))) {
-                        if (is_exact) {
-                            return empty_pattern_value;
-                        }
                         pattern_value.is_kbd = true;
+                        if (is_exact) {
+                            pattern_value.cat = Cat::is_exact_str;
+                        }
                     }
                     else if (eq(token, cstr_array_view("regex"))) {
                         pattern_value.cat = is_exact ? Cat::is_exact_reg : Cat::is_reg;
@@ -115,16 +115,34 @@ PatternValue get_pattern_value(array_view_const_char av)
     return pattern_value;
 }
 
-bool contains_pattern(const char * soh_separated_patterns, bool check_kbd, bool check_ocr)
+namespace
 {
-    for (auto rng : get_line(soh_separated_patterns, string_pattern_separator)) {
-        PatternValue const pattern_value = get_pattern_value({rng.begin(), rng.end()});
-        if (not pattern_value.pattern.empty() && (
-            (check_kbd && pattern_value.is_kbd)
-         || (check_ocr && pattern_value.is_ocr)
-        )) {
-            return true;
+    bool contains_pattern(const char * soh_separated_patterns, bool check_kbd, bool check_ocr)
+    {
+        for (auto rng : get_line(soh_separated_patterns, string_pattern_separator)) {
+            PatternValue const pattern_value = get_pattern_value({rng.begin(), rng.end()});
+            if (not pattern_value.pattern.empty() && (
+                (check_kbd && pattern_value.is_kbd)
+            || (check_ocr && pattern_value.is_ocr)
+            )) {
+                return true;
+            }
         }
+        return false;
     }
-    return false;
+}
+
+bool contains_kbd_pattern(const char * soh_separated_patterns)
+{
+    return contains_pattern(soh_separated_patterns, true, false);
+}
+
+bool contains_kbd_or_ocr_pattern(const char * soh_separated_patterns)
+{
+    return contains_pattern(soh_separated_patterns, true, true);
+}
+
+bool contains_ocr_pattern(const char * soh_separated_patterns)
+{
+    return contains_pattern(soh_separated_patterns, false, true);
 }
