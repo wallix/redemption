@@ -294,4 +294,4 @@ actions test_libredrec
     ./tools/redrec rec $(>) -h > /dev/null
 }
 
-make test_libredrec : libredrec : @test_libredrec ;
+make test_libredrec : libredrec : @test_libredrec : <variant>san:<build>no;
