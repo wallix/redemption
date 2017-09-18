@@ -133,6 +133,7 @@ class File:
         #self.direct_lib_deps = set()
         self.all_source_deps = None # then set()
         self.all_lib_deps = None # then set()
+        self.have_coverage = False
 
 
 ###
@@ -409,7 +410,7 @@ def generate(type, files, requirements, get_target_cb = get_target):
             deps.append(target_requirements[target])
 
         if type == 'test-run':
-            if f.root in dir_nocoverage or src in file_nocoverage:
+            if f.root in dir_nocoverage or f.path in file_nocoverage:
                 deps.append('<covflag>nocover $(GCOV_NO_BUILD)')
             else:
                 iright = len(f.root)
@@ -417,6 +418,7 @@ def generate(type, files, requirements, get_target_cb = get_target):
                 for ext in ('hpp', 'cpp', 'h', 'c'):
                     if base+ext in all_files:
                         deps.append('<covfile>'+base+ext)
+                        f.have_coverage = True
             #if src in coverage_requirements:
                 #deps.append(coverage_requirements[src])
             src = inject_variable_prefix(f.path)
@@ -484,7 +486,11 @@ for t in test_targets:
 
 for k,t in test_targets_counter.items():
     if t[0] == 1:
-        print('alias', k, ':', unprefixed_file(t[1]), ';')
+        f = t[1]
+        unprefixed = unprefixed_file(f)
+        print('alias', k, ':', unprefixed, ';')
+        if f.have_coverage:
+            print('alias ', k, '.coverage : ', unprefixed, '.coverage ;', sep='')
 
 # alias by directory
 dir_tests = OrderedDict()
