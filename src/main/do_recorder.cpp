@@ -1299,7 +1299,7 @@ static inline int check_encrypted_or_checksumed(
 
 inline unsigned get_file_count(
     InMetaSequenceTransport & in_wrm_trans,
-    uint32_t & begin_cap, uint32_t & end_cap,
+    int64_t & begin_cap, int64_t & end_cap,
     timeval & begin_record, timeval & end_record,
     Fstat & fstat, uint64_t & total_wrm_file_len, unsigned & count_wrm_file
 ) {
@@ -1609,8 +1609,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   bool chunk,
                   unsigned ocr_version,
                   std::string & output_filename,
-                  uint32_t begin_cap,
-                  uint32_t end_cap,
+                  int64_t begin_cap,
+                  int64_t end_cap,
                   PngParams & png_params,
                   FlvParams & flv_params,
                   int wrm_color_depth,
@@ -1659,6 +1659,36 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     uint64_t total_wrm_file_len = 0;
     unsigned count_wrm_file = 0;
     try {
+        // begin or end relative to end of trace
+        if (begin_cap < 0 || end_cap < 0) {
+            InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
+            MwrmReader mwrm_reader(buf_meta);
+            MetaLine meta_line;
+
+            buf_meta.open((infile_prefix + infile_extension).c_str());
+            mwrm_reader.read_meta_headers();
+
+            meta_line.start_time = 0;
+            meta_line.stop_time = 0;
+
+            time_t start_time = 0;
+
+            if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                start_time = meta_line.start_time;
+                while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                }
+
+                auto duration = meta_line.stop_time - start_time;
+
+                if (begin_cap < 0) {
+                    begin_cap = std::max<decltype(begin_cap)>(begin_cap + duration, 0);
+                }
+
+                if (end_cap < 0) {
+                    end_cap = std::max<decltype(end_cap)>(end_cap + duration, 0);
+                }
+            }
+        }
         InMetaSequenceTransport in_wrm_trans_tmp(
             cctx,
             infile_prefix,
@@ -2055,10 +2085,10 @@ struct RecorderParams {
     // ==================
     // "begin capture time (in seconds), either absolute or relative to video start
     // (negative number means relative to video end), default=from start"
-    uint32_t begin_cap = 0;
+    int64_t begin_cap = 0;
     // "end capture time (in seconds), either absolute or relative to video start,
     // (nagative number means relative to video end), default=none"
-    uint32_t end_cap = 0;
+    int64_t end_cap = 0;
     // "Number of orders to execute before stopping, default=0 execute all orders"
     uint32_t order_count = 0;
 

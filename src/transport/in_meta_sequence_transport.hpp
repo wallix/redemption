@@ -38,10 +38,10 @@ public:
         const char * filename,
         const char * extension,
         EncryptionMode encryption,
-        Fstat & fsats)
-    : cfb(cctx, encryption, fsats)
+        Fstat & fstat)
+    : cfb(cctx, encryption, fstat)
     , begin_time(0)
-    , buf_meta(cctx, encryption, fsats)
+    , buf_meta(cctx, encryption, fstat)
     , mwrm_reader(this->buf_meta)
     {
         char meta_filename[1024];
