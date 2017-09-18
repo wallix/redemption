@@ -1153,7 +1153,11 @@ public:
 
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        this->send_data(now.tv_sec, message, '-');
+        std::string formatted_message;
+        agent_data_extractor(formatted_message, message);
+        if (!formatted_message.empty()) {
+            this->send_data(now.tv_sec, formatted_message, '-');
+        }
     }
 
     void possible_active_window_change() override {
