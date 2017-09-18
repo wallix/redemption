@@ -16,37 +16,61 @@ actions cover
 {
     echo "Computing coverage for $(COVERFILE) "
 
-    raise () { echo "$1" ; exit 1 ; }
-
     # echo "COVERFILE = $(COVERFILE)"
     # echo "source = $(>)"
     # echo "target = $(<)"
-    COVER_GCNO=$(>:P)"/$(<:B).gcno"
-    [ -e $COVER_GCNO ] || raise "coverage file \"$COVER_GCNO\" does not exist"
+
+    raise () { echo "$1" ; rm *gcov ; exit 1 ; }
 
     COVER_PATH="$(<).dir"
     TAGS="$COVER_PATH/TAGS"
     mkdir -p "$COVER_PATH"
 
-    #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o "$COVER_GCNO" $(>:S=) > "$COVER_PATH"/report.coverage"
-    gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o "$COVER_GCNO" "$(>:S=)" > "$COVER_PATH"/report.coverage || raise 'gcov failed'
-
-    mv *.gcov "$COVER_PATH" || raise 'gcov mv failed'
+    root=$(>:P)
+    root=${root%%/tests/*}
 
     etags -o "$TAGS" $(COVERFILE) || raise 'etags failed'
 
+    echo > "$COVER_PATH"/report.coverage
+
     echo $(COVERFILE) | tr ' ' '\n' | while read f ; do
-        GCOV="$COVER_PATH/${f##*/}".gcov
-        # If no gcov file available for coverage target create an empty one
-        [ -e "$GCOV" ] ||:> "$GCOV"
-        python tools/coverage.py $f "$TAGS" "$GCOV" ./ || raise 'python tools/coverage.py failed'
-    done | tee "$COVER_PATH".report
+        COVER_GCNO=''
+        case ${f##*.} in
+            h|hpp) COVER_GCNO=$(>:P)"/$(<:B).gcno" ;;
+            cpp) COVER_GCNO="$root/${f%cpp}gcno" ;;
+            c)   COVER_GCNO="$root/${f%c}gcno" ;;
+        esac
+        [ -e "$COVER_GCNO" ] || raise "coverage file \"$COVER_GCNO\" does not exist"
+
+        gcov \
+            --unconditional-branches \
+            --all-blocks \
+            --branch-count \
+            --branch-probabilities \
+            --function-summaries \
+            --demangled-names \
+            -o "$COVER_GCNO" \
+            "$(>:S=)" \
+            >> "$COVER_PATH"/report.coverage \
+        || raise 'gcov failed'
+
+        GCOV=${f##*/}.gcov
+        [ -e "$GCOV" ] || :> "$GCOV"
+
+        mv "$GCOV" "$COVER_PATH" || raise 'gcov mv failed'
+    done
+
+    python tools/coverage.py $(<) "$TAGS" $COVER_PATH/*.gcov > "$COVER_PATH".report \
+    || raise 'python tools/coverage.py failed'
+    cat "$COVER_PATH".report
+
+    rm *gcov
 
     : > $(<)
 }
 
 actions id {
-    : > $(<);
+    : > $(<)
 }
 
 lib libunit_test :

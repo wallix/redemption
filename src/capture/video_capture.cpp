@@ -529,7 +529,6 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 : video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
-, drawable(drawable)
 , image_frame_api_ptr(pImageFrameApi)
 {
     if (flv_params.verbosity) {

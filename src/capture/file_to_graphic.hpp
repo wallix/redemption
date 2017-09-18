@@ -170,36 +170,43 @@ private:
     bool ignore_frame_in_timeval;
 
 public:
-    struct Statistics {
-        uint32_t DstBlt;
-        uint32_t MultiDstBlt;
-        uint32_t PatBlt;
-        uint32_t MultiPatBlt;
-        uint32_t OpaqueRect;
-        uint32_t MultiOpaqueRect;
-        uint32_t ScrBlt;
-        uint32_t MultiScrBlt;
-        uint32_t MemBlt;
-        uint32_t Mem3Blt;
-        uint32_t LineTo;
-        uint32_t GlyphIndex;
-        uint32_t Polyline;
-        uint32_t EllipseSC;
+    struct Statistics
+    {
+        struct Order
+        {
+            uint32_t count;
+            uint64_t total_len;
+        };
 
-        uint32_t CacheBitmap;
-        uint32_t CacheColorTable;
-        uint32_t CacheGlyph;
+        Order DstBlt;
+        Order MultiDstBlt;
+        Order PatBlt;
+        Order MultiPatBlt;
+        Order OpaqueRect;
+        Order MultiOpaqueRect;
+        Order ScrBlt;
+        Order MultiScrBlt;
+        Order MemBlt;
+        Order Mem3Blt;
+        Order LineTo;
+        Order GlyphIndex;
+        Order Polyline;
+        Order EllipseSC;
 
-        uint32_t FrameMarker;
+        Order CacheBitmap;
+        Order CacheColorTable;
+        Order CacheGlyph;
 
-        uint32_t BitmapUpdate;
+        Order FrameMarker;
 
-        uint32_t CachePointer;
-        uint32_t PointerIndex;
+        Order BitmapUpdate;
+
+        Order CachePointer;
+        Order PointerIndex;
 
         uint32_t graphics_update_chunk;
         uint32_t bitmap_update_chunk;
-        uint32_t timestamp_chunk;
+        Order timestamp_chunk;
 
         uint64_t total_read_len;
         uint64_t internal_order_read_len;
@@ -350,4 +357,6 @@ private:
 
         return res;
     }
+
+    friend class ReceiveOrder;
 };

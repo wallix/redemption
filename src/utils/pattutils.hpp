@@ -37,19 +37,6 @@ constexpr char string_pattern_separator = '\x01';
 
 PatternValue get_pattern_value(array_view_const_char av);
 
-bool contains_pattern(const char * soh_separated_patterns, bool check_kbd, bool check_ocr);
-
-inline bool contains_kbd_pattern(const char * soh_separated_patterns)
-{
-    return contains_pattern(soh_separated_patterns, true, false);
-}
-
-inline bool contains_kbd_or_ocr_pattern(const char * soh_separated_patterns)
-{
-    return contains_pattern(soh_separated_patterns, true, true);
-}
-
-inline bool contains_ocr_pattern(const char * soh_separated_patterns)
-{
-    return contains_pattern(soh_separated_patterns, false, true);
-}
+bool contains_ocr_pattern(const char * soh_separated_patterns);
+bool contains_kbd_pattern(const char * soh_separated_patterns);
+bool contains_kbd_or_ocr_pattern(const char * soh_separated_patterns);

@@ -49,6 +49,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 
 // opendir/closedir
 #include <sys/types.h>
@@ -1455,45 +1456,129 @@ inline void init_signals()
 }
 
 
+inline int count_digit(uint64_t n)
+{
+    return
+        n < 100000
+            ? n < 10000
+                ? n < 1000
+                    ? n < 100
+                        ? n < 10
+                            ? 1
+                            : 2
+                        : 3
+                    : 4
+                :  5
+            : n < 1000000 ? 6
+            : n < 10000000 ? 7
+            : n < 100000000 ? 8
+            : n < 1000000000 ? 9
+            : n < 10000000000 ? 10
+            : n < 100000000000 ? 11
+            : n < 1000000000000 ? 12
+            : n < 10000000000000 ? 13
+            : n < 100000000000000 ? 14
+            : n < 1000000000000000 ? 15
+            : n < 10000000000000000 ? 16
+            : n < 100000000000000000 ? 17
+            : n < 1000000000000000000 ? 18
+            : 19
+        ;
+}
+
+template<class Mem>
+int fiels_size(FileToGraphic::Statistics const & statistics, Mem mem)
+{
+    return std::max({
+        count_digit(statistics.DstBlt.*mem),
+        count_digit(statistics.MultiDstBlt.*mem),
+        count_digit(statistics.PatBlt.*mem),
+        count_digit(statistics.MultiPatBlt.*mem),
+        count_digit(statistics.OpaqueRect.*mem),
+        count_digit(statistics.MultiOpaqueRect.*mem),
+        count_digit(statistics.ScrBlt.*mem),
+        count_digit(statistics.MultiScrBlt.*mem),
+        count_digit(statistics.MemBlt.*mem),
+        count_digit(statistics.Mem3Blt.*mem),
+        count_digit(statistics.LineTo.*mem),
+        count_digit(statistics.GlyphIndex.*mem),
+        count_digit(statistics.Polyline.*mem),
+
+        count_digit(statistics.CacheBitmap.*mem),
+        count_digit(statistics.CacheColorTable.*mem),
+        count_digit(statistics.CacheGlyph.*mem),
+
+        count_digit(statistics.FrameMarker.*mem),
+
+        count_digit(statistics.BitmapUpdate.*mem),
+
+        count_digit(statistics.CachePointer.*mem),
+        count_digit(statistics.PointerIndex.*mem),
+
+        count_digit(statistics.timestamp_chunk.*mem),
+    });
+}
+
+struct OutStatisticField
+{
+    int count_len;
+    int total_len;
+    FileToGraphic::Statistics::Order const & stat;
+
+    friend std::ostream & operator <<(std::ostream & out, OutStatisticField const & f)
+    {
+        return out << std::setw(f.count_len) << f.stat.count
+            << "  ( " << std::setw(f.total_len) << f.stat.total_len << " bytes)";
+    }
+};
+
 inline
 static void show_statistics(
     FileToGraphic::Statistics const & statistics,
     uint64_t total_wrm_file_len, unsigned count_wrm_file)
 {
+    using Stat = FileToGraphic::Statistics::Order;
+    int const count_field_len = fiels_size(statistics, &Stat::count);
+    int const total_field_len = fiels_size(statistics, &Stat::total_len);
+
+    auto f = [=](Stat const & stat){
+      return OutStatisticField{count_field_len, total_field_len, stat};
+    };
+
     std::cout
     << "\nCount wrm file        : " << count_wrm_file
     << "\nTotal wrm files size  : " << total_wrm_file_len << " bytes"
     << "\nTotal orders size     : " << statistics.total_read_len << " bytes. Ratio : x" << (statistics.total_read_len / double(total_wrm_file_len))
     << "\nInternal orders size  : " << statistics.internal_order_read_len << " bytes"
     << "\n"
-    << "\nDstBlt                : " << statistics.DstBlt
-    << "\nMultiDstBlt           : " << statistics.MultiDstBlt
-    << "\nPatBlt                : " << statistics.PatBlt
-    << "\nMultiPatBlt           : " << statistics.MultiPatBlt
-    << "\nOpaqueRect            : " << statistics.OpaqueRect
-    << "\nMultiOpaqueRect       : " << statistics.MultiOpaqueRect
-    << "\nScrBlt                : " << statistics.ScrBlt
-    << "\nMultiScrBlt           : " << statistics.MultiScrBlt
-    << "\nMemBlt                : " << statistics.MemBlt
-    << "\nMem3Blt               : " << statistics.Mem3Blt
-    << "\nLineTo                : " << statistics.LineTo
-    << "\nGlyphIndex            : " << statistics.GlyphIndex
-    << "\nPolyline              : " << statistics.Polyline
-
-    << "\nCacheBitmap           : " << statistics.CacheBitmap
-    << "\nCacheColorTable       : " << statistics.CacheColorTable
-    << "\nCacheGlyph            : " << statistics.CacheGlyph
-
-    << "\nFrameMarker           : " << statistics.FrameMarker
-
-    << "\nBitmapUpdate          : " << statistics.BitmapUpdate
-
-    << "\nCachePointer          : " << statistics.CachePointer
-    << "\nPointerIndex          : " << statistics.PointerIndex
-
-    << "\ngraphics_update_chunk : " << statistics.graphics_update_chunk
-    << "\nbitmap_update_chunk   : " << statistics.bitmap_update_chunk
-    << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
+    << "\nDstBlt                : " << f(statistics.DstBlt)
+    << "\nMultiDstBlt           : " << f(statistics.MultiDstBlt)
+    << "\nPatBlt                : " << f(statistics.PatBlt)
+    << "\nMultiPatBlt           : " << f(statistics.MultiPatBlt)
+    << "\nOpaqueRect            : " << f(statistics.OpaqueRect)
+    << "\nMultiOpaqueRect       : " << f(statistics.MultiOpaqueRect)
+    << "\nScrBlt                : " << f(statistics.ScrBlt)
+    << "\nMultiScrBlt           : " << f(statistics.MultiScrBlt)
+    << "\nMemBlt                : " << f(statistics.MemBlt)
+    << "\nMem3Blt               : " << f(statistics.Mem3Blt)
+    << "\nLineTo                : " << f(statistics.LineTo)
+    << "\nGlyphIndex            : " << f(statistics.GlyphIndex)
+    << "\nPolyline              : " << f(statistics.Polyline)
+    << "\n"
+    << "\nCacheBitmap           : " << f(statistics.CacheBitmap)
+    << "\nCacheColorTable       : " << f(statistics.CacheColorTable)
+    << "\nCacheGlyph            : " << f(statistics.CacheGlyph)
+    << "\n"
+    << "\nFrameMarker           : " << f(statistics.FrameMarker)
+    << "\n"
+    << "\nBitmapUpdate          : " << f(statistics.BitmapUpdate)
+    << "\n"
+    << "\nCachePointer          : " << f(statistics.CachePointer)
+    << "\nPointerIndex          : " << f(statistics.PointerIndex)
+    << "\n"
+    << "\ngraphics_update_chunk : " << std::setw(count_field_len) << statistics.graphics_update_chunk
+    << "\nbitmap_update_chunk   : " << std::setw(count_field_len) << statistics.bitmap_update_chunk
+    << "\ntimestamp_chunk       : " << f(statistics.timestamp_chunk)
     << std::endl;
 }
 
@@ -2016,8 +2101,15 @@ struct RecorderParams {
     bool json_pgs = false;
 };
 
+enum class ClRes
+{
+    Ok,
+    Err,
+    Exit,
+};
+
 inline
-int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
+ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -2093,12 +2185,12 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "\n\nUsage: redrec [options]\n\n";
         // TODO error code description
         std::cout << desc << "\n\n";
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice << std::endl << std::endl;
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("config-file") > 0) {
@@ -2148,7 +2240,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2161,7 +2253,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
                                  : 0;
         if (!recorder.wrm_color_depth){
             std::cerr << "Unknown wrm color depth\n\n";
-            return 1;
+            return ClRes::Err;
         }
     }
 
@@ -2172,7 +2264,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("png-geometry") > 0) {
@@ -2185,7 +2277,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         if (!png_w || !png_h) {
             std::cerr << "Invalide png geometry\n\n";
-            return -1;
+            return ClRes::Err;
         }
         recorder.png_params.png_width  = png_w;
         recorder.png_params.png_height = png_h;
@@ -2209,14 +2301,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
     if (options.count("hash-path") > 0){
         if (recorder.hash_path.c_str()[0] == 0) {
             std::cerr << "Missing hash-path : use -h path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2230,7 +2322,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if (options.count("mwrm-path") > 0){
         if (recorder.mwrm_path.c_str()[0] == 0) {
             std::cerr << "Missing mwrm-path : use -m path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2239,7 +2331,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (recorder.input_filename.c_str()[0] == 0) {
         std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-        return 1;
+        return ClRes::Err;
     }
 
     // Input path rule is as follow:
@@ -2289,7 +2381,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("encryption") > 0) {
@@ -2304,7 +2396,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2322,7 +2414,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
     }
 
-    return 0;
+    return ClRes::Ok;
 }
 
 extern "C" {
@@ -2403,9 +2495,10 @@ extern "C" {
         // TODO: annoying, if we read default hash_path and mwrm_path from ini
         // we should do that after config_filename was eventually changed...
 
-        if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
-            // parsing error
-            return -1;
+        switch (parse_command_line_options(argc, argv, rp, ini, verbose)) {
+            case ClRes::Exit: return 0;
+            case ClRes::Err: return -1;
+            case ClRes::Ok: ;
         }
 
         {

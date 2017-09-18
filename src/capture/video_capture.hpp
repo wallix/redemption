@@ -252,7 +252,6 @@ public:
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
         FlvParams flv_params;
-        RDPDrawable & drawable;
         gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
     } vc;
 
