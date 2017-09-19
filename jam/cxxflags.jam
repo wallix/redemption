@@ -366,7 +366,7 @@ rule flags ( properties * )
     ## Sanitizers
     if <variant>san in $(properties) && ! <target-os>windows in $(properties)
     {
-        if $(toolset) != gcc || [ ge-ver $(version) : 6.1.0 ]
+        if [ ge-ver $(version) : 6.1.0 ]
         {
             flags +=
                 <cxxflags>-fsanitize=bounds-strict
