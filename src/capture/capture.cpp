@@ -1506,7 +1506,8 @@ Capture::Capture(
     bool session_log_enabled,
     bool keyboard_fully_masked,
     bool meta_keyboard_log,
-    Rect crop_rect)
+    Rect crop_rect,
+    RDPDrawable* rdp_drawable)
 : is_replay_mod(!report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{now, width / 2, height / 2}
@@ -1523,15 +1524,21 @@ Capture::Capture(
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        this->gd_drawable.reset(new RDPDrawable(width, height));
+        if (rdp_drawable) {
+            this->gd_drawable = rdp_drawable;
+        }
+        else {
+            this->gd_drawable_.reset(new RDPDrawable(width, height));
+            this->gd_drawable = this->gd_drawable_.get();
+        }
         this->gds.push_back(*this->gd_drawable);
 
-        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable.get();
+        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
             REDASSERT(!capture_png || !png_params.real_time_image_capture)
             this->video_cropper.reset(new VideoCropper(
-                    this->gd_drawable.get(),
+                    *this->gd_drawable,
                     crop_rect.x,
                     crop_rect.y,
                     crop_rect.cx,
@@ -1546,10 +1553,10 @@ Capture::Capture(
         if (capture_png) {
             if (png_params.real_time_image_capture) {
                 if (png_params.remote_program_session) {
-                    REDASSERT(image_frame_api_ptr == this->gd_drawable.get());
+                    REDASSERT(image_frame_api_ptr == this->gd_drawable);
 
                     this->video_cropper.reset(new VideoCropper(
-                            this->gd_drawable.get(),
+                            *this->gd_drawable,
                             0,
                             0,
                             this->gd_drawable->width(),

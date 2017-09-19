@@ -32,6 +32,8 @@
 
 #include <chrono>
 
+#include <sys/time.h> // timeval
+
 
 class Transport;
 class BmpCache;
@@ -90,8 +92,9 @@ public:
 
     timeval record_now;
 
-// private:
+private:
     timeval start_record_now;
+public:
     timeval start_synctime_now;
 
 private:
@@ -113,6 +116,8 @@ private:
 
         T * * data() noexcept { return this->arr; }
 
+        void clear() { this->last = this->arr; }
+
         std::size_t size() const noexcept {
             return static_cast<std::size_t>(this->last - this->arr);
         }
@@ -132,10 +137,10 @@ private:
     bool timestamp_ok;
     uint16_t mouse_x;
     uint16_t mouse_y;
-    bool real_time;
+    const bool real_time;
 
-    timeval begin_capture;
-    timeval end_capture;
+    const timeval begin_capture;
+    const timeval end_capture;
 public:
     uint32_t max_order_count;
 
@@ -216,10 +221,6 @@ public:
 
     std::chrono::microseconds movie_elapsed_client;
 
-private:
-    std::chrono::microseconds begin_to_elapse;
-
-
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -242,6 +243,8 @@ public:
         gdi::CaptureProbeApi * capture_probe_ptr,
         gdi::ExternalCaptureApi * external_event_ptr
     );
+
+    void clear_consumer();
 
     void set_pause_client(timeval & time);
 

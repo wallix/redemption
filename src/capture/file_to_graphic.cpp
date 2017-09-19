@@ -84,7 +84,6 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     , statistics()
     , break_privplay_client(false)
     , movie_elapsed_client{}
-    , begin_to_elapse(std::chrono::seconds(this->begin_capture.tv_sec))
     , verbose(verbose)
 {
     while (this->next_order()){
@@ -113,6 +112,15 @@ void FileToGraphic::add_consumer(
     this->kbd_input_consumers.push_back(kbd_input_ptr);
     this->capture_probe_consumers.push_back(capture_probe_ptr);
     this->external_event_consumers.push_back(external_event_ptr);
+}
+
+void FileToGraphic::clear_consumer()
+{
+    this->graphic_consumers.clear();
+    this->capture_consumers.clear();
+    this->kbd_input_consumers.clear();
+    this->capture_probe_consumers.clear();
+    this->external_event_consumers.clear();
 }
 
 void FileToGraphic::set_pause_client(timeval & time)
@@ -243,10 +251,8 @@ struct ReceiveOrder
         Rect clip, Header & header, Args const& ...draw_args) const
     {
         read(order, stat, clip, header);
-        if (ftg.begin_to_elapse <= ftg.movie_elapsed_client) {
-            for (gdi::GraphicApi * gd : ftg.graphic_consumers){
-                gd->draw(order, clip, draw_args...);
-            }
+        for (gdi::GraphicApi * gd : ftg.graphic_consumers){
+            gd->draw(order, clip, draw_args...);
         }
     }
 
@@ -256,10 +262,8 @@ struct ReceiveOrder
         FileToGraphic::Verbose verbose_flag, Header & header) const
     {
         auto order = read<Order>(stat, verbose_flag, header);
-        if (ftg.begin_to_elapse <= ftg.movie_elapsed_client) {
-            for (gdi::GraphicApi * gd : ftg.graphic_consumers){
-                gd->draw(order);
-            }
+        for (gdi::GraphicApi * gd : ftg.graphic_consumers){
+            gd->draw(order);
         }
     }
 
@@ -285,10 +289,8 @@ void FileToGraphic::interpret_order()
     this->total_orders_count++;
     auto const & palette = BGRPalette::classic_332();
 
-    // if (this->begin_to_elapse <= this->movie_elapsed_client) {
-    //     if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
-    //         return;
-    //     }
+    // if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
+    //     return;
     // }
 
     ReceiveOrder receive_order{*this};
@@ -429,10 +431,8 @@ void FileToGraphic::interpret_order()
                             this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                         throw Error(ERR_WRM);
                     } else {
-                        if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.memblt, clip, bmp);
-                            }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(this->ssc.memblt, clip, bmp);
                         }
                     }
                 }
@@ -449,10 +449,8 @@ void FileToGraphic::interpret_order()
                         throw Error(ERR_WRM);
                     }
                     else {
-                        if (this->begin_to_elapse <= this->movie_elapsed_client) {
-                            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                                gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
-                            }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
                         }
                     }
                 }
@@ -709,10 +707,8 @@ void FileToGraphic::interpret_order()
                         , (bitmap_data.flags & BITMAP_COMPRESSION)
                         );
 
-        if (this->begin_to_elapse <= this->movie_elapsed_client) {
-            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->draw(bitmap_data, bitmap);
-            }
+        for (gdi::GraphicApi * gd : this->graphic_consumers){
+            gd->draw(bitmap_data, bitmap);
         }
 
     }

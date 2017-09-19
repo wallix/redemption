@@ -25,6 +25,7 @@
 #include "configs/config.hpp"
 
 #include "core/RDP/RDPSerializer.hpp" // RDPSerializer::Verbose
+#include "core/RDP/RDPDrawable.hpp"
 
 #include "transport/crypto_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
@@ -1951,7 +1952,38 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             != ::KeyboardInputMaskingLevel::fully_masked;
                         bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-                        Capture capture(
+                        RDPDrawable rdp_drawable{
+                            player.screen_rect.cx, player.screen_rect.cy};
+
+                        // std::optional<Capture> storage;
+                        class CaptureStorage
+                        {
+                            union U {
+                                char dummy;
+                                Capture capture;
+
+                                U() : dummy(){}
+                                ~U() {}
+                            } u;
+                            bool is_loaded = false;
+
+                        public:
+                            void * get_storage()
+                            {
+                                this->is_loaded = true;
+                                return &this->u.capture;
+                            }
+
+                            ~CaptureStorage()
+                            {
+                                if (this->is_loaded) {
+                                    this->u.capture.~Capture();
+                                }
+                            }
+                        } storage;
+
+                        auto set_capture_consumer = [&](timeval const & now) {
+                            auto * capture = new(storage.get_storage()) Capture(
                                   capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, patter_checker_params
@@ -1961,7 +1993,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_meta, meta_params
                                 , capture_kbd, kbdlog_params
                                 , basename
-                                , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                , now
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
                                 , record_tmp_path
@@ -1983,9 +2015,44 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , keyboard_fully_masked
                                 , meta_keyboard_log
                                 , Rect()
+                                , &rdp_drawable
                                 );
 
-                        player.add_consumer(&capture, &capture, &capture, &capture, &capture);
+                            player.clear_consumer();
+                            player.add_consumer(capture, capture, capture, capture, capture);
+                        };
+
+                        auto lazy_capture = [&](timeval const & now) {
+                            if (begin_capture.tv_sec > now.tv_sec) {
+                                return;
+                            }
+                            set_capture_consumer(begin_capture);
+                        };
+
+                        struct CaptureMaker : gdi::ExternalCaptureApi
+                        {
+                            void external_breakpoint() override {}
+
+                            void external_time(const timeval & now) override
+                            {
+                                this->load_capture(now);
+                            }
+
+                            CaptureMaker(decltype(lazy_capture) & load_capture)
+                            : load_capture(load_capture)
+                            {}
+
+                            decltype(lazy_capture) & load_capture;
+                        };
+                        CaptureMaker capture_maker(lazy_capture);
+
+                        if (begin_capture.tv_sec) {
+                            player.add_consumer(
+                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker);
+                        }
+                        else {
+                            set_capture_consumer(player.record_now);
+                        }
 
                         if (update_progress_data.is_valid()) {
                             try {

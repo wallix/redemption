@@ -225,7 +225,8 @@ private:
     //@}
 
 public:
-    std::unique_ptr<RDPDrawable> gd_drawable;
+    std::unique_ptr<RDPDrawable> gd_drawable_;
+    RDPDrawable* gd_drawable = nullptr;
 
     std::unique_ptr<VideoCropper> video_cropper;
 
@@ -392,7 +393,8 @@ public:
         bool session_log_enabled,
         bool keyboard_fully_masked,
         bool meta_keyboard_log,
-        Rect crop_rect
+        Rect crop_rect,
+        RDPDrawable* rdp_drawable = nullptr
     );
 
     ~Capture();
