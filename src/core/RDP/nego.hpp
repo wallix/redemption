@@ -117,4 +117,5 @@ public:
     // 2.2.1.1 Client X.224 Connection Request PDU
     // ===========================================
     void send_negotiation_request();
+    void fallback_to_tls();
 };
