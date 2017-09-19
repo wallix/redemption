@@ -4087,6 +4087,47 @@ public:
 
     TpduBuffer buf;
 
+    bool process_nego(bool waked_up_by_time)
+    {
+        bool run = true;
+        try {
+            if (!waked_up_by_time) {
+                this->buf.load_data(this->nego.trans.get_transport());
+            }
+        }
+        catch (Error const & e) {
+            if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+                this->nego.fallback_to_tls();
+                run = false;
+            }
+        }
+        while (run && this->state == MOD_RDP_NEGO) {
+            if (this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE) {
+                if (!waked_up_by_time && this->buf.next_pdu()) {
+                    InStream x224_data(this->buf.current_pdu_buffer());
+                    this->early_tls_security_exchange(x224_data);
+                }
+                else {
+                    run = false;
+                }
+            }
+            else if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
+                if (!waked_up_by_time && this->buf.next_credssp()) {
+                    InStream credssp_data(this->buf.current_pdu_buffer());
+                    this->early_tls_security_exchange(credssp_data);
+                }
+                else {
+                    run = false;
+                }
+            }
+            else {
+                InStream x224_data;
+                this->early_tls_security_exchange(x224_data);
+            }
+        }
+        return run;
+    }
+
     void draw_event(time_t now, gdi::GraphicApi & drawable_) override
     {
         // LOG(LOG_INFO, "mod_rdp::draw_event()");
@@ -4095,40 +4136,18 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
+        bool run = true;
         bool waked_up_by_time = this->event.is_waked_up_by_time();
 
-        if (!waked_up_by_time) {
+        if (this->state == MOD_RDP_NEGO) {
+            run = this->process_nego(waked_up_by_time);
+        }
+        else if (!waked_up_by_time) {
             this->buf.load_data(this->nego.trans.get_transport());
         }
 
-        bool run = true;
-
-        while (run) {
-            if (this->state == MOD_RDP_NEGO) {
-                if (this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE) {
-                    if (!waked_up_by_time && this->buf.next_pdu()) {
-                        InStream x224_data(this->buf.current_pdu_buffer());
-                        this->early_tls_security_exchange(x224_data);
-                    }
-                    else {
-                        run = false;
-                    }
-                }
-                else if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-                    if (!waked_up_by_time && this->buf.next_credssp()) {
-                        InStream credssp_data(this->buf.current_pdu_buffer());
-                        this->early_tls_security_exchange(credssp_data);
-                    }
-                    else {
-                        run = false;
-                    }
-                }
-                else {
-                    InStream x224_data;
-                    this->early_tls_security_exchange(x224_data);
-                }
-            }
-            else if (!waked_up_by_time && this->buf.next_pdu()) {
+        if (run && !waked_up_by_time) {
+            while (this->buf.next_pdu()) {
                 InStream x224_data(this->buf.current_pdu_buffer());
 
                 try{
@@ -4268,9 +4287,6 @@ public:
                         throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                     }
                 }
-            }
-            else {
-                run = false;
             }
         }
 
