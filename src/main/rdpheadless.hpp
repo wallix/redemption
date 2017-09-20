@@ -400,12 +400,12 @@ public:
         this->_info.width = width;
         this->_info.height = height;
 
-         if (!this->primary_connection_finished) {
-             this->primary_connection_finished = true;
+        if (!this->primary_connection_finished) {
+            this->primary_connection_finished = true;
 
-             this->start_wab_session_time = tvtime();
+            this->start_wab_session_time = tvtime();
 
-         }
+        }
 
         return ResizeResult::done;
     }
