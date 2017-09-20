@@ -609,9 +609,9 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:50 + Blah1\n"
-        "1970-01-01 01:16:51 + Blah2\n"
-        "1970-01-01 01:16:54 + Blah3\n"
+        "1970-01-01 01:16:50 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
+        "1970-01-01 01:16:51 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
+        "1970-01-01 01:16:54 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:55 - [Kbd]ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD\n"
     );
 }
@@ -647,9 +647,9 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:40 + Blah1\n"
-        "1970-01-01 01:16:41 + Blah2\n"
-        "1970-01-01 01:16:44 + Blah3\n"
+        "1970-01-01 01:16:40 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
+        "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
+        "1970-01-01 01:16:44 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:45 + (break)\n"
         "1970-01-01 01:16:45 - [Kbd]ABCDABCD\n"
     );
@@ -691,10 +691,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
-        "1970-01-01 01:16:43 + Blah2\n"
-        "1970-01-01 01:16:46 + Blah3\n"
+        "1970-01-01 01:16:43 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
+        "1970-01-01 01:16:46 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:47 + (break)\n"
         "1970-01-01 01:16:47 - [Kbd]ABCDABCDABCD\n"
     );
@@ -740,10 +740,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
-        "1970-01-01 01:16:44 + Blah2\n"
-        "1970-01-01 01:16:47 + Blah3\n"
+        "1970-01-01 01:16:44 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
+        "1970-01-01 01:16:47 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:48 + (break)\n"
         "1970-01-01 01:16:48 - [Kbd]ABCDABCDABCDABCDABCD\n"
     );
@@ -827,21 +827,21 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 - [Kbd]ABC\n"
-        "1970-01-01 01:16:44 + Blah2\n"
+        "1970-01-01 01:16:44 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
         "1970-01-01 01:16:45 - [Kbd]D/<enter>\n"
         "1970-01-01 01:16:48 - [Kbd]EF/<enter>\n"
-        "1970-01-01 01:16:52 + Blah3\n"
+        "1970-01-01 01:16:52 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:52 - [Kbd]/<enter>G/<enter>\n"
         "1970-01-01 01:16:57 + (break)\n"
         "1970-01-01 01:17:00 - [Kbd]/<enter>/<tab>HIK\n"
-        "1970-01-01 01:17:01 + Blah4\n"
+        "1970-01-01 01:17:01 + type=\"TITLE_BAR\" data=\"Blah4\"\n"
         "1970-01-01 01:17:06 - [Kbd]/<backspace>/<backspace>L\n"
-        "1970-01-01 01:17:07 + Blah5\n"
+        "1970-01-01 01:17:07 + type=\"TITLE_BAR\" data=\"Blah5\"\n"
         "1970-01-01 01:17:13 - [Kbd]MP\n"
-        "1970-01-01 01:17:14 + Blah6\n"
+        "1970-01-01 01:17:14 + type=\"TITLE_BAR\" data=\"Blah6\"\n"
         "1970-01-01 01:17:27 - [Kbd]QR/<up>/<backspace>T//U//V\n"
     );
 }
@@ -924,21 +924,21 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
     RED_CHECK_EQ(
         trans.buf,
-        "1970-01-01 01:16:41 + Blah1\n"
+        "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 - [Kbd]ABC\n"
-        "1970-01-01 01:16:44 + Blah2\n"
+        "1970-01-01 01:16:44 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
         "1970-01-01 01:16:45 - [Kbd]D\n"
         "1970-01-01 01:16:48 - [Kbd]EF\n"
-        "1970-01-01 01:16:52 + Blah3\n"
+        "1970-01-01 01:16:52 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
         "1970-01-01 01:16:52 - [Kbd]G\n"
         "1970-01-01 01:16:57 + (break)\n"
         "1970-01-01 01:17:00 - [Kbd]HIK\n"
-        "1970-01-01 01:17:01 + Blah4\n"
+        "1970-01-01 01:17:01 + type=\"TITLE_BAR\" data=\"Blah4\"\n"
         "1970-01-01 01:17:06 - [Kbd]L\n"
-        "1970-01-01 01:17:07 + Blah5\n"
+        "1970-01-01 01:17:07 + type=\"TITLE_BAR\" data=\"Blah5\"\n"
         "1970-01-01 01:17:13 - [Kbd]MP\n"
-        "1970-01-01 01:17:14 + Blah6\n"
+        "1970-01-01 01:17:14 + type=\"TITLE_BAR\" data=\"Blah6\"\n"
         "1970-01-01 01:17:27 - [Kbd]QRT/U/V\n"
     );
 }

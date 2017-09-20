@@ -1143,20 +1143,25 @@ public:
         return true;
     }
 
-    void title_changed(time_t rawtime, array_view_const_char title) {
-        this->send_data(rawtime, title, '+');
-    }
-
     void send_line(time_t rawtime, array_view_const_char line) {
         this->send_data(rawtime, line, '+');
     }
 
+    std::string formatted_message;
+
+    void title_changed(time_t rawtime, array_view_const_char title) {
+        this->formatted_message = "type=\"TITLE_BAR\" data=\"";
+        this->formatted_message.insert(this->formatted_message.end(), title.begin(), title.end());
+        this->formatted_message += '\"';
+        this->send_data(rawtime, this->formatted_message, '+');
+    }
+
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        std::string formatted_message;
-        agent_data_extractor(formatted_message, message);
-        if (!formatted_message.empty()) {
-            this->send_data(now.tv_sec, formatted_message, '-');
+        this->formatted_message.clear();
+        agent_data_extractor(this->formatted_message, message);
+        if (!this->formatted_message.empty()) {
+            this->send_data(now.tv_sec, this->formatted_message, '-');
         }
     }
 
@@ -1289,7 +1294,7 @@ public:
     {}
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        line.clear();
+        this->line.clear();
         agent_data_extractor(this->line, message);
         if (!this->line.empty()) {
             this->session_meta.send_line(now.tv_sec, this->line);
