@@ -1223,6 +1223,8 @@ public:
             LOG(LOG_INFO, "Front::incoming");
         }
 
+        bool is_waked_up_by_time__save = this->event.is_waked_up_by_time();
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -1243,7 +1245,7 @@ public:
             this->session_resized = false;
         }
 
-        if (this->event.is_waked_up_by_time()) return;
+        if (is_waked_up_by_time__save) return;
 
         buf.load_data(this->trans);
         while (buf.next_pdu())
