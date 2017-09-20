@@ -39,7 +39,10 @@ using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
     vcfg::var<cfg::font,                        vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                       vcfg::accessmode::get>
+    vcfg::var<cfg::theme,                       vcfg::accessmode::get>,
+
+    vcfg::var<cfg::context::close_box_extra_message,
+                                                vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
 class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi

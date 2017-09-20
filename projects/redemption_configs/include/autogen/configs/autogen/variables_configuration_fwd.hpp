@@ -328,6 +328,7 @@ namespace cfg {
         struct rail_disconnect_message_delay;
         struct use_session_probe_to_launch_remote_program;
         struct session_probe_launch_error_message;
+        struct close_box_extra_message;
     };
 
     struct theme;

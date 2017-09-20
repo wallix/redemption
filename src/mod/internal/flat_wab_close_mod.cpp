@@ -68,6 +68,7 @@ FlatWabCloseMod::FlatWabCloseMod(
             ? nullptr
             : temporary_text(vars).text,
         showtimer,
+        vars.get<cfg::context::close_box_extra_message>().c_str(),
         vars.get<cfg::font>(),
         vars.get<cfg::theme>(),
         language(vars),
@@ -91,6 +92,8 @@ FlatWabCloseMod::FlatWabCloseMod(
 
 FlatWabCloseMod::~FlatWabCloseMod()
 {
+    this->vars.set<cfg::context::close_box_extra_message>("");
+
     this->screen.clear();
 }
 

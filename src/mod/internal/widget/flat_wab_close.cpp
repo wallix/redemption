@@ -30,7 +30,7 @@ FlatWabClose::FlatWabClose(
     int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
     NotifyApi* notifier, const char * diagnostic_text,
     const char * username, const char * target,
-    bool showtimer, Font const & font, Theme const & theme,
+    bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Translation::language_t lang, bool back_selector)
 : WidgetParent(drawable, parent, notifier)
 , connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang),
@@ -72,6 +72,7 @@ FlatWabClose::FlatWabClose(
 , showtimer(showtimer)
 , font(font)
 , diagnostic_text(diagnostic_text)
+, extra_message(extra_message)
 {
     this->impl = &composite_array;
 
@@ -111,12 +112,17 @@ FlatWabClose::FlatWabClose(
         this->add_widget(this->back);
     }
 
+    this->fixed_format_diagnostic_text =
+        (this->diagnostic_text.find("<br>") != std::string::npos);
+
+    if (!this->fixed_format_diagnostic_text && extra_message && *extra_message) {
+        this->diagnostic_text += " ";
+        this->diagnostic_text += extra_message;
+    }
+
     this->move_size_widget(left, top, width, height);
 
     this->set_widget_focus(&this->cancel, focus_reason_tabkey);
-
-    this->fixed_format_diagnostic_text =
-        (this->diagnostic_text.find("<br>") != std::string::npos);
 }
 
 FlatWabClose::~FlatWabClose()

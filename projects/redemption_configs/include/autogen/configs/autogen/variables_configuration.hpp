@@ -4143,6 +4143,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: std::string <br/>
+    /// value{} <br/>
+    struct context::close_box_extra_message {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "context"; }
+        static constexpr char const * name() { return "close_box_extra_message"; }
+        using type = std::string;
+        using mapped_type = type;
+        type value{};
+    };
 
     /// type: Theme <br/>
     /// value{} <br/>
@@ -4491,6 +4502,7 @@ struct context
 , cfg::context::rail_disconnect_message_delay
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
+, cfg::context::close_box_extra_message
 { static constexpr bool is_section = true; };
 
 }

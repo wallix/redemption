@@ -651,6 +651,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "session_probe_launch_error_message");
+        W.sep();
+
+        W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "close_box_extra_message");
     });
 
     W.section("", [&]

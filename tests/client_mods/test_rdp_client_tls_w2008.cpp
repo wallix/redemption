@@ -100,6 +100,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -195,6 +196,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(2023)
                                );
     mod_rdp_params.device_id                       = "device_id";

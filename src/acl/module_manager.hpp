@@ -1330,6 +1330,7 @@ public:
                                            , this->ini.get<cfg::font>()
                                            , this->ini.get<cfg::theme>()
                                            , this->ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                                           , this->ini.get_ref<cfg::context::close_box_extra_message>()
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
                                            //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                            );
