@@ -298,7 +298,8 @@
 "#_advanced\n"
 "#deny_channels = \n\n"
 
-"# Enables support of Server Fast-Path Update PDUs.\n"
+"# Enables support of Client/Server Fast-Path Input/Update PDUs.\n"
+"# Fast-Path is required for Windows Server 2012 (or more recent)!\n"
 "#_advanced\n"
 "#fast_path = 1\n\n"
 

@@ -1170,7 +1170,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Enables support of Server Fast-Path Update PDUs. <br/>
+    /// Enables support of Client/Server Fast-Path Input/Update PDUs. <br/>
+    /// Fast-Path is required for Windows Server 2012 (or more recent)! <br/>
     /// type: bool <br/>
     /// value{1} <br/>
     struct mod_rdp::fast_path {
