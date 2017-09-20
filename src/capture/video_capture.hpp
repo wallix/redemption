@@ -118,7 +118,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, bool no_timestamp, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams flv_params
+        FlvParams const & flv_params
     );
 
     ~FullVideoCaptureImpl();
@@ -252,7 +252,6 @@ public:
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
         FlvParams flv_params;
-        RDPDrawable & drawable;
         gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
     } vc;
 

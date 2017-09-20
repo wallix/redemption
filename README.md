@@ -15,7 +15,7 @@ To compile ReDemPtion you need the following packages:
 - libsnappy-dev
 - libpng12-dev
 - libffmpeg-dev (see below)
-- g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
+- g++ >= 4.9 or clang++ >= 3.5 or other C++14 compiler
 
 <!--Optionally:
 - python (python-dev)-->
@@ -50,6 +50,16 @@ And set environment variable (optionally)
 ## Environment variable setting
 
 List with `grep '\[ setvar' jam/defines.jam`
+
+
+Generate target and lib/obj dependencies
+========================================
+
+When create a new test or when a target fail with link error:
+
+`bjam targets.jam` for updated `targets.jam` file.
+
+Specific deps (libs, header, cpp, etc) in `./tools/bjam/gen_targets.py`.
 
 
 FAQ
@@ -126,7 +136,7 @@ Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
 
-$ `bjam` or `bjam toolset=compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
+$ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
 
 Compile executables without tests (as user):
 

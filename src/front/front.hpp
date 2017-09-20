@@ -1024,6 +1024,7 @@ public:
                                     , keyboard_fully_masked
                                     , meta_keyboard_log
                                     , Rect()
+                                    , nullptr
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();

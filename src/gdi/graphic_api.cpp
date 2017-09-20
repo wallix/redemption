@@ -22,22 +22,38 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/sugar/splitter.hpp"
 
-#include <sstream>
-#include <vector>
+namespace
+{
+    template<class Getc>
+    void textmetrics_impl(
+        const Font & font, const char * unicode_text, int & width, int & height, Getc getc)
+    {
+        UTF8toUnicodeIterator unicode_iter(unicode_text);
+        uint16_t height_max = 0;
+        for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
+            const FontChar & font_item = font.glyph_or_unknown(c);
+            width += font_item.incby;
+            height_max = std::max(height_max, font_item.height);
+        }
+        height = height_max;
+    }
+}
 
 namespace gdi {
 
 TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
 {
-    UTF8toUnicodeIterator unicode_iter(unicode_text);
-    uint16_t height_max = 0;
-    for (; uint32_t c = *unicode_iter; ++unicode_iter) {
-        const FontChar & font_item = font.glyph_or_unknown(c);
-        this->width += font_item.incby;
-        height_max = std::max(height_max, font_item.height);
-    }
-    this->height = height_max;
+    textmetrics_impl(
+        font, unicode_text, this->width, this->height,
+        [](UTF8toUnicodeIterator & it){ return *it; });
+}
+
+inline std::string & operator += (std::string & s, range<char const*> r)
+{
+    s.insert(s.end(), r.begin(), r.end());
+    return s;
 }
 
 MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode_text, int max_width,
@@ -47,32 +63,37 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
 
     int number_of_lines = 1;
 
-    int height_max = 0;
+    TextMetrics const tt(font, " ");
 
-    auto get_text_width = [&font, &height_max](const char* unicode_text) -> int {
-        TextMetrics tt(font, unicode_text);
+    int height_max = tt.height;
+    const int white_space_width = tt.width;
 
-        height_max = std::max(height_max, tt.height);
+    int cumulative_width = 0;
 
-        return tt.width;
-    };
-
-    const int white_space_width = get_text_width(" ");
-
-    std::istringstream  iss(unicode_text);
-    std::string         parameter;
-    std::ostringstream  oss;
-    int                 cumulative_width(0);
-    while (std::getline(iss, parameter, ' ')) {
-        if (!parameter.length()) {
+    for (auto parameter : get_line(unicode_text, ' ')) {
+        if (!parameter.size()) {
             continue;
         }
 
-        const int part_width = get_text_width(parameter.c_str());
+        const int part_width = [&]{
+            int w = 0;
+            int h = 0;
+            textmetrics_impl(
+                font, parameter.begin(), w, h,
+                [&](UTF8toUnicodeIterator & it){
+                    return it.pos() <= reinterpret_cast<uint8_t const*>(parameter.end())
+                        ? *it : 0u;
+                });
+
+            height_max = std::max(height_max, h);
+
+            return w;
+        }();
 
         if (cumulative_width) {
             if (cumulative_width + white_space_width + part_width > max_width) {
-                oss << "<br>" << parameter;
+                out_multiline_string_ref += "<br>";
+                out_multiline_string_ref += parameter;
 
                 cumulative_width = part_width;
 
@@ -81,7 +102,8 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
                 number_of_lines++;
             }
             else {
-                oss << " " << parameter;
+                out_multiline_string_ref += ' ';
+                out_multiline_string_ref += parameter;
 
                 cumulative_width += (white_space_width + part_width);
 
@@ -89,7 +111,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
             }
         }
         else {
-            oss << parameter;
+            out_multiline_string_ref += parameter;
 
             cumulative_width = part_width;
 
@@ -98,8 +120,6 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
     }
 
     this->height = height_max * number_of_lines;
-
-    out_multiline_string_ref = std::move(oss.str());
 }
 
 

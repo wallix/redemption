@@ -32,7 +32,7 @@ namespace trkeys
     struct TrKey { const char * translations[2]; };
 
 #define TR_PROTECTED_KV(name, en, fr) \
-    constexpr struct TrKey##_##name \
+    constexpr struct TrKey##_##name   \
     { const char * translations[2]; } name{{en, fr}}
 
     TR_PROTECTED_KV(password, "Password", "Mot de passe");

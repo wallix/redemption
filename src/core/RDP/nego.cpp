@@ -218,6 +218,31 @@ void RdpNego::set_lb_info(uint8_t * lb_info, size_t lb_info_length)
 // |                                      | (section 5.4) with CredSSP (section|
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
+void RdpNego::fallback_to_tls()
+{
+    this->trans.disconnect();
+
+    if (!this->trans.connect()){
+        LOG(LOG_ERR, "Failed to disconnect transport");
+        throw Error(ERR_SOCKET_CONNECT_FAILED);
+    }
+
+    this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
+
+    if (*this->current_password) {
+        LOG(LOG_INFO, "try next password");
+        this->send_negotiation_request();
+    }
+    else {
+        LOG(LOG_INFO, "Can't activate NLA");
+        this->nla = false;
+        this->tls = true;
+        LOG(LOG_INFO, "falling back to SSL only");
+        this->send_negotiation_request();
+        this->state = NEGO_STATE_NEGOCIATE;
+        this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
+    }
+}
 
 void RdpNego::recv_credssp(InStream & stream)
 {
@@ -227,7 +252,8 @@ void RdpNego::recv_credssp(InStream & stream)
             break;
         case rdpCredsspClient::State::Err:
             LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
-            REDEMPTION_CXX_FALLTHROUGH;
+            this->fallback_to_tls();
+            break;
         case rdpCredsspClient::State::Finish:
             this->state = NEGO_STATE_FINAL;
             this->credssp.reset();
@@ -280,8 +306,7 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
 
             if (!this->credssp->credssp_client_authenticate_init()) {
                 LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-                this->state = NEGO_STATE_FINAL;
-                this->credssp.reset();
+                this->fallback_to_tls();
             }
             else {
                 this->state = NEGO_STATE_CREDSSP;
@@ -294,28 +319,7 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             return;
         }
 
-        this->trans.disconnect();
-
-        if (!this->trans.connect()){
-            LOG(LOG_ERR, "Failed to disconnect transport");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
-        }
-
-        this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
-
-        if (*this->current_password) {
-            LOG(LOG_INFO, "try next password");
-            this->send_negotiation_request();
-        }
-        else {
-            LOG(LOG_INFO, "Can't activate NLA");
-            this->nla = false;
-            this->tls = true;
-            LOG(LOG_INFO, "falling back to SSL only");
-            this->send_negotiation_request();
-            this->state = NEGO_STATE_NEGOCIATE;
-            this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
-        }
+        this->fallback_to_tls();
     }
     else if (this->tls) {
         if (x224.rdp_neg_type == X224::RDP_NEG_RSP

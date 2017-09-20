@@ -677,7 +677,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
 
-        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
@@ -692,7 +692,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
     RED_CHECK_EQ(
         trans.buf,
         "1970-01-01 01:16:41 + Blah1\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 + Blah2\n"
         "1970-01-01 01:16:46 + Blah3\n"
         "1970-01-01 01:16:47 + (break)\n"
@@ -724,7 +724,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd();
 
-        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
         send_kbd(); now.tv_sec += 1;
 
@@ -741,7 +741,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
     RED_CHECK_EQ(
         trans.buf,
         "1970-01-01 01:16:41 + Blah1\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:44 + Blah2\n"
         "1970-01-01 01:16:47 + Blah3\n"
         "1970-01-01 01:16:48 + (break)\n"
@@ -766,7 +766,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -828,7 +828,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
     RED_CHECK_EQ(
         trans.buf,
         "1970-01-01 01:16:41 + Blah1\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 - [Kbd]ABC\n"
         "1970-01-01 01:16:44 + Blah2\n"
         "1970-01-01 01:16:45 - [Kbd]D/<enter>\n"
@@ -863,7 +863,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=Démarrer", 24}); now.tv_sec += 1;
+        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -925,7 +925,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     RED_CHECK_EQ(
         trans.buf,
         "1970-01-01 01:16:41 + Blah1\n"
-        "1970-01-01 01:16:42 - BUTTON_CLICKED=Démarrer\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 - [Kbd]ABC\n"
         "1970-01-01 01:16:44 + Blah2\n"
         "1970-01-01 01:16:45 - [Kbd]D\n"

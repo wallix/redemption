@@ -21,15 +21,21 @@
 
 #pragma once
 
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
 #include <chrono>
+#include <vector>
 
 #include <cassert>
 
 
 struct timeval;
+
+namespace RDP {
+    namespace RAIL {
+        class Rectangle;
+    }
+}
 
 namespace gdi {
 

@@ -40,7 +40,6 @@
 #include "capture/kbdlog_params.hpp"
 
 #include "capture/wrm_chunk_type.hpp"
-#include "capture/save_state_chunk.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "core/wait_obj.hpp"
 #include "core/window_constants.hpp"
@@ -226,7 +225,8 @@ private:
     //@}
 
 public:
-    std::unique_ptr<RDPDrawable> gd_drawable;
+    std::unique_ptr<RDPDrawable> gd_drawable_;
+    RDPDrawable* gd_drawable = nullptr;
 
     std::unique_ptr<VideoCropper> video_cropper;
 
@@ -310,42 +310,11 @@ private:
             }
         }
 
-        void draw_impl(RDP::FrameMarker const & cmd) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gd.draw(cmd);
-            }
+        void draw_impl(RDP::FrameMarker const & cmd);
 
-            if (cmd.action == RDP::FrameMarker::FrameEnd) {
-                for (gdi::CaptureApi & cap : this->caps) {
-                    cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
-                }
-            }
-        }
+        void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd);
 
-        void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gd.draw(cmd);
-            }
-
-// cmd.log(LOG_INFO);
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.new_or_existing_window_event(cmd.header.WindowId(),
-                    cmd.header.FieldsPresentFlags(),
-                    cmd.Style(), cmd.ShowState(),
-                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY(),
-                    cmd.VisibilityRects());
-            }
-        }
-
-        void draw_impl(const RDP::RAIL::DeletedWindow & cmd) {
-            for (gdi::GraphicApi & gd : this->gds) {
-                gd.draw(cmd);
-            }
-
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.delete_window_event(cmd.header.WindowId());
-            }
-        }
+        void draw_impl(const RDP::RAIL::DeletedWindow & cmd);
 
     public:
         MouseTrace const & mouse;
@@ -424,7 +393,8 @@ public:
         bool session_log_enabled,
         bool keyboard_fully_masked,
         bool meta_keyboard_log,
-        Rect crop_rect
+        Rect crop_rect,
+        RDPDrawable* rdp_drawable = nullptr
     );
 
     ~Capture();

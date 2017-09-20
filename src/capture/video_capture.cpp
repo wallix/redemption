@@ -207,6 +207,7 @@ void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
     recorder.encoding_video_frame(this->current_video_time / frame_interval);
+    // TODO Two consecutive encoding_video_frame call is suspecious (differ by `+ 1`)
     recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
 }
 
@@ -340,7 +341,7 @@ struct IOVideoRecorderWithTransport
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
     const int groupid, bool no_timestamp, RDPDrawable & drawable,
-    gdi::ImageFrameApi * pImageFrameApi, FlvParams flv_params)
+    gdi::ImageFrameApi * pImageFrameApi, FlvParams const & flv_params)
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
@@ -528,7 +529,6 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 : video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
-, drawable(drawable)
 , image_frame_api_ptr(pImageFrameApi)
 {
     if (flv_params.verbosity) {

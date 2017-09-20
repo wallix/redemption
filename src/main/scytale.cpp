@@ -230,7 +230,9 @@ struct RedCryptoReaderHandle
                         , int old_encryption_scheme = 0
                         , int one_shot_encryption_scheme = 0
                         )
-    : cctxw(hmac_fn, trace_fn, old_encryption_scheme, one_shot_encryption_scheme)
+    : cctxw(hmac_fn, trace_fn, 
+            false /* unused for reading */, false /* unused for reading */,
+            old_encryption_scheme, one_shot_encryption_scheme)
     , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
     {
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);

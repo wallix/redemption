@@ -73,29 +73,27 @@ ReplayMod::ReplayMod(
 : InternalMod(front, width, height, font, Theme{}, false)
 , auth_error_message(auth_error_message)
 , movie_path(replay_path, movie)
+// TODO RZ: Support encrypted recorded file.
+, in_trans(std::make_unique<InMetaSequenceTransport>(
+    this->cctx,
+    this->movie_path.prefix,
+    this->movie_path.extension,
+    InCryptoTransport::EncryptionMode::NotEncrypted,
+    this->fstat))
+, reader(std::make_unique<FileToGraphic>(
+    *this->in_trans,
+    begin_read,
+    end_read,
+    true,
+    debug_capture))
 , end_of_data(false)
 , wait_for_escape(wait_for_escape)
 , balise_time_frame(balise_time_frame)
 , sync_setted(false)
-, loop_on_movie(false)
 {
-    // TODO RZ: Support encrypted recorded file.
-    this->in_trans = std::make_unique<InMetaSequenceTransport>(
-        this->cctx,
-        this->movie_path.prefix,
-        this->movie_path.extension,
-        InCryptoTransport::EncryptionMode::NotEncrypted,
-        this->fstat);
-    this->reader =  std::make_unique<FileToGraphic>(
-        *this->in_trans,
-        begin_read,
-        end_read,
-        true,
-        debug_capture);
-
     switch (this->front.server_resize( this->reader->info_width
-                                        , this->reader->info_height
-                                        , this->reader->info_bpp)) {
+                                     , this->reader->info_height
+                                     , this->reader->info_bpp)) {
     case FrontAPI::ResizeResult::no_need:
         // no resizing needed
         break;
@@ -145,11 +143,6 @@ void ReplayMod::add_consumer(
 void ReplayMod::play()
 {
     this->reader->play(false);
-}
-
-FileToGraphic * ReplayMod::get_reader()
-{
-    return this->reader.get();
 }
 
 bool ReplayMod::play_client()
@@ -246,24 +239,6 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
 
             if (this->reader->next_order()) {
                 this->reader->interpret_order();
-            }
-            else if (this->loop_on_movie) {
-                // TODO RZ: Support encrypted recorded file.
-                this->in_trans = std::make_unique<InMetaSequenceTransport>(
-                    this->cctx,
-                    this->movie_path.prefix,
-                    this->movie_path.extension,
-                    InCryptoTransport::EncryptionMode::NotEncrypted,
-                    this->fstat);
-                this->reader = std::make_unique<FileToGraphic>(
-                    *this->in_trans,
-                    timeval({0, 0}),
-                    timeval({0, 0}),
-                    true,
-                    FileToGraphic::Verbose::none);
-
-                //this->reader->reinit();
-                this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
             }
             else {
                 this->end_of_data = true;

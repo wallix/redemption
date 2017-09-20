@@ -1013,7 +1013,7 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "-o",
             "/tmp/recorder.1.flva",
-        "--flv",
+        "--video",
         "--full",
         "--flvbreakinterval", "500",
         "--video-codec", "flv"

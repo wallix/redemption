@@ -66,8 +66,8 @@ class SesmanConfig(object):
             # , u'help_message'           :
             #       u"Dans la zone de saisie login, entrez:<br>"
             #      +u"- le login sur la cible et le nom de la machine cible suivi<br>"
-            #      +u"  du compte WAB sous la forme login@serveur:service:WABlogin<br>"
-            #      +u"- ou un nom de compte WAB valide.<br>"
+            #      +u"  du compte Bastion sous la forme login@serveur:service:WABlogin<br>"
+            #      +u"- ou un nom de compte Bastion valide.<br>"
             #      +u"<br>"
             #      +u"Dans la zone de saisie mot de passe,<br>"
             #      +u"entrez le mot de passe du compte.<br>"
@@ -118,6 +118,7 @@ class SesmanConfig(object):
             , u'account_locked' : u"Compte verrouillé."
             , u'start_session_failed' : u'Echec de démarage de session.'
             , u'pattern_kill' : u'Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_launch_failed' : u'Impossible de lancer Session Probe, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_keepalive_missed' : u'Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_outbound_connection_blocking_failed' : u'Connexion sortante potentiellement indésirable detectée, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_process_blocking_failed' : u'Processus potentiellement indésirable détecté, le gestionnaire de session a coupé la connexion.'
@@ -152,7 +153,7 @@ class SesmanConfig(object):
             #       u"In login edit box, enter:<br>"
             #      +u"- target device and login with the wab login separated<br>"
             #      +u"  by a semi colon as login@target:service:WABlogin<br>"
-            #      +u"- or a valid WAB authentication user.<br>"
+            #      +u"- or a valid Bastion authentication user.<br>"
             #      +u"<br>"
             #      +u"In password edit box enter your password<br>"
             #      +u"for user.<br>"
@@ -207,6 +208,7 @@ class SesmanConfig(object):
             , u'account_locked' : u"Account locked."
             , u'start_session_failed' : u'Failed to start session.'
             , u'pattern_kill' : u'Forbidden pattern detected, connection closed by manager.'
+            , u'session_probe_launch_failed' : u'Could not launch Session Probe, connection closed by manager.'
             , u'session_probe_keepalive_missed' : u'Session Probe keepalive missed, connection closed by manager.'
             , u'session_probe_outbound_connection_blocking_failed' : u'Potentially undesirable outbound connection detected, connection closed by manager.'
             , u'session_probe_process_blocking_failed' : u'Potentially undesirable process detected, connection closed by manager.'

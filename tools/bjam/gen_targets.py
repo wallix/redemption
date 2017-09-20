@@ -34,7 +34,13 @@ src_requirements = dict((
     ('src/utils/bitmap.cpp', '<cxxflags>-std=c++14'),
     ('src/main/rdpheadless.cpp', '<cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
+))
+
+target_requirements = dict((
+    ('libscytale', '<library>log_print.o'),
+    ('libredrec', '<library>log.o'),
 ))
 
 remove_requirements = dict((
@@ -59,6 +65,18 @@ target_renames = dict((
     ('rdp_client', 'rdpclient'),
     ('vnc_client', 'vncclient'),
 ))
+
+#coverage_requirements = dict((
+#))
+
+dir_nocoverage = set([
+    'tests/sashimi/',
+    'tests/server/',
+    'tests/system/common/',
+    'tests/system/emscripten/',
+    'tests/client_mods'
+])
+file_nocoverage = set(glob.glob('tests/*.cpp'))
 
 sys_lib_assoc = dict((
     ('png.h', 'png'),
@@ -115,6 +133,7 @@ class File:
         #self.direct_lib_deps = set()
         self.all_source_deps = None # then set()
         self.all_lib_deps = None # then set()
+        self.have_coverage = False
 
 
 ###
@@ -360,7 +379,7 @@ def get_sources_deps(f, cat, exclude):
     a = []
     for pf in f.all_source_deps:
         if pf == app_path_cpp:
-            if cat == 'make-test':
+            if cat == 'test-run':
                 a.append('<library>app_path_test.o')
             else:
                 a.append('<library>app_path_exe.o')
@@ -384,22 +403,42 @@ def get_requirements(f):
 def generate(type, files, requirements, get_target_cb = get_target):
     for f in files:
         src = f.path
-        if type == 'lib':
-            src += '.lib.o'
-        if type == 'exe' or type == 'make-test':
+        target = get_target_cb(f)
+        deps = get_sources_deps(f, type, f)
+        deps += get_requirements(f)
+        if target in target_requirements:
+            deps.append(target_requirements[target])
+
+        if type == 'test-run':
+            if f.root in dir_nocoverage or f.path in file_nocoverage:
+                deps.append('<covflag>nocover $(GCOV_NO_BUILD)')
+            else:
+                iright = len(f.root)
+                base = 'src/' + src[6:iright+1] + src[iright+6:-3]
+                for ext in ('hpp', 'cpp', 'h', 'c'):
+                    if base+ext in all_files:
+                        deps.append('<covfile>'+base+ext)
+                        f.have_coverage = True
+            #if src in coverage_requirements:
+                #deps.append(coverage_requirements[src])
             src = inject_variable_prefix(f.path)
-        print(type, ' ', get_target_cb(f), ' :\n  ', src, '\n:', sep='')
+        elif type == 'exe':
+            src = inject_variable_prefix(f.path)
+        elif type == 'lib':
+            src += '.lib.o'
+
+        print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
+
         if requirements:
             print(' ', requirements)
-        deps_libs = get_sources_deps(f, type, f)
-        deps_libs += get_requirements(f)
+
         if f.path in remove_requirements:
             l = remove_requirements[f.path]
-            for s in sorted(deps_libs):
+            for s in sorted(deps):
                 if s not in l:
                     print(' ', s)
         else:
-            for s in sorted(deps_libs):
+            for s in sorted(deps):
                 print(' ', s)
         print(';')
 
@@ -427,7 +466,7 @@ for f in libs:
     print(';')
 print()
 
-generate('make-test', tests, '', unprefixed_file)
+generate('test-run', tests, '', unprefixed_file)
 print()
 
 generate_obj(sources)
@@ -447,7 +486,11 @@ for t in test_targets:
 
 for k,t in test_targets_counter.items():
     if t[0] == 1:
-        print('alias', k, ':', unprefixed_file(t[1]), ';')
+        f = t[1]
+        unprefixed = unprefixed_file(f)
+        print('alias', k, ':', unprefixed, ';')
+        if f.have_coverage:
+            print('alias ', k, '.coverage : ', unprefixed, '.coverage ;', sep='')
 
 # alias by directory
 dir_tests = OrderedDict()

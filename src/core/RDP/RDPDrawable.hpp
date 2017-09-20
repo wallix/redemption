@@ -922,9 +922,13 @@ public:
         override {}
 };
 
-inline void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
+inline void dump_png24(Drawable & drawable, Transport & trans, bool bgr) {
     ::transport_dump_png24(trans, drawable.data(),
         drawable.width(), drawable.height(),
         drawable.rowsize(),
         bgr);
+}
+
+inline void dump_png24(RDPDrawable & drawable, Transport & trans, bool bgr) {
+    dump_png24(drawable.impl(), trans, bgr);
 }

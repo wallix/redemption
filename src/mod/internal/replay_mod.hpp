@@ -26,7 +26,7 @@
 #pragma once
 
 #include "transport/mwrm_reader.hpp"
-#include "capture/file_to_graphic.hpp"
+#include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
 #include "mod/internal/internal_mod.hpp"
 #include "capture/cryptofile.hpp"
 #include "utils/genfstat.hpp"
@@ -58,7 +58,6 @@ class ReplayMod : public InternalMod
 
     time_t balise_time_frame;
     bool sync_setted;
-    bool loop_on_movie;
 
 public:
     using Verbose = FileToGraphic::Verbose;
@@ -103,8 +102,6 @@ public:
 
     void play();
 
-    FileToGraphic * get_reader();
-
     bool play_client();
 
     void set_sync();
@@ -142,11 +139,6 @@ public:
 
     void refresh(Rect /*rect*/) override
     {}
-
-    void set_loop_on_movie(bool loop)
-    {
-        this->loop_on_movie = loop;
-    }
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue

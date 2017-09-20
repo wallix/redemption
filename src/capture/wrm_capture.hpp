@@ -20,294 +20,43 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-#include "utils/difftimeval.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/sugar/iter.hpp"
-#include "utils/stream.hpp"
-
-#include "capture/wrm_chunk_type.hpp"
 #include "capture/save_state_chunk.hpp"
-#include "transport/crypto_transport.hpp"
-
-#include "gdi/capture_api.hpp"
+#include "capture/wrm_chunk_type.hpp"
 #include "capture/wrm_params.hpp"
 
-#include "gdi/kbd_input_api.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/graphic_api.hpp"
-#include "gdi/capture_probe_api.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-
-#include "gdi/dump_png24.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/RDPSerializer.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+
+#include "gdi/capture_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "gdi/dump_png24.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+
+#include "transport/out_meta_sequence_transport.hpp"
+
 #include "utils/compression_transport_builder.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cstddef>
 
 
-class WrmFGen
-{
-    char         path[1024];
-    char         hash_path[1024];
-    char         filename[1012];
-    char         extension[12];
-    mutable char filename_gen[2048];
-    mutable char hash_filename_gen[2048];
-
-public:
-    WrmFGen(
-        const char * const prefix,
-        const char * const hash_prefix,
-        const char * const filename,
-        const char * const extension)
-    {
-        if (strlen(prefix) > sizeof(this->path) - 1
-         || strlen(hash_prefix) > sizeof(this->hash_path) - 1
-         || strlen(filename) > sizeof(this->filename) - 1
-         || strlen(extension) > sizeof(this->extension) - 1) {
-            throw Error(ERR_TRANSPORT);
-        }
-
-        strcpy(this->path, prefix);
-        strcpy(this->hash_path, hash_prefix);
-        strcpy(this->filename, filename);
-        strcpy(this->extension, extension);
-
-        this->filename_gen[0] = 0;
-    }
-
-    const char * get_filename(unsigned count) const
-    {
-        std::snprintf(
-            this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s",
-            this->path, this->filename, count, this->extension);
-        return this->filename_gen;
-    }
-
-    const char * get_hash_filename(unsigned count) const
-    {
-        std::snprintf(
-            this->hash_filename_gen, sizeof(this->hash_filename_gen), "%s%s-%06u%s",
-            this->hash_path, this->filename, count, this->extension);
-        return this->hash_filename_gen;
-    }
-
-};
-
-
-struct MetaFilename
-{
-    char filename[2048];
-    MetaFilename(const char * path, const char * basename)
-    {
-        int res = snprintf(this->filename, sizeof(this->filename)-1, "%s%s.mwrm", path, basename);
-        if (res > int(sizeof(this->filename) - 6) || res < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-    }
-};
-
-
-class MetaSeqBuf
-{
-    OutCryptoTransport meta_buf_encrypt_transport;
-    OutCryptoTransport wrm_filter_encrypt_transport;
-
-    Fstat & fstat;
-
-    char current_filename_[1024];
-    WrmFGen filegen_;
-    unsigned num_file_;
-    int groupid_;
-
-    MetaFilename mf_;
-    MetaFilename hf_;
-    time_t start_sec_;
-    time_t stop_sec_;
-
-    CryptoContext & cctx;
-
-public:
-    explicit MetaSeqBuf(
-        CryptoContext & cctx,
-        Random & rnd,
-        Fstat & fstat,
-        ReportError report_error,
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid
-    )
-    : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error)
-    , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error)
-    , fstat(fstat)
-    , current_filename_{}
-    , filegen_(prefix, hash_prefix, filename, extension)
-    , num_file_(0)
-    , groupid_(groupid)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
-    , cctx(cctx)
-    {
-        //LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
-    }
-
-    void open(uint16_t width, uint16_t height)
-    {
-        this->meta_buf_encrypt_transport.open(
-            this->mf_.filename,
-            this->hf_.filename,
-            S_IRUSR | S_IRGRP | S_IWUSR);
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-        unsigned(width),  unsigned(height), this->cctx.get_with_checksum()?"checksum":"nochecksum");
-        this->meta_buf_encrypt_transport.send(header1, len);
-    }
-
-    ~MetaSeqBuf()
-    {
-        this->close();
-    }
-
-    void write(const uint8_t * data, size_t len)
-    {
-        if (!this->wrm_filter_encrypt_transport.is_open()) {
-            const char * filename = this->filegen_.get_filename(this->num_file_);
-            const char * hash_filename = this->filegen_.get_hash_filename(this->num_file_);
-            this->wrm_filter_encrypt_transport.open(filename, hash_filename, this->groupid_);
-        }
-        this->wrm_filter_encrypt_transport.send(data, len);
-    }
-
-    bool next()
-    {
-        if (this->wrm_filter_encrypt_transport.is_open()) {
-            this->next_meta_file();
-            return true;
-        }
-        return false;
-    }
-
-    int close()
-    {
-        if (this->wrm_filter_encrypt_transport.is_open()) {
-            this->next_meta_file();
-        }
-
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-
-        this->meta_buf_encrypt_transport.close(qhash, fhash);
-        return 0;
-    }
-
-    void update_sec(time_t sec)
-    { this->stop_sec_ = sec; }
-
-private:
-    void next_meta_file()
-    {
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-
-        this->wrm_filter_encrypt_transport.close(qhash, fhash);
-
-        const char * filename = this->filegen_.get_filename(this->num_file_);
-        this->current_filename_[0] = 0;
-
-        this->num_file_ ++;
-
-        struct stat stat;
-        if (fstat.stat(filename, stat)){
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
-        }
-
-        OutBufferHashLineCtx buf;
-
-        buf.write_filename(filename);
-        buf.write_stat(stat);
-        buf.write_start_and_stop(this->start_sec_, this->stop_sec_);
-        if (this->cctx.get_with_checksum()) {
-            buf.write_hashs(qhash, fhash);
-        }
-        buf.write_newline();
-
-        this->meta_buf_encrypt_transport.send(buf.mes, buf.len);
-
-        this->start_sec_ = this->stop_sec_+1;
-    }
-};
-
-
-struct wrmcapture_OutMetaSequenceTransport : Transport
-{
-    wrmcapture_OutMetaSequenceTransport(
-        CryptoContext & cctx,
-        Random & rnd,
-        Fstat & fstat,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        ReportMessageApi * report_message)
-    : buf(
-        cctx, rnd, fstat,
-        report_error_from_reporter(report_message),
-        now.tv_sec, hash_path, path, basename, ".wrm", groupid)
-    {
-        this->buf.open(width, height);
-    }
-
-    void timestamp(timeval now) override
-    {
-        this->buf.update_sec(now.tv_sec);
-    }
-
-    bool next() override
-    {
-        if (!this->buf.next()) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        ++this->seqno;
-        return true;
-    }
-
-    bool disconnect() override
-    {
-        return !this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override
-    {
-        this->buf.write(data, len);
-    }
-
-    MetaSeqBuf buf;
-};
-
-
 // TODO temporary
-struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
+struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api
+{
     RDPDrawable & drawable;
 
     explicit DumpPng24FromRDPDrawableAdapter(RDPDrawable & drawable) : drawable(drawable) {}
 
-    void dump_png24(Transport& trans, bool bgr) const override {
+    void dump_png24(Transport& trans, bool bgr) const override
+    {
       ::dump_png24(this->drawable.impl(), trans, bgr);
     }
 };
@@ -855,7 +604,7 @@ public:
 
     DumpPng24FromRDPDrawableAdapter dump_png24_api;
 
-    wrmcapture_OutMetaSequenceTransport out;
+    OutMetaSequenceTransport out;
 
 private:
     struct Serializer final : GraphicToFile {
@@ -1084,7 +833,7 @@ public:
     bool kbd_input_mask_enabled;
 
 public:
-    WrmCaptureImpl(const timeval & now, const WrmParams wrm_params, ReportMessageApi * report_message, RDPDrawable & drawable)
+    WrmCaptureImpl(const timeval & now, const WrmParams & wrm_params, ReportMessageApi * report_message, RDPDrawable & drawable)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),

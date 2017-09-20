@@ -40,16 +40,18 @@
 #include "program_options/program_options.hpp"
 
 
-void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
-
 int main(int argc, char** argv)
 {
     RedirectionInfo redir_info;
-    int verbose = 0;
+    uint64_t verbose = 0;
     std::string target_device = "10.10.47.205";
     int target_port = 3389;
     int nbretry = 3;
     int retry_delai_ms = 1000;
+
+    unsigned inactivity_time_ms = 1000u;
+    unsigned max_time_ms = 5u * inactivity_time_ms;
+    std::string screen_output;
 
     std::string username = "administrateur";
     std::string password = "SecureLinux";
@@ -66,6 +68,10 @@ int main(int argc, char** argv)
         {'t', "target-device", &target_device, "target device"},
         {'u', "username", &username, "username"},
         {'p', "password", &password, "password"},
+        {'P', "port", &target_port, "port"},
+        {'a', "inactivity-time", &inactivity_time_ms, "milliseconds inactivity before sreenshot"},
+        {'m', "max-time", &max_time_ms, "maximum milliseconds before sreenshot"},
+        {'s', "screen-output", &screen_output, "png screenshot path"},
         {"verbose", &verbose, "verbose"},
     });
 
@@ -83,8 +89,15 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     Inifile ini;
+
+    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::mod_rdp::persist_bitmap_cache_on_disk>(false);
+    ini.set<cfg::client::persist_bitmap_cache_on_disk>(false);
+    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
+
     SSL_library_init();
     ClientFront front(client_info, verbose > 10);
     ModRDPParams mod_rdp_params( username.c_str()
@@ -105,9 +118,6 @@ int main(int argc, char** argv)
     int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, to_verbose_flags(verbose), nullptr);
 
-
-    wait_obj front_event;
-
     /* Random */
     UdevRandom gen;
     TimeSystem timeobj;
@@ -118,56 +128,8 @@ int main(int argc, char** argv)
     /* mod_api */
     mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-    run_mod(mod, front, front_event, &mod_trans, nullptr);
-
-    return 0;
-}
-
-
-
-void run_mod(mod_api & mod, ClientFront & front, wait_obj &, SocketTransport * st_mod, SocketTransport *) {
-    struct      timeval time_mark = { 0, 50000 };
-    bool        run_session       = true;
-
-    while (run_session) {
-        try {
-            unsigned max = 0;
-            fd_set   rfds;
-            fd_set   wfds;
-
-            io_fd_zero(rfds);
-            io_fd_zero(wfds);
-            struct timeval timeout = time_mark;
-
-            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
-
-            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                timeout.tv_sec  = 2;
-                timeout.tv_usec = 0;
-            }
-
-            int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
-
-            LOG(LOG_INFO, "RDP CLIENT :: select num = %d\n", num);
-
-            if (num < 0) {
-                if (errno == EINTR) {
-                    continue;
-                }
-
-                LOG(LOG_INFO, "RDP CLIENT :: errno = %d\n", errno);
-                break;
-            }
-
-            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                LOG(LOG_INFO, "RDP CLIENT :: draw_event");
-                mod.draw_event(time(nullptr), front);
-            }
-
-        } catch (Error & e) {
-            LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %u!\n", e.id);
-            run_session = false;
-        };
-    }   // while (run_session)
-    return;
+    using Ms = std::chrono::milliseconds;
+    return run_test_client(
+        "RDP", mod_trans.sck, mod, front,
+        Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
 }

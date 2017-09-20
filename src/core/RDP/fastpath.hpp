@@ -495,6 +495,10 @@ namespace FastPath {
                     eventFlags |= FASTPATH_INPUT_KBDFLAGS_EXTENDED;
             }
 
+            if (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED1) {
+                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_EXTENDED1;
+            }
+
             stream.out_uint8(                          // eventHeader
                   (FASTPATH_INPUT_EVENT_SCANCODE << 5)
                 | eventFlags

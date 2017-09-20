@@ -7,69 +7,57 @@
 */
 
 #include "main/do_recorder.hpp"
+#include "main/version.hpp"
+
+#include "system/scoped_crypto_init.hpp"
+#include "program_options/program_options.hpp"
+
+#include "capture/flv_params.hpp"
+#include "capture/flv_params_from_ini.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/wrm_params.hpp"
+
+#include "capture/capture.hpp"
+#include "capture/cryptofile.hpp"
+#include "capture/save_state_chunk.hpp"
+
+#include "configs/config.hpp"
+
+#include "core/RDP/RDPSerializer.hpp" // RDPSerializer::Verbose
+#include "core/RDP/RDPDrawable.hpp"
+
+#include "transport/crypto_transport.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+
+#include "utils/apps/recording_progress.hpp"
+#include "utils/chex_to_int.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/iter.hpp"
+#include "utils/sugar/unique_fd.hpp"
+#include "utils/word_identification.hpp"
 
 
-#include <type_traits>
 #include <string>
 #include <vector>
-#include <utility>
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <memory>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdint.h>
-#include <sys/stat.h>
+#include <iomanip>
+
+// opendir/closedir
 #include <sys/types.h>
-#include <snappy-c.h>
-#include <openssl/err.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <dirent.h>
 
-#include "openssl_crypto.hpp"
+#include <signal.h>
 
-#include "utils/log.hpp"
-#include "transport/transport.hpp"
-#include "system/ssl_calls.hpp"
-#include "system/scoped_crypto_init.hpp"
-
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/exchange.hpp"
-#include "utils/sugar/iter.hpp"
-#include "utils/chex_to_int.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/word_identification.hpp"
-#include "configs/config.hpp"
-#include "program_options/program_options.hpp"
-
-#include "main/version.hpp"
-
-#include "transport/in_meta_sequence_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/transport.hpp"
-
-#include "acl/auth_api.hpp"
-#include "utils/genrandom.hpp"
-#include "capture/capture.hpp"
-#include "capture/cryptofile.hpp"
-#include "utils/apps/recording_progress.hpp"
-
-#include "capture/png_params.hpp"
-#include "capture/wrm_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/wrm_capture.hpp"
-#include "capture/flv_params_from_ini.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "utils/chex_to_int.hpp"
-#include "utils/parse.hpp"
-#include "utils/fileutils.hpp"
-#include "transport/crypto_transport.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -722,7 +710,7 @@ static int do_recompress(
     try {
         CryptoContext cctx_no_crypto;
 
-        wrmcapture_OutMetaSequenceTransport trans(
+        OutMetaSequenceTransport trans(
             ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
             rnd,
             fstat,
@@ -1312,10 +1300,19 @@ static inline int check_encrypted_or_checksumed(
 
 inline unsigned get_file_count(
     InMetaSequenceTransport & in_wrm_trans,
-    uint32_t & begin_cap, uint32_t & end_cap,
-    timeval & begin_record, timeval & end_record
+    int64_t & begin_cap, int64_t & end_cap,
+    timeval & begin_record, timeval & end_record,
+    Fstat & fstat, uint64_t & total_wrm_file_len, unsigned & count_wrm_file
 ) {
-    in_wrm_trans.next();
+    auto next_wrm = [&]{
+        struct stat stat {};
+        in_wrm_trans.next();
+        fstat.stat(in_wrm_trans.path(), stat);
+        total_wrm_file_len += stat.st_size;
+        ++count_wrm_file;
+    };
+
+    next_wrm();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
     // TODO a negative time should be a time relative to end of movie
     // less than 1 year means we are given a time relatve to beginning of movie
@@ -1328,13 +1325,13 @@ inline unsigned get_file_count(
         end_cap += in_wrm_trans.begin_chunk_time();
     }
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
-        in_wrm_trans.next();
+        next_wrm();
     }
     unsigned const result = in_wrm_trans.get_seqno();
     try {
         do {
             end_record.tv_sec = in_wrm_trans.end_chunk_time();
-            in_wrm_trans.next();
+            next_wrm();
         }
         while (true);
     }
@@ -1460,37 +1457,129 @@ inline void init_signals()
 }
 
 
+inline int count_digit(uint64_t n)
+{
+    return
+        n < 100000
+            ? n < 10000
+                ? n < 1000
+                    ? n < 100
+                        ? n < 10
+                            ? 1
+                            : 2
+                        : 3
+                    : 4
+                :  5
+            : n < 1000000 ? 6
+            : n < 10000000 ? 7
+            : n < 100000000 ? 8
+            : n < 1000000000 ? 9
+            : n < 10000000000 ? 10
+            : n < 100000000000 ? 11
+            : n < 1000000000000 ? 12
+            : n < 10000000000000 ? 13
+            : n < 100000000000000 ? 14
+            : n < 1000000000000000 ? 15
+            : n < 10000000000000000 ? 16
+            : n < 100000000000000000 ? 17
+            : n < 1000000000000000000 ? 18
+            : 19
+        ;
+}
+
+template<class Mem>
+int fiels_size(FileToGraphic::Statistics const & statistics, Mem mem)
+{
+    return std::max({
+        count_digit(statistics.DstBlt.*mem),
+        count_digit(statistics.MultiDstBlt.*mem),
+        count_digit(statistics.PatBlt.*mem),
+        count_digit(statistics.MultiPatBlt.*mem),
+        count_digit(statistics.OpaqueRect.*mem),
+        count_digit(statistics.MultiOpaqueRect.*mem),
+        count_digit(statistics.ScrBlt.*mem),
+        count_digit(statistics.MultiScrBlt.*mem),
+        count_digit(statistics.MemBlt.*mem),
+        count_digit(statistics.Mem3Blt.*mem),
+        count_digit(statistics.LineTo.*mem),
+        count_digit(statistics.GlyphIndex.*mem),
+        count_digit(statistics.Polyline.*mem),
+
+        count_digit(statistics.CacheBitmap.*mem),
+        count_digit(statistics.CacheColorTable.*mem),
+        count_digit(statistics.CacheGlyph.*mem),
+
+        count_digit(statistics.FrameMarker.*mem),
+
+        count_digit(statistics.BitmapUpdate.*mem),
+
+        count_digit(statistics.CachePointer.*mem),
+        count_digit(statistics.PointerIndex.*mem),
+
+        count_digit(statistics.timestamp_chunk.*mem),
+    });
+}
+
+struct OutStatisticField
+{
+    int count_len;
+    int total_len;
+    FileToGraphic::Statistics::Order const & stat;
+
+    friend std::ostream & operator <<(std::ostream & out, OutStatisticField const & f)
+    {
+        return out << std::setw(f.count_len) << f.stat.count
+            << "  ( " << std::setw(f.total_len) << f.stat.total_len << " bytes)";
+    }
+};
+
 inline
-static void show_statistics(FileToGraphic::Statistics const & statistics) {
+static void show_statistics(
+    FileToGraphic::Statistics const & statistics,
+    uint64_t total_wrm_file_len, unsigned count_wrm_file)
+{
+    using Stat = FileToGraphic::Statistics::Order;
+    int const count_field_len = fiels_size(statistics, &Stat::count);
+    int const total_field_len = fiels_size(statistics, &Stat::total_len);
+
+    auto f = [=](Stat const & stat){
+      return OutStatisticField{count_field_len, total_field_len, stat};
+    };
+
     std::cout
-    << "\nDstBlt                : " << statistics.DstBlt
-    << "\nMultiDstBlt           : " << statistics.MultiDstBlt
-    << "\nPatBlt                : " << statistics.PatBlt
-    << "\nMultiPatBlt           : " << statistics.MultiPatBlt
-    << "\nOpaqueRect            : " << statistics.OpaqueRect
-    << "\nMultiOpaqueRect       : " << statistics.MultiOpaqueRect
-    << "\nScrBlt                : " << statistics.ScrBlt
-    << "\nMultiScrBlt           : " << statistics.MultiScrBlt
-    << "\nMemBlt                : " << statistics.MemBlt
-    << "\nMem3Blt               : " << statistics.Mem3Blt
-    << "\nLineTo                : " << statistics.LineTo
-    << "\nGlyphIndex            : " << statistics.GlyphIndex
-    << "\nPolyline              : " << statistics.Polyline
-
-    << "\nCacheBitmap           : " << statistics.CacheBitmap
-    << "\nCacheColorTable       : " << statistics.CacheColorTable
-    << "\nCacheGlyph            : " << statistics.CacheGlyph
-
-    << "\nFrameMarker           : " << statistics.FrameMarker
-
-    << "\nBitmapUpdate          : " << statistics.BitmapUpdate
-
-    << "\nCachePointer          : " << statistics.CachePointer
-    << "\nPointerIndex          : " << statistics.PointerIndex
-
-    << "\ngraphics_update_chunk : " << statistics.graphics_update_chunk
-    << "\nbitmap_update_chunk   : " << statistics.bitmap_update_chunk
-    << "\ntimestamp_chunk       : " << statistics.timestamp_chunk
+    << "\nCount wrm file        : " << count_wrm_file
+    << "\nTotal wrm files size  : " << total_wrm_file_len << " bytes"
+    << "\nTotal orders size     : " << statistics.total_read_len << " bytes. Ratio : x" << (statistics.total_read_len / double(total_wrm_file_len))
+    << "\nInternal orders size  : " << statistics.internal_order_read_len << " bytes"
+    << "\n"
+    << "\nDstBlt                : " << f(statistics.DstBlt)
+    << "\nMultiDstBlt           : " << f(statistics.MultiDstBlt)
+    << "\nPatBlt                : " << f(statistics.PatBlt)
+    << "\nMultiPatBlt           : " << f(statistics.MultiPatBlt)
+    << "\nOpaqueRect            : " << f(statistics.OpaqueRect)
+    << "\nMultiOpaqueRect       : " << f(statistics.MultiOpaqueRect)
+    << "\nScrBlt                : " << f(statistics.ScrBlt)
+    << "\nMultiScrBlt           : " << f(statistics.MultiScrBlt)
+    << "\nMemBlt                : " << f(statistics.MemBlt)
+    << "\nMem3Blt               : " << f(statistics.Mem3Blt)
+    << "\nLineTo                : " << f(statistics.LineTo)
+    << "\nGlyphIndex            : " << f(statistics.GlyphIndex)
+    << "\nPolyline              : " << f(statistics.Polyline)
+    << "\n"
+    << "\nCacheBitmap           : " << f(statistics.CacheBitmap)
+    << "\nCacheColorTable       : " << f(statistics.CacheColorTable)
+    << "\nCacheGlyph            : " << f(statistics.CacheGlyph)
+    << "\n"
+    << "\nFrameMarker           : " << f(statistics.FrameMarker)
+    << "\n"
+    << "\nBitmapUpdate          : " << f(statistics.BitmapUpdate)
+    << "\n"
+    << "\nCachePointer          : " << f(statistics.CachePointer)
+    << "\nPointerIndex          : " << f(statistics.PointerIndex)
+    << "\n"
+    << "\ngraphics_update_chunk : " << std::setw(count_field_len) << statistics.graphics_update_chunk
+    << "\nbitmap_update_chunk   : " << std::setw(count_field_len) << statistics.bitmap_update_chunk
+    << "\ntimestamp_chunk       : " << f(statistics.timestamp_chunk)
     << std::endl;
 }
 
@@ -1521,8 +1610,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   bool chunk,
                   unsigned ocr_version,
                   std::string & output_filename,
-                  uint32_t begin_cap,
-                  uint32_t end_cap,
+                  int64_t begin_cap,
+                  int64_t end_cap,
                   PngParams & png_params,
                   FlvParams & flv_params,
                   int wrm_color_depth,
@@ -1568,14 +1657,50 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };
     unsigned file_count   = 0;
+    uint64_t total_wrm_file_len = 0;
+    unsigned count_wrm_file = 0;
     try {
+        // begin or end relative to end of trace
+        if (begin_cap < 0 || end_cap < 0) {
+            InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
+            MwrmReader mwrm_reader(buf_meta);
+            MetaLine meta_line;
+
+            buf_meta.open((infile_prefix + infile_extension).c_str());
+            mwrm_reader.read_meta_headers();
+
+            meta_line.start_time = 0;
+            meta_line.stop_time = 0;
+
+            time_t start_time = 0;
+
+            if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                start_time = meta_line.start_time;
+                while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                }
+
+                auto duration = meta_line.stop_time - start_time;
+
+                if (begin_cap < 0) {
+                    begin_cap = std::max<decltype(begin_cap)>(begin_cap + duration, 0);
+                }
+
+                if (end_cap < 0) {
+                    end_cap = std::max<decltype(end_cap)>(end_cap + duration, 0);
+                }
+            }
+        }
         InMetaSequenceTransport in_wrm_trans_tmp(
             cctx,
             infile_prefix,
             infile_extension.c_str(),
             encryption_mode,
             fstat);
-        file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
+        file_count = get_file_count(
+            in_wrm_trans_tmp,
+            begin_cap, end_cap,
+            begin_record, end_record,
+            fstat, total_wrm_file_len, count_wrm_file);
     }
     catch (const Error & e) {
         if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
@@ -1704,10 +1829,18 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-                            | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-                            | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-                            | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+                        RDPSerializer::Verbose wrm_verbose
+                            = to_verbose_flags(ini.get<cfg::debug::capture>())
+                            | (ini.get<cfg::debug::primary_orders>()
+                                ? RDPSerializer::Verbose::primary_orders
+                                : RDPSerializer::Verbose::none)
+                            | (ini.get<cfg::debug::secondary_orders>()
+                                ? RDPSerializer::Verbose::secondary_orders
+                                : RDPSerializer::Verbose::none)
+                            | (ini.get<cfg::debug::bitmap_update>()
+                                ? RDPSerializer::Verbose::bitmap_update
+                                : RDPSerializer::Verbose::none)
+                        ;
 
                         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
                         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
@@ -1806,20 +1939,51 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             uint32_t(wrm_verbose) // TODO
                         );
 
-const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-int debug_capture = ini.get<cfg::debug::capture>();
-bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
-bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-bool rt_display = ini.get<cfg::video::rt_display>();
-bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
-bool session_log_enabled = false;
-bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-     != ::KeyboardInputMaskingLevel::fully_masked;
-bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+                        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
+                        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
+                        int debug_capture = ini.get<cfg::debug::capture>();
+                        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
+                        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
+                        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
+                        bool rt_display = ini.get<cfg::video::rt_display>();
+                        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
+                        bool session_log_enabled = false;
+                        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
+                            != ::KeyboardInputMaskingLevel::fully_masked;
+                        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
-                        Capture capture(
+                        RDPDrawable rdp_drawable{
+                            player.screen_rect.cx, player.screen_rect.cy};
+
+                        // std::optional<Capture> storage;
+                        class CaptureStorage
+                        {
+                            union U {
+                                char dummy;
+                                Capture capture;
+
+                                U() : dummy(){}
+                                ~U() {}
+                            } u;
+                            bool is_loaded = false;
+
+                        public:
+                            void * get_storage()
+                            {
+                                this->is_loaded = true;
+                                return &this->u.capture;
+                            }
+
+                            ~CaptureStorage()
+                            {
+                                if (this->is_loaded) {
+                                    this->u.capture.~Capture();
+                                }
+                            }
+                        } storage;
+
+                        auto set_capture_consumer = [&](timeval const & now) {
+                            auto * capture = new(storage.get_storage()) Capture(
                                   capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, patter_checker_params
@@ -1829,7 +1993,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , capture_meta, meta_params
                                 , capture_kbd, kbdlog_params
                                 , basename
-                                , ((player.record_now.tv_sec > begin_capture.tv_sec) ? player.record_now : begin_capture)
+                                , now
                                 , player.screen_rect.cx
                                 , player.screen_rect.cy
                                 , record_tmp_path
@@ -1851,9 +2015,44 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                                 , keyboard_fully_masked
                                 , meta_keyboard_log
                                 , Rect()
+                                , &rdp_drawable
                                 );
 
-                        player.add_consumer(&capture, &capture, &capture, &capture, &capture);
+                            player.clear_consumer();
+                            player.add_consumer(capture, capture, capture, capture, capture);
+                        };
+
+                        auto lazy_capture = [&](timeval const & now) {
+                            if (begin_capture.tv_sec > now.tv_sec) {
+                                return;
+                            }
+                            set_capture_consumer(begin_capture);
+                        };
+
+                        struct CaptureMaker : gdi::ExternalCaptureApi
+                        {
+                            void external_breakpoint() override {}
+
+                            void external_time(const timeval & now) override
+                            {
+                                this->load_capture(now);
+                            }
+
+                            CaptureMaker(decltype(lazy_capture) & load_capture)
+                            : load_capture(load_capture)
+                            {}
+
+                            decltype(lazy_capture) & load_capture;
+                        };
+                        CaptureMaker capture_maker(lazy_capture);
+
+                        if (begin_capture.tv_sec) {
+                            player.add_consumer(
+                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker);
+                        }
+                        else {
+                            set_capture_consumer(player.record_now);
+                        }
 
                         if (update_progress_data.is_valid()) {
                             try {
@@ -1894,7 +2093,7 @@ bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & Keyb
                 }
 
                 if (show_statistics && return_code == 0) {
-                    ::show_statistics(player.statistics);
+                    ::show_statistics(player.statistics, total_wrm_file_len, count_wrm_file);
                 }
 
                 result = return_code;
@@ -1953,10 +2152,10 @@ struct RecorderParams {
     // ==================
     // "begin capture time (in seconds), either absolute or relative to video start
     // (negative number means relative to video end), default=from start"
-    uint32_t begin_cap = 0;
+    int64_t begin_cap = 0;
     // "end capture time (in seconds), either absolute or relative to video start,
     // (nagative number means relative to video end), default=none"
-    uint32_t end_cap = 0;
+    int64_t end_cap = 0;
     // "Number of orders to execute before stopping, default=0 execute all orders"
     uint32_t order_count = 0;
 
@@ -1999,8 +2198,15 @@ struct RecorderParams {
     bool json_pgs = false;
 };
 
+enum class ClRes
+{
+    Ok,
+    Err,
+    Exit,
+};
+
 inline
-int parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
+ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & recorder, Inifile & ini, uint32_t & verbose)
 {
     std::string png_geometry;
     std::string wrm_compression_algorithm;  // output compression algorithm.
@@ -2035,7 +2241,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         {'p', "png", "enable png capture"},
         {'w', "wrm", "enable wrm capture"},
         {'t', "ocr", "enable ocr title bar detection"},
-        {'f', "flv", "enable flv capture"},
+        {'f', "video", "enable video capture"},
         {'u', "full", "create full video"},
         {'c', "chunk", "chunk splitting on title bar change detection"},
 
@@ -2076,12 +2282,12 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "\n\nUsage: redrec [options]\n\n";
         // TODO error code description
         std::cout << desc << "\n\n";
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice << std::endl << std::endl;
-        return -1;
+        return ClRes::Exit;
     }
 
     if (options.count("config-file") > 0) {
@@ -2109,10 +2315,15 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     recorder.flv_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
-    recorder.capture_flags = ((options.count("wrm") > 0)              ?CaptureFlags::wrm:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("png") > 0))?CaptureFlags::png:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("flv") > 0))?CaptureFlags::flv:CaptureFlags::none)
-                           | (((recorder.chunk)||(options.count("ocr") > 0))?CaptureFlags::ocr:CaptureFlags::none);
+    recorder.capture_flags
+      = (                   (options.count("wrm") > 0)
+        ? CaptureFlags::wrm : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("png") > 0))
+        ? CaptureFlags::png : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("video") > 0))
+        ? CaptureFlags::flv : CaptureFlags::none)
+      | ((recorder.chunk || (options.count("ocr") > 0))
+        ? CaptureFlags::ocr : CaptureFlags::none);
 
     if (options.count("flv-quality") > 0) {
             if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {
@@ -2126,7 +2337,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2139,7 +2350,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
                                  : 0;
         if (!recorder.wrm_color_depth){
             std::cerr << "Unknown wrm color depth\n\n";
-            return 1;
+            return ClRes::Err;
         }
     }
 
@@ -2150,7 +2361,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
         std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("png-geometry") > 0) {
@@ -2163,7 +2374,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         if (!png_w || !png_h) {
             std::cerr << "Invalide png geometry\n\n";
-            return -1;
+            return ClRes::Err;
         }
         recorder.png_params.png_width  = png_w;
         recorder.png_params.png_height = png_h;
@@ -2187,14 +2398,14 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm compression algorithm\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
     if (options.count("hash-path") > 0){
         if (recorder.hash_path.c_str()[0] == 0) {
             std::cerr << "Missing hash-path : use -h path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2208,7 +2419,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
     if (options.count("mwrm-path") > 0){
         if (recorder.mwrm_path.c_str()[0] == 0) {
             std::cerr << "Missing mwrm-path : use -m path\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
     else {
@@ -2217,7 +2428,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (recorder.input_filename.c_str()[0] == 0) {
         std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-        return 1;
+        return ClRes::Err;
     }
 
     // Input path rule is as follow:
@@ -2267,7 +2478,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         std::cerr << "Input file is missing.\n";
-        return -1;
+        return ClRes::Err;
     }
 
     if (options.count("encryption") > 0) {
@@ -2282,7 +2493,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
-            return -1;
+            return ClRes::Err;
         }
     }
 
@@ -2300,7 +2511,7 @@ int parse_command_line_options(int argc, char const ** argv, RecorderParams & re
         std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
     }
 
-    return 0;
+    return ClRes::Ok;
 }
 
 extern "C" {
@@ -2381,9 +2592,10 @@ extern "C" {
         // TODO: annoying, if we read default hash_path and mwrm_path from ini
         // we should do that after config_filename was eventually changed...
 
-        if (parse_command_line_options(argc, argv, rp, ini, verbose) < 0){
-            // parsing error
-            return -1;
+        switch (parse_command_line_options(argc, argv, rp, ini, verbose)) {
+            case ClRes::Exit: return 0;
+            case ClRes::Err: return -1;
+            case ClRes::Ok: ;
         }
 
         {

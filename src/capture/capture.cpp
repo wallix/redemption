@@ -862,16 +862,11 @@ public:
                 );
 
             if (visibility_rects.size()) {
-                std::for_each(
-                        visibility_rects.cbegin(),
-                        visibility_rects.cend(),
-                        [this, window_id](
-                                const RDP::RAIL::Rectangle& rectangle) {
-                            this->windows_rects.emplace_back(window_id,
-                                Rect(rectangle.Left(), rectangle.Top(),
-                                     rectangle.Width(), rectangle.Height()));
-                        }
-                    );
+                for (const RDP::RAIL::Rectangle& rectangle : visibility_rects) {
+                    this->windows_rects.emplace_back(
+                        window_id,
+                        Rect(rectangle.Left(), rectangle.Top(), rectangle.Width(), rectangle.Height()));
+                }
             }
         }
 
@@ -1158,7 +1153,11 @@ public:
 
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        this->send_data(now.tv_sec, message, '-');
+        std::string formatted_message;
+        agent_data_extractor(formatted_message, message);
+        if (!formatted_message.empty()) {
+            this->send_data(now.tv_sec, formatted_message, '-');
+        }
     }
 
     void possible_active_window_change() override {
@@ -1407,6 +1406,48 @@ public:
 };
 
 
+
+void Capture::Graphic::draw_impl(RDP::FrameMarker const & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    if (cmd.action == RDP::FrameMarker::FrameEnd) {
+        for (gdi::CaptureApi & cap : this->caps) {
+            cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
+        }
+    }
+}
+
+void Capture::Graphic::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    // cmd.log(LOG_INFO);
+    for (gdi::CaptureApi & cap : this->caps) {
+        cap.new_or_existing_window_event(cmd.header.WindowId(),
+            cmd.header.FieldsPresentFlags(),
+            cmd.Style(), cmd.ShowState(),
+            cmd.VisibleOffsetX(), cmd.VisibleOffsetY(),
+            cmd.VisibilityRects());
+    }
+}
+
+void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    for (gdi::CaptureApi & cap : this->caps) {
+        cap.delete_window_event(cmd.header.WindowId());
+    }
+}
+
+
 void Capture::TitleChangedFunctions::notify_title_changed(
     timeval const & now, array_view_const_char title
 ) {
@@ -1465,7 +1506,8 @@ Capture::Capture(
     bool session_log_enabled,
     bool keyboard_fully_masked,
     bool meta_keyboard_log,
-    Rect crop_rect)
+    Rect crop_rect,
+    RDPDrawable* rdp_drawable)
 : is_replay_mod(!report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{now, width / 2, height / 2}
@@ -1482,15 +1524,21 @@ Capture::Capture(
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        this->gd_drawable.reset(new RDPDrawable(width, height));
+        if (rdp_drawable) {
+            this->gd_drawable = rdp_drawable;
+        }
+        else {
+            this->gd_drawable_.reset(new RDPDrawable(width, height));
+            this->gd_drawable = this->gd_drawable_.get();
+        }
         this->gds.push_back(*this->gd_drawable);
 
-        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable.get();
+        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
             REDASSERT(!capture_png || !png_params.real_time_image_capture)
             this->video_cropper.reset(new VideoCropper(
-                    this->gd_drawable.get(),
+                    *this->gd_drawable,
                     crop_rect.x,
                     crop_rect.y,
                     crop_rect.cx,
@@ -1505,10 +1553,10 @@ Capture::Capture(
         if (capture_png) {
             if (png_params.real_time_image_capture) {
                 if (png_params.remote_program_session) {
-                    REDASSERT(image_frame_api_ptr == this->gd_drawable.get());
+                    REDASSERT(image_frame_api_ptr == this->gd_drawable);
 
                     this->video_cropper.reset(new VideoCropper(
-                            this->gd_drawable.get(),
+                            *this->gd_drawable,
                             0,
                             0,
                             this->gd_drawable->width(),
