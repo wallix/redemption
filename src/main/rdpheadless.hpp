@@ -410,7 +410,7 @@ public:
 
          }
 
-        return ResizeResult::done;
+        return ResizeResult::instant_done;
     }
 
     void printClpbrdPDUExchange(std::string const & str, uint16_t valid) {
