@@ -4097,7 +4097,7 @@ public:
                 this->buf.load_data(this->nego.trans.get_transport());
             }
         }
-        catch (Error const & e) {
+        catch (Error const &) {
             if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
                 this->nego.fallback_to_tls();
                 run = false;
