@@ -119,7 +119,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     struct exprio {
         const char * name;
         friend std::ostream & operator << (std::ostream & os, exprio const & mio) {
-            return os << "\" + std::string(" << mio.name << ") + \"";
+            return os << "\" << " << mio.name << " << \"";
         }
     };
     static macroio quoted2(cpp::macro m) { return {m.name}; }
