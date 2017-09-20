@@ -18,6 +18,7 @@
    Author(s): Clément Moroldo
 */
 
+#include "main/version.hpp"
 
 #include "configs/config.hpp"
 
@@ -509,7 +510,7 @@ int main(int argc, char** argv)
 
         cli::option('v', "version")
         .help("Show version")
-        .action(cli::quit([]{ std::cout << " Version 4.2.3" << "\n"; })),
+        .action(cli::quit([]{ std::cout << " Version 4.2.3, ReDemPtion " VERSION << "\n"; })),
 
         cli::option("script_help")
         .help("Show all script event commands")
