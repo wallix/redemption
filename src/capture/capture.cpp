@@ -1109,6 +1109,8 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     bool previous_char_is_event_flush = false;
     const bool key_markers_hidden_state;
 
+    std::string formatted_message; // garbage
+
 public:
     SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state)
     : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
@@ -1151,8 +1153,6 @@ public:
     void send_line(time_t rawtime, array_view_const_char line) {
         this->send_data(rawtime, line, '+');
     }
-
-    std::string formatted_message;
 
     void title_changed(time_t rawtime, array_view_const_char title) {
         this->formatted_message = "type=\"TITLE_BAR\" data=\"";
@@ -1276,11 +1276,13 @@ private:
 
     void send_kbd() {
         if (this->kbd_stream.get_offset()) {
-            this->send_date(this->last_time, '-');
-            auto end = this->kbd_stream.get_current();
-            memcpy(end, session_meta_kbd_suffix().data(), session_meta_kbd_suffix().size());
-            end += session_meta_kbd_suffix().size();
-            this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
+            this->formatted_message = "type=\"KBD_INPUT\" data=\"";
+            auto * data = reinterpret_cast<const char*>(this->kbd_stream.get_data());
+            append_escaped_delimiters(
+                this->formatted_message,
+                {reinterpret_cast<const char*>(data), this->kbd_stream.get_offset()});
+            this->formatted_message += '\"';
+            this->send_data(this->last_time, this->formatted_message, '-');
             this->kbd_stream.rewind();
             this->previous_char_is_event_flush = true;
             this->kbd_char_pos = 0;
