@@ -25,6 +25,7 @@
 #include <string>
 
 #include "utils/sugar/range.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct is_blanck_fn
 {
@@ -68,9 +69,8 @@ namespace algostring
     };
 
 
-    // TODO subject : string_view
     template<class Pred>
-    void append_escaped(std::string & escaped_subject, std::string const & subject, Pred && pred, char esc)
+    void append_escaped(std::string & escaped_subject, array_view_const_char subject, Pred && pred, char esc)
     {
         auto first = subject.begin();
         auto last = subject.end();
@@ -117,14 +117,18 @@ namespace algostring
     }
 }
 
-inline void append_escaped_delimiters(std::string & escaped_subject, std::string const & subject)
+inline void append_escaped_delimiters(std::string & escaped_subject, array_view_const_char subject)
 {
-    algostring::append_escaped(escaped_subject, subject, algostring::is_ascii_double_quote_escapable_fn{}, '\\');
+    algostring::append_escaped(
+        escaped_subject, subject,
+        algostring::is_ascii_double_quote_escapable_fn{}, '\\');
 }
 
 inline void append_escaped_delimiters(std::string & escaped_subject, char const * subject)
 {
-    algostring::append_escaped(escaped_subject, subject, algostring::is_ascii_double_quote_escapable_fn{}, '\\');
+    algostring::append_escaped(
+        escaped_subject, subject,
+        algostring::is_ascii_double_quote_escapable_fn{}, '\\');
 }
 
 inline  std::pair<char *, char const *>

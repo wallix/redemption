@@ -24,6 +24,7 @@
 #include <string>
 #include <openssl/ssl.h>
 
+#include "main/version.hpp"
 
 #include "configs/config.hpp"
 #include "front/client_front.hpp"
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
     /* Program options */
     namespace po = program_options;
     po::options_description desc({
+        {'v', "version",""},
         {'h', "help","produce help message"},
         {'t', "target-device", &target_device, "target device"},
         {'u', "username", &username, "username"},
@@ -86,6 +88,11 @@ int main(int argc, char** argv)
             "Usage: rdpproxy [options]\n\n"
             << desc << std::endl
         ;
+        return 0;
+    }
+
+    if (options.count("version") > 0) {
+        std::cout << VERSION << std::endl;
         return 0;
     }
 

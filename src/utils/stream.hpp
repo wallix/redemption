@@ -835,6 +835,16 @@ public:
     };
 };
 
+inline array_view_const_u8 stream_to_avu8(OutStream & stream) noexcept
+{
+    return make_array_view(stream.get_data(), stream.get_offset());
+}
+
+inline array_view_const_char stream_to_avchar(OutStream & stream) noexcept
+{
+    return make_array_view(reinterpret_cast<char const*>(stream.get_data()), stream.get_offset());
+}
+
 
 template<std::size_t N, class StreamBase>
 struct BasicStaticStream : StreamBase

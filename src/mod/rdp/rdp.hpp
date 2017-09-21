@@ -628,79 +628,59 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "CERTIFICATE_CHECK_SUCCESS"},
-                    {"description", "Connexion to server allowed"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "CERTIFICATE_CHECK_SUCCESS",
+                    "Connexion to server allowed"
+                );
             }
         }
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_NEW"},
-                    {"description", "New X.509 certificate created"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_NEW",
+                    "New X.509 certificate created"
+                );
             }
         }
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_MATCH_SUCCESS"},
-                    {"description", "X.509 server certificate match"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                    "X.509 server certificate match"
+                );
             }
         }
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_MATCH_FAILURE"},
-                    {"description", "X.509 server certificate match failure"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_MATCH_FAILURE",
+                    "X.509 server certificate match failure"
+                );
             }
         }
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_ERROR",
+                    "X.509 server certificate internal error: " + std::string(str_error)
+                );
+            }
+        }
 
-                const std::string description = std::string("X.509 server certificate internal error: ")
-                                              + std::string(str_error);
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_ERROR"},
-                    {"description", description},
-                    });
+    private:
+        KeyQvalueFormatter message;
+        void log5_server_cert(charp_or_string type, charp_or_string description)
+        {
+            this->message.assign(type.data, {{"description", description.data}});
 
-                this->report_message.log5(info);
+            this->report_message.log5(this->message.str());
 
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                LOG(LOG_INFO, "%s", this->message.str());
             }
         }
     } server_notifier;
@@ -4097,7 +4077,7 @@ public:
                 this->buf.load_data(this->nego.trans.get_transport());
             }
         }
-        catch (Error const & e) {
+        catch (Error const &) {
             if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
                 this->nego.fallback_to_tls();
                 run = false;
