@@ -31,6 +31,7 @@
 #include <iterator>
 #include <algorithm>
 
+#include "configs/autogen/enums.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -72,8 +73,8 @@ public:
     bool old_encryption_scheme = false;
     bool one_shot_encryption_scheme = false;
 
-    bool with_encryption = false;
-    bool with_checksum = false;
+private:
+    TraceType trace_type = TraceType::localfile;
 
 public:
     auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
@@ -112,23 +113,21 @@ public:
         this->master_derivator.assign(derivator.begin(), derivator.end());
     }
 
-    void set_with_encryption (bool encryption) {
-        this->with_encryption = encryption;
-        this->with_checksum |= this->with_encryption;
-
+    void set_trace_type(TraceType trace_type)
+    {
+        this->trace_type = trace_type;
     }
 
-    void set_with_checksum (bool checksum) {
-        this->with_checksum = checksum | this->with_encryption ;
+    bool get_with_encryption() const
+    {
+        return this->trace_type == TraceType::cryptofile;
     }
 
-    bool get_with_encryption () {
-        return this->with_encryption;
+    bool get_with_checksum() const
+    {
+        return this->trace_type != TraceType::localfile;
     }
 
-    bool get_with_checksum () {
-        return this->with_checksum || this->with_encryption;
-    }
 private:
     // force extension to "mwrm" if it's .log
     static array_view_const_u8 get_normalized_derivator(

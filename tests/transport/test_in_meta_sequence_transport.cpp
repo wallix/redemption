@@ -270,8 +270,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         tv.tv_sec = 1352304810;
         const int groupid = 0;
 
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
         
         OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);

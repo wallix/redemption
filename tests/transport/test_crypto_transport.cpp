@@ -63,8 +63,7 @@ RED_AUTO_TEST_CASE(TestEncryption1)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(true);
-    cctx.set_with_checksum(true);
+    cctx.set_trace_type(TraceType::cryptofile);
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
@@ -134,8 +133,7 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(true);
-    cctx.set_with_checksum(true);
+    cctx.set_trace_type(TraceType::cryptofile);
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
@@ -247,8 +245,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(true);
-    cctx.set_with_checksum(true);
+    cctx.set_trace_type(TraceType::cryptofile);
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
@@ -379,8 +376,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(false);
-    cctx.set_with_checksum(true);
+    cctx.set_trace_type(TraceType::localfile_hashed);
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
@@ -469,8 +465,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(false);
-    cctx.set_with_checksum(false);
+    cctx.set_trace_type(TraceType::localfile);
 
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
@@ -547,8 +542,7 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     size_t offset = 0;
     uint8_t derivator[] = { 'A', 'B', 'C', 'D' };
 
-    cctx.set_with_encryption(false);
-    cctx.set_with_checksum(true);
+    cctx.set_trace_type(TraceType::localfile_hashed);
     ocrypto encrypter(cctx, rnd);
     // Opening an encrypted stream usually results in some header put in result buffer
     // Of course no such header will be needed in non encrypted files
@@ -628,7 +622,7 @@ struct TestCryptoCtx
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    TestCryptoCtx(bool with_encryption, bool with_checksum)
+    TestCryptoCtx(TraceType trace_type)
     {
         FakeFstat fstat;
         LCGRandom rnd(0);
@@ -641,8 +635,7 @@ struct TestCryptoCtx
         ::unlink(hash_finalname);
         char tmpname[256];
         {
-            cctx.set_with_encryption(with_encryption);
-            cctx.set_with_checksum(with_checksum);
+            cctx.set_trace_type(trace_type);
 
             OutCryptoTransport ct(cctx, rnd, fstat);
             ct.open(finalname, hash_finalname, 0);
@@ -662,9 +655,9 @@ struct TestCryptoCtx
 
 RED_AUTO_TEST_CASE(TestOutCryptoTransport)
 {
-    TestCryptoCtx enc_check    (true,  true);
-    TestCryptoCtx noenc_check  (false, true);
-    TestCryptoCtx noenc_nocheck(false, false);
+    TestCryptoCtx enc_check    (TraceType::cryptofile);
+    TestCryptoCtx noenc_check  (TraceType::localfile_hashed);
+    TestCryptoCtx noenc_nocheck(TraceType::localfile);
     // encryption/nocheck is now impossible, setting encryption on cctx forces checksum
 
     RED_CHECK_MEM_AA(enc_check.fhash, enc_check.qhash);
@@ -706,8 +699,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportBigFile)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -747,8 +739,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportAutoClose)
     const char * finalname = "encrypted.txt";
     const char * hash_finalname = "hash_encrypted.txt";
     {
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -781,8 +772,7 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
     {
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
 
@@ -823,8 +813,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
     ::unlink(hash_finalname);
     char tmpname[256];
     {
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -900,8 +889,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
     
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -978,8 +966,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     const char * hash_finalname = "hash_encrypted.txt";
     char tmpname[256];
     {
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -1060,8 +1047,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
     const char * hash_finalname = "./hash_clear.txt";
     char tmpname[256];
     {
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -1130,8 +1116,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 
     char tmpname[256];
     {
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
@@ -1203,8 +1188,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
     {
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(false);
+        cctx.set_trace_type(TraceType::localfile);
     
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(encrypted_file, hash_encrypted_file, 0);
@@ -1257,8 +1241,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     uint8_t fhash[MD_HASH::DIGEST_LENGTH] = {};
     {
     
-        cctx.set_with_encryption(true);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(encrypted_file, hash_encrypted_file, 0);

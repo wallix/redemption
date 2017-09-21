@@ -118,7 +118,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
         std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
@@ -188,8 +187,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
-        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
         WrmParams wrm_params(
             24,
@@ -377,7 +375,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-    TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -445,8 +442,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     SequencedVideoParams sequenced_video_params;
     FullVideoParams full_video_params;
 
-    cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-    cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
     WrmParams wrm_params(
         24,
