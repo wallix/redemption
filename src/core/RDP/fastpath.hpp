@@ -453,7 +453,10 @@ namespace FastPath {
             this->eventFlags = eventHeader & 0x1F;
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
+                this->spKeyboardFlags |= SlowPath::KBDFLAGS_RELEASE;
+            }
+            else{
+                this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
             }
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
@@ -487,7 +490,7 @@ namespace FastPath {
         KeyboardEvent_Send(OutStream & stream, uint16_t spKeyboardFlags, uint8_t keyCode) {
             uint8_t eventFlags = 0;
 
-            if (spKeyboardFlags & (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE)) {
+            if (spKeyboardFlags & SlowPath::KBDFLAGS_RELEASE) {
                     eventFlags |= FASTPATH_INPUT_KBDFLAGS_RELEASE;
             }
 

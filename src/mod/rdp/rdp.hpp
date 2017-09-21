@@ -5706,9 +5706,8 @@ public:
             CASE(ENCRYPTFAILED);
             CASE(ENCPKGMISMATCH);
             CASE(DECRYPTFAILED2);
-        default:
-            return "?";
-            break;
+            default:
+                return "?";
         }
     }   // get_error_info_name
 
@@ -5716,11 +5715,13 @@ public:
     void process_disconnect_pdu(InStream & stream) {
         uint32_t    errorInfo      = stream.in_uint32_le();
         const char* errorInfo_name = get_error_info_name(errorInfo);
-        LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, errorInfo_name);
+        LOG(LOG_INFO, "process disconnect pdu : code=0x%08X error=%s", errorInfo, errorInfo_name);
 
-        this->close_box_extra_message_ref += "(";
-        this->close_box_extra_message_ref += errorInfo_name;
-        this->close_box_extra_message_ref += ")";
+        if (errorInfo) {
+            this->close_box_extra_message_ref += "(";
+            this->close_box_extra_message_ref += errorInfo_name;
+            this->close_box_extra_message_ref += ")";
+        }
 
         switch (errorInfo){
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
