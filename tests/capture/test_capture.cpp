@@ -617,6 +617,45 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
 }
 
 
+RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
+{
+    BufTransport trans;
+
+    {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false);
+
+        auto send_kbd = [&]{
+            meta.kbd_input(now, 'A');
+            meta.kbd_input(now, '\"');
+            meta.kbd_input(now, 'C');
+            meta.kbd_input(now, 'D');
+            now.tv_sec += 1;
+        };
+        send_kbd();
+        meta.periodic_snapshot(now, 0, 0, 0);
+        send_kbd();
+        meta.title_changed(now.tv_sec, cstr_array_view("Bl\"ah1"));
+        now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.title_changed(now.tv_sec, cstr_array_view("Blah\\2"));
+        meta.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+        now.tv_sec += 1;
+        meta.periodic_snapshot(now, 0, 0, 0);
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:42 + type=\"TITLE_BAR\" data=\"Bl\\\"ah1\"\n"
+        "1970-01-01 01:16:43 + type=\"TITLE_BAR\" data=\"Blah\\\\2\"\n"
+        "1970-01-01 01:16:43 - type=\"INPUT_LANGUAGE\" identifier=\"fr\" display_name=\"xy\\\\z\"\n"
+        "1970-01-01 01:16:44 - [Kbd]A\"CDA\"CD\n"
+    );
+}
+
+
 RED_AUTO_TEST_CASE(TestSessionMeta2)
 {
     BufTransport trans;

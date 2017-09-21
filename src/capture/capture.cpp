@@ -36,6 +36,7 @@
 
 #include "utils/log.hpp"
 
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/byte.hpp"
@@ -973,6 +974,10 @@ namespace {
         s.append(s2.data(), s2.size());
     }
 
+    inline void str_append(std::string & s, char c) {
+        s += c;
+    }
+
     template<class... S>
     void str_append(std::string & s, S const & ... strings) {
         (void)std::initializer_list<int>{
@@ -999,21 +1004,24 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
         auto order = left(data, separator);
         auto parameters = right(data, separator);
 
+        auto append_key_value = [&](Av var, Av value){
+            line += ' ';
+            // array_view with zero terminal
+            line.append(var.data(), var.size()-1);
+            line += "=\"";
+            append_escaped_delimiters(line, value);
+            line += '"';
+        };
+
         auto line_with_1_var = [&](Av var1) {
-            str_append(
-                line,
-                "type=\"", order, "\" ",
-                Av(var1.data(), var1.size()-1), "=\"", parameters, "\""
-            );
+            str_append(line, "type=\"", order, '"');
+            append_key_value(var1, parameters);
         };
         auto line_with_2_var = [&](Av var1, Av var2) {
             if (auto subitem_separator = find(parameters, '\x01')) {
-                str_append(
-                    line,
-                    "type=\"", order, "\" ",
-                    Av(var1.data(), var1.size()-1), "=\"", left(parameters, subitem_separator), "\" ",
-                    Av(var2.data(), var2.size()-1), "=\"", right(parameters, subitem_separator), "\""
-                );
+                str_append(line, "type=\"", order, '"');
+                append_key_value(var1, left(parameters, subitem_separator));
+                append_key_value(var2, right(parameters, subitem_separator));
             }
         };
         auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
@@ -1021,13 +1029,10 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
                 auto text = left(parameters, subitem_separator);
                 auto remaining = right(parameters, subitem_separator);
                 if (auto subitem_separator2 = find(remaining, '\x01')) {
-                    str_append(
-                        line,
-                        "type=\"", order, "\" ",
-                        Av(var1.data(), var1.size()-1), "=\"", text, "\" ",
-                        Av(var2.data(), var2.size()-1), "=\"", left(remaining, subitem_separator2), "\" ",
-                        Av(var3.data(), var3.size()-1), "=\"", right(remaining, subitem_separator2), "\""
-                    );
+                    str_append(line, "type=\"", order, '"');
+                    append_key_value(var1, text);
+                    append_key_value(var2, left(parameters, subitem_separator));
+                    append_key_value(var3, right(parameters, subitem_separator));
                 }
             }
         };
@@ -1151,7 +1156,7 @@ public:
 
     void title_changed(time_t rawtime, array_view_const_char title) {
         this->formatted_message = "type=\"TITLE_BAR\" data=\"";
-        this->formatted_message.insert(this->formatted_message.end(), title.begin(), title.end());
+        append_escaped_delimiters(this->formatted_message, title);
         this->formatted_message += '\"';
         this->send_data(rawtime, this->formatted_message, '+');
     }
