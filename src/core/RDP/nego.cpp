@@ -61,16 +61,9 @@ RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username
     , verbose(verbose)
 {
 
-    if (this->tls){
-        this->enabled_protocols = RdpNegoProtocols::Rdp
-                                | RdpNegoProtocols::Tls;
-        if (this->nla) {
-            this->enabled_protocols |= RdpNegoProtocols::Nla;
-        }
-    }
-    else {
-        this->enabled_protocols = RdpNegoProtocols::Rdp;
-    }
+    this->enabled_protocols = RdpNegoProtocols::Rdp
+        | (this->tls ? RdpNegoProtocols::Tls : 0)
+        | (this->nla ? RdpNegoProtocols::Nla : 0);
 
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s",
         ((this->enabled_protocols & RdpNegoProtocols::Tls) ? "Enabled" : "Disabled"),
@@ -235,12 +228,10 @@ void RdpNego::fallback_to_tls()
     }
     else {
         LOG(LOG_INFO, "Can't activate NLA");
-        this->nla = false;
-        this->tls = true;
         LOG(LOG_INFO, "falling back to SSL only");
+        this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
         this->send_negotiation_request();
         this->state = NEGO_STATE_NEGOCIATE;
-        this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
     }
 }
 
@@ -270,17 +261,15 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
     X224::CC_TPDU_Recv x224(stream);
 
     if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
-        this->tls = false;
-        this->nla = false;
+        this->enabled_protocols = RdpNegoProtocols::Rdp;
         this->state = NEGO_STATE_FINAL;
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
         return;
     }
     this->selected_protocol = x224.rdp_neg_code;
 
-    if (this->nla) {
-        if (x224.rdp_neg_type == X224::RDP_NEG_RSP
-        && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
+    if (x224.rdp_neg_type == X224::RDP_NEG_RSP) {
+        if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID) {
             // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
             //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
             //     this->restricted_admin_mode = true;
@@ -311,19 +300,9 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             else {
                 this->state = NEGO_STATE_CREDSSP;
             }
-            return ;
-        }
-        else if (x224.rdp_neg_type == X224::RDP_NEG_RSP
-        && x224.rdp_neg_code == X224::PROTOCOL_RDP){
-            this->state = NEGO_STATE_FINAL;
             return;
         }
-
-        this->fallback_to_tls();
-    }
-    else if (this->tls) {
-        if (x224.rdp_neg_type == X224::RDP_NEG_RSP
-        && x224.rdp_neg_code == X224::PROTOCOL_TLS){
+        else if (x224.rdp_neg_code == X224::PROTOCOL_TLS) {
             LOG(LOG_INFO, "activating SSL");
             this->trans.enable_client_tls(
                     server_cert_store,
@@ -333,50 +312,32 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
                 );
             this->state = NEGO_STATE_FINAL;
         }
-        else if (x224.rdp_neg_type == X224::RDP_NEG_RSP
-        && x224.rdp_neg_code == X224::PROTOCOL_RDP){
+        else if (x224.rdp_neg_code == X224::PROTOCOL_RDP) {
             this->state = NEGO_STATE_FINAL;
-            return;
         }
-        else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
-        && (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
-        || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER)){
-            LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
-            this->tls = false;
-            this->nla = false;
-            this->trans.disconnect();
-            if (!this->trans.connect()){
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
-            }
-            this->send_negotiation_request();
-            this->state = NEGO_STATE_NEGOCIATE;
-            this->enabled_protocols = RdpNegoProtocols::Rdp;
-        }
-        else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
-                 && x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
+    }
+    else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE) {
+        if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
             LOG(LOG_INFO, "Enable NLA is probably required");
             this->trans.disconnect();
             throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
         }
-        else {
-            // "Other cases are errors, set an appropriate error message"
-            this->trans.disconnect();
-            x224.throw_error();
-        }
-    }
-    else {
-        if (x224.rdp_neg_type == X224::RDP_NEG_RSP
-        && x224.rdp_neg_code == X224::PROTOCOL_RDP){
-            this->state = NEGO_STATE_FINAL;
-        }
-        else {
-            // Other cases are errors, set an appropriate error message
+        else if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
             LOG(LOG_INFO, "Enable TLS is probably required");
             this->trans.disconnect();
-            x224.throw_error();
+            throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
         }
-        // TODO Check tpdu has no embedded negotiation code
-        this->state = NEGO_STATE_FINAL;
+        else if (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
+                 || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER) {
+            LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
+            this->trans.disconnect();
+            if (!this->trans.connect()){
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            this->enabled_protocols = RdpNegoProtocols::Rdp;
+            this->send_negotiation_request();
+            this->state = NEGO_STATE_NEGOCIATE;
+        }
     }
     LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
 }
@@ -424,8 +385,11 @@ void RdpNego::send_negotiation_request()
         hexdump_c(cookie_or_token, strlen(cookie_or_token));
     }
     uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP
-            | (this->tls ? X224::PROTOCOL_TLS:0)
-            | (this->nla ? X224::PROTOCOL_HYBRID:0);
+        | ((this->enabled_protocols & RdpNegoProtocols::Nla) ?
+           X224::PROTOCOL_HYBRID : 0)
+        | ((this->enabled_protocols & RdpNegoProtocols::Tls) ?
+           X224::PROTOCOL_TLS : 0);
+
 
     StaticOutStream<65536> stream;
     X224::CR_TPDU_Send(stream, cookie_or_token,

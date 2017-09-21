@@ -42,8 +42,8 @@ public:
         EXTENDED_CLIENT_DATA_SUPPORTED = 0x01
     };
 
-    bool tls;
-    bool nla;
+    const bool tls;
+    const bool nla;
 
 private:
     bool krb;
