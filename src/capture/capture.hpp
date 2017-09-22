@@ -32,7 +32,7 @@
 #include "capture/wrm_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
-#include "capture/pattern_checker_params.hpp"
+#include "capture/pattern_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/sequenced_video_params.hpp"
 #include "capture/full_video_params.hpp"
@@ -365,7 +365,7 @@ public:
     Capture(
         bool capture_wrm, const WrmParams wrm_params,
         bool capture_png, const PngParams png_params,
-        bool capture_pattern_checker, const PatternCheckerParams /* pattern_checker_params */,
+        bool capture_pattern_checker, const PatternParams pattern_params,
         bool capture_ocr, const OcrParams ocr_params,
         bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
         bool capture_flv_full, const FullVideoParams /*full_video_params*/,
@@ -381,9 +381,6 @@ public:
         const FlvParams flv_params,
         ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
-        const char * pattern_kill,                          // pattern
-        const char * pattern_notify,                        // pattern
-        int debug_capture,                                  // pattern
         bool syslog_keyboard_log,                           // kbd syslog
         bool session_log_enabled,                           // kbd session
         bool keyboard_fully_masked,                         // kbd session (as session_log_enabled)

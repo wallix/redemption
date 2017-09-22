@@ -962,7 +962,11 @@ public:
             MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>())
         };
         KbdLogParams kbdlog_params;
-        PatternCheckerParams patter_checker_params;
+        PatternParams pattern_params{
+            ini.get<cfg::context::pattern_notify>().c_str(),
+            ini.get<cfg::context::pattern_kill>().c_str(),
+            ini.get<cfg::debug::capture>()
+        };
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
@@ -982,9 +986,6 @@ public:
             int(wrm_verbose)
         );
 
-        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-        int debug_capture = ini.get<cfg::debug::capture>();
         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
         bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
         bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
@@ -995,7 +996,7 @@ public:
         this->capture = new Capture(
                                       capture_wrm, wrm_params
                                     , capture_png, png_params
-                                    , capture_pattern_checker, patter_checker_params
+                                    , capture_pattern_checker, pattern_params
                                     , capture_ocr, ocr_params
                                     , capture_flv, sequenced_video_params
                                     , capture_flv_full, full_video_params
@@ -1010,9 +1011,6 @@ public:
                                     , flv_params
                                     , &this->report_message
                                     , nullptr
-                                    , pattern_kill
-                                    , pattern_notify
-                                    , debug_capture
                                     , syslog_keyboard_log
                                     , session_log_enabled
                                     , keyboard_fully_masked

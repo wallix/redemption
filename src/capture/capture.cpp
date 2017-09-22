@@ -67,15 +67,6 @@
 #include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
-#include "capture/wrm_params.hpp"
-#include "capture/png_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/meta_params.hpp"
-#include "capture/sequenced_video_params.hpp"
-#include "capture/full_video_params.hpp"
-#include "capture/pattern_checker_params.hpp"
-#include "capture/kbdlog_params.hpp"
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 
@@ -579,19 +570,14 @@ class PatternsChecker : noncopyable
     ReportMessageApi & report_message;
 
 public:
-    PatternsChecker(
-        ReportMessageApi & report_message,
-        const char * const filters_kill,
-        const char * const filters_notify,
-        int verbose = 0
-    )
+    PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
     : report_message(report_message)
     {
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            filters_kill, this->regexes_filter_kill, verbose);
+            params.pattern_kill, this->regexes_filter_kill, params.verbose);
 
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            filters_notify, this->regexes_filter_notify, verbose);
+            params.pattern_notify, this->regexes_filter_notify, params.verbose);
     }
 
     bool contains_pattern() const {
@@ -1469,7 +1455,7 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 Capture::Capture(
     bool capture_wrm, const WrmParams wrm_params,
     bool capture_png, const PngParams png_params,
-    bool capture_pattern_checker, const PatternCheckerParams /* pattern_checker_params */,
+    bool capture_pattern_checker, const PatternParams pattern_params,
     bool capture_ocr, const OcrParams ocr_params,
     bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
     bool capture_flv_full, const FullVideoParams /*full_video_params*/,
@@ -1485,9 +1471,6 @@ Capture::Capture(
     const FlvParams flv_params,
     ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
-    const char * pattern_kill,
-    const char * pattern_notify,
-    int debug_capture,
     bool syslog_keyboard_log,
     bool session_log_enabled,
     bool keyboard_fully_masked,
@@ -1592,11 +1575,7 @@ Capture::Capture(
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
-                *report_message,
-                pattern_kill,
-                pattern_notify,
-                debug_capture)
-            );
+                *report_message, pattern_params));
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1645,7 +1624,11 @@ Capture::Capture(
     if (capture_kbd) {
         this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
         this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
-        this->pattern_kbd_capture_obj.reset(new PatternKbd(report_message, pattern_kill, pattern_notify, debug_capture));
+        this->pattern_kbd_capture_obj.reset(new PatternKbd(
+            report_message,
+            pattern_params.pattern_kill,
+            pattern_params.pattern_notify,
+            pattern_params.verbose));
     }
 
     if (this->syslog_kbd_capture_obj.get() && !syslog_keyboard_log) {
