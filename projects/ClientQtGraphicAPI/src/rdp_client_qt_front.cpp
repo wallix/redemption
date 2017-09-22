@@ -533,7 +533,6 @@ public:
         mod_rdp_params.enable_fastpath                 = false;
         mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_new_pointer              = true;
-        mod_rdp_params.server_redirection_support      = true;
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.enable_glyph_cache              = true;
         std::string allow_channels = "*";
@@ -2212,7 +2211,7 @@ public:
                         break;
 
 
-                        
+
             case rdpdr::Component::RDPDR_CTYP_PRT:
             {
                 //hexdump_c(chunk_series.get_data(), chunk_size);

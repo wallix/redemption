@@ -100,8 +100,6 @@ obj netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 
 obj nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 
-obj mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc/mppc.cpp : ;
-
 obj video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : ;
 
 obj authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp : ;
@@ -141,6 +139,19 @@ obj tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp : ;
 
 obj multiline.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/multiline.cpp : ;
 
+obj mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp : ;
+
+
+obj file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : ;
+
+obj get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp : ;
+
+obj clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp : ;
+
+obj pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp : ;
+
+obj protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp : ;
+
 
 using qt : /usr ; #4
 
@@ -164,7 +175,6 @@ exe client_demo_Qt4 :
     gdapi.o
     log.o
     nego.o
-    mppc.o
     netutils.o
     authorization_channels.o
     video_recorder.o
@@ -183,6 +193,7 @@ exe client_demo_Qt4 :
     tooltip.o
     screen.o
     multiline.o
+    mppc.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -222,7 +233,6 @@ exe client_rdp_Qt4 :
     gdapi.o
     log.o
     nego.o
-    mppc.o
     netutils.o
     authorization_channels.o
     video_recorder.o
@@ -241,6 +251,11 @@ exe client_rdp_Qt4 :
     tooltip.o
     screen.o
     multiline.o
+    mppc.o
+    file_to_graphic.o
+    clip_from_cmd.o
+    pattutils.o
+    protected_graphics.o
     /qt//QtGui       #4
     /qt//phonon
     bitmap
@@ -293,7 +308,6 @@ exe client_rdp_Qt5 :
     gdapi.o
     log.o
     nego.o
-    mppc.o
     netutils.o
     authorization_channels.o
     video_recorder.o
@@ -312,6 +326,7 @@ exe client_rdp_Qt5 :
     tooltip.o
     screen.o
     multiline.o
+    mppc.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets

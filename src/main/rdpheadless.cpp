@@ -464,6 +464,7 @@ int main(int argc, char** argv)
                                | PERF_DISABLE_FULLWINDOWDRAG
                                | PERF_DISABLE_MENUANIMATIONS;
     info.cs_monitor.monitorCount = 1;
+    std::fill(std::begin(info.order_caps.orderSupport), std::end(info.order_caps.orderSupport), 1);
     //info.encryptionLevel = 1;
     int verbose = 0;
 

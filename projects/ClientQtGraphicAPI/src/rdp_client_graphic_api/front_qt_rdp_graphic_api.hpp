@@ -96,6 +96,7 @@ class Front_Qt_API : public FrontAPI
 public:
     RDPVerbose        verbose;
     ClientInfo        info;
+    CryptoContext     cctx;
     std::string       user_name;
     std::string       user_password;
     std::string       target_IP;
@@ -137,6 +138,7 @@ public:
 
     bool wab_diag_question;
     int asked_color;
+
 
 
 
@@ -205,6 +207,7 @@ public:
     Front_Qt_API( RDPVerbose verbose)
     : verbose(verbose)
     , info()
+    , cctx()
     , port(0)
     , local_IP("unknow_local_IP")
     , nbTry(3)
@@ -230,6 +233,8 @@ public:
     , windowsData(this)
     {
         this->windowsData.open();
+          std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
+
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
@@ -2822,7 +2827,7 @@ public:
     void draw(const RDP::FrameMarker & order) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
+            //order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
@@ -3218,7 +3223,7 @@ public:
                     ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
 
                 UdevRandom gen;
-                CryptoContext cctx;
+
                 NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
@@ -3240,7 +3245,7 @@ public:
                 WrmParams wrmParams(
                         this->info.bpp
         //                     , TraceType::localfile
-                    , cctx
+                    , this->cctx
                     , gen
                     , this->fstat
                     , record_path.c_str()

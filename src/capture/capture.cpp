@@ -1013,8 +1013,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 if (auto subitem_separator2 = find(remaining, '\x01')) {
                     message.assign(order, {
                         {zstr(var1), text},
-                        {zstr(var2), left(parameters, subitem_separator)},
-                        {zstr(var3), right(parameters, subitem_separator)},
+                        {zstr(var2), left(parameters, subitem_separator2)},
+                        {zstr(var3), right(parameters, subitem_separator2)},
                     });
                 }
             }
