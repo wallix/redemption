@@ -1617,7 +1617,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
-                  bool const no_timestamp,
                   bool infile_is_encrypted,
                   uint32_t order_count,
                   bool show_file_metadata,
@@ -1828,7 +1827,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::globals::codec_id>(flv_params.codec);
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
-                        flv_params.no_timestamp = no_timestamp;
 
                         RDPSerializer::Verbose wrm_verbose
                             = to_verbose_flags(ini.get<cfg::debug::capture>())
@@ -2645,7 +2643,6 @@ extern "C" {
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
-                          false, // no_timestamp,
                           rp.infile_is_encrypted,
                           rp.order_count,
                           rp.show_file_metadata,
