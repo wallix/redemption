@@ -1912,29 +1912,41 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.remote_program_session = false;
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
 
-                        MetaParams meta_params{
+                        RDPDrawable rdp_drawable{
+                            player.screen_rect.cx, player.screen_rect.cy};
+
+                        DrawableParams const drawable_params{
+                            player.screen_rect.cx,
+                            player.screen_rect.cy,
+                            &rdp_drawable
+                        };
+
+                        MetaParams const meta_params{
                             MetaParams::EnableSessionLog::No,
                             MetaParams::HideNonPrintable::No
                         };
+
                         auto const disable_keyboard_log
                           = ini.get<cfg::video::disable_keyboard_log>();
-                        KbdLogParams kbd_log_params{
+                        KbdLogParams const kbd_log_params{
                             !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
                             !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
                             false, // session
                             !bool(disable_keyboard_log & KeyboardLogFlags::meta)
                         };
-                        PatternParams pattern_params{
+
+                        PatternParams const pattern_params{
                             ini.get<cfg::context::pattern_notify>().c_str(),
                             ini.get<cfg::context::pattern_kill>().c_str(),
                             ini.get<cfg::debug::capture>()
                         };
-                        SequencedVideoParams sequenced_video_params;
-                        FullVideoParams full_video_params;
+
+                        SequencedVideoParams const sequenced_video_params;
+                        FullVideoParams const full_video_params;
 
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-                        WrmParams wrm_params(
+                        WrmParams const wrm_params(
                             wrm_color_depth,
                             cctx,
                             rnd,
@@ -1948,9 +1960,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_compression_algorithm,
                             uint32_t(wrm_verbose) // TODO
                         );
-
-                        RDPDrawable rdp_drawable{
-                            player.screen_rect.cx, player.screen_rect.cy};
 
                         // std::optional<Capture> storage;
                         class CaptureStorage
@@ -1981,7 +1990,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         auto set_capture_consumer = [&](timeval const & now) {
                             auto * capture = new(storage.get_storage()) Capture(
-                                  capture_wrm, wrm_params
+                                  drawable_params
+                                , capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, pattern_params
                                 , capture_ocr, ocr_params
@@ -1991,8 +2001,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_kbd, kbd_log_params
                                 , basename
                                 , now
-                                , player.screen_rect.cx
-                                , player.screen_rect.cy
                                 , record_tmp_path
                                 , record_path
                                 , groupid
@@ -2000,7 +2008,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , nullptr
                                 , &update_progress_data
                                 , Rect()
-                                , &rdp_drawable
                                 );
 
                             player.clear_consumer();

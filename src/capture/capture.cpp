@@ -1453,6 +1453,7 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 
 
 Capture::Capture(
+    const DrawableParams drawable_params,
     bool capture_wrm, const WrmParams wrm_params,
     bool capture_png, const PngParams png_params,
     bool capture_pattern_checker, const PatternParams pattern_params,
@@ -1463,19 +1464,16 @@ Capture::Capture(
     bool capture_kbd, const KbdLogParams kbd_log_params,
     const char * basename,
     const timeval & now,
-    int width,
-    int height,
     const char * record_tmp_path,
     const char * record_path,
     const int groupid,
     const FlvParams flv_params,
     ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
-    Rect crop_rect,
-    RDPDrawable* rdp_drawable)
+    Rect crop_rect)
 : is_replay_mod(!report_message)
 , update_progress_data(update_progress_data)
-, mouse_info{now, width / 2, height / 2}
+, mouse_info{now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_event{}
 , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
 {
@@ -1489,11 +1487,12 @@ Capture::Capture(
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        if (rdp_drawable) {
-            this->gd_drawable = rdp_drawable;
+        if (drawable_params.rdp_drawable) {
+            this->gd_drawable = drawable_params.rdp_drawable;
         }
         else {
-            this->gd_drawable_.reset(new RDPDrawable(width, height));
+            this->gd_drawable_.reset(new RDPDrawable(
+                drawable_params.width, drawable_params.height));
             this->gd_drawable = this->gd_drawable_.get();
         }
         this->gds.push_back(*this->gd_drawable);

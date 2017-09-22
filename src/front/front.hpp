@@ -957,12 +957,19 @@ public:
             );
         }
 
-        MetaParams meta_params {
+        DrawableParams const drawable_params{
+            this->client_info.width,
+            this->client_info.height,
+            nullptr
+        };
+
+        MetaParams const meta_params {
             MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
             MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>())
         };
+
         auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-        KbdLogParams kbd_log_params{
+        KbdLogParams const kbd_log_params{
             !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
             !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
             ini.get<cfg::session_log::enable_session_log>()
@@ -970,11 +977,13 @@ public:
                 != ::KeyboardInputMaskingLevel::fully_masked,
             !bool(disable_keyboard_log & KeyboardLogFlags::meta)
         };
-        PatternParams pattern_params{
+
+        PatternParams const pattern_params{
             ini.get<cfg::context::pattern_notify>().c_str(),
             ini.get<cfg::context::pattern_kill>().c_str(),
             ini.get<cfg::debug::capture>()
         };
+
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
@@ -994,7 +1003,8 @@ public:
         );
 
         this->capture = new Capture(
-                                      capture_wrm, wrm_params
+                                      drawable_params
+                                    , capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker, pattern_params
                                     , capture_ocr, ocr_params
@@ -1004,7 +1014,6 @@ public:
                                     , capture_kbd, kbd_log_params
                                     , basename
                                     , now
-                                    , this->client_info.width, this->client_info.height
                                     , record_tmp_path
                                     , record_path
                                     , groupid
@@ -1012,7 +1021,6 @@ public:
                                     , &this->report_message
                                     , nullptr
                                     , Rect()
-                                    , nullptr
                                     );
         if (this->nomouse) {
             this->capture->set_pointer_display();

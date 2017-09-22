@@ -180,6 +180,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
             record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
+        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
+
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No
@@ -217,7 +219,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         );
 
         Capture capture(
-                          capture_wrm, wrm_params
+                          drawable_params
+                        , capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker, pattern_params
                         , capture_ocr, ocr_params
@@ -226,7 +229,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_meta, meta_params
                         , capture_kbd, kbd_log_params
                         , basename
-                        , now, scr.cx, scr.cy
+                        , now
                         , record_tmp_path
                         , record_path
                         , groupid
@@ -426,6 +429,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
         record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
+    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
+
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No
@@ -464,7 +469,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     // TODO remove this after unifying capture interface
     Capture capture(
-                     capture_wrm, wrm_params
+                     drawable_params
+                   , capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker, pattern_params
                    , capture_ocr, ocr_params
@@ -473,7 +479,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_meta, meta_params
                    , capture_kbd, kbd_log_params
                    , basename
-                   , now, scr.cx, scr.cy
+                   , now
                    , record_tmp_path
                    , record_path
                    , groupid

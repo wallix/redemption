@@ -29,6 +29,7 @@
 #include "gdi/capture_probe_api.hpp"
 #include "capture/notify_next_video.hpp"
 
+#include "capture/drawable_params.hpp"
 #include "capture/flv_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/kbd_log_params.hpp"
@@ -363,6 +364,7 @@ private:
 
 public:
     Capture(
+        const DrawableParams drawable_params,
         bool capture_wrm, const WrmParams wrm_params,
         bool capture_png, const PngParams png_params,
         bool capture_pattern_checker, const PatternParams pattern_params,
@@ -373,16 +375,13 @@ public:
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
         const char * basename,
         const timeval & now,
-        int width,                                          // drawable
-        int height,                                         // drawable
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
         const FlvParams flv_params,
         ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
-        Rect crop_rect,
-        RDPDrawable* rdp_drawable = nullptr                 // drawable
+        Rect crop_rect
     );
 
     ~Capture();
