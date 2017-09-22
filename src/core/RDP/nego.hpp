@@ -49,6 +49,8 @@ private:
     bool krb;
     bool restricted_admin_mode;
 
+    bool nla_tried = false;
+
 public:
     enum
     {

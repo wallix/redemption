@@ -282,6 +282,8 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
                 certif_path
             );
 
+            this->nla_tried = true;
+
             LOG(LOG_INFO, "activating CREDSSP");
             this->credssp.reset(new rdpCredsspClient(
                 this->trans, this->user,
@@ -320,7 +322,12 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
         if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
             LOG(LOG_INFO, "Enable NLA is probably required");
             this->trans.disconnect();
-            throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
+            if (this->nla_tried) {
+                throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+            }
+            else {
+                throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
+            }
         }
         else if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
             LOG(LOG_INFO, "Enable TLS is probably required");
