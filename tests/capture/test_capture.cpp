@@ -177,8 +177,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         }
 
         PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
-            record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
         DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
 
@@ -208,18 +208,25 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             cctx,
             rnd,
             fstat,
-            record_path,
             hash_path,
-            basename,
-            groupid,
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
             int(wrm_verbose)
         );
 
+        CaptureParams capture_params{
+            now,
+            basename,
+            record_tmp_path,
+            record_path,
+            groupid,
+            nullptr
+        };
+
         Capture capture(
-                          drawable_params
+                          capture_params
+                        , drawable_params
                         , capture_wrm, wrm_params
                         , capture_png, png_params
                         , capture_pattern_checker, pattern_params
@@ -228,13 +235,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_flv_full, full_video_params
                         , capture_meta, meta_params
                         , capture_kbd, kbd_log_params
-                        , basename
-                        , now
-                        , record_tmp_path
-                        , record_path
-                        , groupid
                         , flv_params
-                        , nullptr
                         , nullptr
                         , Rect()
                         );
@@ -426,8 +427,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     }
 
     PngParams png_params = {
-        0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
-        record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
     DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
 
@@ -457,19 +458,25 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         cctx,
         rnd,
         fstat,
-        record_path,
         hash_path,
-        basename,
-        groupid,
         wrm_frame_interval,
         wrm_break_interval,
         wrm_compression_algorithm,
         int(wrm_verbose)
     );
 
-    // TODO remove this after unifying capture interface
+    CaptureParams capture_params{
+        now,
+        basename,
+        record_tmp_path,
+        record_path,
+        groupid,
+        nullptr
+    };
+
     Capture capture(
-                     drawable_params
+                     capture_params
+                   , drawable_params
                    , capture_wrm, wrm_params
                    , capture_png, png_params
                    , capture_pattern_checker, pattern_params
@@ -478,13 +485,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_flv_full, full_video_params
                    , capture_meta, meta_params
                    , capture_kbd, kbd_log_params
-                   , basename
-                   , now
-                   , record_tmp_path
-                   , record_path
-                   , groupid
                    , flv_params
-                   , nullptr
                    , nullptr
                    , Rect()
                    );

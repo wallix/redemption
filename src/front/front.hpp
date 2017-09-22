@@ -892,15 +892,7 @@ public:
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ;
 
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
+        OcrParams const ocr_params = ocr_params_from_ini(ini);
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
@@ -935,10 +927,6 @@ public:
             100u,
             ini.get<cfg::video::png_limit>(),
             true,
-            &this->report_message,
-            record_tmp_path,
-            basename,
-            groupid,
             this->client_info.remote_program,
             static_cast<bool>(ini.get<cfg::video::rt_display>())
         };
@@ -963,26 +951,11 @@ public:
             nullptr
         };
 
-        MetaParams const meta_params {
-            MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
-            MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>())
-        };
+        MetaParams const meta_params = meta_params_from_ini(ini);
 
-        auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-        KbdLogParams const kbd_log_params{
-            !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-            !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
-            ini.get<cfg::session_log::enable_session_log>()
-             && ini.get<cfg::session_log::keyboard_input_masking_level>()
-                != ::KeyboardInputMaskingLevel::fully_masked,
-            !bool(disable_keyboard_log & KeyboardLogFlags::meta)
-        };
+        KbdLogParams const kbd_log_params = kbd_log_params_from_ini(ini);
 
-        PatternParams const pattern_params{
-            ini.get<cfg::context::pattern_notify>().c_str(),
-            ini.get<cfg::context::pattern_kill>().c_str(),
-            ini.get<cfg::debug::capture>()
-        };
+        PatternParams const pattern_params = pattern_params_from_ini(ini);
 
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
@@ -992,18 +965,25 @@ public:
             this->cctx,
             this->gen,
             this->fstat,
-            record_path,
             hash_path,
-            basename,
-            groupid,
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
             int(wrm_verbose)
         );
 
+        CaptureParams capture_params{
+            now,
+            basename,
+            record_tmp_path,
+            record_path,
+            groupid,
+            &this->report_message
+        };
+
         this->capture = new Capture(
-                                      drawable_params
+                                      capture_params
+                                    , drawable_params
                                     , capture_wrm, wrm_params
                                     , capture_png, png_params
                                     , capture_pattern_checker, pattern_params
@@ -1012,13 +992,7 @@ public:
                                     , capture_flv_full, full_video_params
                                     , capture_meta, meta_params
                                     , capture_kbd, kbd_log_params
-                                    , basename
-                                    , now
-                                    , record_tmp_path
-                                    , record_path
-                                    , groupid
                                     , flv_params
-                                    , &this->report_message
                                     , nullptr
                                     , Rect()
                                     );

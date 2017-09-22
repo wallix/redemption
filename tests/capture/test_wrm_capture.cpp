@@ -131,10 +131,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             cctx,
             rnd,
             fstat,
-            record_path,
             hash_path,
-            basename,
-            groupid,
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
@@ -143,7 +140,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(
+          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -248,10 +247,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             cctx,
             rnd,
             fstat,
-            "./",
             "/tmp/",
-            "capture",
-            1000, // ini.get<cfg::video::capture_groupid>()
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
@@ -262,7 +258,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(
+            CaptureParams{now, "capture", "", "./", 1000, nullptr},
+            wrm_params/* authentifier */, gd_drawable);
 
         RED_CHECK(true);
 

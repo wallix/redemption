@@ -1859,15 +1859,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool capture_meta = capture_ocr;
                         bool capture_kbd = false;
 
-                        OcrParams ocr_params = {
-                            ini.get<cfg::ocr::version>(),
-                            ocr::locale::LocaleId(
-                                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-                            ini.get<cfg::ocr::on_title_bar_only>(),
-                            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                            ini.get<cfg::ocr::interval>(),
-                            ini.get<cfg::debug::ocr>()
-                        };
+                        OcrParams const ocr_params = ocr_params_from_ini(ini);
 
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -1903,10 +1895,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
                         // PngParams
-                        png_params.report_message = nullptr;
-                        png_params.record_tmp_path = record_tmp_path;
-                        png_params.basename = basename;
-                        png_params.groupid = groupid;
                         png_params.remote_program_session = false;
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
 
@@ -1924,20 +1912,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             MetaParams::HideNonPrintable::No
                         };
 
-                        auto const disable_keyboard_log
-                          = ini.get<cfg::video::disable_keyboard_log>();
-                        KbdLogParams const kbd_log_params{
-                            !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-                            !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
-                            false, // session
-                            !bool(disable_keyboard_log & KeyboardLogFlags::meta)
-                        };
+                        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+                        kbd_log_params.session_log_enabled = false;
 
-                        PatternParams const pattern_params{
-                            ini.get<cfg::context::pattern_notify>().c_str(),
-                            ini.get<cfg::context::pattern_kill>().c_str(),
-                            ini.get<cfg::debug::capture>()
-                        };
+                        PatternParams const pattern_params = pattern_params_from_ini(ini);
 
                         SequencedVideoParams const sequenced_video_params;
                         FullVideoParams const full_video_params;
@@ -1949,10 +1927,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             cctx,
                             rnd,
                             fstat,
-                            record_path,
                             hash_path,
-                            basename,
-                            groupid,
                             wrm_frame_interval,
                             wrm_break_interval,
                             wrm_compression_algorithm,
@@ -1987,8 +1962,17 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         } storage;
 
                         auto set_capture_consumer = [&](timeval const & now) {
+                            CaptureParams capture_params{
+                                now,
+                                basename,
+                                record_tmp_path,
+                                record_path,
+                                groupid,
+                                nullptr
+                            };
                             auto * capture = new(storage.get_storage()) Capture(
-                                  drawable_params
+                                  capture_params
+                                , drawable_params
                                 , capture_wrm, wrm_params
                                 , capture_png, png_params
                                 , capture_pattern_checker, pattern_params
@@ -1997,13 +1981,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_flv_full, full_video_params
                                 , capture_meta, meta_params
                                 , capture_kbd, kbd_log_params
-                                , basename
-                                , now
-                                , record_tmp_path
-                                , record_path
-                                , groupid
                                 , flv_params
-                                , nullptr
                                 , &update_progress_data
                                 , Rect()
                                 );
@@ -2153,7 +2131,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0, false, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
     FlvParams flv_params;
 
     // flv output options

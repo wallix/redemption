@@ -626,10 +626,13 @@ public:
 
     gdi::ImageFrameApi * image_frame_api_ptr;
 
-    PngCapture(const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, report_error_from_reporter(png_params.report_message))
+    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    : trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        capture_params.record_tmp_path, capture_params.basename, ".png",
+        capture_params.groupid, report_error_from_reporter(capture_params.report_message))
     , drawable(drawable)
-    , start_capture(now)
+    , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
     , scaled_width{(((pImageFrameApi->width() * this->zoom_factor) / 100)+3) & 0xFFC}
@@ -718,8 +721,9 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : PngCapture(now, drawable, pImageFrameApi, png_params)
+        const CaptureParams & capture_params, RDPDrawable & drawable,
+        gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    : PngCapture(capture_params, drawable, pImageFrameApi, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -1453,6 +1457,7 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 
 
 Capture::Capture(
+    const CaptureParams capture_params,
     const DrawableParams drawable_params,
     bool capture_wrm, const WrmParams wrm_params,
     bool capture_png, const PngParams png_params,
@@ -1462,27 +1467,21 @@ Capture::Capture(
     bool capture_flv_full, const FullVideoParams /*full_video_params*/,
     bool capture_meta, const MetaParams meta_params,
     bool capture_kbd, const KbdLogParams kbd_log_params,
-    const char * basename,
-    const timeval & now,
-    const char * record_tmp_path,
-    const char * record_path,
-    const int groupid,
     const FlvParams flv_params,
-    ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
     Rect crop_rect)
-: is_replay_mod(!report_message)
+: is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
-, mouse_info{now, drawable_params.width / 2, drawable_params.height / 2}
+, mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_event{}
 , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
 {
    //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
-
-    if (capture_png || (report_message && (capture_flv || capture_ocr))) {
-        if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
-            LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
+    if (capture_png || (capture_params.report_message && (capture_flv || capture_ocr))) {
+        if (recursive_create_directory(capture_params.record_tmp_path,
+                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
+            LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
         }
     }
 
@@ -1531,22 +1530,24 @@ Capture::Capture(
                 }
 
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
         }
 
         if (capture_wrm) {
-            this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, report_message, *this->gd_drawable));
+            this->wrm_capture_obj.reset(new WrmCaptureImpl(
+                capture_params, wrm_params, *this->gd_drawable));
         }
 
         if (capture_meta) {
             this->meta_capture_obj.reset(new MetaCaptureImpl(
-                now, meta_params, record_tmp_path, basename,
-                report_error_from_reporter(report_message)
+                capture_params.now, meta_params,
+                capture_params.record_tmp_path, capture_params.basename,
+                report_error_from_reporter(capture_params.report_message)
             ));
         }
 
@@ -1557,20 +1558,22 @@ Capture::Capture(
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                now, record_path, basename, groupid, png_params.zoom,
+                capture_params.now, capture_params.record_path, capture_params.basename,
+                capture_params.groupid, png_params.zoom,
                 *this->gd_drawable, image_frame_api_ptr, flv_params, notifier
             ));
         }
 
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                now, record_path, basename, groupid, *this->gd_drawable,
+                capture_params.now, capture_params.record_path, capture_params.basename,
+                capture_params.groupid, *this->gd_drawable,
                 image_frame_api_ptr, flv_params));
         }
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
-                *report_message, pattern_params));
+                *capture_params.report_message, pattern_params));
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1580,7 +1583,7 @@ Capture::Capture(
         if (capture_ocr) {
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj.reset(new TitleCaptureImpl(
-                    now, *this->gd_drawable, ocr_params,
+                    capture_params.now, *this->gd_drawable, ocr_params,
                     this->notifier_title_changed
                 ));
             }
@@ -1619,19 +1622,20 @@ Capture::Capture(
 
     if (capture_kbd) {
         if (kbd_log_params.syslog_keyboard_log) {
-            this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
+            this->syslog_kbd_capture_obj.reset(new SyslogKbd(capture_params.now));
             this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
             this->caps.push_back(*this->syslog_kbd_capture_obj.get());
         }
 
         if (kbd_log_params.session_log_enabled) {
-            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
+            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(
+                *capture_params.report_message));
             this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
             this->probes.push_back(*this->session_log_kbd_capture_obj.get());
         }
 
         this->pattern_kbd_capture_obj.reset(new PatternKbd(
-            report_message,
+            capture_params.report_message,
             pattern_params.pattern_kill,
             pattern_params.pattern_notify,
             pattern_params.verbose));

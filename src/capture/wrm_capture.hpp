@@ -24,6 +24,8 @@
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/wrm_params.hpp"
 
+#include "capture/capture_params.hpp"
+
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -833,7 +835,7 @@ public:
     bool kbd_input_mask_enabled;
 
 public:
-    WrmCaptureImpl(const timeval & now, const WrmParams & wrm_params, ReportMessageApi * report_message, RDPDrawable & drawable)
+    WrmCaptureImpl(const CaptureParams & capture_params, const WrmParams & wrm_params, RDPDrawable & drawable)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
@@ -841,19 +843,26 @@ public:
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
-    , out(wrm_params.cctx,
-           wrm_params.rnd,
-           wrm_params.fstat,
-           wrm_params.record_path,
-           wrm_params.hash_path,
-           wrm_params.basename,
-           now, drawable.width(), drawable.height(), wrm_params.groupid, report_message)
-    , graphic_to_file(now, this->out, drawable.width(), drawable.height(), wrm_params.capture_bpp,
+    , out(
+        wrm_params.cctx,
+        wrm_params.rnd,
+        wrm_params.fstat,
+        capture_params.record_path,
+        wrm_params.hash_path,
+        capture_params.basename,
+        capture_params.now,
+        drawable.width(),
+        drawable.height(),
+        capture_params.groupid,
+        capture_params.report_message)
+    , graphic_to_file(
+        capture_params.now, this->out, drawable.width(), drawable.height(), wrm_params.capture_bpp,
         this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
-    , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
+    , nc(this->graphic_to_file, capture_params.now,
+        wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
     {}
 
