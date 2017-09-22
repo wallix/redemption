@@ -930,16 +930,17 @@ public:
         }
 
         PngParams png_params = {
-                0, 0,
-                ini.get<cfg::video::png_interval>(),
-                100u,
-                ini.get<cfg::video::png_limit>(),
-                true,
-                &this->report_message,
-                record_tmp_path,
-                basename,
-                groupid,
-                this->client_info.remote_program
+            0, 0,
+            ini.get<cfg::video::png_interval>(),
+            100u,
+            ini.get<cfg::video::png_limit>(),
+            true,
+            &this->report_message,
+            record_tmp_path,
+            basename,
+            groupid,
+            this->client_info.remote_program,
+            static_cast<bool>(ini.get<cfg::video::rt_display>())
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
@@ -977,17 +978,14 @@ public:
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
+            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm),
             int(wrm_verbose)
         );
 
         const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
         const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
         int debug_capture = ini.get<cfg::debug::capture>();
-        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-        bool rt_display = ini.get<cfg::video::rt_display>();
-        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
         bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
         bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
              != ::KeyboardInputMaskingLevel::fully_masked;
@@ -1010,16 +1008,12 @@ public:
                                     , record_path
                                     , groupid
                                     , flv_params
-                                    , false, &this->report_message
+                                    , &this->report_message
                                     , nullptr
                                     , pattern_kill
                                     , pattern_notify
                                     , debug_capture
-                                    , flv_capture_chunk
-                                    , flv_break_interval
                                     , syslog_keyboard_log
-                                    , rt_display
-                                    , disable_keyboard_log
                                     , session_log_enabled
                                     , keyboard_fully_masked
                                     , meta_keyboard_log

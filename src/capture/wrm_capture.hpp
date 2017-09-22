@@ -854,6 +854,7 @@ public:
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
     , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
+    // TODO wrm_params.disable_keyboard_log
     , kbd_input_mask_enabled{false}
     {}
 
@@ -868,11 +869,6 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_mask_enabled = enable;
-    }
-
-    void enable_keyboard_log()
-    {
-        this->kbd_input_mask_enabled = false;
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {

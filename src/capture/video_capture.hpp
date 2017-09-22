@@ -117,7 +117,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, bool no_timestamp, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
+        const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
         FlvParams const & flv_params
     );
 
@@ -223,7 +223,6 @@ public:
             SequenceTransport & trans,
             RDPDrawable & drawable,
             gdi::ImageFrameApi * pImageFrameApi,
-            bool no_timestamp,
             FlvParams flv_params
         );
 
@@ -320,12 +319,10 @@ public:
         const char * const record_path,
         const char * const basename,
         const int groupid,
-        bool no_timestamp,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi * pImageFrameApi,
         FlvParams flv_params,
-        std::chrono::microseconds video_interval,
         NotifyNextVideo & next_video_notifier);
 
     void next_video(const timeval& now);

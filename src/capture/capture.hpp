@@ -373,28 +373,23 @@ public:
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
         const char * basename,
         const timeval & now,
-        int width,
-        int height,
+        int width,                                          // drawable
+        int height,                                         // drawable
         const char * record_tmp_path,
         const char * record_path,
         const int groupid,
         const FlvParams flv_params,
-        bool no_timestamp,
         ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
-        const char * pattern_kill,
-        const char * pattern_notify,
-        int debug_capture,
-        bool flv_capture_chunk,
-        const std::chrono::duration<long int> flv_break_interval,
-        bool syslog_keyboard_log,
-        bool rt_display,
-        bool disable_keyboard_log,
-        bool session_log_enabled,
-        bool keyboard_fully_masked,
-        bool meta_keyboard_log,
+        const char * pattern_kill,                          // pattern
+        const char * pattern_notify,                        // pattern
+        int debug_capture,                                  // pattern
+        bool syslog_keyboard_log,                           // kbd syslog
+        bool session_log_enabled,                           // kbd session
+        bool keyboard_fully_masked,                         // kbd session (as session_log_enabled)
+        bool meta_keyboard_log,                             // kbd meta
         Rect crop_rect,
-        RDPDrawable* rdp_drawable = nullptr
+        RDPDrawable* rdp_drawable = nullptr                 // drawable
     );
 
     ~Capture();

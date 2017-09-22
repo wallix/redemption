@@ -37,6 +37,9 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 ini.get<cfg::video::l_qscale>(),
                 ini.get<cfg::video::l_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::globals::notimestamp>(),
+                ini.get<cfg::globals::capture_chunk>(),
+                ini.get<cfg::video::flv_break_interval>(),
                 ini.get<cfg::debug::ffmpeg>()
             };
             case Level::high: return FlvParams{
@@ -47,6 +50,9 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 ini.get<cfg::video::h_qscale>(),
                 ini.get<cfg::video::h_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::globals::notimestamp>(),
+                ini.get<cfg::globals::capture_chunk>(),
+                ini.get<cfg::video::flv_break_interval>(),
                 ini.get<cfg::debug::ffmpeg>()
             };
             case Level::medium:
@@ -58,6 +64,9 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
                 ini.get<cfg::video::m_qscale>(),
                 ini.get<cfg::video::m_bitrate>(),
                 ini.get<cfg::globals::codec_id>(),
+                ini.get<cfg::globals::notimestamp>(),
+                ini.get<cfg::globals::capture_chunk>(),
+                ini.get<cfg::video::flv_break_interval>(),
                 ini.get<cfg::debug::ffmpeg>()
             };
         }
@@ -70,5 +79,3 @@ inline FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_
 
     return flv_params;
 }
-
-

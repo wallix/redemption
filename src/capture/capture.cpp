@@ -1483,17 +1483,12 @@ Capture::Capture(
     const char * record_path,
     const int groupid,
     const FlvParams flv_params,
-    bool no_timestamp,
     ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
     const char * pattern_kill,
     const char * pattern_notify,
     int debug_capture,
-    bool flv_capture_chunk,
-    const std::chrono::duration<long int> flv_break_interval,
     bool syslog_keyboard_log,
-    bool rt_display,
-    bool disable_keyboard_log,
     bool session_log_enabled,
     bool keyboard_fully_masked,
     bool meta_keyboard_log,
@@ -1579,23 +1574,20 @@ Capture::Capture(
 
         if (capture_flv) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-            if (flv_capture_chunk && this->meta_capture_obj) {
+            if (flv_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
-                image_frame_api_ptr,
-                flv_params,
-                flv_break_interval, notifier
+                now, record_path, basename, groupid, png_params.zoom,
+                *this->gd_drawable, image_frame_api_ptr, flv_params, notifier
             ));
         }
 
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
-                image_frame_api_ptr,
-                flv_params));
+                now, record_path, basename, groupid, *this->gd_drawable,
+                image_frame_api_ptr, flv_params));
         }
 
         if (capture_pattern_checker) {
@@ -1629,14 +1621,10 @@ Capture::Capture(
             this->caps.push_back(*this->wrm_capture_obj);
             this->objs.push_back(*this->wrm_capture_obj);
             this->probes.push_back(*this->wrm_capture_obj);
-
-            if (!disable_keyboard_log) {
-                this->wrm_capture_obj->enable_keyboard_log();
-            }
         }
 
         if (this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = rt_display;
+            this->png_capture_real_time_obj->enable_rt_display = png_params.rt_display;
             this->caps.push_back(*this->png_capture_real_time_obj);
         }
 
@@ -1660,7 +1648,7 @@ Capture::Capture(
         this->pattern_kbd_capture_obj.reset(new PatternKbd(report_message, pattern_kill, pattern_notify, debug_capture));
     }
 
-    if (this->syslog_kbd_capture_obj.get() && (!syslog_keyboard_log)) {
+    if (this->syslog_kbd_capture_obj.get() && !syslog_keyboard_log) {
         this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
         this->caps.push_back(*this->syslog_kbd_capture_obj.get());
     }

@@ -106,14 +106,14 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        // TODO remove this after unifying capture interface
-        bool no_timestamp = false;
-        // TODO remove this after unifying capture interface
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
- |(ini.get<cfg::debug::primary_orders>()?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
- |(ini.get<cfg::debug::secondary_orders>()?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
- |(ini.get<cfg::debug::bitmap_update>()?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+            |(ini.get<cfg::debug::primary_orders>()
+                ? GraphicToFile::Verbose::primary_orders : GraphicToFile::Verbose::none)
+            |(ini.get<cfg::debug::secondary_orders>()
+                ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
+            |(ini.get<cfg::debug::bitmap_update>()
+                ? GraphicToFile::Verbose::bitmap_update : GraphicToFile::Verbose::none);
 
         WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
@@ -121,6 +121,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+        flv_params.no_timestamp = false;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
 
@@ -175,8 +176,9 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                                nullptr, record_tmp_path, basename, groupid, false};
+        PngParams png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
+            record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
@@ -201,17 +203,14 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
+            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm),
             int(wrm_verbose)
         );
 
         const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
         const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
         int debug_capture = ini.get<cfg::debug::capture>();
-        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-        bool rt_display = ini.get<cfg::video::rt_display>();
-        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
         bool session_log_enabled = false;
         bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
              != ::KeyboardInputMaskingLevel::fully_masked;
@@ -232,16 +231,12 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , record_path
                         , groupid
                         , flv_params
-                        , no_timestamp, nullptr
+                        , nullptr
                         , nullptr
                         , pattern_kill
                         , pattern_notify
                         , debug_capture
-                        , flv_capture_chunk
-                        , flv_break_interval
                         , syslog_keyboard_log
-                        , rt_display
-                        , disable_keyboard_log
                         , session_log_enabled
                         , keyboard_fully_masked
                         , meta_keyboard_log
@@ -368,15 +363,19 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool no_timestamp = false;
 
     GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-        | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+        | (ini.get<cfg::debug::primary_orders>()
+            ? GraphicToFile::Verbose::primary_orders : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::secondary_orders>()
+            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::bitmap_update>()
+            ? GraphicToFile::Verbose::bitmap_update : GraphicToFile::Verbose::none);
 
     WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
 
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+    flv_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
@@ -430,8 +429,9 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                        nullptr, record_tmp_path, basename, groupid, false};
+    PngParams png_params = {
+        0, 0, std::chrono::milliseconds{60}, 100, 0, false, nullptr,
+        record_tmp_path, basename, groupid, false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
@@ -456,6 +456,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         wrm_frame_interval,
         wrm_break_interval,
         wrm_compression_algorithm,
+        bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm),
         int(wrm_verbose)
     );
 
@@ -463,11 +464,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
     const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
     int debug_capture = ini.get<cfg::debug::capture>();
-    bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-    const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
     bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-    bool rt_display = ini.get<cfg::video::rt_display>();
-    bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
     bool session_log_enabled = false;
     bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
          != ::KeyboardInputMaskingLevel::fully_masked;
@@ -489,16 +486,12 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , record_path
                    , groupid
                    , flv_params
-                   , no_timestamp, nullptr
+                   , nullptr
                    , nullptr
                    , pattern_kill
                    , pattern_notify
                    , debug_capture
-                   , flv_capture_chunk
-                   , flv_break_interval
                    , syslog_keyboard_log
-                   , rt_display
-                   , disable_keyboard_log
                    , session_log_enabled
                    , keyboard_fully_masked
                    , meta_keyboard_log

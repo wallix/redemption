@@ -1828,6 +1828,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::globals::codec_id>(flv_params.codec);
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
+                        flv_params.no_timestamp = no_timestamp;
 
                         RDPSerializer::Verbose wrm_verbose
                             = to_verbose_flags(ini.get<cfg::debug::capture>())
@@ -1909,7 +1910,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.basename = basename;
                         png_params.groupid = groupid;
                         png_params.remote_program_session = false;
-
+                        png_params.rt_display = ini.get<cfg::video::rt_display>();
 
                         MetaParams meta_params{
                             MetaParams::EnableSessionLog::No,
@@ -1934,17 +1935,15 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_frame_interval,
                             wrm_break_interval,
                             wrm_compression_algorithm,
+                            bool(ini.get<cfg::video::disable_keyboard_log>()
+                                & KeyboardLogFlags::wrm),
                             uint32_t(wrm_verbose) // TODO
                         );
 
                         const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
                         const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
                         int debug_capture = ini.get<cfg::debug::capture>();
-                        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-                        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
                         bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-                        bool rt_display = ini.get<cfg::video::rt_display>();
-                        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
                         bool session_log_enabled = false;
                         bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
                             != ::KeyboardInputMaskingLevel::fully_masked;
@@ -1998,17 +1997,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , record_path
                                 , groupid
                                 , flv_params
-                                , no_timestamp
                                 , nullptr
                                 , &update_progress_data
                                 , pattern_kill
                                 , pattern_notify
                                 , debug_capture
-                                , flv_capture_chunk
-                                , flv_break_interval
                                 , syslog_keyboard_log
-                                , rt_display
-                                , disable_keyboard_log
                                 , session_log_enabled
                                 , keyboard_fully_masked
                                 , meta_keyboard_log
@@ -2161,7 +2155,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0, false, false};
     FlvParams flv_params;
 
     // flv output options

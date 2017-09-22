@@ -38,4 +38,5 @@ struct PngParams
     const char * basename;
     int groupid;
     bool remote_program_session;
+    bool rt_display;
 };
