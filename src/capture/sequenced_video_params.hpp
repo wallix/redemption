@@ -20,9 +20,6 @@
 
 #pragma once
 
-#include <chrono>
-
 struct SequencedVideoParams
 {
-    std::chrono::microseconds video_interval;
 };

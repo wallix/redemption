@@ -29,15 +29,15 @@
 #include "gdi/capture_probe_api.hpp"
 #include "capture/notify_next_video.hpp"
 
-#include "capture/wrm_params.hpp"
-#include "capture/png_params.hpp"
 #include "capture/flv_params.hpp"
-#include "capture/pattern_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/sequenced_video_params.hpp"
 #include "capture/full_video_params.hpp"
+#include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
-#include "capture/kbdlog_params.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/pattern_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/wrm_params.hpp"
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/file_to_graphic.hpp"
@@ -381,10 +381,6 @@ public:
         const FlvParams flv_params,
         ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
-        bool syslog_keyboard_log,                           // kbd syslog
-        bool session_log_enabled,                           // kbd session
-        bool keyboard_fully_masked,                         // kbd session (as session_log_enabled)
-        bool meta_keyboard_log,                             // kbd meta
         Rect crop_rect,
         RDPDrawable* rdp_drawable = nullptr                 // drawable
     );

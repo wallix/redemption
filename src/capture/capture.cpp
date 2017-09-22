@@ -1460,7 +1460,7 @@ Capture::Capture(
     bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
     bool capture_flv_full, const FullVideoParams /*full_video_params*/,
     bool capture_meta, const MetaParams meta_params,
-    bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
+    bool capture_kbd, const KbdLogParams kbd_log_params,
     const char * basename,
     const timeval & now,
     int width,
@@ -1471,10 +1471,6 @@ Capture::Capture(
     const FlvParams flv_params,
     ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
-    bool syslog_keyboard_log,
-    bool session_log_enabled,
-    bool keyboard_fully_masked,
-    bool meta_keyboard_log,
     Rect crop_rect,
     RDPDrawable* rdp_drawable)
 : is_replay_mod(!report_message)
@@ -1596,6 +1592,7 @@ Capture::Capture(
 
         if (capture_wrm) {
             this->gds.push_back(*this->wrm_capture_obj);
+            // TODO kbd_log_params.wrm_keyboard_log
             this->kbds.push_back(*this->wrm_capture_obj);
             this->caps.push_back(*this->wrm_capture_obj);
             this->objs.push_back(*this->wrm_capture_obj);
@@ -1622,32 +1619,35 @@ Capture::Capture(
     }
 
     if (capture_kbd) {
-        this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
-        this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
+        if (kbd_log_params.syslog_keyboard_log) {
+            this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
+            this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
+            this->caps.push_back(*this->syslog_kbd_capture_obj.get());
+        }
+
+        if (kbd_log_params.session_log_enabled) {
+            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
+            this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
+            this->probes.push_back(*this->session_log_kbd_capture_obj.get());
+        }
+
         this->pattern_kbd_capture_obj.reset(new PatternKbd(
             report_message,
             pattern_params.pattern_kill,
             pattern_params.pattern_notify,
             pattern_params.verbose));
-    }
 
-    if (this->syslog_kbd_capture_obj.get() && !syslog_keyboard_log) {
-        this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
-        this->caps.push_back(*this->syslog_kbd_capture_obj.get());
-    }
-
-    if (this->session_log_kbd_capture_obj.get() && session_log_enabled && keyboard_fully_masked) {
-        this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
-        this->probes.push_back(*this->session_log_kbd_capture_obj.get());
-    }
-
-    if (this->pattern_kbd_capture_obj.get() && this->pattern_kbd_capture_obj->contains_pattern()) {
-        this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
+        if (this->pattern_kbd_capture_obj->contains_pattern()) {
+            this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
+        }
+        else {
+            this->pattern_kbd_capture_obj.reset();
+        }
     }
 
     if (this->meta_capture_obj) {
         this->caps.push_back(this->meta_capture_obj->meta);
-        if (!meta_keyboard_log) {
+        if (kbd_log_params.meta_keyboard_log) {
             this->kbds.push_back(this->meta_capture_obj->meta);
             this->probes.push_back(this->meta_capture_obj->meta);
         }

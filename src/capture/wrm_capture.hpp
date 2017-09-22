@@ -854,13 +854,8 @@ public:
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
     , nc(this->graphic_to_file, now, wrm_params.frame_interval, wrm_params.break_interval)
-    // TODO wrm_params.disable_keyboard_log
     , kbd_input_mask_enabled{false}
     {}
-
-    ~WrmCaptureImpl()
-    {
-    }
 
     // shadow text
     bool kbd_input(const timeval& now, uint32_t uchar) override {

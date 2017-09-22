@@ -45,7 +45,6 @@ struct WrmParams
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
-    bool disable_keyboard_log;
     uint32_t wrm_verbose;
 
     WrmParams(uint8_t capture_bpp,
@@ -59,7 +58,6 @@ struct WrmParams
               std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
               std::chrono::seconds break_interval,
               WrmCompressionAlgorithm wrm_compression_algorithm,
-              bool disable_keyboard_log,
               // TODO Verbose::WrmCapture
               uint32_t wrm_verbose)
     : capture_bpp(capture_bpp)
@@ -73,7 +71,6 @@ struct WrmParams
     , frame_interval(frame_interval)
     , break_interval(break_interval)
     , wrm_compression_algorithm(wrm_compression_algorithm)
-    , disable_keyboard_log(disable_keyboard_log)
     , wrm_verbose(wrm_verbose)
     {
     }

@@ -138,7 +138,6 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            false,
             int(wrm_verbose)
         );
 
@@ -256,7 +255,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            false,
             0 //0xFFFF VERBOSE
         );
 

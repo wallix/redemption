@@ -1916,7 +1916,14 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             MetaParams::EnableSessionLog::No,
                             MetaParams::HideNonPrintable::No
                         };
-                        KbdLogParams kbdlog_params;
+                        auto const disable_keyboard_log
+                          = ini.get<cfg::video::disable_keyboard_log>();
+                        KbdLogParams kbd_log_params{
+                            !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
+                            !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
+                            false, // session
+                            !bool(disable_keyboard_log & KeyboardLogFlags::meta)
+                        };
                         PatternParams pattern_params{
                             ini.get<cfg::context::pattern_notify>().c_str(),
                             ini.get<cfg::context::pattern_kill>().c_str(),
@@ -1939,16 +1946,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             wrm_frame_interval,
                             wrm_break_interval,
                             wrm_compression_algorithm,
-                            bool(ini.get<cfg::video::disable_keyboard_log>()
-                                & KeyboardLogFlags::wrm),
                             uint32_t(wrm_verbose) // TODO
                         );
-
-                        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-                        bool session_log_enabled = false;
-                        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-                            != ::KeyboardInputMaskingLevel::fully_masked;
-                        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
 
                         RDPDrawable rdp_drawable{
                             player.screen_rect.cx, player.screen_rect.cy};
@@ -1989,7 +1988,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_flv, sequenced_video_params
                                 , capture_flv_full, full_video_params
                                 , capture_meta, meta_params
-                                , capture_kbd, kbdlog_params
+                                , capture_kbd, kbd_log_params
                                 , basename
                                 , now
                                 , player.screen_rect.cx
@@ -2000,10 +1999,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , flv_params
                                 , nullptr
                                 , &update_progress_data
-                                , syslog_keyboard_log
-                                , session_log_enabled
-                                , keyboard_fully_masked
-                                , meta_keyboard_log
                                 , Rect()
                                 , &rdp_drawable
                                 );

@@ -961,7 +961,15 @@ public:
             MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
             MetaParams::HideNonPrintable(ini.get<cfg::session_log::hide_non_printable_kbd_input>())
         };
-        KbdLogParams kbdlog_params;
+        auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
+        KbdLogParams kbd_log_params{
+            !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
+            !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
+            ini.get<cfg::session_log::enable_session_log>()
+             && ini.get<cfg::session_log::keyboard_input_masking_level>()
+                != ::KeyboardInputMaskingLevel::fully_masked,
+            !bool(disable_keyboard_log & KeyboardLogFlags::meta)
+        };
         PatternParams pattern_params{
             ini.get<cfg::context::pattern_notify>().c_str(),
             ini.get<cfg::context::pattern_kill>().c_str(),
@@ -982,16 +990,8 @@ public:
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm),
             int(wrm_verbose)
         );
-
-        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-        bool session_log_enabled = ini.get<cfg::session_log::enable_session_log>();
-        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-             != ::KeyboardInputMaskingLevel::fully_masked;
-        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
-
 
         this->capture = new Capture(
                                       capture_wrm, wrm_params
@@ -1001,7 +1001,7 @@ public:
                                     , capture_flv, sequenced_video_params
                                     , capture_flv_full, full_video_params
                                     , capture_meta, meta_params
-                                    , capture_kbd, kbdlog_params
+                                    , capture_kbd, kbd_log_params
                                     , basename
                                     , now
                                     , this->client_info.width, this->client_info.height
@@ -1011,10 +1011,6 @@ public:
                                     , flv_params
                                     , &this->report_message
                                     , nullptr
-                                    , syslog_keyboard_log
-                                    , session_log_enabled
-                                    , keyboard_fully_masked
-                                    , meta_keyboard_log
                                     , Rect()
                                     , nullptr
                                     );
