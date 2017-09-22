@@ -2827,7 +2827,7 @@ public:
     void draw(const RDP::FrameMarker & order) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            order.log(LOG_INFO);
+            //order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 

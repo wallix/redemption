@@ -328,9 +328,13 @@ public:
             std::cout << "primary connection lenght = " << prim_len << " ms" <<  std::endl;
 
             if (!this->out_path.empty()) {
+                std::cout << "out_path is not empty: " << this->out_path << std::endl;
                 std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
                 if (file_movie) {
+                    std::cout << "out_path is written " << this->out_path << std::endl;
                     file_movie << this->index << "\t" << prim_len << "\n";
+                } else {
+                    std::cout << "out_path is not written " << this->out_path << std::endl;
                 }
             }
 
