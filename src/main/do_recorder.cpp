@@ -12,11 +12,7 @@
 #include "system/scoped_crypto_init.hpp"
 #include "program_options/program_options.hpp"
 
-#include "capture/flv_params.hpp"
-#include "capture/flv_params_from_ini.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/png_params.hpp"
-#include "capture/wrm_params.hpp"
+#include "capture/params_from_ini.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
@@ -1828,23 +1824,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                        RDPSerializer::Verbose wrm_verbose
-                            = to_verbose_flags(ini.get<cfg::debug::capture>())
-                            | (ini.get<cfg::debug::primary_orders>()
-                                ? RDPSerializer::Verbose::primary_orders
-                                : RDPSerializer::Verbose::none)
-                            | (ini.get<cfg::debug::secondary_orders>()
-                                ? RDPSerializer::Verbose::secondary_orders
-                                : RDPSerializer::Verbose::none)
-                            | (ini.get<cfg::debug::bitmap_update>()
-                                ? RDPSerializer::Verbose::bitmap_update
-                                : RDPSerializer::Verbose::none)
-                        ;
-
-                        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-                        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-                        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -1922,16 +1901,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-                        WrmParams const wrm_params(
+                        WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
                             cctx,
                             rnd,
                             fstat,
                             hash_path,
-                            wrm_frame_interval,
-                            wrm_break_interval,
-                            wrm_compression_algorithm,
-                            uint32_t(wrm_verbose) // TODO
+                            ini
                         );
 
                         // std::optional<Capture> storage;

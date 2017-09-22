@@ -107,19 +107,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool full_video = false;
 
-        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-            |(ini.get<cfg::debug::primary_orders>()
-                ? GraphicToFile::Verbose::primary_orders : GraphicToFile::Verbose::none)
-            |(ini.get<cfg::debug::secondary_orders>()
-                ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
-            |(ini.get<cfg::debug::bitmap_update>()
-                ? GraphicToFile::Verbose::bitmap_update : GraphicToFile::Verbose::none);
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-
-
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
         flv_params.no_timestamp = false;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -186,33 +173,24 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No
         };
-        auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-        KbdLogParams kbd_log_params{
-            !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-            !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
-            false, // session
-            !bool(disable_keyboard_log & KeyboardLogFlags::meta)
-        };
-        PatternParams pattern_params{
-            ini.get<cfg::context::pattern_notify>().c_str(),
-            ini.get<cfg::context::pattern_kill>().c_str(),
-            ini.get<cfg::debug::capture>()
-        };
+
+        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+        kbd_log_params.session_log_enabled = false;
+
+        PatternParams const pattern_params = pattern_params_from_ini(ini);
+
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams wrm_params(
+        WrmParams wrm_params = wrm_params_from_ini(
             24,
             cctx,
             rnd,
             fstat,
             hash_path,
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            int(wrm_verbose)
+            ini
         );
 
         CaptureParams capture_params{
@@ -436,18 +414,12 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No
     };
-    auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
-    KbdLogParams kbd_log_params{
-        !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-        !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
-        false, // session
-        !bool(disable_keyboard_log & KeyboardLogFlags::meta)
-    };
-    PatternParams pattern_params{
-        ini.get<cfg::context::pattern_notify>().c_str(),
-        ini.get<cfg::context::pattern_kill>().c_str(),
-        ini.get<cfg::debug::capture>()
-    };
+
+    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+    kbd_log_params.session_log_enabled = false;
+
+    PatternParams const pattern_params = pattern_params_from_ini(ini);
+
     SequencedVideoParams sequenced_video_params;
     FullVideoParams full_video_params;
 

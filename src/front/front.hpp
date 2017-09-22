@@ -109,11 +109,7 @@
 
 #include "gdi/clip_from_cmd.hpp"
 
-#include "capture/png_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/wrm_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/flv_params_from_ini.hpp"
+#include "capture/params_from_ini.hpp"
 #include "capture/cryptofile.hpp"
 
 
@@ -865,15 +861,6 @@ public:
         bool full_video = false;
         FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
-        RDPSerializer::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-            | (ini.get<cfg::debug::primary_orders>() ?RDPSerializer::Verbose::primary_orders:RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::secondary_orders>() ?RDPSerializer::Verbose::secondary_orders:RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::bitmap_update>() ?RDPSerializer::Verbose::bitmap_update:RDPSerializer::Verbose::none);
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
@@ -960,16 +947,13 @@ public:
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
-        WrmParams wrm_params(
+        WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
             this->cctx,
             this->gen,
             this->fstat,
             hash_path,
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            int(wrm_verbose)
+            ini
         );
 
         CaptureParams capture_params{

@@ -25,6 +25,8 @@
 #include "capture/meta_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
+#include "capture/wrm_params.hpp"
+#include "core/RDP/RDPSerializer.hpp"
 
 #include "configs/config.hpp"
 
@@ -125,5 +127,28 @@ inline PatternParams pattern_params_from_ini(Inifile & ini)
         ini.get<cfg::context::pattern_notify>().c_str(),
         ini.get<cfg::context::pattern_kill>().c_str(),
         ini.get<cfg::debug::capture>()
+    };
+}
+
+inline WrmParams wrm_params_from_ini(
+    uint8_t capture_bpp, CryptoContext & cctx, Random & rnd, Fstat & fstat,
+    const char * hash_path, Inifile & ini)
+{
+    return WrmParams{
+        capture_bpp,
+        cctx,
+        rnd,
+        fstat,
+        hash_path,
+        ini.get<cfg::video::frame_interval>(),
+        ini.get<cfg::video::break_interval>(),
+        ini.get<cfg::video::wrm_compression_algorithm>(),
+        uint32_t(to_verbose_flags(ini.get<cfg::debug::capture>())
+            | (ini.get<cfg::debug::primary_orders>()
+                ? RDPSerializer::Verbose::primary_orders : RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::secondary_orders>()
+                ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::bitmap_update>()
+                ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none))
     };
 }
