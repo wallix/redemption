@@ -18,6 +18,7 @@
    Author(s): Clément Moroldo
 */
 
+#include "main/version.hpp"
 
 #include "configs/config.hpp"
 
@@ -490,6 +491,7 @@ int main(int argc, char** argv)
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(0)
                                );
     bool quick_connection_test = true;
@@ -509,7 +511,7 @@ int main(int argc, char** argv)
 
         cli::option('v', "version")
         .help("Show version")
-        .action(cli::quit([]{ std::cout << " Version 4.2.3" << "\n"; })),
+        .action(cli::quit([]{ std::cout << " Version 4.2.3, ReDemPtion " VERSION << "\n"; })),
 
         cli::option("script_help")
         .help("Show all script event commands")

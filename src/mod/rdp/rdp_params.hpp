@@ -168,6 +168,8 @@ struct ModRDPParams {
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
+    std::string& close_box_extra_message_ref;
+
     const char * load_balance_info = "";
 
     unsigned rail_disconnect_message_delay = 0;
@@ -187,6 +189,7 @@ struct ModRDPParams {
                 , Font const & font
                 , Theme const & theme
                 , std::array<uint8_t, 28>& server_auto_reconnect_packet_ref
+                , std::string& close_box_extra_message_ref
                 , RDPVerbose verbose
                 )
         : target_user(target_user)
@@ -197,6 +200,7 @@ struct ModRDPParams {
         , font(font)
         , theme(theme)
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
+        , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
     {}
 

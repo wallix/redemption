@@ -183,6 +183,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";

@@ -69,12 +69,14 @@ private:
     std::string  diagnostic_text;
     bool         fixed_format_diagnostic_text;
 
+    const char * extra_message;
+
 public:
     FlatWabClose(gdi::GraphicApi & drawable,
                  int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,
                  NotifyApi* notifier, const char * diagnostic_text,
                  const char * username, const char * target,
-                 bool showtimer, Font const & font, Theme const & theme,
+                 bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false);
 
     ~FlatWabClose() override;

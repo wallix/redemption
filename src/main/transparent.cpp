@@ -266,6 +266,7 @@ int main(int argc, char * argv[]) {
                                        , ini.get<cfg::font>()
                                        , ini.get<cfg::theme>()
                                        , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                                       , ini.get_ref<cfg::context::close_box_extra_message>()
                                        , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
                                        );
             //mod_rdp_params.enable_tls                          = true;

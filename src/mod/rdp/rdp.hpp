@@ -628,79 +628,59 @@ protected:
 
         void server_access_allowed() override {
             if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "CERTIFICATE_CHECK_SUCCESS"},
-                    {"description", "Connexion to server allowed"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "CERTIFICATE_CHECK_SUCCESS",
+                    "Connexion to server allowed"
+                );
             }
         }
 
         void server_cert_create() override {
             if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_NEW"},
-                    {"description", "New X.509 certificate created"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_NEW",
+                    "New X.509 certificate created"
+                );
             }
         }
 
         void server_cert_success() override {
             if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_MATCH_SUCCESS"},
-                    {"description", "X.509 server certificate match"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                    "X.509 server certificate match"
+                );
             }
         }
 
         void server_cert_failure() override {
             if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_MATCH_FAILURE"},
-                    {"description", "X.509 server certificate match failure"},
-                    });
-
-                this->report_message.log5(info);
-
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_MATCH_FAILURE",
+                    "X.509 server certificate match failure"
+                );
             }
         }
 
         void server_cert_error(const char * str_error) override {
             if (is_syslog_notification_enabled(this->server_cert_error_message)) {
+                this->log5_server_cert(
+                    "SERVER_CERTIFICATE_ERROR",
+                    "X.509 server certificate internal error: " + std::string(str_error)
+                );
+            }
+        }
 
-                const std::string description = std::string("X.509 server certificate internal error: ")
-                                              + std::string(str_error);
-                auto info = key_qvalue_pairs({
-                    {"type", "SERVER_CERTIFICATE_ERROR"},
-                    {"description", description},
-                    });
+    private:
+        KeyQvalueFormatter message;
+        void log5_server_cert(charp_or_string type, charp_or_string description)
+        {
+            this->message.assign(type.data, {{"description", description.data}});
 
-                this->report_message.log5(info);
+            this->report_message.log5(this->message.str());
 
-                if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+            if (bool(this->verbose & RDPVerbose::basic_trace)) {
+                LOG(LOG_INFO, "%s", this->message.str());
             }
         }
     } server_notifier;
@@ -803,6 +783,7 @@ protected:
     bool client_use_bmp_cache_2 = false;
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
+    std::string& close_box_extra_message_ref;
 
     bool is_server_auto_reconnec_packet_received = false;
 
@@ -979,6 +960,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
+        , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
     {
@@ -4095,7 +4077,7 @@ public:
                 this->buf.load_data(this->nego.trans.get_transport());
             }
         }
-        catch (Error const & e) {
+        catch (Error const &) {
             if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
                 this->nego.fallback_to_tls();
                 run = false;
@@ -5594,335 +5576,139 @@ public:
         ERRINFO_DECRYPTFAILED2                    = 0x00001195
     };
 
-    void process_disconnect_pdu(InStream & stream) {
-        uint32_t errorInfo = stream.in_uint32_le();
+    const char* get_error_info_name(uint32_t errorInfo) {
         switch (errorInfo){
-        case ERRINFO_RPC_INITIATED_DISCONNECT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT");
-            break;
-        case ERRINFO_RPC_INITIATED_LOGOFF:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_LOGOFF");
-            break;
-        case ERRINFO_IDLE_TIMEOUT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "IDLE_TIMEOUT");
-            break;
-        case ERRINFO_LOGON_TIMEOUT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGON_TIMEOUT");
-            break;
+            #define CASE(e) case ERRINFO_##e: return #e
+            CASE(RPC_INITIATED_DISCONNECT);
+            CASE(RPC_INITIATED_LOGOFF);
+            CASE(IDLE_TIMEOUT);
+            CASE(LOGON_TIMEOUT);
+            CASE(DISCONNECTED_BY_OTHERCONNECTION);
+            CASE(OUT_OF_MEMORY);
+            CASE(SERVER_DENIED_CONNECTION);
+            CASE(SERVER_INSUFFICIENT_PRIVILEGES);
+            CASE(SERVER_FRESH_CREDENTIALS_REQUIRED);
+            CASE(RPC_INITIATED_DISCONNECT_BYUSER);
+            CASE(LOGOFF_BY_USER);
+            CASE(LICENSE_INTERNAL);
+            CASE(LICENSE_NO_LICENSE_SERVER);
+            CASE(LICENSE_NO_LICENSE);
+            CASE(LICENSE_BAD_CLIENT_MSG);
+            CASE(LICENSE_HWID_DOESNT_MATCH_LICENSE);
+            CASE(LICENSE_BAD_CLIENT_LICENSE);
+            CASE(LICENSE_CANT_FINISH_PROTOCOL);
+            CASE(LICENSE_CLIENT_ENDED_PROTOCOL);
+            CASE(LICENSE_BAD_CLIENT_ENCRYPTION);
+            CASE(LICENSE_CANT_UPGRADE_LICENSE);
+            CASE(LICENSE_NO_REMOTE_CONNECTIONS);
+            CASE(CB_DESTINATION_NOT_FOUND);
+            CASE(CB_LOADING_DESTINATION);
+            CASE(CB_REDIRECTING_TO_DESTINATION);
+            CASE(CB_SESSION_ONLINE_VM_WAKE);
+            CASE(CB_SESSION_ONLINE_VM_BOOT);
+            CASE(CB_SESSION_ONLINE_VM_NO_DNS);
+            CASE(CB_DESTINATION_POOL_NOT_FREE);
+            CASE(CB_CONNECTION_CANCELLED);
+            CASE(CB_CONNECTION_ERROR_INVALID_SETTINGS);
+            CASE(CB_SESSION_ONLINE_VM_BOOT_TIMEOUT);
+            CASE(CB_SESSION_ONLINE_VM_SESSMON_FAILED);
+            CASE(UNKNOWNPDUTYPE2);
+            CASE(UNKNOWNPDUTYPE);
+            CASE(DATAPDUSEQUENCE);
+            CASE(CONTROLPDUSEQUENCE);
+            CASE(INVALIDCONTROLPDUACTION);
+            CASE(INVALIDINPUTPDUTYPE);
+            CASE(INVALIDINPUTPDUMOUSE);
+            CASE(INVALIDREFRESHRECTPDU);
+            CASE(CREATEUSERDATAFAILED);
+            CASE(CONNECTFAILED);
+            CASE(CONFIRMACTIVEWRONGSHAREID);
+            CASE(CONFIRMACTIVEWRONGORIGINATOR);
+            CASE(PERSISTENTKEYPDUBADLENGTH);
+            CASE(PERSISTENTKEYPDUILLEGALFIRST);
+            CASE(PERSISTENTKEYPDUTOOMANYTOTALKEYS);
+            CASE(PERSISTENTKEYPDUTOOMANYCACHEKEYS);
+            CASE(INPUTPDUBADLENGTH);
+            CASE(BITMAPCACHEERRORPDUBADLENGTH);
+            CASE(SECURITYDATATOOSHORT);
+            CASE(VCHANNELDATATOOSHORT);
+            CASE(SHAREDATATOOSHORT);
+            CASE(BADSUPRESSOUTPUTPDU);
+            CASE(CONFIRMACTIVEPDUTOOSHORT);
+            CASE(CAPABILITYSETTOOSMALL);
+            CASE(CAPABILITYSETTOOLARGE);
+            CASE(NOCURSORCACHE);
+            CASE(BADCAPABILITIES);
+            CASE(VIRTUALCHANNELDECOMPRESSIONERR);
+            CASE(INVALIDVCCOMPRESSIONTYPE);
+            CASE(INVALIDCHANNELID);
+            CASE(VCHANNELSTOOMANY);
+            CASE(REMOTEAPPSNOTENABLED);
+            CASE(CACHECAPNOTSET);
+            CASE(BITMAPCACHEERRORPDUBADLENGTH2);
+            CASE(OFFSCRCACHEERRORPDUBADLENGTH);
+            CASE(DNGCACHEERRORPDUBADLENGTH);
+            CASE(GDIPLUSPDUBADLENGTH);
+            CASE(SECURITYDATATOOSHORT2);
+            CASE(SECURITYDATATOOSHORT3);
+            CASE(SECURITYDATATOOSHORT4);
+            CASE(SECURITYDATATOOSHORT5);
+            CASE(SECURITYDATATOOSHORT6);
+            CASE(SECURITYDATATOOSHORT7);
+            CASE(SECURITYDATATOOSHORT8);
+            CASE(SECURITYDATATOOSHORT9);
+            CASE(SECURITYDATATOOSHORT10);
+            CASE(SECURITYDATATOOSHORT11);
+            CASE(SECURITYDATATOOSHORT12);
+            CASE(SECURITYDATATOOSHORT13);
+            CASE(SECURITYDATATOOSHORT14);
+            CASE(SECURITYDATATOOSHORT15);
+            CASE(SECURITYDATATOOSHORT16);
+            CASE(SECURITYDATATOOSHORT17);
+            CASE(SECURITYDATATOOSHORT18);
+            CASE(SECURITYDATATOOSHORT19);
+            CASE(SECURITYDATATOOSHORT20);
+            CASE(SECURITYDATATOOSHORT21);
+            CASE(SECURITYDATATOOSHORT22);
+            CASE(SECURITYDATATOOSHORT23);
+            CASE(BADMONITORDATA);
+            CASE(VCDECOMPRESSEDREASSEMBLEFAILED);
+            CASE(VCDATATOOLONG);
+            CASE(BAD_FRAME_ACK_DATA);
+            CASE(GRAPHICSMODENOTSUPPORTED);
+            CASE(GRAPHICSSUBSYSTEMRESETFAILED);
+            CASE(GRAPHICSSUBSYSTEMFAILED);
+            CASE(TIMEZONEKEYNAMELENGTHTOOSHORT);
+            CASE(TIMEZONEKEYNAMELENGTHTOOLONG);
+            CASE(DYNAMICDSTDISABLEDFIELDMISSING);
+            CASE(UPDATESESSIONKEYFAILED);
+            CASE(DECRYPTFAILED);
+            CASE(ENCRYPTFAILED);
+            CASE(ENCPKGMISMATCH);
+            CASE(DECRYPTFAILED2);
+            default:
+                return "?";
+        }
+    }   // get_error_info_name
+
+
+    void process_disconnect_pdu(InStream & stream) {
+        uint32_t    errorInfo      = stream.in_uint32_le();
+        const char* errorInfo_name = get_error_info_name(errorInfo);
+        LOG(LOG_INFO, "process disconnect pdu : code=0x%08X error=%s", errorInfo, errorInfo_name);
+
+        if (errorInfo) {
+            this->close_box_extra_message_ref += "(";
+            this->close_box_extra_message_ref += errorInfo_name;
+            this->close_box_extra_message_ref += ")";
+        }
+
+        switch (errorInfo){
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
             this->authentifier.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
             break;
-        case ERRINFO_OUT_OF_MEMORY:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
-            break;
-        case ERRINFO_SERVER_DENIED_CONNECTION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_DENIED_CONNECTION");
-            break;
-        case ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_INSUFFICIENT_PRIVILEGES");
-            break;
-        case ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_FRESH_CREDENTIALS_REQUIRED");
-            break;
-        case ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT_BYUSER");
-            break;
-        case ERRINFO_LOGOFF_BY_USER:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGOFF_BY_USER");
-            break;
-        case ERRINFO_LICENSE_INTERNAL:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_INTERNAL");
-            break;
-        case ERRINFO_LICENSE_NO_LICENSE_SERVER:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE_SERVER");
-            break;
-        case ERRINFO_LICENSE_NO_LICENSE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE");
-            break;
-        case ERRINFO_LICENSE_BAD_CLIENT_MSG:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_MSG");
-            break;
-        case ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_HWID_DOESNT_MATCH_LICENSE");
-            break;
-        case ERRINFO_LICENSE_BAD_CLIENT_LICENSE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_LICENSE");
-            break;
-        case ERRINFO_LICENSE_CANT_FINISH_PROTOCOL:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_FINISH_PROTOCOL");
-            break;
-        case ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CLIENT_ENDED_PROTOCOL");
-            break;
-        case ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_ENCRYPTION");
-            break;
-        case ERRINFO_LICENSE_CANT_UPGRADE_LICENSE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_UPGRADE_LICENSE");
-            break;
-        case ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_REMOTE_CONNECTIONS");
-            break;
-        case ERRINFO_CB_DESTINATION_NOT_FOUND:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_NOT_FOUND");
-            break;
-        case ERRINFO_CB_LOADING_DESTINATION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_LOADING_DESTINATION");
-            break;
-        case ERRINFO_CB_REDIRECTING_TO_DESTINATION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_REDIRECTING_TO_DESTINATION");
-            break;
-        case ERRINFO_CB_SESSION_ONLINE_VM_WAKE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_WAKE");
-            break;
-        case ERRINFO_CB_SESSION_ONLINE_VM_BOOT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT");
-            break;
-        case ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_NO_DNS");
-            break;
-        case ERRINFO_CB_DESTINATION_POOL_NOT_FREE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_POOL_NOT_FREE");
-            break;
-        case ERRINFO_CB_CONNECTION_CANCELLED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_CANCELLED");
-            break;
-        case ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_ERROR_INVALID_SETTINGS");
-            break;
-        case ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT_TIMEOUT");
-            break;
-        case ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_SESSMON_FAILED");
-            break;
-        case ERRINFO_UNKNOWNPDUTYPE2:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE2");
-            break;
-        case ERRINFO_UNKNOWNPDUTYPE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE");
-            break;
-        case ERRINFO_DATAPDUSEQUENCE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DATAPDUSEQUENCE");
-            break;
-        case ERRINFO_CONTROLPDUSEQUENCE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONTROLPDUSEQUENCE");
-            break;
-        case ERRINFO_INVALIDCONTROLPDUACTION:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCONTROLPDUACTION");
-            break;
-        case ERRINFO_INVALIDINPUTPDUTYPE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUTYPE");
-            break;
-        case ERRINFO_INVALIDINPUTPDUMOUSE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUMOUSE");
-            break;
-        case ERRINFO_INVALIDREFRESHRECTPDU:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDREFRESHRECTPDU");
-            break;
-        case ERRINFO_CREATEUSERDATAFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CREATEUSERDATAFAILED");
-            break;
-        case ERRINFO_CONNECTFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONNECTFAILED");
-            break;
-        case ERRINFO_CONFIRMACTIVEWRONGSHAREID:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGSHAREID");
-            break;
-        case ERRINFO_CONFIRMACTIVEWRONGORIGINATOR:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGORIGINATOR");
-            break;
-        case ERRINFO_PERSISTENTKEYPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUBADLENGTH");
-            break;
-        case ERRINFO_PERSISTENTKEYPDUILLEGALFIRST:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUILLEGALFIRST");
-            break;
-        case ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYTOTALKEYS");
-            break;
-        case ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYCACHEKEYS");
-            break;
-        case ERRINFO_INPUTPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INPUTPDUBADLENGTH");
-            break;
-        case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT");
-            break;
-        case ERRINFO_VCHANNELDATATOOSHORT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELDATATOOSHORT");
-            break;
-        case ERRINFO_SHAREDATATOOSHORT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SHAREDATATOOSHORT");
-            break;
-        case ERRINFO_BADSUPRESSOUTPUTPDU:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADSUPRESSOUTPUTPDU");
-            break;
-        case ERRINFO_CONFIRMACTIVEPDUTOOSHORT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEPDUTOOSHORT");
-            break;
-        case ERRINFO_CAPABILITYSETTOOSMALL:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOSMALL");
-            break;
-        case ERRINFO_CAPABILITYSETTOOLARGE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOLARGE");
-            break;
-        case ERRINFO_NOCURSORCACHE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "NOCURSORCACHE");
-            break;
-        case ERRINFO_BADCAPABILITIES:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADCAPABILITIES");
-            break;
-        case ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VIRTUALCHANNELDECOMPRESSIONERR");
-            break;
-        case ERRINFO_INVALIDVCCOMPRESSIONTYPE:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDVCCOMPRESSIONTYPE");
-            break;
-        case ERRINFO_INVALIDCHANNELID:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCHANNELID");
-            break;
-        case ERRINFO_VCHANNELSTOOMANY:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELSTOOMANY");
-            break;
         case ERRINFO_REMOTEAPPSNOTENABLED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "REMOTEAPPSNOTENABLED");
-
             this->remote_apps_not_enabled = true;
-            break;
-        case ERRINFO_CACHECAPNOTSET:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CACHECAPNOTSET");
-            break;
-        case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH2");
-            break;
-        case ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OFFSCRCACHEERRORPDUBADLENGTH");
-            break;
-        case ERRINFO_DNGCACHEERRORPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DNGCACHEERRORPDUBADLENGTH");
-            break;
-        case ERRINFO_GDIPLUSPDUBADLENGTH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GDIPLUSPDUBADLENGTH");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT2:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT2");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT3:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT3");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT4:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT4");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT5:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT5");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT6:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT6");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT7:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT7");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT8:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT8");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT9:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT9");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT10:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT10");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT11:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT11");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT12:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT12");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT13:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT13");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT14:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT14");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT15:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT15");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT16:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT16");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT17:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT17");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT18:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT18");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT19:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT19");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT20:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT20");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT21:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT21");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT22:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT22");
-            break;
-        case ERRINFO_SECURITYDATATOOSHORT23:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT23");
-            break;
-        case ERRINFO_BADMONITORDATA:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADMONITORDATA");
-            break;
-        case ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDECOMPRESSEDREASSEMBLEFAILED");
-            break;
-        case ERRINFO_VCDATATOOLONG:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDATATOOLONG");
-            break;
-        case ERRINFO_BAD_FRAME_ACK_DATA:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BAD_FRAME_ACK_DATA");
-            break;
-        case ERRINFO_GRAPHICSMODENOTSUPPORTED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSMODENOTSUPPORTED");
-            break;
-        case ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMRESETFAILED");
-            break;
-        case ERRINFO_GRAPHICSSUBSYSTEMFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMFAILED");
-            break;
-        case ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOSHORT");
-            break;
-        case ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOLONG");
-            break;
-        case ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DYNAMICDSTDISABLEDFIELDMISSING");
-            break;
-        case ERRINFO_UPDATESESSIONKEYFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UPDATESESSIONKEYFAILED");
-            break;
-        case ERRINFO_DECRYPTFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED");
-            break;
-        case ERRINFO_ENCRYPTFAILED:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCRYPTFAILED");
-            break;
-        case ERRINFO_ENCPKGMISMATCH:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCPKGMISMATCH");
-            break;
-        case ERRINFO_DECRYPTFAILED2:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED2");
-            break;
-        default:
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "?");
             break;
         }
     }   // process_disconnect_pdu

@@ -24,6 +24,7 @@
 #include <string>
 #include <openssl/ssl.h>
 
+#include "main/version.hpp"
 
 #include "configs/config.hpp"
 #include "front/client_front.hpp"
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
     /* Program options */
     namespace po = program_options;
     po::options_description desc({
+        {'v', "version",""},
         {'h', "help","produce help message"},
         {'t', "target-device", &target_device, "target device"},
         {'u', "username", &username, "username"},
@@ -89,6 +91,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    if (options.count("version") > 0) {
+        std::cout << VERSION << std::endl;
+        return 0;
+    }
+
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     Inifile ini;
@@ -108,6 +115,7 @@ int main(int argc, char** argv)
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(verbose));
 
     if (verbose > 128) {

@@ -78,10 +78,10 @@
 "certificate_password = string(max=254, default='inquisition')\n\n"
 
 "#_advanced\n"
-"png_path = string(max=4096, default='" + std::string(app_path(AppPath::Png)) + "')\n\n"
+"png_path = string(max=4096, default='" << app_path(AppPath::Png) << "')\n\n"
 
 "#_advanced\n"
-"wrm_path = string(max=4096, default='" + std::string(app_path(AppPath::Wrm)) + "')\n\n"
+"wrm_path = string(max=4096, default='" << app_path(AppPath::Wrm) << "')\n\n"
 
 "#_advanced\n"
 "movie_path = string(default='')\n\n"
@@ -100,7 +100,7 @@
 "enable_osd_display_remote_target = boolean(default=True)\n\n"
 
 "#_advanced\n"
-"persistent_path = string(max=4096, default='" + std::string(app_path(AppPath::Persistent)) + "')\n\n"
+"persistent_path = string(max=4096, default='" << app_path(AppPath::Persistent) << "')\n\n"
 
 "#_hidden\n"
 "enable_wab_integration = boolean(default=" CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) ")\n\n"
@@ -298,7 +298,8 @@
 "#_advanced\n"
 "deny_channels = string_list(default=list())\n\n"
 
-"# Enables support of Server Fast-Path Update PDUs.\n"
+"# Enables support of Client/Server Fast-Path Input/Update PDUs.\n"
+"# Fast-Path is required for Windows Server 2012 (or more recent)!\n"
 "#_advanced\n"
 "fast_path = boolean(default=True)\n\n"
 
@@ -579,13 +580,13 @@
 "replay_path = string(max=4096, default='/tmp/')\n\n"
 
 "#_advanced\n"
-"hash_path = string(max=4096, default='" + std::string(app_path(AppPath::Hash)) + "')\n\n"
+"hash_path = string(max=4096, default='" << app_path(AppPath::Hash) << "')\n\n"
 
 "#_advanced\n"
-"record_tmp_path = string(max=4096, default='" + std::string(app_path(AppPath::RecordTmp)) + "')\n\n"
+"record_tmp_path = string(max=4096, default='" << app_path(AppPath::RecordTmp) << "')\n\n"
 
 "#_advanced\n"
-"record_path = string(max=4096, default='" + std::string(app_path(AppPath::Record)) + "')\n\n"
+"record_path = string(max=4096, default='" << app_path(AppPath::Record) << "')\n\n"
 
 "# Disable keyboard log:\n"
 "#   0: none\n"

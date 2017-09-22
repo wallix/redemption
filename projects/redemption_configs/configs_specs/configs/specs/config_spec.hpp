@@ -236,7 +236,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs.\n"}, set(true));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_suppress_output", set(true));
         W.sep();
@@ -286,7 +286,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
         W.member(advanced_in_gui, no_sesman, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Server Fast-Path Update PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, set(false));
         W.sep();
@@ -651,6 +651,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "session_probe_launch_error_message");
+        W.sep();
+
+        W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "close_box_extra_message");
     });
 
     W.section("", [&]

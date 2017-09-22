@@ -36,6 +36,7 @@
 
 #include "utils/log.hpp"
 
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/byte.hpp"
@@ -346,6 +347,7 @@ public:
     }
 
 private:
+    KeyQvalueFormatter message;
     bool test_pattern(
         uint8_t const * uchar, size_t char_len,
         PatternSearcher & searcher, bool is_pattern_kill
@@ -541,14 +543,17 @@ public:
         }
     }
 
+private:
+    KeyQvalueFormatter formatted_message;
+
+public:
     void flush() {
         if (this->kbd_stream.get_offset()) {
-            auto info = key_qvalue_pairs({
-                {"type","KBD_INPUT"},
-                {"data", make_array_view(byte_ptr(this->kbd_stream.get_data()).to_charp(), this->kbd_stream.get_offset())},
-                });
+            this->formatted_message.assign("KBD_INPUT", {
+                {"data", stream_to_avchar(this->kbd_stream)}
+            });
 
-            this->report_message.log5(info);
+            this->report_message.log5(this->formatted_message.str());
 
             this->kbd_stream.rewind();
         }
@@ -963,25 +968,9 @@ namespace {
     inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {
         return N - 1 == s2.size() && std::equal(s1, s1 + N - 1, begin(s2));
     }
-
-    template<std::size_t N>
-    void str_append(std::string & s, char const (&s2)[N]) {
-        s.append(s2, N-1);
-    }
-
-    inline void str_append(std::string & s, array_view_const_char const & s2) {
-        s.append(s2.data(), s2.size());
-    }
-
-    template<class... S>
-    void str_append(std::string & s, S const & ... strings) {
-        (void)std::initializer_list<int>{
-            (str_append(s, strings), 0)...
-        };
-    }
 }
 
-inline void agent_data_extractor(std::string & line, array_view_const_char data)
+inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_char data)
 {
     using Av = array_view_const_char;
 
@@ -992,6 +981,8 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
 
     auto separator = find(data, '=');
 
+    auto const tmp_size = message.av().size();
+
     if (separator) {
         auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
         auto right = [](Av s, char const * pos) { return Av(pos + 1, begin(s) + s.size() - (pos + 1)); };
@@ -999,21 +990,20 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
         auto order = left(data, separator);
         auto parameters = right(data, separator);
 
+        auto zstr = [](Av var) {
+            // array_view with zero terminal
+            return make_array_view(var.data(), var.size()-1);
+        };
+
         auto line_with_1_var = [&](Av var1) {
-            str_append(
-                line,
-                "type=\"", order, "\" ",
-                Av(var1.data(), var1.size()-1), "=\"", parameters, "\""
-            );
+            message.assign(order, {{zstr(var1), parameters}});
         };
         auto line_with_2_var = [&](Av var1, Av var2) {
             if (auto subitem_separator = find(parameters, '\x01')) {
-                str_append(
-                    line,
-                    "type=\"", order, "\" ",
-                    Av(var1.data(), var1.size()-1), "=\"", left(parameters, subitem_separator), "\" ",
-                    Av(var2.data(), var2.size()-1), "=\"", right(parameters, subitem_separator), "\""
-                );
+                message.assign(order, {
+                    {zstr(var1), left(parameters, subitem_separator)},
+                    {zstr(var2), right(parameters, subitem_separator)},
+                });
             }
         };
         auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
@@ -1021,13 +1011,11 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
                 auto text = left(parameters, subitem_separator);
                 auto remaining = right(parameters, subitem_separator);
                 if (auto subitem_separator2 = find(remaining, '\x01')) {
-                    str_append(
-                        line,
-                        "type=\"", order, "\" ",
-                        Av(var1.data(), var1.size()-1), "=\"", text, "\" ",
-                        Av(var2.data(), var2.size()-1), "=\"", left(remaining, subitem_separator2), "\" ",
-                        Av(var3.data(), var3.size()-1), "=\"", right(remaining, subitem_separator2), "\""
-                    );
+                    message.assign(order, {
+                        {zstr(var1), text},
+                        {zstr(var2), left(parameters, subitem_separator)},
+                        {zstr(var3), right(parameters, subitem_separator)},
+                    });
                 }
             }
         };
@@ -1057,18 +1045,19 @@ inline void agent_data_extractor(std::string & line, array_view_const_char data)
             line_with_2_var("windows", "edit");
         }
         else {
+            message.clear();
             LOG(LOG_WARNING,
                 "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
                 int(data.size()), data.data());
-            return;
+            return ;
         }
     }
 
-    if (line.empty()) {
+    if (message.av().size() == tmp_size) {
+        message.clear();
         LOG(LOG_WARNING,
             "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
             int(data.size()), data.data());
-        return;
     }
 }
 
@@ -1143,20 +1132,24 @@ public:
         return true;
     }
 
-    void title_changed(time_t rawtime, array_view_const_char title) {
-        this->send_data(rawtime, title, '+');
-    }
-
     void send_line(time_t rawtime, array_view_const_char line) {
         this->send_data(rawtime, line, '+');
     }
 
+private:
+    KeyQvalueFormatter formatted_message;
+
+public:
+    void title_changed(time_t rawtime, array_view_const_char title) {
+        this->formatted_message.assign("TITLE_BAR", {{"data", title}});
+        this->send_data(rawtime, this->formatted_message.av(), '+');
+    }
+
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        std::string formatted_message;
-        agent_data_extractor(formatted_message, message);
-        if (!formatted_message.empty()) {
-            this->send_data(now.tv_sec, formatted_message, '-');
+        agent_data_extractor(this->formatted_message, message);
+        if (!this->formatted_message.av().empty()) {
+            this->send_data(now.tv_sec, this->formatted_message.av(), '-');
         }
     }
 
@@ -1266,11 +1259,10 @@ private:
 
     void send_kbd() {
         if (this->kbd_stream.get_offset()) {
-            this->send_date(this->last_time, '-');
-            auto end = this->kbd_stream.get_current();
-            memcpy(end, session_meta_kbd_suffix().data(), session_meta_kbd_suffix().size());
-            end += session_meta_kbd_suffix().size();
-            this->trans.send(this->kbd_buffer, std::size_t(end - this->kbd_buffer));
+            this->formatted_message.assign("KBD_INPUT", {
+                {"data", stream_to_avchar(this->kbd_stream)}
+            });
+            this->send_data(this->last_time, this->formatted_message.av(), '-');
             this->kbd_stream.rewind();
             this->previous_char_is_event_flush = true;
             this->kbd_char_pos = 0;
@@ -1280,7 +1272,7 @@ private:
 
 class SessionLogAgent : public gdi::CaptureProbeApi
 {
-    std::string line;
+    KeyQvalueFormatter line;
     SessionMeta & session_meta;
 
 public:
@@ -1289,10 +1281,9 @@ public:
     {}
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        line.clear();
         agent_data_extractor(this->line, message);
-        if (!this->line.empty()) {
-            this->session_meta.send_line(now.tv_sec, this->line);
+        if (!this->line.str().empty()) {
+            this->session_meta.send_line(now.tv_sec, this->line.av());
         }
     }
 

@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(Test_escape_delimiters)
         append_escaped_delimiters(s, S);                   \
         RED_CHECK_EQUAL(Escaped, s);                       \
         s.clear();                                         \
-        append_escaped_delimiters(s, std::string(S));      \
+        append_escaped_delimiters(s, cstr_array_view(S));  \
         RED_CHECK_EQUAL(Escaped, s);                       \
         std::fill(std::begin(as), std::end(as), 0);        \
         p = append_escaped_delimiters(as, sizeof(as), S);  \

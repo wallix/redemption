@@ -1223,6 +1223,8 @@ public:
             LOG(LOG_INFO, "Front::incoming");
         }
 
+        bool is_waked_up_by_time__save = this->event.is_waked_up_by_time();
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -1243,7 +1245,7 @@ public:
             this->session_resized = false;
         }
 
-        if (this->event.is_waked_up_by_time()) return;
+        if (is_waked_up_by_time__save) return;
 
         buf.load_data(this->trans);
         while (buf.next_pdu())
@@ -3697,7 +3699,7 @@ private:
                             SlowPath::KeyboardEvent_Recv ke(ie.payload);
 
                             if (bool(this->verbose & Verbose::basic_trace3)) {
-                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
+                                LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_SCANCODE eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                     ie.eventTime, ke.keyboardFlags, ke.keyCode);
                             }
 
@@ -4574,7 +4576,7 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        bool    tsk_switch_shortcuts;
+        bool tsk_switch_shortcuts;
 
         struct KeyboardFlags {
             static uint16_t get(SlowPath::KeyboardEvent_Recv const & ke) {

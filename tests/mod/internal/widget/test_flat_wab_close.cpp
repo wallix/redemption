@@ -43,9 +43,11 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
 
     NotifyApi * notifier = nullptr;
 
+    const char* extra_message = nullptr;
+
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                 "abc<br>def", "rec", "rec",
-                                false, font, Theme(), Translation::EN);
+                                false, extra_message, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
@@ -67,6 +69,8 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     NotifyApi * notifier = nullptr;
 
+    const char* extra_message = nullptr;
+
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
         "adipiscing elit. Nam purus lacus, luctus sit<br>"
@@ -82,7 +86,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
         "erat ut ligula. Fusce sit amet mauris neque.<br>"
         "Sed orci augue, luctus in ornare sed,<br>"
         "adipiscing et arcu.",
-        nullptr, nullptr, false, font, Theme(), Translation::EN);
+        nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
 
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
@@ -105,9 +109,11 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
 
     NotifyApi * notifier = nullptr;
 
+    const char* extra_message = nullptr;
+
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
@@ -129,9 +135,11 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
     NotifyApi * notifier = nullptr;
 
+    const char* extra_message = nullptr;
+
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect().offset(20,0));
@@ -153,9 +161,11 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     NotifyApi * notifier = nullptr;
 
+    const char* extra_message = nullptr;
+
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.x(),
@@ -189,10 +199,11 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
 
+    const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, &notifier,
                                 "abc<br>def", "tartempion", "caufield",
-                                true, font, Theme(), Translation::EN);
+                                true, extra_message, font, Theme(), Translation::EN);
 
     flat_wab_close.refresh_timeleft(183);
 

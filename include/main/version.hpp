@@ -25,4 +25,4 @@
 
 #pragma once
 
-#define VERSION "0.9.723"
+#define VERSION "pub-0.9.723"
