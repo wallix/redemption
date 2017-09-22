@@ -1068,6 +1068,9 @@ int main(int argc, char** argv)
                     return err;
                 }
             }
+            front.primary_connection_finished = true;
+            front.start_wab_session_time = tvtime();
+
         } catch (const Error & e) {
             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
             if (error_message.size()) {
