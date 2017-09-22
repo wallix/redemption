@@ -86,6 +86,8 @@ private:
 
     std::unique_ptr<rdpCredsspClient> credssp;
 
+    std::string& extra_message;
+
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -97,6 +99,7 @@ public:
 public:
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
             const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+            std::string& extra_message,
             const Verbose verbose = {});
     ~RdpNego();
 

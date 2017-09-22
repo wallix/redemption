@@ -45,7 +45,7 @@ struct RdpNegoProtocols
 
 RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
                  const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-                 const Verbose verbose)
+                 std::string& extra_message, const Verbose verbose)
     : tls(nla || tls)
     , nla(nla)
     , krb(nla && krb)
@@ -58,6 +58,7 @@ RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username
     , rand(rand)
     , timeobj(timeobj)
     , lb_info(nullptr)
+    , extra_message(extra_message)
     , verbose(verbose)
 {
 
@@ -291,7 +292,7 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->krb, this->restricted_admin_mode,
-                this->rand, this->timeobj,
+                this->rand, this->timeobj, this->extra_message,
                 bool(this->verbose & Verbose::credssp)
             ));
 

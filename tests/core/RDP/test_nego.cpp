@@ -112,7 +112,8 @@ RED_AUTO_TEST_CASE(TestNego)
     LCGRandom rand(0);
     LCGTime timeobj;
     NullServerNotifier null_server_notifier;
-    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj);
+    std::string extra_message;
+    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj, extra_message);
     nego.set_identity(user, domain, pass, host);
 
     nego.send_negotiation_request();
@@ -172,7 +173,8 @@ RED_AUTO_TEST_CASE(TestSetIdentity) {
 
     LCGRandom rand(0);
     LCGTime timeobj;
-    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand, timeobj);
+    std::string extra_message;
+    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand, timeobj, extra_message);
 
     char pass[] = "Password\x00Pass\x00";
 
