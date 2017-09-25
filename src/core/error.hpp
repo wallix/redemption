@@ -455,6 +455,9 @@ public:
 
 inline const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) {
     switch (error.id) {
+    case ERR_SESSION_UNKNOWN_BACKEND:
+        return TR(trkeys::err_session_unknown_backend, lang);
+
     case ERR_NLA_AUTHENTICATION_FAILED:
         return TR(trkeys::err_nla_authentication_failed, lang);
 

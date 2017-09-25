@@ -236,7 +236,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs.\n"}, set(true));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_suppress_output", set(true));
         W.sep();
@@ -288,7 +288,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
         W.sep();
-        W.member(ini_and_gui, no_sesman, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, set(false));
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, sesman::name{"server_redirection"}, set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "load_balance_info");

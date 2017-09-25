@@ -57,6 +57,7 @@ protected:
     const char * target_host;
     Random & rand;
     TimeObj & timeobj;
+    std::string& extra_message;
     const bool verbose;
 
 public:
@@ -72,6 +73,7 @@ public:
         const bool restricted_admin_mode,
         Random & rand,
         TimeObj & timeobj,
+        std::string& extra_message,
         const bool verbose = false
     )
         : server(false)
@@ -86,6 +88,7 @@ public:
         , target_host(target_host)
         , rand(rand)
         , timeobj(timeobj)
+        , extra_message(extra_message)
         , verbose(verbose)
     {
         if (this->verbose) {
@@ -225,7 +228,7 @@ protected:
         status = this->table->EncryptMessage(&Message, this->send_seq_num++);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "EncryptMessage status: 0x%08X\n", status);
+            LOG(LOG_ERR, "EncryptMessage status: 0x%08X", status);
             return status;
         }
 
@@ -252,10 +255,11 @@ protected:
         }
 
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
-            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu\n",
+            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu",
                 this->pubKeyAuth.size());
             if (this->pubKeyAuth.size() == 0) {
-                LOG(LOG_INFO, "Provided password is probably incorrect.\n");
+                this->extra_message = " Provided login/password is probably incorrect.";
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
             return SEC_E_INVALID_TOKEN;
         }
@@ -281,7 +285,7 @@ protected:
         status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X\n", status);
+            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
             return status;
         }
 
@@ -337,10 +341,11 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
+               std::string& extra_message,
                const bool verbose = false)
         : rdpCredsspBase(
             user, domain, pass, hostname, target_host, krb,
-            restricted_admin_mode, rand, timeobj, verbose)
+            restricted_admin_mode, rand, timeobj, extra_message, verbose)
         , trans(transport)
     {
     }
@@ -460,7 +465,7 @@ private:
             status = this->table->QuerySecurityPackageInfo(&packageInfo);
 
             if (status != SEC_E_OK) {
-                LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+                LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X", status);
                 return Res::Err;
             }
 
@@ -478,7 +483,7 @@ private:
         } while (interface_changed);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
+            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
             return Res::Err;
         }
 
@@ -571,7 +576,7 @@ private:
                                     output_buffer.Buffer.size());
 
             // #ifdef WITH_DEBUG_CREDSSP
-            //             LOG(LOG_ERR, "Sending Authentication Token\n");
+            //             LOG(LOG_ERR, "Sending Authentication Token");
             //             hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
             // #endif
             if (this->verbose) {
@@ -610,7 +615,7 @@ private:
         this->ts_request.recv(in_stream);
 
         // #ifdef WITH_DEBUG_CREDSSP
-        //         LOG(LOG_ERR, "Receiving Authentication Token (%d)\n", (int) this->negoToken.cbBuffer);
+        //         LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->negoToken.cbBuffer);
         //         hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
         // #endif
         if (this->verbose) {
@@ -649,7 +654,7 @@ private:
         status = this->credssp_encrypt_ts_credentials();
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+            LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
             return Res::Err;
         }
         if (this->verbose) {
@@ -720,10 +725,11 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
+               std::string& extra_message,
                const bool verbose = false)
         : rdpCredsspBase(
             user, domain, pass, hostname, "", krb,
-            restricted_admin_mode, rand, timeobj, verbose)
+            restricted_admin_mode, rand, timeobj, extra_message, verbose)
         , trans(transport)
     {
     }
@@ -757,7 +763,7 @@ public:
         Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
 
         if (this->authInfo.size() < 1) {
-            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer\n");
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer");
             return SEC_E_INVALID_TOKEN;
         }
 
@@ -865,7 +871,7 @@ public:
        status = this->table->QuerySecurityPackageInfo(&packageInfo);
 
        if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+           LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X", status);
            return 0;
        }
 
@@ -877,7 +883,7 @@ public:
                                                       nullptr);
 
        if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
+           LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
            return 0;
        }
 
@@ -969,7 +975,7 @@ public:
            }
 
            if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
-               LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X\n", status);
+               LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
                return -1;
            }
 
@@ -986,26 +992,26 @@ public:
            return -1;
 
        if (this->credssp_decrypt_ts_credentials() != SEC_E_OK) {
-           LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X\n", status);
+           LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", status);
            return 0;
        }
 
        if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X\n", status);
+           LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
            return 0;
        }
 
        status = this->table->ImpersonateSecurityContext();
 
        if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X\n", status);
+           LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
            return 0;
        }
        else {
            status = this->table->RevertSecurityContext();
 
            if (status != SEC_E_OK) {
-               LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X\n", status);
+               LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
                return 0;
            }
        }

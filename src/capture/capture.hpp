@@ -29,15 +29,17 @@
 #include "gdi/capture_probe_api.hpp"
 #include "capture/notify_next_video.hpp"
 
-#include "capture/wrm_params.hpp"
-#include "capture/png_params.hpp"
+#include "capture/capture_params.hpp"
+#include "capture/drawable_params.hpp"
 #include "capture/flv_params.hpp"
-#include "capture/pattern_checker_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/sequenced_video_params.hpp"
 #include "capture/full_video_params.hpp"
+#include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
-#include "capture/kbdlog_params.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/pattern_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/wrm_params.hpp"
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/file_to_graphic.hpp"
@@ -363,38 +365,19 @@ private:
 
 public:
     Capture(
+        const CaptureParams capture_params,
+        const DrawableParams drawable_params,
         bool capture_wrm, const WrmParams wrm_params,
         bool capture_png, const PngParams png_params,
-        bool capture_pattern_checker, const PatternCheckerParams /* pattern_checker_params */,
+        bool capture_pattern_checker, const PatternParams pattern_params,
         bool capture_ocr, const OcrParams ocr_params,
         bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
         bool capture_flv_full, const FullVideoParams /*full_video_params*/,
         bool capture_meta, const MetaParams /*meta_params*/,
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
-        const char * basename,
-        const timeval & now,
-        int width,
-        int height,
-        const char * record_tmp_path,
-        const char * record_path,
-        const int groupid,
         const FlvParams flv_params,
-        bool no_timestamp,
-        ReportMessageApi * report_message,
         UpdateProgressData * update_progress_data,
-        const char * pattern_kill,
-        const char * pattern_notify,
-        int debug_capture,
-        bool flv_capture_chunk,
-        const std::chrono::duration<long int> flv_break_interval,
-        bool syslog_keyboard_log,
-        bool rt_display,
-        bool disable_keyboard_log,
-        bool session_log_enabled,
-        bool keyboard_fully_masked,
-        bool meta_keyboard_log,
-        Rect crop_rect,
-        RDPDrawable* rdp_drawable = nullptr
+        Rect crop_rect
     );
 
     ~Capture();

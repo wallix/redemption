@@ -110,8 +110,12 @@ struct CryptoContextWrapper
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
-        cctx.set_with_encryption(with_encryption);
-        cctx.set_with_checksum(with_checksum);
+        cctx.set_trace_type(
+            with_encryption
+            ? TraceType::cryptofile
+            : with_checksum
+                ? TraceType::localfile_hashed
+                : TraceType::localfile);
         cctx.old_encryption_scheme = old_encryption_scheme;
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
     }

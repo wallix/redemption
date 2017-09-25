@@ -340,12 +340,12 @@ struct IOVideoRecorderWithTransport
 
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
-    const int groupid, bool no_timestamp, RDPDrawable & drawable,
+    const int groupid, RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi, FlvParams const & flv_params)
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
-, video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
+, video_cap_ctx(now, flv_params.no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
@@ -524,9 +524,8 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     SequenceTransport & trans,
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
-    bool no_timestamp,
     FlvParams flv_params)
-: video_cap_ctx(now, no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
+: video_cap_ctx(now, flv_params.no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , image_frame_api_ptr(pImageFrameApi)
@@ -682,16 +681,14 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     const char * const record_path,
     const char * const basename,
     const int groupid,
-    bool no_timestamp,
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
     FlvParams flv_params,
-    std::chrono::microseconds video_interval,
     NotifyNextVideo & next_video_notifier)
 : first_image(now, *this)
 , vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
-, vc(now, this->vc_trans, drawable, pImageFrameApi, no_timestamp, std::move(flv_params))
+, vc(now, this->vc_trans, drawable, pImageFrameApi, std::move(flv_params))
 , ic_trans(record_path, basename, ".png", groupid, nullptr)
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_scaled_width(pImageFrameApi->width())
@@ -700,7 +697,9 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , image_frame_api_ptr(pImageFrameApi)
 , video_sequencer(
     now,
-    (video_interval > std::chrono::microseconds(0)) ? video_interval : std::chrono::microseconds::max(),
+    (flv_params.video_interval > std::chrono::microseconds(0))
+        ? flv_params.video_interval
+        : std::chrono::microseconds::max(),
     *this)
 , next_video_notifier(next_video_notifier)
 {

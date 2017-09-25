@@ -313,6 +313,8 @@ protected:
     AuthApi & authentifier;
     ReportMessageApi & report_message;
 
+    std::string& close_box_extra_message_ref;
+
     RdpNego nego;
 
     char clientAddr[512];
@@ -783,7 +785,6 @@ protected:
     bool client_use_bmp_cache_2 = false;
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
-    std::string& close_box_extra_message_ref;
 
     bool is_server_auto_reconnec_packet_received = false;
 
@@ -847,9 +848,11 @@ public:
         , auth_channel_chanid(0)
         , authentifier(authentifier)
         , report_message(report_message)
+        , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
+              , this->close_box_extra_message_ref
               , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
@@ -960,7 +963,6 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
-        , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
     {
@@ -3687,7 +3689,12 @@ public:
                             if (sdata.pdutype2 == PDUTYPE2_SET_ERROR_INFO_PDU)
                             {
                                 if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
-                                this->process_disconnect_pdu(sdata.payload);
+                                uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                this->process_error_info(error_info);
+                                if (error_info == ERRINFO_SERVER_DENIED_CONNECTION) {
+                                    this->close_box_extra_message_ref += " ";
+                                    this->close_box_extra_message_ref += " Please check provided Load Balance Info.";
+                                }
                             }
 
                             LOG(LOG_ERR, "Rdp::finalization is early");
@@ -3905,8 +3912,11 @@ public:
                                     this->process_save_session_info(sdata.payload);
                                     break;
                                 case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                    if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
-                                    this->process_disconnect_pdu(sdata.payload);
+                                    {
+                                        if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                        uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                        this->process_error_info(error_info);
+                                    }
                                     break;
                                 case PDUTYPE2_SHUTDOWN_DENIED:
                                     //if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");}
@@ -4252,19 +4262,28 @@ public:
 
                     if (UP_AND_RUNNING != this->connection_finalization_state &&
                         !this->already_upped_and_running) {
-                        const char * statestr = "unknow event";
-                        const char * statedescr = "unknow event";
+                        const char * statestr = "UNKNOWN_STATE";
+                        const char * statedescr = "Unknow state.";
                         switch (this->state) {
-                            #define CASE(e, s) case e: statestr = #e + 4; statedescr = s; break
-                            CASE(MOD_RDP_NEGO, "fail during TLS security exchange");
-                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, "fail during basic setting exchange");
-                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, "fail during channels connection");
-                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, "fail during channels connection");
-                            CASE(MOD_RDP_GET_LICENSE, "failed while trying to get licence");
-                            CASE(MOD_RDP_CONNECTED, "fail while connecting session on the target");
+                            #define CASE(e, s)                                          \
+                                case e:                                                 \
+                                    statestr = #e + 4; statedescr = s;                  \
+                                    this->close_box_extra_message_ref += " ";           \
+                                    this->close_box_extra_message_ref += statedescr;    \
+                                    this->close_box_extra_message_ref += " (";          \
+                                    this->close_box_extra_message_ref += statestr;      \
+                                    this->close_box_extra_message_ref += ")";           \
+                                break
+                            CASE(MOD_RDP_NEGO, "Fail during TLS security exchange.");
+                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, "Fail during basic setting exchange.");
+                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, "Fail during channels connection.");
+                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, "Fail during channels connection.");
+                            CASE(MOD_RDP_GET_LICENSE, "Failed while trying to get licence.");
+                            CASE(MOD_RDP_CONNECTED, "Fail while connecting session on the target.");
                             #undef CASE
                         }
-                        LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state, %s.",
+
+                        LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
                             statestr, statedescr);
                         throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                     }
@@ -5691,14 +5710,16 @@ public:
         }
     }   // get_error_info_name
 
+    uint32_t get_error_info_from_pdu(InStream & stream) {
+        return stream.in_uint32_le();
+    }
 
-    void process_disconnect_pdu(InStream & stream) {
-        uint32_t    errorInfo      = stream.in_uint32_le();
+    void process_error_info(uint32_t errorInfo) {
         const char* errorInfo_name = get_error_info_name(errorInfo);
         LOG(LOG_INFO, "process disconnect pdu : code=0x%08X error=%s", errorInfo, errorInfo_name);
 
         if (errorInfo) {
-            this->close_box_extra_message_ref += "(";
+            this->close_box_extra_message_ref += " (";
             this->close_box_extra_message_ref += errorInfo_name;
             this->close_box_extra_message_ref += ")";
         }
@@ -5711,7 +5732,7 @@ public:
             this->remote_apps_not_enabled = true;
             break;
         }
-    }   // process_disconnect_pdu
+    }   // process_error_info
 
     void process_logon_info(const char * domain, const char * username) {
         char domain_username_format_0[2048];

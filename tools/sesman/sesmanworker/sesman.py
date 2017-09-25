@@ -1779,10 +1779,11 @@ class Sesman():
     def fetch_connectionpolicy(self, conn_opts):
         cp_spec = {
             'rdp': {
+                u'server_redirection': 'server_redirection',
+                u'load_balance_info': 'load_balance_info',
                 u'use_client_provided_alternate_shell': 'use_client_provided_alternate_shell',
                 u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
                 u'use_client_provided_remoteapp': 'use_client_provided_remoteapp',
-                u'load_balance_info': 'load_balance_info',
                 u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program'
                 },

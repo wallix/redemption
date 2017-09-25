@@ -111,7 +111,6 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
-        TraceType wrm_trace_type = TraceType::localfile;
 
         const char * record_path = "./";
         const int groupid = 0; // www-data
@@ -125,18 +124,14 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         strcpy(basename, "capture");
         strcpy(extension, "");          // extension is currently ignored
 
-        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+        cctx.set_trace_type(TraceType::localfile);
 
         WrmParams wrm_params(
             24,
             cctx,
             rnd,
             fstat,
-            record_path,
             hash_path,
-            basename,
-            groupid,
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
@@ -145,7 +140,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(
+          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -243,18 +240,14 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         RED_CHECK(true);
 
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::localfile_hashed);
 
         WrmParams wrm_params(
             24,
             cctx,
             rnd,
             fstat,
-            "./",
             "/tmp/",
-            "capture",
-            1000, // ini.get<cfg::video::capture_groupid>()
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
@@ -265,7 +258,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
-        WrmCaptureImpl wrm(now, wrm_params, nullptr /* authentifier */, gd_drawable);
+        WrmCaptureImpl wrm(
+            CaptureParams{now, "capture", "", "./", 1000, nullptr},
+            wrm_params/* authentifier */, gd_drawable);
 
         RED_CHECK(true);
 
@@ -449,8 +444,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_usec = 0;
         const int groupid = 0;
         
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(false);
+        cctx.set_trace_type(TraceType::localfile);
         
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
@@ -528,8 +522,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_usec = 0;
         const int groupid = 0;
         
-        cctx.set_with_encryption(false);
-        cctx.set_with_checksum(true);
+        cctx.set_trace_type(TraceType::localfile_hashed);
         
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "/tmp/", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);

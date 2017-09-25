@@ -259,6 +259,10 @@ namespace trkeys
         "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition.",
         "(RP) Impossible de lancer Session Probe! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
     );
+    TR_KV(err_session_unknown_backend,
+        "Unknown backend failure.",
+        "Erreur de backend inconnue."
+    );
 #undef TR_KV
 }
 

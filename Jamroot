@@ -291,7 +291,7 @@ make targets.jam : : @gen_targets ;
 actions test_libredrec
 {
     # check is loadable
-    ./tools/redrec rec $(>) -h > /dev/null
+    ./tools/redrec rec $(>) -h > /dev/null && :> $(<)
 }
 
 make test_libredrec : libredrec : @test_libredrec

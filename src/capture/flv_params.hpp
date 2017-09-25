@@ -21,7 +21,9 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 #include "configs/autogen/enums.hpp"
+#include "utils/rect.hpp"
 
 struct FlvParams
 {
@@ -33,5 +35,8 @@ struct FlvParams
     unsigned qscale;
     unsigned bitrate;
     std::string codec;
+    bool no_timestamp;
+    bool capture_chunk;
+    std::chrono::microseconds video_interval;
     unsigned verbosity;
 };
