@@ -787,6 +787,8 @@ public:
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPBitmapData " << std::endl;
         }
+
+        this->record_connection_nego_times();
     }
 
     virtual void draw(const RDPDestBlt & cmd, Rect clip) override {
