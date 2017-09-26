@@ -20,6 +20,11 @@
 
 #pragma once
 
-struct PatternCheckerParams
+#include <cstdint>
+
+struct PatternParams
 {
+    const char * pattern_notify;
+    const char * pattern_kill;
+    uint32_t verbose;
 };

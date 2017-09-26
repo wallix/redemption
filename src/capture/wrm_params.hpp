@@ -38,10 +38,7 @@ struct WrmParams
     CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
-    const char * record_path;
     const char * hash_path;
-    const char * basename;
-    int groupid;
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
@@ -51,10 +48,7 @@ struct WrmParams
               CryptoContext & cctx,
               Random & rnd,
               Fstat & fstat,
-              const char * record_path,
               const char * hash_path,
-              const char * basename,
-              int groupid,
               std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
               std::chrono::seconds break_interval,
               WrmCompressionAlgorithm wrm_compression_algorithm,
@@ -64,10 +58,7 @@ struct WrmParams
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)
-    , record_path(record_path)
     , hash_path(hash_path)
-    , basename(basename)
-    , groupid(groupid)
     , frame_interval(frame_interval)
     , break_interval(break_interval)
     , wrm_compression_algorithm(wrm_compression_algorithm)

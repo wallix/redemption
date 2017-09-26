@@ -407,12 +407,12 @@ public:
         this->_info.width = width;
         this->_info.height = height;
 
-        if (!this->primary_connection_finished) {
-            this->primary_connection_finished = true;
-
-            this->start_wab_session_time = tvtime();
-
-        }
+//         if (!this->primary_connection_finished) {
+//             this->primary_connection_finished = true;
+//
+//             this->start_wab_session_time = tvtime();
+//
+//         }
 
         return ResizeResult::instant_done;
     }
@@ -787,6 +787,8 @@ public:
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPBitmapData " << std::endl;
         }
+
+        this->record_connection_nego_times();
     }
 
     virtual void draw(const RDPDestBlt & cmd, Rect clip) override {

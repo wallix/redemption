@@ -67,15 +67,6 @@
 #include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
-#include "capture/wrm_params.hpp"
-#include "capture/png_params.hpp"
-#include "capture/flv_params.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/meta_params.hpp"
-#include "capture/sequenced_video_params.hpp"
-#include "capture/full_video_params.hpp"
-#include "capture/pattern_checker_params.hpp"
-#include "capture/kbdlog_params.hpp"
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 
@@ -579,19 +570,14 @@ class PatternsChecker : noncopyable
     ReportMessageApi & report_message;
 
 public:
-    PatternsChecker(
-        ReportMessageApi & report_message,
-        const char * const filters_kill,
-        const char * const filters_notify,
-        int verbose = 0
-    )
+    PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
     : report_message(report_message)
     {
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            filters_kill, this->regexes_filter_kill, verbose);
+            params.pattern_kill, this->regexes_filter_kill, params.verbose);
 
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            filters_notify, this->regexes_filter_notify, verbose);
+            params.pattern_notify, this->regexes_filter_notify, params.verbose);
     }
 
     bool contains_pattern() const {
@@ -640,10 +626,13 @@ public:
 
     gdi::ImageFrameApi * image_frame_api_ptr;
 
-    PngCapture(const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_params.record_tmp_path, png_params.basename, ".png", png_params.groupid, report_error_from_reporter(png_params.report_message))
+    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    : trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        capture_params.record_tmp_path, capture_params.basename, ".png",
+        capture_params.groupid, report_error_from_reporter(capture_params.report_message))
     , drawable(drawable)
-    , start_capture(now)
+    , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
     , scaled_width{(((pImageFrameApi->width() * this->zoom_factor) / 100)+3) & 0xFFC}
@@ -732,8 +721,9 @@ public:
     bool enable_rt_display = false;
 
     PngCaptureRT(
-        const timeval & now, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : PngCapture(now, drawable, pImageFrameApi, png_params)
+        const CaptureParams & capture_params, RDPDrawable & drawable,
+        gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    : PngCapture(capture_params, drawable, pImageFrameApi, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -1467,59 +1457,41 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 
 
 Capture::Capture(
+    const CaptureParams capture_params,
+    const DrawableParams drawable_params,
     bool capture_wrm, const WrmParams wrm_params,
     bool capture_png, const PngParams png_params,
-    bool capture_pattern_checker, const PatternCheckerParams /* pattern_checker_params */,
+    bool capture_pattern_checker, const PatternParams pattern_params,
     bool capture_ocr, const OcrParams ocr_params,
     bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
     bool capture_flv_full, const FullVideoParams /*full_video_params*/,
     bool capture_meta, const MetaParams meta_params,
-    bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
-    const char * basename,
-    const timeval & now,
-    int width,
-    int height,
-    const char * record_tmp_path,
-    const char * record_path,
-    const int groupid,
+    bool capture_kbd, const KbdLogParams kbd_log_params,
     const FlvParams flv_params,
-    bool no_timestamp,
-    ReportMessageApi * report_message,
     UpdateProgressData * update_progress_data,
-    const char * pattern_kill,
-    const char * pattern_notify,
-    int debug_capture,
-    bool flv_capture_chunk,
-    const std::chrono::duration<long int> flv_break_interval,
-    bool syslog_keyboard_log,
-    bool rt_display,
-    bool disable_keyboard_log,
-    bool session_log_enabled,
-    bool keyboard_fully_masked,
-    bool meta_keyboard_log,
-    Rect crop_rect,
-    RDPDrawable* rdp_drawable)
-: is_replay_mod(!report_message)
+    Rect crop_rect)
+: is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
-, mouse_info{now, width / 2, height / 2}
+, mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_event{}
 , capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
 {
    //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
-
-    if (capture_png || (report_message && (capture_flv || capture_ocr))) {
-        if (recursive_create_directory(record_tmp_path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
-            LOG(LOG_INFO, "Failed to create directory: \"%s\"", record_tmp_path);
+    if (capture_png || (capture_params.report_message && (capture_flv || capture_ocr))) {
+        if (recursive_create_directory(capture_params.record_tmp_path,
+                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
+            LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
         }
     }
 
     if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
-        if (rdp_drawable) {
-            this->gd_drawable = rdp_drawable;
+        if (drawable_params.rdp_drawable) {
+            this->gd_drawable = drawable_params.rdp_drawable;
         }
         else {
-            this->gd_drawable_.reset(new RDPDrawable(width, height));
+            this->gd_drawable_.reset(new RDPDrawable(
+                drawable_params.width, drawable_params.height));
             this->gd_drawable = this->gd_drawable_.get();
         }
         this->gds.push_back(*this->gd_drawable);
@@ -1558,53 +1530,50 @@ Capture::Capture(
                 }
 
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    now, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
             }
         }
 
         if (capture_wrm) {
-            this->wrm_capture_obj.reset(new WrmCaptureImpl(now, wrm_params, report_message, *this->gd_drawable));
+            this->wrm_capture_obj.reset(new WrmCaptureImpl(
+                capture_params, wrm_params, *this->gd_drawable));
         }
 
         if (capture_meta) {
             this->meta_capture_obj.reset(new MetaCaptureImpl(
-                now, meta_params, record_tmp_path, basename,
-                report_error_from_reporter(report_message)
+                capture_params.now, meta_params,
+                capture_params.record_tmp_path, capture_params.basename,
+                report_error_from_reporter(capture_params.report_message)
             ));
         }
 
         if (capture_flv) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-            if (flv_capture_chunk && this->meta_capture_obj) {
+            if (flv_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                now, record_path, basename, groupid, no_timestamp, png_params.zoom, *this->gd_drawable,
-                image_frame_api_ptr,
-                flv_params,
-                flv_break_interval, notifier
+                capture_params.now, capture_params.record_path, capture_params.basename,
+                capture_params.groupid, png_params.zoom,
+                *this->gd_drawable, image_frame_api_ptr, flv_params, notifier
             ));
         }
 
         if (capture_flv_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                now, record_path, basename, groupid, no_timestamp, *this->gd_drawable,
-                image_frame_api_ptr,
-                flv_params));
+                capture_params.now, capture_params.record_path, capture_params.basename,
+                capture_params.groupid, *this->gd_drawable,
+                image_frame_api_ptr, flv_params));
         }
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
-                *report_message,
-                pattern_kill,
-                pattern_notify,
-                debug_capture)
-            );
+                *capture_params.report_message, pattern_params));
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1614,7 +1583,7 @@ Capture::Capture(
         if (capture_ocr) {
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj.reset(new TitleCaptureImpl(
-                    now, *this->gd_drawable, ocr_params,
+                    capture_params.now, *this->gd_drawable, ocr_params,
                     this->notifier_title_changed
                 ));
             }
@@ -1625,18 +1594,15 @@ Capture::Capture(
 
         if (capture_wrm) {
             this->gds.push_back(*this->wrm_capture_obj);
+            // TODO kbd_log_params.wrm_keyboard_log
             this->kbds.push_back(*this->wrm_capture_obj);
             this->caps.push_back(*this->wrm_capture_obj);
             this->objs.push_back(*this->wrm_capture_obj);
             this->probes.push_back(*this->wrm_capture_obj);
-
-            if (!disable_keyboard_log) {
-                this->wrm_capture_obj->enable_keyboard_log();
-            }
         }
 
         if (this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = rt_display;
+            this->png_capture_real_time_obj->enable_rt_display = png_params.rt_display;
             this->caps.push_back(*this->png_capture_real_time_obj);
         }
 
@@ -1655,28 +1621,36 @@ Capture::Capture(
     }
 
     if (capture_kbd) {
-        this->syslog_kbd_capture_obj.reset(new SyslogKbd(now));
-        this->session_log_kbd_capture_obj.reset(new SessionLogKbd(*report_message));
-        this->pattern_kbd_capture_obj.reset(new PatternKbd(report_message, pattern_kill, pattern_notify, debug_capture));
-    }
+        if (kbd_log_params.syslog_keyboard_log) {
+            this->syslog_kbd_capture_obj.reset(new SyslogKbd(capture_params.now));
+            this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
+            this->caps.push_back(*this->syslog_kbd_capture_obj.get());
+        }
 
-    if (this->syslog_kbd_capture_obj.get() && (!syslog_keyboard_log)) {
-        this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
-        this->caps.push_back(*this->syslog_kbd_capture_obj.get());
-    }
+        if (kbd_log_params.session_log_enabled) {
+            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(
+                *capture_params.report_message));
+            this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
+            this->probes.push_back(*this->session_log_kbd_capture_obj.get());
+        }
 
-    if (this->session_log_kbd_capture_obj.get() && session_log_enabled && keyboard_fully_masked) {
-        this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
-        this->probes.push_back(*this->session_log_kbd_capture_obj.get());
-    }
+        this->pattern_kbd_capture_obj.reset(new PatternKbd(
+            capture_params.report_message,
+            pattern_params.pattern_kill,
+            pattern_params.pattern_notify,
+            pattern_params.verbose));
 
-    if (this->pattern_kbd_capture_obj.get() && this->pattern_kbd_capture_obj->contains_pattern()) {
-        this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
+        if (this->pattern_kbd_capture_obj->contains_pattern()) {
+            this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
+        }
+        else {
+            this->pattern_kbd_capture_obj.reset();
+        }
     }
 
     if (this->meta_capture_obj) {
         this->caps.push_back(this->meta_capture_obj->meta);
-        if (!meta_keyboard_log) {
+        if (kbd_log_params.meta_keyboard_log) {
             this->kbds.push_back(this->meta_capture_obj->meta);
             this->probes.push_back(this->meta_capture_obj->meta);
         }

@@ -106,22 +106,9 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        // TODO remove this after unifying capture interface
-        bool no_timestamp = false;
-        // TODO remove this after unifying capture interface
-
-        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
- |(ini.get<cfg::debug::primary_orders>()?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
- |(ini.get<cfg::debug::secondary_orders>()?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
- |(ini.get<cfg::debug::bitmap_update>()?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
-
 
         FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+        flv_params.no_timestamp = false;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
 
@@ -176,77 +163,58 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
-        PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                                nullptr, record_tmp_path, basename, groupid, false};
+        PngParams png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+
+        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No
         };
-        KbdLogParams kbdlog_params;
-        PatternCheckerParams patter_checker_params;
+
+        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+        kbd_log_params.session_log_enabled = false;
+
+        PatternParams const pattern_params = pattern_params_from_ini(ini);
+
         SequencedVideoParams sequenced_video_params;
         FullVideoParams full_video_params;
 
-        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams wrm_params(
+        WrmParams wrm_params = wrm_params_from_ini(
             24,
             cctx,
             rnd,
             fstat,
-            record_path,
             hash_path,
-            basename,
-            groupid,
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            int(wrm_verbose)
+            ini
         );
 
-        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-        int debug_capture = ini.get<cfg::debug::capture>();
-        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
-        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-        bool rt_display = ini.get<cfg::video::rt_display>();
-        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
-        bool session_log_enabled = false;
-        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-             != ::KeyboardInputMaskingLevel::fully_masked;
-        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
+        CaptureParams capture_params{
+            now,
+            basename,
+            record_tmp_path,
+            record_path,
+            groupid,
+            nullptr
+        };
 
         Capture capture(
-                          capture_wrm, wrm_params
+                          capture_params
+                        , drawable_params
+                        , capture_wrm, wrm_params
                         , capture_png, png_params
-                        , capture_pattern_checker, patter_checker_params
+                        , capture_pattern_checker, pattern_params
                         , capture_ocr, ocr_params
                         , capture_flv, sequenced_video_params
                         , capture_flv_full, full_video_params
                         , capture_meta, meta_params
-                        , capture_kbd, kbdlog_params
-                        , basename
-                        , now, scr.cx, scr.cy
-                        , record_tmp_path
-                        , record_path
-                        , groupid
+                        , capture_kbd, kbd_log_params
                         , flv_params
-                        , no_timestamp, nullptr
                         , nullptr
-                        , pattern_kill
-                        , pattern_notify
-                        , debug_capture
-                        , flv_capture_chunk
-                        , flv_break_interval
-                        , syslog_keyboard_log
-                        , rt_display
-                        , disable_keyboard_log
-                        , session_log_enabled
-                        , keyboard_fully_masked
-                        , meta_keyboard_log
                         , Rect()
                         );
 
@@ -370,16 +338,19 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool no_timestamp = false;
 
     GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-        | (ini.get<cfg::debug::primary_orders>() ?GraphicToFile::Verbose::primary_orders:GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::secondary_orders>() ?GraphicToFile::Verbose::secondary_orders:GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::bitmap_update>() ?GraphicToFile::Verbose::bitmap_update:GraphicToFile::Verbose::none);
+        | (ini.get<cfg::debug::primary_orders>()
+            ? GraphicToFile::Verbose::primary_orders : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::secondary_orders>()
+            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
+        | (ini.get<cfg::debug::bitmap_update>()
+            ? GraphicToFile::Verbose::bitmap_update : GraphicToFile::Verbose::none);
 
     WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-    TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
 
     FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
+    flv_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
@@ -433,79 +404,61 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
-    PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-                        nullptr, record_tmp_path, basename, groupid, false};
+    PngParams png_params = {
+        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+
+    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No
     };
-    KbdLogParams kbdlog_params;
-    PatternCheckerParams patter_checker_params;
+
+    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+    kbd_log_params.session_log_enabled = false;
+
+    PatternParams const pattern_params = pattern_params_from_ini(ini);
+
     SequencedVideoParams sequenced_video_params;
     FullVideoParams full_video_params;
 
-    cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-    cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
     WrmParams wrm_params(
         24,
         cctx,
         rnd,
         fstat,
-        record_path,
         hash_path,
-        basename,
-        groupid,
         wrm_frame_interval,
         wrm_break_interval,
         wrm_compression_algorithm,
         int(wrm_verbose)
     );
 
+    CaptureParams capture_params{
+        now,
+        basename,
+        record_tmp_path,
+        record_path,
+        groupid,
+        nullptr
+    };
 
-    const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-    const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-    int debug_capture = ini.get<cfg::debug::capture>();
-    bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-    const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
-    bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-    bool rt_display = ini.get<cfg::video::rt_display>();
-    bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
-    bool session_log_enabled = false;
-    bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-         != ::KeyboardInputMaskingLevel::fully_masked;
-    bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
-
-    // TODO remove this after unifying capture interface
     Capture capture(
-                     capture_wrm, wrm_params
+                     capture_params
+                   , drawable_params
+                   , capture_wrm, wrm_params
                    , capture_png, png_params
-                   , capture_pattern_checker, patter_checker_params
+                   , capture_pattern_checker, pattern_params
                    , capture_ocr, ocr_params
                    , capture_flv, sequenced_video_params
                    , capture_flv_full, full_video_params
                    , capture_meta, meta_params
-                   , capture_kbd, kbdlog_params
-                   , basename
-                   , now, scr.cx, scr.cy
-                   , record_tmp_path
-                   , record_path
-                   , groupid
+                   , capture_kbd, kbd_log_params
                    , flv_params
-                   , no_timestamp, nullptr
                    , nullptr
-                   , pattern_kill
-                   , pattern_notify
-                   , debug_capture
-                   , flv_capture_chunk
-                   , flv_break_interval
-                   , syslog_keyboard_log
-                   , rt_display
-                   , disable_keyboard_log
-                   , session_log_enabled
-                   , keyboard_fully_masked
-                   , meta_keyboard_log
                    , Rect()
                    );
     auto const color_cxt = gdi::ColorCtx::depth16();
@@ -543,7 +496,8 @@ RED_AUTO_TEST_CASE(TestPattern)
                 this->message = message;
             }
         } report_message;
-        PatternsChecker checker(report_message, i ? ".de." : nullptr, i ? nullptr : ".de.");
+        PatternsChecker checker(
+            report_message, PatternParams{i ? nullptr : ".de.", i ? ".de." : nullptr, 0});
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 

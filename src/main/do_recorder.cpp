@@ -12,11 +12,7 @@
 #include "system/scoped_crypto_init.hpp"
 #include "program_options/program_options.hpp"
 
-#include "capture/flv_params.hpp"
-#include "capture/flv_params_from_ini.hpp"
-#include "capture/ocr_params.hpp"
-#include "capture/png_params.hpp"
-#include "capture/wrm_params.hpp"
+#include "capture/params_from_ini.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
@@ -1617,7 +1613,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
-                  bool const no_timestamp,
                   bool infile_is_encrypted,
                   uint32_t order_count,
                   bool show_file_metadata,
@@ -1829,24 +1824,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
-                        RDPSerializer::Verbose wrm_verbose
-                            = to_verbose_flags(ini.get<cfg::debug::capture>())
-                            | (ini.get<cfg::debug::primary_orders>()
-                                ? RDPSerializer::Verbose::primary_orders
-                                : RDPSerializer::Verbose::none)
-                            | (ini.get<cfg::debug::secondary_orders>()
-                                ? RDPSerializer::Verbose::secondary_orders
-                                : RDPSerializer::Verbose::none)
-                            | (ini.get<cfg::debug::bitmap_update>()
-                                ? RDPSerializer::Verbose::bitmap_update
-                                : RDPSerializer::Verbose::none)
-                        ;
-
-                        WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-                        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-                        std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-                        TraceType wrm_trace_type = ini.get<cfg::globals::trace_type>();
-
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
 
@@ -1861,15 +1838,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool capture_meta = capture_ocr;
                         bool capture_kbd = false;
 
-                        OcrParams ocr_params = {
-                            ini.get<cfg::ocr::version>(),
-                            ocr::locale::LocaleId(
-                                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-                            ini.get<cfg::ocr::on_title_bar_only>(),
-                            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                            ini.get<cfg::ocr::interval>(),
-                            ini.get<cfg::debug::ocr>()
-                        };
+                        OcrParams const ocr_params = ocr_params_from_ini(ini);
 
                         if (ini.get<cfg::debug::capture>()) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -1905,55 +1874,41 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 
                         // PngParams
-                        png_params.report_message = nullptr;
-                        png_params.record_tmp_path = record_tmp_path;
-                        png_params.basename = basename;
-                        png_params.groupid = groupid;
                         png_params.remote_program_session = false;
+                        png_params.rt_display = ini.get<cfg::video::rt_display>();
 
+                        RDPDrawable rdp_drawable{
+                            player.screen_rect.cx, player.screen_rect.cy};
 
-                        MetaParams meta_params{
+                        DrawableParams const drawable_params{
+                            player.screen_rect.cx,
+                            player.screen_rect.cy,
+                            &rdp_drawable
+                        };
+
+                        MetaParams const meta_params{
                             MetaParams::EnableSessionLog::No,
                             MetaParams::HideNonPrintable::No
                         };
-                        KbdLogParams kbdlog_params;
-                        PatternCheckerParams patter_checker_params;
-                        SequencedVideoParams sequenced_video_params;
-                        FullVideoParams full_video_params;
 
-                        cctx.set_with_encryption(wrm_trace_type == TraceType::cryptofile);
-                        cctx.set_with_checksum(wrm_trace_type == TraceType::localfile_hashed);
+                        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+                        kbd_log_params.session_log_enabled = false;
 
-                        WrmParams wrm_params(
+                        PatternParams const pattern_params = pattern_params_from_ini(ini);
+
+                        SequencedVideoParams const sequenced_video_params;
+                        FullVideoParams const full_video_params;
+
+                        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+                        WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
                             cctx,
                             rnd,
                             fstat,
-                            record_path,
                             hash_path,
-                            basename,
-                            groupid,
-                            wrm_frame_interval,
-                            wrm_break_interval,
-                            wrm_compression_algorithm,
-                            uint32_t(wrm_verbose) // TODO
+                            ini
                         );
-
-                        const char * pattern_kill = ini.get<cfg::context::pattern_kill>().c_str();
-                        const char * pattern_notify = ini.get<cfg::context::pattern_notify>().c_str();
-                        int debug_capture = ini.get<cfg::debug::capture>();
-                        bool flv_capture_chunk = ini.get<cfg::globals::capture_chunk>();
-                        const std::chrono::duration<long int> flv_break_interval = ini.get<cfg::video::flv_break_interval>();
-                        bool syslog_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog);
-                        bool rt_display = ini.get<cfg::video::rt_display>();
-                        bool disable_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm);
-                        bool session_log_enabled = false;
-                        bool keyboard_fully_masked = ini.get<cfg::session_log::keyboard_input_masking_level>()
-                            != ::KeyboardInputMaskingLevel::fully_masked;
-                        bool meta_keyboard_log = bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::meta);
-
-                        RDPDrawable rdp_drawable{
-                            player.screen_rect.cx, player.screen_rect.cy};
 
                         // std::optional<Capture> storage;
                         class CaptureStorage
@@ -1983,39 +1938,28 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         } storage;
 
                         auto set_capture_consumer = [&](timeval const & now) {
+                            CaptureParams capture_params{
+                                now,
+                                basename,
+                                record_tmp_path,
+                                record_path,
+                                groupid,
+                                nullptr
+                            };
                             auto * capture = new(storage.get_storage()) Capture(
-                                  capture_wrm, wrm_params
+                                  capture_params
+                                , drawable_params
+                                , capture_wrm, wrm_params
                                 , capture_png, png_params
-                                , capture_pattern_checker, patter_checker_params
+                                , capture_pattern_checker, pattern_params
                                 , capture_ocr, ocr_params
                                 , capture_flv, sequenced_video_params
                                 , capture_flv_full, full_video_params
                                 , capture_meta, meta_params
-                                , capture_kbd, kbdlog_params
-                                , basename
-                                , now
-                                , player.screen_rect.cx
-                                , player.screen_rect.cy
-                                , record_tmp_path
-                                , record_path
-                                , groupid
+                                , capture_kbd, kbd_log_params
                                 , flv_params
-                                , no_timestamp
-                                , nullptr
                                 , &update_progress_data
-                                , pattern_kill
-                                , pattern_notify
-                                , debug_capture
-                                , flv_capture_chunk
-                                , flv_break_interval
-                                , syslog_keyboard_log
-                                , rt_display
-                                , disable_keyboard_log
-                                , session_log_enabled
-                                , keyboard_fully_masked
-                                , meta_keyboard_log
                                 , Rect()
-                                , &rdp_drawable
                                 );
 
                             player.clear_consumer();
@@ -2163,7 +2107,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , nullptr, nullptr, nullptr, 0, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
     FlvParams flv_params;
 
     // flv output options
@@ -2653,7 +2597,6 @@ extern "C" {
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,
-                          false, // no_timestamp,
                           rp.infile_is_encrypted,
                           rp.order_count,
                           rp.show_file_metadata,

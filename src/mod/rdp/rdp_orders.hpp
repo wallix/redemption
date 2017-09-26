@@ -480,6 +480,8 @@ public:
 
             uint8_t class_ = (drawing_order.control_flags & (STANDARD | SECONDARY));
             if (class_ == SECONDARY) {
+                if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "Alternate secondary order"); }
+
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
                 switch (header.orderType) {
                     case RDP::AltsecDrawingOrderHeader::FrameMarker:
@@ -504,12 +506,15 @@ public:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_BITMAP XXX secondary order"); }
                     this->process_bmpcache(stream, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
+                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_COLOR_TABLE secondary order"); }
                     this->process_colormap(stream, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
+                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_GLYPH secondary order"); }
                     this->process_glyphcache(stream, header);
                     //hexdump_d(order_start, stream.p - order_start);
                     break;
@@ -531,57 +536,56 @@ public:
                     ? this->common.clip
                     : Rect(0, 0, front_width, front_height)
                 ;
-                //LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    //this->glyph_index.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->glyph_index.log(LOG_INFO, cmd_clip);}
                     gd.draw(this->glyph_index, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
                     gd.draw(this->destblt, cmd_clip);
-                    //this->destblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->destblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case MULTIDSTBLT:
                     this->multidstblt.receive(stream, header);
                     gd.draw(this->multidstblt, cmd_clip);
-                    //this->multidstblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->multidstblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case MULTIOPAQUERECT:
                     this->multiopaquerect.receive(stream, header);
                     gd.draw(this->multiopaquerect, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->multiopaquerect.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->multiopaquerect.log(LOG_INFO, cmd_clip);}
                     break;
                 case MULTIPATBLT:
                     this->multipatblt.receive(stream, header);
                     gd.draw(this->multipatblt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->multipatblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->multipatblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case MULTISCRBLT:
                     this->multiscrblt.receive(stream, header);
                     gd.draw(this->multiscrblt, cmd_clip);
-                    //this->multiscrblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->multiscrblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
                     gd.draw(this->patblt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->patblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->patblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
                     gd.draw(this->scrblt, cmd_clip);
-                    //this->scrblt.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->scrblt.log(LOG_INFO, cmd_clip);}
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
                     gd.draw(this->lineto, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->lineto.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->lineto.log(LOG_INFO, cmd_clip); }
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
                     gd.draw(this->opaquerect, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->opaquerect.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->opaquerect.log(LOG_INFO, cmd_clip); }
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -598,6 +602,7 @@ public:
                         // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
                             gd.draw(this->memblt, cmd_clip, bitmap);
+                            if (bool(this->verbose & RDPVerbose::graphics)){ this->memblt.log(LOG_INFO, cmd_clip); }
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -621,6 +626,7 @@ public:
                         // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
                             gd.draw(this->mem3blt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
+                            if (bool(this->verbose & RDPVerbose::graphics)){ this->mem3blt.log(LOG_INFO, cmd_clip); }
                         }
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
@@ -632,12 +638,12 @@ public:
                 case POLYLINE:
                     this->polyline.receive(stream, header);
                     gd.draw(this->polyline, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->polyline.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){this->polyline.log(LOG_INFO, cmd_clip); }
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
                     gd.draw(this->ellipseSC, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
-                    //this->ellipseSC.log(LOG_INFO, cmd_clip);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->ellipseSC.log(LOG_INFO, cmd_clip); }
                     break;
                 default:
                     /* error unknown order */

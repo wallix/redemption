@@ -89,6 +89,7 @@ public:
     uint32_t             _requestedFormatId = 0;
     std::string          _requestedFormatName;
     bool                 _waiting_for_data;
+    std::string close_box_extra_message_ref;
 
 
     struct FileSystemData {
@@ -522,6 +523,7 @@ public:
                                    , ini.get<cfg::font>()
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
+                                   , this->close_box_extra_message_ref
                                    , to_verbose_flags(0)   // this->verbose
                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
@@ -577,6 +579,7 @@ public:
         , sound_qt(nullptr)
         , _monitorCountNegociated(false)
         , _waiting_for_data(false)
+        , close_box_extra_message_ref("Close")
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
         this->sound_qt     = new Sound_Qt(this->form, this);

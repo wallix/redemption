@@ -14,24 +14,17 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2016
-*   Author(s): Jonathan Poelen
+*   Copyright (C) Wallix 2010-2017
+*   Author(s): Christophe Grosjean
 */
 
 #pragma once
 
-#include <chrono>
+class RDPDrawable;
 
-class ReportMessageApi;
-
-struct PngParams
+struct DrawableParams
 {
-    unsigned png_width;
-    unsigned png_height;
-    std::chrono::milliseconds png_interval;
-    unsigned zoom;
-    uint32_t png_limit;
-    bool real_time_image_capture;
-    bool remote_program_session;
-    bool rt_display;
+    int width;
+    int height;
+    RDPDrawable* rdp_drawable;
 };
