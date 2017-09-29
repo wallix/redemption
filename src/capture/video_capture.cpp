@@ -168,6 +168,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 , start_video_capture(now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
+, start_frame_index(0)
 , no_timestamp(no_timestamp)
 , image_frame_api_ptr(pImageFrameApi)
 , timestamp_tracer(
@@ -206,9 +207,18 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
-    recorder.encoding_video_frame(this->current_video_time / frame_interval);
+    recorder.encoding_video_frame(
+        this->current_video_time / this->frame_interval - this->start_frame_index);
     // TODO Two consecutive encoding_video_frame call is suspecious (differ by `+ 1`)
-    recorder.encoding_video_frame(this->current_video_time / frame_interval + 1);
+    recorder.encoding_video_frame(
+        this->current_video_time / this->frame_interval - this->start_frame_index + 1);
+}
+
+void VideoCaptureCtx::next_video()
+{
+    if (this->frame_interval.count()) {
+        this->start_frame_index = this->current_video_time / this->frame_interval;
+    }
 }
 
 Microseconds VideoCaptureCtx::snapshot(
@@ -235,7 +245,8 @@ Microseconds VideoCaptureCtx::snapshot(
             if (this->start_video_capture.tv_sec != this->previous_second) {
                 this->preparing_video_frame(recorder);
             }
-            recorder.encoding_video_frame(previous_video_time / frame_interval);
+            recorder.encoding_video_frame(
+                previous_video_time / frame_interval - this->start_frame_index);
             auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
             this->start_video_capture = addusectimeval(elapsed, this->start_video_capture);
             previous_video_time += elapsed;
@@ -567,6 +578,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->flv_params.target_height,
         this->flv_params.verbosity
     ));
+    this->video_cap_ctx.next_video();
 }
 
 void SequencedVideoCaptureImpl::VideoCapture::encoding_video_frame()
@@ -716,6 +728,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 
 void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
     this->video_sequencer.reset_now(now);
+
     if (!this->ic_has_first_img) {
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
@@ -726,6 +739,7 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
         this->ic_has_first_img = true;
         this->ic_trans.next();
     }
+
     this->vc.next_video();
     tm ptm;
     localtime_r(&now.tv_sec, &ptm);
@@ -734,6 +748,7 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     this->ic_flush();
     this->vc.clear_timestamp();
     this->ic_trans.next();
+
     this->next_video_notifier.notify_next_video(now, reason);
 }
 

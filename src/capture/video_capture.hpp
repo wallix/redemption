@@ -77,6 +77,7 @@ struct VideoCaptureCtx : noncopyable
     void encoding_video_frame(video_recorder &);
     gdi::CaptureApi::Microseconds snapshot(
         video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+    void next_video();
 
     uint16_t width() const noexcept {
         return this->drawable.width();
@@ -101,6 +102,7 @@ private:
     timeval start_video_capture;
     std::chrono::microseconds frame_interval;
     std::chrono::microseconds current_video_time;
+    uint64_t start_frame_index;
 
     bool no_timestamp;
     time_t previous_second = 0;
