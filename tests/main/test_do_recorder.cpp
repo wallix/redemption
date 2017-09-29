@@ -1028,13 +1028,13 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
 
     const char * filename;
     filename = "/tmp/recorder.1-000000.flv";
-    RED_CHECK_EQUAL(13451264, filesize(filename));
+    RED_CHECK_EQUAL(13451870, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1-000001.flv";
-    RED_CHECK_EQUAL(1641846, filesize(filename));
+    RED_CHECK_EQUAL(1641583, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1.flv";
-    RED_CHECK_EQUAL(15092851, filesize(filename));
+    RED_CHECK_EQUAL(14978053, filesize(filename));
     ::unlink(filename);
 }
 

@@ -209,9 +209,6 @@ void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
     this->preparing_video_frame(recorder);
     recorder.encoding_video_frame(
         this->current_video_time / this->frame_interval - this->start_frame_index);
-    // TODO Two consecutive encoding_video_frame call is suspecious (differ by `+ 1`)
-    recorder.encoding_video_frame(
-        this->current_video_time / this->frame_interval - this->start_frame_index + 1);
 }
 
 void VideoCaptureCtx::next_video()
@@ -384,7 +381,10 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     }
 }
 
-FullVideoCaptureImpl::~FullVideoCaptureImpl() = default;
+FullVideoCaptureImpl::~FullVideoCaptureImpl()
+{
+    this->encoding_video_frame();
+}
 
 
 void FullVideoCaptureImpl::frame_marker_event(
@@ -551,11 +551,15 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     this->next_video();
 }
 
-SequencedVideoCaptureImpl::VideoCapture::~VideoCapture() = default;
+SequencedVideoCaptureImpl::VideoCapture::~VideoCapture()
+{
+    this->encoding_video_frame();
+}
 
 void SequencedVideoCaptureImpl::VideoCapture::next_video()
 {
     if (this->recorder) {
+        this->encoding_video_frame();
         this->recorder.reset();
         this->trans.next();
     }
@@ -729,9 +733,10 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
     this->video_sequencer.reset_now(now);
 
+    tm ptm;
+    localtime_r(&now.tv_sec, &ptm);
+
     if (!this->ic_has_first_img) {
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
         this->vc.prepare_video_frame();
         this->vc.trace_timestamp(ptm);
         this->ic_flush();
@@ -741,8 +746,7 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     }
 
     this->vc.next_video();
-    tm ptm;
-    localtime_r(&now.tv_sec, &ptm);
+
     this->vc.prepare_video_frame();
     this->vc.trace_timestamp(ptm);
     this->ic_flush();
