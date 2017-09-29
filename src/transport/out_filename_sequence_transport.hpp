@@ -188,8 +188,8 @@ class OutFilenameSequenceTransport : public Transport
         {
             const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
-            LOG( LOG_ERR, "renaming file \"%s\" to \"%s\"\n"
-                   , this->current_filename_, filename);
+            LOG( LOG_INFO, "renaming file \"%s\" to \"%s\"\n"
+               , this->current_filename_, filename);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%d : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
