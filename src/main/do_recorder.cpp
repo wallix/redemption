@@ -1896,8 +1896,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         PatternParams const pattern_params = pattern_params_from_ini(ini);
 
-                        SequencedVideoParams const sequenced_video_params;
-                        FullVideoParams const full_video_params;
+                        SequencedVideoParams const sequenced_video_params {};
+                        FullVideoParams const full_video_params {};
 
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
