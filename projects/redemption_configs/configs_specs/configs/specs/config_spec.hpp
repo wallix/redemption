@@ -444,7 +444,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
         W.sep();
-        W.member(hidden_in_gui, sesman_to_proxy, type_<unsigned>(), "rt_display", set(0));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "rt_display", set(false));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
