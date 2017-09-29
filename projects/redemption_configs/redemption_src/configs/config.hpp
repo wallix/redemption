@@ -27,16 +27,14 @@
 #include "core/app_path.hpp"
 #include "core/authid.hpp"
 
-#include "utils/sugar/underlying_cast.hpp"
 #include "utils/sugar/exchange.hpp"
 #include "utils/log.hpp"
-#include "utils/translation.hpp"
 #include "utils/cfgloader.hpp"
-#include "utils/fileutils.hpp" // file_exist
 
 #include <cstdint>
 #include <cassert>
 #include <cstdio>
+
 
 namespace configs
 {
@@ -92,7 +90,6 @@ namespace configs
 
 #include "config_variant.hpp"
 
-#include "configs/io.hpp"
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/variables_configuration_fwd.hpp"
 #include "configs/autogen/variables_configuration.hpp"
@@ -121,40 +118,7 @@ namespace configs
     void post_set_value(VariablesConfiguration &, CfgType const &)
     {}
 
-    inline void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value)
-    {
-        Theme & theme = static_cast<cfg::theme&>(vars).value;
-
-        auto & str = cfg_value.value;
-        if (static_cast<cfg::debug::config>(vars).value) {
-            LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
-        }
-
-        // load theme
-
-        {
-            char theme_path[1024] = {};
-            snprintf(theme_path, 1024, "%s/themes/%s/" THEME_INI, app_path(AppPath::Cfg), str.c_str());
-            theme_path[sizeof(theme_path) - 1] = 0;
-
-            configuration_load(ThemeHolder(theme), theme_path);
-        }
-
-        if (theme.global.logo) {
-            char logo_path[1024] = {};
-            snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_PNG, app_path(AppPath::Cfg), str.c_str());
-            logo_path[sizeof(logo_path) - 1] = 0;
-            if (!file_exist(logo_path)) {
-                snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_BMP, app_path(AppPath::Cfg), str.c_str());
-                logo_path[sizeof(logo_path) - 1] = 0;
-                if (!file_exist(logo_path)) {
-                    theme.global.logo = false;
-                    return;
-                }
-            }
-            theme.global.logo_path = logo_path;
-        }
-    }
+    void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);
 }
 
 
@@ -506,39 +470,3 @@ private:
         static_cast<Field<cfg::context::target_port>&>(this->fields).asked_ = true;
     }
 };
-
-#include "configs/autogen/set_value.tcc"
-
-
-inline Translation::language_t language(Inifile const & ini)
-{
-    return static_cast<Translation::language_t>(
-        ini.template get<cfg::translation::language>());
-}
-
-inline const char * Translation::translate(trkeys::TrKey_password k) const
-{
-    if (this->ini) {
-        switch (this->lang) {
-            case Translation::EN: {
-                auto & s = this->ini->template get<cfg::translation::password_en>();
-                if (!s.empty()) {
-                    return s.c_str();
-                }
-            }
-            break;
-            case Translation::FR: {
-                auto & s = this->ini->template get<cfg::translation::password_fr>();
-                if (!s.empty()) {
-                    return s.c_str();
-                }
-            }
-            break;
-            case Translation::MAX_LANG:
-                assert(false);
-                break;
-        }
-    }
-
-    return k.translations[this->lang];
-}

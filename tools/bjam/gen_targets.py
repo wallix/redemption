@@ -219,6 +219,11 @@ extra_srcs = (
         'projects/redemption_configs/redemption_src/configs/config.hpp',
         'H')
     ),
+    ('src/configs/config.cpp', File(
+        'projects/redemption_configs/redemption_src',
+        'projects/redemption_configs/redemption_src/configs/config.cpp',
+        'C')
+    ),
 )
 
 for t in extra_srcs:
