@@ -358,7 +358,7 @@ private:
     std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
-    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
     bool capture_drawable = false;
 
@@ -452,13 +452,13 @@ public:
     void set_pointer_display();
 
     void external_breakpoint() override {
-        for (gdi::ExternalCaptureApi & obj : this->objs) {
+        for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
             obj.external_breakpoint();
         }
     }
 
     void external_time(timeval const & now) override {
-        for (gdi::ExternalCaptureApi & obj : this->objs) {
+        for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
             obj.external_time(now);
         }
     }

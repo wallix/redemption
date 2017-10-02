@@ -1601,7 +1601,7 @@ Capture::Capture(
             // TODO kbd_log_params.wrm_keyboard_log
             this->kbds.push_back(*this->wrm_capture_obj);
             this->caps.push_back(*this->wrm_capture_obj);
-            this->objs.push_back(*this->wrm_capture_obj);
+            this->ext_caps.push_back(*this->wrm_capture_obj);
             this->probes.push_back(*this->wrm_capture_obj);
         }
 
@@ -1617,7 +1617,7 @@ Capture::Capture(
         if (this->sequenced_video_capture_obj) {
             //this->caps.push_back(this->sequenced_video_capture_obj->vc);
             this->caps.push_back(*this->sequenced_video_capture_obj);
-       }
+        }
 
         if (this->full_video_capture_obj) {
             this->caps.push_back(*this->full_video_capture_obj);
