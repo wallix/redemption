@@ -65,10 +65,21 @@ protected:
 
 struct VideoCaptureCtx : noncopyable
 {
+    enum class ImageByInterval : bool
+    {
+        One,
+        ZeroOrOne,
+    };
+
+    enum class TraceTimestamp : bool
+    {
+        No,
+        Yes,
+    };
+
     VideoCaptureCtx(
         timeval const & now,
-        bool no_timestamp,
-        unsigned frame_rate,
+        FlvParams const & flv_params,
         RDPDrawable & drawable,
         gdi::ImageFrameApi * pImageFrameApi
     );
@@ -104,7 +115,8 @@ private:
     std::chrono::microseconds current_video_time;
     uint64_t start_frame_index;
 
-    bool no_timestamp;
+    TraceTimestamp trace_timestamp;
+    ImageByInterval image_by_interval;
     time_t previous_second = 0;
     bool has_frame_marker = false;
 

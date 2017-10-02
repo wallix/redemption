@@ -18,20 +18,20 @@
    Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
+#include "capture/flv_params.hpp"
 #include "capture/video_capture.hpp"
-
-#include "utils/log.hpp"
-
-#include "utils/difftimeval.hpp"
-
-#include "gdi/capture_api.hpp"
+#include "capture/video_recorder.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
 
-#include "capture/video_recorder.hpp"
-#include "capture/flv_params.hpp"
+#include "gdi/capture_api.hpp"
+
 #include "transport/transport.hpp"
+
 #include "utils/bitmap_shrink.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/log.hpp"
+
 
 #include <cerrno>
 #include <cstring>
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
+
 
 namespace
 {
@@ -159,17 +160,17 @@ using Microseconds = gdi::CaptureApi::Microseconds;
 
 VideoCaptureCtx::VideoCaptureCtx(
     timeval const & now,
-    bool no_timestamp,
-    unsigned frame_rate,
+    FlvParams const & flv_params,
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi
 )
 : drawable(drawable)
 , start_video_capture(now)
-, frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
+, frame_interval(std::chrono::microseconds(1000000L / flv_params.frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , start_frame_index(0)
-, no_timestamp(no_timestamp)
+, trace_timestamp(flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes)
+, image_by_interval(ImageByInterval::ZeroOrOne)
 , image_frame_api_ptr(pImageFrameApi)
 , timestamp_tracer(
       pImageFrameApi->width(),
@@ -183,7 +184,7 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     this->drawable.trace_mouse();
     this->image_frame_api_ptr->prepare_image_frame();
-    if (!this->no_timestamp) {
+    if (TraceTimestamp::Yes == this->trace_timestamp) {
         time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
         localtime_r(&rawtime, &tm_result);
@@ -192,7 +193,7 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
     recorder.preparing_video_frame();
     this->previous_second = this->start_video_capture.tv_sec;
 
-    if (!this->no_timestamp) {
+    if (TraceTimestamp::Yes == this->trace_timestamp) {
         this->timestamp_tracer.clear();
     }
     this->drawable.clear_mouse();
@@ -207,8 +208,8 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
-    recorder.encoding_video_frame(
-        this->current_video_time / this->frame_interval - this->start_frame_index);
+    auto const index = this->current_video_time / this->frame_interval - this->start_frame_index;
+    recorder.encoding_video_frame(index);
 }
 
 void VideoCaptureCtx::next_video()
@@ -235,19 +236,39 @@ Microseconds VideoCaptureCtx::snapshot(
         tick %= frame_interval;
         this->current_video_time -= tick;
 
-        // here, synchronize video time with the end of second
+        // synchronize video time with the end of second
 
-        std::chrono::microseconds count = this->current_video_time - previous_video_time;
-        while (count >= frame_interval) {
-            if (this->start_video_capture.tv_sec != this->previous_second) {
-                this->preparing_video_frame(recorder);
+        switch (this->image_by_interval) {
+            case ImageByInterval::One:
+            {
+                auto count = (this->current_video_time - previous_video_time) / frame_interval;
+                auto frame_index = previous_video_time / frame_interval - this->start_frame_index;
+
+                while (count--) {
+                    if (this->start_video_capture.tv_sec != this->previous_second) {
+                        this->preparing_video_frame(recorder);
+                    }
+                    recorder.encoding_video_frame(frame_index++);
+                    this->start_video_capture += frame_interval;
+                }
             }
-            recorder.encoding_video_frame(
-                previous_video_time / frame_interval - this->start_frame_index);
-            auto elapsed = std::min(count, std::chrono::microseconds(std::chrono::seconds(1)));
-            this->start_video_capture = addusectimeval(elapsed, this->start_video_capture);
-            previous_video_time += elapsed;
-            count -= elapsed;
+            break;
+            case ImageByInterval::ZeroOrOne:
+            {
+                std::chrono::microseconds count = this->current_video_time - previous_video_time;
+                while (count >= frame_interval) {
+                    if (this->start_video_capture.tv_sec != this->previous_second) {
+                        this->preparing_video_frame(recorder);
+                    }
+                    recorder.encoding_video_frame(
+                        previous_video_time / frame_interval - this->start_frame_index);
+                    auto elapsed = std::min(count, decltype(count)(std::chrono::seconds(1)));
+                    this->start_video_capture += elapsed;
+                    previous_video_time += elapsed;
+                    count -= elapsed;
+                }
+            }
+            break;
         }
     }
     return frame_interval - tick;
@@ -353,7 +374,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
-, video_cap_ctx(now, flv_params.no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
+, video_cap_ctx(now, flv_params, drawable, pImageFrameApi)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
@@ -536,7 +557,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
     FlvParams flv_params)
-: video_cap_ctx(now, flv_params.no_timestamp, flv_params.frame_rate, drawable, pImageFrameApi)
+: video_cap_ctx(now, flv_params, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , image_frame_api_ptr(pImageFrameApi)

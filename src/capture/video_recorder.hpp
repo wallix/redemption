@@ -92,9 +92,8 @@ class video_recorder
     //unsigned frame_key = frame_key_limit;
 
 public:
-    //typedef int(*read_packet_t)(void *io_params, uint8_t *buf, int buf_size);
-    typedef int(*write_packet_fn_t)(void *io_params, uint8_t *buf, int buf_size);
-    typedef int64_t(*seek_fn_t)(void *io_params, int64_t offset, int whence);
+    using write_packet_fn_t = int(*)(void *io_params, uint8_t *buf, int buf_size);
+    using seek_fn_t = int64_t(*)(void *io_params, int64_t offset, int whence);
 
     video_recorder(
         write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,

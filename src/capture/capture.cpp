@@ -1677,21 +1677,19 @@ Capture::~Capture()
         this->wrm_capture_obj.reset();
         if (this->sequenced_video_capture_obj) {
             try {
-                this->sequenced_video_capture_obj->encoding_video_frame();
+                this->sequenced_video_capture_obj.reset();
             }
             catch (Error const & e) {
                 LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
             }
-            this->sequenced_video_capture_obj.reset();
         }
         if (this->full_video_capture_obj) {
             try {
-                this->full_video_capture_obj->encoding_video_frame();
+                this->full_video_capture_obj.reset();
             }
             catch (Error const & e) {
                 LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
             }
-            this->full_video_capture_obj.reset();
         }
     }
     else {

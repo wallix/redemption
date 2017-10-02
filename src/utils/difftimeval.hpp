@@ -171,3 +171,8 @@ static inline timeval how_long_to_wait(const timeval & alarm, const timeval & no
  * @}
  */
 
+inline timeval & operator+=(timeval & a, std::chrono::microseconds const & usec)
+{
+    a = addusectimeval(usec, a);
+    return a;
+}
