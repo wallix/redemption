@@ -30,6 +30,8 @@
 
 #include <memory>
 
+#include "configs/config.hpp"
+
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "utils/stream.hpp"

@@ -30,6 +30,7 @@ disable_srcs = (
 )
 
 src_requirements = dict((
+    ('src/capture/params_from_ini.cpp', '<cxxflags>-std=c++14'),
     ('src/utils/bitmap_from_file.cpp', '<cxxflags>-std=c++14'),
     ('src/utils/bitmap.cpp', '<cxxflags>-std=c++14'),
     ('src/main/rdpheadless.cpp', '<cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random

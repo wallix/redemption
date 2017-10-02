@@ -1821,6 +1821,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         ini.set<cfg::globals::video_quality>(flv_params.video_quality);
                         ini.set<cfg::globals::codec_id>(flv_params.codec);
+                        ini.set<cfg::video::bogus_vlc_frame_rate>(flv_params.bogus_vlc_frame_rate);
                         flv_params = flv_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
@@ -2211,6 +2212,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
         {"video-codec", &recorder.flv_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"bogus-vlc", "Needed to play a video with ffplay or VLC."},
+        {"disable-bogus-vlc", ""},
 
         {"json-pgs", "use json format to .pgs file"},
     });
@@ -2257,6 +2260,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         recorder.json_pgs = true;
     }
 
+    recorder.flv_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
+    if (options.count("bogus-vlc")) {
+        recorder.flv_params.bogus_vlc_frame_rate = true;
+    }
+    if (options.count("disable-bogus-vlc")) {
+        recorder.flv_params.bogus_vlc_frame_rate = false;
+    }
     recorder.flv_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags

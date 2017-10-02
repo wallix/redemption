@@ -29,6 +29,7 @@ exe rdpproxy :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -201,6 +202,7 @@ exe rdptproxy :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -285,6 +287,7 @@ exe vncclient :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -368,6 +371,7 @@ lib libredrec :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -422,6 +426,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -510,6 +515,7 @@ test-run tests/acl/test_authentifier :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -598,6 +604,7 @@ test-run tests/acl/test_module_manager :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -712,6 +719,7 @@ test-run tests/capture/test_capture :
   <library>snappy
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1743,6 +1751,7 @@ test-run tests/core/test_mainloop :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1837,6 +1846,7 @@ test-run tests/core/test_session :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1920,6 +1930,7 @@ test-run tests/core/test_session_server :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2008,6 +2019,7 @@ test-run tests/front/test_front :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2094,6 +2106,7 @@ test-run tests/main/test_do_recorder :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3179,6 +3192,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3219,6 +3233,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3259,6 +3274,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3852,6 +3868,7 @@ obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_
 obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp ;
+obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp : <cxxflags>-std=c++14 ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp ;

@@ -170,7 +170,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 , current_video_time(0)
 , start_frame_index(0)
 , trace_timestamp(flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes)
-, image_by_interval(ImageByInterval::ZeroOrOne)
+, image_by_interval(flv_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne)
 , image_frame_api_ptr(pImageFrameApi)
 , timestamp_tracer(
       pImageFrameApi->width(),
