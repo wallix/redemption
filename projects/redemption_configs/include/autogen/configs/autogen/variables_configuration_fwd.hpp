@@ -52,6 +52,7 @@ namespace cfg {
         struct video_quality;
         struct large_pointer_support;
         struct unicode_keyboard_event_support;
+        struct mod_recv_timeout;
     };
 
     struct session_log {
@@ -88,6 +89,7 @@ namespace cfg {
         struct enable_new_pointer_update;
         struct bogus_ios_glyph_support_level;
         struct bogus_number_of_fastpath_input_event;
+        struct recv_timeout;
     };
 
     struct mod_rdp {

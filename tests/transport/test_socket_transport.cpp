@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 else if (res == -1) {
                     res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res != -1){
-                        client_trans = new SocketTransport("Sender", client_sck, "127.0.0.1", 4444, to_verbose_flags(511));
+                        client_trans = new SocketTransport("Sender", client_sck, "127.0.0.1", 4444, std::chrono::seconds(1), to_verbose_flags(511));
                     }
                 }
             }
@@ -201,7 +201,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
                 if (sck > 0){
                     recv_sck[nb_recv_sck] = sck;
-                    sck_trans[nb_recv_sck] = new SocketTransport("Reader", sck, "127.0.0.1", 4444, to_verbose_flags(511));
+                    sck_trans[nb_recv_sck] = new SocketTransport("Reader", sck, "127.0.0.1", 4444, std::chrono::seconds(1), to_verbose_flags(511));
                     nb_recv_sck++;
 
                 }

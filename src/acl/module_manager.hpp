@@ -649,6 +649,7 @@ private:
         : SocketTransport( name, sck
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
+                         , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)

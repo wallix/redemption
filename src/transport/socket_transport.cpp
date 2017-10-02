@@ -31,7 +31,8 @@
 namespace
 {
     ssize_t tls_recv_all(TLSContext & tls, uint8_t * data, size_t const len);
-    ssize_t socket_recv_all(int sck, char const * name, uint8_t * data, size_t const len);
+    ssize_t socket_recv_all(int sck, char const * name, uint8_t * data, size_t const len,
+        std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
     ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
 
@@ -55,14 +56,20 @@ namespace
 }
 
 SocketTransport::SocketTransport(const char * name, int sck, const char *ip_address, int port,
+                                 std::chrono::milliseconds recv_timeout,
                                  Verbose verbose, std::string * error_message)
     : sck(sck)
     , name(name)
     , port(port)
     , error_message(error_message)
     , tls(nullptr)
+    , recv_timeout(recv_timeout)
     , verbose(verbose)
 {
+    if (bool(verbose)) {
+        LOG(LOG_INFO, "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
+    }
+
     strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
     this->ip_address[127] = 0;
 }
@@ -216,7 +223,7 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
         LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
     }
 
-    ssize_t res = this->tls ? tls_recv_all(*this->tls, buffer, len) : socket_recv_all(this->sck, this->name, buffer, len);
+    ssize_t res = this->tls ? tls_recv_all(*this->tls, buffer, len) : socket_recv_all(this->sck, this->name, buffer, len, this->recv_timeout);
     //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
 
     // we properly reached end of file on a block boundary
@@ -293,7 +300,8 @@ namespace
         return len;
     }
 
-    ssize_t socket_recv_all(int sck, char const* name, uint8_t* data, size_t const len) {
+    ssize_t socket_recv_all(int sck, char const* name, uint8_t* data, size_t const len,
+            std::chrono::milliseconds recv_timeout) {
         size_t remaining_len = len;
 
         while (remaining_len > 0) {
@@ -322,12 +330,13 @@ namespace
                     data += res;
                     if (remaining_len) {
                         fd_set fds;
-                        struct timeval time = { 1, 0 };
+                        struct timeval time = addusectimeval(recv_timeout, {0, 0});
                         io_fd_zero(fds);
                         io_fd_set(sck, fds);
-                        if ((::select(sck + 1, &fds, nullptr, nullptr, &time) < 1) ||
+                        int ret = ::select(sck + 1, &fds, nullptr, nullptr, &time);
+                        if ((ret < 1) ||
                             !io_fd_isset(sck, fds)) {
-                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes", name, sck, remaining_len);
+                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes, ret=%d", name, sck, remaining_len, ret);
                             return -1;
                         }
                     }

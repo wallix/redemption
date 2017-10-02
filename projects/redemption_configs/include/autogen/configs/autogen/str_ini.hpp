@@ -122,6 +122,10 @@
 
 "#unicode_keyboard_event_support = 0\n\n"
 
+"# In milliseconds.\n"
+"#_advanced\n"
+"#mod_recv_timeout = 1000\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"
@@ -243,6 +247,10 @@
 "#   1: pause key only\n"
 "#   2: all input events\n"
 "#bogus_number_of_fastpath_input_event = 1\n\n"
+
+"# In milliseconds.\n"
+"#_advanced\n"
+"#recv_timeout = 1000\n\n"
 
 "[mod_rdp]\n\n"
 

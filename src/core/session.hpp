@@ -70,6 +70,7 @@ class Session
         : auth_trans(
             "Authentifier", client_sck,
             ini.get<cfg::globals::authfile>().c_str(), 0,
+            std::chrono::seconds(1),
             to_verbose_flags(ini.get<cfg::debug::auth>()))
         , acl_serial(
             ini, now, this->auth_trans, cctx, rnd, fstat,
@@ -95,7 +96,7 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
 
         SocketTransport front_trans(
-            "RDP Client", sck, "", 0,
+            "RDP Client", sck, "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
             to_verbose_flags(this->ini.get<cfg::debug::front>())
         );
 

@@ -50,6 +50,8 @@ public:
     std::string * error_message;
     TLSContext * tls;
 
+    std::chrono::milliseconds recv_timeout;
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -57,6 +59,7 @@ public:
     };
 
     SocketTransport( const char * name, int sck, const char *ip_address, int port
+                   , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);
 
     ~SocketTransport() override;
