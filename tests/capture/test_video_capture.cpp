@@ -211,7 +211,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, {}, 0};
         FullVideoCaptureImpl video_capture(now,
             "./", "opaquerect_fullvideocapture_timestamp1",
-            0 /* groupid */, drawable, &drawable, flv_params);
+            0 /* groupid */, drawable, &drawable, flv_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
@@ -226,7 +226,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, {}, 0};
         FullVideoCaptureImpl video_capture(now,
             "./", "opaquerect_fullvideocapture_timestamp_mouse0",
-            0 /* groupid */, drawable, &drawable, flv_params);
+            0 /* groupid */, drawable, &drawable, flv_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, false);
     }
     CHECK_FILESIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp_mouse0.flv", 298223);
@@ -240,7 +240,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureX264)
         FlvParams flv_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", false, false, false, {}, 0};
         FullVideoCaptureImpl video_capture(now,
             "./", "opaquerect_fullvideocapture_timestamp2",
-            0 /* groupid */, drawable, &drawable, flv_params);
+            0 /* groupid */, drawable, &drawable, flv_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
     CHECK_FILESIZE_AND_CLEAN2("./opaquerect_fullvideocapture_timestamp2.mp4", 123987, 123973);

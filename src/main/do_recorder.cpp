@@ -1610,6 +1610,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int64_t end_cap,
                   PngParams & png_params,
                   FlvParams & flv_params,
+                  FullVideoParams & full_video_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
@@ -1898,7 +1899,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         PatternParams const pattern_params = pattern_params_from_ini(ini);
 
                         SequencedVideoParams const sequenced_video_params {};
-                        FullVideoParams const full_video_params {};
 
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
@@ -2110,6 +2110,7 @@ struct RecorderParams {
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
     FlvParams flv_params;
+    FullVideoParams full_video_params;
 
     // flv output options
     bool full_video; // create full video
@@ -2260,15 +2261,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         recorder.json_pgs = true;
     }
 
-    recorder.flv_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
+    recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
+    recorder.flv_params.bogus_vlc_frame_rate = false;
     if (options.count("bogus-vlc")) {
+        recorder.full_video_params.bogus_vlc_frame_rate = true;
         recorder.flv_params.bogus_vlc_frame_rate = true;
     }
     if (options.count("disable-bogus-vlc")) {
+        recorder.full_video_params.bogus_vlc_frame_rate = false;
         recorder.flv_params.bogus_vlc_frame_rate = false;
     }
     recorder.flv_params.video_quality = Level::high;
-    recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags
       = (                   (options.count("wrm") > 0)
         ? CaptureFlags::wrm : CaptureFlags::none)
@@ -2604,6 +2607,7 @@ extern "C" {
                           rp.end_cap,
                           rp.png_params,
                           rp.flv_params,
+                          rp.full_video_params,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
                           rp.wrm_break_interval,

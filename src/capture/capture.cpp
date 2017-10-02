@@ -1468,7 +1468,7 @@ Capture::Capture(
     bool capture_pattern_checker, const PatternParams pattern_params,
     bool capture_ocr, const OcrParams ocr_params,
     bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
-    bool capture_flv_full, const FullVideoParams /*full_video_params*/,
+    bool capture_flv_full, const FullVideoParams full_video_params,
     bool capture_meta, const MetaParams meta_params,
     bool capture_kbd, const KbdLogParams kbd_log_params,
     const FlvParams flv_params,
@@ -1572,7 +1572,7 @@ Capture::Capture(
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 capture_params.now, capture_params.record_path, capture_params.basename,
                 capture_params.groupid, *this->gd_drawable,
-                image_frame_api_ptr, flv_params));
+                image_frame_api_ptr, flv_params, full_video_params));
         }
 
         if (capture_pattern_checker) {

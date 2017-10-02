@@ -19,6 +19,7 @@
 */
 
 #include "capture/flv_params.hpp"
+#include "capture/full_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
 
@@ -160,17 +161,19 @@ using Microseconds = gdi::CaptureApi::Microseconds;
 
 VideoCaptureCtx::VideoCaptureCtx(
     timeval const & now,
-    FlvParams const & flv_params,
+    TraceTimestamp trace_timestamp,
+    ImageByInterval image_by_interval,
+    unsigned frame_rate,
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi
 )
 : drawable(drawable)
 , start_video_capture(now)
-, frame_interval(std::chrono::microseconds(1000000L / flv_params.frame_rate)) // `1000000L % frame_rate ` should be equal to 0
+, frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , start_frame_index(0)
-, trace_timestamp(flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes)
-, image_by_interval(flv_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne)
+, trace_timestamp(trace_timestamp)
+, image_by_interval(image_by_interval)
 , image_frame_api_ptr(pImageFrameApi)
 , timestamp_tracer(
       pImageFrameApi->width(),
@@ -370,18 +373,23 @@ struct IOVideoRecorderWithTransport
 
 //@}
 
+using TraceTimestamp = VideoCaptureCtx::TraceTimestamp;
+using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 
 // FullVideoCaptureImpl
 //@{
 
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
-    const int groupid, RDPDrawable & drawable,
-    gdi::ImageFrameApi * pImageFrameApi, FlvParams const & flv_params)
+    const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
+    FlvParams const & flv_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
     record_path, basename, ("." + flv_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
-, video_cap_ctx(now, flv_params, drawable, pImageFrameApi)
+, video_cap_ctx(now,
+    flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
+    full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+    flv_params.frame_rate, drawable, pImageFrameApi)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
@@ -564,7 +572,10 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
     FlvParams flv_params)
-: video_cap_ctx(now, flv_params, drawable, pImageFrameApi)
+: video_cap_ctx(now,
+    flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
+    flv_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+    flv_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
 , flv_params(std::move(flv_params))
 , image_frame_api_ptr(pImageFrameApi)

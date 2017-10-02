@@ -22,6 +22,7 @@
 
 #include "capture/video_recorder.hpp"
 #include "capture/flv_params.hpp"
+#include "capture/full_video_params.hpp"
 #include "capture/notify_next_video.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/capture_api.hpp"
@@ -79,7 +80,9 @@ struct VideoCaptureCtx : noncopyable
 
     VideoCaptureCtx(
         timeval const & now,
-        FlvParams const & flv_params,
+        TraceTimestamp trace_timestamp,
+        ImageByInterval image_by_interval,
+        unsigned frame_rate,
         RDPDrawable & drawable,
         gdi::ImageFrameApi * pImageFrameApi
     );
@@ -132,7 +135,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams const & flv_params
+        FlvParams const & flv_params, FullVideoParams const & full_video_params
     );
 
     ~FullVideoCaptureImpl();
