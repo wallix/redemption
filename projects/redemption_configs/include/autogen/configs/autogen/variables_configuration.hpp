@@ -2215,7 +2215,7 @@ namespace cfg {
         type value{static_cast<type>(1)};
     };
     /// AUTHID_VIDEO_RT_DISPLAY <br/>
-    /// type: unsigned int <br/>
+    /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
     struct video::rt_display {
@@ -2226,8 +2226,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(56); }
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -2265,6 +2265,20 @@ namespace cfg {
         using type = std::chrono::seconds;
         using mapped_type = type;
         type value{0};
+    };
+    /// Needed to play a video with ffplay or VLC. <br/>
+    /// Note: Useless with mpv and mplayer. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
+    struct video::bogus_vlc_frame_rate {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "video"; }
+        static constexpr char const * name() { return "bogus_vlc_frame_rate"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
     };
     /// Bitrate for low quality. <br/>
     /// type: unsigned int <br/>
@@ -4366,6 +4380,7 @@ struct video
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
 , cfg::video::flv_break_interval
+, cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
 , cfg::video::l_height

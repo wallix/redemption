@@ -626,6 +626,11 @@
 "#_advanced\n"
 "#wrm_compression_algorithm = 1\n\n"
 
+"# Needed to play a video with ffplay or VLC.\n"
+"# Note: Useless with mpv and mplayer.\n"
+"#_advanced\n"
+"#bogus_vlc_frame_rate = 1\n\n"
+
 "# Bitrate for low quality.\n"
 "#_advanced\n"
 "#l_bitrate = 10000\n\n"

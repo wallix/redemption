@@ -611,7 +611,7 @@
 "disable_file_system_log = integer(min=0, max=3, default=1)\n\n"
 
 "#_hidden\n"
-"rt_display = integer(min=0, default=0)\n\n"
+"rt_display = boolean(default=False)\n\n"
 
 "# The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
 "#   0: 24-bit\n"
@@ -625,6 +625,11 @@
 "#   2: snappy\n"
 "#_advanced\n"
 "wrm_compression_algorithm = option(0, 1, 2, default=1)\n\n"
+
+"# Needed to play a video with ffplay or VLC.\n"
+"# Note: Useless with mpv and mplayer.\n"
+"#_advanced\n"
+"bogus_vlc_frame_rate = boolean(default=True)\n\n"
 
 "# Bitrate for low quality.\n"
 "#_advanced\n"
