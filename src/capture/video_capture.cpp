@@ -208,8 +208,15 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
-    auto const index = this->current_video_time / this->frame_interval - this->start_frame_index;
-    recorder.encoding_video_frame(index);
+    auto index = this->current_video_time / this->frame_interval - this->start_frame_index;
+    recorder.encoding_video_frame(index + 1);
+    if (!index) {
+        ++index;
+        long long count = std::max<long long>(2, std::chrono::seconds(1) / this->frame_interval);
+        while (count--) {
+            recorder.encoding_video_frame(++index);
+        }
+    }
 }
 
 void VideoCaptureCtx::next_video()
