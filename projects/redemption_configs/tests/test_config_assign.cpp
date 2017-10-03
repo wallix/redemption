@@ -318,7 +318,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::hash_path>(cpath);
     ini.set<cfg::video::hash_path>(spath);
-    ini.set<cfg::video::inactivity_timeout>(std::chrono::seconds{1});
     ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::png_limit>(1);
     ini.set<cfg::video::record_path>(cpath);

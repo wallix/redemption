@@ -435,8 +435,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
-        W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
         W.sep();
@@ -620,7 +618,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "manager_disconnect_reason");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "disconnect_reason_ack", set(false));
         W.sep();

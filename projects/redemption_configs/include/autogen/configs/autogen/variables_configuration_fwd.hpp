@@ -178,7 +178,6 @@ namespace cfg {
         struct hash_path;
         struct record_tmp_path;
         struct record_path;
-        struct inactivity_timeout;
         struct disable_keyboard_log;
         struct disable_clipboard_log;
         struct disable_file_system_log;
@@ -307,7 +306,6 @@ namespace cfg {
         struct session_probe_outbound_connection_monitoring_rules;
         struct session_probe_process_monitoring_rules;
         struct session_probe_extra_system_processes;
-        struct manager_disconnect_reason;
         struct disconnect_reason;
         struct disconnect_reason_ack;
         struct ip_target;

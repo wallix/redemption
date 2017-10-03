@@ -1634,7 +1634,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.set<cfg::video::video_break_interval>(std::chrono::seconds{video_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
     ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
 
@@ -1820,9 +1819,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
+                        ini.set<cfg::video::video_break_interval>(std::chrono::seconds{video_break_interval});
+                        ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::globals::video_quality>(video_params.video_quality);
                         ini.set<cfg::globals::codec_id>(video_params.codec);
-                        ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         video_params = video_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 

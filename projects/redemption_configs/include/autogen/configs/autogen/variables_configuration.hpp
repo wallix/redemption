@@ -2164,17 +2164,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Record);
     };
-    /// type: std::chrono::seconds <br/>
-    /// value{300} <br/>
-    struct video::inactivity_timeout {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "video"; }
-        static constexpr char const * name() { return "inactivity_timeout"; }
-        using type = std::chrono::seconds;
-        using mapped_type = type;
-        type value{300};
-    };
     /// Disable keyboard log: <br/>
     /// type: KeyboardLogFlags <br/>
     /// value{static_cast<type>(1)} <br/>
@@ -3813,17 +3802,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: std::string <br/>
-    /// value{} <br/>
-    struct context::manager_disconnect_reason {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "manager_disconnect_reason"; }
-        using type = std::string;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_DISCONNECT_REASON <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4372,7 +4350,6 @@ struct video
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path
-, cfg::video::inactivity_timeout
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
 , cfg::video::disable_file_system_log
@@ -4501,7 +4478,6 @@ struct context
 , cfg::context::session_probe_outbound_connection_monitoring_rules
 , cfg::context::session_probe_process_monitoring_rules
 , cfg::context::session_probe_extra_system_processes
-, cfg::context::manager_disconnect_reason
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
