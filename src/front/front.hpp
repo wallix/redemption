@@ -944,8 +944,8 @@ public:
 
         PatternParams const pattern_params = pattern_params_from_ini(ini);
 
-        SequencedVideoParams sequenced_video_params;
-        FullVideoParams full_video_params;
+        SequencedVideoParams const sequenced_video_params {};
+        FullVideoParams const full_video_params {};
 
         WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
