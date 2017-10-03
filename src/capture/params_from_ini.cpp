@@ -25,17 +25,17 @@
 #include "configs/config.hpp"
 
 
-FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini)
+VideoParams video_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini)
 {
-    FlvParams flv_params = [&]() {
+    VideoParams video_params = [&]() {
         auto create_params = [&](auto... xs) {
-            return FlvParams{
+            return VideoParams{
                 xs...,
                 ini.get<cfg::globals::codec_id>(),
                 ini.get<cfg::globals::notimestamp>(),
                 ini.get<cfg::globals::capture_chunk>(),
                 ini.get<cfg::video::bogus_vlc_frame_rate>(),
-                ini.get<cfg::video::flv_break_interval>(),
+                ini.get<cfg::video::video_break_interval>(),
                 ini.get<cfg::debug::ffmpeg>()
             };
         };
@@ -69,12 +69,12 @@ FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_height,
         }
     }();
 
-    if (flv_params.target_width > original_width && flv_params.target_height > original_height) {
-        flv_params.target_width = original_width;
-        flv_params.target_height = original_height;
+    if (video_params.target_width > original_width && video_params.target_height > original_height) {
+        video_params.target_width = original_width;
+        video_params.target_height = original_height;
     }
 
-    return flv_params;
+    return video_params;
 }
 
 OcrParams ocr_params_from_ini(Inifile & ini)

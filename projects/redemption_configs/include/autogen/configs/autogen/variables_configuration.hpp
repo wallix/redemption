@@ -2257,11 +2257,11 @@ namespace cfg {
     };
     /// type: std::chrono::seconds <br/>
     /// value{0} <br/>
-    struct video::flv_break_interval {
+    struct video::video_break_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
-        static constexpr char const * name() { return "flv_break_interval"; }
+        static constexpr char const * name() { return "video_break_interval"; }
         using type = std::chrono::seconds;
         using mapped_type = type;
         type value{0};
@@ -4379,7 +4379,7 @@ struct video
 , cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::flv_break_interval
+, cfg::video::video_break_interval
 , cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate

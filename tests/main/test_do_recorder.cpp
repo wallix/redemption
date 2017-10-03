@@ -1015,7 +1015,7 @@ inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2,
             "/tmp/recorder.1.flva",
         "--video",
         "--full",
-        "--flvbreakinterval", "500",
+        "--video-break-interval", "500",
         "--video-codec", "flv",
         opt_vlc,
     };

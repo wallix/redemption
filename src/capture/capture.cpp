@@ -1467,29 +1467,29 @@ Capture::Capture(
     bool capture_png, const PngParams png_params,
     bool capture_pattern_checker, const PatternParams pattern_params,
     bool capture_ocr, const OcrParams ocr_params,
-    bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
-    bool capture_flv_full, const FullVideoParams full_video_params,
+    bool capture_video, const SequencedVideoParams /*sequenced_video_params*/,
+    bool capture_video_full, const FullVideoParams full_video_params,
     bool capture_meta, const MetaParams meta_params,
     bool capture_kbd, const KbdLogParams kbd_log_params,
-    const FlvParams flv_params,
+    const VideoParams video_params,
     UpdateProgressData * update_progress_data,
     Rect crop_rect)
 : is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_event{}
-, capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+, capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 {
    //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
-    if (capture_png || (capture_params.report_message && (capture_flv || capture_ocr))) {
+    if (capture_png || (capture_params.report_message && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
                 S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
         }
     }
 
-    if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
+    if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
         }
@@ -1555,24 +1555,24 @@ Capture::Capture(
             ));
         }
 
-        if (capture_flv) {
+        if (capture_video) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-            if (flv_params.capture_chunk && this->meta_capture_obj) {
+            if (video_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 capture_params.now, capture_params.record_path, capture_params.basename,
                 capture_params.groupid, png_params.zoom,
-                *this->gd_drawable, image_frame_api_ptr, flv_params, notifier
+                *this->gd_drawable, image_frame_api_ptr, video_params, notifier
             ));
         }
 
-        if (capture_flv_full) {
+        if (capture_video_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 capture_params.now, capture_params.record_path, capture_params.basename,
                 capture_params.groupid, *this->gd_drawable,
-                image_frame_api_ptr, flv_params, full_video_params));
+                image_frame_api_ptr, video_params, full_video_params));
         }
 
         if (capture_pattern_checker) {

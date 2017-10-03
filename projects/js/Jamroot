@@ -70,7 +70,7 @@ rule defines ( properties * )
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>VIDEO_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;

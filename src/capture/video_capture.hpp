@@ -21,7 +21,7 @@
 #pragma once
 
 #include "capture/video_recorder.hpp"
-#include "capture/flv_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/notify_next_video.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -135,7 +135,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
         const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams const & flv_params, FullVideoParams const & full_video_params
+        VideoParams const & video_params, FullVideoParams const & full_video_params
     );
 
     ~FullVideoCaptureImpl();
@@ -240,7 +240,7 @@ public:
             SequenceTransport & trans,
             RDPDrawable & drawable,
             gdi::ImageFrameApi * pImageFrameApi,
-            FlvParams flv_params
+            VideoParams video_params
         );
 
         ~VideoCapture();
@@ -267,7 +267,7 @@ public:
         VideoCaptureCtx video_cap_ctx;
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
-        FlvParams flv_params;
+        VideoParams video_params;
         gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
     } vc;
 
@@ -339,7 +339,7 @@ public:
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams flv_params,
+        VideoParams video_params,
         NotifyNextVideo & next_video_notifier);
 
     void next_video(const timeval& now);

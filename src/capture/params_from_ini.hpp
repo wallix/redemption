@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "capture/flv_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/ocr_params.hpp"
@@ -34,7 +34,7 @@ class Fstat;
 class Inifile;
 class Random;
 
-FlvParams flv_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini);
+VideoParams video_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini);
 
 OcrParams ocr_params_from_ini(Inifile & ini);
 

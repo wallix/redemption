@@ -25,7 +25,7 @@
 #include "configs/autogen/enums.hpp"
 #include "utils/rect.hpp"
 
-struct FlvParams
+struct VideoParams
 {
     Level video_quality;
 

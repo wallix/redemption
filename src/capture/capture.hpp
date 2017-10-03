@@ -31,7 +31,7 @@
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
-#include "capture/flv_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
@@ -371,11 +371,11 @@ public:
         bool capture_png, const PngParams png_params,
         bool capture_pattern_checker, const PatternParams pattern_params,
         bool capture_ocr, const OcrParams ocr_params,
-        bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
-        bool capture_flv_full, const FullVideoParams /*full_video_params*/,
+        bool capture_video, const SequencedVideoParams /*sequenced_video_params*/,
+        bool capture_video_full, const FullVideoParams full_video_params,
         bool capture_meta, const MetaParams /*meta_params*/,
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
-        const FlvParams flv_params,
+        const VideoParams video_params,
         UpdateProgressData * update_progress_data,
         Rect crop_rect
     );

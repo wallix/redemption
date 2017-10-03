@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
-#include "capture/flv_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
@@ -382,14 +382,14 @@ using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     const timeval & now, const char * const record_path, const char * const basename,
     const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-    FlvParams const & flv_params, FullVideoParams const & full_video_params)
+    VideoParams const & video_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
-    record_path, basename, ("." + flv_params.codec).c_str(),
+    record_path, basename, ("." + video_params.codec).c_str(),
     groupid, /* TODO set an authentifier */nullptr)
 , video_cap_ctx(now,
-    flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
+    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
-    flv_params.frame_rate, drawable, pImageFrameApi)
+    video_params.frame_rate, drawable, pImageFrameApi)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
@@ -400,19 +400,19 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     pImageFrameApi->pix_len(),
     pImageFrameApi->first_pixel(),
 
-    flv_params.bitrate,
-    flv_params.frame_rate,
-    flv_params.qscale,
-    flv_params.codec.c_str(),
-    flv_params.target_width,
-    flv_params.target_height,
-    flv_params.verbosity)
+    video_params.bitrate,
+    video_params.frame_rate,
+    video_params.qscale,
+    video_params.codec.c_str(),
+    video_params.target_width,
+    video_params.target_height,
+    video_params.verbosity)
 {
-    if (flv_params.verbosity) {
+    if (video_params.verbosity) {
         LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
-            flv_params.target_width, flv_params.target_height,
-            flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
-            flv_params.codec.c_str()
+            video_params.target_width, video_params.target_height,
+            video_params.frame_rate, video_params.qscale, video_params.bitrate,
+            video_params.codec.c_str()
         );
     }
 }
@@ -571,20 +571,20 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     SequenceTransport & trans,
     RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
-    FlvParams flv_params)
+    VideoParams video_params)
 : video_cap_ctx(now,
-    flv_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
-    flv_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
-    flv_params.frame_rate, drawable, pImageFrameApi)
+    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
+    video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+    video_params.frame_rate, drawable, pImageFrameApi)
 , trans(trans)
-, flv_params(std::move(flv_params))
+, video_params(std::move(video_params))
 , image_frame_api_ptr(pImageFrameApi)
 {
-    if (flv_params.verbosity) {
+    if (video_params.verbosity) {
         LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
-            flv_params.target_width, flv_params.target_height,
-            flv_params.frame_rate, flv_params.qscale, flv_params.bitrate,
-            flv_params.codec.c_str());
+            video_params.target_width, video_params.target_height,
+            video_params.frame_rate, video_params.qscale, video_params.bitrate,
+            video_params.codec.c_str());
     }
 
     this->next_video();
@@ -613,13 +613,13 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->image_frame_api_ptr->pix_len(),
         this->image_frame_api_ptr->first_pixel(),
 
-        this->flv_params.bitrate,
-        this->flv_params.frame_rate,
-        this->flv_params.qscale,
-        this->flv_params.codec.c_str(),
-        this->flv_params.target_width,
-        this->flv_params.target_height,
-        this->flv_params.verbosity
+        this->video_params.bitrate,
+        this->video_params.frame_rate,
+        this->video_params.qscale,
+        this->video_params.codec.c_str(),
+        this->video_params.target_width,
+        this->video_params.target_height,
+        this->video_params.verbosity
     ));
     this->video_cap_ctx.next_video();
 }
@@ -739,11 +739,11 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi * pImageFrameApi,
-    FlvParams flv_params,
+    VideoParams video_params,
     NotifyNextVideo & next_video_notifier)
 : first_image(now, *this)
-, vc_trans(record_path, basename, ("." + flv_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
-, vc(now, this->vc_trans, drawable, pImageFrameApi, std::move(flv_params))
+, vc_trans(record_path, basename, ("." + video_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
+, vc(now, this->vc_trans, drawable, pImageFrameApi, std::move(video_params))
 , ic_trans(record_path, basename, ".png", groupid, nullptr)
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_scaled_width(pImageFrameApi->width())
@@ -752,8 +752,8 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , image_frame_api_ptr(pImageFrameApi)
 , video_sequencer(
     now,
-    (flv_params.video_interval > std::chrono::microseconds(0))
-        ? flv_params.video_interval
+    (video_params.video_interval > std::chrono::microseconds(0))
+        ? video_params.video_interval
         : std::chrono::microseconds::max(),
     *this)
 , next_video_notifier(next_video_notifier)

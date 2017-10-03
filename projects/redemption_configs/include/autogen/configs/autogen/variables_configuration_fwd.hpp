@@ -185,7 +185,7 @@ namespace cfg {
         struct rt_display;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
-        struct flv_break_interval;
+        struct video_break_interval;
         struct bogus_vlc_frame_rate;
         struct l_bitrate;
         struct l_framerate;

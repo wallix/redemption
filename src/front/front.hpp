@@ -859,7 +859,7 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
         bool full_video = false;
-        FlvParams flv_params = flv_params_from_ini(this->client_info.width, this->client_info.height, ini);
+        VideoParams video_params = video_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
@@ -870,8 +870,8 @@ public:
                 || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
-        bool capture_flv_full = full_video;
+        bool capture_video = bool(capture_flags & CaptureFlags::video);
+        bool capture_video_full = full_video;
         bool capture_meta = capture_ocr;
         bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
@@ -924,8 +924,8 @@ public:
                 capture_wrm ?"wrm ":"",
                 capture_png ?"png ":"",
                 capture_kbd ? 1 : 0,
-                capture_flv ?"flv ":"",
-                capture_flv_full ?"flv_full ":"",
+                capture_video ?"video ":"",
+                capture_video_full ?"video_full ":"",
                 capture_pattern_checker ?"pattern ":"",
                 capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                 capture_meta?"meta ":""
@@ -972,11 +972,11 @@ public:
                                     , capture_png, png_params
                                     , capture_pattern_checker, pattern_params
                                     , capture_ocr, ocr_params
-                                    , capture_flv, sequenced_video_params
-                                    , capture_flv_full, full_video_params
+                                    , capture_video, sequenced_video_params
+                                    , capture_video_full, full_video_params
                                     , capture_meta, meta_params
                                     , capture_kbd, kbd_log_params
-                                    , flv_params
+                                    , video_params
                                     , nullptr
                                     , Rect()
                                     );

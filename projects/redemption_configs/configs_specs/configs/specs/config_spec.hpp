@@ -449,7 +449,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "flv_break_interval", set(0));
+        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "video_break_interval", set(0));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
         W.sep();

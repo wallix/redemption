@@ -1609,7 +1609,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   int64_t begin_cap,
                   int64_t end_cap,
                   PngParams & png_params,
-                  FlvParams & flv_params,
+                  VideoParams & video_params,
                   FullVideoParams & full_video_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
@@ -1622,7 +1622,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   bool full_video,
                   bool remove_input_file,
                   int wrm_compression_algorithm,
-                  uint32_t flv_break_interval,
+                  uint32_t video_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx,
                   Random & rnd, Fstat & fstat,
@@ -1634,7 +1634,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
-    ini.set<cfg::video::flv_break_interval>(std::chrono::seconds{flv_break_interval});
+    ini.set<cfg::video::video_break_interval>(std::chrono::seconds{video_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
     ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
 
@@ -1723,7 +1723,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     int result = -1;
     try {
         bool test = (
-                bool(capture_flags & CaptureFlags::flv)
+               bool(capture_flags & CaptureFlags::video)
             || bool(capture_flags & CaptureFlags::ocr)
             || bool(capture_flags & CaptureFlags::png)
             || full_video
@@ -1820,10 +1820,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
-                        ini.set<cfg::globals::video_quality>(flv_params.video_quality);
-                        ini.set<cfg::globals::codec_id>(flv_params.codec);
-                        ini.set<cfg::video::bogus_vlc_frame_rate>(flv_params.bogus_vlc_frame_rate);
-                        flv_params = flv_params_from_ini(
+                        ini.set<cfg::globals::video_quality>(video_params.video_quality);
+                        ini.set<cfg::globals::codec_id>(video_params.codec);
+                        ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
+                        video_params = video_params_from_ini(
                             player.screen_rect.cx, player.screen_rect.cy, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -1835,8 +1835,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
                                             || capture_pattern_checker;
-                        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
-                        bool capture_flv_full = full_video;
+                        bool capture_video = bool(capture_flags & CaptureFlags::video);
+                        bool capture_video_full = full_video;
                         bool capture_meta = capture_ocr;
                         bool capture_kbd = false;
 
@@ -1847,8 +1847,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 capture_wrm ?"wrm ":"",
                                 capture_png ?"png ":"",
                                 capture_kbd ? 1 : 0,
-                                capture_flv ?"flv ":"",
-                                capture_flv_full ?"flv_full ":"",
+                                capture_video ?"video ":"",
+                                capture_video_full ?"video_full ":"",
                                 capture_pattern_checker ?"pattern ":"",
                                 capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                                 capture_meta?"meta ":""
@@ -1954,11 +1954,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_png, png_params
                                 , capture_pattern_checker, pattern_params
                                 , capture_ocr, ocr_params
-                                , capture_flv, sequenced_video_params
-                                , capture_flv_full, full_video_params
+                                , capture_video, sequenced_video_params
+                                , capture_video_full, full_video_params
                                 , capture_meta, meta_params
                                 , capture_kbd, kbd_log_params
-                                , flv_params
+                                , video_params
                                 , &update_progress_data
                                 , Rect()
                                 );
@@ -2109,13 +2109,13 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
-    FlvParams flv_params;
+    VideoParams video_params;
     FullVideoParams full_video_params;
 
-    // flv output options
+    // video output options
     bool full_video; // create full video
-    uint32_t    flv_break_interval = 10*60;
-    std::string flv_quality;
+    uint32_t    video_break_interval = 10*60;
+    std::string video_quality;
 
     // wrm output options
     int wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -2206,13 +2206,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         {"config-file", &recorder.config_filename, "used another ini file"},
 
-        {'a', "flvbreakinterval", &recorder.flv_break_interval, "number of seconds between splitting flv files (by default, one flv every 10 minutes)"},
+        {'a', "video-break-interval", &recorder.video_break_interval, "number of seconds between splitting video files (by default, one video every 10 minutes)"},
 
-        {'q', "flv-quality", &recorder.flv_quality, "flv quality (high, medium, low)"},
+        {'q', "video-quality", &recorder.video_quality, "video quality (high, medium, low)"},
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
-        {"video-codec", &recorder.flv_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"video-codec", &recorder.video_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
         {"bogus-vlc", "Needed to play a video with ffplay or VLC."},
         {"disable-bogus-vlc", ""},
 
@@ -2262,35 +2262,31 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
-    recorder.flv_params.bogus_vlc_frame_rate = false;
+    recorder.video_params.bogus_vlc_frame_rate = false;
     if (options.count("bogus-vlc")) {
         recorder.full_video_params.bogus_vlc_frame_rate = true;
-        recorder.flv_params.bogus_vlc_frame_rate = true;
+        recorder.video_params.bogus_vlc_frame_rate = true;
     }
     if (options.count("disable-bogus-vlc")) {
         recorder.full_video_params.bogus_vlc_frame_rate = false;
-        recorder.flv_params.bogus_vlc_frame_rate = false;
+        recorder.video_params.bogus_vlc_frame_rate = false;
     }
-    recorder.flv_params.video_quality = Level::high;
+    recorder.video_params.video_quality = Level::high;
     recorder.capture_flags
-      = (                   (options.count("wrm") > 0)
-        ? CaptureFlags::wrm : CaptureFlags::none)
-      | ((recorder.chunk || (options.count("png") > 0))
-        ? CaptureFlags::png : CaptureFlags::none)
-      | ((recorder.chunk || (options.count("video") > 0))
-        ? CaptureFlags::flv : CaptureFlags::none)
-      | ((recorder.chunk || (options.count("ocr") > 0))
-        ? CaptureFlags::ocr : CaptureFlags::none);
+      = (                   options.count("wrm")    ? CaptureFlags::wrm   : CaptureFlags::none)
+      | ((recorder.chunk || options.count("png"))   ? CaptureFlags::png   : CaptureFlags::none)
+      | ((recorder.chunk || options.count("video")) ? CaptureFlags::video : CaptureFlags::none)
+      | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 
-    if (options.count("flv-quality") > 0) {
-            if (0 == strcmp(recorder.flv_quality.c_str(), "high")) {
-            recorder.flv_params.video_quality = Level::high;
+    if (options.count("video-quality") > 0) {
+            if (0 == strcmp(recorder.video_quality.c_str(), "high")) {
+            recorder.video_params.video_quality = Level::high;
         }
-        else if (0 == strcmp(recorder.flv_quality.c_str(), "low")) {
-            recorder.flv_params.video_quality = Level::low;
+        else if (0 == strcmp(recorder.video_quality.c_str(), "low")) {
+            recorder.video_params.video_quality = Level::low;
         }
-        else  if (0 == strcmp(recorder.flv_quality.c_str(), "medium")) {
-            recorder.flv_params.video_quality = Level::medium;
+        else  if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
+            recorder.video_params.video_quality = Level::medium;
         }
         else {
             std::cerr << "Unknown video quality" << std::endl;
@@ -2338,7 +2334,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         std::cout << "png-geometry: " << recorder.png_params.png_width << "x" << recorder.png_params.png_height << std::endl;
     }
 
-    //recorder.flv_params.video_codec = "flv";
+    //recorder.video_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
          if (wrm_compression_algorithm == "none") {
@@ -2580,7 +2576,7 @@ extern "C" {
             }
 
             if (rp.chunk) {
-                rp.flv_break_interval = 60*10; // 10 minutes
+                rp.video_break_interval = 60*10; // 10 minutes
                 rp.png_params.png_interval = std::chrono::seconds{1};
             }
 
@@ -2606,7 +2602,7 @@ extern "C" {
                           rp.begin_cap,
                           rp.end_cap,
                           rp.png_params,
-                          rp.flv_params,
+                          rp.video_params,
                           rp.full_video_params,
                           rp.wrm_color_depth,
                           rp.wrm_frame_interval,
@@ -2619,7 +2615,7 @@ extern "C" {
                           rp.full_video,
                           rp.remove_input_file,
                           rp.wrm_compression_algorithm_,
-                          rp.flv_break_interval,
+                          rp.video_break_interval,
                           rp.encryption_type,
                           ini, cctx, rnd, fstat,
                           verbose);

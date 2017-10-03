@@ -24,7 +24,7 @@
 #ifdef IN_IDE_PARSER
 # define RECORD_PATH "/var/rdpproxy/recorded"
 # define RECORD_TMP_PATH "/var/rdpproxy/tmp"
-# define FLV_PATH "/tmp"
+# define VIDEO_PATH "/tmp"
 # define OCR_PATH "/tmp"
 # define PNG_PATH "/tmp"
 # define WRM_PATH "/tmp"
@@ -50,7 +50,7 @@ char const * app_path(AppPath k) noexcept
     {
         case AppPath::Record: return RECORD_PATH;
         case AppPath::RecordTmp: return RECORD_TMP_PATH;
-        case AppPath::Flv: return FLV_PATH;
+        case AppPath::Video: return VIDEO_PATH;
         case AppPath::Ocr: return OCR_PATH;
         case AppPath::Png: return PNG_PATH;
         case AppPath::Wrm: return WRM_PATH;
