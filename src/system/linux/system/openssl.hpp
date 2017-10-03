@@ -381,7 +381,7 @@ struct TLSContext
         SSL_set_fd(ssl, sck);
 
         LOG(LOG_INFO, "SSL_connect()");
-    again:
+
         // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
         // -------------------------------------------------------------------
 
@@ -418,23 +418,18 @@ struct TLSContext
         // for non-blocking BIOs. Call SSL_get_error() with the return value ret to find
         // out the reason
 
-        int connection_status = SSL_connect(ssl);
-
-        if (connection_status <= 0)
-        {
+        for (int connection_status; (connection_status = SSL_connect(ssl)) <= 0;) {
             unsigned long error;
 
             switch (SSL_get_error(ssl, connection_status))
             {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    break;
+
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_WARNING, "Server closed TLS connection\n");
                     return;
-
-                case SSL_ERROR_WANT_READ:
-                    goto again;
-
-                case SSL_ERROR_WANT_WRITE:
-                    goto again;
 
                 case SSL_ERROR_SYSCALL:
                     LOG(LOG_WARNING, "I/O error\n");
