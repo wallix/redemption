@@ -199,6 +199,7 @@ exe extract_text
 exe ppocr_extract_text
 :
     $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp
+    $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp
     ocr
 :
     $(GCOV_NO_BUILD)
