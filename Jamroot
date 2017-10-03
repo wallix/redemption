@@ -296,3 +296,36 @@ actions test_libredrec
 
 make test_libredrec : libredrec : @test_libredrec
 : <variant>san:<build>no <variant>coverage:<build>no ;
+
+
+## { test_web_video_mp4
+explicit test_web_video_mp4 generate_test_web_video_mp4 tests/web_video/test.mp4 ;
+
+exe generate_test_web_video_mp4
+:
+    tests/web_video/generate_video_mp4.cpp
+:
+    $(EXE_DEPENDENCIES)
+    <library>libredrec
+    <library>ffmpeg
+    <library>png
+    <library>dl
+;
+
+actions run_web_video_mp4 {
+    TMP=/tmp/web_video_mp4_test/
+    "$(>)" $TMP
+    mkdir -p $TMP
+    #mv -f test.mp4 $TMP
+    cp $(REDEMPTION_TEST_PATH)/web_video/test.html $TMP
+    cd $TMP
+    python -m SimpleHTTPServer 4104 &
+    xdg-open 'http://0000:4104/test.html'
+    sleep 3
+    pkill -P $$
+}
+
+make tests/web_video/test.mp4 : generate_test_web_video_mp4 : @run_web_video_mp4 ;
+
+alias test_web_video_mp4 : tests/web_video/test.mp4 ;
+## } test_web_video_mp4

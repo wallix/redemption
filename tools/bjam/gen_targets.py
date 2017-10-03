@@ -208,6 +208,7 @@ tests = [f for f in files_on_tests \
     and not start_with(f.path, 'tests/includes/') \
     and not start_with(f.path, 'tests/system/common/') \
     and not start_with(f.path, 'tests/system/emscripten/system/') \
+    and not start_with(f.path, 'tests/web_video/') \
     and f.path != 'tests/test_meta_protocol2.cpp' \
     and f.path not in disable_tests
 ]
