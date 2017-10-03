@@ -84,7 +84,7 @@ struct VideoCaptureCtx : noncopyable
         ImageByInterval image_by_interval,
         unsigned frame_rate,
         RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi
+        gdi::ImageFrameApi & imageFrameApi
     );
 
     void frame_marker_event(video_recorder &);
@@ -123,7 +123,7 @@ private:
     time_t previous_second = 0;
     bool has_frame_marker = false;
 
-    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+    gdi::ImageFrameApi & image_frame_api;
 
 public:
     TimestampTracer timestamp_tracer;
@@ -134,7 +134,7 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
         const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
+        const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
         VideoParams const & video_params, FullVideoParams const & full_video_params
     );
 
@@ -239,7 +239,7 @@ public:
             const timeval & now,
             SequenceTransport & trans,
             RDPDrawable & drawable,
-            gdi::ImageFrameApi * pImageFrameApi,
+            gdi::ImageFrameApi & imageFrameApi,
             VideoParams video_params
         );
 
@@ -268,7 +268,7 @@ public:
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
         VideoParams video_params;
-        gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+        gdi::ImageFrameApi & image_frame_api;
     } vc;
 
     SequenceTransport ic_trans;
@@ -279,7 +279,7 @@ public:
 
     /* const */ RDPDrawable & ic_drawable;
 
-    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+    gdi::ImageFrameApi & image_frame_api;
 
 private:
     std::unique_ptr<uint8_t[]> ic_scaled_buffer;
@@ -338,7 +338,7 @@ public:
         const int groupid,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi,
+        gdi::ImageFrameApi & imageFrameApi,
         VideoParams video_params,
         NotifyNextVideo & next_video_notifier);
 

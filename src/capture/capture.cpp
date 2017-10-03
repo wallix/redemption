@@ -40,6 +40,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/byte.hpp"
+#include "utils/sugar/non_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
@@ -624,9 +625,9 @@ public:
 
     TimestampTracer timestamp_tracer;
 
-    gdi::ImageFrameApi * image_frame_api_ptr;
+    gdi::ImageFrameApi & image_frame_api;
 
-    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi, const PngParams & png_params)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
@@ -635,11 +636,11 @@ public:
     , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width{(((pImageFrameApi->width() * this->zoom_factor) / 100)+3) & 0xFFC}
-    , scaled_height{((pImageFrameApi->height() * this->zoom_factor) / 100)}
-    , timestamp_tracer(pImageFrameApi->width(), pImageFrameApi->height(), this->drawable.impl().Bpp,
-          pImageFrameApi->first_pixel(), pImageFrameApi->rowsize())
-    , image_frame_api_ptr(pImageFrameApi)
+    , scaled_width{(((imageFrameApi.width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((imageFrameApi.height() * this->zoom_factor) / 100)}
+    , timestamp_tracer(imageFrameApi.width(), imageFrameApi.height(), this->drawable.impl().Bpp,
+          imageFrameApi.first_pixel(), imageFrameApi.rowsize())
+    , image_frame_api(imageFrameApi)
     {
         if (this->zoom_factor != 100) {
             this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
@@ -650,16 +651,16 @@ public:
     {
         if (this->zoom_factor == 100) {
             ::transport_dump_png24(
-                this->trans, this->image_frame_api_ptr->data(),
-                this->image_frame_api_ptr->width(), this->image_frame_api_ptr->height(),
-                this->image_frame_api_ptr->rowsize(), true);
+                this->trans, this->image_frame_api.data(),
+                this->image_frame_api.width(), this->image_frame_api.height(),
+                this->image_frame_api.rowsize(), true);
         }
         else {
             scale_data(
-                this->scaled_buffer.get(), this->image_frame_api_ptr->data(),
-                this->scaled_width, this->image_frame_api_ptr->width(),
-                this->scaled_height, this->image_frame_api_ptr->height(),
-                this->image_frame_api_ptr->rowsize());
+                this->scaled_buffer.get(), this->image_frame_api.data(),
+                this->scaled_width, this->image_frame_api.width(),
+                this->scaled_height, this->image_frame_api.height(),
+                this->image_frame_api.rowsize());
             ::transport_dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,
@@ -690,7 +691,7 @@ public:
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
-                this->image_frame_api_ptr->prepare_image_frame();
+                this->image_frame_api.prepare_image_frame();
                 this->timestamp_tracer.trace(ptm);
 
                 this->dump();
@@ -722,8 +723,8 @@ public:
 
     PngCaptureRT(
         const CaptureParams & capture_params, RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : PngCapture(capture_params, drawable, pImageFrameApi, png_params)
+        gdi::ImageFrameApi & imageFrameApi, const PngParams & png_params)
+    : PngCapture(capture_params, drawable, imageFrameApi, png_params)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     {
@@ -943,7 +944,7 @@ public:
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
 
-            this->image_frame_api_ptr->reset(
+            this->image_frame_api.reset(
                 new_image_frame_rect.x, new_image_frame_rect.y,
                 new_image_frame_rect.cx, new_image_frame_rect.cy);
         }
@@ -1500,7 +1501,7 @@ Capture::Capture(
         }
         this->gds.push_back(*this->gd_drawable);
 
-        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable;
+        non_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
             REDASSERT(!capture_png || !png_params.real_time_image_capture)
@@ -1534,11 +1535,11 @@ Capture::Capture(
                 }
 
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, *image_frame_api_ptr, png_params));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, *this->gd_drawable, *image_frame_api_ptr, png_params));
             }
         }
 
@@ -1564,7 +1565,7 @@ Capture::Capture(
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 capture_params.now, capture_params.record_path, capture_params.basename,
                 capture_params.groupid, png_params.zoom,
-                *this->gd_drawable, image_frame_api_ptr, video_params, notifier
+                *this->gd_drawable, *image_frame_api_ptr, video_params, notifier
             ));
         }
 
@@ -1572,7 +1573,7 @@ Capture::Capture(
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 capture_params.now, capture_params.record_path, capture_params.basename,
                 capture_params.groupid, *this->gd_drawable,
-                image_frame_api_ptr, video_params, full_video_params));
+                *image_frame_api_ptr, video_params, full_video_params));
         }
 
         if (capture_pattern_checker) {
