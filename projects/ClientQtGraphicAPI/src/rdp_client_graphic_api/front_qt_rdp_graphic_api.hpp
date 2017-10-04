@@ -417,12 +417,12 @@ public:
         this->_callback = this->_front->init_mod();
 
         if (this->_callback !=  nullptr) {
-
+            LOG(LOG_INFO,  "listen 1");
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_draw_event_data()));
-
+            LOG(LOG_INFO,  "listen 2");
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
-
+            LOG(LOG_INFO,  "listen 3");
             if (this->_callback) {
                 if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
@@ -452,7 +452,6 @@ public:
             this->_front->disconnect(labelErrorMsg);
             return false;
         }
-
         return true;
     }
 
@@ -2955,7 +2954,7 @@ public:
             this->connect();
         }
         this->form->setCursor(Qt::ArrowCursor);
-
+        LOG(LOG_INFO, "connexionReleased done");
         //return res;
     }
 
@@ -3184,7 +3183,9 @@ public:
     virtual void connect() {
         this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
+            LOG(LOG_INFO, "mod qt connect done");
             this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
+            LOG(LOG_INFO, "setKeyboardLayout init done");
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
@@ -3192,7 +3193,7 @@ public:
             this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
 
             this->is_replaying = false;
-
+            LOG(LOG_INFO, "Screen_Qt init");
             if (this->is_recording && !this->is_replaying) {
 
 //                 this->start_capture();
