@@ -126,7 +126,7 @@ namespace
             }
             else {
                 // real failure
-            trial = nbretry;
+                trial = nbretry;
             }
         }
 
