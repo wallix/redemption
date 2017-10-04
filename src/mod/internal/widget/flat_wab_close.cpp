@@ -72,7 +72,6 @@ FlatWabClose::FlatWabClose(
 , showtimer(showtimer)
 , font(font)
 , diagnostic_text(diagnostic_text)
-, extra_message(extra_message)
 {
     this->impl = &composite_array;
 

@@ -30,7 +30,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("none")
       .value("png")
       .value("wrm")
-      .value("flv")
+      .value("video")
       .value("ocr")
     ;
 

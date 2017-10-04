@@ -25,7 +25,7 @@
 #include "configs/autogen/enums.hpp"
 #include "utils/rect.hpp"
 
-struct FlvParams
+struct VideoParams
 {
     Level video_quality;
 
@@ -37,6 +37,7 @@ struct FlvParams
     std::string codec;
     bool no_timestamp;
     bool capture_chunk;
+    bool bogus_vlc_frame_rate;
     std::chrono::microseconds video_interval;
     unsigned verbosity;
 };

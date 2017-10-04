@@ -766,6 +766,10 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
+    void set_pointer(Pointer const & ptr) override {
+        this->graphic_to_file.set_pointer(ptr);
+    }
+
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
         timeval start_native_capture;

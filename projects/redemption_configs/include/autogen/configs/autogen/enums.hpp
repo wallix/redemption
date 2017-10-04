@@ -12,7 +12,7 @@ enum class CaptureFlags {
     none = 0,
     png = 1,
     wrm = 2,
-    flv = 4,
+    video = 4,
     ocr = 8,
 };
 

@@ -58,7 +58,7 @@ static CheckFileList euser_check_file_list[] =
     { "",                 app_path(AppPath::Record),            false, true,  false, false },
     { "",                 app_path(AppPath::RecordTmp),         false, true,  false, false },
     { "",                 app_path(AppPath::Hash),              false, true,  false, false },
-    { "",                 app_path(AppPath::Flv),               false, true,  false, false },
+    { "",                 app_path(AppPath::Video),             false, true,  false, false },
     { "",                 app_path(AppPath::Ocr),               false, true,  false, false },
     { "",                 app_path(AppPath::Png),               false, true,  false, false },
     { "",                 app_path(AppPath::License),           false, true,  false, false },

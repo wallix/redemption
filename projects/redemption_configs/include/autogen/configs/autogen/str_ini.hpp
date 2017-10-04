@@ -551,7 +551,7 @@
 "#   0: none\n"
 "#   1: png\n"
 "#   2: wrm\n"
-"#   4: flv\n"
+"#   4: video\n"
 "#   8: ocr\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_advanced\n"
@@ -625,6 +625,11 @@
 "#   2: snappy\n"
 "#_advanced\n"
 "#wrm_compression_algorithm = 1\n\n"
+
+"# Needed to play a video with ffplay or VLC.\n"
+"# Note: Useless with mpv and mplayer.\n"
+"#_advanced\n"
+"#bogus_vlc_frame_rate = 1\n\n"
 
 "# Bitrate for low quality.\n"
 "#_advanced\n"

@@ -95,6 +95,14 @@ obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>CFG_PATH='\"$(REDEMPTION_ROOT_PATH)/etc/rdpproxy/\"'
 ;
 
+obj config.o : redemption_src/configs/config.cpp
+:
+    <include>redemption_src
+    <implicit-dependency>generate_cpp_configs
+    <implicit-dependency>generate_python_spec
+    <implicit-dependency>generate_enum
+;
+
 constant TEST_DEPENDENCIES :
     $(UNIT_TEST_DEPENDENCIES)
     <library>libunit_test
@@ -102,10 +110,8 @@ constant TEST_DEPENDENCIES :
     <library>cfgloader.o
     <library>fileutils.o
     <library>app_path_test.o
+    <library>config.o
     <cxxflags>-frtti
-    <implicit-dependency>generate_cpp_configs
-    <implicit-dependency>generate_python_spec
-    <implicit-dependency>generate_enum
     <include>redemption_src
     <conditional>@defines-for-test
 ;

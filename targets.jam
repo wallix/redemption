@@ -7,6 +7,7 @@ exe rdpinichecker :
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
 ;
@@ -23,10 +24,12 @@ exe rdpproxy :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -105,6 +108,7 @@ exe rdpclient :
   <library>openssl
   <library>png
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -139,6 +143,7 @@ exe rdpheadless :
   <library>krb5
   <library>openssl
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -192,10 +197,12 @@ exe rdptproxy :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -275,10 +282,12 @@ exe vncclient :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -357,10 +366,12 @@ lib libredrec :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -410,10 +421,12 @@ test-run tests/acl/test_acl_serializer :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -497,10 +510,12 @@ test-run tests/acl/test_authentifier :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -584,10 +599,12 @@ test-run tests/acl/test_module_manager :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -698,9 +715,11 @@ test-run tests/capture/test_capture :
   <library>ffmpeg
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -843,6 +862,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -896,6 +916,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -927,6 +948,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -1724,10 +1746,12 @@ test-run tests/core/test_mainloop :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1817,10 +1841,12 @@ test-run tests/core/test_session :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1899,10 +1925,12 @@ test-run tests/core/test_session_server :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1986,10 +2014,12 @@ test-run tests/front/test_front :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2071,10 +2101,12 @@ test-run tests/main/test_do_recorder :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2152,6 +2184,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2187,6 +2220,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2222,6 +2256,7 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2259,6 +2294,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2370,6 +2406,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2998,6 +3035,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -3149,10 +3187,12 @@ test-run tests/server/test_mstsc_client :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3188,10 +3228,12 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3227,10 +3269,12 @@ test-run tests/server/test_rdesktop_client :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3777,6 +3821,7 @@ test-run tests/utils/test_theme :
 :
   <covfile>src/utils/theme.hpp
   <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
 ;
@@ -3795,6 +3840,7 @@ test-run tests/utils/test_translation :
 :
   <covfile>src/utils/translation.hpp
   <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
 ;
@@ -3814,6 +3860,7 @@ test-run tests/utils/winpr/test_pattern :
   <covfile>src/utils/winpr/pattern.hpp
 ;
 
+obj projects/redemption_configs/redemption_src/configs/config.o : projects/redemption_configs/redemption_src/configs/config.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
@@ -3821,6 +3868,7 @@ obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_
 obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp ;
+obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp : <cxxflags>-std=c++14 ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp ;

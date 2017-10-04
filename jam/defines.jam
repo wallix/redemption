@@ -56,7 +56,7 @@ rule defines ( properties * )
     local defs ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
-    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>VIDEO_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
@@ -74,7 +74,7 @@ rule defines-for-test ( properties * )
     local defs ;
     defs += <define>RECORD_PATH='\"/tmp/redemption_recorded\"' ;
     defs += <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"' ;
-    defs += <define>FLV_PATH='\"/tmp\"' ;
+    defs += <define>VIDEO_PATH='\"/tmp\"' ;
     defs += <define>OCR_PATH='\"/tmp\"' ;
     defs += <define>PNG_PATH='\"/tmp\"' ;
     defs += <define>WRM_PATH='\"/tmp\"' ;

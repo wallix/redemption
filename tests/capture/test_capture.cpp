@@ -30,6 +30,8 @@
 
 #include <memory>
 
+#include "configs/config.hpp"
+
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
 #include "utils/stream.hpp"
@@ -41,7 +43,7 @@
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
-#include "capture/flv_params_from_ini.hpp"
+#include "capture/params_from_ini.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/fileutils.hpp"
@@ -107,8 +109,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool full_video = false;
 
-        FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
-        flv_params.no_timestamp = false;
+        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+        video_params.no_timestamp = false;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
 
@@ -117,8 +119,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         bool capture_pattern_checker = false;
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_flv = bool(capture_flags & CaptureFlags::flv);
-        bool capture_flv_full = full_video;
+        bool capture_video = bool(capture_flags & CaptureFlags::video);
+        bool capture_video_full = full_video;
         bool capture_meta = capture_ocr;
         bool capture_kbd = false;
 
@@ -137,8 +139,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                 capture_wrm ?"wrm ":"",
                 capture_png ?"png ":"",
                 capture_kbd ? 1 : 0,
-                capture_flv ?"flv ":"",
-                capture_flv_full ?"flv_full ":"",
+                capture_video ?"video ":"",
+                capture_video_full ?"video_full ":"",
                 capture_pattern_checker ?"pattern ":"",
                 capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
                 capture_meta?"meta ":""
@@ -209,11 +211,11 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
                         , capture_png, png_params
                         , capture_pattern_checker, pattern_params
                         , capture_ocr, ocr_params
-                        , capture_flv, sequenced_video_params
-                        , capture_flv_full, full_video_params
+                        , capture_video, sequenced_video_params
+                        , capture_video_full, full_video_params
                         , capture_meta, meta_params
                         , capture_kbd, kbd_log_params
-                        , flv_params
+                        , video_params
                         , nullptr
                         , Rect()
                         );
@@ -349,8 +351,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
     std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
 
-    FlvParams flv_params = flv_params_from_ini(scr.cx, scr.cy, ini);
-    flv_params.no_timestamp = no_timestamp;
+    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+    video_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
     bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
@@ -358,8 +360,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool capture_pattern_checker = false;
 
     bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-    bool capture_flv = bool(capture_flags & CaptureFlags::flv);
-    bool capture_flv_full = full_video;
+    bool capture_video = bool(capture_flags & CaptureFlags::video);
+    bool capture_video_full = full_video;
     bool capture_meta = capture_ocr;
     bool capture_kbd = false;
 
@@ -378,8 +380,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
             capture_wrm ?"wrm ":"",
             capture_png ?"png ":"",
             capture_kbd ? 1 : 0,
-            capture_flv ?"flv ":"",
-            capture_flv_full ?"flv_full ":"",
+            capture_video ?"video ":"",
+            capture_video_full ?"video_full ":"",
             capture_pattern_checker ?"pattern ":"",
             capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
             capture_meta?"meta ":""
@@ -453,11 +455,11 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , capture_png, png_params
                    , capture_pattern_checker, pattern_params
                    , capture_ocr, ocr_params
-                   , capture_flv, sequenced_video_params
-                   , capture_flv_full, full_video_params
+                   , capture_video, sequenced_video_params
+                   , capture_video_full, full_video_params
                    , capture_meta, meta_params
                    , capture_kbd, kbd_log_params
-                   , flv_params
+                   , video_params
                    , nullptr
                    , Rect()
                    );

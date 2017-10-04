@@ -22,4 +22,5 @@
 
 struct FullVideoParams
 {
+    bool bogus_vlc_frame_rate;
 };

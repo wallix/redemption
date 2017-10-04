@@ -178,14 +178,14 @@ namespace cfg {
         struct hash_path;
         struct record_tmp_path;
         struct record_path;
-        struct inactivity_timeout;
         struct disable_keyboard_log;
         struct disable_clipboard_log;
         struct disable_file_system_log;
         struct rt_display;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
-        struct flv_break_interval;
+        struct video_break_interval;
+        struct bogus_vlc_frame_rate;
         struct l_bitrate;
         struct l_framerate;
         struct l_height;
@@ -306,7 +306,6 @@ namespace cfg {
         struct session_probe_outbound_connection_monitoring_rules;
         struct session_probe_process_monitoring_rules;
         struct session_probe_extra_system_processes;
-        struct manager_disconnect_reason;
         struct disconnect_reason;
         struct disconnect_reason_ack;
         struct ip_target;

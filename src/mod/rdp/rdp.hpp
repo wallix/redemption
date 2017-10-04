@@ -984,6 +984,15 @@ public:
             mod_rdp_params.log();
         }
 
+        // Clear client screen
+        {
+            Rect r(0, 0, front_width, front_height);
+            RDPOpaqueRect cmd(r, color_encode(BGRColor(BLACK), 24));
+            this->front.begin_update();
+            this->front.draw(cmd, r, gdi::ColorCtx::depth24());
+            this->front.end_update();
+        }
+
         this->beginning = timeobj.get_time().tv_sec;
 
         if (this->cbAutoReconnectCookie) {

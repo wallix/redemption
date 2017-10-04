@@ -270,6 +270,15 @@ public:
     {
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
+        // Clear client screen
+        {
+            Rect r(0, 0, front_width, front_height);
+            RDPOpaqueRect cmd(r, color_encode(BGRColor(BLACK), 24));
+            this->front.begin_update();
+            this->front.draw(cmd, r, gdi::ColorCtx::depth24());
+            this->front.end_update();
+        }
+
         ::time(&this->beginning);
 
         // TODO init layout sym with apple layout
@@ -3933,7 +3942,7 @@ public:
             {"type", "SESSION_DISCONNECTION"},
             {"duration", extra},
             });
-           
+
         this->report_message.log5(info);
     }
 
