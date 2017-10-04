@@ -21,6 +21,7 @@
 #pragma once
 
 #include "capture/video_recorder.hpp"
+#include "capture/capture_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/notify_next_video.hpp"
@@ -133,8 +134,8 @@ public:
 struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
-        const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
+        CaptureParams const & capture_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
         VideoParams const & video_params, FullVideoParams const & full_video_params
     );
 
@@ -332,10 +333,7 @@ public:
 
 public:
     SequencedVideoCaptureImpl(
-        const timeval & now,
-        const char * const record_path,
-        const char * const basename,
-        const int groupid,
+        CaptureParams const & capture_params,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi & imageFrameApi,

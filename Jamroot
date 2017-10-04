@@ -300,7 +300,7 @@ make test_libredrec : libredrec : @test_libredrec
 
 
 ## { test_web_video_mp4
-explicit test_web_video_mp4 generate_test_web_video_mp4 tests/web_video/test.mp4 ;
+explicit test_web_video_mp4 tests/web_video/test.mp4 ;
 
 exe generate_test_web_video_mp4
 :

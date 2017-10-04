@@ -29,9 +29,10 @@ int main(int ac, char ** av)
     VideoParams video_params{
         Level::medium, drawable.width(), drawable.height(),
         25, 15, 100000, "mp4", false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
+    CaptureParams capture_params{
+        now, "test", nullptr, prefix, 0 /* groupid */, nullptr};
     FullVideoCaptureImpl capture(
-        now, prefix, "test", 0 /* groupid */,
-        drawable, drawable, video_params, FullVideoParams{false});
+        capture_params, drawable, drawable, video_params, FullVideoParams{false});
 
     Rect screen(0, 0, drawable.width(), drawable.height());
     auto const color_cxt = gdi::ColorCtx::depth24();
