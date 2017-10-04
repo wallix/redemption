@@ -325,7 +325,7 @@ struct IOVideoRecorderWithTransport
 {
     static int write(void * opaque, uint8_t * buf, int buf_size)
     {
-        Transport * trans       = reinterpret_cast<Transport *>(opaque);
+        Transport * trans       = static_cast<Transport*>(opaque);
         int         return_code = buf_size;
         try {
             trans->send(buf, buf_size);
@@ -360,7 +360,7 @@ struct IOVideoRecorderWithTransport
             return -1;
         }
         try {
-            Transport * trans = reinterpret_cast<Transport *>(opaque);
+            Transport * trans = static_cast<Transport*>(opaque);
             trans->seek(offset, whence);
             return offset;
         }
