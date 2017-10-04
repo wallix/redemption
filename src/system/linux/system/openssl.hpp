@@ -66,7 +66,7 @@ extern "C" {
 }
 
 
-struct TLSContext
+class TLSContext
 {
     bool tls;
     SSL_CTX * allocated_ctx;
@@ -75,6 +75,7 @@ struct TLSContext
     std::unique_ptr<uint8_t[]> public_key;
     size_t public_key_length;
 
+public:
     TLSContext() : tls(false)
         , allocated_ctx(nullptr)
         , allocated_ssl(nullptr)
@@ -82,6 +83,33 @@ struct TLSContext
         , public_key(nullptr)
         , public_key_length(0)
     {
+    }
+
+    ~TLSContext()
+    {
+        if (this->allocated_ssl) {
+            //SSL_shutdown(this->allocated_ssl);
+            SSL_free(this->allocated_ssl);
+        }
+
+        if (this->allocated_ctx) {
+            SSL_CTX_free(this->allocated_ctx);
+        }
+    }
+
+    int pending_data() const
+    {
+        return SSL_pending(this->allocated_ssl);
+    }
+
+    uint8_t const * get_public_key() const noexcept
+    {
+        return this->public_key.get();
+    }
+
+    std::size_t get_public_key_length() const noexcept
+    {
+        return this->public_key_length;
     }
 
     static inline char* crypto_print_name(X509_NAME* name)
@@ -606,7 +634,7 @@ struct TLSContext
 
                     char const * const issuer_existing      = this->crypto_print_name(X509_get_issuer_name(px509Existing));
                     char const * const subject_existing     = this->crypto_print_name(X509_get_subject_name(px509Existing));
-                    char const * const fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);;
+                    char const * const fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);
 
                     LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
                     LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
@@ -806,12 +834,12 @@ struct TLSContext
         //        void * subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
 
            X509_NAME * issuer_name = X509_get_issuer_name(xcert);
-           char * issuer = crypto_print_name(issuer_name);
+           char * issuer = this->crypto_print_name(issuer_name);
            LOG(LOG_INFO, "TLS::X509::issuer=%s", issuer);
            free(issuer);
 
            X509_NAME * subject_name = X509_get_subject_name(xcert);
-           char * subject = crypto_print_name(subject_name);
+           char * subject = this->crypto_print_name(subject_name);
            LOG(LOG_INFO, "TLS::X509::subject=%s", subject);
            free(subject);
 

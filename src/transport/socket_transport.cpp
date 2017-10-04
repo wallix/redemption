@@ -34,24 +34,6 @@ namespace
     ssize_t socket_recv_all(int sck, char const * name, uint8_t * data, size_t const len);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
     ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
-
-    void delete_socket_tls(TLSContext * tls)
-    {
-        if (tls) {
-            if (tls->allocated_ssl) {
-                //SSL_shutdown(this->tls->allocated_ssl);
-                SSL_free(tls->allocated_ssl);
-                tls->allocated_ssl = nullptr;
-            }
-
-            if (tls->allocated_ctx) {
-                SSL_CTX_free(tls->allocated_ctx);
-                tls->allocated_ctx = nullptr;
-            }
-
-            delete tls;
-        }
-    }
 }
 
 SocketTransport::SocketTransport(const char * name, int sck, const char *ip_address, int port,
@@ -73,7 +55,7 @@ SocketTransport::~SocketTransport()
         this->disconnect();
     }
 
-    delete_socket_tls(this->tls);
+    this->tls.reset();
 
     if (bool(verbose)) {
         LOG( LOG_INFO
@@ -89,17 +71,17 @@ bool SocketTransport::is_set(wait_obj & obj, fd_set & rfds) const
 
 bool SocketTransport::has_pending_data() const
 {
-    return this->tls && SSL_pending(this->tls->allocated_ssl);
+    return this->tls && this->tls->pending_data();
 }
 
 const uint8_t * SocketTransport::get_public_key() const
 {
-    return this->tls ? this->tls->public_key.get() : nullptr;
+    return this->tls ? this->tls->get_public_key() : nullptr;
 }
 
 size_t SocketTransport::get_public_key_length() const
 {
-    return this->tls ? this->tls->public_key_length : 0;
+    return this->tls ? this->tls->get_public_key_length() : 0;
 }
 
 void SocketTransport::enable_server_tls(const char * certificate_password,
@@ -109,7 +91,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
         // TODO this should be an error, no need to commute two times to TLS
         return;
     }
-    this->tls = new TLSContext();
+    this->tls.reset(new TLSContext());
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
@@ -128,7 +110,7 @@ void SocketTransport::enable_client_tls(bool server_cert_store,
         return;
     }
 
-    this->tls = new TLSContext();
+    this->tls.reset(new TLSContext());
 
     LOG(LOG_INFO, "Client TLS start");
     bool ensure_server_certificate_match =
@@ -152,8 +134,7 @@ void SocketTransport::enable_client_tls(bool server_cert_store,
     }
     catch (...) {
         // Disconnect tls if needed
-        delete_socket_tls(this->tls);
-        this->tls = nullptr;
+        this->tls.reset();
 
         LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
         throw;
@@ -169,8 +150,7 @@ bool SocketTransport::disconnect()
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
     }
     // Disconnect tls if needed
-    delete_socket_tls(this->tls);
-    this->tls = nullptr;
+    this->tls.reset();
     shutdown(this->sck, 2);
     close(this->sck);
     this->sck = 0;

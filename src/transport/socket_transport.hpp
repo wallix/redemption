@@ -29,6 +29,7 @@
 #include "configs/autogen/enums.hpp"
 
 #include <string>
+#include <memory>
 
 
 class TLSContext;
@@ -48,7 +49,7 @@ public:
     int  port;
 
     std::string * error_message;
-    TLSContext * tls;
+    std::unique_ptr<TLSContext> tls;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
