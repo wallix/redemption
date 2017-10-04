@@ -305,6 +305,7 @@ explicit test_web_video_mp4 tests/web_video/test.mp4 ;
 exe generate_video
 :
     $(REDEMPTION_TEST_PATH)/web_video/generate_video.cpp
+    src/utils/set_exception_handler_pretty_message.o
 :
     $(EXE_DEPENDENCIES)
     <library>libredrec

@@ -21,6 +21,7 @@
 #include "capture/video_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
 
 #include <iostream>
 
@@ -31,19 +32,7 @@ int main(int ac, char ** av)
         return 0;
     }
 
-    static std::terminate_handler old_terminate_handler =
-    std::set_terminate([]{
-        auto eptr = std::current_exception();
-        try {
-            if (eptr) {
-                std::rethrow_exception(eptr);
-            }
-        } catch(const Error& e) {
-            std::cerr << e.errmsg() << "\n";
-        } catch(...) {
-        }
-        old_terminate_handler();
-    });
+    set_exception_handler_pretty_message();
 
     char path[1024];
     char basename[1024];

@@ -173,6 +173,7 @@ exe rdpheadless :
   <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
+  <library>src/utils/set_exception_handler_pretty_message.o
   <library>z
 ;
 exe rdptanalyzer :
@@ -3942,6 +3943,7 @@ obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
+obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
