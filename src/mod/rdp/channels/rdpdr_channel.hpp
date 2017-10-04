@@ -39,8 +39,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     rdpdr::SharedHeader server_message_header;
 
     rdpdr::DeviceIORequest server_device_io_request;
+    uint16_t serverVersionMinor;
 
     FileSystemDriveManager& file_system_drive_manager;
+
 
     struct device_io_request_info_type
     {
@@ -887,6 +889,7 @@ public:
                          to_server_sender_,
                          params)
     , to_server_sender(*to_server_sender_)
+    , serverVersionMinor(0xC)
     , file_system_drive_manager(file_system_drive_manager)
     , param_client_name(params.client_name)
     , param_file_system_read_authorized(params.file_system_read_authorized)
@@ -1530,16 +1533,16 @@ public:
                         std::string device_name = (p_device_name) ? *p_device_name : "";
 
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
-                        
+
                             auto device_type_name = rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(device_type);
                             auto info = key_qvalue_pairs({
                                 {"type", "DRIVE_REDIRECTION_USE"},
                                 {"device_name", device_name},
                                 {"device_type", device_type_name}
                                 });
-                           
+
                             this->report_message.log5(info);
-                                
+
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
                             }
@@ -1674,9 +1677,9 @@ public:
                                         {"type", "DRIVE_REDIRECTION_READ"},
                                         {"file_name", target_info.file_path},
                                         });
-                                   
+
                                     this->report_message.log5(info);
-                                        
+
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
                                     }
@@ -1720,9 +1723,9 @@ public:
                                     {"type", "DRIVE_REDIRECTION_WRITE"},
                                     {"file_name", target_info.file_path},
                                     });
-                               
+
                                 this->report_message.log5(info);
-                                    
+
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
                                 }
@@ -2015,6 +2018,8 @@ public:
 
         server_announce_request.receive(chunk);
 
+        serverVersionMinor = server_announce_request.VersionMinor();
+
         if (bool(this->verbose & RDPVerbose::rdpdr)) {
             server_announce_request.log(LOG_INFO);
         }
@@ -2130,7 +2135,7 @@ public:
                     0x2,        // osType
                    // 0x50001,                               // osVersion
                    // 0x1,                                   // protocolMajorVersion
-                    0xC,        // protocolMinorVersion -
+                    this->serverVersionMinor,     // protocolMinorVersion -
                                 //     RDP Client 6.0 and 6.1
                     0xFFFF,     // ioCode1
                   // 0x0,                                   // ioCode2

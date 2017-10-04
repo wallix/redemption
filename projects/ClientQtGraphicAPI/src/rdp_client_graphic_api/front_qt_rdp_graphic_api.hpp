@@ -57,7 +57,7 @@
 #include "keyboard/keymap2.hpp"
 #include "transport/crypto_transport.hpp"
 
-#include "capture/flv_params_from_ini.hpp"
+#include "capture/flv_params.hpp"
 #include "capture/capture.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
@@ -3224,11 +3224,11 @@ public:
 
                 UdevRandom gen;
 
-                NullReportMessage * reportMessage  = nullptr;
+                //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, 0, true, reportMessage, ini.get<cfg::video::record_tmp_path>().c_str(), "", 1};
-                FlvParams flv_params = flv_params_from_ini(this->info.width, this->info.height, ini);
+                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, true, true, true};
+                FlvParams flv_params = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, ini.get<cfg::video::break_interval>(), 0};
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
                                             ini.get<cfg::ocr::on_title_bar_only>(),
@@ -3243,28 +3243,29 @@ public:
 
 
                 WrmParams wrmParams(
-                        this->info.bpp
-        //                     , TraceType::localfile
+                      this->info.bpp
                     , this->cctx
                     , gen
                     , this->fstat
-                    , record_path.c_str()
                     , ini.get<cfg::video::hash_path>().c_str()
-                    , movie_name.c_str()
-                    , ini.get<cfg::video::capture_groupid>()
                     , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
                     , ini.get<cfg::video::break_interval>()
                     , WrmCompressionAlgorithm::no_compression
                     , 0
                 );
 
-                PatternCheckerParams patternCheckerParams;
+                PatternParams patternCheckerParams;
                 SequencedVideoParams sequenced_video_params;
                 FullVideoParams full_video_params;
                 MetaParams meta_params;
                 KbdLogParams kbd_log_params;
 
-                this->capture = std::make_unique<Capture>(true, wrmParams
+                CaptureParams captureParams;
+                DrawableParams drawableParams;
+
+                this->capture = std::make_unique<Capture>(captureParams
+                                                , drawableParams
+                                                , true, wrmParams
                                                 , false, png_params
                                                 , false, patternCheckerParams
                                                 , false, ocr_params
@@ -3272,28 +3273,8 @@ public:
                                                 , false, full_video_params
                                                 , false, meta_params
                                                 , false, kbd_log_params
-                                                , ""
-                                                , time
-                                                , this->info.width
-                                                , this->info.height
-                                                , ini.get<cfg::video::record_tmp_path>().c_str()
-                                                , ini.get<cfg::video::record_tmp_path>().c_str()
-                                                , 1
                                                 , flv_params
-                                                , false
-                                                , &(this->reportMessage)
                                                 , nullptr
-                                                , ""
-                                                , ""
-                                                , 0xfffffff
-                                                , false
-                                                , std::chrono::duration<long int>{60}
-                                                , false
-                                                , false
-                                                , false
-                                                , false
-                                                , false
-                                                , false
                                                 , Rect(0, 0, 0, 0)
                                                 );
 

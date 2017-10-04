@@ -2022,6 +2022,35 @@ public:
 
 // DeviceIoResponse (variable):  Returns the result of DR_DRIVE_CONROL_REQ; it is the same as the common Device Control Response (section 2.2.1.5.5). The content of the OutputBuffer field is described in [MS-FSCC] section 2.3 as a reply type message.
 
+// struct ClientDriveControlResponse {
+//
+//     ClientDriveControlResponse() = default;
+//
+//     ClientDriveControlResponse()
+//       {}
+//
+//     void emit(OutStream & stream) const {
+//         stream.out_uint32_le(this->OutputBufferLength);
+//     }
+//
+//     void receive(InStream & stream) {
+//         {
+//             const unsigned expected = 0;
+//             if (!stream.in_check_rem(expected)) {
+//                 LOG(LOG_ERR,
+//                     "Truncated ClientDriveControlResponse: expected=%u remains=%zu",
+//                     expected, stream.in_remain());
+//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
+//             }
+//         }
+//     }
+//
+//     void log() const {
+//         LOG(LOG_INFO, "     Client Drive Control Response:");
+//         LOG(LOG_INFO, "          * OutputBufferLength = %u (4 bytes)", this->OutputBufferLength);
+//     }
+// };
+
 // 2.2.1.5.5 Device Control Response (DR_CONTROL_RSP)
 
 //  A message with this header describes a response to a Device Control Request (section 2.2.1.4.5).
@@ -2049,7 +2078,7 @@ public:
 
 // OutputBuffer (variable):  A variable-length array of bytes whose size is specified by the OutputBufferLength field.
 
-struct ClientDriveControlResponse {
+struct DriveControlRequest {
 
     uint32_t OutputBufferLength = 0;
 

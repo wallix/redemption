@@ -32,7 +32,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
-#include "capture/flv_params_from_ini.hpp"
+#include "capture/flv_params.hpp"
 
 #include "rdp_client_qt_widget.hpp"
 
@@ -123,6 +123,8 @@ public:
 
         uint32_t current_dir_id = 0;
         std::vector<std::string> elem_in_path;
+
+        uint16_t protocol_minor_version = 0;
 
     } fileSystemData;
 
@@ -524,7 +526,7 @@ public:
                                    , ini.get<cfg::theme>()
                                    , this->server_auto_reconnect_packet_ref
                                    , this->close_box_extra_message_ref
-                                   , to_verbose_flags(0)   // this->verbose
+                                   , this->verbose
                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
                                    );
@@ -592,26 +594,49 @@ public:
         uint8_t commandIsValid(0);
 
         // TODO QCommandLineParser / program_options
-        for (int i = 0; i <  argc - 1; i++) {
+        for (int i = 0; i <  argc; i++) {
 
             std::string word(argv[i]);
-            std::string arg(argv[i+1]);
 
             if (       word == "-n") {
-                this->user_name = arg;
-                commandIsValid += NAME_GOTTEN;
+                if (i < argc-1) {
+                    this->user_name = std::string(argv[i+1]);
+                    commandIsValid += NAME_GOTTEN;
+                }
             } else if (word == "-w") {
-                this->user_password = arg;
-                commandIsValid += PWD_GOTTEN;
+                if (i < argc-1) {
+                    this->user_password = std::string(argv[i+1]);
+                    commandIsValid += PWD_GOTTEN;
+                }
             } else if (word == "-i") {
-                this->target_IP = arg;
-                commandIsValid += IP_GOTTEN;
+                if (i < argc-1) {
+                    this->target_IP = std::string(argv[i+1]);
+                    commandIsValid += IP_GOTTEN;
+                }
             } else if (word == "-p") {
-                std::string portStr(arg);
-                this->port = std::stoi(portStr);
-                commandIsValid += PORT_GOTTEN;
+                if (i < argc-1) {
+                    this->port = std::stoi(std::string(argv[i+1]));
+                    commandIsValid += PORT_GOTTEN;
+                }
+            } else if (word == "--rdpdr") {
+                this->verbose = RDPVerbose::rdpdr | this->verbose;
+                 std::cout << "--rdpdr rdpdr verbose on";
+            } else if (word == "--rdpsnd") {
+                this->verbose = RDPVerbose::rdpsnd | this->verbose;
+            } else if (word == "--cliprdr") {
+                this->verbose = RDPVerbose::cliprdr | this->verbose;
+            } else if (word == "--graphics") {
+                this->verbose = RDPVerbose::graphics | this->verbose;
+            } else if (word == "--printer") {
+                this->verbose = RDPVerbose::printer | this->verbose;
+            } else if (word == "--rdpdr_dump") {
+                this->verbose = RDPVerbose::rdpdr_dump | this->verbose;
+            }  else if (word == "--cliprdr_dump") {
+                this->verbose = RDPVerbose::cliprdr_dump | this->verbose;
             }
         }
+
+
 
         if (commandIsValid == COMMAND_VALID) {
             this->connect();
@@ -625,7 +650,7 @@ public:
                 std::cout << "-w [password] ";
             }
             if (!(commandIsValid & IP_GOTTEN)) {
-                std::cout << "-i [ip_serveur] ";
+                std::cout << "-i [ip_server] ";
             }
             if (!(commandIsValid & PORT_GOTTEN)) {
                 std::cout << "-p [port] ";
@@ -1077,7 +1102,7 @@ public:
                         }
 
                         uint16_t versionMajor = chunk.in_uint16_le();
-                        uint16_t versionMinor = chunk.in_uint16_le();
+                        this->fileSystemData.protocol_minor_version = chunk.in_uint16_le();
                         uint32_t clientID = chunk.in_uint32_le();
 
                         StaticOutStream<32> stream;
@@ -1087,7 +1112,7 @@ public:
                         sharedHeader.emit(stream);
 
                         rdpdr::ClientAnnounceReply clientAnnounceReply( versionMajor
-                                                                    , versionMinor
+                                                                    , this->fileSystemData.protocol_minor_version
                                                                     , clientID);
                         clientAnnounceReply.emit(stream);
 
@@ -1135,6 +1160,7 @@ public:
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
                         {
+
                         uint16_t capa  = chunk.in_uint16_le();
                         chunk.in_skip_bytes(2);
                         bool driveEnable = false;
@@ -1175,7 +1201,7 @@ public:
                         out_stream.out_uint16_le(5);    // 5 capabilities.
                         out_stream.out_clear_bytes(2);  // Padding(2)
 
-                        rdpdr::GeneralCapabilitySet gcs();
+
 
                         // General capability set
                         out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
@@ -1189,7 +1215,7 @@ public:
 
                         rdpdr::GeneralCapabilitySet general_capability_set(
                                 0x2,        // osType
-                                rdpdr::MINOR_VERSION_2,        // protocolMinorVersion -
+                                this->fileSystemData.protocol_minor_version,        // protocolMinorVersion -
                                 rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
                                 rdpdr::RDPDR_DEVICE_REMOVE_PDUS |           // extendedPDU -
                                     rdpdr::RDPDR_CLIENT_DISPLAY_NAME_PDU  |
@@ -2142,7 +2168,7 @@ public:
 
                             case rdpdr::IRP_MJ_DEVICE_CONTROL:
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Response");
+                                    LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Request");
                                 }
                                 {
                                     rdpdr::DeviceControlRequest dcr;
@@ -3314,7 +3340,7 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = RDPVerbose::none;              //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = to_verbose_flags(0);               //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
