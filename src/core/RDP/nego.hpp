@@ -111,7 +111,7 @@ public:
     // 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
     void recv_credssp(InStream & stream);
 
-    void recv_connection_confirm(
+    bool recv_connection_confirm(
         bool server_cert_store,
         ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,

@@ -100,14 +100,14 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }
 
-void SocketTransport::enable_client_tls(bool server_cert_store,
-                                        ServerCertCheck server_cert_check,
-                                        ServerNotifier & server_notifier,
-                                        const char * certif_path)
+Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
+                                                        ServerCertCheck server_cert_check,
+                                                        ServerNotifier & server_notifier,
+                                                        const char * certif_path)
 {
     if (this->tls != nullptr) {
         // TODO this should be an error, no need to commute two times to TLS
-        return;
+        return Transport::TlsResult::Fail;
     }
 
     this->tls.reset(new TLSContext());
@@ -122,7 +122,7 @@ void SocketTransport::enable_client_tls(bool server_cert_store,
        ||(server_cert_check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
 
     try {
-        this->tls->enable_client_tls(this->sck,
+        return this->tls->enable_client_tls(this->sck,
            server_cert_store,
            ensure_server_certificate_match,
            ensure_server_certificate_exists,
@@ -141,6 +141,7 @@ void SocketTransport::enable_client_tls(bool server_cert_store,
     }
 
     LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
+    return Transport::TlsResult::Ok;
 }
 
 bool SocketTransport::disconnect()

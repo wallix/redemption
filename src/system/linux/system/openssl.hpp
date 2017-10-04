@@ -33,6 +33,8 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 
+#include "transport/transport.hpp" // Transport::TlsResult
+
 #include "cxx/diagnostic.hpp"
 
 #include <memory>
@@ -153,7 +155,7 @@ public:
     }
 
 
-    void enable_client_tls(
+    Transport::TlsResult enable_client_tls(
             int sck,
             bool server_cert_store,
             bool ensure_server_certificate_match,
@@ -196,7 +198,7 @@ public:
             LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
             ERR_print_errors_cb(openssl_print_fp, static_cast<void*>(error_message));
 
-            return;
+            return Transport::TlsResult::Fail;
         }
         // TODO: This should be wrapped in some abstract layer
         this->allocated_ctx = ctx;
@@ -446,30 +448,31 @@ public:
         // for non-blocking BIOs. Call SSL_get_error() with the return value ret to find
         // out the reason
 
-        for (int connection_status; (connection_status = SSL_connect(ssl)) <= 0;) {
+        int const connection_status = SSL_connect(ssl);
+        if (connection_status <= 0) {
             unsigned long error;
 
             switch (SSL_get_error(ssl, connection_status))
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
-                    break;
+                    return Transport::TlsResult::Want;
 
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_WARNING, "Server closed TLS connection\n");
-                    return;
+                    return Transport::TlsResult::Fail;
 
                 case SSL_ERROR_SYSCALL:
                     LOG(LOG_WARNING, "I/O error\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return;
+                    return Transport::TlsResult::Fail;
 
                 case SSL_ERROR_SSL:
                     LOG(LOG_WARNING, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return;
+                    return Transport::TlsResult::Fail;
 
                 default:
                     LOG(LOG_WARNING, "Unknown error\n");
@@ -477,7 +480,7 @@ public:
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     }
                     LOG(LOG_WARNING, "tls::tls_print_error %s [%d]", strerror(errno), errno);
-                    return;
+                    return Transport::TlsResult::Fail;
             }
         }
 
@@ -513,7 +516,7 @@ public:
         if (!px509) {
             LOG(LOG_WARNING, "SSL_get_peer_certificate() failed");
             server_notifier.server_cert_error(strerror(errno));
-            return;
+            return Transport::TlsResult::Fail;
         }
 
         // TODO("Before to have default value certificate doesn't exists")
@@ -769,7 +772,7 @@ public:
             if (!pkey)
             {
                 LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
-                return;
+                return Transport::TlsResult::Fail;
             }
 
             LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
@@ -867,6 +870,7 @@ public:
         }
 
         LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+        return Transport::TlsResult::Ok;
     }
 
     void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list)

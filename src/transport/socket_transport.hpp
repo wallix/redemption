@@ -74,10 +74,10 @@ public:
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
 
-    void enable_client_tls(bool server_cert_store,
-                           ServerCertCheck server_cert_check,
-                           ServerNotifier & server_notifier,
-                           const char * certif_path
+    TlsResult enable_client_tls(bool server_cert_store,
+                                ServerCertCheck server_cert_check,
+                                ServerNotifier & server_notifier,
+                                const char * certif_path
     ) override;
 
     bool disconnect() override;
