@@ -32,7 +32,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
-#include "capture/flv_params.hpp"
+
 
 #include "rdp_client_qt_widget.hpp"
 

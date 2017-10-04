@@ -57,7 +57,8 @@
 #include "keyboard/keymap2.hpp"
 #include "transport/crypto_transport.hpp"
 
-#include "capture/flv_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/capture.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
@@ -3228,7 +3229,7 @@ public:
                 struct timeval time;
                 gettimeofday(&time, nullptr);
                 PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, true, true, true};
-                FlvParams flv_params = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, ini.get<cfg::video::break_interval>(), 0};
+                VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
                                             ini.get<cfg::ocr::on_title_bar_only>(),
@@ -3256,7 +3257,7 @@ public:
 
                 PatternParams patternCheckerParams;
                 SequencedVideoParams sequenced_video_params;
-                FullVideoParams full_video_params;
+                FullVideoParams full_video_params = { false };;
                 MetaParams meta_params;
                 KbdLogParams kbd_log_params;
 
@@ -3273,7 +3274,7 @@ public:
                                                 , false, full_video_params
                                                 , false, meta_params
                                                 , false, kbd_log_params
-                                                , flv_params
+                                                , videoParams
                                                 , nullptr
                                                 , Rect(0, 0, 0, 0)
                                                 );
