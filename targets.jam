@@ -3861,7 +3861,7 @@ test-run tests/utils/winpr/test_pattern :
   <covfile>src/utils/winpr/pattern.hpp
 ;
 
-obj projects/redemption_configs/redemption_src/configs/config.o : projects/redemption_configs/redemption_src/configs/config.cpp ;
+obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
