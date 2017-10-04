@@ -20,17 +20,51 @@
 
 #include "capture/video_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "utils/fileutils.hpp"
+
+#include <iostream>
 
 int main(int ac, char ** av)
 {
-    char const * prefix = ac ? av[1] : "./";
+    if (ac && av[1][0] == '-' && av[1][1] == 'h' && !av[1][2]) {
+        std::cout << av[0] << " [outfile = ./test.mp4]\n";
+        return 0;
+    }
+
+    static std::terminate_handler old_terminate_handler =
+    std::set_terminate([]{
+        auto eptr = std::current_exception();
+        try {
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+        } catch(const Error& e) {
+            std::cerr << e.errmsg() << "\n";
+        } catch(...) {
+        }
+        old_terminate_handler();
+    });
+
+    char path[1024];
+    char basename[1024];
+    char extension[8]; // and codec
+    char const * const filename = ac ? av[1] : "./test.mp4";
+
+    canonical_path(
+        filename,
+        path, sizeof(path),
+        basename, sizeof(basename),
+        extension, sizeof(extension));
+
+    char const * codec = extension[0] && extension[0] == '.' ? extension+1 : "mp4";
+
     timeval now {1353055800, 0};
     RDPDrawable drawable(800, 600);
     VideoParams video_params{
         Level::medium, drawable.width(), drawable.height(),
-        25, 15, 100000, "mp4", false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
+        25, 15, 100000, codec, false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
     CaptureParams capture_params{
-        now, "test", nullptr, prefix, 0 /* groupid */, nullptr};
+        now, basename, nullptr, path, 0 /* groupid */, nullptr};
     FullVideoCaptureImpl capture(
         capture_params, drawable, drawable, video_params, FullVideoParams{false});
 

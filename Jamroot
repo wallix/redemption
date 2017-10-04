@@ -302,9 +302,9 @@ make test_libredrec : libredrec : @test_libredrec
 ## { test_web_video_mp4
 explicit test_web_video_mp4 tests/web_video/test.mp4 ;
 
-exe generate_test_web_video_mp4
+exe generate_video
 :
-    tests/web_video/generate_video_mp4.cpp
+    $(REDEMPTION_TEST_PATH)/web_video/generate_video.cpp
 :
     $(EXE_DEPENDENCIES)
     <library>libredrec
@@ -314,11 +314,13 @@ exe generate_test_web_video_mp4
 ;
 
 actions run_web_video_mp4 {
+    set -e
     TMP=/tmp/web_video_mp4_test/
-    "$(>)" $TMP
+    VIDEO=$TMP/test.mp4
+    rm -f "$VIDEO"
     mkdir -p $TMP
-    #mv -f test.mp4 $TMP
-    cp $(REDEMPTION_TEST_PATH)/web_video/test.html $TMP
+    "$(>)" $VIDEO
+    cp "$(REDEMPTION_TEST_PATH)/web_video/test.html" "$TMP"
     cd $TMP
     python -m SimpleHTTPServer 4104 &
     xdg-open 'http://0000:4104/test.html'
@@ -326,7 +328,7 @@ actions run_web_video_mp4 {
     pkill -P $$
 }
 
-make tests/web_video/test.mp4 : generate_test_web_video_mp4 : @run_web_video_mp4 ;
+make tests/web_video/test.mp4 : generate_video : @run_web_video_mp4 ;
 
 alias test_web_video_mp4 : tests/web_video/test.mp4 ;
 ## } test_web_video_mp4
