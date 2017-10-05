@@ -1652,7 +1652,7 @@ public:
            LOG(LOG_INFO, "begin_update");
            LOG(LOG_INFO, "========================================\n");
         }
-        if (this->is_recording && !this->is_replaying) {
+        if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
             this->graph_capture->begin_update();
             struct timeval time;
             gettimeofday(&time, nullptr);
@@ -1661,7 +1661,9 @@ public:
     }
 
     virtual void end_update() override {
-        this->screen->update_view();
+        if (this->connected) {
+            this->screen->update_view();
+        }
 
         if (bool(this->verbose & RDPVerbose::graphics)) {
            LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -1992,7 +1994,9 @@ public:
 
         QImage image(data.get(), mincx, mincy, srcBitmap.format());
         QRect trect(drect.x, drect.y, mincx, mincy);
-        this->screen->paintCache().drawImage(trect, image);
+        if (this->connected) {
+            this->screen->paintCache().drawImage(trect, image);
+        }
     }
 
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy) {
@@ -2020,7 +2024,9 @@ public:
         }
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->connected) {
+            this->screen->paintCache().drawImage(trect, qbitmap);
+        }
     }
 
 
@@ -2030,7 +2036,9 @@ public:
             qbitmap.invertPixels();
         }
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->screen) {
+            this->screen->paintCache().drawImage(trect, qbitmap);
+        }
     }
 
 
@@ -2070,17 +2078,21 @@ public:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
         QBrush brush(color, style);
-        this->screen->paintCache().setBrush(brush);
-        this->screen->paintCache().setCompositionMode(mode);
-        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-        this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
-        this->screen->paintCache().setBrush(Qt::SolidPattern);
+        if (this->connected) {
+            this->screen->paintCache().setBrush(brush);
+            this->screen->paintCache().setCompositionMode(mode);
+            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+            this->screen->paintCache().setBrush(Qt::SolidPattern);
+        }
     }
 
     void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
-        this->screen->paintCache().setCompositionMode(mode);
-        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-        this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+        if (this->connected) {
+            this->screen->paintCache().setCompositionMode(mode);
+            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
     }
 
 
@@ -2115,11 +2127,13 @@ public:
                 case 0x5A:
                     {
                         QBrush brush(backColor, Qt::Dense4Pattern);
-                        this->screen->paintCache().setBrush(brush);
-                        this->screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
-                        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                        this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
-                        this->screen->paintCache().setBrush(Qt::SolidPattern);
+                        if (this->connected) {
+                            this->screen->paintCache().setBrush(brush);
+                            this->screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
+                            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+                            this->screen->paintCache().setBrush(Qt::SolidPattern);
+                        }
                     }
                     break;
 
@@ -2129,12 +2143,14 @@ public:
                 // +------+-------------------------------+
                 case 0xF0:
                     {
-                        QBrush brush(foreColor, Qt::Dense4Pattern);
-                        this->screen->paintCache().setPen(Qt::NoPen);
-                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                        this->screen->paintCache().setBrush(brush);
-                        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                        this->screen->paintCache().setBrush(Qt::SolidPattern);
+                        if (this->connected) {
+                            QBrush brush(foreColor, Qt::Dense4Pattern);
+                            this->screen->paintCache().setPen(Qt::NoPen);
+                            this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                            this->screen->paintCache().setBrush(brush);
+                            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                            this->screen->paintCache().setBrush(Qt::SolidPattern);
+                        }
                     }
                     break;
                 default: LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", cmd.rop);
@@ -2145,7 +2161,9 @@ public:
             switch (cmd.rop) {
 
                 case 0x00: // blackness
-                    this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
+                    if (this->connected) {
+                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
+                    }
                     break;
                     // +------+-------------------------------+
                     // | 0x05 | ROP: 0x000500A9               |
@@ -2218,9 +2236,11 @@ public:
                     // |      | RPN: P                        |
                     // +------+-------------------------------+
                 case 0xF0:
-                    this->screen->paintCache().setPen(Qt::NoPen);
-                    this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    if (this->connected) {
+                        this->screen->paintCache().setPen(Qt::NoPen);
+                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    }
                     break;
                     // +------+-------------------------------+
                     // | 0xF5 | ROP: 0x00F50225               |
@@ -2238,7 +2258,9 @@ public:
                     break;
 
                 case 0xFF: // whiteness
-                    this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
+                    if (this->connected) {
+                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
+                    }
                     break;
                 default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", cmd.rop);
                     break;
@@ -2268,7 +2290,9 @@ public:
         QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
         Rect rect(cmd.rect.intersect(clip));
 
-        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
+        if (this->connected) {
+            this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -2322,7 +2346,9 @@ public:
 
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
-        this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->connected) {
+            this->screen->paintCache().drawImage(trect, qbitmap);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(bitmap_data, bmp);
@@ -2345,9 +2371,11 @@ public:
         }
 
         // TODO clipping
-        this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
+        if (this->connected) {
+            this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
 
-        this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
+            this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -2381,7 +2409,10 @@ public:
 
         switch (cmd.rop) {
 
-            case 0x00: this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+            case 0x00:
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                }
                 break;
 
             case 0x55: this->draw_RDPScrBlt(srcx, srcy, drect, true);
@@ -2394,7 +2425,9 @@ public:
                 break;
 
             case 0xFF:
-                this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                }
                 break;
             default: LOG(LOG_WARNING, "DEFAULT: RDPScrBlt rop = %x", cmd.rop);
                 break;
@@ -2427,7 +2460,10 @@ public:
 
         switch (cmd.rop) {
 
-            case 0x00: this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+            case 0x00:
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                }
                 break;
 
             case 0x22: this->draw_memblt_op<Op_0x22>(drect, bitmap);
@@ -2461,7 +2497,10 @@ public:
             case 0x88: this->draw_memblt_op<Op_0x88>(drect, bitmap);
                 break;
 
-            case 0xFF: this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+            case 0xFF:
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                }
                 break;
 
             default: LOG(LOG_WARNING, "DEFAULT: RDPMemBlt rop = %x", cmd.rop);
@@ -2535,7 +2574,9 @@ public:
                         image = image.convertToFormat(this->imageFormatRGB);
                     }
                     QRect trect(drect.x, rowYCoord, mincx, 1);
-                    this->screen->paintCache().drawImage(trect, image);
+                    if (this->connected) {
+                        this->screen->paintCache().drawImage(trect, image);
+                    }
                     rowYCoord--;
                 }
             }
@@ -2569,7 +2610,9 @@ public:
 
         switch (cmd.rop) {
             case 0x00: // blackness
-                this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                }
                 break;
             case 0x55:                                         // inversion
                 this->draw_RDPScrBlt(drect.x, drect.y, drect, true);
@@ -2577,7 +2620,9 @@ public:
             case 0xAA: // change nothing
                 break;
             case 0xFF: // whiteness
-                this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                if (this->connected) {
+                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                }
                 break;
             default: LOG(LOG_WARNING, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
                 break;
@@ -2722,7 +2767,9 @@ public:
                                 if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
-                                    this->screen->paintCache().fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
+                                    if (this->connected) {
+                                        this->screen->paintCache().fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
+                                    }
                                 }
                                 fc_bit_mask >>= 1;
                             }
@@ -2990,7 +3037,9 @@ public:
     }
 
     void setMainScreenOnTopRelease() override {
-        this->screen->activateWindow();
+        if (this->connected) {
+            this->screen->activateWindow();
+        }
     }
 
     void send_rdp_scanCode(int keyCode, int flag) {
