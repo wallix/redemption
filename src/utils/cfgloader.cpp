@@ -20,6 +20,7 @@
 
 #include "utils/cfgloader.hpp"
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 

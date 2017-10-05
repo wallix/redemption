@@ -26,6 +26,7 @@
 #include "cxx/diagnostic.hpp"
 
 #include <cstdarg>
+#include <cstdio>
 
 bool & LOG__REDEMPTION__AS__LOGPRINT()
 {

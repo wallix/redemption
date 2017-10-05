@@ -22,6 +22,7 @@
 
 #include "transport/socket_transport.hpp"
 #include "utils/netutils.hpp"
+#include "utils/hexdump.hpp"
 #include "system/openssl.hpp"
 
 #include <sys/types.h>

@@ -22,6 +22,7 @@
 #include "cxx/diagnostic.hpp"
 
 #include <cstdarg>
+#include <cstdio>
 
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
 {
