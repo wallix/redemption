@@ -454,6 +454,8 @@ def inject_variable_prefix(path):
         path = '$(REDEMPTION_SRC_PATH)' + path[3:]
     elif start_with(path, 'tests/'):
         path = '$(REDEMPTION_TEST_PATH)' + path[5:]
+    elif start_with(path, 'projects/redemption_configs/'):
+        path = '$(REDEMPTION_CONFIG_PATH)' + path[27:]
     return path
 
 def generate_obj(files):

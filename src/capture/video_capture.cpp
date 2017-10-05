@@ -325,7 +325,7 @@ struct IOVideoRecorderWithTransport
 {
     static int write(void * opaque, uint8_t * buf, int buf_size)
     {
-        Transport * trans       = reinterpret_cast<Transport *>(opaque);
+        Transport * trans       = static_cast<Transport*>(opaque);
         int         return_code = buf_size;
         try {
             trans->send(buf, buf_size);
@@ -360,7 +360,7 @@ struct IOVideoRecorderWithTransport
             return -1;
         }
         try {
-            Transport * trans = reinterpret_cast<Transport *>(opaque);
+            Transport * trans = static_cast<Transport*>(opaque);
             trans->seek(offset, whence);
             return offset;
         }
@@ -380,13 +380,13 @@ using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 //@{
 
 FullVideoCaptureImpl::FullVideoCaptureImpl(
-    const timeval & now, const char * const record_path, const char * const basename,
-    const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
+    CaptureParams const & capture_params,
+    RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
-    record_path, basename, ("." + video_params.codec).c_str(),
-    groupid, /* TODO set an authentifier */nullptr)
-, video_cap_ctx(now,
+    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
+    capture_params.groupid, capture_params.report_message)
+, video_cap_ctx(capture_params.now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, imageFrameApi)
@@ -732,26 +732,27 @@ void SequencedVideoCaptureImpl::VideoSequencer::frame_marker_event(
 
 
 SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
-    const timeval & now,
-    const char * const record_path,
-    const char * const basename,
-    const int groupid,
+    CaptureParams const & capture_params,
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi & imageFrameApi,
     VideoParams video_params,
     NotifyNextVideo & next_video_notifier)
-: first_image(now, *this)
-, vc_trans(record_path, basename, ("." + video_params.codec).c_str(), groupid, /* TODO set an authentifier */nullptr)
-, vc(now, this->vc_trans, drawable, imageFrameApi, std::move(video_params))
-, ic_trans(record_path, basename, ".png", groupid, nullptr)
+: first_image(capture_params.now, *this)
+, vc_trans(
+    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
+    capture_params.groupid, capture_params.report_message)
+, vc(capture_params.now, this->vc_trans, drawable, imageFrameApi, std::move(video_params))
+, ic_trans(
+    capture_params.record_path, capture_params.basename, ".png",
+    capture_params.groupid, capture_params.report_message)
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_scaled_width(imageFrameApi.width())
 , ic_scaled_height(imageFrameApi.height())
 , ic_drawable(drawable)
 , image_frame_api(imageFrameApi)
 , video_sequencer(
-    now,
+    capture_params.now,
     (video_params.video_interval > std::chrono::microseconds(0))
         ? video_params.video_interval
         : std::chrono::microseconds::max(),

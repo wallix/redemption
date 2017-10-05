@@ -20,18 +20,42 @@
 
 #include "capture/video_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
+
+#include <iostream>
 
 int main(int ac, char ** av)
 {
-    char const * prefix = ac ? av[1] : "./";
+    if (ac && av[1][0] == '-' && av[1][1] == 'h' && !av[1][2]) {
+        std::cout << av[0] << " [outfile = ./test.mp4]\n";
+        return 0;
+    }
+
+    set_exception_handler_pretty_message();
+
+    char path[1024];
+    char basename[1024];
+    char extension[8]; // and codec
+    char const * const filename = ac ? av[1] : "./test.mp4";
+
+    canonical_path(
+        filename,
+        path, sizeof(path),
+        basename, sizeof(basename),
+        extension, sizeof(extension));
+
+    char const * codec = extension[0] && extension[0] == '.' ? extension+1 : "mp4";
+
     timeval now {1353055800, 0};
     RDPDrawable drawable(800, 600);
     VideoParams video_params{
         Level::medium, drawable.width(), drawable.height(),
-        25, 15, 100000, "mp4", false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
+        25, 15, 100000, codec, false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
+    CaptureParams capture_params{
+        now, basename, nullptr, path, 0 /* groupid */, nullptr};
     FullVideoCaptureImpl capture(
-        now, prefix, "test", 0 /* groupid */,
-        drawable, drawable, video_params, FullVideoParams{false});
+        capture_params, drawable, drawable, video_params, FullVideoParams{false});
 
     Rect screen(0, 0, drawable.width(), drawable.height());
     auto const color_cxt = gdi::ColorCtx::depth24();

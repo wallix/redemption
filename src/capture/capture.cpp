@@ -1563,16 +1563,13 @@ Capture::Capture(
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                capture_params.now, capture_params.record_path, capture_params.basename,
-                capture_params.groupid, png_params.zoom,
-                *this->gd_drawable, *image_frame_api_ptr, video_params, notifier
-            ));
+                capture_params, png_params.zoom, *this->gd_drawable,
+                *image_frame_api_ptr, video_params, notifier));
         }
 
         if (capture_video_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                capture_params.now, capture_params.record_path, capture_params.basename,
-                capture_params.groupid, *this->gd_drawable,
+                capture_params, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, full_video_params));
         }
 

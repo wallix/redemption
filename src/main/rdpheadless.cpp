@@ -24,6 +24,7 @@
 
 #include "main/rdpheadless.hpp"
 #include "utils/netutils.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -931,20 +932,7 @@ int main(int argc, char** argv)
         // std::cout << " ======= Connection steps =======" << "\n";
         // std::cout << " ================================" << "\n";
 
-        // Exception handler (pretty message)
-        static std::terminate_handler old_terminate_handler =
-        std::set_terminate([]{
-            auto eptr = std::current_exception();
-            try {
-                if (eptr) {
-                    std::rethrow_exception(eptr);
-                }
-            } catch(const Error& e) {
-                std::cerr << e.errmsg() << "\n";
-            } catch(...) {
-            }
-            old_terminate_handler();
-        });
+        set_exception_handler_pretty_message();
 
         // Signal handler (SIGPIPE)
         {
