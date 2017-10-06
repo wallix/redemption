@@ -2135,7 +2135,7 @@ public:
                     0x2,        // osType
                    // 0x50001,                               // osVersion
                    // 0x1,                                   // protocolMajorVersion
-                    this->serverVersionMinor,     // protocolMinorVersion -
+                    0xc,                                    //this->serverVersionMinor,         // protocolMinorVersion -
                                 //     RDP Client 6.0 and 6.1
                     0xFFFF,     // ioCode1
                   // 0x0,                                   // ioCode2

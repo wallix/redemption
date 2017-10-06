@@ -2179,7 +2179,7 @@ public:
                                     switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
                                         {
-                                            rdpdr::ClientDriveControlResponse cdcr(64);
+                                            rdpdr::DriveControlResponse cdcr(64);
                                             cdcr.emit(out_stream);
 
                                             uint8_t ObjectId[16] =  { 0 };
@@ -2196,7 +2196,7 @@ public:
 
                                         case fscc::FSCTL_GET_OBJECT_ID :
                                         {
-                                            rdpdr::ClientDriveControlResponse cdcr(64);
+                                            rdpdr::DriveControlResponse cdcr(64);
                                             cdcr.emit(out_stream);
 
                                             uint8_t ObjectId[16] =  { 0 };
