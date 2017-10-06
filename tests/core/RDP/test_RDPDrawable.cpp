@@ -585,8 +585,11 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
-              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
+        , timestamp_tracer(gdi::ImageDataView{
+            const_cast<Drawable&>(drawable).first_pixel(),
+            drawable.width(), drawable.height(),
+            drawable.rowsize(), static_cast<uint8_t>(drawable.Bpp)
+        })
         {
         }
 

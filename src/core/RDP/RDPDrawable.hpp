@@ -79,19 +79,41 @@ public:
     {
     }
 
-    uint8_t * first_pixel() noexcept override {
+    ConstImageView get_image_view() const override
+    {
+        return ConstImageView{
+            this->drawable.data(),
+            this->drawable.width(),
+            this->drawable.height(),
+            this->drawable.rowsize(),
+            Drawable::Bpp
+        };
+    }
+
+    ImageView get_mutable_image_view() override
+    {
+        return ImageView{
+            this->drawable.first_pixel(),
+            this->drawable.width(),
+            this->drawable.height(),
+            this->drawable.rowsize(),
+            Drawable::Bpp
+        };
+    }
+
+    uint8_t * first_pixel() noexcept {
         return this->drawable.first_pixel();
     }
 
-    const uint8_t * data() const noexcept override {
+    const uint8_t * data() const noexcept {
         return this->drawable.data();
     }
 
-    uint16_t width() const noexcept override {
+    uint16_t width() const noexcept {
         return this->drawable.width();
     }
 
-    uint16_t height() const noexcept override {
+    uint16_t height() const noexcept {
         return this->drawable.height();
     }
 
@@ -103,11 +125,11 @@ public:
         return this->drawable.size();
     }
 
-    size_t rowsize() const noexcept override {
+    size_t rowsize() const noexcept {
         return this->drawable.rowsize();
     }
 
-    size_t pix_len() const noexcept override {
+    size_t pix_len() const noexcept {
         return this->drawable.pix_len();
     }
 

@@ -611,12 +611,13 @@ private:
 
 class PngCapture : public gdi::CaptureApi
 {
-public:
+protected:
     OutFilenameSequenceTransport trans;
     RDPDrawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
+private:
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -625,9 +626,13 @@ public:
 
     TimestampTracer timestamp_tracer;
 
+protected:
     gdi::ImageFrameApi & image_frame_api;
 
-    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi, const PngParams & png_params)
+    PngCapture(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable,
+        gdi::ImageFrameApi & imageFrameApi, gdi::ImageDataView const & image_view)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
@@ -636,10 +641,9 @@ public:
     , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width{(((imageFrameApi.width() * this->zoom_factor) / 100)+3) & 0xFFC}
-    , scaled_height{((imageFrameApi.height() * this->zoom_factor) / 100)}
-    , timestamp_tracer(imageFrameApi.width(), imageFrameApi.height(), this->drawable.impl().Bpp,
-          imageFrameApi.first_pixel(), imageFrameApi.rowsize())
+    , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
+    , timestamp_tracer(image_view)
     , image_frame_api(imageFrameApi)
     {
         if (this->zoom_factor != 100) {
@@ -647,20 +651,30 @@ public:
         }
     }
 
+public:
+    PngCapture(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
+    : PngCapture(
+        capture_params, png_params, drawable,
+        imageFrameApi, imageFrameApi.get_mutable_image_view())
+    {}
+
     void dump(void)
     {
+        auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {
             ::transport_dump_png24(
-                this->trans, this->image_frame_api.data(),
-                this->image_frame_api.width(), this->image_frame_api.height(),
-                this->image_frame_api.rowsize(), true);
+                this->trans, image_view.data(),
+                image_view.width(), image_view.height(),
+                image_view.rowsize(), true);
         }
         else {
             scale_data(
-                this->scaled_buffer.get(), this->image_frame_api.data(),
-                this->scaled_width, this->image_frame_api.width(),
-                this->scaled_height, this->image_frame_api.height(),
-                this->image_frame_api.rowsize());
+                this->scaled_buffer.get(), image_view.data(),
+                this->scaled_width, image_view.width(),
+                this->scaled_height, image_view.height(),
+                image_view.rowsize());
             ::transport_dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,
@@ -715,18 +729,19 @@ public:
 
 class PngCaptureRT : public PngCapture
 {
-public:
     uint32_t num_start;
     unsigned png_limit;
 
-    bool enable_rt_display = false;
+    bool enable_rt_display;
 
+public:
     PngCaptureRT(
-        const CaptureParams & capture_params, RDPDrawable & drawable,
-        gdi::ImageFrameApi & imageFrameApi, const PngParams & png_params)
-    : PngCapture(capture_params, drawable, imageFrameApi, png_params)
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
+    : PngCapture(capture_params, png_params, drawable, imageFrameApi)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
+    , enable_rt_display(png_params.rt_display)
     {
     }
 
@@ -755,9 +770,6 @@ public:
     Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        (void)x;
-        (void)y;
-        (void)ignore_frame_in_timeval;
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
@@ -1535,11 +1547,11 @@ Capture::Capture(
                 }
 
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    capture_params, *this->gd_drawable, *image_frame_api_ptr, png_params));
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    capture_params, *this->gd_drawable, *image_frame_api_ptr, png_params));
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr));
             }
         }
 
@@ -1604,7 +1616,6 @@ Capture::Capture(
         }
 
         if (this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = png_params.rt_display;
             this->caps.push_back(*this->png_capture_real_time_obj);
         }
 

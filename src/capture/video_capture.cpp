@@ -175,12 +175,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 , trace_timestamp(trace_timestamp)
 , image_by_interval(image_by_interval)
 , image_frame_api(imageFrameApi)
-, timestamp_tracer(
-      imageFrameApi.width(),
-      imageFrameApi.height(),
-      this->drawable.impl().Bpp,
-      imageFrameApi.first_pixel(),
-      imageFrameApi.rowsize())
+, timestamp_tracer(imageFrameApi.get_mutable_image_view())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
@@ -394,12 +389,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
     &this->trans_tmp_file,
-
-    imageFrameApi.width(),
-    imageFrameApi.height(),
-    imageFrameApi.pix_len(),
-    imageFrameApi.first_pixel(),
-
+    imageFrameApi.get_image_view(),
     video_params.bitrate,
     video_params.frame_rate,
     video_params.qscale,
@@ -607,12 +597,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         IOVideoRecorderWithTransport<SequenceTransport>::write,
         IOVideoRecorderWithTransport<SequenceTransport>::seek,
         &this->trans,
-
-        this->image_frame_api.width(),
-        this->image_frame_api.height(),
-        this->image_frame_api.pix_len(),
-        this->image_frame_api.first_pixel(),
-
+        this->image_frame_api.get_image_view(),
         this->video_params.bitrate,
         this->video_params.frame_rate,
         this->video_params.qscale,
@@ -659,8 +644,9 @@ void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
 {
     percent = std::min(percent, 100u);
-    const unsigned zoom_width = (this->image_frame_api.width() * percent) / 100;
-    const unsigned zoom_height = (this->image_frame_api.height() * percent) / 100;
+    auto const image_view = this->image_frame_api.get_image_view();
+    const unsigned zoom_width = (image_view.width() * percent) / 100;
+    const unsigned zoom_height = (image_view.height() * percent) / 100;
     this->ic_zoom_factor = percent;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
@@ -681,25 +667,20 @@ void SequencedVideoCaptureImpl::ic_flush()
 
 void SequencedVideoCaptureImpl::dump24()
 {
-    ::transport_dump_png24(
-        this->ic_trans,
-        this->image_frame_api.first_pixel(),
-        this->image_frame_api.width(),
-        this->image_frame_api.height(),
-        this->image_frame_api.rowsize(),
-        true);
+    ::transport_dump_png24(this->ic_trans, this->image_frame_api.get_image_view(), true);
 }
 
 void SequencedVideoCaptureImpl::scale_dump24()
 {
+    auto image_view = this->image_frame_api.get_image_view();
     scale_data(
         this->ic_scaled_buffer.get(),
-        this->image_frame_api.first_pixel(),
+        image_view.data(),
         this->ic_scaled_width,
-        this->image_frame_api.width(),
+        image_view.width(),
         this->ic_scaled_height,
-        this->image_frame_api.height(),
-        this->image_frame_api.rowsize());
+        image_view.height(),
+        image_view.rowsize());
     ::transport_dump_png24(
         this->ic_trans, this->ic_scaled_buffer.get(),
         this->ic_scaled_width, this->ic_scaled_height,
@@ -747,8 +728,6 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     capture_params.record_path, capture_params.basename, ".png",
     capture_params.groupid, capture_params.report_message)
 , ic_zoom_factor(std::min(image_zoom, 100u))
-, ic_scaled_width(imageFrameApi.width())
-, ic_scaled_height(imageFrameApi.height())
 , ic_drawable(drawable)
 , image_frame_api(imageFrameApi)
 , video_sequencer(
@@ -759,10 +738,9 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     *this)
 , next_video_notifier(next_video_notifier)
 {
-    const unsigned zoom_width =
-        (imageFrameApi.width() * this->ic_zoom_factor) / 100;
-    const unsigned zoom_height =
-        (imageFrameApi.height() * this->ic_zoom_factor) / 100;
+    auto const image_view = imageFrameApi.get_image_view();
+    const unsigned zoom_width = (image_view.width() * this->ic_zoom_factor) / 100;
+    const unsigned zoom_height = (image_view.height() * this->ic_zoom_factor) / 100;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
     if (this->ic_zoom_factor != 100) {
