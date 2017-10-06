@@ -21,6 +21,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 
 inline static void msgdump_c(bool send, bool from_or_to_client,

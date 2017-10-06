@@ -27,6 +27,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 #include "core/error.hpp"
 
 #include <cstring>

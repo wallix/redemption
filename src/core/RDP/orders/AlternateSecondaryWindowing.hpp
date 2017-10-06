@@ -28,6 +28,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/noncopyable.hpp"

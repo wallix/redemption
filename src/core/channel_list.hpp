@@ -26,6 +26,7 @@
 
 #include "core/channel_names.hpp"
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 #include "transport/transport.hpp"
 #include "cxx/cxx.hpp"
 

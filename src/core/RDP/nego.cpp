@@ -253,7 +253,7 @@ void RdpNego::recv_credssp(InStream & stream)
     }
 }
 
-void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck server_cert_check,
+bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck server_cert_check,
                                       ServerNotifier & server_notifier, const char * certif_path,
                                       InStream & stream)
 {
@@ -265,7 +265,7 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
         this->enabled_protocols = RdpNegoProtocols::Rdp;
         this->state = NEGO_STATE_FINAL;
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
-        return;
+        return true;
     }
     this->selected_protocol = x224.rdp_neg_code;
 
@@ -276,12 +276,18 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             //     this->restricted_admin_mode = true;
             // }
             LOG(LOG_INFO, "activating SSL");
-            this->trans.enable_client_tls(
+            switch (this->trans.enable_client_tls(
                 server_cert_store,
                 server_cert_check,
                 server_notifier,
                 certif_path
-            );
+            )) {
+                case Transport::TlsResult::Want: return false;
+                case Transport::TlsResult::Fail:
+                    LOG(LOG_ERR, "enable_client_tls fail");
+                    REDEMPTION_CXX_FALLTHROUGH;
+                case Transport::TlsResult::Ok: break;
+            }
 
             this->nla_tried = true;
 
@@ -303,16 +309,22 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             else {
                 this->state = NEGO_STATE_CREDSSP;
             }
-            return;
+            return true;
         }
         else if (x224.rdp_neg_code == X224::PROTOCOL_TLS) {
             LOG(LOG_INFO, "activating SSL");
-            this->trans.enable_client_tls(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
+            switch (this->trans.enable_client_tls(
+                server_cert_store,
+                server_cert_check,
+                server_notifier,
+                certif_path
+            )) {
+                case Transport::TlsResult::Want: return false;
+                case Transport::TlsResult::Fail:
+                    LOG(LOG_ERR, "enable_client_tls fail");
+                    REDEMPTION_CXX_FALLTHROUGH;
+                case Transport::TlsResult::Ok: break;
+            }
             this->state = NEGO_STATE_FINAL;
         }
         else if (x224.rdp_neg_code == X224::PROTOCOL_RDP) {
@@ -348,6 +360,7 @@ void RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
         }
     }
     LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
+    return true;
 }
 
 

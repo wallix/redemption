@@ -3,7 +3,7 @@
 Edit `configs_specs/configs/specs/config_spec.hpp`
 
 - `CONFIG_DEFINE_TYPE` macro: declare a redemption type (forward declaration and more)
-- `W.section(section_name, [&]{ scope_section; })`
+- `W.section(section_name, [&]{ /* members... */ })`
 - `W.member(sesman_io, spec_attr, type, name[, desc][, default_value])`. Ordering value is not significant.
 - `W.sep()`: empty line (human readable)
 
@@ -75,23 +75,24 @@ Edit `configs_specs/configs/specs/config_type.hpp`
 ```cpp
 // enum { a = 1, b = 2, c = 4, ... }
 e.enumeration_flags(enum_name[, enum_desc][, enum_info])
-    [.enable_icase_parser()]
+    [.set_string_parser()]
     .value(value_name[, value_desc])[.alias(alias_name)...]
     ...
 
 // enum { a, b, c, ... }
 e.enumeration_list(enum_name[, enum_desc][, enum_info])
-    [.enable_icase_parser()]
+    [.set_string_parser()]
     .value(value_name[, value_desc])[.alias(alias_name)...]
     ...
 
 // enum { a = v1, b = v2, c = v3, ... }
 e.enumeration_set(enum_name[, enum_desc][, enum_info])
-    [.enable_icase_parser()]
+    [.set_string_parser()]
     .value(value_name, integer_val[, value_desc])[.alias(alias_name)...]
     ...
 
 // enum_info: description after values
+// set_string_parser(): use a name parser instead of a value parser
 ```
 
 

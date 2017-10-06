@@ -33,6 +33,7 @@
 #include <algorithm> // min max
 #include <cstdlib> // abs
 #include <cstdint>
+#include <cstdio> // snprintf
 
 struct Rect {
     int16_t x;

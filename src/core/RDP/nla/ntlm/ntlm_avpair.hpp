@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/sugar/non_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -150,7 +151,7 @@ class NtlmAvPairList final
         void log(NTLM_AV_ID avId) const
         {
             LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(this->avLen));
-            hexdump8_c(this->data.get(), this->avLen);
+            hexdump_c(this->data.get(), this->avLen, 8);
         }
     };
     AvPair list[AV_ID_MAX]{{reinterpret_cast<uint8_t const*>(""), 0}};

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 struct RedirectionInfo {
     bool valid;

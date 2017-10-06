@@ -57,7 +57,8 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    virtual void enable_client_tls(
+    enum class TlsResult { Ok, Fail, Want, };
+    virtual TlsResult enable_client_tls(
             bool server_cert_store,
             ServerCertCheck server_cert_check,
             ServerNotifier & server_notifier,
@@ -69,6 +70,7 @@ public:
         (void)server_cert_check;
         (void)server_notifier;
         (void)certif_path;
+        return TlsResult::Fail;
     }
 
     virtual void enable_server_tls(const char * certificate_password,
@@ -206,7 +208,7 @@ struct InTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    void enable_client_tls(
+    Transport::TlsResult enable_client_tls(
         bool server_cert_store,
         ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
@@ -248,7 +250,7 @@ struct OutTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    void enable_client_tls(
+    Transport::TlsResult enable_client_tls(
         bool server_cert_store,
         ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
