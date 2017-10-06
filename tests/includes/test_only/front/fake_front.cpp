@@ -22,6 +22,7 @@
 
 #include "test_only/front/fake_front.hpp"
 #include "utils/log.hpp"
+#include "utils/png.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
@@ -287,16 +288,14 @@ void FakeFront::dump_png(const char * prefix)
     sprintf(tmpname, "%sXXXXXX.png", prefix);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY | O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24( f, this->gd.data(), this->gd.width(), this->gd.height()
-                , this->gd.rowsize(), true);
+    ::dump_png24(f, this->gd, true);
     ::fclose(f);
 }
 
 void FakeFront::save_to_png(const char * filename)
 {
     std::FILE * file = fopen(filename, "w+");
-    dump_png24(file, this->gd.data(), this->gd.width(),
-                this->gd.height(), this->gd.rowsize(), true);
+    dump_png24(file, this->gd, true);
     fclose(file);
 }
 

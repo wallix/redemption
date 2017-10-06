@@ -358,10 +358,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    TimestampTracer timestamp_tracer(gdi::ImageDataView{
-        gd.first_pixel(), gd.width(), gd.height(),
-        gd.rowsize(), static_cast<uint8_t>(gd.Bpp)
-    });
+    TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(gd));
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
 
     time_t rawtime;

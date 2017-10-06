@@ -24,8 +24,9 @@
 #include <cstdio>
 
 #include "core/font.hpp"
-#include "mod/mod_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "mod/mod_api.hpp"
+#include "utils/png.hpp"
 
 struct TestDraw : mod_api
 {
@@ -45,8 +46,7 @@ struct TestDraw : mod_api
     void save_to_png(const char * filename)
     {
         std::FILE * file = std::fopen(filename, "w+");
-        dump_png24(file, this->gd.data(), this->gd.width(),
-                   this->gd.height(), this->gd.rowsize(), true);
+        dump_png24(file, this->gd, true);
         std::fclose(file);
     }
 

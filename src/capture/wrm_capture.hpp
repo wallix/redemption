@@ -45,6 +45,7 @@
 #include "utils/genfstat.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/png.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cstddef>
@@ -243,12 +244,7 @@ public:
 
     void dump_png24(Transport & trans, bool bgr) const
     {
-        auto const image_view = this->image_frame_api.get_image_view();
-        ::transport_dump_png24(
-            trans, image_view.data(),
-            image_view.width(), image_view.height(),
-            image_view.rowsize(),
-            bgr);
+        ::dump_png24(trans, this->image_frame_api, bgr);
     }
 
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
@@ -325,12 +321,7 @@ public:
     void send_image_chunk(bool bgr = false)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        auto const image_view = image_frame_api.get_image_view();
-        ::transport_dump_png24(
-            png_trans, image_view.data(),
-            image_view.width(), image_view.height(),
-            image_view.rowsize(),
-            bgr);
+        ::dump_png24(png_trans, this->image_frame_api, bgr);
     }
 
     void send_reset_chunk()

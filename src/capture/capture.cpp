@@ -664,10 +664,7 @@ public:
     {
         auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, image_view.data(),
-                image_view.width(), image_view.height(),
-                image_view.rowsize(), true);
+            ::dump_png24(this->trans, image_view, true);
         }
         else {
             scale_data(
@@ -675,7 +672,7 @@ public:
                 this->scaled_width, image_view.width(),
                 this->scaled_height, image_view.height(),
                 image_view.rowsize());
-            ::transport_dump_png24(
+            ::dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,
                 this->scaled_width * 3, false);

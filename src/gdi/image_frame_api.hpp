@@ -105,4 +105,14 @@ struct ImageFrameApi
                unsigned int out_width, unsigned int out_height) = 0;
 };
 
+inline ConstImageDataView get_image_view(ImageFrameApi const & image_frame)
+{
+    return image_frame.get_image_view();
+}
+
+inline ImageDataView get_mutable_image_view(ImageFrameApi & image_frame)
+{
+    return image_frame.get_mutable_image_view();
+}
+
 }

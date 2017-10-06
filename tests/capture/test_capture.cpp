@@ -921,10 +921,7 @@ public:
     }
 
     void flush() {
-        ::transport_dump_png24(
-            this->trans, this->drawable.data(),
-            this->drawable.width(), this->drawable.height(),
-            this->drawable.rowsize(), true);
+        ::dump_png24(this->trans, this->drawable, true);
     }
 };
 
@@ -1968,7 +1965,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
     );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    dump_png24(d, png_trans, true);
+    dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -2451,7 +2448,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    dump_png24(d, png_trans, true);
+    dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 

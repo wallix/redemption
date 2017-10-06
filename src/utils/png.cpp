@@ -21,6 +21,7 @@
 #include "utils/png.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
+#include "utils/drawable.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -172,7 +173,7 @@ namespace detail
     }
 }
 
-void transport_dump_png24(
+void dump_png24(
     Transport & trans, uint8_t const * data,
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
@@ -197,6 +198,53 @@ void dump_png24(
     // commented line below it to create row capture
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
+
+void dump_png24(Transport & trans, Drawable const & drawable, bool bgr)
+{
+    ::dump_png24(
+        trans, drawable.data(),
+        drawable.width(), drawable.height(),
+        drawable.rowsize(),
+        bgr);
+}
+
+void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr)
+{
+    ::dump_png24(
+        f, drawable.data(),
+        drawable.width(), drawable.height(),
+        drawable.rowsize(),
+        bgr);
+}
+
+void dump_png24(Transport & trans, gdi::ConstImageDataView const & image_view, bool bgr)
+{
+    ::dump_png24(
+        trans, image_view.data(),
+        image_view.width(), image_view.height(),
+        image_view.rowsize(),
+        bgr);
+}
+
+void dump_png24(std::FILE * f, gdi::ConstImageDataView const & image_view, bool bgr)
+{
+    ::dump_png24(
+        f, image_view.data(),
+        image_view.width(), image_view.height(),
+        image_view.rowsize(),
+        bgr);
+}
+
+void dump_png24(Transport & trans, gdi::ImageFrameApi const & image_frame, bool bgr)
+{
+    dump_png24(trans, image_frame.get_image_view(), bgr);
+}
+
+void dump_png24(std::FILE * f, gdi::ImageFrameApi const & image_frame, bool bgr)
+{
+    dump_png24(f, image_frame.get_image_view(), bgr);
+}
+
 
 void read_png24(
     std::FILE * fd, uint8_t * data,

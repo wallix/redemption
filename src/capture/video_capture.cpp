@@ -29,6 +29,7 @@
 
 #include "transport/transport.hpp"
 
+#include "utils/png.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
@@ -667,7 +668,7 @@ void SequencedVideoCaptureImpl::ic_flush()
 
 void SequencedVideoCaptureImpl::dump24()
 {
-    ::transport_dump_png24(this->ic_trans, this->image_frame_api.get_image_view(), true);
+    dump_png24(this->ic_trans, this->image_frame_api, true);
 }
 
 void SequencedVideoCaptureImpl::scale_dump24()
@@ -681,7 +682,7 @@ void SequencedVideoCaptureImpl::scale_dump24()
         this->ic_scaled_height,
         image_view.height(),
         image_view.rowsize());
-    ::transport_dump_png24(
+    ::dump_png24(
         this->ic_trans, this->ic_scaled_buffer.get(),
         this->ic_scaled_width, this->ic_scaled_height,
         this->ic_scaled_width * 3, false);

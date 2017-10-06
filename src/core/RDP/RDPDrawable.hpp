@@ -51,7 +51,6 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "utils/drawable.hpp"
-#include "utils/png.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
@@ -81,24 +80,12 @@ public:
 
     ConstImageView get_image_view() const override
     {
-        return ConstImageView{
-            this->drawable.data(),
-            this->drawable.width(),
-            this->drawable.height(),
-            this->drawable.rowsize(),
-            Drawable::Bpp
-        };
+        return gdi::get_image_view(this->drawable);
     }
 
     ImageView get_mutable_image_view() override
     {
-        return ImageView{
-            this->drawable.first_pixel(),
-            this->drawable.width(),
-            this->drawable.height(),
-            this->drawable.rowsize(),
-            Drawable::Bpp
-        };
+        return gdi::get_mutable_image_view(this->drawable);
     }
 
     uint8_t * first_pixel() noexcept {
@@ -943,14 +930,3 @@ public:
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
         override {}
 };
-
-inline void dump_png24(Drawable & drawable, Transport & trans, bool bgr) {
-    ::transport_dump_png24(trans, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
-inline void dump_png24(RDPDrawable & drawable, Transport & trans, bool bgr) {
-    dump_png24(drawable.impl(), trans, bgr);
-}
