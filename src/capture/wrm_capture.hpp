@@ -32,9 +32,9 @@
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
 
+#include "gdi/image_frame_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
-#include "gdi/dump_png24.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 
@@ -48,20 +48,6 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cstddef>
-
-
-// TODO temporary
-struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api
-{
-    RDPDrawable & drawable;
-
-    explicit DumpPng24FromRDPDrawableAdapter(RDPDrawable & drawable) : drawable(drawable) {}
-
-    void dump_png24(Transport& trans, bool bgr) const override
-    {
-      ::dump_png24(this->drawable.impl(), trans, bgr);
-    }
-};
 
 
 inline void wrmcapture_send_wrm_chunk(Transport & t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
@@ -205,12 +191,10 @@ class GraphicToFile
     const std::chrono::microseconds delta_time = std::chrono::seconds(1);
     timeval timer;
     timeval last_sent_timer;
-    const uint16_t width;
-    const uint16_t height;
     uint16_t mouse_x;
     uint16_t mouse_y;
     const bool send_input;
-    gdi::DumpPng24Api & dump_png24_api;
+    gdi::ImageFrameApi & image_frame_api;
 
 
     uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
@@ -224,13 +208,11 @@ public:
 
     GraphicToFile(const timeval & now
                 , Transport & trans
-                , const uint16_t width
-                , const uint16_t height
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
-                , gdi::DumpPng24Api & dump_png24
+                , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input = SendInput::NO
                 , Verbose verbose = Verbose::none)
@@ -241,12 +223,10 @@ public:
     , trans(this->compression_bullder.get())
     , timer(now)
     , last_sent_timer{0, 0}
-    , width(width)
-    , height(height)
     , mouse_x(0)
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
-    , dump_png24_api(dump_png24)
+    , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
     {
@@ -261,8 +241,14 @@ public:
         this->send_image_chunk();
     }
 
-    void dump_png24(Transport & trans, bool bgr) const {
-        this->dump_png24_api.dump_png24(trans, bgr);
+    void dump_png24(Transport & trans, bool bgr) const
+    {
+        auto const image_view = this->image_frame_api.get_image_view();
+        ::transport_dump_png24(
+            trans, image_view.data(),
+            image_view.width(), image_view.height(),
+            image_view.rowsize(),
+            bgr);
     }
 
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
@@ -300,12 +286,14 @@ public:
         const BmpCache::cache_ & c3 = this->bmp_cache.get_cache(3);
         const BmpCache::cache_ & c4 = this->bmp_cache.get_cache(4);
 
+        auto const image_view = image_frame_api.get_image_view();
+
         wrmcapture_send_meta_chunk(
             this->trans_target
           , this->wrm_format_version
 
-          , this->width
-          , this->height
+          , image_view.width()
+          , image_view.height()
           , this->capture_bpp
 
           , c0.entries()
@@ -334,10 +322,15 @@ public:
     }
 
     // this one is used to store some embedded image inside WRM
-    void send_image_chunk(void)
+    void send_image_chunk(bool bgr = false)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        this->dump_png24_api.dump_png24(png_trans, false);
+        auto const image_view = image_frame_api.get_image_view();
+        ::transport_dump_png24(
+            png_trans, image_view.data(),
+            image_view.width(), image_view.height(),
+            image_view.rowsize(),
+            bgr);
     }
 
     void send_reset_chunk()
@@ -426,11 +419,7 @@ public:
         this->send_meta_chunk();
         this->send_timestamp_chunk();
         this->send_save_state_chunk();
-
-        OutChunkedBufferingTransport<65536> png_trans(this->trans);
-
-        this->dump_png24_api.dump_png24(png_trans, true);
-
+        this->send_image_chunk(true);
         this->send_caches_chunk();
     }
 
@@ -599,33 +588,26 @@ class WrmCaptureImpl :
     public gdi::CaptureProbeApi,
     public gdi::ExternalCaptureApi // from gdi/capture_api.hpp
 {
-public:
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
     PointerCache ptr_cache;
 
-    DumpPng24FromRDPDrawableAdapter dump_png24_api;
-
     OutMetaSequenceTransport out;
 
-private:
     struct Serializer final : GraphicToFile {
         Serializer(const timeval & now
                 , Transport & trans
-                , const uint16_t width
-                , const uint16_t height
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
-                , gdi::DumpPng24Api & dump_png24
+                , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
-                , SendInput send_input = SendInput::NO
-                , GraphicToFile::Verbose verbose = GraphicToFile::Verbose::none)
-            : GraphicToFile(now, trans, width, height,
-                            capture_bpp,
+                , SendInput send_input
+                , GraphicToFile::Verbose verbose)
+            : GraphicToFile(now, trans, capture_bpp,
                             bmp_cache, gly_cache, ptr_cache,
-                            dump_png24, wrm_compression_algorithm,
+                            image_frame_api, wrm_compression_algorithm,
                             send_input, verbose)
         {}
 
@@ -838,15 +820,15 @@ public:
 
     bool kbd_input_mask_enabled;
 
-public:
-    WrmCaptureImpl(const CaptureParams & capture_params, const WrmParams & wrm_params, RDPDrawable & drawable)
+    WrmCaptureImpl(
+        const CaptureParams & capture_params, const WrmParams & wrm_params,
+        gdi::ImageFrameApi & image_frame_api, gdi::ConstImageDataView const & image_view)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
         BmpCache::CacheOption(262, 12288, false))
     , ptr_cache(/*pointerCacheSize=*/0x19)
-    , dump_png24_api{drawable}
     , out(
         wrm_params.cctx,
         wrm_params.rnd,
@@ -855,19 +837,26 @@ public:
         wrm_params.hash_path,
         capture_params.basename,
         capture_params.now,
-        drawable.width(),
-        drawable.height(),
+        image_view.width(),
+        image_view.height(),
         capture_params.groupid,
         capture_params.report_message)
     , graphic_to_file(
-        capture_params.now, this->out, drawable.width(), drawable.height(), wrm_params.capture_bpp,
-        this->bmp_cache, this->gly_cache, this->ptr_cache, this->dump_png24_api,
+        capture_params.now, this->out, wrm_params.capture_bpp,
+        this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
     )
     , nc(this->graphic_to_file, capture_params.now,
         wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
+    {}
+
+public:
+    WrmCaptureImpl(
+        const CaptureParams & capture_params, const WrmParams & wrm_params,
+        gdi::ImageFrameApi & image_frame_api)
+    : WrmCaptureImpl(capture_params, wrm_params, image_frame_api, image_frame_api.get_image_view())
     {}
 
     // shadow text
@@ -889,5 +878,4 @@ public:
     ) override {
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
-
 };
